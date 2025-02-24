@@ -19,6 +19,7 @@ import (
 
 // APIServerExtraArgs
 func TestCloudStackKubernetes132RedHat8APIServerExtraArgsSimpleFlow(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat132()),
@@ -27,6 +28,7 @@ func TestCloudStackKubernetes132RedHat8APIServerExtraArgsSimpleFlow(t *testing.T
 		api.ClusterToConfigFiller(
 			api.WithKubernetesVersion(v1alpha1.Kube132),
 			api.WithControlPlaneAPIServerExtraArgs(),
+			api.WithLicenseToken(licenseToken),
 		),
 	)
 	runSimpleFlowWithoutClusterConfigGeneration(test)
@@ -4106,6 +4108,8 @@ func TestCloudStackKubernetes132MulticlusterWorkloadClusterNewCredentialsSecretG
 }
 
 func TestCloudStackKubernetes132WorkloadClusterAWSIamAuthAPI(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	licenseToken2 := framework.GetLicenseToken2()
 	cloudstack := framework.NewCloudStack(t)
 	managementCluster := framework.NewClusterE2ETest(
 		t, cloudstack,
@@ -4114,6 +4118,7 @@ func TestCloudStackKubernetes132WorkloadClusterAWSIamAuthAPI(t *testing.T) {
 			api.WithControlPlaneCount(1),
 			api.WithWorkerNodeCount(1),
 			api.WithStackedEtcdTopology(),
+			api.WithLicenseToken(licenseToken),
 		),
 		cloudstack.WithRedhat9Kubernetes132(),
 	)
@@ -4130,6 +4135,7 @@ func TestCloudStackKubernetes132WorkloadClusterAWSIamAuthAPI(t *testing.T) {
 			api.ClusterToConfigFiller(
 				api.WithManagementCluster(managementCluster.ClusterName),
 				api.WithStackedEtcdTopology(),
+				api.WithLicenseToken(licenseToken2),
 			),
 			framework.WithAwsIamConfig(),
 			cloudstack.WithRedhat9Kubernetes132(),
@@ -4153,11 +4159,12 @@ func TestCloudStackKubernetes132WorkloadClusterAWSIamAuthAPI(t *testing.T) {
 }
 
 func TestCloudStackKubernetes132WorkloadClusterAWSIamAuthGithubFluxAPI(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	licenseToken2 := framework.GetLicenseToken2()
 	cloudstack := framework.NewCloudStack(t)
 	managementCluster := framework.NewClusterE2ETest(
 		t,
 		cloudstack,
-
 		framework.WithFluxGithubEnvVarCheck(),
 		framework.WithFluxGithubCleanup(),
 	).WithClusterConfig(
@@ -4165,6 +4172,7 @@ func TestCloudStackKubernetes132WorkloadClusterAWSIamAuthGithubFluxAPI(t *testin
 			api.WithControlPlaneCount(1),
 			api.WithWorkerNodeCount(1),
 			api.WithStackedEtcdTopology(),
+			api.WithLicenseToken(licenseToken),
 		),
 		cloudstack.WithRedhat9Kubernetes132(),
 		framework.WithFluxGithubConfig(),
@@ -4181,6 +4189,7 @@ func TestCloudStackKubernetes132WorkloadClusterAWSIamAuthGithubFluxAPI(t *testin
 			api.ClusterToConfigFiller(
 				api.WithManagementCluster(managementCluster.ClusterName),
 				api.WithStackedEtcdTopology(),
+				api.WithLicenseToken(licenseToken2),
 			),
 			framework.WithAwsIamConfig(),
 			cloudstack.WithRedhat9Kubernetes132(),
@@ -4204,6 +4213,8 @@ func TestCloudStackKubernetes132WorkloadClusterAWSIamAuthGithubFluxAPI(t *testin
 }
 
 func TestCloudStackKubernetes132WorkloadClusterOIDCAuthAPI(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	licenseToken2 := framework.GetLicenseToken2()
 	cloudstack := framework.NewCloudStack(t)
 	managementCluster := framework.NewClusterE2ETest(
 		t, cloudstack,
@@ -4212,6 +4223,7 @@ func TestCloudStackKubernetes132WorkloadClusterOIDCAuthAPI(t *testing.T) {
 			api.WithControlPlaneCount(1),
 			api.WithWorkerNodeCount(1),
 			api.WithStackedEtcdTopology(),
+			api.WithLicenseToken(licenseToken),
 		),
 		cloudstack.WithRedhat9Kubernetes132(),
 	)
@@ -4227,6 +4239,7 @@ func TestCloudStackKubernetes132WorkloadClusterOIDCAuthAPI(t *testing.T) {
 			api.ClusterToConfigFiller(
 				api.WithManagementCluster(managementCluster.ClusterName),
 				api.WithStackedEtcdTopology(),
+				api.WithLicenseToken(licenseToken2),
 			),
 			framework.WithOIDCClusterConfig(t),
 			cloudstack.WithRedhat9Kubernetes132(),
@@ -4250,6 +4263,8 @@ func TestCloudStackKubernetes132WorkloadClusterOIDCAuthAPI(t *testing.T) {
 }
 
 func TestCloudStackKubernetes132WorkloadClusterOIDCAuthGithubFluxAPI(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	licenseToken2 := framework.GetLicenseToken2()
 	cloudstack := framework.NewCloudStack(t)
 	managementCluster := framework.NewClusterE2ETest(
 		t,
@@ -4261,6 +4276,7 @@ func TestCloudStackKubernetes132WorkloadClusterOIDCAuthGithubFluxAPI(t *testing.
 			api.WithControlPlaneCount(1),
 			api.WithWorkerNodeCount(1),
 			api.WithStackedEtcdTopology(),
+			api.WithLicenseToken(licenseToken),
 		),
 		cloudstack.WithRedhat9Kubernetes132(),
 		framework.WithFluxGithubConfig(),
@@ -4277,6 +4293,7 @@ func TestCloudStackKubernetes132WorkloadClusterOIDCAuthGithubFluxAPI(t *testing.
 			api.ClusterToConfigFiller(
 				api.WithManagementCluster(managementCluster.ClusterName),
 				api.WithStackedEtcdTopology(),
+				api.WithLicenseToken(licenseToken2),
 			),
 			framework.WithOIDCClusterConfig(t),
 			cloudstack.WithRedhat9Kubernetes132(),
