@@ -1561,6 +1561,8 @@ func (c *Cluster) ConvertConfigToConfigGenerateStruct() *ClusterGenerate {
 			BundlesRef:                    c.Spec.BundlesRef,
 			EksaVersion:                   c.Spec.EksaVersion,
 			MachineHealthCheck:            c.Spec.MachineHealthCheck,
+			EtcdEncryption:                c.Spec.EtcdEncryption,
+			LicenseToken:                  c.Spec.LicenseToken,
 		},
 	}
 

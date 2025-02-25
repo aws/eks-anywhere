@@ -22,8 +22,22 @@ func TestWriteClusterConfigWithOIDCAndGitOps(t *testing.T) {
 		s.Cluster.CreationTimestamp = v1.Time{Time: time.Now()}
 		s.Cluster.Name = "mycluster"
 		s.Cluster.Spec.KubernetesVersion = ""
+		s.Cluster.Spec.LicenseToken = "test-token"
 		s.Cluster.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{
 			Count: 3,
+		}
+		s.Cluster.Spec.EtcdEncryption = &[]v1alpha1.EtcdEncryption{
+			{
+				Providers: []v1alpha1.EtcdEncryptionProvider{
+					{
+						KMS: &v1alpha1.KMS{
+							Name:                "test-config",
+							SocketListenAddress: "unix:///kms/socket/path",
+						},
+					},
+				},
+				Resources: []string{"secrets"},
+			},
 		}
 		s.Cluster.Spec.GitOpsRef = &v1alpha1.Ref{
 			Kind: v1alpha1.GitOpsConfigKind,
@@ -131,6 +145,7 @@ func TestWriteClusterConfigWithFluxAndGitOpsConfigs(t *testing.T) {
 		s.Cluster.CreationTimestamp = v1.Time{Time: time.Now()}
 		s.Cluster.Name = "mycluster"
 		s.Cluster.Spec.KubernetesVersion = ""
+		s.Cluster.Spec.LicenseToken = "test-token"
 		s.Cluster.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{
 			Count: 3,
 		}
@@ -238,6 +253,7 @@ func TestWriteClusterConfigWithFluxConfig(t *testing.T) {
 		s.Cluster.CreationTimestamp = v1.Time{Time: time.Now()}
 		s.Cluster.Name = "mycluster"
 		s.Cluster.Spec.KubernetesVersion = ""
+		s.Cluster.Spec.LicenseToken = "test-token"
 		s.Cluster.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{
 			Count: 3,
 		}

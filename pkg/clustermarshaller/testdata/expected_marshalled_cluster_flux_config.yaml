@@ -15,6 +15,7 @@ spec:
   gitOpsRef:
     kind: FluxConfig
     name: config
+  licenseToken: test-token
   managementCluster:
     name: mycluster
   workerNodeGroupConfigurations:
