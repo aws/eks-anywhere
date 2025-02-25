@@ -282,11 +282,6 @@ func WithRedHat131Tinkerbell() TinkerbellOpt {
 	return withKubeVersionAndOS(anywherev1.Kube131, RedHat8, "", nil)
 }
 
-// WithRedHat132Tinkerbell tink test with redhat 1.31.
-func WithRedHat132Tinkerbell() TinkerbellOpt {
-	return withKubeVersionAndOS(anywherev1.Kube132, RedHat8, "", nil)
-}
-
 // WithRedHat9127Tinkerbell tink test with redhat9 efi 1.27.
 func WithRedHat9127Tinkerbell() TinkerbellOpt {
 	return withKubeVersionAndOS(anywherev1.Kube127, RedHat9, "", nil)

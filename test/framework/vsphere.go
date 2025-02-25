@@ -165,11 +165,6 @@ func WithRedHat131VSphere() VSphereOpt {
 	return withVSphereKubeVersionAndOS(anywherev1.Kube131, RedHat8, nil)
 }
 
-// WithRedHat132VSphere vsphere test with Redhat 8 for Kubernetes 1.32.
-func WithRedHat132VSphere() VSphereOpt {
-	return withVSphereKubeVersionAndOS(anywherev1.Kube132, RedHat8, nil)
-}
-
 // WithUbuntu127 returns a VSphereOpt that adds API fillers to use a Ubuntu vSphere template for k8s 1.27
 // and the "ubuntu" osFamily in all machine configs.
 func WithUbuntu127() VSphereOpt {
