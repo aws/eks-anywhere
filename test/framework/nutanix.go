@@ -275,12 +275,6 @@ func WithRedHat131Nutanix() NutanixOpt {
 	return withNutanixKubeVersionAndOS(anywherev1.Kube131, RedHat8, nil)
 }
 
-// WithRedHat132Nutanix returns a NutanixOpt that adds API fillers to use a RedHat 8 Nutanix template for k8s 1.32
-// and the "redhat" osFamily in all machine configs.
-func WithRedHat132Nutanix() NutanixOpt {
-	return withNutanixKubeVersionAndOS(anywherev1.Kube132, RedHat8, nil)
-}
-
 // WithRedHat9Kubernetes128Nutanix returns a NutanixOpt that adds API fillers to use a RedHat 9 Nutanix template for k8s 1.28
 // and the "redhat" osFamily in all machine configs.
 func WithRedHat9Kubernetes128Nutanix() NutanixOpt {
@@ -374,12 +368,6 @@ func WithRedHat130NutanixUUID() NutanixOpt {
 // and the "redhat" osFamily in all machine configs.
 func WithRedHat131NutanixUUID() NutanixOpt {
 	return withNutanixKubeVersionAndOSForUUID(anywherev1.Kube131, RedHat8, nil)
-}
-
-// WithRedHat132NutanixUUID returns a NutanixOpt that adds API fillers to use a RedHat Nutanix template UUID for k8s 1.32
-// and the "redhat" osFamily in all machine configs.
-func WithRedHat132NutanixUUID() NutanixOpt {
-	return withNutanixKubeVersionAndOSForUUID(anywherev1.Kube132, RedHat8, nil)
 }
 
 // WithRedHat9Kubernetes128NutanixUUID returns a NutanixOpt that adds API fillers to use a RedHat 9 Nutanix template UUID for k8s 1.28
