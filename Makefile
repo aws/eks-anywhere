@@ -112,6 +112,7 @@ BUILD_LIB := build/lib
 BUILDKIT := $(BUILD_LIB)/buildkit.sh
 
 CONTROLLER_GEN_BIN := controller-gen
+CONTROLLER_GEN_VERSION := v0.17.2
 CONTROLLER_GEN := $(TOOLS_BIN_DIR)/$(CONTROLLER_GEN_BIN)
 
 GO_VULNCHECK_BIN := govulncheck
@@ -299,7 +300,7 @@ $(KUBEBUILDER): $(TOOLS_BIN_DIR)
 	chmod +x $(KUBEBUILDER)
 
 $(CONTROLLER_GEN): $(TOOLS_BIN_DIR)
-	GOBIN=$(TOOLS_BIN_DIR_ABS) $(GO) install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.8.0
+	GOBIN=$(TOOLS_BIN_DIR_ABS) $(GO) install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_GEN_VERSION)
 
 $(GO_VULNCHECK): $(TOOLS_BIN_DIR)
 	GOBIN=$(TOOLS_BIN_DIR_ABS) $(GO) install golang.org/x/vuln/cmd/govulncheck@latest
@@ -452,8 +453,10 @@ endif
 # Generate zz_generated.deepcopy.go
 #
 generate: $(CONTROLLER_GEN)  ## Generate zz_generated.deepcopy.go
-	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
-
+	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" \
+		paths=./pkg/api/... \
+		paths="./release/api/..."
+	
 .PHONY: verify-generate
 verify-generate: generate ## Verify if generated zz_generated.deepcopy.go files need to be updated
 	$(eval DIFF=$(shell git diff --raw -- '*.go' | wc -c))
