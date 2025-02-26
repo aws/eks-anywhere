@@ -45,9 +45,9 @@ func UpgradeFirstControlPlanePod(nodeName, image, kubernetesVersion, etcdVersion
 }
 
 // UpgradeSecondaryControlPlanePod returns an upgrader pod that can be deployed on the remaining control plane nodes.
-func UpgradeSecondaryControlPlanePod(nodeName, image string) *corev1.Pod {
+func UpgradeSecondaryControlPlanePod(nodeName, image, kubernetesVersion string) *corev1.Pod {
 	p := upgraderPod(nodeName, image, true)
-	p.Spec.InitContainers = containersForUpgrade(true, image, nodeName, "upgrade", "node", "--type", "RestCP")
+	p.Spec.InitContainers = containersForUpgrade(true, image, nodeName, "upgrade", "node", "--type", "RestCP", "--k8sVersion", kubernetesVersion)
 	return p
 }
 
