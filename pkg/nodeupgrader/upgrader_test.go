@@ -29,7 +29,7 @@ func TestUpgradeFirstControlPlanePod(t *testing.T) {
 
 func TestUpgradeSecondaryControlPlanePod(t *testing.T) {
 	g := NewWithT(t)
-	pod := nodeupgrader.UpgradeSecondaryControlPlanePod(nodeName, upgraderImage)
+	pod := nodeupgrader.UpgradeSecondaryControlPlanePod(nodeName, upgraderImage, kubernetesVersion)
 	g.Expect(pod).ToNot(BeNil())
 
 	data, err := yaml.Marshal(pod)

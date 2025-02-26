@@ -86,6 +86,8 @@ spec:
     - node
     - --type
     - RestCP
+    - --k8sVersion
+    - v1.28.3-eks-1-28-9
     command:
     - nsenter
     image: public.ecr.aws/eks-anywhere/node-upgrader:latest
