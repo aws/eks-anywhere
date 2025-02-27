@@ -121,6 +121,10 @@ GO_VULNCHECK := $(TOOLS_BIN_DIR)/$(GO_VULNCHECK_BIN)
 SETUP_ENVTEST_BIN := setup-envtest
 SETUP_ENVTEST := $(TOOLS_BIN_DIR)/$(SETUP_ENVTEST_BIN)
 
+MOCKGEN_BIN := mockgen
+MOCKGEN_VERSION := v1.6.0
+MOCKGEN := $(TOOLS_BIN_DIR)/$(MOCKGEN_BIN)
+
 BINARY_NAME=eks-anywhere-cluster-controller
 ifdef CODEBUILD_SRC_DIR
 	TAR_PATH?=$(CODEBUILD_SRC_DIR)/$(PROJECT_PATH)/$(CODEBUILD_BUILD_NUMBER)-$(CODEBUILD_RESOLVED_SOURCE_VERSION)/artifacts
@@ -307,6 +311,9 @@ $(GO_VULNCHECK): $(TOOLS_BIN_DIR)
 
 $(SETUP_ENVTEST): $(TOOLS_BIN_DIR)
 	GOBIN=$(TOOLS_BIN_DIR_ABS) $(GO) install sigs.k8s.io/controller-runtime/tools/setup-envtest@v0.0.0-20240215124517-56159419231e
+
+$(MOCKGEN): $(TOOLS_BIN_DIR)
+	GOBIN=$(TOOLS_BIN_DIR_ABS) $(GO) install github.com/golang/mock/mockgen@$(MOCKGEN_VERSION)
 
 envtest-setup: $(SETUP_ENVTEST)
 	$(eval KUBEBUILDER_ASSETS ?= $(shell $(SETUP_ENVTEST) use --use-env -p path --arch $(GO_ARCH) $(KUBEBUILDER_ENVTEST_KUBERNETES_VERSION)))
@@ -567,9 +574,8 @@ packages-e2e-test: build-all-test-binaries ## Run Curated Packages tests
 
 .PHONY: mocks
 mocks: export PATH := $(GO_PATH):$(PATH)
-mocks: MOCKGEN := ${GOPATH}/bin/mockgen --build_flags=--mod=mod
-mocks: ## Generate mocks
-	$(GO) install github.com/golang/mock/mockgen@v1.6.0
+mocks: MOCKGEN := $(MOCKGEN) --build_flags=--mod=mod
+mocks: $(MOCKGEN) ## Generate mocks
 	${MOCKGEN} -destination=controllers/mocks/snow_machineconfig_controller.go -package=mocks -source "controllers/snow_machineconfig_controller.go"
 	${MOCKGEN} -destination=pkg/providers/mocks/providers.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers" Provider,DatacenterConfig,MachineConfig
 	${MOCKGEN} -destination=pkg/executables/mocks/executables.go -package=mocks "github.com/aws/eks-anywhere/pkg/executables" Executable,DockerClient,DockerContainer
