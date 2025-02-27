@@ -51,6 +51,7 @@ type ParallelRunConf struct {
 	TestReportFolder       string
 	BranchName             string
 	Logger                 logr.Logger
+	Stage                  string
 }
 
 type (
@@ -202,6 +203,7 @@ type instanceRunConf struct {
 	CleanupResources        bool
 	Logger                  logr.Logger
 	Session                 *session.Session
+	Stage                   string
 }
 
 //nolint:gocyclo, revive // RunTests responsible launching test runner to run tests is complex.
@@ -238,7 +240,7 @@ func RunTests(conf instanceRunConf, inventoryCatalogue map[string]*hardwareCatal
 		"branch_name", conf.BranchName, "ip_pool", conf.IPPool.ToString(),
 		"hardware_count", conf.HardwareCount, "tinkerbell_airgapped_test", conf.TinkerbellAirgappedTest,
 		"bundles_override", conf.BundlesOverride, "test_runner_type", conf.TestRunnerType,
-		"cleanup_resources", conf.CleanupResources)
+		"cleanup_resources", conf.CleanupResources, "stage", conf.Stage)
 
 	instanceId, err := testRunner.createInstance(conf)
 	if err != nil {
@@ -518,6 +520,7 @@ func newInstanceRunConf(awsSession *session.Session, conf ParallelRunConf, jobNu
 		TestRunnerType:          testRunnerType,
 		TestRunnerConfig:        *testRunnerConfig,
 		Logger:                  conf.Logger.WithValues("jobID", jobID, "test", testRegex),
+		Stage:                   conf.Stage,
 	}
 }
 

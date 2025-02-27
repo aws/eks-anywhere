@@ -89,6 +89,8 @@ env:
     T_SSH_PRIVATE_KEY: "vsphere_ci_beta_connection:base64_encoded_ssh_private_key"
     LICENSE_TOKEN: "extended_support:license_token"
     LICENSE_TOKEN2: "extended_support:license_token2"
+    STAGING_LICENSE_TOKEN: "extended_support:staging_license_token"
+    STAGING_LICENSE_TOKEN2: "extended_support:staging_license_token2"
 phases:
   pre_build:
     commands:
@@ -112,6 +114,11 @@ phases:
         if [ -f ./bin/local-bundle-release.yaml ]; then
           BUNDLES_OVERRIDE=true
         fi
+      - STAGE="dev"
+      - |
+        if [[ "$(CODEBUILD_INITIATOR)" =~ "aws-staging-eks-a-release" ]]; then
+          STAGE="staging"
+        fi
       - SKIPPED_TESTS=$(yq e ".skipped_tests | @csv" ${CODEBUILD_SRC_DIR}/test/e2e/SKIPPED_TESTS.yaml)
       - mv bin/vsphere/e2e.test bin/e2e.test
       - >
@@ -128,6 +135,7 @@ phases:
         --cleanup-resources=true
         --test-report-folder=reports
         --branch-name=${BRANCH_NAME}
+        --stage=${STAGE}
   post_build:
     commands:
       - unset AWS_SDK_LOAD_CONFIG AWS_PROFILE
