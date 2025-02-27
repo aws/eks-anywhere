@@ -98,7 +98,7 @@ func (i *Installer) InstallEksdManifest(ctx context.Context, clusterSpec *cluste
 		if err := i.retrier.Retry(
 			func() error {
 				var readerErr error
-				eksdReleaseManifest, readerErr = i.reader.ReadFile(vb.EksD.EksDReleaseUrl)
+				eksdReleaseManifest, readerErr = i.reader.ReadFile(vb.EksD.EksDReleaseURL)
 				return readerErr
 			},
 		); err != nil {

@@ -215,7 +215,7 @@ func buildEKSARelease(release *releasev1.EksARelease, bundle *releasev1.Bundles)
 			ReleaseDate:       release.Date,
 			Version:           release.Version,
 			GitCommit:         release.GitCommit,
-			BundleManifestURL: release.BundleManifestUrl,
+			BundleManifestURL: release.BundleManifestURL,
 			BundlesRef: releasev1.BundlesRef{
 				APIVersion: releasev1.GroupVersion.String(),
 				Name:       bundle.Name,

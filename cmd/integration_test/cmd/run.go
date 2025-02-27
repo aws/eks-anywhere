@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"log"
 
@@ -34,7 +33,7 @@ var runE2ECmd = &cobra.Command{
 	SilenceUsage: true,
 	PreRun:       preRunSetup,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		err := runE2E(cmd.Context())
+		err := runE2E()
 		if err != nil {
 			logger.Fatal(err, "Failed to run e2e test")
 		}
@@ -74,7 +73,7 @@ func init() {
 	}
 }
 
-func runE2E(ctx context.Context) error {
+func runE2E() error {
 	instanceConfigFile := viper.GetString(instanceConfigFlagName)
 	storageBucket := viper.GetString(storageBucketFlagName)
 	jobId := viper.GetString(jobIdFlagName)

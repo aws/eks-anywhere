@@ -66,11 +66,11 @@ func BundleManifestURL(releases *releasev1.Release, version string) (string, err
 		return "", fmt.Errorf("no matching release found for version %s to get Bundles URL. Latest available version is %s", version, releases.Spec.LatestVersion)
 	}
 
-	return eksAReleaseForVersion.BundleManifestUrl, nil
+	return eksAReleaseForVersion.BundleManifestURL, nil
 }
 
 func ReadBundlesForRelease(reader Reader, release *releasev1.EksARelease) (*releasev1.Bundles, error) {
-	return bundles.Read(reader, release.BundleManifestUrl)
+	return bundles.Read(reader, release.BundleManifestURL)
 }
 
 func ReleaseForVersion(releases *releasev1.Release, version string) (*releasev1.EksARelease, error) {

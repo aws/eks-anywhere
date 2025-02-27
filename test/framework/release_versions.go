@@ -330,7 +330,7 @@ func getReleases(url string) (release *releasev1alpha1.Release, err error) {
 func getLatestPrevMinorRelease(releases *releasev1alpha1.Release, releaseBranchVersion *semver.Version) (*releasev1alpha1.EksARelease, error) {
 	targetRelease := &releasev1alpha1.EksARelease{
 		Version:           "",
-		BundleManifestUrl: "",
+		BundleManifestURL: "",
 	}
 	latestPrevMinorReleaseVersion := newVersion("0.0.0")
 

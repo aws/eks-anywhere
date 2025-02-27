@@ -78,7 +78,7 @@ func (vb *VersionsBundle) Manifests() map[string][]*string {
 		},
 		"eks-distro": {
 			&vb.EksD.Components,
-			&vb.EksD.EksDReleaseUrl,
+			&vb.EksD.EksDReleaseURL,
 		},
 	}
 }

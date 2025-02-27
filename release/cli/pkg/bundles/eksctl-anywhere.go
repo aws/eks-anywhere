@@ -142,7 +142,7 @@ func GetEksARelease(r *releasetypes.ReleaseConfig) (anywherev1alpha1.EksARelease
 				Arm64: bundleArchiveArtifacts["eksctl-anywhere-darwin-arm64"],
 			},
 		},
-		BundleManifestUrl: bundleManifestUrl,
+		BundleManifestURL: bundleManifestUrl,
 	}
 
 	fmt.Printf("%s Successfully generated EKS-A release spec\n", constants.SuccessIcon)

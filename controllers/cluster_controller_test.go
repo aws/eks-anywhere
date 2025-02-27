@@ -1684,7 +1684,7 @@ func createBundle(cluster *anywherev1.Cluster) *releasev1.Bundles {
 					KubeVersion: "1.20",
 					EksD: releasev1.EksDRelease{
 						Name:           "test",
-						EksDReleaseUrl: "testdata/release.yaml",
+						EksDReleaseURL: "testdata/release.yaml",
 						KubeVersion:    "1.20",
 					},
 					CertManager:                releasev1.CertManagerBundle{},

@@ -82,7 +82,7 @@ type EksARelease struct {
 
 	// +kubebuilder:validation:Required
 	// Manifest url to parse bundle information from for this EKS-A release
-	BundleManifestUrl string `json:"bundleManifestUrl"`
+	BundleManifestURL string `json:"bundleManifestUrl"`
 
 	// +kubebuilder:validation:Required
 	// EKS Anywhere binary bundle

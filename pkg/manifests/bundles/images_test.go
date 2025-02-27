@@ -56,7 +56,7 @@ func TestReadImages(t *testing.T) {
 			VersionsBundles: []releasev1.VersionsBundle{
 				{
 					EksD: releasev1.EksDRelease{
-						EksDReleaseUrl: eksdURL,
+						EksDReleaseURL: eksdURL,
 					},
 				},
 			},
@@ -104,13 +104,13 @@ func TestReadImagesWithKubeVersionFilter(t *testing.T) {
 				{
 					KubeVersion: "1.20",
 					EksD: releasev1.EksDRelease{
-						EksDReleaseUrl: eksdURL,
+						EksDReleaseURL: eksdURL,
 					},
 				},
 				{
 					KubeVersion: "1.21",
 					EksD: releasev1.EksDRelease{
-						EksDReleaseUrl: "fake url",
+						EksDReleaseURL: "fake url",
 					},
 				},
 			},
@@ -156,7 +156,7 @@ func TestReadImagesError(t *testing.T) {
 			VersionsBundles: []releasev1.VersionsBundle{
 				{
 					EksD: releasev1.EksDRelease{
-						EksDReleaseUrl: eksdURL,
+						EksDReleaseURL: eksdURL,
 					},
 				},
 			},

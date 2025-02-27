@@ -470,6 +470,7 @@ func (e *ClusterE2ETest) generateHardwareConfig(opts ...CommandOpt) {
 	e.RunEKSA(generateHardwareConfigArgs, opts...)
 }
 
+// GenerateClusterConfigForVersion generates cluste config for a giving eksaVersion.
 func (e *ClusterE2ETest) GenerateClusterConfigForVersion(eksaVersion string, opts ...CommandOpt) {
 	e.generateClusterConfigObjects(opts...)
 	if eksaVersion != "" {
@@ -520,7 +521,7 @@ func (e *ClusterE2ETest) UpdateClusterConfig(fillers ...api.ClusterConfigFiller)
 	e.buildClusterConfigFile()
 }
 
-func (e *ClusterE2ETest) baseClusterConfigUpdates(opts ...CommandOpt) []api.ClusterConfigFiller {
+func (e *ClusterE2ETest) baseClusterConfigUpdates() []api.ClusterConfigFiller {
 	clusterFillers := make([]api.ClusterFiller, 0, len(e.clusterFillers)+3)
 	// This defaults all tests to a 1:1:1 configuration. Since all the fillers defined on each test are run
 	// after these 3, if the tests is explicit about any of these, the defaults will be overwritten
@@ -1690,13 +1691,13 @@ func (e *ClusterE2ETest) VerifyCertManagerPackageInstalled(prefix, namespace, pa
 	}
 
 	e.T.Log("Waiting for Self Signed certificate to be issued")
-	err = e.verifySelfSignedCertificate(mgmtCluster)
+	err = e.verifySelfSignedCertificate()
 	if err != nil {
 		errCh <- err
 	}
 
 	e.T.Log("Waiting for Let's Encrypt certificate to be issued")
-	err = e.verifyLetsEncryptCert(mgmtCluster)
+	err = e.verifyLetsEncryptCert()
 	if err != nil {
 		errCh <- err
 	}
@@ -1720,7 +1721,7 @@ var certManagerSelfSignedIssuer []byte
 //go:embed testdata/certmanager/certmanager_selfsignedcert.yaml
 var certManagerSelfSignedCert []byte
 
-func (e *ClusterE2ETest) verifySelfSignedCertificate(mgmtCluster *types.Cluster) error {
+func (e *ClusterE2ETest) verifySelfSignedCertificate() error {
 	ctx := context.Background()
 	selfsignedCert := "my-selfsigned-ca"
 	err := e.KubectlClient.ApplyKubeSpecFromBytes(ctx, e.Cluster(), certManagerSelfSignedIssuer)
@@ -1750,7 +1751,7 @@ var certManagerLetsEncryptCert []byte
 //go:embed testdata/certmanager/certmanager_secret.yaml
 var certManagerSecret string
 
-func (e *ClusterE2ETest) verifyLetsEncryptCert(mgmtCluster *types.Cluster) error {
+func (e *ClusterE2ETest) verifyLetsEncryptCert() error {
 	ctx := context.Background()
 	letsEncryptCert := "test-cert"
 	accessKey, secretAccess, region, zoneID := GetRoute53Configs()

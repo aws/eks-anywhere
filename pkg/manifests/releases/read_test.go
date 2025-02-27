@@ -195,8 +195,8 @@ func TestBundleManifestURL(t *testing.T) {
 			releases: &releasev1.Release{
 				Spec: releasev1.ReleaseSpec{
 					Releases: []releasev1.EksARelease{
-						{Version: "v0.0.1", Number: 1, BundleManifestUrl: "https://example.com/bundle-manifest"},
-						{Version: "v0.0.2", Number: 2, BundleManifestUrl: "https://example.com/bundle-manifest"},
+						{Version: "v0.0.1", Number: 1, BundleManifestURL: "https://example.com/bundle-manifest"},
+						{Version: "v0.0.2", Number: 2, BundleManifestURL: "https://example.com/bundle-manifest"},
 					},
 				},
 			},
@@ -209,8 +209,8 @@ func TestBundleManifestURL(t *testing.T) {
 			releases: &releasev1.Release{
 				Spec: releasev1.ReleaseSpec{
 					Releases: []releasev1.EksARelease{
-						{Version: "v0.0.1", Number: 1, BundleManifestUrl: "https://example.com/bundle-manifest"},
-						{Version: "v0.0.2", Number: 2, BundleManifestUrl: "https://example.com/bundle-manifest"},
+						{Version: "v0.0.1", Number: 1, BundleManifestURL: "https://example.com/bundle-manifest"},
+						{Version: "v0.0.2", Number: 2, BundleManifestURL: "https://example.com/bundle-manifest"},
 					},
 				},
 			},
@@ -224,8 +224,8 @@ func TestBundleManifestURL(t *testing.T) {
 				Spec: releasev1.ReleaseSpec{
 					LatestVersion: "v0.0.2",
 					Releases: []releasev1.EksARelease{
-						{Version: "v0.0.1", Number: 1, BundleManifestUrl: "https://example.com/bundle-manifest"},
-						{Version: "v0.0.2", Number: 2, BundleManifestUrl: "https://example.com/bundle-manifest"},
+						{Version: "v0.0.1", Number: 1, BundleManifestURL: "https://example.com/bundle-manifest"},
+						{Version: "v0.0.2", Number: 2, BundleManifestURL: "https://example.com/bundle-manifest"},
 					},
 				},
 			},
