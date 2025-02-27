@@ -3,8 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.8.0
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.17.2
   name: cloudstackmachineconfigs.anywhere.eks.amazonaws.com
 spec:
   group: anywhere.eks.amazonaws.com
@@ -22,14 +21,19 @@ spec:
           API.
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -38,27 +42,26 @@ spec:
               CloudStackMachineConfig.
             properties:
               affinity:
-                description: Defaults to `no`. Can be `pro` or `anti`. If set to `pro`
-                  or `anti`, will create an affinity group per machine set of the
-                  corresponding type
+                description: |-
+                  Defaults to `no`. Can be `pro` or `anti`. If set to `pro` or `anti`, will create an affinity
+                  group per machine set of the corresponding type
                 type: string
               affinityGroupIds:
-                description: AffinityGroupIds allows users to pass in a list of UUIDs
-                  for previously-created Affinity Groups. Any VM’s created with this
-                  spec will be added to the affinity group, which will dictate which
-                  physical host(s) they can be placed on. Affinity groups can be type
-                  “affinity” or “anti-affinity” in CloudStack. If they are type “anti-affinity”,
-                  all VM’s in the group must be on separate physical hosts for high
-                  availability. If they are type “affinity”, all VM’s in the group
-                  must be on the same physical host for improved performance
+                description: |-
+                  AffinityGroupIds allows users to pass in a list of UUIDs for previously-created Affinity
+                  Groups. Any VM’s created with this spec will be added to the affinity group, which will
+                  dictate which physical host(s) they can be placed on. Affinity groups can be type “affinity”
+                  or “anti-affinity” in CloudStack. If they are type “anti-affinity”, all VM’s in the group
+                  must be on separate physical hosts for high availability. If they are type “affinity”, all
+                  VM’s in the group must be on the same physical host for improved performance
                 items:
                   type: string
                 type: array
               computeOffering:
-                description: ComputeOffering refers to a compute offering which has
-                  been previously registered in CloudStack. It represents a VM’s instance
-                  size including number of CPU’s, memory, and CPU speed. It can either
-                  be specified as a UUID or name
+                description: |-
+                  ComputeOffering refers to a compute offering which has been previously registered in
+                  CloudStack. It represents a VM’s instance size including number of CPU’s, memory, and CPU
+                  speed. It can either be specified as a UUID or name
                 properties:
                   id:
                     description: Id of a resource in the CloudStack environment. Mutually
@@ -70,10 +73,10 @@ spec:
                     type: string
                 type: object
               diskOffering:
-                description: DiskOffering refers to a disk offering which has been
-                  previously registered in CloudStack. It represents a disk offering
-                  with pre-defined size or custom specified disk size. It can either
-                  be specified as a UUID or name
+                description: |-
+                  DiskOffering refers to a disk offering which has been previously registered in CloudStack.
+                  It represents a disk offering with pre-defined size or custom specified disk size. It can
+                  either be specified as a UUID or name
                 properties:
                   customSizeInGB:
                     description: disk size in GB, > 0 for customized disk offering;
@@ -114,11 +117,11 @@ spec:
                   case is to use data disk to store logs
                 type: object
               template:
-                description: Template refers to a VM image template which has been
-                  previously registered in CloudStack. It can either be specified
-                  as a UUID or name. When using a template name it must include the
-                  Kubernetes version(s). For example, a template used for Kubernetes
-                  1.27 could be ubuntu-2204-1.27.
+                description: |-
+                  Template refers to a VM image template which has been previously registered in CloudStack.
+                  It can either be specified as a UUID or name.
+                  When using a template name it must include the Kubernetes version(s). For example,
+                  a template used for Kubernetes 1.27 could be ubuntu-2204-1.27.
                 properties:
                   id:
                     description: Id of a resource in the CloudStack environment. Mutually
@@ -132,13 +135,14 @@ spec:
               userCustomDetails:
                 additionalProperties:
                   type: string
-                description: UserCustomDetails allows users to pass in non-standard
-                  key value inputs, outside those defined [here](https://github.com/shapeblue/cloudstack/blob/main/api/src/main/java/com/cloud/vm/VmDetailConstants.java)
+                description: |-
+                  UserCustomDetails allows users to pass in non-standard key value inputs, outside those
+                  defined [here](https://github.com/shapeblue/cloudstack/blob/main/api/src/main/java/com/cloud/vm/VmDetailConstants.java)
                 type: object
               users:
-                description: Users consists of an array of objects containing the
-                  username, as well as a list of their public keys. These users will
-                  be authorized to ssh into the machines
+                description: |-
+                  Users consists of an array of objects containing the username, as well as a list of their
+                  public keys. These users will be authorized to ssh into the machines
                 items:
                   description: UserConfiguration defines the configuration of the
                     user to be added to the VM.
@@ -163,8 +167,9 @@ spec:
               of CloudStackMachineConfig.
             properties:
               failureMessage:
-                description: FailureMessage indicates that there is a fatal problem
-                  reconciling the state, and will be set to a descriptive error message.
+                description: |-
+                  FailureMessage indicates that there is a fatal problem reconciling the
+                  state, and will be set to a descriptive error message.
                 type: string
               specValid:
                 description: SpecValid is set to true if cloudstackmachineconfig is
@@ -176,9 +181,3 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []

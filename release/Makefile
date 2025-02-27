@@ -44,7 +44,7 @@ GOBIN=$(shell go env GOBIN)
 endif
 
 # Setup Go
-GOLANG_VERSION?="1.22"
+GOLANG_VERSION?="1.23"
 GO_VERSION ?= $(shell source $(REPO_ROOT)/scripts/common.sh && build::common::get_go_path $(GOLANG_VERSION))
 GO ?= $(GO_VERSION)/go
 

@@ -2,7 +2,6 @@
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
-  creationTimestamp: null
   name: mutating-webhook-configuration
 webhooks:
 - admissionReviewVersions:
@@ -156,9 +155,29 @@ webhooks:
 apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
 metadata:
-  creationTimestamp: null
   name: validating-webhook-configuration
 webhooks:
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-anywhere-eks-amazonaws-com-v1alpha1-snowdatacenterconfig
+  failurePolicy: Fail
+  name: snowdatacenterconfig.kb.io
+  rules:
+  - apiGroups:
+    - anywhere.eks.amazonaws.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - snowdatacenterconfigs
+  sideEffects: None
 - admissionReviewVersions:
   - v1
   - v1beta1
@@ -347,27 +366,6 @@ webhooks:
     - UPDATE
     resources:
     - oidcconfigs
-  sideEffects: None
-- admissionReviewVersions:
-  - v1
-  - v1beta1
-  clientConfig:
-    service:
-      name: webhook-service
-      namespace: system
-      path: /validate-anywhere-eks-amazonaws-com-v1alpha1-snowdatacenterconfig
-  failurePolicy: Fail
-  name: snowdatacenterconfig.kb.io
-  rules:
-  - apiGroups:
-    - anywhere.eks.amazonaws.com
-    apiVersions:
-    - v1alpha1
-    operations:
-    - CREATE
-    - UPDATE
-    resources:
-    - snowdatacenterconfigs
   sideEffects: None
 - admissionReviewVersions:
   - v1
