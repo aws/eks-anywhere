@@ -36,7 +36,7 @@ fi
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
 BIN_FOLDER=$REPO_ROOT/bin
-TEST_REGEX="${1:-TestDockerKubernetes131SimpleFlow}"
+TEST_REGEX="${1:-TestDockerKubernetes132SimpleFlow}"
 BRANCH_NAME="${2:-main}"
 source $REPO_ROOT/test/e2e/E2E_AMI_FILTER_VARS
 
