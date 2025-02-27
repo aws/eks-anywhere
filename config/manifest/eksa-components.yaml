@@ -7,8 +7,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.8.0
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.17.2
   name: awsdatacenterconfigs.anywhere.eks.amazonaws.com
 spec:
   group: anywhere.eks.amazonaws.com
@@ -26,14 +25,19 @@ spec:
           API.
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -56,19 +60,12 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.8.0
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.17.2
   name: awsiamconfigs.anywhere.eks.amazonaws.com
 spec:
   group: anywhere.eks.amazonaws.com
@@ -85,14 +82,19 @@ spec:
         description: AWSIamConfig is the Schema for the awsiamconfigs API.
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -103,8 +105,9 @@ spec:
                 description: AWSRegion defines a region in an AWS partition
                 type: string
               backendMode:
-                description: BackendMode defines multiple backends for aws-iam-authenticator
-                  server The server searches for mappings in order
+                description: |-
+                  BackendMode defines multiple backends for aws-iam-authenticator server
+                  The server searches for mappings in order
                 items:
                   type: string
                 type: array
@@ -161,12 +164,6 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -3576,8 +3573,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.8.0
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.17.2
   name: cloudstackdatacenterconfigs.anywhere.eks.amazonaws.com
 spec:
   group: anywhere.eks.amazonaws.com
@@ -3595,14 +3591,19 @@ spec:
           API.
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -3611,13 +3612,9 @@ spec:
               of CloudStackDatacenterConfig.
             properties:
               account:
-                description: 'Account typically represents a customer of the service
-                  provider or a department in a large organization. Multiple users
-                  can exist in an account, and all CloudStack resources belong to
-                  an account. Accounts have users and users have credentials to operate
-                  on resources within that account. If an account name is provided,
-                  a domain must also be provided. Deprecated: Please use AvailabilityZones
-                  instead'
+                description: |-
+                  Account typically represents a customer of the service provider or a department in a large organization. Multiple users can exist in an account, and all CloudStack resources belong to an account. Accounts have users and users have credentials to operate on resources within that account. If an account name is provided, a domain must also be provided.
+                  Deprecated: Please use AvailabilityZones instead
                 type: string
               availabilityZones:
                 description: AvailabilityZones list of different partitions to distribute
@@ -3639,16 +3636,10 @@ spec:
                         the eksa-system namespace
                       type: string
                     domain:
-                      description: Domain contains a grouping of accounts. Domains
-                        usually contain multiple accounts that have some logical relationship
-                        to each other and a set of delegated administrators with some
-                        authority over the domain and its subdomains This field is
-                        considered as a fully qualified domain name which is the same
-                        as the domain path without "ROOT/" prefix. For example, if
-                        "foo" is specified then a domain with "ROOT/foo" domain path
-                        is picked. The value "ROOT" is a special case that points
-                        to "the" ROOT domain of the CloudStack. That is, a domain
-                        with a path "ROOT/ROOT" is not allowed.
+                      description: |-
+                        Domain contains a grouping of accounts. Domains usually contain multiple accounts that have some logical relationship to each other and a set of delegated administrators with some authority over the domain and its subdomains
+                        This field is considered as a fully qualified domain name which is the same as the domain path without "ROOT/" prefix. For example, if "foo" is specified then a domain with "ROOT/foo" domain path is picked.
+                        The value "ROOT" is a special case that points to "the" ROOT domain of the CloudStack. That is, a domain with a path "ROOT/ROOT" is not allowed.
                       type: string
                     managementApiEndpoint:
                       description: CloudStack Management API endpoint's IP. It is
@@ -3670,13 +3661,9 @@ spec:
                         name:
                           type: string
                         network:
-                          description: Network is the name or UUID of the CloudStack
-                            network in which clusters should be created. It can either
-                            be an isolated or shared network. If it doesn’t already
-                            exist in CloudStack, it’ll automatically be created by
-                            CAPC as an isolated network. It can either be specified
-                            as a UUID or name In multiple-zones situation, only 'Shared'
-                            network is supported.
+                          description: |-
+                            Network is the name or UUID of the CloudStack network in which clusters should be created. It can either be an isolated or shared network. If it doesn’t already exist in CloudStack, it’ll automatically be created by CAPC as an isolated network. It can either be specified as a UUID or name
+                            In multiple-zones situation, only 'Shared' network is supported.
                           properties:
                             id:
                               description: Id of a resource in the CloudStack environment.
@@ -3699,25 +3686,21 @@ spec:
                   type: object
                 type: array
               domain:
-                description: 'Domain contains a grouping of accounts. Domains usually
-                  contain multiple accounts that have some logical relationship to
-                  each other and a set of delegated administrators with some authority
-                  over the domain and its subdomains This field is considered as a
-                  fully qualified domain name which is the same as the domain path
-                  without "ROOT/" prefix. For example, if "foo" is specified then
-                  a domain with "ROOT/foo" domain path is picked. The value "ROOT"
-                  is a special case that points to "the" ROOT domain of the CloudStack.
-                  That is, a domain with a path "ROOT/ROOT" is not allowed. Deprecated:
-                  Please use AvailabilityZones instead'
+                description: |-
+                  Domain contains a grouping of accounts. Domains usually contain multiple accounts that have some logical relationship to each other and a set of delegated administrators with some authority over the domain and its subdomains
+                  This field is considered as a fully qualified domain name which is the same as the domain path without "ROOT/" prefix. For example, if "foo" is specified then a domain with "ROOT/foo" domain path is picked.
+                  The value "ROOT" is a special case that points to "the" ROOT domain of the CloudStack. That is, a domain with a path "ROOT/ROOT" is not allowed.
+                  Deprecated: Please use AvailabilityZones instead
                 type: string
               managementApiEndpoint:
-                description: 'CloudStack Management API endpoint''s IP. It is added
-                  to VM''s noproxy list Deprecated: Please use AvailabilityZones instead'
+                description: |-
+                  CloudStack Management API endpoint's IP. It is added to VM's noproxy list
+                  Deprecated: Please use AvailabilityZones instead
                 type: string
               zones:
-                description: 'Zones is a list of one or more zones that are managed
-                  by a single CloudStack management endpoint. Deprecated: Please use
-                  AvailabilityZones instead'
+                description: |-
+                  Zones is a list of one or more zones that are managed by a single CloudStack management endpoint.
+                  Deprecated: Please use AvailabilityZones instead
                 items:
                   description: CloudStackZone is an organizational construct typically
                     used to represent a single datacenter, and all its physical and
@@ -3732,12 +3715,9 @@ spec:
                     name:
                       type: string
                     network:
-                      description: Network is the name or UUID of the CloudStack network
-                        in which clusters should be created. It can either be an isolated
-                        or shared network. If it doesn’t already exist in CloudStack,
-                        it’ll automatically be created by CAPC as an isolated network.
-                        It can either be specified as a UUID or name In multiple-zones
-                        situation, only 'Shared' network is supported.
+                      description: |-
+                        Network is the name or UUID of the CloudStack network in which clusters should be created. It can either be an isolated or shared network. If it doesn’t already exist in CloudStack, it’ll automatically be created by CAPC as an isolated network. It can either be specified as a UUID or name
+                        In multiple-zones situation, only 'Shared' network is supported.
                       properties:
                         id:
                           description: Id of a resource in the CloudStack environment.
@@ -3758,8 +3738,9 @@ spec:
               of CloudStackDatacenterConfig.
             properties:
               failureMessage:
-                description: FailureMessage indicates that there is a fatal problem
-                  reconciling the state, and will be set to a descriptive error message.
+                description: |-
+                  FailureMessage indicates that there is a fatal problem reconciling the
+                  state, and will be set to a descriptive error message.
                 type: string
               observedGeneration:
                 description: ObservedGeneration is the latest generation observed
@@ -3776,19 +3757,12 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.8.0
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.17.2
   name: cloudstackmachineconfigs.anywhere.eks.amazonaws.com
 spec:
   group: anywhere.eks.amazonaws.com
@@ -3806,14 +3780,19 @@ spec:
           API.
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -3822,27 +3801,26 @@ spec:
               CloudStackMachineConfig.
             properties:
               affinity:
-                description: Defaults to `no`. Can be `pro` or `anti`. If set to `pro`
-                  or `anti`, will create an affinity group per machine set of the
-                  corresponding type
+                description: |-
+                  Defaults to `no`. Can be `pro` or `anti`. If set to `pro` or `anti`, will create an affinity
+                  group per machine set of the corresponding type
                 type: string
               affinityGroupIds:
-                description: AffinityGroupIds allows users to pass in a list of UUIDs
-                  for previously-created Affinity Groups. Any VM’s created with this
-                  spec will be added to the affinity group, which will dictate which
-                  physical host(s) they can be placed on. Affinity groups can be type
-                  “affinity” or “anti-affinity” in CloudStack. If they are type “anti-affinity”,
-                  all VM’s in the group must be on separate physical hosts for high
-                  availability. If they are type “affinity”, all VM’s in the group
-                  must be on the same physical host for improved performance
+                description: |-
+                  AffinityGroupIds allows users to pass in a list of UUIDs for previously-created Affinity
+                  Groups. Any VM’s created with this spec will be added to the affinity group, which will
+                  dictate which physical host(s) they can be placed on. Affinity groups can be type “affinity”
+                  or “anti-affinity” in CloudStack. If they are type “anti-affinity”, all VM’s in the group
+                  must be on separate physical hosts for high availability. If they are type “affinity”, all
+                  VM’s in the group must be on the same physical host for improved performance
                 items:
                   type: string
                 type: array
               computeOffering:
-                description: ComputeOffering refers to a compute offering which has
-                  been previously registered in CloudStack. It represents a VM’s instance
-                  size including number of CPU’s, memory, and CPU speed. It can either
-                  be specified as a UUID or name
+                description: |-
+                  ComputeOffering refers to a compute offering which has been previously registered in
+                  CloudStack. It represents a VM’s instance size including number of CPU’s, memory, and CPU
+                  speed. It can either be specified as a UUID or name
                 properties:
                   id:
                     description: Id of a resource in the CloudStack environment. Mutually
@@ -3854,10 +3832,10 @@ spec:
                     type: string
                 type: object
               diskOffering:
-                description: DiskOffering refers to a disk offering which has been
-                  previously registered in CloudStack. It represents a disk offering
-                  with pre-defined size or custom specified disk size. It can either
-                  be specified as a UUID or name
+                description: |-
+                  DiskOffering refers to a disk offering which has been previously registered in CloudStack.
+                  It represents a disk offering with pre-defined size or custom specified disk size. It can
+                  either be specified as a UUID or name
                 properties:
                   customSizeInGB:
                     description: disk size in GB, > 0 for customized disk offering;
@@ -3898,11 +3876,11 @@ spec:
                   case is to use data disk to store logs
                 type: object
               template:
-                description: Template refers to a VM image template which has been
-                  previously registered in CloudStack. It can either be specified
-                  as a UUID or name. When using a template name it must include the
-                  Kubernetes version(s). For example, a template used for Kubernetes
-                  1.27 could be ubuntu-2204-1.27.
+                description: |-
+                  Template refers to a VM image template which has been previously registered in CloudStack.
+                  It can either be specified as a UUID or name.
+                  When using a template name it must include the Kubernetes version(s). For example,
+                  a template used for Kubernetes 1.27 could be ubuntu-2204-1.27.
                 properties:
                   id:
                     description: Id of a resource in the CloudStack environment. Mutually
@@ -3916,13 +3894,14 @@ spec:
               userCustomDetails:
                 additionalProperties:
                   type: string
-                description: UserCustomDetails allows users to pass in non-standard
-                  key value inputs, outside those defined [here](https://github.com/shapeblue/cloudstack/blob/main/api/src/main/java/com/cloud/vm/VmDetailConstants.java)
+                description: |-
+                  UserCustomDetails allows users to pass in non-standard key value inputs, outside those
+                  defined [here](https://github.com/shapeblue/cloudstack/blob/main/api/src/main/java/com/cloud/vm/VmDetailConstants.java)
                 type: object
               users:
-                description: Users consists of an array of objects containing the
-                  username, as well as a list of their public keys. These users will
-                  be authorized to ssh into the machines
+                description: |-
+                  Users consists of an array of objects containing the username, as well as a list of their
+                  public keys. These users will be authorized to ssh into the machines
                 items:
                   description: UserConfiguration defines the configuration of the
                     user to be added to the VM.
@@ -3947,8 +3926,9 @@ spec:
               of CloudStackMachineConfig.
             properties:
               failureMessage:
-                description: FailureMessage indicates that there is a fatal problem
-                  reconciling the state, and will be set to a descriptive error message.
+                description: |-
+                  FailureMessage indicates that there is a fatal problem reconciling the
+                  state, and will be set to a descriptive error message.
                 type: string
               specValid:
                 description: SpecValid is set to true if cloudstackmachineconfig is
@@ -3960,19 +3940,13 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: eksa-system/eksa-serving-cert
-    controller-gen.kubebuilder.io/version: v0.8.0
+    controller-gen.kubebuilder.io/version: v0.17.2
   name: clusters.anywhere.eks.amazonaws.com
 spec:
   conversion:
@@ -4000,14 +3974,19 @@ spec:
         description: Cluster is the Schema for the clusters API.
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -4015,9 +3994,9 @@ spec:
             description: ClusterSpec defines the desired state of Cluster.
             properties:
               bundlesRef:
-                description: 'BundlesRef contains a reference to the Bundles containing
-                  the desired dependencies for the cluster. DEPRECATED: Use EksaVersion
-                  instead.'
+                description: |-
+                  BundlesRef contains a reference to the Bundles containing the desired dependencies for the cluster.
+                  DEPRECATED: Use EksaVersion instead.
                 properties:
                   apiVersion:
                     description: APIVersion refers to the Bundles APIVersion
@@ -4053,21 +4032,20 @@ spec:
                               values are a valid interface name or interface prefix.
                             type: string
                           ipv4NativeRoutingCIDR:
-                            description: IPv4NativeRoutingCIDR specifies the CIDR
-                              to use when RoutingMode is set to direct. When specified,
-                              Cilium assumes networking for this CIDR is preconfigured
-                              and hands traffic destined for that range to the Linux
-                              network stack without applying any SNAT. If this is
-                              not set autoDirectNodeRoutes will be set to true
+                            description: |-
+                              IPv4NativeRoutingCIDR specifies the CIDR to use when RoutingMode is set to direct.
+                              When specified, Cilium assumes networking for this CIDR is preconfigured and
+                              hands traffic destined for that range to the Linux network stack without
+                              applying any SNAT.
+                              If this is not set autoDirectNodeRoutes will be set to true
                             type: string
                           ipv6NativeRoutingCIDR:
-                            description: IPv6NativeRoutingCIDR specifies the IPv6
-                              CIDR to use when RoutingMode is set to direct. When
-                              specified, Cilium assumes networking for this CIDR is
-                              preconfigured and hands traffic destined for that range
-                              to the Linux network stack without applying any SNAT.
-                              If this is not set autoDirectNodeRoutes will be set
-                              to true
+                            description: |-
+                              IPv6NativeRoutingCIDR specifies the IPv6 CIDR to use when RoutingMode is set to direct.
+                              When specified, Cilium assumes networking for this CIDR is preconfigured and
+                              hands traffic destined for that range to the Linux network stack without
+                              applying any SNAT.
+                              If this is not set autoDirectNodeRoutes will be set to true
                             type: string
                           policyEnforcementMode:
                             description: PolicyEnforcementMode determines communication
@@ -4075,15 +4053,15 @@ spec:
                               never.
                             type: string
                           routingMode:
-                            description: RoutingMode indicates the routing tunnel
-                              mode to use for Cilium. Accepted values are overlay
-                              (geneve tunnel with overlay) or direct (tunneling disabled
-                              with direct routing) Defaults to overlay.
+                            description: |-
+                              RoutingMode indicates the routing tunnel mode to use for Cilium. Accepted values are overlay (geneve tunnel with overlay)
+                              or direct (tunneling disabled with direct routing)
+                              Defaults to overlay.
                             type: string
                           skipUpgrade:
-                            description: SkipUpgrade indicicates that Cilium maintenance
-                              should be skipped during upgrades. This can be used
-                              when operators wish to self manage the Cilium installation.
+                            description: |-
+                              SkipUpgrade indicicates that Cilium maintenance should be skipped during upgrades. This can
+                              be used when operators wish to self manage the Cilium installation.
                             type: boolean
                         type: object
                       kindnetd:
@@ -4111,8 +4089,9 @@ spec:
                         type: integer
                     type: object
                   pods:
-                    description: Comma-separated list of CIDR blocks to use for pod
-                      and service subnets. Defaults to 192.168.0.0/16 for pod subnet.
+                    description: |-
+                      Comma-separated list of CIDR blocks to use for pod and service subnets.
+                      Defaults to 192.168.0.0/16 for pod subnet.
                     properties:
                       cidrBlocks:
                         items:
@@ -4136,8 +4115,9 @@ spec:
                       for the API server.
                     type: object
                   certSans:
-                    description: CertSANs is a slice of domain names or IPs to be
-                      added as Subject Name Alternatives of the Kube API Servers Certificate.
+                    description: |-
+                      CertSANs is a slice of domain names or IPs to be added as Subject Name Alternatives of the
+                      Kube API Servers Certificate.
                     items:
                       type: string
                     type: array
@@ -4212,29 +4192,32 @@ spec:
                         type: string
                     type: object
                   skipLoadBalancerDeployment:
-                    description: SkipLoadBalancerDeployment skip deploying control
-                      plane load balancer. Make sure your infrastructure can handle
-                      control plane load balancing when you set this field to true.
+                    description: |-
+                      SkipLoadBalancerDeployment skip deploying control plane load balancer.
+                      Make sure your infrastructure can handle control plane load balancing when you set this field to true.
                     type: boolean
                   taints:
                     description: Taints define the set of taints to be applied on
                       control plane nodes
                     items:
-                      description: The node this Taint is attached to has the "effect"
-                        on any pod that does not tolerate the Taint.
+                      description: |-
+                        The node this Taint is attached to has the "effect" on
+                        any pod that does not tolerate the Taint.
                       properties:
                         effect:
-                          description: Required. The effect of the taint on pods that
-                            do not tolerate the taint. Valid effects are NoSchedule,
-                            PreferNoSchedule and NoExecute.
+                          description: |-
+                            Required. The effect of the taint on pods
+                            that do not tolerate the taint.
+                            Valid effects are NoSchedule, PreferNoSchedule and NoExecute.
                           type: string
                         key:
                           description: Required. The taint key to be applied to a
                             node.
                           type: string
                         timeAdded:
-                          description: TimeAdded represents the time at which the
-                            taint was added. It is only written for NoExecute taints.
+                          description: |-
+                            TimeAdded represents the time at which the taint was added.
+                            It is only written for NoExecute taints.
                           format: date-time
                           type: string
                         value:
@@ -4247,8 +4230,9 @@ spec:
                       type: object
                     type: array
                   upgradeRolloutStrategy:
-                    description: UpgradeRolloutStrategy determines the rollout strategy
-                      to use for rolling upgrades and related parameters/knobs
+                    description: |-
+                      UpgradeRolloutStrategy determines the rollout strategy to use for rolling upgrades
+                      and related parameters/knobs
                     properties:
                       rollingUpdate:
                         description: ControlPlaneRollingUpdateParams is API for rolling
@@ -4282,19 +4266,18 @@ spec:
                   properties:
                     providers:
                       items:
-                        description: EtcdEncryptionProvider defines the configuration
-                          for ETCD encryption providers. Currently only KMS provider
-                          is supported.
+                        description: |-
+                          EtcdEncryptionProvider defines the configuration for ETCD encryption providers.
+                          Currently only KMS provider is supported.
                         properties:
                           kms:
                             description: KMS defines the configuration for KMS Encryption
                               provider.
                             properties:
                               cachesize:
-                                description: CacheSize defines the maximum number
-                                  of encrypted objects to be cached in memory. The
-                                  default value is 1000. You can set this to a negative
-                                  value to disable caching.
+                                description: |-
+                                  CacheSize defines the maximum number of encrypted objects to be cached in memory. The default value is 1000.
+                                  You can set this to a negative value to disable caching.
                                 format: int32
                                 type: integer
                               name:
@@ -4365,11 +4348,9 @@ spec:
               licenseToken:
                 type: string
               machineHealthCheck:
-                description: MachineHealthCheck allows to configure timeouts for machine
-                  health checks. Machine Health Checks are responsible for remediating
-                  unhealthy Machines. Configuring these values will decide how long
-                  to wait to remediate unhealthy machine or determine health of nodes'
-                  machines.
+                description: |-
+                  MachineHealthCheck allows to configure timeouts for machine health checks. Machine Health Checks are responsible for remediating unhealthy Machines.
+                  Configuring these values will decide how long to wait to remediate unhealthy machine or determine health of nodes' machines.
                 properties:
                   maxUnhealthy:
                     anyOf:
@@ -4507,14 +4488,14 @@ spec:
                       use for pulling images
                     type: string
                   insecureSkipVerify:
-                    description: InsecureSkipVerify skips the registry certificate
-                      verification. Only use this solution for isolated testing or
-                      in a tightly controlled, air-gapped environment.
+                    description: |-
+                      InsecureSkipVerify skips the registry certificate verification.
+                      Only use this solution for isolated testing or in a tightly controlled, air-gapped environment.
                     type: boolean
                   ociNamespaces:
-                    description: OCINamespaces defines the mapping from an upstream
-                      registry to a local namespace where upstream artifacts are placed
-                      into
+                    description: |-
+                      OCINamespaces defines the mapping from an upstream registry to a local namespace where upstream
+                      artifacts are placed into
                     items:
                       description: OCINamespace represents an entity in a local reigstry
                         to group related images.
@@ -4631,21 +4612,24 @@ spec:
                       description: Taints define the set of taints to be applied on
                         worker nodes
                       items:
-                        description: The node this Taint is attached to has the "effect"
-                          on any pod that does not tolerate the Taint.
+                        description: |-
+                          The node this Taint is attached to has the "effect" on
+                          any pod that does not tolerate the Taint.
                         properties:
                           effect:
-                            description: Required. The effect of the taint on pods
-                              that do not tolerate the taint. Valid effects are NoSchedule,
-                              PreferNoSchedule and NoExecute.
+                            description: |-
+                              Required. The effect of the taint on pods
+                              that do not tolerate the taint.
+                              Valid effects are NoSchedule, PreferNoSchedule and NoExecute.
                             type: string
                           key:
                             description: Required. The taint key to be applied to
                               a node.
                             type: string
                           timeAdded:
-                            description: TimeAdded represents the time at which the
-                              taint was added. It is only written for NoExecute taints.
+                            description: |-
+                              TimeAdded represents the time at which the taint was added.
+                              It is only written for NoExecute taints.
                             format: date-time
                             type: string
                           value:
@@ -4658,8 +4642,9 @@ spec:
                         type: object
                       type: array
                     upgradeRolloutStrategy:
-                      description: UpgradeRolloutStrategy determines the rollout strategy
-                        to use for rolling upgrades and related parameters/knobs
+                      description: |-
+                        UpgradeRolloutStrategy determines the rollout strategy to use for rolling upgrades
+                        and related parameters/knobs
                       properties:
                         rollingUpdate:
                           description: WorkerNodesRollingUpdateParams is API for rolling
@@ -4685,12 +4670,13 @@ spec:
             description: ClusterStatus defines the observed state of Cluster.
             properties:
               childrenReconciledGeneration:
-                description: 'ChildrenReconciledGeneration represents the sum of the
-                  .metadata.generation for all the linked objects for the cluster,
-                  observed the last time the cluster was successfully reconciled.
-                  NOTE: This field was added for internal use and we do not provide
-                  guarantees to its behavior if changed externally. Its meaning and
-                  implementation are subject to change in the future.'
+                description: |-
+                  ChildrenReconciledGeneration represents the sum of the .metadata.generation
+                  for all the linked objects for the cluster, observed the last time the
+                  cluster was successfully reconciled.
+                  NOTE: This field was added for internal use and we do not provide guarantees
+                  to its behavior if changed externally. Its meaning and implementation are
+                  subject to change in the future.
                 format: int64
                 type: integer
               conditions:
@@ -4699,37 +4685,37 @@ spec:
                     operational state.
                   properties:
                     lastTransitionTime:
-                      description: Last time the condition transitioned from one status
-                        to another. This should be when the underlying condition changed.
-                        If that is not known, then using the time when the API field
-                        changed is acceptable.
+                      description: |-
+                        Last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed. If that is not known, then using the time when
+                        the API field changed is acceptable.
                       format: date-time
                       type: string
                     message:
-                      description: A human readable message indicating details about
-                        the transition. This field may be empty.
+                      description: |-
+                        A human readable message indicating details about the transition.
+                        This field may be empty.
                       type: string
                     reason:
-                      description: The reason for the condition's last transition
-                        in CamelCase. The specific API may choose whether or not this
-                        field is considered a guaranteed API. This field may not be
-                        empty.
+                      description: |-
+                        The reason for the condition's last transition in CamelCase.
+                        The specific API may choose whether or not this field is considered a guaranteed API.
+                        This field may not be empty.
                       type: string
                     severity:
-                      description: Severity provides an explicit classification of
-                        Reason code, so the users or machines can immediately understand
-                        the current situation and act accordingly. The Severity field
-                        MUST be set only when Status=False.
+                      description: |-
+                        Severity provides an explicit classification of Reason code, so the users or machines can immediately
+                        understand the current situation and act accordingly.
+                        The Severity field MUST be set only when Status=False.
                       type: string
                     status:
                       description: Status of the condition, one of True, False, Unknown.
                       type: string
                     type:
-                      description: Type of condition in CamelCase or in foo.example.com/CamelCase.
-                        Many .condition.type values are consistent across resources
-                        like Available, but because arbitrary conditions can be useful
-                        (see .node.status.conditions), the ability to deconflict is
-                        important.
+                      description: |-
+                        Type of condition in CamelCase or in foo.example.com/CamelCase.
+                        Many .condition.type values are consistent across resources like Available, but because arbitrary conditions
+                        can be useful (see .node.status.conditions), the ability to deconflict is important.
                       type: string
                   required:
                   - lastTransitionTime
@@ -4766,8 +4752,9 @@ spec:
                   a cluster
                 type: string
               failureReason:
-                description: Machine readable value about a terminal problem while
-                  reconciling the cluster set at the same time as failureMessage
+                description: |-
+                  Machine readable value about a terminal problem while reconciling the cluster
+                  set at the same time as failureMessage
                 type: string
               observedGeneration:
                 description: ObservedGeneration is the latest generation observed
@@ -4775,12 +4762,13 @@ spec:
                 format: int64
                 type: integer
               reconciledGeneration:
-                description: 'ReconciledGeneration represents the .metadata.generation
-                  the last time the cluster was successfully reconciled. It is the
-                  latest generation observed by the controller. NOTE: This field was
-                  added for internal use and we do not provide guarantees to its behavior
-                  if changed externally. Its meaning and implementation are subject
-                  to change in the future.'
+                description: |-
+                  ReconciledGeneration represents the .metadata.generation the last time the
+                  cluster was successfully reconciled. It is the latest generation observed
+                  by the controller.
+                  NOTE: This field was added for internal use and we do not provide guarantees
+                  to its behavior if changed externally. Its meaning and implementation are
+                  subject to change in the future.
                 format: int64
                 type: integer
             type: object
@@ -4789,19 +4777,12 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.8.0
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.17.2
   name: controlplaneupgrades.anywhere.eks.amazonaws.com
 spec:
   group: anywhere.eks.amazonaws.com
@@ -4846,14 +4827,19 @@ spec:
           API.
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -4868,42 +4854,49 @@ spec:
                     description: API version of the referent.
                     type: string
                   fieldPath:
-                    description: 'If referring to a piece of an object instead of
-                      an entire object, this string should contain a valid JSON/Go
-                      field access statement, such as desiredState.manifest.containers[2].
-                      For example, if the object reference is to a container within
-                      a pod, this would take on a value like: "spec.containers{name}"
-                      (where "name" refers to the name of the container that triggered
-                      the event) or if no container name is specified "spec.containers[2]"
-                      (container with index 2 in this pod). This syntax is chosen
-                      only to have some well-defined way of referencing a part of
-                      an object. TODO: this design is not final and this field is
-                      subject to change in the future.'
+                    description: |-
+                      If referring to a piece of an object instead of an entire object, this string
+                      should contain a valid JSON/Go field access statement, such as desiredState.manifest.containers[2].
+                      For example, if the object reference is to a container within a pod, this would take on a value like:
+                      "spec.containers{name}" (where "name" refers to the name of the container that triggered
+                      the event) or if no container name is specified "spec.containers[2]" (container with
+                      index 2 in this pod). This syntax is chosen only to have some well-defined way of
+                      referencing a part of an object.
                     type: string
                   kind:
-                    description: 'Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                    description: |-
+                      Kind of the referent.
+                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
                     type: string
                   name:
-                    description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
+                    description: |-
+                      Name of the referent.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
                     type: string
                   namespace:
-                    description: 'Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/'
+                    description: |-
+                      Namespace of the referent.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
                     type: string
                   resourceVersion:
-                    description: 'Specific resourceVersion to which this reference
-                      is made, if any. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency'
+                    description: |-
+                      Specific resourceVersion to which this reference is made, if any.
+                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
                     type: string
                   uid:
-                    description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
+                    description: |-
+                      UID of the referent.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids
                     type: string
                 type: object
+                x-kubernetes-map-type: atomic
               controlPlaneSpecData:
-                description: ControlPlaneSpecData contains base64 encoded KCP spec
-                  that's used to update the statuses of CAPI objects once the control
-                  plane upgrade is done. This field is needed so that we have a static
-                  copy of the control plane spec in case it gets modified after the
-                  ControlPlaneUpgrade was created, as ControlPlane is a reference
-                  to the object in real time.
+                description: |-
+                  ControlPlaneSpecData contains base64 encoded KCP spec that's used to update
+                  the statuses of CAPI objects once the control plane upgrade is done.
+                  This field is needed so that we have a static copy of the control plane spec
+                  in case it gets modified after the ControlPlaneUpgrade was created,
+                  as ControlPlane is a reference to the object in real time.
                 type: string
               etcdVersion:
                 description: EtcdVersion refers to the version of ETCD to upgrade
@@ -4917,65 +4910,49 @@ spec:
                 description: MachinesRequireUpgrade is a list of references to CAPI
                   machines that need to be upgraded.
                 items:
-                  description: "ObjectReference contains enough information to let
-                    you inspect or modify the referred object. --- New uses of this
-                    type are discouraged because of difficulty describing its usage
-                    when embedded in APIs. 1. Ignored fields.  It includes many fields
-                    which are not generally honored.  For instance, ResourceVersion
-                    and FieldPath are both very rarely valid in actual usage. 2. Invalid
-                    usage help.  It is impossible to add specific help for individual
-                    usage.  In most embedded usages, there are particular restrictions
-                    like, \"must refer only to types A and B\" or \"UID not honored\"
-                    or \"name must be restricted\". Those cannot be well described
-                    when embedded. 3. Inconsistent validation.  Because the usages
-                    are different, the validation rules are different by usage, which
-                    makes it hard for users to predict what will happen. 4. The fields
-                    are both imprecise and overly precise.  Kind is not a precise
-                    mapping to a URL. This can produce ambiguity during interpretation
-                    and require a REST mapping.  In most cases, the dependency is
-                    on the group,resource tuple and the version of the actual struct
-                    is irrelevant. 5. We cannot easily change it.  Because this type
-                    is embedded in many locations, updates to this type will affect
-                    numerous schemas.  Don't make new APIs embed an underspecified
-                    API type they do not control. \n Instead of using this type, create
-                    a locally provided and used type that is well-focused on your
-                    reference. For example, ServiceReferences for admission registration:
-                    https://github.com/kubernetes/api/blob/release-1.17/admissionregistration/v1/types.go#L533
-                    ."
+                  description: ObjectReference contains enough information to let
+                    you inspect or modify the referred object.
                   properties:
                     apiVersion:
                       description: API version of the referent.
                       type: string
                     fieldPath:
-                      description: 'If referring to a piece of an object instead of
-                        an entire object, this string should contain a valid JSON/Go
-                        field access statement, such as desiredState.manifest.containers[2].
-                        For example, if the object reference is to a container within
-                        a pod, this would take on a value like: "spec.containers{name}"
-                        (where "name" refers to the name of the container that triggered
-                        the event) or if no container name is specified "spec.containers[2]"
-                        (container with index 2 in this pod). This syntax is chosen
-                        only to have some well-defined way of referencing a part of
-                        an object. TODO: this design is not final and this field is
-                        subject to change in the future.'
+                      description: |-
+                        If referring to a piece of an object instead of an entire object, this string
+                        should contain a valid JSON/Go field access statement, such as desiredState.manifest.containers[2].
+                        For example, if the object reference is to a container within a pod, this would take on a value like:
+                        "spec.containers{name}" (where "name" refers to the name of the container that triggered
+                        the event) or if no container name is specified "spec.containers[2]" (container with
+                        index 2 in this pod). This syntax is chosen only to have some well-defined way of
+                        referencing a part of an object.
                       type: string
                     kind:
-                      description: 'Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                      description: |-
+                        Kind of the referent.
+                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
                       type: string
                     name:
-                      description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
+                      description: |-
+                        Name of the referent.
+                        More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
                       type: string
                     namespace:
-                      description: 'Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/'
+                      description: |-
+                        Namespace of the referent.
+                        More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
                       type: string
                     resourceVersion:
-                      description: 'Specific resourceVersion to which this reference
-                        is made, if any. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency'
+                      description: |-
+                        Specific resourceVersion to which this reference is made, if any.
+                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
                       type: string
                     uid:
-                      description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
+                      description: |-
+                        UID of the referent.
+                        More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids
                       type: string
                   type: object
+                  x-kubernetes-map-type: atomic
                 type: array
             required:
             - controlPlane
@@ -5006,19 +4983,12 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.8.0
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.17.2
   name: dockerdatacenterconfigs.anywhere.eks.amazonaws.com
 spec:
   group: anywhere.eks.amazonaws.com
@@ -5036,14 +5006,19 @@ spec:
           API.
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -5059,12 +5034,6 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -5157,8 +5126,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.8.0
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.17.2
   name: fluxconfigs.anywhere.eks.amazonaws.com
 spec:
   group: anywhere.eks.amazonaws.com
@@ -5172,19 +5140,24 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: FluxConfig is the Schema for the fluxconfigs API and defines
-          the configurations of the Flux GitOps Toolkit and Git repository it links
-          to.
+        description: |-
+          FluxConfig is the Schema for the fluxconfigs API and defines the configurations of the Flux GitOps Toolkit and
+          Git repository it links to.
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -5246,19 +5219,12 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.8.0
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.17.2
   name: gitopsconfigs.anywhere.eks.amazonaws.com
 spec:
   group: anywhere.eks.amazonaws.com
@@ -5274,14 +5240,19 @@ spec:
       openAPIV3Schema:
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -5334,19 +5305,12 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.8.0
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.17.2
   name: machinedeploymentupgrades.anywhere.eks.amazonaws.com
 spec:
   group: anywhere.eks.amazonaws.com
@@ -5391,14 +5355,19 @@ spec:
           API.
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -5418,35 +5387,42 @@ spec:
                     description: API version of the referent.
                     type: string
                   fieldPath:
-                    description: 'If referring to a piece of an object instead of
-                      an entire object, this string should contain a valid JSON/Go
-                      field access statement, such as desiredState.manifest.containers[2].
-                      For example, if the object reference is to a container within
-                      a pod, this would take on a value like: "spec.containers{name}"
-                      (where "name" refers to the name of the container that triggered
-                      the event) or if no container name is specified "spec.containers[2]"
-                      (container with index 2 in this pod). This syntax is chosen
-                      only to have some well-defined way of referencing a part of
-                      an object. TODO: this design is not final and this field is
-                      subject to change in the future.'
+                    description: |-
+                      If referring to a piece of an object instead of an entire object, this string
+                      should contain a valid JSON/Go field access statement, such as desiredState.manifest.containers[2].
+                      For example, if the object reference is to a container within a pod, this would take on a value like:
+                      "spec.containers{name}" (where "name" refers to the name of the container that triggered
+                      the event) or if no container name is specified "spec.containers[2]" (container with
+                      index 2 in this pod). This syntax is chosen only to have some well-defined way of
+                      referencing a part of an object.
                     type: string
                   kind:
-                    description: 'Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                    description: |-
+                      Kind of the referent.
+                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
                     type: string
                   name:
-                    description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
+                    description: |-
+                      Name of the referent.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
                     type: string
                   namespace:
-                    description: 'Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/'
+                    description: |-
+                      Namespace of the referent.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
                     type: string
                   resourceVersion:
-                    description: 'Specific resourceVersion to which this reference
-                      is made, if any. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency'
+                    description: |-
+                      Specific resourceVersion to which this reference is made, if any.
+                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
                     type: string
                   uid:
-                    description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
+                    description: |-
+                      UID of the referent.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids
                     type: string
                 type: object
+                x-kubernetes-map-type: atomic
               machineSpecData:
                 description: MachineSpecData is a base64 encoded json string value
                   of the machineDeplopyment.Spec.Template.Spec field that's specification
@@ -5456,65 +5432,49 @@ spec:
                 description: MachinesRequireUpgrade is a list of references to CAPI
                   machines that need to be upgraded.
                 items:
-                  description: "ObjectReference contains enough information to let
-                    you inspect or modify the referred object. --- New uses of this
-                    type are discouraged because of difficulty describing its usage
-                    when embedded in APIs. 1. Ignored fields.  It includes many fields
-                    which are not generally honored.  For instance, ResourceVersion
-                    and FieldPath are both very rarely valid in actual usage. 2. Invalid
-                    usage help.  It is impossible to add specific help for individual
-                    usage.  In most embedded usages, there are particular restrictions
-                    like, \"must refer only to types A and B\" or \"UID not honored\"
-                    or \"name must be restricted\". Those cannot be well described
-                    when embedded. 3. Inconsistent validation.  Because the usages
-                    are different, the validation rules are different by usage, which
-                    makes it hard for users to predict what will happen. 4. The fields
-                    are both imprecise and overly precise.  Kind is not a precise
-                    mapping to a URL. This can produce ambiguity during interpretation
-                    and require a REST mapping.  In most cases, the dependency is
-                    on the group,resource tuple and the version of the actual struct
-                    is irrelevant. 5. We cannot easily change it.  Because this type
-                    is embedded in many locations, updates to this type will affect
-                    numerous schemas.  Don't make new APIs embed an underspecified
-                    API type they do not control. \n Instead of using this type, create
-                    a locally provided and used type that is well-focused on your
-                    reference. For example, ServiceReferences for admission registration:
-                    https://github.com/kubernetes/api/blob/release-1.17/admissionregistration/v1/types.go#L533
-                    ."
+                  description: ObjectReference contains enough information to let
+                    you inspect or modify the referred object.
                   properties:
                     apiVersion:
                       description: API version of the referent.
                       type: string
                     fieldPath:
-                      description: 'If referring to a piece of an object instead of
-                        an entire object, this string should contain a valid JSON/Go
-                        field access statement, such as desiredState.manifest.containers[2].
-                        For example, if the object reference is to a container within
-                        a pod, this would take on a value like: "spec.containers{name}"
-                        (where "name" refers to the name of the container that triggered
-                        the event) or if no container name is specified "spec.containers[2]"
-                        (container with index 2 in this pod). This syntax is chosen
-                        only to have some well-defined way of referencing a part of
-                        an object. TODO: this design is not final and this field is
-                        subject to change in the future.'
+                      description: |-
+                        If referring to a piece of an object instead of an entire object, this string
+                        should contain a valid JSON/Go field access statement, such as desiredState.manifest.containers[2].
+                        For example, if the object reference is to a container within a pod, this would take on a value like:
+                        "spec.containers{name}" (where "name" refers to the name of the container that triggered
+                        the event) or if no container name is specified "spec.containers[2]" (container with
+                        index 2 in this pod). This syntax is chosen only to have some well-defined way of
+                        referencing a part of an object.
                       type: string
                     kind:
-                      description: 'Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                      description: |-
+                        Kind of the referent.
+                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
                       type: string
                     name:
-                      description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
+                      description: |-
+                        Name of the referent.
+                        More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
                       type: string
                     namespace:
-                      description: 'Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/'
+                      description: |-
+                        Namespace of the referent.
+                        More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
                       type: string
                     resourceVersion:
-                      description: 'Specific resourceVersion to which this reference
-                        is made, if any. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency'
+                      description: |-
+                        Specific resourceVersion to which this reference is made, if any.
+                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
                       type: string
                     uid:
-                      description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
+                      description: |-
+                        UID of the referent.
+                        More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids
                       type: string
                   type: object
+                  x-kubernetes-map-type: atomic
                 type: array
             required:
             - kubernetesVersion
@@ -5546,19 +5506,12 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.8.0
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.17.2
   name: nodeupgrades.anywhere.eks.amazonaws.com
 spec:
   group: anywhere.eks.amazonaws.com
@@ -5594,14 +5547,19 @@ spec:
         description: NodeUpgrade is the Schema for the nodeupgrades API.
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -5609,14 +5567,14 @@ spec:
             description: NodeUpgradeSpec defines the desired state of NodeUpgrade.
             properties:
               etcdVersion:
-                description: EtcdVersion refers to the version of ETCD to upgrade
-                  to. This field is optional and only gets used for control plane
-                  nodes.
+                description: |-
+                  EtcdVersion refers to the version of ETCD to upgrade to.
+                  This field is optional and only gets used for control plane nodes.
                 type: string
               firstNodeToBeUpgraded:
-                description: FirstNodeToBeUpgraded signifies that the Node is the
-                  first node to be upgraded. This flag is only valid for control plane
-                  nodes and ignored for worker nodes.
+                description: |-
+                  FirstNodeToBeUpgraded signifies that the Node is the first node to be upgraded.
+                  This flag is only valid for control plane nodes and ignored for worker nodes.
                 type: boolean
               kubernetesVersion:
                 description: KubernetesVersion refers to the Kubernetes version to
@@ -5630,35 +5588,42 @@ spec:
                     description: API version of the referent.
                     type: string
                   fieldPath:
-                    description: 'If referring to a piece of an object instead of
-                      an entire object, this string should contain a valid JSON/Go
-                      field access statement, such as desiredState.manifest.containers[2].
-                      For example, if the object reference is to a container within
-                      a pod, this would take on a value like: "spec.containers{name}"
-                      (where "name" refers to the name of the container that triggered
-                      the event) or if no container name is specified "spec.containers[2]"
-                      (container with index 2 in this pod). This syntax is chosen
-                      only to have some well-defined way of referencing a part of
-                      an object. TODO: this design is not final and this field is
-                      subject to change in the future.'
+                    description: |-
+                      If referring to a piece of an object instead of an entire object, this string
+                      should contain a valid JSON/Go field access statement, such as desiredState.manifest.containers[2].
+                      For example, if the object reference is to a container within a pod, this would take on a value like:
+                      "spec.containers{name}" (where "name" refers to the name of the container that triggered
+                      the event) or if no container name is specified "spec.containers[2]" (container with
+                      index 2 in this pod). This syntax is chosen only to have some well-defined way of
+                      referencing a part of an object.
                     type: string
                   kind:
-                    description: 'Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                    description: |-
+                      Kind of the referent.
+                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
                     type: string
                   name:
-                    description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
+                    description: |-
+                      Name of the referent.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
                     type: string
                   namespace:
-                    description: 'Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/'
+                    description: |-
+                      Namespace of the referent.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
                     type: string
                   resourceVersion:
-                    description: 'Specific resourceVersion to which this reference
-                      is made, if any. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency'
+                    description: |-
+                      Specific resourceVersion to which this reference is made, if any.
+                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
                     type: string
                   uid:
-                    description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
+                    description: |-
+                      UID of the referent.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids
                     type: string
                 type: object
+                x-kubernetes-map-type: atomic
             required:
             - kubernetesVersion
             - machine
@@ -5667,48 +5632,50 @@ spec:
             description: NodeUpgradeStatus defines the observed state of NodeUpgrade.
             properties:
               completed:
-                description: Completed denotes that the upgrader has completed running
-                  all the operations and the node is successfully upgraded.
+                description: |-
+                  Completed denotes that the upgrader has completed running all the operations
+                  and the node is successfully upgraded.
                 type: boolean
               conditions:
-                description: Conditions defines current state of the NodeUpgrade,
+                description: |-
+                  Conditions defines current state of the NodeUpgrade,
                   including the state of init containers, that facilitate the upgrade.
                 items:
                   description: Condition defines an observation of a Cluster API resource
                     operational state.
                   properties:
                     lastTransitionTime:
-                      description: Last time the condition transitioned from one status
-                        to another. This should be when the underlying condition changed.
-                        If that is not known, then using the time when the API field
-                        changed is acceptable.
+                      description: |-
+                        Last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed. If that is not known, then using the time when
+                        the API field changed is acceptable.
                       format: date-time
                       type: string
                     message:
-                      description: A human readable message indicating details about
-                        the transition. This field may be empty.
+                      description: |-
+                        A human readable message indicating details about the transition.
+                        This field may be empty.
                       type: string
                     reason:
-                      description: The reason for the condition's last transition
-                        in CamelCase. The specific API may choose whether or not this
-                        field is considered a guaranteed API. This field may not be
-                        empty.
+                      description: |-
+                        The reason for the condition's last transition in CamelCase.
+                        The specific API may choose whether or not this field is considered a guaranteed API.
+                        This field may not be empty.
                       type: string
                     severity:
-                      description: Severity provides an explicit classification of
-                        Reason code, so the users or machines can immediately understand
-                        the current situation and act accordingly. The Severity field
-                        MUST be set only when Status=False.
+                      description: |-
+                        Severity provides an explicit classification of Reason code, so the users or machines can immediately
+                        understand the current situation and act accordingly.
+                        The Severity field MUST be set only when Status=False.
                       type: string
                     status:
                       description: Status of the condition, one of True, False, Unknown.
                       type: string
                     type:
-                      description: Type of condition in CamelCase or in foo.example.com/CamelCase.
-                        Many .condition.type values are consistent across resources
-                        like Available, but because arbitrary conditions can be useful
-                        (see .node.status.conditions), the ability to deconflict is
-                        important.
+                      description: |-
+                        Type of condition in CamelCase or in foo.example.com/CamelCase.
+                        Many .condition.type values are consistent across resources like Available, but because arbitrary conditions
+                        can be useful (see .node.status.conditions), the ability to deconflict is important.
                       type: string
                   required:
                   - lastTransitionTime
@@ -5727,19 +5694,12 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.8.0
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.17.2
   name: nutanixdatacenterconfigs.anywhere.eks.amazonaws.com
 spec:
   group: anywhere.eks.amazonaws.com
@@ -5757,14 +5717,19 @@ spec:
           API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -5773,21 +5738,22 @@ spec:
               NutanixDatacenterConfig.
             properties:
               additionalTrustBundle:
-                description: AdditionalTrustBundle is the optional PEM-encoded certificate
-                  bundle for users that configured their Prism Central with certificates
-                  from non-publicly trusted CAs
+                description: |-
+                  AdditionalTrustBundle is the optional PEM-encoded certificate bundle for
+                  users that configured their Prism Central with certificates from non-publicly
+                  trusted CAs
                 type: string
               ccmExcludeNodeIPs:
-                description: CcmExcludeIPs is the optional list of IP addresses that
-                  should be excluded from the CCM IP pool for nodes. List should be
-                  valid IP addresses and IP address ranges.
+                description: |-
+                  CcmExcludeIPs is the optional list of IP addresses that should be excluded from the CCM IP pool for nodes.
+                  List should be valid IP addresses and IP address ranges.
                 items:
                   type: string
                 type: array
               credentialRef:
-                description: CredentialRef is the reference to the secret name that
-                  contains the credentials for the Nutanix Prism Central. The namespace
-                  for the secret is assumed to be a constant i.e. eksa-system.
+                description: |-
+                  CredentialRef is the reference to the secret name that contains the credentials
+                  for the Nutanix Prism Central. The namespace for the secret is assumed to be a constant i.e. eksa-system.
                 properties:
                   kind:
                     type: string
@@ -5825,9 +5791,10 @@ spec:
                       - type
                       type: object
                     name:
-                      description: Name is the unique name of the failure domain.
-                        Name must be between 1 and 64 characters long. It must consist
-                        of only lower case alphanumeric characters and hyphens (-).
+                      description: |-
+                        Name is the unique name of the failure domain.
+                        Name must be between 1 and 64 characters long.
+                        It must consist of only lower case alphanumeric characters and hyphens (-).
                         It must start and end with an alphanumeric character.
                       maxLength: 64
                       minLength: 1
@@ -5864,18 +5831,20 @@ spec:
                         type: string
                       type: array
                   required:
+                  - cluster
                   - name
+                  - subnets
                   type: object
                 type: array
               insecure:
-                description: Insecure is the optional flag to skip TLS verification.
-                  Nutanix Prism Central installation by default ships with a self-signed
-                  certificate that will fail TLS verification because the certificate
-                  is not issued by a public CA and does not have the IP SANs with
-                  the Prism Central endpoint. To accommodate the scenario where the
-                  user has not changed the default Certificate that ships with Prism
-                  Central, we allow the user to skip TLS verification. This is not
-                  recommended for production use.
+                description: |-
+                  Insecure is the optional flag to skip TLS verification. Nutanix Prism
+                  Central installation by default ships with a self-signed certificate
+                  that will fail TLS verification because the certificate is not issued by
+                  a public CA and does not have the IP SANs with the Prism Central endpoint.
+                  To accommodate the scenario where the user has not changed the default
+                  Certificate that ships with Prism Central, we allow the user to skip TLS
+                  verification. This is not recommended for production use.
                 type: boolean
               port:
                 description: Port is the Port of Nutanix Prism Central
@@ -5893,19 +5862,12 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.8.0
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.17.2
   name: nutanixmachineconfigs.anywhere.eks.amazonaws.com
 spec:
   group: anywhere.eks.amazonaws.com
@@ -5923,14 +5885,19 @@ spec:
           API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -5938,9 +5905,9 @@ spec:
             description: NutanixMachineConfigSpec defines the desired state of NutanixMachineConfig.
             properties:
               additionalCategories:
-                description: additionalCategories is a list of optional categories
-                  to be added to the VM. Categories must be created in Prism Central
-                  before they can be used.
+                description: |-
+                  additionalCategories is a list of optional categories to be added to the VM.
+                  Categories must be created in Prism Central before they can be used.
                 items:
                   description: NutanixCategoryIdentifier holds the identity of a Nutanix
                     Prism Central category.
@@ -5952,13 +5919,17 @@ spec:
                       description: value is the category value linked to the key in
                         the Prism Central.
                       type: string
+                  required:
+                  - key
+                  - value
                   type: object
                 type: array
               cluster:
-                description: cluster is to identify the cluster (the Prism Element
-                  under management of the Prism Central), in which the Machine's VM
-                  will be created. The cluster identifier (uuid or name) can be obtained
-                  from the Prism Central console or using the prism_central API.
+                description: |-
+                  cluster is to identify the cluster (the Prism Element under management
+                  of the Prism Central), in which the Machine's VM will be created.
+                  The cluster identifier (uuid or name) can be obtained from the Prism Central console
+                  or using the prism_central API.
                 properties:
                   name:
                     description: name is the resource name in the PC
@@ -5998,11 +5969,12 @@ spec:
                   type: object
                 type: array
               image:
-                description: image is to identify the OS image uploaded to the Prism
-                  Central (PC) The image identifier (uuid or name) can be obtained
-                  from the Prism Central console or using the Prism Central API. It
-                  must include the Kubernetes version(s). For example, a template
-                  used for Kubernetes 1.27 could be ubuntu-2204-1.27.
+                description: |-
+                  image is to identify the OS image uploaded to the Prism Central (PC)
+                  The image identifier (uuid or name) can be obtained from the Prism Central console
+                  or using the Prism Central API.
+                  It must include the Kubernetes version(s). For example, a template used for
+                  Kubernetes 1.27 could be ubuntu-2204-1.27.
                 properties:
                   name:
                     description: name is the resource name in the PC
@@ -6023,17 +5995,18 @@ spec:
                 anyOf:
                 - type: integer
                 - type: string
-                description: memorySize is the memory size (in Quantity format) of
-                  the VM The minimum memorySize is 2Gi bytes
+                description: |-
+                  memorySize is the memory size (in Quantity format) of the VM
+                  The minimum memorySize is 2Gi bytes
                 pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                 x-kubernetes-int-or-string: true
               osFamily:
                 type: string
               project:
-                description: Project is an optional property that specifies the Prism
-                  Central project so that machine resources can be linked to it. The
-                  project identifier (uuid or name) can be obtained from the Prism
-                  Central console or using the Prism Central API.
+                description: |-
+                  Project is an optional property that specifies the Prism Central project so that machine resources
+                  can be linked to it. The project identifier (uuid or name) can be obtained from the Prism Central console
+                  or using the Prism Central API.
                 properties:
                   name:
                     description: name is the resource name in the PC
@@ -6051,10 +6024,10 @@ spec:
                 - type
                 type: object
               subnet:
-                description: subnet is to identify the cluster's network subnet to
-                  use for the Machine's VM The cluster identifier (uuid or name) can
-                  be obtained from the Prism Central console or using the Prism Central
-                  API.
+                description: |-
+                  subnet is to identify the cluster's network subnet to use for the Machine's VM
+                  The cluster identifier (uuid or name) can be obtained from the Prism Central console
+                  or using the Prism Central API.
                 properties:
                   name:
                     description: name is the resource name in the PC
@@ -6075,8 +6048,9 @@ spec:
                 anyOf:
                 - type: integer
                 - type: string
-                description: systemDiskSize is size (in Quantity format) of the system
-                  disk of the VM The minimum systemDiskSize is 20Gi bytes
+                description: |-
+                  systemDiskSize is size (in Quantity format) of the system disk of the VM
+                  The minimum systemDiskSize is 20Gi bytes
                 pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                 x-kubernetes-int-or-string: true
               users:
@@ -6121,9 +6095,9 @@ spec:
               NutanixMachineConfig.
             properties:
               addresses:
-                description: Addresses contains the Nutanix VM associated addresses.
-                  Address type is one of Hostname, ExternalIP, InternalIP, ExternalDNS,
-                  InternalDNS
+                description: |-
+                  Addresses contains the Nutanix VM associated addresses.
+                  Address type is one of Hostname, ExternalIP, InternalIP, ExternalDNS, InternalDNS
                 items:
                   description: MachineAddress contains information for the node's
                     address.
@@ -6147,37 +6121,37 @@ spec:
                     operational state.
                   properties:
                     lastTransitionTime:
-                      description: Last time the condition transitioned from one status
-                        to another. This should be when the underlying condition changed.
-                        If that is not known, then using the time when the API field
-                        changed is acceptable.
+                      description: |-
+                        Last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed. If that is not known, then using the time when
+                        the API field changed is acceptable.
                       format: date-time
                       type: string
                     message:
-                      description: A human readable message indicating details about
-                        the transition. This field may be empty.
+                      description: |-
+                        A human readable message indicating details about the transition.
+                        This field may be empty.
                       type: string
                     reason:
-                      description: The reason for the condition's last transition
-                        in CamelCase. The specific API may choose whether or not this
-                        field is considered a guaranteed API. This field may not be
-                        empty.
+                      description: |-
+                        The reason for the condition's last transition in CamelCase.
+                        The specific API may choose whether or not this field is considered a guaranteed API.
+                        This field may not be empty.
                       type: string
                     severity:
-                      description: Severity provides an explicit classification of
-                        Reason code, so the users or machines can immediately understand
-                        the current situation and act accordingly. The Severity field
-                        MUST be set only when Status=False.
+                      description: |-
+                        Severity provides an explicit classification of Reason code, so the users or machines can immediately
+                        understand the current situation and act accordingly.
+                        The Severity field MUST be set only when Status=False.
                       type: string
                     status:
                       description: Status of the condition, one of True, False, Unknown.
                       type: string
                     type:
-                      description: Type of condition in CamelCase or in foo.example.com/CamelCase.
-                        Many .condition.type values are consistent across resources
-                        like Available, but because arbitrary conditions can be useful
-                        (see .node.status.conditions), the ability to deconflict is
-                        important.
+                      description: |-
+                        Type of condition in CamelCase or in foo.example.com/CamelCase.
+                        Many .condition.type values are consistent across resources like Available, but because arbitrary conditions
+                        can be useful (see .node.status.conditions), the ability to deconflict is important.
                       type: string
                   required:
                   - lastTransitionTime
@@ -6193,35 +6167,42 @@ spec:
                     description: API version of the referent.
                     type: string
                   fieldPath:
-                    description: 'If referring to a piece of an object instead of
-                      an entire object, this string should contain a valid JSON/Go
-                      field access statement, such as desiredState.manifest.containers[2].
-                      For example, if the object reference is to a container within
-                      a pod, this would take on a value like: "spec.containers{name}"
-                      (where "name" refers to the name of the container that triggered
-                      the event) or if no container name is specified "spec.containers[2]"
-                      (container with index 2 in this pod). This syntax is chosen
-                      only to have some well-defined way of referencing a part of
-                      an object. TODO: this design is not final and this field is
-                      subject to change in the future.'
+                    description: |-
+                      If referring to a piece of an object instead of an entire object, this string
+                      should contain a valid JSON/Go field access statement, such as desiredState.manifest.containers[2].
+                      For example, if the object reference is to a container within a pod, this would take on a value like:
+                      "spec.containers{name}" (where "name" refers to the name of the container that triggered
+                      the event) or if no container name is specified "spec.containers[2]" (container with
+                      index 2 in this pod). This syntax is chosen only to have some well-defined way of
+                      referencing a part of an object.
                     type: string
                   kind:
-                    description: 'Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                    description: |-
+                      Kind of the referent.
+                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
                     type: string
                   name:
-                    description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names'
+                    description: |-
+                      Name of the referent.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
                     type: string
                   namespace:
-                    description: 'Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/'
+                    description: |-
+                      Namespace of the referent.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
                     type: string
                   resourceVersion:
-                    description: 'Specific resourceVersion to which this reference
-                      is made, if any. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency'
+                    description: |-
+                      Specific resourceVersion to which this reference is made, if any.
+                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
                     type: string
                   uid:
-                    description: 'UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids'
+                    description: |-
+                      UID of the referent.
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids
                     type: string
                 type: object
+                x-kubernetes-map-type: atomic
               ready:
                 description: Ready is true when the provider resource is ready.
                 type: boolean
@@ -6234,19 +6215,12 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.8.0
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.17.2
   name: oidcconfigs.anywhere.eks.amazonaws.com
 spec:
   group: anywhere.eks.amazonaws.com
@@ -6263,14 +6237,19 @@ spec:
         description: OIDCConfig is the Schema for the oidcconfigs API.
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -6324,19 +6303,12 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.8.0
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.17.2
   name: snowdatacenterconfigs.anywhere.eks.amazonaws.com
 spec:
   group: anywhere.eks.amazonaws.com
@@ -6354,14 +6326,19 @@ spec:
           API.
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -6387,19 +6364,12 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.8.0
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.17.2
   name: snowippools.anywhere.eks.amazonaws.com
 spec:
   group: anywhere.eks.amazonaws.com
@@ -6416,14 +6386,19 @@ spec:
         description: SnowIPPool is the Schema for the SnowIPPools API.
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -6466,19 +6441,12 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.8.0
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.17.2
   name: snowmachineconfigs.anywhere.eks.amazonaws.com
 spec:
   group: anywhere.eks.amazonaws.com
@@ -6495,14 +6463,19 @@ spec:
         description: SnowMachineConfig is the Schema for the SnowMachineConfigs API.
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -6520,9 +6493,9 @@ spec:
                     description: Device name
                     type: string
                   size:
-                    description: Size specifies size (in Gi) of the storage device.
-                      Must be greater than the image snapshot size or 8 (whichever
-                      is greater).
+                    description: |-
+                      Size specifies size (in Gi) of the storage device.
+                      Must be greater than the image snapshot size or 8 (whichever is greater).
                     format: int64
                     minimum: 8
                     type: integer
@@ -6547,9 +6520,9 @@ spec:
                   for the machine
                 properties:
                   bottlerocketConfiguration:
-                    description: BottlerocketConfiguration defines the Bottlerocket
-                      configuration on the host OS. These settings only take effect
-                      when the `osFamily` is bottlerocket.
+                    description: |-
+                      BottlerocketConfiguration defines the Bottlerocket configuration on the host OS.
+                      These settings only take effect when the `osFamily` is bottlerocket.
                     properties:
                       boot:
                         description: Boot defines the boot settings for bottlerocket.
@@ -6588,19 +6561,19 @@ spec:
                               type: string
                             type: array
                           clusterDomain:
-                            description: ClusterDomain defines the DNS domain for
-                              the cluster, allowing all Kubernetes-run containers
+                            description: |-
+                              ClusterDomain defines the DNS domain for the cluster, allowing all Kubernetes-run containers
                               to search this domain before the host’s search domains
                             type: string
                           containerLogMaxFiles:
-                            description: ContainerLogMaxFiles specifies the maximum
-                              number of container log files that can be present for
-                              a container
+                            description: |-
+                              ContainerLogMaxFiles specifies the maximum number of container log
+                              files that can be present for a container
                             type: integer
                           containerLogMaxSize:
-                            description: ContainerLogMaxSize is a quantity defining
-                              the maximum size of the container log file before it
-                              is rotated
+                            description: |-
+                              ContainerLogMaxSize is a quantity defining the maximum size of
+                              the container log file before it is rotated
                             type: string
                           cpuCFSQuota:
                             description: CPUCFSQuota enables CPU CFS quota enforcement
@@ -6613,9 +6586,9 @@ spec:
                           cpuManagerPolicyOptions:
                             additionalProperties:
                               type: string
-                            description: CPUManagerPolicyOptions is a set of key=value
-                              which allows to set extra options to fine tune the behaviour
-                              of the cpu manager policies
+                            description: |-
+                              CPUManagerPolicyOptions is a set of key=value which allows to set extra options to
+                              fine tune the behaviour of the cpu manager policies
                             type: object
                           cpuManagerReconcilePeriod:
                             description: CPUManagerReconcilePeriod is the reconciliation
@@ -6636,10 +6609,9 @@ spec:
                               quantities that defines hard eviction thresholds.
                             type: object
                           evictionMaxPodGracePeriod:
-                            description: EvictionMaxPodGracePeriod is the maximum
-                              allowed grace period (in seconds) to use when terminating
-                              pods in response to a soft eviction threshold being
-                              met.
+                            description: |-
+                              EvictionMaxPodGracePeriod is the maximum allowed grace period (in seconds) to use
+                              when terminating pods in response to a soft eviction threshold being met.
                             type: integer
                           evictionSoft:
                             additionalProperties:
@@ -6650,14 +6622,14 @@ spec:
                           evictionSoftGracePeriod:
                             additionalProperties:
                               type: string
-                            description: EvictionSoftGracePeriod is a map of signal
-                              names to quantities that defines grace periods for each
-                              soft eviction signal.
+                            description: |-
+                              EvictionSoftGracePeriod is a map of signal names to quantities that defines grace periods
+                              for each soft eviction signal.
                             type: object
                           imageGCHighThresholdPercent:
-                            description: ImageGCHighThresholdPercent is the percent
-                              of disk usage after which image garbage collection is
-                              always run.
+                            description: |-
+                              ImageGCHighThresholdPercent is the percent of disk usage after which image garbage
+                              collection is always run.
                             type: integer
                           imageGCLowThresholdPercent:
                             description: ImageGCLowThresholdPercent is the percent
@@ -6675,9 +6647,9 @@ spec:
                           kubeReserved:
                             additionalProperties:
                               type: string
-                            description: KubeReserved is a set of ResourceName=ResourceQuantity
-                              pairs that describe resources reserved for kubernetes
-                              system components
+                            description: |-
+                              KubeReserved is a set of ResourceName=ResourceQuantity pairs that describe resources
+                              reserved for kubernetes system components
                             type: object
                           maxPods:
                             description: MaxPods defines the maximum number of pods
@@ -6705,30 +6677,30 @@ spec:
                               pulls per second.
                             type: integer
                           shutdownGracePeriod:
-                            description: ShutdownGracePeriod specifies the total duration
-                              that the node should delay the shutdown and total grace
-                              period for pod termination during a node shutdown.
+                            description: |-
+                              ShutdownGracePeriod specifies the total duration that the node should delay
+                              the shutdown and total grace period for pod termination during a node shutdown.
                             type: string
                           shutdownGracePeriodCriticalPods:
-                            description: ShutdownGracePeriodCriticalPods specifies
-                              the duration used to terminate critical pods during
-                              a node shutdown.
+                            description: |-
+                              ShutdownGracePeriodCriticalPods specifies the duration used to terminate
+                              critical pods during a node shutdown.
                             type: string
                           systemReserved:
                             additionalProperties:
                               type: string
-                            description: SystemReserved is a set of ResourceName=ResourceQuantity
-                              pairs that describe resources reserved for non-kubernetes
-                              components.
+                            description: |-
+                              SystemReserved is a set of ResourceName=ResourceQuantity pairs that describe
+                              resources reserved for non-kubernetes components.
                             type: object
                           topologyManagerPolicy:
                             description: TopologyManagerPolicy is the name of the
                               topology manager policy to use.
                             type: string
                           topologyManagerScope:
-                            description: TopologyManagerScope represents the scope
-                              of topology hint generation that topology manager requests
-                              and hint providers generate.
+                            description: |-
+                              TopologyManagerScope represents the scope of topology hint generation
+                              that topology manager requests and hint providers generate.
                             type: string
                         type: object
                     type: object
@@ -6786,10 +6758,9 @@ spec:
                           minimum: 1
                           type: integer
                         ipPoolRef:
-                          description: IPPool contains a reference to a snow ip pool
-                            which provides a range of ip addresses. When specified,
-                            an ip address selected from the pool is allocated to this
-                            DNI.
+                          description: |-
+                            IPPool contains a reference to a snow ip pool which provides a range of ip addresses.
+                            When specified, an ip address selected from the pool is allocated to this DNI.
                           properties:
                             kind:
                               type: string
@@ -6816,17 +6787,16 @@ spec:
                 description: NonRootVolumes provides the configuration options for
                   the non root storage volumes.
                 items:
-                  description: 'Volume encapsulates the configuration options for
-                    the storage device TODO: Trim the fields that do not apply for
-                    Snow.'
+                  description: Volume encapsulates the configuration options for the
+                    storage device
                   properties:
                     deviceName:
                       description: Device name
                       type: string
                     size:
-                      description: Size specifies size (in Gi) of the storage device.
-                        Must be greater than the image snapshot size or 8 (whichever
-                        is greater).
+                      description: |-
+                        Size specifies size (in Gi) of the storage device.
+                        Must be greater than the image snapshot size or 8 (whichever is greater).
                       format: int64
                       minimum: 8
                       type: integer
@@ -6842,13 +6812,14 @@ spec:
                   type: object
                 type: array
               osFamily:
-                description: 'OSFamily is the node instance OS. Valid values: "bottlerocket"
-                  and "ubuntu".'
+                description: |-
+                  OSFamily is the node instance OS.
+                  Valid values: "bottlerocket" and "ubuntu".
                 type: string
               physicalNetworkConnector:
-                description: 'PhysicalNetworkConnector is the physical network connector
-                  type to use for creating direct network interfaces (DNI). Valid
-                  values: "SFP_PLUS" (default), "QSFP" and "RJ45".'
+                description: |-
+                  PhysicalNetworkConnector is the physical network connector type to use for creating direct network interfaces (DNI).
+                  Valid values: "SFP_PLUS" (default), "QSFP" and "RJ45".
                 type: string
               sshKeyName:
                 description: SSHKeyName is the name of the ssh key defined in the
@@ -6861,8 +6832,9 @@ spec:
             description: SnowMachineConfigStatus defines the observed state of SnowMachineConfig.
             properties:
               failureMessage:
-                description: FailureMessage indicates that there is a fatal problem
-                  reconciling the state, and will be set to a descriptive error message.
+                description: |-
+                  FailureMessage indicates that there is a fatal problem reconciling the
+                  state, and will be set to a descriptive error message.
                 type: string
               specValid:
                 description: SpecValid is set to true if vspheredatacenterconfig is
@@ -6874,19 +6846,12 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.8.0
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.17.2
   name: tinkerbelldatacenterconfigs.anywhere.eks.amazonaws.com
 spec:
   group: anywhere.eks.amazonaws.com
@@ -6904,14 +6869,19 @@ spec:
           API.
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -6924,10 +6894,10 @@ spec:
                   Hook images path to pull from a local server.
                 type: string
               hookIsoURL:
-                description: HookIsoURL is the URL of ISO image that will be used
-                  to provision the hardware during one time boot process. It can be
-                  used to override the default Hook OS ISO image to pull from a local
-                  server.
+                description: |-
+                  HookIsoURL is the URL of ISO image that will be used to provision the hardware
+                  during one time boot process.
+                  It can be used to override the default Hook OS ISO image to pull from a local server.
                 type: string
               isoBoot:
                 description: IsoBoot can be used to indicate that the hardware should
@@ -6938,20 +6908,18 @@ spec:
                   balancer interface for the Tinkerbell stack.
                 type: string
               osImageURL:
-                description: OSImageURL can be used to override the default OS image
-                  path to pull from a local server. OSImageURL is a URL to the OS
-                  image used during provisioning. To perform modular upgrades the
-                  OSImageURL must be specified on the TinkerbellMachineConfig objects.
-                  You cannot specify an OSImageURL on the TinkerbellDatacenterConfig
-                  and TinkerbellMachineConfigs simultaneously. It must include the
-                  Kubernetes version(s). For example, a URL used for Kubernetes 1.27
-                  could be http://localhost:8080/ubuntu-2204-1.27.tgz
+                description: |-
+                  OSImageURL can be used to override the default OS image path to pull from a local server.
+                  OSImageURL is a URL to the OS image used during provisioning. To perform modular upgrades
+                  the OSImageURL must be specified on the TinkerbellMachineConfig objects. You cannot specify
+                  an OSImageURL on the TinkerbellDatacenterConfig and TinkerbellMachineConfigs simultaneously.
+                  It must include the Kubernetes version(s). For example, a URL used for Kubernetes 1.27 could
+                  be http://localhost:8080/ubuntu-2204-1.27.tgz
                 type: string
               skipLoadBalancerDeployment:
-                description: SkipLoadBalancerDeployment when set to "true" can be
-                  used to skip deploying a load balancer to expose Tinkerbell stack.
-                  Users will need to deploy and configure a load balancer manually
-                  after the cluster is created.
+                description: |-
+                  SkipLoadBalancerDeployment when set to "true" can be used to skip deploying a load balancer to expose Tinkerbell stack.
+                  Users will need to deploy and configure a load balancer manually after the cluster is created.
                 type: boolean
               tinkerbellIP:
                 description: TinkerbellIP is used to configure a VIP for hosting the
@@ -6961,28 +6929,22 @@ spec:
             - tinkerbellIP
             type: object
           status:
-            description: "TinkerbellDatacenterConfigStatus defines the observed state
-              of TinkerbellDatacenterConfig \n Important: Run \"make generate\" to
-              regenerate code after modifying this file."
+            description: |-
+              TinkerbellDatacenterConfigStatus defines the observed state of TinkerbellDatacenterConfig
+
+              Important: Run "make generate" to regenerate code after modifying this file.
             type: object
         type: object
     served: true
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.8.0
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.17.2
   name: tinkerbellmachineconfigs.anywhere.eks.amazonaws.com
 spec:
   group: anywhere.eks.amazonaws.com
@@ -7000,14 +6962,19 @@ spec:
           API.
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -7026,9 +6993,9 @@ spec:
                   on the host OS.
                 properties:
                   bottlerocketConfiguration:
-                    description: BottlerocketConfiguration defines the Bottlerocket
-                      configuration on the host OS. These settings only take effect
-                      when the `osFamily` is bottlerocket.
+                    description: |-
+                      BottlerocketConfiguration defines the Bottlerocket configuration on the host OS.
+                      These settings only take effect when the `osFamily` is bottlerocket.
                     properties:
                       boot:
                         description: Boot defines the boot settings for bottlerocket.
@@ -7067,19 +7034,19 @@ spec:
                               type: string
                             type: array
                           clusterDomain:
-                            description: ClusterDomain defines the DNS domain for
-                              the cluster, allowing all Kubernetes-run containers
+                            description: |-
+                              ClusterDomain defines the DNS domain for the cluster, allowing all Kubernetes-run containers
                               to search this domain before the host’s search domains
                             type: string
                           containerLogMaxFiles:
-                            description: ContainerLogMaxFiles specifies the maximum
-                              number of container log files that can be present for
-                              a container
+                            description: |-
+                              ContainerLogMaxFiles specifies the maximum number of container log
+                              files that can be present for a container
                             type: integer
                           containerLogMaxSize:
-                            description: ContainerLogMaxSize is a quantity defining
-                              the maximum size of the container log file before it
-                              is rotated
+                            description: |-
+                              ContainerLogMaxSize is a quantity defining the maximum size of
+                              the container log file before it is rotated
                             type: string
                           cpuCFSQuota:
                             description: CPUCFSQuota enables CPU CFS quota enforcement
@@ -7092,9 +7059,9 @@ spec:
                           cpuManagerPolicyOptions:
                             additionalProperties:
                               type: string
-                            description: CPUManagerPolicyOptions is a set of key=value
-                              which allows to set extra options to fine tune the behaviour
-                              of the cpu manager policies
+                            description: |-
+                              CPUManagerPolicyOptions is a set of key=value which allows to set extra options to
+                              fine tune the behaviour of the cpu manager policies
                             type: object
                           cpuManagerReconcilePeriod:
                             description: CPUManagerReconcilePeriod is the reconciliation
@@ -7115,10 +7082,9 @@ spec:
                               quantities that defines hard eviction thresholds.
                             type: object
                           evictionMaxPodGracePeriod:
-                            description: EvictionMaxPodGracePeriod is the maximum
-                              allowed grace period (in seconds) to use when terminating
-                              pods in response to a soft eviction threshold being
-                              met.
+                            description: |-
+                              EvictionMaxPodGracePeriod is the maximum allowed grace period (in seconds) to use
+                              when terminating pods in response to a soft eviction threshold being met.
                             type: integer
                           evictionSoft:
                             additionalProperties:
@@ -7129,14 +7095,14 @@ spec:
                           evictionSoftGracePeriod:
                             additionalProperties:
                               type: string
-                            description: EvictionSoftGracePeriod is a map of signal
-                              names to quantities that defines grace periods for each
-                              soft eviction signal.
+                            description: |-
+                              EvictionSoftGracePeriod is a map of signal names to quantities that defines grace periods
+                              for each soft eviction signal.
                             type: object
                           imageGCHighThresholdPercent:
-                            description: ImageGCHighThresholdPercent is the percent
-                              of disk usage after which image garbage collection is
-                              always run.
+                            description: |-
+                              ImageGCHighThresholdPercent is the percent of disk usage after which image garbage
+                              collection is always run.
                             type: integer
                           imageGCLowThresholdPercent:
                             description: ImageGCLowThresholdPercent is the percent
@@ -7154,9 +7120,9 @@ spec:
                           kubeReserved:
                             additionalProperties:
                               type: string
-                            description: KubeReserved is a set of ResourceName=ResourceQuantity
-                              pairs that describe resources reserved for kubernetes
-                              system components
+                            description: |-
+                              KubeReserved is a set of ResourceName=ResourceQuantity pairs that describe resources
+                              reserved for kubernetes system components
                             type: object
                           maxPods:
                             description: MaxPods defines the maximum number of pods
@@ -7184,30 +7150,30 @@ spec:
                               pulls per second.
                             type: integer
                           shutdownGracePeriod:
-                            description: ShutdownGracePeriod specifies the total duration
-                              that the node should delay the shutdown and total grace
-                              period for pod termination during a node shutdown.
+                            description: |-
+                              ShutdownGracePeriod specifies the total duration that the node should delay
+                              the shutdown and total grace period for pod termination during a node shutdown.
                             type: string
                           shutdownGracePeriodCriticalPods:
-                            description: ShutdownGracePeriodCriticalPods specifies
-                              the duration used to terminate critical pods during
-                              a node shutdown.
+                            description: |-
+                              ShutdownGracePeriodCriticalPods specifies the duration used to terminate
+                              critical pods during a node shutdown.
                             type: string
                           systemReserved:
                             additionalProperties:
                               type: string
-                            description: SystemReserved is a set of ResourceName=ResourceQuantity
-                              pairs that describe resources reserved for non-kubernetes
-                              components.
+                            description: |-
+                              SystemReserved is a set of ResourceName=ResourceQuantity pairs that describe
+                              resources reserved for non-kubernetes components.
                             type: object
                           topologyManagerPolicy:
                             description: TopologyManagerPolicy is the name of the
                               topology manager policy to use.
                             type: string
                           topologyManagerScope:
-                            description: TopologyManagerScope represents the scope
-                              of topology hint generation that topology manager requests
-                              and hint providers generate.
+                            description: |-
+                              TopologyManagerScope represents the scope of topology hint generation
+                              that topology manager requests and hint providers generate.
                             type: string
                         type: object
                     type: object
@@ -7244,10 +7210,11 @@ spec:
               osFamily:
                 type: string
               osImageURL:
-                description: OSImageURL can be used to override the default OS image
-                  path to pull from a local server. OSImageURL is a URL to the OS
-                  image used during provisioning. It must include the Kubernetes version(s).
-                  For example, a URL used for Kubernetes 1.27 could be http://localhost:8080/ubuntu-2204-1.27.tgz
+                description: |-
+                  OSImageURL can be used to override the default OS image path to pull from a local server.
+                  OSImageURL is a URL to the OS image used during provisioning. It must include
+                  the Kubernetes version(s). For example, a URL used for Kubernetes 1.27 could
+                  be http://localhost:8080/ubuntu-2204-1.27.tgz
                 type: string
               templateRef:
                 properties:
@@ -7285,19 +7252,12 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.8.0
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.17.2
   name: tinkerbelltemplateconfigs.anywhere.eks.amazonaws.com
 spec:
   group: anywhere.eks.amazonaws.com
@@ -7315,14 +7275,19 @@ spec:
           API.
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -7424,19 +7389,12 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.8.0
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.17.2
   name: vspheredatacenterconfigs.anywhere.eks.amazonaws.com
 spec:
   group: anywhere.eks.amazonaws.com
@@ -7454,14 +7412,19 @@ spec:
           API.
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -7529,8 +7492,9 @@ spec:
               of VSphereDatacenterConfig.
             properties:
               failureMessage:
-                description: FailureMessage indicates that there is a fatal problem
-                  reconciling the state, and will be set to a descriptive error message.
+                description: |-
+                  FailureMessage indicates that there is a fatal problem reconciling the
+                  state, and will be set to a descriptive error message.
                 type: string
               observedGeneration:
                 description: ObservedGeneration is the latest generation observed
@@ -7547,19 +7511,12 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.8.0
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.17.2
   name: vspheremachineconfigs.anywhere.eks.amazonaws.com
 spec:
   group: anywhere.eks.amazonaws.com
@@ -7577,14 +7534,19 @@ spec:
           API.
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -7609,9 +7571,9 @@ spec:
                   on the host OS.
                 properties:
                   bottlerocketConfiguration:
-                    description: BottlerocketConfiguration defines the Bottlerocket
-                      configuration on the host OS. These settings only take effect
-                      when the `osFamily` is bottlerocket.
+                    description: |-
+                      BottlerocketConfiguration defines the Bottlerocket configuration on the host OS.
+                      These settings only take effect when the `osFamily` is bottlerocket.
                     properties:
                       boot:
                         description: Boot defines the boot settings for bottlerocket.
@@ -7650,19 +7612,19 @@ spec:
                               type: string
                             type: array
                           clusterDomain:
-                            description: ClusterDomain defines the DNS domain for
-                              the cluster, allowing all Kubernetes-run containers
+                            description: |-
+                              ClusterDomain defines the DNS domain for the cluster, allowing all Kubernetes-run containers
                               to search this domain before the host’s search domains
                             type: string
                           containerLogMaxFiles:
-                            description: ContainerLogMaxFiles specifies the maximum
-                              number of container log files that can be present for
-                              a container
+                            description: |-
+                              ContainerLogMaxFiles specifies the maximum number of container log
+                              files that can be present for a container
                             type: integer
                           containerLogMaxSize:
-                            description: ContainerLogMaxSize is a quantity defining
-                              the maximum size of the container log file before it
-                              is rotated
+                            description: |-
+                              ContainerLogMaxSize is a quantity defining the maximum size of
+                              the container log file before it is rotated
                             type: string
                           cpuCFSQuota:
                             description: CPUCFSQuota enables CPU CFS quota enforcement
@@ -7675,9 +7637,9 @@ spec:
                           cpuManagerPolicyOptions:
                             additionalProperties:
                               type: string
-                            description: CPUManagerPolicyOptions is a set of key=value
-                              which allows to set extra options to fine tune the behaviour
-                              of the cpu manager policies
+                            description: |-
+                              CPUManagerPolicyOptions is a set of key=value which allows to set extra options to
+                              fine tune the behaviour of the cpu manager policies
                             type: object
                           cpuManagerReconcilePeriod:
                             description: CPUManagerReconcilePeriod is the reconciliation
@@ -7698,10 +7660,9 @@ spec:
                               quantities that defines hard eviction thresholds.
                             type: object
                           evictionMaxPodGracePeriod:
-                            description: EvictionMaxPodGracePeriod is the maximum
-                              allowed grace period (in seconds) to use when terminating
-                              pods in response to a soft eviction threshold being
-                              met.
+                            description: |-
+                              EvictionMaxPodGracePeriod is the maximum allowed grace period (in seconds) to use
+                              when terminating pods in response to a soft eviction threshold being met.
                             type: integer
                           evictionSoft:
                             additionalProperties:
@@ -7712,14 +7673,14 @@ spec:
                           evictionSoftGracePeriod:
                             additionalProperties:
                               type: string
-                            description: EvictionSoftGracePeriod is a map of signal
-                              names to quantities that defines grace periods for each
-                              soft eviction signal.
+                            description: |-
+                              EvictionSoftGracePeriod is a map of signal names to quantities that defines grace periods
+                              for each soft eviction signal.
                             type: object
                           imageGCHighThresholdPercent:
-                            description: ImageGCHighThresholdPercent is the percent
-                              of disk usage after which image garbage collection is
-                              always run.
+                            description: |-
+                              ImageGCHighThresholdPercent is the percent of disk usage after which image garbage
+                              collection is always run.
                             type: integer
                           imageGCLowThresholdPercent:
                             description: ImageGCLowThresholdPercent is the percent
@@ -7737,9 +7698,9 @@ spec:
                           kubeReserved:
                             additionalProperties:
                               type: string
-                            description: KubeReserved is a set of ResourceName=ResourceQuantity
-                              pairs that describe resources reserved for kubernetes
-                              system components
+                            description: |-
+                              KubeReserved is a set of ResourceName=ResourceQuantity pairs that describe resources
+                              reserved for kubernetes system components
                             type: object
                           maxPods:
                             description: MaxPods defines the maximum number of pods
@@ -7767,30 +7728,30 @@ spec:
                               pulls per second.
                             type: integer
                           shutdownGracePeriod:
-                            description: ShutdownGracePeriod specifies the total duration
-                              that the node should delay the shutdown and total grace
-                              period for pod termination during a node shutdown.
+                            description: |-
+                              ShutdownGracePeriod specifies the total duration that the node should delay
+                              the shutdown and total grace period for pod termination during a node shutdown.
                             type: string
                           shutdownGracePeriodCriticalPods:
-                            description: ShutdownGracePeriodCriticalPods specifies
-                              the duration used to terminate critical pods during
-                              a node shutdown.
+                            description: |-
+                              ShutdownGracePeriodCriticalPods specifies the duration used to terminate
+                              critical pods during a node shutdown.
                             type: string
                           systemReserved:
                             additionalProperties:
                               type: string
-                            description: SystemReserved is a set of ResourceName=ResourceQuantity
-                              pairs that describe resources reserved for non-kubernetes
-                              components.
+                            description: |-
+                              SystemReserved is a set of ResourceName=ResourceQuantity pairs that describe
+                              resources reserved for non-kubernetes components.
                             type: object
                           topologyManagerPolicy:
                             description: TopologyManagerPolicy is the name of the
                               topology manager policy to use.
                             type: string
                           topologyManagerScope:
-                            description: TopologyManagerScope represents the scope
-                              of topology hint generation that topology manager requests
-                              and hint providers generate.
+                            description: |-
+                              TopologyManagerScope represents the scope of topology hint generation
+                              that topology manager requests and hint providers generate.
                             type: string
                         type: object
                     type: object
@@ -7839,9 +7800,9 @@ spec:
                   type: string
                 type: array
               template:
-                description: Template field is the template to use for provisioning
-                  the VM. It must include the Kubernetes version(s). For example,
-                  a template used for Kubernetes 1.27 could be ubuntu-2204-1.27.
+                description: |-
+                  Template field is the template to use for provisioning the VM. It must include the Kubernetes
+                  version(s). For example, a template used for Kubernetes 1.27 could be ubuntu-2204-1.27.
                 type: string
               users:
                 items:
@@ -7876,12 +7837,6 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -7930,7 +7885,6 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  creationTimestamp: null
   name: eksa-manager-role
   namespace: eksa-system
 rules:
@@ -7951,7 +7905,6 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  creationTimestamp: null
   name: eksa-manager-role
 rules:
 - apiGroups:
@@ -8054,7 +8007,10 @@ rules:
   - cloudstackdatacenterconfigs/finalizers
   - cloudstackmachineconfigs/finalizers
   - clusters/finalizers
+  - controlplaneupgrades/finalizers
   - dockerdatacenterconfigs/finalizers
+  - machinedeploymentupgrades/finalizers
+  - nodeupgrades/finalizers
   - snowippools/finalizers
   - snowmachineconfigs/finalizers
   - tinkerbelldatacenterconfigs/finalizers
@@ -8071,7 +8027,10 @@ rules:
   - cloudstackdatacenterconfigs/status
   - cloudstackmachineconfigs/status
   - clusters/status
+  - controlplaneupgrades/status
   - dockerdatacenterconfigs/status
+  - machinedeploymentupgrades/status
+  - nodeupgrades/status
   - snowippools/status
   - snowmachineconfigs/status
   - tinkerbelldatacenterconfigs/status
@@ -8087,39 +8046,6 @@ rules:
   - anywhere.eks.amazonaws.com
   resources:
   - bundles
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - anywhere.eks.amazonaws.com
-  resources:
-  - controlplaneupgrades
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - anywhere.eks.amazonaws.com
-  resources:
-  - controlplaneupgrades/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - anywhere.eks.amazonaws.com
-  resources:
-  - controlplaneupgrades/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - anywhere.eks.amazonaws.com
-  resources:
   - eksareleases
   verbs:
   - get
@@ -8128,32 +8054,8 @@ rules:
 - apiGroups:
   - anywhere.eks.amazonaws.com
   resources:
+  - controlplaneupgrades
   - machinedeploymentupgrades
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - anywhere.eks.amazonaws.com
-  resources:
-  - machinedeploymentupgrades/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - anywhere.eks.amazonaws.com
-  resources:
-  - machinedeploymentupgrades/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - anywhere.eks.amazonaws.com
-  resources:
   - nodeupgrades
   verbs:
   - create
@@ -8163,20 +8065,6 @@ rules:
   - patch
   - update
   - watch
-- apiGroups:
-  - anywhere.eks.amazonaws.com
-  resources:
-  - nodeupgrades/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - anywhere.eks.amazonaws.com
-  resources:
-  - nodeupgrades/status
-  verbs:
-  - get
-  - patch
-  - update
 - apiGroups:
   - bmc.tinkerbell.org
   resources:
@@ -8209,6 +8097,7 @@ rules:
   - cluster.x-k8s.io
   resources:
   - clusters
+  - machinedeployments
   verbs:
   - create
   - delete
@@ -8221,6 +8110,8 @@ rules:
   - cluster.x-k8s.io
   resources:
   - machinedeployment
+  - machines
+  - machinesets
   verbs:
   - get
   - list
@@ -8236,44 +8127,12 @@ rules:
 - apiGroups:
   - cluster.x-k8s.io
   resources:
-  - machinedeployments
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - cluster.x-k8s.io
-  resources:
   - machinehealthchecks
   verbs:
   - create
   - get
   - list
   - patch
-  - watch
-- apiGroups:
-  - cluster.x-k8s.io
-  resources:
-  - machines
-  verbs:
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - cluster.x-k8s.io
-  resources:
-  - machinesets
-  verbs:
-  - get
-  - list
-  - patch
-  - update
   - watch
 - apiGroups:
   - clusterctl.cluster.x-k8s.io
@@ -8714,6 +8573,27 @@ webhooks:
     service:
       name: eksa-webhook-service
       namespace: eksa-system
+      path: /validate-anywhere-eks-amazonaws-com-v1alpha1-snowdatacenterconfig
+  failurePolicy: Fail
+  name: snowdatacenterconfig.kb.io
+  rules:
+  - apiGroups:
+    - anywhere.eks.amazonaws.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - snowdatacenterconfigs
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: eksa-webhook-service
+      namespace: eksa-system
       path: /validate-anywhere-eks-amazonaws-com-v1alpha1-awsiamconfig
   failurePolicy: Fail
   name: validation.awsiamconfig.anywhere.amazonaws.com
@@ -8895,27 +8775,6 @@ webhooks:
     - UPDATE
     resources:
     - oidcconfigs
-  sideEffects: None
-- admissionReviewVersions:
-  - v1
-  - v1beta1
-  clientConfig:
-    service:
-      name: eksa-webhook-service
-      namespace: eksa-system
-      path: /validate-anywhere-eks-amazonaws-com-v1alpha1-snowdatacenterconfig
-  failurePolicy: Fail
-  name: snowdatacenterconfig.kb.io
-  rules:
-  - apiGroups:
-    - anywhere.eks.amazonaws.com
-    apiVersions:
-    - v1alpha1
-    operations:
-    - CREATE
-    - UPDATE
-    resources:
-    - snowdatacenterconfigs
   sideEffects: None
 - admissionReviewVersions:
   - v1
