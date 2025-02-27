@@ -20,8 +20,8 @@ SHELL := /bin/bash
 ARTIFACTS_BUCKET?=my-s3-bucket
 GIT_VERSION?=$(shell git describe --tag)
 GIT_TAG?=$(shell git tag -l "v*.*.*" --sort -v:refname | head -1)
-GOLANG_VERSION?="1.21"
-GO_PATH?= $(shell source ./scripts/common.sh && build::common::get_go_path $(GOLANG_VERSION))
+GOLANG_VERSION?="1.23"
+GO_PATH ?= $(shell source ./scripts/common.sh && build::common::get_go_path $(GOLANG_VERSION))
 GO ?= $(GO_PATH)/go
 GO_TEST ?= $(GO) test
 # A regular expression defining what packages to exclude from the unit-test recipe.
@@ -98,6 +98,7 @@ BUILD_LIB := build/lib
 BUILDKIT := $(BUILD_LIB)/buildkit.sh
 
 CONTROLLER_GEN_BIN := controller-gen
+CONTROLLER_GEN_VERSION := v0.17.2
 CONTROLLER_GEN := $(TOOLS_BIN_DIR)/$(CONTROLLER_GEN_BIN)
 
 GO_VULNCHECK_BIN := govulncheck
@@ -285,7 +286,7 @@ $(KUBEBUILDER): $(TOOLS_BIN_DIR)
 	chmod +x $(KUBEBUILDER)
 
 $(CONTROLLER_GEN): $(TOOLS_BIN_DIR)
-	GOBIN=$(TOOLS_BIN_DIR_ABS) $(GO) install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.8.0
+	GOBIN=$(TOOLS_BIN_DIR_ABS) $(GO) install sigs.k8s.io/controller-tools/cmd/controller-gen@$(CONTROLLER_GEN_VERSION)
 
 $(GO_VULNCHECK): $(TOOLS_BIN_DIR)
 	GOBIN=$(TOOLS_BIN_DIR_ABS) $(GO) install golang.org/x/vuln/cmd/govulncheck@latest
@@ -434,12 +435,18 @@ endif
 	rm -rf _output
 	make -C docs clean
 
-#
-# Generate zz_generated.deepcopy.go
-#
+## We need to make sure the right go binary is used when running controller-gen.
+## Among other things it uses the go binary to parse the go.mod, which due to newer directives,
+## has to be parsed with a version at least as new as the go version used to build the go.mod.
+## In a local dev environment this export path is not necessary, assuming single go version is used.
+## However, in CI we use the base builder image which contains multiple go versions and might not default to
+## the same version as the one in this Makefile.
+generate: export PATH := $(GO_PATH):$(PATH)
 generate: $(CONTROLLER_GEN)  ## Generate zz_generated.deepcopy.go
-	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
-
+	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" \
+		paths=./pkg/api/... \
+		paths="./release/api/..."
+	
 .PHONY: verify-generate
 verify-generate: generate ## Verify if generated zz_generated.deepcopy.go files need to be updated
 	$(eval DIFF=$(shell git diff --raw -- '*.go' | wc -c))
@@ -717,6 +724,13 @@ generate-manifests: ## Generate manifests e.g. CRD, RBAC etc.
 	$(MAKE) generate-core-manifests
 
 .PHONY: generate-core-manifests
+## We need to make sure the right go binary is used when running controller-gen.
+## Among other things it uses the go binary to parse the go.mod, which due to newer directives,
+## has to be parsed with a version at least as new as the go version used to build the go.mod.
+## In a local dev environment this export path is not necessary, assuming single go version is used.
+## However, in CI we use the base builder image which contains multiple go versions and might not default to
+## the same version as the one in this Makefile.
+generate-core-manifests: export PATH := $(GO_PATH):$(PATH)
 generate-core-manifests: $(CONTROLLER_GEN) ## Generate manifests for the core provider e.g. CRD, RBAC etc.
 	$(CONTROLLER_GEN) \
 		paths=./pkg/api/... \
