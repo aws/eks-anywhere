@@ -38,6 +38,50 @@ description: >
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
 
+## [v0.22.0](https://github.com/aws/eks-anywhere/releases/tag/v0.22.0)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.32.0 |    ✔    |     -      |    —    |     —      |  —   |
+|      RHEL 8.x (*)   |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     ✔      |    ✔    |     ✔      |  —   |
+
+\* RHEL 8's kernel version 4.18.0 is not supported by Kubeadm 1.32, RHEL 8 support will not be available on Kubernetes 1.32 and above.
+
+### Added
+- Support for Kubernetes v1.32
+- Extended support for Kubernetes versions ([#9218](https://github.com/aws/eks-anywhere/pull/9218))
+- Support for deploying EKS-A clusters across vSphere Failure Domains. Available behind feature flag `VSPHERE_FAILURE_DOMAIN_ENABLED` ([#9239](https://github.com/aws/eks-anywhere/pull/9239))
+- Enable hardware Provisioning through ISO booting for baremetal Provider ([#9213](https://github.com/aws/eks-anywhere/pull/9213))
+
+### Changed
+- Added EKS-D for 1-32:
+  - [`v1-32-eks-6`](https://distro.eks.amazonaws.com/releases/1-32/6/)
+- Cert Manager: `v1.15.3` to `v1.16.3`
+- Cilium: `v1.14.12` to `v1.15.13`
+- Cluster API: `v1.8.3` to `v1.9.4`
+- Cluster API Provider Nutanix: `v1.4.0` to `v1.5.3`
+- Cluster API Provider Tinkerbell: `v0.5.3` to `v0.6.4`
+- Cluster API Provider vSphere: `v1.11.2` to `v1.12.0`
+- Cri-tools: `v1.31.1` to `v1.32.0`
+- Flux: `v2.4.0` to `v2.5.0`
+- Govmomi: `v0.44.1` to `v0.48.1`
+- Helm: `v3.16.4` to `v3.17.1`
+- Image builder: `v0.1.40` to `v0.1.41`
+- Kind: `v0.24.0` to `v0.26.0`
+- Kube-vip: `v0.8.0` to `v0.8.9`
+- Tinkerbell Stack:
+  - Rufio: `v0.4.1` to `v0.6.4`
+  - Hegel: `v0.12.0` to `v0.14.2`
+  - Hook: `v0.9.1` to `v0.10.0`
+- Troubleshoot: `v0.107.4` to `v0.117.0`
+
+### Removed
+- Support for Kubernetes v1.27
+
 ## [v0.21.7](https://github.com/aws/eks-anywhere/releases/tag/v0.21.7)
 
 ### Supported OS version details
