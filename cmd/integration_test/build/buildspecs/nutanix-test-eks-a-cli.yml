@@ -49,6 +49,8 @@ env:
     T_NUTANIX_TEMPLATE_NAME_REDHAT_9_1_32: "nutanix_ci:nutanix_template_rhel_9_1_32"
     LICENSE_TOKEN: "extended_support:license_token"
     LICENSE_TOKEN2: "extended_support:license_token2"
+    STAGING_LICENSE_TOKEN: "extended_support:staging_license_token"
+    STAGING_LICENSE_TOKEN2: "extended_support:staging_license_token2"
 phases:
   pre_build:
     commands:
@@ -76,6 +78,11 @@ phases:
         if [ -f ./bin/local-bundle-release.yaml ]; then
           BUNDLES_OVERRIDE=true
         fi
+      - STAGE="dev"
+      - |
+        if [[ "$CODEBUILD_INITIATOR" =~ "aws-staging-eks-a-release" ]]; then
+          STAGE="staging"
+        fi
       - SKIPPED_TESTS=$(yq e ".skipped_tests | @csv" ${CODEBUILD_SRC_DIR}/test/e2e/SKIPPED_TESTS.yaml)
       - mv bin/nutanix/e2e.test bin/e2e.test
       - >
@@ -92,6 +99,7 @@ phases:
         --cleanup-resources=true
         --test-report-folder=reports
         --branch-name=${BRANCH_NAME}
+        --stage=${STAGE}
   post_build:
     commands:
       - >
