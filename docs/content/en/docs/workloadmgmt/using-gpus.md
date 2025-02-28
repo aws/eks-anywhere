@@ -9,7 +9,7 @@ description: >
 
 The [NVIDIA GPU Operator](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/index.html) allows GPUs to be exposed to applications in Kubernetes clusters much like CPUs. Instead of provisioning a special OS image for GPU nodes with the required drivers and dependencies, a standard OS image can be used for both CPU and GPU nodes. The NVIDIA GPU Operator can be used to provision the required software components for GPUs such as the NVIDIA drivers, Kubernetes device plugin for GPUs, and the NVIDIA Container Toolkit. See the [licensing section](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/index.html#licenses-and-contributing) of the NVIDIA GPU Operator documentation for information on the NVIDIA End User License Agreements.
 
-In the example on this page, a single-node EKS Anywhere cluster on bare metal is used with an Ubuntu 20.04 image produced from image-builder without modifications and Kubernetes version 1.31.
+In the example on this page, a single-node EKS Anywhere cluster on bare metal is used with an Ubuntu 20.04 image produced from image-builder without modifications and Kubernetes version 1.32.
 
 ### 1. Configure an EKS Anywhere cluster spec and hardware inventory
 

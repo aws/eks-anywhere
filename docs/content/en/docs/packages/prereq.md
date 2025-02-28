@@ -155,7 +155,7 @@ You can get a list of the available packages from the command line:
 ```bash
 export CLUSTER_NAME=<your-cluster-name>
 export KUBECONFIG=${PWD}/${CLUSTER_NAME}/${CLUSTER_NAME}-eks-a-cluster.kubeconfig
-eksctl anywhere list packages --kube-version 1.31
+eksctl anywhere list packages --kube-version 1.32
 ```
 
 Example command output:
@@ -181,5 +181,5 @@ The example shows how to install the `harbor` package from the [curated package 
 
 ```bash
 export CLUSTER_NAME=<your-cluster-name>
-eksctl anywhere generate package harbor --cluster ${CLUSTER_NAME} --kube-version 1.31 > harbor-spec.yaml
+eksctl anywhere generate package harbor --cluster ${CLUSTER_NAME} --kube-version 1.32 > harbor-spec.yaml
 ```
