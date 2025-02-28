@@ -58,7 +58,7 @@ spec:
     machineGroupRef:
       kind: CloudStackMachineConfig
       name: my-cluster-name-etcd
-  kubernetesVersion: "1.31"
+  kubernetesVersion: "1.32"
   managementCluster:
     name: my-cluster-name
   workerNodeGroupConfigurations:
@@ -333,7 +333,7 @@ The default is generating a key in your `$(pwd)/<cluster-name>` folder when not 
 ### template.{id,name} (required)
 The VM template to use for your EKS Anywhere cluster. Currently, a VM based on RHEL 8.6 is required.
 This can be a name or ID.
-The `template.name` must contain the `Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` version (in case of modular upgrade). For example, if the Kubernetes version is 1.31, the `template.name` field name should include 1.31, 1_31, 1-31 or 131.
+The `template.name` must contain the `Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` version (in case of modular upgrade). For example, if the Kubernetes version is 1.32, the `template.name` field name should include 1.32, 1_32, 1-32 or 132.
 See the [Artifacts]({{< relref "../../osmgmt/artifacts" >}}) page for instructions for building RHEL-based images.
 
 ### diskOffering (optional)
