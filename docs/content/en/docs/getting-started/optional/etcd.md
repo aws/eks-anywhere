@@ -61,7 +61,7 @@ spec:
       machineGroupRef:
         kind: VSphereMachineConfig
         name: my-cluster-name-etcd
-   kubernetesVersion: "1.31"
+   kubernetesVersion: "1.32"
    workerNodeGroupConfigurations:
       - count: 1
         machineGroupRef:
