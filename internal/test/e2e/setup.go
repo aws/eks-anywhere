@@ -47,6 +47,7 @@ type E2ESession struct {
 	branchName          string
 	hardware            []*api.Hardware
 	logger              logr.Logger
+	stage               string
 }
 
 func newE2ESession(instanceId string, conf instanceRunConf) (*E2ESession, error) {
@@ -64,6 +65,7 @@ func newE2ESession(instanceId string, conf instanceRunConf) (*E2ESession, error)
 		branchName:          conf.BranchName,
 		hardware:            conf.Hardware,
 		logger:              conf.Logger,
+		stage:               conf.Stage,
 	}
 
 	return e, nil

@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"log"
 
@@ -25,6 +24,7 @@ const (
 	testReportFolderFlagName   = "test-report-folder"
 	branchNameFlagName         = "branch-name"
 	instanceConfigFlagName     = "instance-config"
+	stageFlagName              = "stage"
 )
 
 var runE2ECmd = &cobra.Command{
@@ -34,7 +34,7 @@ var runE2ECmd = &cobra.Command{
 	SilenceUsage: true,
 	PreRun:       preRunSetup,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		err := runE2E(cmd.Context())
+		err := runE2E()
 		if err != nil {
 			logger.Fatal(err, "Failed to run e2e test")
 		}
@@ -66,6 +66,7 @@ func init() {
 	runE2ECmd.Flags().Bool(cleanupResourcesFlagName, false, "Flag to indicate if test resources should be cleaned up automatically as tests complete")
 	runE2ECmd.Flags().String(testReportFolderFlagName, "", "Folder destination for JUnit tests reports")
 	runE2ECmd.Flags().String(branchNameFlagName, "main", "EKS-A origin branch from where the tests are being run")
+	runE2ECmd.Flags().String(stageFlagName, "dev", "Flag to indicate the stage the pipeline from where the tests are being triggered")
 
 	for _, flag := range requiredFlags {
 		if err := runE2ECmd.MarkFlagRequired(flag); err != nil {
@@ -74,7 +75,7 @@ func init() {
 	}
 }
 
-func runE2E(ctx context.Context) error {
+func runE2E() error {
 	instanceConfigFile := viper.GetString(instanceConfigFlagName)
 	storageBucket := viper.GetString(storageBucketFlagName)
 	jobId := viper.GetString(jobIdFlagName)
@@ -86,6 +87,7 @@ func runE2E(ctx context.Context) error {
 	cleanupResources := viper.GetBool(cleanupResourcesFlagName)
 	testReportFolder := viper.GetString(testReportFolderFlagName)
 	branchName := viper.GetString(branchNameFlagName)
+	stage := viper.GetString(stageFlagName)
 
 	runConf := e2e.ParallelRunConf{
 		MaxConcurrentTests:     maxConcurrentTests,
@@ -100,6 +102,7 @@ func runE2E(ctx context.Context) error {
 		BranchName:             branchName,
 		TestInstanceConfigFile: instanceConfigFile,
 		Logger:                 logger.Get(),
+		Stage:                  stage,
 	}
 
 	err := e2e.RunTestsInParallel(runConf)
