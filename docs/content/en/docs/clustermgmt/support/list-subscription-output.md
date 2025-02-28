@@ -24,6 +24,12 @@ toc_hide: true
             "licenseArns": [
                 "arn:aws:license-manager::<account-id>:license:l-4f36acf12e6d491484812927b327c066"
             ],
+            "licenses": [
+                {
+                    "id": "<license-id-string>",
+                    "token": "<license-token-string>"
+                }
+            ],
             "tags": {
                 "environment": "prod"
             }

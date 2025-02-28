@@ -17,7 +17,7 @@ toc_hide: true
             "duration": 12,
             "unit": "MONTHS"
         },
-        "status": "ACTIVE",
+        "status": "DELETING",
         "packageRegistry": "<packages-registry>.dkr.ecr.<region>.amazonaws.com",
         "autoRenew": false,
         "licenseArns": [

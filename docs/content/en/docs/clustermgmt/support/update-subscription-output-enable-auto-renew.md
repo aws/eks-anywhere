@@ -19,7 +19,7 @@ toc_hide: true
         },
         "status": "ACTIVE",
         "packageRegistry": "<packages-registry>.dkr.ecr.<region>.amazonaws.com",
-        "autoRenew": false,
+        "autoRenew": true,
         "licenseArns": [
             "arn:aws:license-manager::<account-id>:license:l-4f36acf12e6d491484812927b327c066"
         ],
