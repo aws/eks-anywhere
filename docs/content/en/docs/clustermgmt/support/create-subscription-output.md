@@ -20,6 +20,7 @@ toc_hide: true
           "packageRegistry": "<packages-registry>.dkr.ecr.<region>.amazonaws.com",
           "autoRenew": false,
           "licenseArns": [],
+          "licenses": [],
           "tags": {
               "environment": "prod"
           }
