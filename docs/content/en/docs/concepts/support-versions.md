@@ -20,7 +20,7 @@ Each EKS Anywhere version includes all components required to create and manage 
 - Management components (Cluster API controller, EKS Anywhere controller, provider-specific controllers)
 - Cluster components (Kubernetes, Cilium)
 
-You can find details about each EKS Anywhere release in the [EKS Anywhere release manifest](https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml). The release manifest contains references to the corresponding bundle manifest for each EKS Anywhere version. Within the bundle manifest, you will find the components included in a specific EKS Anywhere version. The images running in your deployment use the same URI values specified in the bundle manifest for that component. For example, see the [bundle manifest](https://anywhere-assets.eks.amazonaws.com/releases/bundles/89/manifest.yaml) for EKS Anywhere version `v0.21.5`.
+You can find details about each EKS Anywhere release in the [EKS Anywhere release manifest](https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml). The release manifest contains references to the corresponding bundle manifest for each EKS Anywhere version. Within the bundle manifest, you will find the components included in a specific EKS Anywhere version. The images running in your deployment use the same URI values specified in the bundle manifest for that component. For example, see the [bundle manifest](https://anywhere-assets.eks.amazonaws.com/releases/bundles/91/manifest.yaml) for EKS Anywhere version `v0.21.7`.
 
 EKS Anywhere follows a 4-month release cadence for minor versions and a 2-week cadence for patch versions. Common vulnerabilities and exposures (CVE) patches and bug fixes, including those for the supported Kubernetes versions, are included in the latest EKS Anywhere minor version (version N). High and critical CVE patches and bug fixes are also backported to the penultimate EKS Anywhere minor version (version N-1), which follows a monthly patch release cadence.
 
@@ -82,7 +82,7 @@ Yes. Extended support for Kubernetes versions was released in EKS Anywhere versi
 
 **4. What happens on the end of support date for a Kubernetes version?**
 
-Unlike Amazon EKS in the cloud, there are not forced upgrades with EKS Anywhere. On the end of support date, you can still create new EKS Anywhere clusters with the unsupported Kubernetes version if the EKS Anywhere version includes it. Existing EKS Anywhere clusters with unsupported Kubernetes versions continue to function. However, you will not be able to receive CVE patches or bug fixes for unsupported Kubernetes versions. Troubleshooting support, configuration guidance, and upgrade assistance is available for all Kubernetes and EKS Anywhere versions for customers with EKS Anywhere Enterprise Subscriptions.
+Unlike Amazon EKS in the cloud, there are no forced upgrades with EKS Anywhere. On the end of support date, you can still create new EKS Anywhere clusters with the unsupported Kubernetes version if the EKS Anywhere version includes it. Existing EKS Anywhere clusters with unsupported Kubernetes versions continue to function. However, you will not be able to receive CVE patches or bug fixes for unsupported Kubernetes versions. Troubleshooting support, configuration guidance, and upgrade assistance is available for all Kubernetes and EKS Anywhere versions for customers with EKS Anywhere Enterprise Subscriptions.
 
 **5. What EKS Anywhere versions are supported if you have the EKS Anywhere Enterprise Subscription?**
 

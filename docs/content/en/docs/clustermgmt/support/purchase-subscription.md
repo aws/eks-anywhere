@@ -168,6 +168,13 @@ aws eks update-eks-anywhere-subscription \
   --no-auto-renew
 ```
 
+<details>
+  <summary>Expand for sample command output</summary>
+  <br />
+  {{% content "update-subscription-output-disable-auto-renew.md" %}}
+</details>
+<br />
+
 Enable auto renewal
 
 ```bash
@@ -176,6 +183,13 @@ aws eks update-eks-anywhere-subscription \
   --id 'my-subscription-id' \
   --auto-renew
 ```
+
+<details>
+  <summary>Expand for sample command output</summary>
+  <br />
+  {{% content "update-subscription-output-enable-auto-renew.md" %}}
+</details>
+<br />
 
 Update tags
 
@@ -207,3 +221,10 @@ aws eks delete-eks-anywhere-subscription \
   --region 'region-code' \
   --id 'my-subscription-id'
 ```
+
+<details>
+  <summary>Expand for sample command output</summary>
+  <br />
+  {{% content "delete-subscription-output.md" %}}
+</details>
+<br />
