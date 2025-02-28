@@ -233,7 +233,7 @@ phases:
         fi
       - STAGE="dev"
       - |
-        if [[ "$(CODEBUILD_INITIATOR)" =~ "aws-staging-eks-a-release" ]]; then
+        if [[ "$CODEBUILD_INITIATOR" =~ "aws-staging-eks-a-release" ]]; then
           STAGE="staging"
         fi
       - SKIPPED_TESTS=$(yq e ".skipped_tests | @csv" ${CODEBUILD_SRC_DIR}/test/e2e/SKIPPED_TESTS.yaml)
