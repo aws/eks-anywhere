@@ -63,6 +63,8 @@ spec:
      labels:                         <a href="#workernodegroupconfigurationslabels-optional"># Labels to apply to worker node group nodes </a>
        <span>"key1"</span>: <span>"value1"</span>
        <span">"key2"</span>: <span>"value2"</span>
+     failureDomains:                 <a href="#workernodegroupconfigurationsfailuredomains-optional"># List of failure domains used for this worker node group </a>
+     - failuredomain-01  
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: VSphereDatacenterConfig
@@ -74,6 +76,19 @@ spec:
   network: <span>"network1"</span>                <a href="#network-required"># Path to the VM network on which to deploy EKS Anywhere (required) </a>
   insecure: false                    <a href="#insecure-optional"># Set to true if vCenter does not have a valid certificate </a>
   thumbprint: <span>"1E:3B:A1:4C:B2:..."</span>   <a href="#thumbprint-required-if-insecurefalse"># SHA1 thumprint of vCenter server certificate (required if insecure=false)</a>
+  failureDomains:                    <a href="#failuredomains-optional"># List of failure domains used for the worker nodes </a>
+  - name: failuredomain-01
+    computeCluster: "computeCluster-1"
+    resourcePool: "resourcePool1"
+    datastore: "dataStore1"
+    folder: "folder1"
+    network: "network1"
+  - name: failuredomain-02
+    computeCluster: "computeCluster-2"
+    resourcePool: "resourcePool2"
+    datastore: "dataStore2"
+    folder: "folder2"
+    network: "network2"
 
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
@@ -197,6 +212,15 @@ The Kubernetes version you want to use for this worker node group. The Kubernete
 
 Must be less than or equal to the cluster `kubernetesVersion` defined at the root level of the cluster spec. The worker node Kubernetes version must be no more than two minor Kubernetes versions lower than the cluster control plane's Kubernetes version. Removing `workerNodeGroupConfiguration.kubernetesVersion` will trigger an upgrade of the node group to the `kubernetesVersion` defined at the root level of the cluster spec.
 
+### workerNodeGroupConfigurations[*].failureDomains (optional)
+The failure domains you want to use for this worker node group. This feature is available behind feature flag `VSPHERE_FAILURE_DOMAIN_ENABLED`. Set environment variable as below to enable this feature.
+
+```
+export VSPHERE_FAILURE_DOMAIN_ENABLED=true
+```
+
+Failure domains must be selected from the predefined list of failure domains defined in VSphereDatacenterConfig.failureDomains
+
 ### externalEtcdConfiguration.count (optional)
 Number of etcd members
 
@@ -249,6 +273,31 @@ openssl x509 -sha1 -fingerprint -in ca.crt -noout
 
 If you specify the wrong thumbprint, an error message will be printed with the expected thumbprint. If no valid
 certificate is being used, `insecure` must be set to true.
+
+### failuredomains (optional)
+The list of failure domains to distribute worker nodes across the infrastructure.This feature is available behind feature flag `VSPHERE_FAILURE_DOMAIN_ENABLED`. Set environment variable as below to enable this feature.
+
+```
+export VSPHERE_FAILURE_DOMAIN_ENABLED=true
+```
+
+#### failureDomains[0].name
+Name is used as a unique identifier for each failure domain.
+
+#### failureDomains[0].computeCluster
+ComputeCluster is the name or inventory path of the computecluster in which the VM is created/located.
+
+#### failureDomains[0].resourcePool
+ResourcePool is the name or inventory path of the resource pool in which the VM is created/located.
+
+#### failureDomains[0].datastore
+Datastore is the name or inventory path of the datastore in which the VM is created/located.
+
+#### failureDomains[0].folder
+Folder is the name or inventory path of the folder in which the the VM is created/located.
+
+#### failureDomains[0].network
+Network is the name or inventory path of the network which will be added to the VM.
 
 ## VSphereMachineConfig Fields
 
