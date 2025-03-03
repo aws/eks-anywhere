@@ -5,6 +5,14 @@ weight: 7
 description: >
   Changelog for Curated packages release
 ---
+## Package Bundle Release (02-28-2025)
+
+#### Changed
+
+- Harbor `2.11.1` to `2.12.1`
+- ADOT `0.41.1` to `0.42.0`
+  - The `logging` exporter is now [deprecated](https://github.com/open-telemetry/opentelemetry-collector/pull/11037),  users should update the config  to the `debug` exporter instead
+
 
 ## Package Bundle Release (12-26-2024)
 
