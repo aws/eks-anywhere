@@ -395,8 +395,7 @@ The completed tasks are stored in the `generated` folder as a file named `<clust
 This feature is experimental. To enable this feature, export the following environment variable:<br/>
 `export CHECKPOINT_ENABLED=true`
 
-### Update vSphere credential
-{{% content "vsphere-credential-update.md" %}}
+
 
 ### Troubleshooting
 
@@ -408,4 +407,8 @@ Attempting to upgrade a cluster with more than 1 minor release will result in re
 Error: failed to upgrade cluster: validations failed
 ```
 
-For more errors you can see the [troubleshooting section]({{< relref "../../troubleshooting" >}}).
+For troubleshooting other common upgrade issues, see the [Troubleshooting]({{< relref "../../troubleshooting" >}}) documentation.
+
+### Update vSphere credentials
+
+To update the vSphere credentials used by EKS Anywhere, see the [Update vSphere credentials]({{< relref "./vsphere-credential-update" >}}) page.
