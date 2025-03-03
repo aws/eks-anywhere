@@ -33,6 +33,18 @@ More information on troubleshooting EKS Anywhere is available from the [AWS Know
 
 ## General troubleshooting
 
+### Infrastructure-specific commands and output (vSphere vs Bare Metal, for example)
+
+You may need to adapt the commands in the troubleshooting examples provided on this page for the infrastructure you are using.  
+Here are examples of what you may see depending on which infrastrurcture you are deploying to:
+
+* capi-system (General)
+* capv-system (vSphere) 
+* capc-system (CloudStack) 
+* capv-system (Nutanix) 
+* capd-system (Docker) 
+* capt-system (Tinkerbell) 
+
 ### Increase eksctl anywhere output
 
 If you’re having trouble running `eksctl anywhere` you may get more verbose output with the `-v 6` option. The highest level of verbosity is `-v 9` and the default level of logging is level equivalent to `-v 0`.
