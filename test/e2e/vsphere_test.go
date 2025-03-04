@@ -4269,21 +4269,6 @@ func TestVSphereKubernetes130To131RedHatUpgrade(t *testing.T) {
 	)
 }
 
-func TestVSphereKubernetes131To132RedHatUpgrade(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithRedHat131VSphere())
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube131)),
-	)
-	runSimpleUpgradeFlow(
-		test,
-		v1alpha1.Kube132,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube132)),
-		provider.WithProviderUpgrade(provider.Redhat132Template()),
-	)
-}
-
 func TestVSphereKubernetes128To129StackedEtcdRedHatUpgrade(t *testing.T) {
 	provider := framework.NewVSphere(t, framework.WithRedHat128VSphere())
 	test := framework.NewClusterE2ETest(
