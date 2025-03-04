@@ -9,6 +9,7 @@ description: >
 ---
 
 {{% alert title="Announcements" color="warning" %}}
+* Due to a bug in Cilium introduced in 1.14, which is present in `v0.21.0`-`v0.21.6`, we recommend that you upgrade to `v0.21.7` or above to fix an issue when using hostport. More details listed [here](https://github.com/aws/eks-anywhere-build-tooling/pull/4330)
 * Due to a bug in the `sigs.k8s.io/yaml` module that EKS Anywhere uses, Kubernetes versions whose minor versions are multiples of 10, such as `1.30`, `1.40`, etc, will be parsed as `float64` instead of `string` if specified without quotes in the cluster config file. This causes the trailing zero to get dropped and be evaluated as `1.3` and `1.4` respectively. This issue has been fixed in EKS Anywhere release `v0.21.5` so we recommend you to upgrade to that version for a better user experience. If you are unable to upgrade to `v0.21.5`, you must use single or double quotes around Kubernetes version(s) whose minor versions are multiples of 10.
   Refer to the following links for more information regarding this issue:
   * [EKS Anywhere issue regarding truncation of trailing zeros in Kubernetes version](https://github.com/aws/eks-anywhere/issues/9184)
