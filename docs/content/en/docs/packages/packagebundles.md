@@ -22,7 +22,7 @@ NAMESPACE       NAME        STATE
 eksa-packages   v1-27-125   available
 ```
 
-To get a package bundle manually, you can use `oras` to pull the package bundle (bundle.yaml) from the [public.ecr.aws/eks-anywhere](https://anywhere.eks.amazonaws.com/docs/packages/packagebundles/) repository. (See the [ORAS CLI official documentation](https://oras.land/docs/) for more details)
+To get a package bundle manually, you can use `oras` to pull the package bundle (bundle.yaml) from the [public.ecr.aws/eks-anywhere](https://gallery.ecr.aws/eks-anywhere/eks-anywhere-packages-bundles) repository. (See the [ORAS CLI official documentation](https://oras.land/docs/) for more details)
 
 ```
 oras pull public.ecr.aws/eks-anywhere/eks-anywhere-packages-bundles:v1-27-latest
