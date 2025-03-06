@@ -101,7 +101,7 @@ phases:
         -j ${JOB_ID}
         -i ${INTEGRATION_TEST_INSTANCE_PROFILE}
         -p ${INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT}
-        -r 'Test'
+        -r ${TEST_REGEX}
         -v 4
         --skip ${SKIPPED_TESTS}
         --bundles-override=${BUNDLES_OVERRIDE}
