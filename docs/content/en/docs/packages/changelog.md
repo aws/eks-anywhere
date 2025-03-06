@@ -5,6 +5,15 @@ weight: 7
 description: >
   Changelog for Curated packages release
 ---
+## Package Bundle Release (02-28-2025)
+
+#### Changed
+
+- Harbor `2.11.1` to `2.12.1`
+  - Fixes [schema.json](https://github.com/aws/eks-anywhere-build-tooling/blob/main/projects/goharbor/harbor/helm/schema.json) to sync with upstream version [PR](https://github.com/aws/eks-anywhere-build-tooling/pull/4373)
+- ADOT `0.41.1` to `0.42.0`
+  - The `logging` exporter is now [deprecated](https://github.com/open-telemetry/opentelemetry-collector/pull/11037), users should update the config to the `debug` exporter instead. Example configuration can be found [here](https://github.com/open-telemetry/opentelemetry-collector/blob/main/exporter/debugexporter/README.md)
+
 
 ## Package Bundle Release (12-26-2024)
 
