@@ -487,7 +487,6 @@ func (e *ClusterE2ETest) generateHardwareConfig(opts ...CommandOpt) {
 }
 
 func (e *ClusterE2ETest) GenerateClusterConfigForVersion(eksaVersion string, opts ...CommandOpt) {
-	e.generateClusterConfigObjects(opts...)
 	if eksaVersion != "" {
 		// LicenseToken field was introduced in cluster spec only in release-22
 		// attempting to populate the field for any prior versions would break the api.
@@ -509,6 +508,7 @@ func (e *ClusterE2ETest) GenerateClusterConfigForVersion(eksaVersion string, opt
 		}
 	}
 
+	e.generateClusterConfigObjects(opts...)
 	e.buildClusterConfigFile()
 }
 
