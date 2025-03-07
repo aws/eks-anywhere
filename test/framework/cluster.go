@@ -64,6 +64,7 @@ const (
 	CleanupResourcesVar                    = "T_CLEANUP_RESOURCES"
 	LicenseTokenEnvVar                     = "LICENSE_TOKEN"
 	LicenseToken2EnvVar                    = "LICENSE_TOKEN2"
+	StagingLicenseTokenEnvVar              = "STAGING_LICENSE_TOKEN"
 	hardwareYamlPath                       = "hardware.yaml"
 	hardwareCsvPath                        = "hardware.csv"
 	EksaPackagesInstallation               = "eks-anywhere-packages"
@@ -501,7 +502,7 @@ func (e *ClusterE2ETest) GenerateClusterConfigForVersion(eksaVersion string, opt
 		}
 
 		if currentSemver.Compare(semverV022) != -1 {
-			licenseToken := GetLicenseToken()
+			licenseToken := GetStagingLicenseToken()
 			if licenseToken != "" {
 				e.clusterFillers = append(e.clusterFillers, api.WithLicenseToken(licenseToken))
 			}
@@ -1111,6 +1112,11 @@ func GetLicenseToken() string {
 // GetLicenseToken2 retrieves the license token 2 from the environment variables.
 func GetLicenseToken2() string {
 	return os.Getenv(LicenseToken2EnvVar)
+}
+
+// GetStagingLicenseToken retrieves the staging license token from the environment variables.
+func GetStagingLicenseToken() string {
+	return os.Getenv(StagingLicenseTokenEnvVar)
 }
 
 func getCleanupResourcesVar() (bool, error) {
