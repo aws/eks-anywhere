@@ -7,3 +7,4 @@
 1. Update `GOLANG_VERSION` in the [`release` `Makefile`](https://github.com/aws/eks-anywhere/blob/main/release/Makefile#L45)
 1. Update `go-version` in [`codecov` workflow](https://github.com/aws/eks-anywhere/blob/main/.github/workflows/go-coverage.yml#L17)
 1. Update `go-version` in [`golangci-lint` workflow](https://github.com/aws/eks-anywhere/blob/main/.github/workflows/golangci-lint.yml#L17)
+1. Update `go-version-input` (twice) in [`govulncheck` workflow](https://github.com/aws/eks-anywhere/blob/main/.github/workflows/vulnerability.yml))
