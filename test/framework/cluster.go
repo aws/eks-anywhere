@@ -65,6 +65,7 @@ const (
 	LicenseTokenEnvVar                     = "LICENSE_TOKEN"
 	LicenseToken2EnvVar                    = "LICENSE_TOKEN2"
 	StagingLicenseTokenEnvVar              = "STAGING_LICENSE_TOKEN"
+	StagingLicenseToken2EnvVar             = "STAGING_LICENSE_TOKEN2"
 	hardwareYamlPath                       = "hardware.yaml"
 	hardwareCsvPath                        = "hardware.csv"
 	EksaPackagesInstallation               = "eks-anywhere-packages"
@@ -1117,6 +1118,11 @@ func GetLicenseToken2() string {
 // GetStagingLicenseToken retrieves the staging license token from the environment variables.
 func GetStagingLicenseToken() string {
 	return os.Getenv(StagingLicenseTokenEnvVar)
+}
+
+// GetStagingLicenseToken2 retrieves the staging license token 2 from the environment variables.
+func GetStagingLicenseToken2() string {
+	return os.Getenv(StagingLicenseToken2EnvVar)
 }
 
 func getCleanupResourcesVar() (bool, error) {
