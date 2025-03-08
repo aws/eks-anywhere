@@ -282,12 +282,24 @@ Optional field to replace the HookOS image.
 This field is useful if you want to provide a customized HookOS image or simply host the standard image locally.
 See [Artifacts]({{< relref "../../osmgmt/artifacts/#hookos-kernel-and-initial-ramdisk-for-bare-metal" >}}) for details.
 
+### isoBoot (optional)
+Optional field (boolean) to enable the ISO boot mode.
+Use this field to enabld ISO mounting and boot for OS installation.
+See [Boot Modes]({{< relref "customize/bare-metal-boot-modes/#iso-boot" >}}) for details.
+
+### hookIsoURL (optional)
+Optional field (string URL) to override the default AWS hosted location for the HookOS ISO.
+Use this field to host the HookOS ISO locally.
+See [Boot Modes]({{< relref "customize/bare-metal-boot-modes/#iso-boot" >}}) for details.
+
 #### Example `TinkerbellDatacenterConfig.spec`
 ```yaml
 spec:
   tinkerbellIP: "192.168.0.10"                                          # Available, routable IP
   osImageURL: "http://my-web-server/ubuntu-v1.23.7-eks-a-12-amd64.gz"   # Full URL to the OS Image hosted locally
   hookImagesURLPath: "http://my-web-server/hook"                        # Path to the hook images. This path must contain vmlinuz-x86_64 and initramfs-x86_64
+  isoBoot: false                                                        # Set to true to enable the ISO boot mode
+  hookIsoURL: "http://my-web-server/hook-x86_64-efi-initrd.iso"         # Full URL to the HookOS ISO image hosted locally
 ```
 This is the folder structure for `my-web-server`:
 ```
@@ -295,7 +307,9 @@ my-web-server
 ├── hook
 │   ├── initramfs-x86_64
 │   └── vmlinuz-x86_64
-└── ubuntu-v1.23.7-eks-a-12-amd64.gz
+├── ubuntu-v1.23.7-eks-a-12-amd64.gz
+└── hook-x86_64-efi-initrd.iso
+
 ```
 
 ### skipLoadBalancerDeployment (optional)
