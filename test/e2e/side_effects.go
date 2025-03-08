@@ -227,27 +227,37 @@ func runTestManagementClusterUpgradeSideEffects(t *testing.T, provider framework
 		),
 	)
 
+	licenseToken := framework.GetStagingLicenseToken2()
+
 	test := framework.NewMulticlusterE2ETest(t, managementCluster)
 
 	workloadCluster := framework.NewClusterE2ETest(t, provider,
 		framework.WithClusterName(test.NewWorkloadClusterName()),
 	)
 	workloadCluster.GenerateClusterConfigForVersion(latestRelease.Version, framework.ExecuteWithEksaRelease(latestRelease))
-	workloadCluster.UpdateClusterConfig(api.ClusterToConfigFiller(
-		api.WithManagementCluster(managementCluster.ClusterName),
-		api.WithControlPlaneCount(2),
-		api.WithControlPlaneLabel("cluster.x-k8s.io/failure-domain", "ds.meta_data.failuredomain"),
-		api.RemoveAllWorkerNodeGroups(),
-		api.WithWorkerNodeGroup("workers-0",
-			api.WithCount(3),
-			api.WithLabel("cluster.x-k8s.io/failure-domain", "ds.meta_data.failuredomain"),
+	workloadCluster.UpdateClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithManagementCluster(managementCluster.ClusterName),
+			api.WithControlPlaneCount(2),
+			api.WithControlPlaneLabel("cluster.x-k8s.io/failure-domain", "ds.meta_data.failuredomain"),
+			api.RemoveAllWorkerNodeGroups(),
+			api.WithWorkerNodeGroup(
+				"workers-0",
+				api.WithCount(3),
+				api.WithLabel("cluster.x-k8s.io/failure-domain", "ds.meta_data.failuredomain"),
+			),
+			api.WithEtcdCountIfExternal(3),
+			api.WithCiliumPolicyEnforcementMode(anywherev1.CiliumPolicyModeAlways),
+			api.WithLicenseToken(licenseToken),
 		),
-		api.WithEtcdCountIfExternal(3),
-		api.WithCiliumPolicyEnforcementMode(anywherev1.CiliumPolicyModeAlways)),
-		provider.WithNewWorkerNodeGroup("workers-0",
-			framework.WithWorkerNodeGroup("workers-0",
+		provider.WithNewWorkerNodeGroup(
+			"workers-0",
+			framework.WithWorkerNodeGroup(
+				"workers-0",
 				api.WithCount(2),
-				api.WithLabel("cluster.x-k8s.io/failure-domain", "ds.meta_data.failuredomain"))),
+				api.WithLabel("cluster.x-k8s.io/failure-domain", "ds.meta_data.failuredomain"),
+			),
+		),
 		framework.WithOIDCClusterConfig(t),
 		provider.WithKubeVersionAndOS(kubeVersion, os, latestRelease),
 		api.JoinClusterConfigFillers(
