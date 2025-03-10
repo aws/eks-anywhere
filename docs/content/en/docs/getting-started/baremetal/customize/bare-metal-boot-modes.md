@@ -61,6 +61,13 @@ To enable the ISO boot method there is one required fields and one optional fiel
 - Required: `TinkerbellDatacenterConfig.spec.isoBoot` - Set this field to `true` to enable the ISO boot mode.
 - Optional: `TinkerbellDatacenterConfig.spec.isoURL` - This field is a string value that specifies the URL to the HookOS ISO file. If this field is not provided, the default HookOS ISO file will be used.
 
+{{% alert title="Important" color="warning" %}}
+In order to use the ISO boot mode all of the following must be true:
+- The BMC info for all machines must be provided in the <a href="{{< relref "../bare-preparation/#prepare-hardware-inventory" >}}">hardware.csv</a> file.
+- All BMCs must have virtual media mounting capabilities with remote HTTP(S) support.
+- All BMCs must have <a href="https://www.dmtf.org/standards/redfish">Redfish</a> enabled and Redfish must have virtual media mounting capabilities.
+{{% /alert %}}
+
 ```yaml
 spec:
   isoBoot: true
