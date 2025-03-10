@@ -56,7 +56,7 @@ EKS Anywhere -> File Server: patch and serve HookOS
 
 ### Cluster Spec Configuration - ISO Boot
 
-To enable the ISO boot method there is one required fields and one optional field.
+To enable the ISO boot method there is one required field and one optional field.
 
 - Required: `TinkerbellDatacenterConfig.spec.isoBoot` - Set this field to `true` to enable the ISO boot mode.
 - Optional: `TinkerbellDatacenterConfig.spec.isoURL` - This field is a string value that specifies the URL to the HookOS ISO file. If this field is not provided, the default HookOS ISO file will be used.
