@@ -284,7 +284,7 @@ See [Artifacts]({{< relref "../../osmgmt/artifacts/#hookos-kernel-and-initial-ra
 
 ### isoBoot (optional)
 Optional field (boolean) to enable the ISO boot mode.
-Use this field to enabld ISO mounting and boot for OS installation.
+Use this field to enable ISO mounting and boot for OS installation.
 See [Boot Modes]({{< relref "customize/bare-metal-boot-modes/#iso-boot" >}}) for details.
 
 ### hookIsoURL (optional)
