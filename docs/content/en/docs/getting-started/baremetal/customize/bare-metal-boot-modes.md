@@ -12,7 +12,7 @@ In order to install an Operating System on a machine, the machine needs to boot 
 
 ## Network Boot
 
-This is the default boot method machines in EKS Anywhere. This method requires the EKS Anywhere Bootstrap and Management Clusters to have layer 2 network access to the machines being booted. The network boot process hands out the initial bootloader location via DHCP. In EKS Anywhere this is the iPXE bootloader. The iPXE bootloader then downloads the EKS Anywhere OSIE image and boots into it. The following is a simplified sequence diagram of the network boot process:
+This is the default boot method used for machines in EKS Anywhere. This method requires the EKS Anywhere Bootstrap and Management Clusters to have layer 2 network access to the machines being booted. The network boot process hands out the initial bootloader location via DHCP. In EKS Anywhere this is the iPXE bootloader. The iPXE bootloader then downloads the EKS Anywhere OSIE image and boots into it. The following is a simplified sequence diagram of the network boot process:
 
 <!-- This is the code to generate this image
 ```sequence
