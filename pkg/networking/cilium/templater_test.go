@@ -350,8 +350,9 @@ func TestTemplaterGenerateManifestDirectModeManualIPCIDRSuccess(t *testing.T) {
 		"prometheus": map[string]interface{}{
 			"enabled": true,
 		},
-		"rollOutCiliumPods":     true,
-		"autoDirectNodeRoutes":  true,
+		"rollOutCiliumPods": true,
+
+		"autoDirectNodeRoutes":  "true",
 		"routingMode":           "native",
 		"ipv4NativeRoutingCIDR": "192.168.0.0/24",
 		"ipv6NativeRoutingCIDR": "2001:db8::/32",
@@ -376,6 +377,9 @@ func TestTemplaterGenerateManifestDirectModeManualIPCIDRSuccess(t *testing.T) {
 	tt.spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.IPv4NativeRoutingCIDR = "192.168.0.0/24"
 	tt.spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.IPv6NativeRoutingCIDR = "2001:db8::/32"
 	tt.expectHelmClientFactoryGet("", "")
+
+	fmt.Println(wantValues)
+	fmt.Println()
 	tt.expectHelmTemplateWith(eqMap(wantValues), "1.22").Return(tt.manifest, nil)
 
 	tt.Expect(tt.t.GenerateManifest(tt.ctx, tt.spec)).To(Equal(tt.manifest), "templater.GenerateManifest() should return right manifest")
