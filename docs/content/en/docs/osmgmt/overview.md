@@ -22,15 +22,15 @@ Reference the table below for the operating systems supported per deployment opt
 | Ubuntu | 20.04.x, 22.04.x |
 | RHEL | 8.x, 9.x<sup>*</sup> |
 
-<sup>*</sup>Nutanix and CloudStack only
+<sup>*</sup>Bare Metal, CloudStack and Nutanix only
 
-With the vSphere, bare metal, Snow, CloudStack and Nutanix deployment options, EKS Anywhere provisions the operating system when new machines are deployed during cluster creation, upgrade, and scaling operations. You can configure the operating system to use through the EKS Anywhere cluster spec, which varies by deployment option. See the deployment option sections below for an overview of how the operating system configuration works per deployment option.
+With the vSphere, Bare Metal, Snow, CloudStack and Nutanix deployment options, EKS Anywhere provisions the operating system when new machines are deployed during cluster creation, upgrade, and scaling operations. You can configure the operating system to use through the EKS Anywhere cluster spec, which varies by deployment option. See the deployment option sections below for an overview of how the operating system configuration works per deployment option.
 
 ## vSphere
 To configure the operating system to use for EKS Anywhere clusters on vSphere, use the [`VSphereMachingConfig` `spec.template` field]({{< ref "/docs/getting-started/vsphere/vsphere-spec#template-optional" >}}). The template name corresponds to the template you imported into your vSphere environment. See the [Customize OVAs]({{< ref "/docs/getting-started/vsphere/customize/customize-ovas" >}}) and [Import OVAs]({{< ref "/docs/getting-started/vsphere/customize/vsphere-ovas" >}}) documentation pages for more information. Changing the template after cluster creation will result in the deployment of new machines.
 
-## Bare metal
-To configure the operating system to use for EKS Anywhere clusters on bare metal, use the [`TinkerbellDatacenterConfig` `spec.osImageURL` field]({{< ref "/docs/getting-started/baremetal/bare-spec#osimageurl-required" >}}). This field can be used to stream the operating system from a custom location and is required to use Ubuntu or RHEL. You cannot change the `osImageURL` after creating your cluster. To upgrade the operating system, you must replace the image at the existing `osImageURL` location with a new image. Operating system changes are only deployed when an action that triggers a deployment of new machines is triggered, which includes Kubernetes version upgrades only at this time.
+## Bare Metal
+To configure the operating system to use for EKS Anywhere clusters on Bare Metal, use the [`TinkerbellDatacenterConfig` `spec.osImageURL` field]({{< ref "/docs/getting-started/baremetal/bare-spec#osimageurl-required" >}}). This field can be used to stream the operating system from a custom location and is required to use Ubuntu or RHEL. You cannot change the `osImageURL` after creating your cluster. To upgrade the operating system, you must replace the image at the existing `osImageURL` location with a new image. Operating system changes are only deployed when an action that triggers a deployment of new machines is triggered, which includes Kubernetes version upgrades only at this time.
 
 ## Snow
 To configure the operating system to use for EKS Anywhere clusters on Snow, use the [`SnowMachineConfig` `spec.osFamily` field]({{< ref "/docs/getting-started/snow/snow-spec#osfamily" >}}). At this time, only Ubuntu is supported for use with EKS Anywhere clusters on Snow. You can customize the instance image with the [`SnowMachineConfig` `spec.amiID` field]({{< ref "/docs/getting-started/snow/snow-spec#amiid-optional" >}}) and the instance type with the [`SnowMachineConfig` `spec.instanceType` field]({{< ref "/docs/getting-started/snow/snow-spec#instancetype-optional" >}}). Changes to these fields after cluster creation will result in the deployment of new machines.
