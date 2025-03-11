@@ -51,6 +51,11 @@ const (
 	MemoryAvailable          = "Memory_Available"
 )
 
+const (
+	// Documentation URLs.
+	vSpherePermissionDoc = "https://anywhere.eks.amazonaws.com/docs/getting-started/vsphere/vsphere-preparation/"
+)
+
 //go:embed config/template-cp.yaml
 var defaultCAPIConfigCP string
 
@@ -376,7 +381,7 @@ func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 
 	if !p.skippedValidations[validations.VSphereUserPriv] {
 		if err := p.validator.validateVsphereUserPrivs(ctx, vSphereClusterSpec); err != nil {
-			return fmt.Errorf("validating vsphere user privileges: %v", err)
+			return fmt.Errorf("validating vsphere user privileges: %w, please refer to %s for required permissions or use -v 3 for full missing permissions", err, vSpherePermissionDoc)
 		}
 	}
 
