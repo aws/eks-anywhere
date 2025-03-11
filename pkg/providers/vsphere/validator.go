@@ -9,8 +9,6 @@ import (
 	"net"
 	"path/filepath"
 
-	"gopkg.in/yaml.v2"
-
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/collection"
 	"github.com/aws/eks-anywhere/pkg/config"
@@ -553,13 +551,14 @@ func (v *Validator) validatePrivs(ctx context.Context, privObjs []PrivAssociatio
 	}
 
 	if len(missingPrivs) != 0 {
-		content, err := yaml.Marshal(missingPrivs)
+
+		_, err := json.Marshal(missingPrivs)
 		if err != nil {
 			return passed, fmt.Errorf("failed to marshal missing permissions: %v", err)
 		}
 
 		errMsg := fmt.Sprintf("user %s missing vSphere permissions", username)
-		logger.V(3).Info(errMsg, "Permissions", string(content))
+		logger.V(3).Info(errMsg, "Missing Permissions (JSON)", missingPrivs)
 
 		return passed, fmt.Errorf("user %s missing vSphere permissions", username)
 	}
