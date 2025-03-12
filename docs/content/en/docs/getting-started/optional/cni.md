@@ -173,7 +173,7 @@ spec:
 
 By default all traffic is sent by Cilium over Geneve tunneling on the network. The `routingMode` option allows users to switch to [native routing](https://docs.cilium.io/en/v1.15/network/concepts/routing/#native-routing) instead.
 
-The `ipv4-native-routing-cidr` is required to set the CIDR in which native routing can be performed.
+The `ipv4NativeRoutingCIDR` is required to set the CIDR in which native routing can be performed.
 
 These fields can be set as follows:
 ```yaml
@@ -192,7 +192,7 @@ spec:
     cniConfig:
       cilium:
         routingMode: "direct"
-        ipv4-native-routing-cidr: 192.168.0.0/16
+        ipv4NativeRoutingCIDR: 192.168.0.0/16
 ```
 
 ### Use a custom CNI
