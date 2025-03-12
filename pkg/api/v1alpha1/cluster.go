@@ -796,6 +796,7 @@ func validateCNIPlugin(network ClusterNetwork) error {
 		}
 		return nil
 	}
+
 	return validateCNIConfig(network.CNIConfig)
 }
 
@@ -840,6 +841,10 @@ func validateCiliumConfig(cilium *CiliumConfig) error {
 		if cilium.PolicyEnforcementMode != "" {
 			return errors.New("when using skipUpgrades for cilium all other fields must be empty")
 		}
+	}
+
+	if cilium.RoutingMode == "direct" && cilium.IPv4NativeRoutingCIDR == "" {
+		return errors.New("direct routing mode requires IPv4NativeRoutingCIDR to be set")
 	}
 
 	if cilium.PolicyEnforcementMode == "" {
