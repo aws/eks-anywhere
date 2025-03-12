@@ -150,7 +150,6 @@ func (t *Templater) GenerateManifest(ctx context.Context, spec *cluster.Spec, op
 		return nil, fmt.Errorf("failed generating cilium manifest: %v", err)
 	}
 
-	// Print manifes file in string format
 	if spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode == anywherev1.CiliumPolicyModeAlways {
 		networkPolicyManifest, err := t.GenerateNetworkPolicyManifest(spec, c.namespaces)
 		if err != nil {
