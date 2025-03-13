@@ -3073,6 +3073,17 @@ func TestValidateCNIConfig(t *testing.T) {
 			},
 		},
 		{
+			name:    "directmode needs native routing CIDR",
+			wantErr: fmt.Errorf("validating cniConfig: direct routing mode requires IPv4NativeRoutingCIDR to be set"),
+			clusterNetwork: &ClusterNetwork{
+				CNIConfig: &CNIConfig{
+					Cilium: &CiliumConfig{
+						RoutingMode: CiliumRoutingModeDirect,
+					},
+				},
+			},
+		},
+		{
 			name:    "invalid cilium policy enforcement mode",
 			wantErr: fmt.Errorf("validating cniConfig: cilium policyEnforcementMode \"invalid\" not supported"),
 			clusterNetwork: &ClusterNetwork{

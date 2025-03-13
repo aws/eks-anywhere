@@ -119,8 +119,8 @@ func TestTemplaterGenerateUpgradePreflightManifestSuccess(t *testing.T) {
 			"enabled": true,
 		},
 		"rollOutCiliumPods": true,
-		"routing-mode":      "tunnel",
-		"tunnel-protocol":   "geneve",
+		"routingMode":       "tunnel",
+		"tunnelProtocol":    "geneve",
 		"image": map[string]interface{}{
 			"repository": "public.ecr.aws/isovalent/cilium",
 			"tag":        "v1.9.11-eksa.1",
@@ -190,8 +190,8 @@ func TestTemplaterGenerateManifestSuccess(t *testing.T) {
 			"enabled": true,
 		},
 		"rollOutCiliumPods": true,
-		"routing-mode":      "tunnel",
-		"tunnel-protocol":   "geneve",
+		"routingMode":       "tunnel",
+		"tunnelProtocol":    "geneve",
 		"image": map[string]interface{}{
 			"repository": "public.ecr.aws/isovalent/cilium",
 			"tag":        "v1.9.11-eksa.1",
@@ -228,8 +228,8 @@ func TestTemplaterGenerateManifestPolicyEnforcementModeSuccess(t *testing.T) {
 			"enabled": true,
 		},
 		"rollOutCiliumPods": true,
-		"routing-mode":      "tunnel",
-		"tunnel-protocol":   "geneve",
+		"routingMode":       "tunnel",
+		"tunnelProtocol":    "geneve",
 		"image": map[string]interface{}{
 			"repository": "public.ecr.aws/isovalent/cilium",
 			"tag":        "v1.9.11-eksa.1",
@@ -271,8 +271,8 @@ func TestTemplaterGenerateManifestEgressMasqueradeInterfacesSuccess(t *testing.T
 			"enabled": true,
 		},
 		"rollOutCiliumPods": true,
-		"routing-mode":      "tunnel",
-		"tunnel-protocol":   "geneve",
+		"routingMode":       "tunnel",
+		"tunnelProtocol":    "geneve",
 		"image": map[string]interface{}{
 			"repository": "public.ecr.aws/isovalent/cilium",
 			"tag":        "v1.9.11-eksa.1",
@@ -312,7 +312,7 @@ func TestTemplaterGenerateManifestDirectRouteModeSuccess(t *testing.T) {
 			"enabled": true,
 		},
 		"rollOutCiliumPods":    true,
-		"routing-mode":         "native",
+		"routingMode":          "native",
 		"autoDirectNodeRoutes": "true",
 		"image": map[string]interface{}{
 			"repository": "public.ecr.aws/isovalent/cilium",
@@ -351,7 +351,8 @@ func TestTemplaterGenerateManifestDirectModeManualIPCIDRSuccess(t *testing.T) {
 			"enabled": true,
 		},
 		"rollOutCiliumPods":     true,
-		"routing-mode":          "native",
+		"autoDirectNodeRoutes":  "true",
+		"routingMode":           "native",
 		"ipv4NativeRoutingCIDR": "192.168.0.0/24",
 		"ipv6NativeRoutingCIDR": "2001:db8::/32",
 		"image": map[string]interface{}{
@@ -459,8 +460,8 @@ func wantUpgradeValues() map[string]interface{} {
 			"enabled": true,
 		},
 		"rollOutCiliumPods": true,
-		"routing-mode":      "tunnel",
-		"tunnel-protocol":   "geneve",
+		"routingMode":       "tunnel",
+		"tunnelProtocol":    "geneve",
 		"image": map[string]interface{}{
 			"repository": "public.ecr.aws/isovalent/cilium",
 			"tag":        "v1.9.11-eksa.1",
