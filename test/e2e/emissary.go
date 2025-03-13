@@ -32,9 +32,10 @@ func runCuratedPackageEmissaryInstallSimpleFlow(test *framework.ClusterE2ETest) 
 }
 
 func runCuratedPackageEmissaryRemoteClusterInstallSimpleFlow(test *framework.MulticlusterE2ETest) {
+	licenseToken := framework.GetLicenseToken2()
 	test.CreateManagementClusterWithConfig()
 	test.RunInWorkloadClusters(func(e *framework.WorkloadCluster) {
-		e.GenerateClusterConfig()
+		e.GenerateClusterConfigWithLicenseToken(licenseToken)
 		e.ApplyClusterManifest()
 		e.WaitForKubeconfig()
 		e.ValidateClusterState()
