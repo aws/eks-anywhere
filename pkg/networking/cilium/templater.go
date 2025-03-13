@@ -205,8 +205,8 @@ func templateValues(spec *cluster.Spec, versionsBundle *cluster.VersionsBundle) 
 			"enabled": true,
 		},
 		"rollOutCiliumPods": true,
-		"routing-mode":      "tunnel",
-		"tunnel-protocol":   "geneve",
+		"routingMode":       "tunnel",
+		"tunnelProtocol":    "geneve",
 		"image": values{
 			"repository": versionsBundle.Cilium.Cilium.Image(),
 			"tag":        versionsBundle.Cilium.Cilium.Tag(),
@@ -237,16 +237,18 @@ func templateValues(spec *cluster.Spec, versionsBundle *cluster.VersionsBundle) 
 	}
 
 	if spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.RoutingMode == anywherev1.CiliumRoutingModeDirect {
-		val["routing-mode"] = "native"
-		delete(val, "tunnel-protocol")
+		val["routingMode"] = "native"
+		val["autoDirectNodeRoutes"] = "true"
 
-		if spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.IPv4NativeRoutingCIDR == "" &&
-			spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.IPv6NativeRoutingCIDR == "" {
-			val["autoDirectNodeRoutes"] = "true"
-		} else {
+		delete(val, "tunnelProtocol")
+
+		if spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.IPv4NativeRoutingCIDR != "" {
 			val["ipv4NativeRoutingCIDR"] = spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.IPv4NativeRoutingCIDR
+		}
+		if spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.IPv6NativeRoutingCIDR != "" {
 			val["ipv6NativeRoutingCIDR"] = spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.IPv6NativeRoutingCIDR
 		}
+
 	}
 
 	return val

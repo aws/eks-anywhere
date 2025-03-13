@@ -171,9 +171,11 @@ spec:
 
 ### RoutingMode option for Cilium plugin
 
-By default all traffic is sent by Cilium over Geneve tunneling on the network. The `routingMode` option allows users to switch to [native routing](https://docs.cilium.io/en/v1.12/concepts/networking/routing/#native-routing) instead.
+By default all traffic is sent by Cilium over Geneve tunneling on the network. The `routingMode` option allows users to switch to [native routing](https://docs.cilium.io/en/v1.15/network/concepts/routing/#native-routing) instead.
 
-This field can be set as follows:
+The `ipv4NativeRoutingCIDR` is required to set the CIDR in which native routing can be performed.
+
+These fields can be set as follows:
 ```yaml
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: Cluster
@@ -190,6 +192,7 @@ spec:
     cniConfig:
       cilium:
         routingMode: "direct"
+        ipv4NativeRoutingCIDR: 192.168.0.0/16
 ```
 
 ### Use a custom CNI
