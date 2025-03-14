@@ -44,8 +44,6 @@ env:
   secrets-manager:
     EKSA_VSPHERE_USERNAME: "vsphere_ci_beta_connection:vsphere_username"
     EKSA_VSPHERE_PASSWORD: "vsphere_ci_beta_connection:vsphere_password"
-    EKSA_AWS_ACCESS_KEY_ID: "packages_ci_beta:aws_access_key_id"
-    EKSA_AWS_SECRET_ACCESS_KEY: "packages_ci_beta:aws_secret_access_key_id"
     EKSA_AWS_REGION: "packages_ci_beta:aws_region"
     VSPHERE_SERVER: "vsphere_ci_beta_connection:vsphere_url"
     GOVC_INSECURE: "vsphere_ci_beta_connection:govc_insecure"
@@ -152,6 +150,11 @@ phases:
       - source ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/create_infra_config.sh
       - ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/start_docker.sh
       - make conformance-tests
+      - PACKAGES_ROLE=$(aws sts assume-role --role-arn $PACKAGES_ROLE_ARN --role-session-name test)
+      - export PACKAGES_ROLE
+      - export EKSA_AWS_ACCESS_KEY_ID=$(echo "${PACKAGES_ROLE}" | jq -r '.Credentials.AccessKeyId')
+      - export EKSA_AWS_SECRET_ACCESS_KEY=$(echo "${PACKAGES_ROLE}" | jq -r '.Credentials.SecretAccessKey')
+      - export EKSA_AWS_SESSION_TOKEN=$(echo "${PACKAGES_ROLE}" | jq -r '.Credentials.SessionToken') 
   build:
     commands:
       - export JOB_ID=$CODEBUILD_BUILD_ID

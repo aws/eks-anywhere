@@ -11,11 +11,7 @@ env:
     TEST_RUNNER_GOVC_TEMPLATE: "eks-a-admin-ci"
     INTEGRATION_TEST_INFRA_CONFIG: "/tmp/test-infra.yml"
   secrets-manager:
-    EKSA_AWS_ACCESS_KEY_ID: "packages_ci_beta:aws_access_key_id"
-    EKSA_AWS_SECRET_ACCESS_KEY: "packages_ci_beta:aws_secret_access_key_id"
     EKSA_AWS_REGION: "packages_ci_beta:aws_region"
-    ROUTE53_ACCESS_KEY_ID: "packages_ci_beta:route53_access_key_id"
-    ROUTE53_SECRET_ACCESS_KEY: "packages_ci_beta:route53_secret_access_key"
     ROUTE53_REGION: "packages_ci_beta:route53_region"
     ROUTE53_ZONEID: "packages_ci_beta:route53_zoneid"
     EKSA_GITHUB_TOKEN: "github-eks-anywhere-flux-bot:github-token"
@@ -84,6 +80,16 @@ phases:
         -n ${CLUSTER_NAME_PREFIX}
         --delete-duplicate-networks
         -v 6
+      - PACKAGES_ROLE=$(aws sts assume-role --role-arn $PACKAGES_ROLE_ARN --role-session-name test)
+      - export PACKAGES_ROLE
+      - export EKSA_AWS_ACCESS_KEY_ID=$(echo "${PACKAGES_ROLE}" | jq -r '.Credentials.AccessKeyId')
+      - export EKSA_AWS_SECRET_ACCESS_KEY=$(echo "${PACKAGES_ROLE}" | jq -r '.Credentials.SecretAccessKey')
+      - export EKSA_AWS_SESSION_TOKEN=$(echo "${PACKAGES_ROLE}" | jq -r '.Credentials.SessionToken')
+      - CERT_MANAGER_ROLE=$(aws sts assume-role --role-arn $CERT_MANAGER_ROLE_ARN --role-session-name test)
+      - export CERT_MANAGER_ROLE
+      - export ROUTE53_ACCESS_KEY_ID=$(echo "${CERT_MANAGER_ROLE}" | jq -r '.Credentials.AccessKeyId')
+      - export ROUTE53_SECRET_ACCESS_KEY=$(echo "${CERT_MANAGER_ROLE}" | jq -r '.Credentials.SecretAccessKey')
+      - export ROUTE53_SESSION_TOKEN=$(echo "${CERT_MANAGER_ROLE}" | jq -r '.Credentials.SessionToken')
   build:
     commands:
       - export JOB_ID=$CODEBUILD_BUILD_ID
