@@ -53,14 +53,14 @@ spec:
         batch: {}
         memory_limiter: null
       exporters:
-        logging:
-          loglevel: info
+        debug:
+          verbosity: basic
       service:
         pipelines:
           metrics:
             receivers: [prometheus]
             processors: [batch]
-            exporters: [logging]
+            exporters: [debug]
         telemetry:
           metrics:
             address: 0.0.0.0:8888
