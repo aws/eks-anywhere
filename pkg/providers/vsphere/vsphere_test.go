@@ -41,27 +41,27 @@ import (
 )
 
 const (
-	testClusterConfigMainFilename            = "cluster_main.yaml"
-	testClusterConfigMainStackedEtcdFilename = "cluster_main_stacked_etcd.yaml"
-	testClusterConfigMain121Filename         = "cluster_main_121.yaml"
-	testClusterConfigMain121CPOnlyFilename   = "cluster_main_121_cp_only.yaml"
-	testClusterConfigWithCPUpgradeStrategy   = "cluster_main_121_cp_upgrade_strategy.yaml"
-	testClusterConfigWithMDUpgradeStrategy   = "cluster_main_121_md_upgrade_strategy.yaml"
-	testClusterConfigRedhatFilename          = "cluster_redhat_external_etcd.yaml"
-	testDataDir                              = "testdata"
-	expectedVSphereName                      = "vsphere"
-	expectedVSphereUsername                  = "vsphere_username"
-	expectedVSpherePassword                  = "vsphere_password"
-	expectedVSphereServer                    = "vsphere_server"
-	expectedExpClusterResourceSet            = "expClusterResourceSetKey"
-	eksd119Release                           = "kubernetes-1-19-eks-4"
-	eksd119ReleaseTag                        = "eksdRelease:kubernetes-1-19-eks-4"
-	eksd121ReleaseTag                        = "eksdRelease:kubernetes-1-21-eks-4"
-	eksd129ReleaseTag                        = "eksdRelease:kubernetes-1-29-eks-4"
-	ubuntuOSTag                              = "os:ubuntu"
-	bottlerocketOSTag                        = "os:bottlerocket"
-	testTemplate                             = "/SDDC-Datacenter/vm/Templates/ubuntu-1804-kube-v1.19.6"
-	testVsphereClusterConfigMainFailueDomainFilename            = "cluster_vsphere_failuredomain.yaml"
+	testClusterConfigMainFilename                    = "cluster_main.yaml"
+	testClusterConfigMainStackedEtcdFilename         = "cluster_main_stacked_etcd.yaml"
+	testClusterConfigMain121Filename                 = "cluster_main_121.yaml"
+	testClusterConfigMain121CPOnlyFilename           = "cluster_main_121_cp_only.yaml"
+	testClusterConfigWithCPUpgradeStrategy           = "cluster_main_121_cp_upgrade_strategy.yaml"
+	testClusterConfigWithMDUpgradeStrategy           = "cluster_main_121_md_upgrade_strategy.yaml"
+	testClusterConfigRedhatFilename                  = "cluster_redhat_external_etcd.yaml"
+	testDataDir                                      = "testdata"
+	expectedVSphereName                              = "vsphere"
+	expectedVSphereUsername                          = "vsphere_username"
+	expectedVSpherePassword                          = "vsphere_password"
+	expectedVSphereServer                            = "vsphere_server"
+	expectedExpClusterResourceSet                    = "expClusterResourceSetKey"
+	eksd119Release                                   = "kubernetes-1-19-eks-4"
+	eksd119ReleaseTag                                = "eksdRelease:kubernetes-1-19-eks-4"
+	eksd121ReleaseTag                                = "eksdRelease:kubernetes-1-21-eks-4"
+	eksd129ReleaseTag                                = "eksdRelease:kubernetes-1-29-eks-4"
+	ubuntuOSTag                                      = "os:ubuntu"
+	bottlerocketOSTag                                = "os:bottlerocket"
+	testTemplate                                     = "/SDDC-Datacenter/vm/Templates/ubuntu-1804-kube-v1.19.6"
+	testVsphereClusterConfigMainFailueDomainFilename = "cluster_vsphere_failuredomain.yaml"
 )
 
 type DummyProviderGovcClient struct {
@@ -1557,8 +1557,8 @@ func TestSetupAndValidateCreateClusterMissingPrivError(t *testing.T) {
 	provider.validator.vSphereClientBuilder = vscb
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-
-	thenErrorExpected(t, "validating vsphere user privileges: error", err)
+	expectedErrorMsg := fmt.Sprintf("validating vsphere user privileges: error, please refer to %s for required permissions or use -v 3 for full missing permissions", vSpherePermissionDoc)
+	thenErrorExpected(t, expectedErrorMsg, err)
 }
 
 func TestSetupAndValidateUpgradeClusterMissingPrivError(t *testing.T) {
