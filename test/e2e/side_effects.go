@@ -214,7 +214,7 @@ func runTestManagementClusterUpgradeSideEffects(t *testing.T, provider framework
 	latestRelease := latestMinorRelease(t)
 
 	managementCluster := framework.NewClusterE2ETest(t, provider, framework.PersistentCluster())
-	managementCluster.GenerateClusterConfigForVersion(latestRelease.Version, framework.ExecuteWithEksaRelease(latestRelease))
+	managementCluster.GenerateClusterConfigForVersion(latestRelease.Version, "", framework.ExecuteWithEksaRelease(latestRelease))
 	managementCluster.UpdateClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithControlPlaneCount(1),
@@ -234,7 +234,7 @@ func runTestManagementClusterUpgradeSideEffects(t *testing.T, provider framework
 	workloadCluster := framework.NewClusterE2ETest(t, provider,
 		framework.WithClusterName(test.NewWorkloadClusterName()),
 	)
-	workloadCluster.GenerateClusterConfigForVersion(latestRelease.Version, framework.ExecuteWithEksaRelease(latestRelease))
+	workloadCluster.GenerateClusterConfigForVersion(latestRelease.Version, licenseToken, framework.ExecuteWithEksaRelease(latestRelease))
 	workloadCluster.UpdateClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithManagementCluster(managementCluster.ClusterName),
@@ -248,7 +248,6 @@ func runTestManagementClusterUpgradeSideEffects(t *testing.T, provider framework
 			),
 			api.WithEtcdCountIfExternal(3),
 			api.WithCiliumPolicyEnforcementMode(anywherev1.CiliumPolicyModeAlways),
-			api.WithLicenseToken(licenseToken),
 		),
 		provider.WithNewWorkerNodeGroup(
 			"workers-0",

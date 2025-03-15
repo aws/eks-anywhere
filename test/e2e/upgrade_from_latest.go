@@ -34,7 +34,7 @@ func prevLatestMinorRelease(t testing.TB) *releasev1.EksARelease {
 }
 
 func runUpgradeFromReleaseFlow(test *framework.ClusterE2ETest, latestRelease *releasev1.EksARelease, wantVersion anywherev1.KubernetesVersion, clusterOpts ...framework.ClusterE2ETestOpt) {
-	test.GenerateClusterConfigForVersion(latestRelease.Version, framework.ExecuteWithEksaRelease(latestRelease))
+	test.GenerateClusterConfigForVersion(latestRelease.Version, "", framework.ExecuteWithEksaRelease(latestRelease))
 	test.CreateCluster(framework.ExecuteWithEksaRelease(latestRelease))
 	// Adding this manual wait because old versions of the cli don't wait long enough
 	// after creation, which makes the upgrade preflight validations fail
@@ -46,7 +46,7 @@ func runUpgradeFromReleaseFlow(test *framework.ClusterE2ETest, latestRelease *re
 }
 
 func runUpgradeWithFluxFromReleaseFlow(test *framework.ClusterE2ETest, latestRelease *releasev1.EksARelease, wantVersion anywherev1.KubernetesVersion, clusterOpts ...framework.ClusterE2ETestOpt) {
-	test.GenerateClusterConfigForVersion(latestRelease.Version, framework.ExecuteWithEksaRelease(latestRelease))
+	test.GenerateClusterConfigForVersion(latestRelease.Version, "", framework.ExecuteWithEksaRelease(latestRelease))
 	test.CreateCluster(framework.ExecuteWithEksaRelease(latestRelease))
 	// Adding this manual wait because old versions of the cli don't wait long enough
 	// after creation, which makes the upgrade preflight validations fail
@@ -200,7 +200,7 @@ func runMulticlusterUpgradeFromReleaseFlowAPIWithFlux(test *framework.Multiclust
 func runUpgradeManagementComponentsFlow(t *testing.T, release *releasev1.EksARelease, provider framework.Provider, kubeVersion anywherev1.KubernetesVersion, os framework.OS) {
 	test := framework.NewClusterE2ETest(t, provider)
 	// create cluster with old eksa
-	test.GenerateClusterConfigForVersion(release.Version, framework.ExecuteWithEksaRelease(release))
+	test.GenerateClusterConfigForVersion(release.Version, "", framework.ExecuteWithEksaRelease(release))
 	test.UpdateClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithKubernetesVersion(kubeVersion),

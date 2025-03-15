@@ -1767,7 +1767,7 @@ func TestTinkerbellKubernetes128UpgradeManagementComponents(t *testing.T) {
 		framework.WithWorkerHardware(1),
 	)
 	// create cluster with old eksa
-	test.GenerateClusterConfigForVersion(release.Version, framework.ExecuteWithEksaRelease(release))
+	test.GenerateClusterConfigForVersion(release.Version, "", framework.ExecuteWithEksaRelease(release))
 	test.UpdateClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithKubernetesVersion(v1alpha1.Kube128),
