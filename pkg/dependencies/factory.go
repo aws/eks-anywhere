@@ -1363,7 +1363,7 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec, kubeConfig str
 		mgmtKubeConfig := kubeconfig.ResolveFilename(kubeConfig, managementClusterName)
 
 		httpProxy, httpsProxy, noProxy := getProxyConfiguration(spec)
-		eksaAccessKeyID, eksaSecretKey, eksaRegion := os.Getenv(cliconfig.EksaAccessKeyIdEnv), os.Getenv(cliconfig.EksaSecretAccessKeyEnv), os.Getenv(cliconfig.EksaRegionEnv)
+		eksaAccessKeyID, eksaSecretKey, eksaRegion, eksSessionToken := os.Getenv(cliconfig.EksaAccessKeyIdEnv), os.Getenv(cliconfig.EksaSecretAccessKeyEnv), os.Getenv(cliconfig.EksaRegionEnv), os.Getenv(cliconfig.EksaSessionTokenKeyEnv)
 
 		eksaAwsConfig := ""
 		p := os.Getenv(cliconfig.EksaAwsConfigFileEnv)
@@ -1386,6 +1386,7 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec, kubeConfig str
 		options := []curatedpackages.PackageControllerClientOpt{
 			curatedpackages.WithEksaAccessKeyId(eksaAccessKeyID),
 			curatedpackages.WithEksaSecretAccessKey(eksaSecretKey),
+			curatedpackages.WithEksaSessionToken(eksSessionToken),
 			curatedpackages.WithEksaRegion(eksaRegion),
 			curatedpackages.WithEksaAwsConfig(eksaAwsConfig),
 			curatedpackages.WithHTTPProxy(httpProxy),

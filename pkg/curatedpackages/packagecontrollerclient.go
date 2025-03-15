@@ -53,6 +53,7 @@ type PackageControllerClient struct {
 	kubectl               KubectlRunner
 	eksaAccessKeyID       string
 	eksaSecretAccessKey   string
+	eksaSessionToken      string
 	eksaRegion            string
 	eksaAwsConfig         string
 	httpProxy             string
@@ -270,7 +271,15 @@ func (pc *PackageControllerClient) GetCuratedPackagesRegistries(ctx context.Cont
 		}
 
 		regionalRegistry := GetRegionalRegistry(defaultRegistry, pc.eksaRegion)
-		if err := pc.registryAccessTester.Test(ctx, pc.eksaAccessKeyID, pc.eksaSecretAccessKey, pc.eksaRegion, pc.eksaAwsConfig, regionalRegistry); err == nil {
+		registrtyTestParams := RegistryAccessTestParams{
+			AccessKey:    pc.eksaAccessKeyID,
+			Secret:       pc.eksaSecretAccessKey,
+			SessionToken: pc.eksaSessionToken,
+			Region:       pc.eksaRegion,
+			AwsConfig:    pc.eksaAwsConfig,
+			Registry:     regionalRegistry,
+		}
+		if err := pc.registryAccessTester.Test(ctx, registrtyTestParams); err == nil {
 			// use regional registry when the above credential is good
 			logger.V(6).Info("Using regional registry")
 			defaultRegistry = regionalRegistry
@@ -318,6 +327,7 @@ func (pc *PackageControllerClient) generateHelmOverrideValues() ([]byte, error) 
 	templateValues := map[string]interface{}{
 		"eksaAccessKeyId":     base64.StdEncoding.EncodeToString([]byte(pc.eksaAccessKeyID)),
 		"eksaSecretAccessKey": base64.StdEncoding.EncodeToString([]byte(pc.eksaSecretAccessKey)),
+		"eksaSessionToken":    base64.StdEncoding.EncodeToString([]byte(pc.eksaSessionToken)),
 		"eksaRegion":          base64.StdEncoding.EncodeToString([]byte(pc.eksaRegion)),
 		"eksaAwsConfig":       base64.StdEncoding.EncodeToString([]byte(pc.eksaAwsConfig)),
 		"mirrorEndpoint":      base64.StdEncoding.EncodeToString([]byte(endpoint)),
@@ -572,6 +582,13 @@ func WithActiveBundleTimeout(timeout time.Duration) func(client *PackageControll
 func WithEksaSecretAccessKey(eksaSecretAccessKey string) func(client *PackageControllerClient) {
 	return func(config *PackageControllerClient) {
 		config.eksaSecretAccessKey = eksaSecretAccessKey
+	}
+}
+
+// WithEksaSessionToken set the eksaSessionToken field.
+func WithEksaSessionToken(eksaSessionToken string) func(client *PackageControllerClient) {
+	return func(config *PackageControllerClient) {
+		config.eksaSessionToken = eksaSessionToken
 	}
 }
 

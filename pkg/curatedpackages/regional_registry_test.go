@@ -166,7 +166,7 @@ aws_secret_access_key=secret
 }
 
 func TestGetAWSConfigFromKeySecret(t *testing.T) {
-	cfg, err := curatedpackages.GetAWSConfigFromKeySecret(context.Background(), "key", "secret", "us-west-2")
+	cfg, err := curatedpackages.GetAWSConfigFromKeySecret(context.Background(), "key", "secret", "sessionToken", "us-west-2")
 	if err != nil {
 		t.Errorf("Error parsing AWS Config: %s", err)
 	}
@@ -181,6 +181,10 @@ func TestGetAWSConfigFromKeySecret(t *testing.T) {
 
 	if cred.SecretAccessKey != "secret" {
 		t.Errorf("secret is not generated correctly")
+	}
+
+	if cred.SessionToken != "sessionToken" {
+		t.Errorf("sessionToken is not generated correctly")
 	}
 
 	if cfg.Region != "us-west-2" {
