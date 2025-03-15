@@ -1088,7 +1088,7 @@ func TestDockerKubernetes131to132UpgradeFromLatestMinorReleaseAPI(t *testing.T) 
 	managementCluster := framework.NewClusterE2ETest(
 		t, provider,
 	)
-	managementCluster.GenerateClusterConfigForVersion(release.Version, framework.ExecuteWithEksaRelease(release))
+	managementCluster.GenerateClusterConfigForVersion(release.Version, "", framework.ExecuteWithEksaRelease(release))
 	managementCluster.UpdateClusterConfig(api.ClusterToConfigFiller(
 		api.WithKubernetesVersion(v1alpha1.Kube131),
 	))
@@ -1097,7 +1097,7 @@ func TestDockerKubernetes131to132UpgradeFromLatestMinorReleaseAPI(t *testing.T) 
 	wc := framework.NewClusterE2ETest(
 		t, provider, framework.WithClusterName(test.NewWorkloadClusterName()),
 	)
-	wc.GenerateClusterConfigForVersion(release.Version, framework.ExecuteWithEksaRelease(release))
+	wc.GenerateClusterConfigForVersion(release.Version, "", framework.ExecuteWithEksaRelease(release))
 	wc.UpdateClusterConfig(api.ClusterToConfigFiller(
 		api.WithKubernetesVersion(v1alpha1.Kube131),
 		api.WithManagementCluster(managementCluster.ClusterName),
@@ -1289,7 +1289,7 @@ func TestDockerUpgradeFromLatestMinorReleaseCiliumSkipUpgrade_CLIUpgrade(t *test
 
 	test.ValidateCiliumCLIAvailable()
 
-	test.GenerateClusterConfigForVersion(release.Version, framework.ExecuteWithEksaRelease(release))
+	test.GenerateClusterConfigForVersion(release.Version, "", framework.ExecuteWithEksaRelease(release))
 	test.CreateCluster(framework.ExecuteWithEksaRelease(release))
 	test.ReplaceCiliumWithOSSCilium()
 

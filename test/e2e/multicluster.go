@@ -37,7 +37,7 @@ func runWorkloadClusterExistingConfigFlow(test *framework.MulticlusterE2ETest) {
 func runWorkloadClusterPrevVersionCreateFlow(test *framework.MulticlusterE2ETest, latestMinorRelease *releasev1.EksARelease) {
 	test.CreateManagementClusterWithConfig()
 	test.RunInWorkloadClusters(func(w *framework.WorkloadCluster) {
-		w.GenerateClusterConfigForVersion(latestMinorRelease.Version, framework.ExecuteWithEksaRelease(latestMinorRelease))
+		w.GenerateClusterConfigForVersion(latestMinorRelease.Version, "", framework.ExecuteWithEksaRelease(latestMinorRelease))
 		w.CreateCluster(framework.ExecuteWithEksaRelease(latestMinorRelease))
 		w.DeleteCluster()
 	})
@@ -46,8 +46,9 @@ func runWorkloadClusterPrevVersionCreateFlow(test *framework.MulticlusterE2ETest
 
 func runWorkloadClusterFlowWithGitOps(test *framework.MulticlusterE2ETest, clusterOpts ...framework.ClusterE2ETestOpt) {
 	test.CreateManagementClusterWithConfig()
+	licenseToken := framework.GetLicenseToken2()
 	test.RunInWorkloadClusters(func(w *framework.WorkloadCluster) {
-		w.GenerateClusterConfig()
+		w.GenerateClusterConfigWithLicenseToken(licenseToken)
 		w.CreateCluster()
 		w.UpgradeWithGitOps(clusterOpts...)
 		time.Sleep(5 * time.Minute)
