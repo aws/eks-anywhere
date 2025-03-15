@@ -108,7 +108,7 @@ func (m *MulticlusterE2ETest) RunConcurrently(flows ...func()) {
 }
 
 func (m *MulticlusterE2ETest) CreateManagementClusterForVersion(eksaVersion string, opts ...CommandOpt) {
-	m.ManagementCluster.GenerateClusterConfigForVersion(eksaVersion)
+	m.ManagementCluster.GenerateClusterConfigForVersion(eksaVersion, "")
 	m.CreateManagementCluster(opts...)
 }
 
