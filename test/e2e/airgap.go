@@ -199,7 +199,7 @@ func runDockerAirgapConfigFlow(test *framework.ClusterE2ETest) {
 
 func runDockerAirgapUpgradeFromReleaseFlow(test *framework.ClusterE2ETest, latestRelease *releasev1.EksARelease, wantVersion anywherev1.KubernetesVersion) {
 	test.SetRegistryMirrorDefaultInstanceSecurityGroupOnCleanup()
-	test.GenerateClusterConfigForVersion(latestRelease.Version, framework.ExecuteWithEksaRelease(latestRelease))
+	test.GenerateClusterConfigForVersion(latestRelease.Version, "", framework.ExecuteWithEksaRelease(latestRelease))
 
 	// Downloading and importing the artifacts from the previous version
 	test.DownloadArtifacts(framework.ExecuteWithEksaRelease(latestRelease))

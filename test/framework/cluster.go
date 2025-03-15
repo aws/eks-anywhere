@@ -359,7 +359,7 @@ func (e *ClusterE2ETest) GenerateClusterConfig(opts ...CommandOpt) {
 	if licenseToken != "" {
 		e.clusterFillers = append(e.clusterFillers, api.WithLicenseToken(licenseToken))
 	}
-	e.GenerateClusterConfigForVersion("", opts...)
+	e.GenerateClusterConfigForVersion("", "", opts...)
 }
 
 // GenerateClusterConfigWithLicenseToken generates a cluster configuration while setting a specific license token.
@@ -367,7 +367,7 @@ func (e *ClusterE2ETest) GenerateClusterConfigWithLicenseToken(licenseToken stri
 	if licenseToken != "" {
 		e.clusterFillers = append(e.clusterFillers, api.WithLicenseToken(licenseToken))
 	}
-	e.GenerateClusterConfigForVersion("", opts...)
+	e.GenerateClusterConfigForVersion("", "", opts...)
 }
 
 func newBmclibClient(log logr.Logger, hostIP, username, password string) *bmclib.Client {
@@ -488,7 +488,8 @@ func (e *ClusterE2ETest) generateHardwareConfig(opts ...CommandOpt) {
 	e.RunEKSA(generateHardwareConfigArgs, opts...)
 }
 
-func (e *ClusterE2ETest) GenerateClusterConfigForVersion(eksaVersion string, opts ...CommandOpt) {
+// GenerateClusterConfigForVersion generates cluster configuration for the specified EKS-A version and license token.
+func (e *ClusterE2ETest) GenerateClusterConfigForVersion(eksaVersion, licenseToken string, opts ...CommandOpt) {
 	if eksaVersion != "" {
 		// LicenseToken field was introduced in cluster spec only in release-22
 		// attempting to populate the field for any prior versions would break the api.
@@ -503,9 +504,11 @@ func (e *ClusterE2ETest) GenerateClusterConfigForVersion(eksaVersion string, opt
 		}
 
 		if currentSemver.Compare(semverV022) != -1 {
-			licenseToken := GetStagingLicenseToken()
 			if licenseToken != "" {
 				e.clusterFillers = append(e.clusterFillers, api.WithLicenseToken(licenseToken))
+			} else {
+				defaultLicenseToken := GetStagingLicenseToken()
+				e.clusterFillers = append(e.clusterFillers, api.WithLicenseToken(defaultLicenseToken))
 			}
 		}
 	}

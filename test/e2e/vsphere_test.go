@@ -5413,7 +5413,7 @@ func TestVSphereKubernetes131To132UbuntuInPlaceUpgradeFromLatestMinorRelease(t *
 		provider,
 		framework.WithEnvVar(features.VSphereInPlaceEnvVar, "true"),
 	)
-	test.GenerateClusterConfigForVersion(release.Version, framework.ExecuteWithEksaRelease(release))
+	test.GenerateClusterConfigForVersion(release.Version, "", framework.ExecuteWithEksaRelease(release))
 	test.UpdateClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithKubernetesVersion(v1alpha1.Kube131),
@@ -5597,7 +5597,7 @@ func TestVSphereKubernetes131to132UpgradeFromLatestMinorReleaseBottleRocketAPI(t
 	managementCluster := framework.NewClusterE2ETest(
 		t, provider,
 	)
-	managementCluster.GenerateClusterConfigForVersion(release.Version, framework.ExecuteWithEksaRelease(release))
+	managementCluster.GenerateClusterConfigForVersion(release.Version, "", framework.ExecuteWithEksaRelease(release))
 	managementCluster.UpdateClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithKubernetesVersion(v1alpha1.Kube131),
@@ -5612,7 +5612,7 @@ func TestVSphereKubernetes131to132UpgradeFromLatestMinorReleaseBottleRocketAPI(t
 	wc := framework.NewClusterE2ETest(
 		t, provider, framework.WithClusterName(test.NewWorkloadClusterName()),
 	)
-	wc.GenerateClusterConfigForVersion(release.Version, framework.ExecuteWithEksaRelease(release))
+	wc.GenerateClusterConfigForVersion(release.Version, "", framework.ExecuteWithEksaRelease(release))
 	wc.UpdateClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithKubernetesVersion(v1alpha1.Kube131),
