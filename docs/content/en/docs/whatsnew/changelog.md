@@ -39,6 +39,32 @@ description: >
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
 
+## [v0.22.1](https://github.com/aws/eks-anywhere/releases/tag/v0.22.1)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.26.2 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     ✔      |    ✔    |     ✔      |  —   |
+
+### Changed
+- EKS Distro:
+  - [`v1-31-eks-15`](https://distro.eks.amazonaws.com/releases/1-31/15/)
+  - [`v1-30-eks-26`](https://distro.eks.amazonaws.com/releases/1-30/26/)
+  - [`v1-29-eks-33`](https://distro.eks.amazonaws.com/releases/1-29/33/)
+  - [`v1-28-eks-44`](https://distro.eks.amazonaws.com/releases/1-28/44/)
+- Golang: `1.21` to `1.23` ([#9312](https://github.com/aws/eks-anywhere/pull/9312))
+- CAPAS: `v0.1.30` to `v0.2.0`
+
+### Fixed
+- Address vulnerability [GO-2025-3503](https://pkg.go.dev/vuln/GO-2025-3503) in golang.org/x/net package v0.33.0 ([#9405](https://github.com/aws/eks-anywhere/pull/9405))
+- Fixing cilium routingMode parameters in helm configuration ([#9401](https://github.com/aws/eks-anywhere/pull/9401))
+- Update RHEL OS version validation from image builder ([#4423](https://github.com/aws/eks-anywhere-build-tooling/pull/4423))
+- Update Bottlerocket host containers source extraction logic ([#4400](https://github.com/aws/eks-anywhere-build-tooling/pull/4400))
+
 ## [v0.22.0](https://github.com/aws/eks-anywhere/releases/tag/v0.22.0)
 
 ### Supported OS version details
