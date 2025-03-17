@@ -1078,11 +1078,13 @@ func (g *Govc) GroupExists(ctx context.Context, name string) (bool, error) {
 	}
 
 	response, err := g.exec(ctx, params...)
-	if err != nil {
+	if err != nil && strings.Contains(err.Error(), fmt.Sprintf("group %s doesn't exist", name)) {
+		return false, nil
+	} else if err != nil {
 		return false, err
 	}
-
-	return response.Len() > 0, nil
+	// govc returns empty response when group exists
+	return response.Len() == 0, nil
 }
 
 // AddUserToGroup adds a user to a group.

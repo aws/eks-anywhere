@@ -1327,9 +1327,10 @@ func TestGovcCreateRole(t *testing.T) {
 func TestGovcGroupExistsFalse(t *testing.T) {
 	ctx := context.Background()
 	_, g, executable, env := setup(t)
-	group := "EKSA"
+	group := "FakeGroup"
+	expectedErr := "govc: ServerFaultCode: The specified principal (FakeGroup@vsphere.local) is invalid.\nCaused by: group FakeGroup doesn't exist or multiple groups same name"
 
-	executable.EXPECT().ExecuteWithEnv(ctx, env, "sso.group.ls", group).Return(*bytes.NewBufferString(""), nil)
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "sso.group.ls", group).Return(*bytes.NewBufferString(""), errors.New(expectedErr))
 
 	exists, err := g.GroupExists(ctx, group)
 	gt := NewWithT(t)
@@ -1341,8 +1342,8 @@ func TestGovcGroupExistsTrue(t *testing.T) {
 	ctx := context.Background()
 	_, g, executable, env := setup(t)
 	group := "EKSA"
-
-	executable.EXPECT().ExecuteWithEnv(ctx, env, "sso.group.ls", group).Return(*bytes.NewBufferString(group), nil)
+	// If group exists, govc should give empty response
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "sso.group.ls", group).Return(*bytes.NewBufferString(""), nil)
 
 	exists, err := g.GroupExists(ctx, group)
 	gt := NewWithT(t)
@@ -1354,8 +1355,7 @@ func TestGovcGroupExistsError(t *testing.T) {
 	ctx := context.Background()
 	_, g, executable, env := setup(t)
 	group := "EKSA"
-
-	executable.EXPECT().ExecuteWithEnv(ctx, env, "sso.group.ls", group).Return(*bytes.NewBufferString(""), errors.New("operation failed"))
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "sso.group.ls", group).Return(*bytes.NewBufferString(""), errors.New("unexpected error"))
 
 	_, err := g.GroupExists(ctx, group)
 	gt := NewWithT(t)
