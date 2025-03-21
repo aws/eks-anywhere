@@ -271,7 +271,7 @@ func (pc *PackageControllerClient) GetCuratedPackagesRegistries(ctx context.Cont
 		}
 
 		regionalRegistry := GetRegionalRegistry(defaultRegistry, pc.eksaRegion)
-		registrtyTestParams := RegistryAccessTestParams{
+		registryTestParams := RegistryAccessTestParams{
 			AccessKey:    pc.eksaAccessKeyID,
 			Secret:       pc.eksaSecretAccessKey,
 			SessionToken: pc.eksaSessionToken,
@@ -279,7 +279,7 @@ func (pc *PackageControllerClient) GetCuratedPackagesRegistries(ctx context.Cont
 			AwsConfig:    pc.eksaAwsConfig,
 			Registry:     regionalRegistry,
 		}
-		if err := pc.registryAccessTester.Test(ctx, registrtyTestParams); err == nil {
+		if err := pc.registryAccessTester.Test(ctx, registryTestParams); err == nil {
 			// use regional registry when the above credential is good
 			logger.V(6).Info("Using regional registry")
 			defaultRegistry = regionalRegistry
