@@ -175,13 +175,13 @@ func (r *Reconciler) ValidateMachineConfigs(ctx context.Context, log logr.Logger
 }
 
 // ValidateFailureDomains performs validations for the provided failure domains and the assigned failure domains in worker node group.
-func (r *Reconciler) ValidateFailureDomains(_ context.Context, log logr.Logger, clusterSpec *c.Spec) (controller.Result, error) {
+func (r *Reconciler) ValidateFailureDomains(ctx context.Context, log logr.Logger, clusterSpec *c.Spec) (controller.Result, error) {
 	if features.IsActive(features.VsphereFailureDomainEnabled()) {
 		log = log.WithValues("phase", "validateFailureDomains")
 
 		vsphereClusterSpec := vsphere.NewSpec(clusterSpec)
 
-		if err := r.validator.ValidateFailureDomains(vsphereClusterSpec); err != nil {
+		if err := r.validator.ValidateFailureDomains(ctx, vsphereClusterSpec); err != nil {
 			log.Error(err, "Invalid Failure domain setup")
 			failureMessage := err.Error()
 			clusterSpec.Cluster.SetFailure(anywherev1.FailureDomainInvalidReason, failureMessage)

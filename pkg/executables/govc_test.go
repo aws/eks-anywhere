@@ -463,6 +463,314 @@ func TestDeployTemplateFromLibraryErrorMarkAsTemplate(t *testing.T) {
 	tt.assertDeployTemplateError(t)
 }
 
+func TestGetResourcePoolPathSuccess(t *testing.T) {
+	ctx := context.Background()
+	datacenter := "SDDC-Datacenter"
+	resourcePool := "*/Resources/Compute-ResourcePool"
+
+	_, g, executable, env := setup(t)
+	gt := NewWithT(t)
+
+	executable.EXPECT().ExecuteWithEnv(
+		ctx,
+		env,
+		"find",
+		"-json",
+		"/"+datacenter,
+		"-type",
+		"p",
+		"-name",
+		"Compute-ResourcePool",
+	).Return(*bytes.NewBufferString("[\"/SDDC-Datacenter/host/Cluster-1/Resources/Compute-ResourcePool\"]"), nil)
+
+	path, err := g.GetResourcePoolPath(ctx, datacenter, resourcePool, env)
+	gt.Expect(err).To(BeNil())
+	gt.Expect(path).To(Equal("/SDDC-Datacenter/host/Cluster-1/Resources/Compute-ResourcePool"))
+}
+
+func TestGetResourcePoolPathErrorMultiplePoolsFound(t *testing.T) {
+	ctx := context.Background()
+	datacenter := "SDDC-Datacenter"
+	resourcePool := "*/Resources/Compute-ResourcePool"
+	trimmedPool := strings.TrimPrefix(resourcePool, "*/")
+
+	_, g, executable, env := setup(t)
+	gt := NewWithT(t)
+
+	g.Retrier = retrier.NewWithMaxRetries(1, 0)
+
+	executable.EXPECT().
+		ExecuteWithEnv(ctx, env, "find", "-json", "/"+datacenter, "-type", "p", "-name", filepath.Base(resourcePool)).
+		Return(*bytes.NewBufferString(`["/SDDC-Datacenter/host/Cluster-1/Resources/Compute-ResourcePool", "/SDDC-Datacenter/host/Cluster-2/Resources/Compute-ResourcePool"]`), nil)
+
+	_, err := g.GetResourcePoolPath(ctx, datacenter, resourcePool, env)
+	gt.Expect(err).NotTo(BeNil())
+	gt.Expect(err.Error()).To(Equal(fmt.Sprintf("specified resource pool '%s' maps to multiple paths within the datacenter '%s'", trimmedPool, datacenter)))
+}
+
+func TestGetResourcePoolPathErrorInvalidJSONResponse(t *testing.T) {
+	ctx := context.Background()
+	datacenter := "SDDC-Datacenter"
+	resourcePool := "*/Resources/Compute-ResourcePool"
+
+	_, g, executable, env := setup(t)
+	gt := NewWithT(t)
+
+	g.Retrier = retrier.NewWithMaxRetries(1, 0)
+
+	executable.EXPECT().
+		ExecuteWithEnv(ctx, env, "find", "-json", "/"+datacenter, "-type", "p", "-name", filepath.Base(resourcePool)).
+		Return(*bytes.NewBufferString(`{"this": "is not a string array"}`), nil)
+
+	_, err := g.GetResourcePoolPath(ctx, datacenter, resourcePool, env)
+	gt.Expect(err).NotTo(BeNil())
+	gt.Expect(err.Error()).To(Equal("failed unmarshalling govc response: json: cannot unmarshal object into Go value of type []string"))
+}
+
+func TestGetResourcePoolPathErrorFailedToGetResourcePool(t *testing.T) {
+	ctx := context.Background()
+	datacenter := "SDDC-Datacenter"
+	resourcePool := "*/Resources/Compute-ResourcePool"
+
+	_, g, executable, env := setup(t)
+	gt := NewWithT(t)
+
+	g.Retrier = retrier.NewWithMaxRetries(1, 0)
+
+	executable.EXPECT().
+		ExecuteWithEnv(ctx, env, "find", "-json", "/"+datacenter, "-type", "p", "-name", filepath.Base(resourcePool)).
+		Return(bytes.Buffer{}, errors.New("failed to execute find command"))
+
+	_, err := g.GetResourcePoolPath(ctx, datacenter, resourcePool, env)
+	gt.Expect(err).NotTo(BeNil())
+	gt.Expect(err.Error()).To(Equal("getting resource pool: failed to execute find command"))
+}
+
+func TestGetResourcePoolPathErrorResourcePoolNotFound(t *testing.T) {
+	ctx := context.Background()
+	datacenter := "SDDC-Datacenter"
+	resourcePool := "*/Resources/NonExistentPool"
+
+	_, g, executable, env := setup(t)
+	gt := NewWithT(t)
+
+	g.Retrier = retrier.NewWithMaxRetries(1, 0)
+
+	// Return an empty JSON array, simulating no results found
+	executable.EXPECT().
+		ExecuteWithEnv(ctx, env, "find", "-json", "/"+datacenter, "-type", "p", "-name", filepath.Base(resourcePool)).
+		Return(*bytes.NewBufferString("[]"), nil)
+
+	_, err := g.GetResourcePoolPath(ctx, datacenter, resourcePool, env)
+	gt.Expect(err).NotTo(BeNil())
+	gt.Expect(err.Error()).To(Equal("resource pool 'Resources/NonExistentPool' not found"))
+}
+
+func TestGetResourcePoolPathErrorNullOrEmptyResponse(t *testing.T) {
+	ctx := context.Background()
+	datacenter := "SDDC-Datacenter"
+	resourcePool := "*/Resources/Compute-ResourcePool"
+
+	tests := []struct {
+		name     string
+		response string
+	}{
+		{
+			name:     "null response",
+			response: "null",
+		},
+		{
+			name:     "empty response",
+			response: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, g, executable, env := setup(t)
+			gt := NewWithT(t)
+
+			g.Retrier = retrier.NewWithMaxRetries(1, 0)
+
+			executable.EXPECT().
+				ExecuteWithEnv(ctx, env, "find", "-json", "/"+datacenter, "-type", "p", "-name", filepath.Base(resourcePool)).
+				Return(*bytes.NewBufferString(tt.response), nil)
+
+			_, err := g.GetResourcePoolPath(ctx, datacenter, resourcePool, env)
+			gt.Expect(err).NotTo(BeNil())
+			gt.Expect(err.Error()).To(Equal(fmt.Sprintf("resource pool '%s' not found", resourcePool)))
+		})
+	}
+}
+
+func TestGetFolderPathSuccess(t *testing.T) {
+	ctx := context.Background()
+	datacenter := "SDDC-Datacenter"
+	folder := "/SDDC-Datacenter/vm/test"
+
+	_, g, executable, env := setup(t)
+	gt := NewWithT(t)
+
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "folder.info", folder).Return(bytes.Buffer{}, nil)
+
+	path, err := g.GetFolderPath(ctx, datacenter, folder, env)
+	gt.Expect(err).To(BeNil())
+	gt.Expect(path).To(Equal(folder))
+}
+
+func TestGetFolderPathErrorPathMissingFolderPrefix(t *testing.T) {
+	ctx := context.Background()
+	datacenter := "SDDC-Datacenter"
+	// Path starts with datacenter but has invalid folder type
+	folderPath := "/SDDC-Datacenter/wrongtype/test"
+
+	_, g, _, env := setup(t)
+	gt := NewWithT(t)
+
+	_, err := g.GetFolderPath(ctx, datacenter, folderPath, env)
+
+	gt.Expect(err).NotTo(BeNil())
+	gt.Expect(err.Error()).To(ContainSubstring("invalid folder type, expected path under /SDDC-Datacenter/vm"))
+}
+
+func TestGetFolderPathErrorIntermediateDirectoryInvalid(t *testing.T) {
+	ctx := context.Background()
+	datacenter := "SDDC-Datacenter"
+	folderPath := "/SDDC-Datacenter/vm/invalid/subfolder"
+
+	_, g, executable, env := setup(t)
+	gt := NewWithT(t)
+
+	g.Retrier = retrier.NewWithMaxRetries(1, 0)
+
+	gomock.InOrder(
+		executable.EXPECT().
+			ExecuteWithEnv(ctx, env, "folder.info", folderPath).
+			Return(bytes.Buffer{}, errors.New("not found")),
+		executable.EXPECT().
+			ExecuteWithEnv(ctx, env, "folder.create", folderPath).
+			Return(bytes.Buffer{}, errors.New("create folder failed")),
+		executable.EXPECT().
+			ExecuteWithEnv(ctx, env, "folder.info", "/SDDC-Datacenter/vm/").
+			Return(bytes.Buffer{}, nil),
+		executable.EXPECT().
+			ExecuteWithEnv(ctx, env, "folder.info", "/SDDC-Datacenter/vm/invalid/").
+			Return(bytes.Buffer{}, errors.New("not found")),
+	)
+
+	_, err := g.GetFolderPath(ctx, datacenter, folderPath, env)
+	gt.Expect(err).NotTo(BeNil())
+	gt.Expect(err.Error()).To(Equal("failed to get folder: /SDDC-Datacenter/vm/invalid/ is an invalid intermediate directory"))
+}
+
+func TestGetFolderPathEmpty(t *testing.T) {
+	ctx := context.Background()
+	datacenter := "SDDC-Datacenter"
+
+	_, g, _, env := setup(t)
+	gt := NewWithT(t)
+
+	path, err := g.GetFolderPath(ctx, datacenter, "", env)
+	gt.Expect(err).To(BeNil())
+	gt.Expect(path).To(Equal(""))
+}
+
+func TestGetFolderPathCreateNewFolder(t *testing.T) {
+	ctx := context.Background()
+	datacenter := "SDDC-Datacenter"
+	folder := "/SDDC-Datacenter/vm/newFolder"
+
+	_, g, executable, env := setup(t)
+	gt := NewWithT(t)
+
+	gomock.InOrder(
+		executable.EXPECT().ExecuteWithEnv(ctx, env, "folder.info", folder).Return(bytes.Buffer{}, errors.New("not found")),
+		executable.EXPECT().ExecuteWithEnv(ctx, env, "folder.create", folder).Return(bytes.Buffer{}, nil),
+	)
+
+	path, err := g.GetFolderPath(ctx, datacenter, folder, env)
+	gt.Expect(err).To(BeNil())
+	gt.Expect(path).To(Equal(folder))
+}
+
+func TestGetDatastorePathSuccess(t *testing.T) {
+	ctx := context.Background()
+	datacenter := "SDDC-Datacenter"
+	datastore := "/SDDC-Datacenter/datastore/testDatastore"
+
+	_, g, executable, env := setup(t)
+	gt := NewWithT(t)
+
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "datastore.info", datastore).Return(bytes.Buffer{}, nil)
+
+	path, err := g.GetDatastorePath(ctx, datacenter, datastore, env)
+	gt.Expect(err).To(BeNil())
+	gt.Expect(path).To(Equal(datastore))
+}
+
+func TestGetDatastorePathError(t *testing.T) {
+	ctx := context.Background()
+	datacenter := "SDDC-Datacenter"
+	datastorePath := "testDatastore"
+
+	_, g, executable, env := setup(t)
+	gt := NewWithT(t)
+
+	g.Retrier = retrier.NewWithMaxRetries(1, 0)
+	gomock.InOrder(
+		executable.EXPECT().
+			ExecuteWithEnv(ctx, env, "datastore.info", "/SDDC-Datacenter/datastore/testDatastore").
+			Return(bytes.Buffer{}, errors.New("datastore info failed")),
+		executable.EXPECT().
+			ExecuteWithEnv(ctx, env, "folder.info", "/SDDC-Datacenter/datastore").
+			Return(bytes.Buffer{}, errors.New("folder info failed")),
+	)
+
+	_, err := g.GetDatastorePath(ctx, datacenter, datastorePath, env)
+	gt.Expect(err).NotTo(BeNil())
+	gt.Expect(err.Error()).To(ContainSubstring("failed to get datastore"))
+}
+
+func TestGetDatastorePathErrorPathMissingDatastorePrefix(t *testing.T) {
+	ctx := context.Background()
+	datacenter := "SDDC-Datacenter"
+	// Path starts with datacenter but has invalid folder type
+	datastorePath := "/SDDC-Datacenter/wrongtype/testDatastore"
+
+	_, g, _, env := setup(t)
+	gt := NewWithT(t)
+
+	_, err := g.GetDatastorePath(ctx, datacenter, datastorePath, env)
+
+	gt.Expect(err).NotTo(BeNil())
+	gt.Expect(err.Error()).To(ContainSubstring("invalid folder type, expected path under /SDDC-Datacenter/datastore"))
+}
+
+func TestGetDatastorePathErrorValidPathButNoDatastore(t *testing.T) {
+	ctx := context.Background()
+	datacenter := "SDDC-Datacenter"
+	// Path starts with datacenter but has invalid folder type
+	datastorePath := "/SDDC-Datacenter/datastore/nonExistingDatastore"
+
+	_, g, executable, env := setup(t)
+	gt := NewWithT(t)
+
+	g.Retrier = retrier.NewWithMaxRetries(1, 0)
+	gomock.InOrder(
+		executable.EXPECT().
+			ExecuteWithEnv(ctx, env, "datastore.info", datastorePath).
+			Return(bytes.Buffer{}, errors.New("datastore info failed")),
+		executable.EXPECT().
+			ExecuteWithEnv(ctx, env, "folder.info", "/SDDC-Datacenter/datastore").
+			Return(bytes.Buffer{}, nil),
+	)
+
+	_, err := g.GetDatastorePath(ctx, datacenter, datastorePath, env)
+
+	gt.Expect(err).NotTo(BeNil())
+	gt.Expect(err.Error()).To(ContainSubstring("failed to get datastore: valid path, but 'nonExistingDatastore' is not a datastore"))
+}
+
 func TestGovcValidateVCenterSetupMachineConfig(t *testing.T) {
 	ctx := context.Background()
 	ts := newHTTPSServer(t)
