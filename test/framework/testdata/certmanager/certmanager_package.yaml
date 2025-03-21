@@ -1,0 +1,18 @@
+apiVersion: packages.eks.amazonaws.com/v1alpha1
+kind: Package
+metadata:
+  name: {{.name}}
+  namespace: {{.namespace}}
+spec:
+  packageName: cert-manager
+  targetNamespace: {{.targetNamespace}}
+  config: |-
+    extraEnv:
+      - name: AWS_ACCESS_KEY_ID
+        value: {{.accessKeyId}}
+      - name: AWS_SECRET_ACCESS_KEY
+        value: {{.secretKey}}
+{{- if .sessionToken }}
+      - name: AWS_SESSION_TOKEN
+        value: {{.sessionToken}}
+{{- end }}

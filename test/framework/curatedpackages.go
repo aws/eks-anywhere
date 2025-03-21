@@ -38,6 +38,7 @@ const (
 	eksaPackagesRegion          = "EKSA_AWS_REGION"
 	route53AccessKey            = "ROUTE53_ACCESS_KEY_ID"
 	route53SecretKey            = "ROUTE53_SECRET_ACCESS_KEY"
+	route53SessionToken         = "ROUTE53_SESSION_TOKEN"
 	route53Region               = "ROUTE53_REGION"
 	route53ZoneID               = "ROUTE53_ZONEID"
 )
@@ -87,7 +88,6 @@ func CheckCertManagerCredentials(t *testing.T) {
 }
 
 // GetRoute53Configs returns route53 configurations for cert-manager.
-func GetRoute53Configs() (string, string, string, string) {
-	return os.Getenv(route53AccessKey), os.Getenv(route53SecretKey),
-		os.Getenv(route53Region), os.Getenv(route53ZoneID)
+func GetRoute53Configs() (string, string) {
+	return os.Getenv(route53Region), os.Getenv(route53ZoneID)
 }
