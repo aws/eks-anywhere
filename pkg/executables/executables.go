@@ -29,6 +29,7 @@ var redactedEnvKeys = []string{
 	githubTokenEnv,
 	config.EksaAccessKeyIdEnv,
 	config.EksaSecretAccessKeyEnv,
+	config.EksaSessionTokenKeyEnv,
 	config.AwsAccessKeyIdEnv,
 	config.AwsSecretAccessKeyEnv,
 	constants.SnowCredentialsKey,

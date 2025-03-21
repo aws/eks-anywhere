@@ -1,0 +1,12 @@
+registryMirrorSecret:
+  endpoint: "MS4yLjMuNDo0NDM="
+  username: "dXNlcm5hbWU="
+  password: "cGFzc3dvcmQ="
+  cacertcontent: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCmFiYwplZmcKLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo="
+  insecure: "ZmFsc2U="
+awsSecret:
+  id: "dGVzdC1hY2Nlc3MtaWQ="
+  secret: "dGVzdC1hY2Nlc3Mta2V5"
+  region: "dGVzdC1yZWdpb24="
+  sessionToken: "dGVzdC1zZXNzaW9uLXRva2Vu"
+  config: "dGVzdC1hd3MtY29uZmlnLWZpbGU="

@@ -14,29 +14,39 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ecr"
 )
 
+// RegistryAccessTestParams struct for testing resigtry access.
+type RegistryAccessTestParams struct {
+	AccessKey    string
+	Secret       string
+	SessionToken string
+	Region       string
+	AwsConfig    string
+	Registry     string
+}
+
 // RegistryAccessTester test if AWS credentials has valid permission to access an ECR registry.
 type RegistryAccessTester interface {
-	Test(ctx context.Context, accessKey, secret, region, awsConfig, registry string) error
+	Test(ctx context.Context, params RegistryAccessTestParams) error
 }
 
 // DefaultRegistryAccessTester the default implementation of RegistryAccessTester.
 type DefaultRegistryAccessTester struct{}
 
 // Test if the AWS static credential or sharedConfig has valid permission to access an ECR registry.
-func (r *DefaultRegistryAccessTester) Test(ctx context.Context, accessKey, secret, region, awsConfig, registry string) (err error) {
+func (r *DefaultRegistryAccessTester) Test(ctx context.Context, params RegistryAccessTestParams) (err error) {
 	authTokenProvider := &DefaultRegistryAuthTokenProvider{}
 
 	var authToken string
-	if len(awsConfig) > 0 {
-		authToken, err = authTokenProvider.GetTokenByAWSConfig(ctx, awsConfig)
+	if len(params.AwsConfig) > 0 {
+		authToken, err = authTokenProvider.GetTokenByAWSConfig(ctx, params.AwsConfig)
 	} else {
-		authToken, err = authTokenProvider.GetTokenByAWSKeySecret(ctx, accessKey, secret, region)
+		authToken, err = authTokenProvider.GetTokenByAWSKeySecret(ctx, params.AccessKey, params.Secret, params.SessionToken, params.Region)
 	}
 	if err != nil {
 		return err
 	}
 
-	return TestRegistryWithAuthToken(authToken, registry, http.DefaultClient.Do)
+	return TestRegistryWithAuthToken(authToken, params.Registry, http.DefaultClient.Do)
 }
 
 // TestRegistryWithAuthToken test if the registry can be acccessed with auth token.
@@ -116,9 +126,9 @@ func ParseAWSConfig(ctx context.Context, awsConfig string) (*aws.Config, error) 
 }
 
 // GetAWSConfigFromKeySecret get AWS config from key, secret and region.
-func GetAWSConfigFromKeySecret(ctx context.Context, key, secret, region string) (*aws.Config, error) {
+func GetAWSConfigFromKeySecret(ctx context.Context, key, secret, sessionToken, region string) (*aws.Config, error) {
 	cfg, err := config.LoadDefaultConfig(ctx,
-		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(key, secret, "")),
+		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(key, secret, sessionToken)),
 		config.WithRegion(region),
 	)
 	if err != nil {
@@ -128,8 +138,8 @@ func GetAWSConfigFromKeySecret(ctx context.Context, key, secret, region string) 
 }
 
 // GetTokenByAWSKeySecret get auth token by AWS key and secret.
-func (d *DefaultRegistryAuthTokenProvider) GetTokenByAWSKeySecret(ctx context.Context, key, secret, region string) (string, error) {
-	cfg, err := GetAWSConfigFromKeySecret(ctx, key, secret, region)
+func (d *DefaultRegistryAuthTokenProvider) GetTokenByAWSKeySecret(ctx context.Context, key, secret, sessionToken, region string) (string, error) {
+	cfg, err := GetAWSConfigFromKeySecret(ctx, key, secret, sessionToken, region)
 	if err != nil {
 		return "", err
 	}

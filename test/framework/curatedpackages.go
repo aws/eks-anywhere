@@ -32,19 +32,21 @@ func WithPackageConfig(t *testing.T, bundleURI, chartName, chartURI,
 }
 
 const (
-	eksaPackagesSecretKey = "EKSA_AWS_SECRET_ACCESS_KEY"
-	eksaPackagesAccessKey = "EKSA_AWS_ACCESS_KEY_ID"
-	eksaPackagesRegion    = "EKSA_AWS_REGION"
-	route53AccessKey      = "ROUTE53_ACCESS_KEY_ID"
-	route53SecretKey      = "ROUTE53_SECRET_ACCESS_KEY"
-	route53Region         = "ROUTE53_REGION"
-	route53ZoneID         = "ROUTE53_ZONEID"
+	eksaPackagesSecretKey       = "EKSA_AWS_SECRET_ACCESS_KEY"
+	eksaPackagesAccessKey       = "EKSA_AWS_ACCESS_KEY_ID"
+	eksaPackagesSessionTokenKey = "EKSA_AWS_SESSION_TOKEN"
+	eksaPackagesRegion          = "EKSA_AWS_REGION"
+	route53AccessKey            = "ROUTE53_ACCESS_KEY_ID"
+	route53SecretKey            = "ROUTE53_SECRET_ACCESS_KEY"
+	route53Region               = "ROUTE53_REGION"
+	route53ZoneID               = "ROUTE53_ZONEID"
 )
 
 var requiredPackagesEnvVars = []string{
 	eksaPackagesRegion,
 	eksaPackagesAccessKey,
 	eksaPackagesSecretKey,
+	eksaPackagesSessionTokenKey,
 }
 
 var requiredCertManagerEnvVars = []string{
