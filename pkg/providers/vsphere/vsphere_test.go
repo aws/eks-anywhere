@@ -112,6 +112,26 @@ func (pc *DummyProviderGovcClient) NetworkExists(ctx context.Context, network st
 	return true, nil
 }
 
+//nolint:revive
+func (pc *DummyProviderGovcClient) GetResourcePoolPath(ctx context.Context, datacenter string, resourcePool string, envMap map[string]string) (string, error) {
+	return "", nil
+}
+
+//nolint:revive
+func (pc *DummyProviderGovcClient) GetFolderPath(ctx context.Context, datacenter string, folder string, envMap map[string]string) (string, error) {
+	return "", nil
+}
+
+//nolint:revive
+func (pc *DummyProviderGovcClient) GetDatastorePath(ctx context.Context, datacenter string, datastorePath string, envMap map[string]string) (string, error) {
+	return "", nil
+}
+
+//nolint:revive
+func (pc *DummyProviderGovcClient) ValidateFailureDomainConfig(ctx context.Context, datacenterConfig *v1alpha1.VSphereDatacenterConfig, failureDomain *v1alpha1.FailureDomain) error {
+	return nil
+}
+
 func (pc *DummyProviderGovcClient) ValidateVCenterSetupMachineConfig(ctx context.Context, datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConfig *v1alpha1.VSphereMachineConfig, selfSigned *bool) error {
 	return nil
 }
