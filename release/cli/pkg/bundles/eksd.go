@@ -140,7 +140,7 @@ func GetEksDReleaseBundle(r *releasetypes.ReleaseConfig, eksDReleaseChannel, kub
 		Name:           eksdRelease.Name,
 		ReleaseChannel: eksDReleaseChannel,
 		KubeVersion:    kubeVer,
-		EksDReleaseUrl: eksDManifestUrl,
+		EksDReleaseURL: eksDManifestUrl,
 		GitCommit:      gitCommit,
 		KindNode:       bundleImageArtifacts["kind-node"],
 		Etcdadm:        bundleArchiveArtifacts["etcdadm"],

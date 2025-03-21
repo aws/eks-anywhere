@@ -235,7 +235,7 @@ func readBasicClusterSpec(clusterConfigPath string, cliVersion version.Info, opt
 			ReleaseDate:       release.Date,
 			Version:           release.Version,
 			GitCommit:         release.GitCommit,
-			BundleManifestURL: release.BundleManifestUrl,
+			BundleManifestURL: release.BundleManifestURL,
 			BundlesRef: releasev1.BundlesRef{
 				APIVersion: releasev1.GroupVersion.String(),
 				Name:       bundle.Name,

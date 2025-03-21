@@ -1639,7 +1639,7 @@ func createBundle(cluster *anywherev1.Cluster) *artifactsv1.Bundles {
 					KubeVersion: "1.20",
 					EksD: artifactsv1.EksDRelease{
 						Name:           "test",
-						EksDReleaseUrl: "testdata/release.yaml",
+						EksDReleaseURL: "testdata/release.yaml",
 						KubeVersion:    "1.20",
 					},
 					CertManager:                artifactsv1.CertManagerBundle{},

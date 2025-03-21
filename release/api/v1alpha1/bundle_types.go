@@ -101,7 +101,7 @@ type EksDRelease struct {
 	// +kubebuilder:validation:Required
 	// Url pointing to the EKS-D release manifest using which
 	// assets where created
-	EksDReleaseUrl string `json:"manifestUrl,omitempty"`
+	EksDReleaseURL string `json:"manifestUrl,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Git commit the component is built from, before any patches
@@ -293,7 +293,7 @@ type TinkerbellStackBundle struct {
 	Stack          Image         `json:"stack"`
 }
 
-// Tinkerbell Template Actions.
+// ActionsBundle defines Tinkerbell Template Actions.
 type ActionsBundle struct {
 	Cexec       Image `json:"cexec"`
 	Kexec       Image `json:"kexec"`
@@ -312,7 +312,7 @@ type TinkBundle struct {
 	Nginx          Image `json:"nginx"`
 }
 
-// Tinkerbell hook OS.
+// HookBundle defines Tinkerbell hook OS.
 type HookBundle struct {
 	Bootkit   Image    `json:"bootkit"`
 	Docker    Image    `json:"docker"`

@@ -181,7 +181,7 @@ func Bundle() *releasev1.Bundles {
 					KubeVersion: "1.19",
 					EksD: releasev1.EksDRelease{
 						Name:           "test",
-						EksDReleaseUrl: "embed:///testdata/release.yaml",
+						EksDReleaseURL: "embed:///testdata/release.yaml",
 						KubeVersion:    "1.19",
 					},
 					CertManager:                releasev1.CertManagerBundle{},
@@ -203,7 +203,7 @@ func Bundle() *releasev1.Bundles {
 					KubeVersion: "1.22",
 					EksD: releasev1.EksDRelease{
 						Name:           "test",
-						EksDReleaseUrl: "embed:///testdata/release.yaml",
+						EksDReleaseURL: "embed:///testdata/release.yaml",
 						KubeVersion:    "1.22",
 						Raw: releasev1.OSImageBundle{
 							Bottlerocket: releasev1.Archive{
@@ -230,7 +230,7 @@ func Bundle() *releasev1.Bundles {
 					KubeVersion: "1.24",
 					EksD: releasev1.EksDRelease{
 						Name:           "test",
-						EksDReleaseUrl: "embed:///testdata/release.yaml",
+						EksDReleaseURL: "embed:///testdata/release.yaml",
 						KubeVersion:    "1.22",
 					},
 					CertManager:  releasev1.CertManagerBundle{},

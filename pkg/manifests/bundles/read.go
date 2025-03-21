@@ -31,5 +31,5 @@ func Read(reader Reader, url string) (*releasev1.Bundles, error) {
 }
 
 func ReadEKSD(reader Reader, versionsBundle releasev1.VersionsBundle) (*eksdv1.Release, error) {
-	return eksd.ReadManifest(reader, versionsBundle.EksD.EksDReleaseUrl)
+	return eksd.ReadManifest(reader, versionsBundle.EksD.EksDReleaseURL)
 }

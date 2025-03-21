@@ -50,7 +50,7 @@ func NewClusterSpec(opts ...ClusterSpecOpt) *cluster.Spec {
 			VersionsBundle: &releasev1alpha1.VersionsBundle{
 				EksD: releasev1alpha1.EksDRelease{
 					Name:           "kubernetes-1-19-eks-7",
-					EksDReleaseUrl: "embed:///testdata/release.yaml",
+					EksDReleaseURL: "embed:///testdata/release.yaml",
 					KubeVersion:    "1.19",
 				},
 			},
@@ -63,7 +63,7 @@ func NewClusterSpec(opts ...ClusterSpecOpt) *cluster.Spec {
 				{
 					EksD: releasev1alpha1.EksDRelease{
 						Name:           "kubernetes-1-19-eks-7",
-						EksDReleaseUrl: "embed:///testdata/release.yaml",
+						EksDReleaseURL: "embed:///testdata/release.yaml",
 						KubeVersion:    "1.19",
 					},
 				},
