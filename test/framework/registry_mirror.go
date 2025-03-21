@@ -65,7 +65,7 @@ func WithRegistryMirrorEndpointAndCert(providerName string) ClusterE2ETestOpt {
 }
 
 // WithRegistryMirrorOciNamespaces sets up e2e for registry mirrors with ocinamespaces.
-func WithRegistryMirrorOciNamespaces(providerName string) ClusterE2ETestOpt {
+func WithRegistryMirrorOciNamespaces(providerName string, optNamespaces ...v1alpha1.OCINamespace) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
 		var ociNamespaces []v1alpha1.OCINamespace
 
@@ -83,6 +83,8 @@ func WithRegistryMirrorOciNamespaces(providerName string) ClusterE2ETestOpt {
 				Namespace: ns2val,
 			})
 		}
+
+		ociNamespaces = append(ociNamespaces, optNamespaces...)
 
 		setupRegistryMirrorEndpointAndCert(e, providerName, false, ociNamespaces...)
 	}
