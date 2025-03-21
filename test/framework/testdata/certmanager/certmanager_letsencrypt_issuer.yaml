@@ -13,10 +13,6 @@ spec:
           route53:
             region: "{{.route53Region}}"
             hostedZoneID: "{{.route53ZoneId}}"
-            accessKeyID: "{{.route53AccessKeyId}}"
-            secretAccessKeySecretRef:
-              name: route53-credentials-secret
-              key: secret-access-key
         selector:
           dnsZones:
             - "cert-manager-e2e.model-rocket.aws.dev"
