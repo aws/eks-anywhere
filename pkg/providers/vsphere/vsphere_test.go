@@ -112,6 +112,10 @@ func (pc *DummyProviderGovcClient) NetworkExists(ctx context.Context, network st
 	return true, nil
 }
 
+func (pc *DummyProviderGovcClient) ValidateFailureDomainConfig(ctx context.Context, datacenterConfig *v1alpha1.VSphereDatacenterConfig, failureDomain *v1alpha1.FailureDomain) error {
+	return nil
+}
+
 func (pc *DummyProviderGovcClient) ValidateVCenterSetupMachineConfig(ctx context.Context, datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConfig *v1alpha1.VSphereMachineConfig, selfSigned *bool) error {
 	return nil
 }

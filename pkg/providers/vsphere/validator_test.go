@@ -370,15 +370,57 @@ func TestValidatorValidateMachineConfigTemplateDoesNotExist(t *testing.T) {
 }
 
 func TestValidateFailureDomains(t *testing.T) {
+	defaultSpec := &Spec{
+		Spec: &cluster.Spec{
+			Config: &cluster.Config{
+				Cluster: &v1alpha1.Cluster{
+					Spec: v1alpha1.ClusterSpec{
+						WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{
+							{
+								Name:           "wd-1",
+								FailureDomains: []string{"fd-1"},
+							},
+						},
+					},
+				},
+				VSphereDatacenter: &v1alpha1.VSphereDatacenterConfig{
+					Spec: v1alpha1.VSphereDatacenterConfigSpec{
+						Datacenter: "myDatacenter",
+						Server:     "myServer",
+						Network:    "/myDatacenter/network/myNetwork",
+						FailureDomains: []v1alpha1.FailureDomain{
+							{
+								Name:           "fd-1",
+								ComputeCluster: "myComputeCluster",
+								ResourcePool:   "myResourcePool",
+								Datastore:      "myDatastore",
+								Folder:         "myFolder",
+								Network:        "/myDatacenter/network/myNetwork",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
 	tests := []struct {
 		name                       string
 		spec                       *Spec
 		expectedErr                string
 		enableVsphereFailureDomain bool
+		networkExists              bool
+		folderExists               bool
+		datastoreExists            bool
+		resourcepoolExists         bool
 	}{
 		{
 			name:                       "TestValidateFailureDomains success case",
 			enableVsphereFailureDomain: true,
+			networkExists:              true,
+			folderExists:               true,
+			datastoreExists:            true,
+			resourcepoolExists:         true,
 			spec: &Spec{
 				Spec: &cluster.Spec{
 					Config: &cluster.Config{
@@ -432,7 +474,7 @@ func TestValidateFailureDomains(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: "Failure Domains feature is not enabled",
+			expectedErr: "failure domains feature is not enabled",
 		},
 		{
 			name:                       "TestValidateFailureDomains with feature flag disabled and without failure domains",
@@ -577,18 +619,98 @@ func TestValidateFailureDomains(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:                       "TestValidateFailureDomains datastore does not exist",
+			enableVsphereFailureDomain: true,
+			networkExists:              true,
+			datastoreExists:            false,
+			folderExists:               true,
+			resourcepoolExists:         true,
+			expectedErr:                "failed to get datastore: myDatastore is not a datastore",
+			spec:                       defaultSpec,
+		},
+		{
+			name:                       "TestValidateFailureDomains folder does not exist",
+			enableVsphereFailureDomain: true,
+			networkExists:              true,
+			datastoreExists:            true,
+			folderExists:               false,
+			resourcepoolExists:         true,
+			expectedErr:                "failed to get folder: folder myFolder not found",
+			spec:                       defaultSpec,
+		},
+		{
+			name:                       "TestValidateFailureDomains resourcepool does not exist",
+			enableVsphereFailureDomain: true,
+			networkExists:              true,
+			datastoreExists:            true,
+			folderExists:               true,
+			resourcepoolExists:         false,
+			expectedErr:                "resource pool 'myResourcePool' not found",
+			spec:                       defaultSpec,
+		},
+		{
+			name:                       "TestValidateFailureDomains network does not exist",
+			enableVsphereFailureDomain: true,
+			networkExists:              false,
+			datastoreExists:            true,
+			folderExists:               true,
+			resourcepoolExists:         true,
+			expectedErr:                "failed checking if network '/myDatacenter/network/myNetwork' exists: network not found",
+			spec:                       defaultSpec,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
 			t.Setenv(features.VSphereFailureDomainEnabledEnvVar, strconv.FormatBool(tt.enableVsphereFailureDomain))
 			ctrl := gomock.NewController(t)
 			govc := govcmocks.NewMockProviderGovcClient(ctrl)
 
+			if tt.enableVsphereFailureDomain && len(tt.spec.VSphereDatacenter.Spec.FailureDomains) > 0 {
+				govc.EXPECT().
+					NetworkExists(gomock.Any(), gomock.AssignableToTypeOf("")).
+					DoAndReturn(func(_ context.Context, network string) (bool, error) {
+						if tt.networkExists {
+							return true, nil
+						}
+						return false, fmt.Errorf("failed checking if network '%s' exists: network not found", network)
+					}).AnyTimes()
+
+				govc.EXPECT().
+					ValidateFailureDomainConfig(
+						gomock.Any(),
+						gomock.AssignableToTypeOf(&v1alpha1.VSphereDatacenterConfig{}),
+						gomock.AssignableToTypeOf(&v1alpha1.FailureDomain{}),
+					).DoAndReturn(func(_ context.Context, _ *v1alpha1.VSphereDatacenterConfig, fd *v1alpha1.FailureDomain) error {
+					// Only proceed with these validations if network exists
+					if !tt.networkExists {
+						return nil
+					}
+
+					if !tt.datastoreExists {
+						return fmt.Errorf("failed to get datastore: %s is not a datastore", fd.Datastore)
+					}
+
+					if !tt.folderExists {
+						return fmt.Errorf("failed to get folder: folder %s not found", fd.Folder)
+					}
+
+					if !tt.resourcepoolExists {
+						return fmt.Errorf("resource pool '%s' not found", fd.ResourcePool)
+					}
+
+					return nil
+				}).AnyTimes()
+
+			}
+
 			v := Validator{
 				govc: govc,
 			}
-			err := v.ValidateFailureDomains(tt.spec)
+
+			err := v.ValidateFailureDomains(ctx, tt.spec)
 			if tt.expectedErr != "" {
 				assert.Contains(t, err.Error(), tt.expectedErr)
 			} else {
