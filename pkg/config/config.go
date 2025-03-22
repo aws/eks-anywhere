@@ -13,6 +13,7 @@ const (
 	SshKnownHostsEnv          = "SSH_KNOWN_HOSTS"
 	EksaAccessKeyIdEnv        = "EKSA_AWS_ACCESS_KEY_ID"
 	EksaSecretAccessKeyEnv    = "EKSA_AWS_SECRET_ACCESS_KEY"
+	EksaSessionTokenKeyEnv    = "EKSA_AWS_SESSION_TOKEN"
 	AwsAccessKeyIdEnv         = "AWS_ACCESS_KEY_ID"
 	AwsSecretAccessKeyEnv     = "AWS_SECRET_ACCESS_KEY"
 	EksaAwsConfigFileEnv      = "EKSA_AWS_CONFIG_FILE"

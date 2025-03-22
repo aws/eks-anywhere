@@ -79,6 +79,7 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 	}
 	eksaAccessId := "test-access-id"
 	eksaAccessKey := "test-access-key"
+	eksaSessionToken := "test-session-token"
 	eksaAwsConfigFile := "test-aws-config-file"
 	eksaRegion := "test-region"
 	clusterName := "billy"
@@ -138,6 +139,35 @@ func newPackageControllerTests(t *testing.T) []*packageControllerTest {
 			registryMirror: registryMirror,
 			writer:         writer,
 			wantValueFile:  "testdata/values_test.yaml",
+		},
+		{
+			WithT:        NewWithT(t),
+			ctx:          context.Background(),
+			kubectl:      k,
+			chartManager: cm,
+			command: curatedpackages.NewPackageControllerClient(
+				cm, k, clusterName, kubeConfig, chart, registryMirror,
+				curatedpackages.WithEksaSecretAccessKey(eksaAccessKey),
+				curatedpackages.WithEksaRegion(eksaRegion),
+				curatedpackages.WithEksaAccessKeyId(eksaAccessId),
+				curatedpackages.WithEksaSessionToken(eksaSessionToken),
+				curatedpackages.WithEksaAwsConfig(eksaAwsConfigFile),
+				curatedpackages.WithManagementClusterName(clusterName),
+				curatedpackages.WithValuesFileWriter(writer),
+				curatedpackages.WithClusterSpec(clusterSpec),
+			),
+			clusterName:    clusterName,
+			kubeConfig:     kubeConfig,
+			chart:          chart,
+			eksaAccessID:   eksaAccessId,
+			eksaAccessKey:  eksaAccessKey,
+			eksaRegion:     eksaRegion,
+			httpProxy:      "1.1.1.1",
+			httpsProxy:     "1.1.1.1",
+			noProxy:        []string{"1.1.1.1/24"},
+			registryMirror: registryMirror,
+			writer:         writer,
+			wantValueFile:  "testdata/values_with_sessiontoken.yaml",
 		},
 		{
 			WithT:        NewWithT(t),
@@ -1229,7 +1259,7 @@ func TestEnableFullLifecyclePath(t *testing.T) {
 
 type stubRegistryAccessTester struct{}
 
-func (s *stubRegistryAccessTester) Test(ctx context.Context, accessKey, secret, registry, region, awsConfig string) error {
+func (s *stubRegistryAccessTester) Test(_ context.Context, _ curatedpackages.RegistryAccessTestParams) error {
 	return nil
 }
 
