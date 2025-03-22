@@ -97,6 +97,7 @@ type ProviderGovcClient interface {
 	TemplateHasSnapshot(ctx context.Context, template string) (bool, error)
 	GetWorkloadAvailableSpace(ctx context.Context, datastore string) (float64, error)
 	ValidateVCenterSetupMachineConfig(ctx context.Context, datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConfig *v1alpha1.VSphereMachineConfig, selfSigned *bool) error
+	ValidateFailureDomainConfig(ctx context.Context, datacenterConfig *v1alpha1.VSphereDatacenterConfig, failureDomain *v1alpha1.FailureDomain) error
 	ValidateVCenterConnection(ctx context.Context, server string) error
 	ValidateVCenterAuthentication(ctx context.Context) error
 	IsCertSelfSigned(ctx context.Context) bool
@@ -325,7 +326,7 @@ func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 		return err
 	}
 
-	if err := p.validator.ValidateFailureDomains(vSphereClusterSpec); err != nil {
+	if err := p.validator.ValidateFailureDomains(ctx, vSphereClusterSpec); err != nil {
 		return err
 	}
 
@@ -407,7 +408,7 @@ func (p *vsphereProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cl
 		return err
 	}
 
-	if err := p.validator.ValidateFailureDomains(vSphereClusterSpec); err != nil {
+	if err := p.validator.ValidateFailureDomains(ctx, vSphereClusterSpec); err != nil {
 		return err
 	}
 
