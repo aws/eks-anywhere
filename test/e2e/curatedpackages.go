@@ -120,7 +120,6 @@ func WaitForResource(
 	if !strings.HasPrefix(jsonpath, "jsonpath") {
 		jsonpath = fmt.Sprintf("jsonpath='%s'", jsonpath)
 	}
-	command := []string{}
 	for time.Now().Before(end) {
 		out, err := test.KubectlClient.Execute(ctx, "get", "-n", namespace,
 			"--kubeconfig="+kubeconfig.FromClusterName(test.ClusterName),
@@ -138,7 +137,7 @@ func WaitForResource(
 	}
 	return fmt.Errorf(
 		"timed out waiting for resource: %s [namespace: %s, jsonpath: %s, timeout: %s]",
-		command,
+		resource,
 		namespace,
 		jsonpath,
 		timeout,
