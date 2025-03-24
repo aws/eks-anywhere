@@ -3186,6 +3186,51 @@ func TestVSphereKubernetes131RedHatSimpleFlow(t *testing.T) {
 	runSimpleFlow(test)
 }
 
+func TestVSphereKubernetes128RedHat9SimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithRedHat9128VSphere()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
+	)
+	runSimpleFlow(test)
+}
+
+func TestVSphereKubernetes129RedHat9SimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithRedHat9129VSphere()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
+	)
+	runSimpleFlow(test)
+}
+
+func TestVSphereKubernetes130RedHat9SimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithRedHat9130VSphere()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130)),
+	)
+	runSimpleFlow(test)
+}
+
+func TestVSphereKubernetes131RedHat9SimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithRedHat9131VSphere()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube131)),
+	)
+	runSimpleFlow(test)
+}
+
+func TestVSphereKubernetes132RedHat9SimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithRedHat9132VSphere()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube132)),
+	)
+	runSimpleFlow(test)
+}
+
 func TestVSphereKubernetes128ThreeReplicasFiveWorkersSimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -4269,6 +4314,66 @@ func TestVSphereKubernetes130To131RedHatUpgrade(t *testing.T) {
 	)
 }
 
+func TestVSphereKubernetes128To129RedHat9Upgrade(t *testing.T) {
+	provider := framework.NewVSphere(t, framework.WithRedHat9128VSphere())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
+	)
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube129,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube129)),
+		provider.WithProviderUpgrade(provider.Redhat9129Template()),
+	)
+}
+
+func TestVSphereKubernetes129To130RedHat9Upgrade(t *testing.T) {
+	provider := framework.NewVSphere(t, framework.WithRedHat9129VSphere())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
+	)
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube130,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube130)),
+		provider.WithProviderUpgrade(provider.Redhat9130Template()),
+	)
+}
+
+func TestVSphereKubernetes130To131RedHat9Upgrade(t *testing.T) {
+	provider := framework.NewVSphere(t, framework.WithRedHat9130VSphere())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130)),
+	)
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube131,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube131)),
+		provider.WithProviderUpgrade(provider.Redhat9131Template()),
+	)
+}
+
+func TestVSphereKubernetes131To132RedHat9Upgrade(t *testing.T) {
+	provider := framework.NewVSphere(t, framework.WithRedHat9131VSphere())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube131)),
+	)
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube132,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube132)),
+		provider.WithProviderUpgrade(provider.Redhat9132Template()),
+	)
+}
+
 func TestVSphereKubernetes128To129StackedEtcdRedHatUpgrade(t *testing.T) {
 	provider := framework.NewVSphere(t, framework.WithRedHat128VSphere())
 	test := framework.NewClusterE2ETest(
@@ -4314,6 +4419,70 @@ func TestVSphereKubernetes130To131StackedEtcdRedHatUpgrade(t *testing.T) {
 		v1alpha1.Kube131,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube131)),
 		provider.WithProviderUpgrade(provider.Redhat131Template()),
+	)
+}
+
+func TestVSphereKubernetes128To129StackedEtcdRedHat9Upgrade(t *testing.T) {
+	provider := framework.NewVSphere(t, framework.WithRedHat9128VSphere())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
+		framework.WithClusterFiller(api.WithStackedEtcdTopology()),
+	)
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube129,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube129)),
+		provider.WithProviderUpgrade(provider.Redhat9129Template()),
+	)
+}
+
+func TestVSphereKubernetes129To130StackedEtcdRedHat9Upgrade(t *testing.T) {
+	provider := framework.NewVSphere(t, framework.WithRedHat9129VSphere())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
+		framework.WithClusterFiller(api.WithStackedEtcdTopology()),
+	)
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube130,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube130)),
+		provider.WithProviderUpgrade(provider.Redhat9130Template()),
+	)
+}
+
+func TestVSphereKubernetes130To131StackedEtcdRedHat9Upgrade(t *testing.T) {
+	provider := framework.NewVSphere(t, framework.WithRedHat9130VSphere())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130)),
+		framework.WithClusterFiller(api.WithStackedEtcdTopology()),
+	)
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube131,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube131)),
+		provider.WithProviderUpgrade(provider.Redhat9131Template()),
+	)
+}
+
+func TestVSphereKubernetes131To132StackedEtcdRedHat9Upgrade(t *testing.T) {
+	provider := framework.NewVSphere(t, framework.WithRedHat9131VSphere())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube131)),
+		framework.WithClusterFiller(api.WithStackedEtcdTopology()),
+	)
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube132,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube132)),
+		provider.WithProviderUpgrade(provider.Redhat9132Template()),
 	)
 }
 
@@ -5254,14 +5423,14 @@ func TestVSphereKubernetes131BottlerocketTo132StackedEtcdUpgrade(t *testing.T) {
 	)
 }
 
-func TestVSphereKubernetes132RedhatUpgradeFromLatestMinorRelease(t *testing.T) {
+func TestVSphereKubernetes132Redhat9UpgradeFromLatestMinorRelease(t *testing.T) {
 	release := latestMinorRelease(t)
 	useBundlesOverride := false
 	provider := framework.NewVSphere(t,
 		framework.WithVSphereFillers(
 			api.WithOsFamilyForAllMachines(v1alpha1.RedHat),
 		),
-		framework.WithKubeVersionAndOSForRelease(v1alpha1.Kube132, framework.RedHat8, release, useBundlesOverride),
+		framework.WithKubeVersionAndOSForRelease(v1alpha1.Kube132, framework.RedHat9, release, useBundlesOverride),
 	)
 	test := framework.NewClusterE2ETest(
 		t,
@@ -5276,7 +5445,7 @@ func TestVSphereKubernetes132RedhatUpgradeFromLatestMinorRelease(t *testing.T) {
 		release,
 		v1alpha1.Kube132,
 		provider.WithProviderUpgrade(
-			provider.Redhat132Template(), // Set the template so it doesn't get autoimported
+			provider.Redhat9132Template(), // Set the template so it doesn't get autoimported
 		),
 	)
 }
@@ -5555,6 +5724,118 @@ func TestVSphereKubernetes130To131RedhatUpgradeFromLatestMinorRelease(t *testing
 			provider.Redhat131Template(), // Set the template so it doesn't get auto-imported
 		),
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube131)),
+	)
+}
+
+func TestVSphereKubernetes128To129Redhat9UpgradeFromLatestMinorRelease(t *testing.T) {
+	release := latestMinorRelease(t)
+	useBundlesOverride := false
+	provider := framework.NewVSphere(t,
+		framework.WithVSphereFillers(
+			api.WithOsFamilyForAllMachines(v1alpha1.RedHat),
+		),
+		framework.WithKubeVersionAndOSForRelease(v1alpha1.Kube128, framework.RedHat9, release, useBundlesOverride),
+	)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+	)
+	runUpgradeFromReleaseFlow(
+		test,
+		release,
+		v1alpha1.Kube129,
+		provider.WithProviderUpgrade(
+			provider.Redhat9129Template(), // Set the template so it doesn't get auto-imported
+		),
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube129)),
+	)
+}
+
+func TestVSphereKubernetes129To130Redhat9UpgradeFromLatestMinorRelease(t *testing.T) {
+	release := latestMinorRelease(t)
+	useBundlesOverride := false
+	provider := framework.NewVSphere(t,
+		framework.WithVSphereFillers(
+			api.WithOsFamilyForAllMachines(v1alpha1.RedHat),
+		),
+		framework.WithKubeVersionAndOSForRelease(v1alpha1.Kube129, framework.RedHat9, release, useBundlesOverride),
+	)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+	)
+	runUpgradeFromReleaseFlow(
+		test,
+		release,
+		v1alpha1.Kube130,
+		provider.WithProviderUpgrade(
+			provider.Redhat9130Template(), // Set the template so it doesn't get auto-imported
+		),
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube130)),
+	)
+}
+
+func TestVSphereKubernetes130To131Redhat9UpgradeFromLatestMinorRelease(t *testing.T) {
+	release := latestMinorRelease(t)
+	useBundlesOverride := false
+	provider := framework.NewVSphere(t,
+		framework.WithVSphereFillers(
+			api.WithOsFamilyForAllMachines(v1alpha1.RedHat),
+		),
+		framework.WithKubeVersionAndOSForRelease(v1alpha1.Kube130, framework.RedHat9, release, useBundlesOverride),
+	)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130)),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+	)
+	runUpgradeFromReleaseFlow(
+		test,
+		release,
+		v1alpha1.Kube131,
+		provider.WithProviderUpgrade(
+			provider.Redhat9131Template(), // Set the template so it doesn't get auto-imported
+		),
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube131)),
+	)
+}
+
+func TestVSphereKubernetes131To132Redhat9UpgradeFromLatestMinorRelease(t *testing.T) {
+	release := latestMinorRelease(t)
+	useBundlesOverride := false
+	provider := framework.NewVSphere(t,
+		framework.WithVSphereFillers(
+			api.WithOsFamilyForAllMachines(v1alpha1.RedHat),
+		),
+		framework.WithKubeVersionAndOSForRelease(v1alpha1.Kube131, framework.RedHat9, release, useBundlesOverride),
+	)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube131)),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+	)
+	runUpgradeFromReleaseFlow(
+		test,
+		release,
+		v1alpha1.Kube132,
+		provider.WithProviderUpgrade(
+			provider.Redhat9132Template(), // Set the template so it doesn't get auto-imported
+		),
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube132)),
 	)
 }
 
