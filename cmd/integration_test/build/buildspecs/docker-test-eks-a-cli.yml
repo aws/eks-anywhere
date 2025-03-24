@@ -7,11 +7,7 @@ env:
     EKSA_GIT_PRIVATE_KEY: "/tmp/private-key"
     INTEGRATION_TEST_INFRA_CONFIG: "/tmp/test-infra.yml"
   secrets-manager:
-    EKSA_AWS_ACCESS_KEY_ID: "packages_ci_beta:aws_access_key_id"
-    EKSA_AWS_SECRET_ACCESS_KEY: "packages_ci_beta:aws_secret_access_key_id"
     EKSA_AWS_REGION: "packages_ci_beta:aws_region"
-    NON_REGIONAL_EKSA_AWS_ACCESS_KEY_ID: "packages_ci_beta:non_regional_aws_access_key_id"
-    NON_REGIONAL_EKSA_AWS_SECRET_ACCESS_KEY: "packages_ci_beta:non_regional_aws_secret_access_key_id"
     EKSA_GITHUB_TOKEN: "github-eks-anywhere-flux-bot:github-token"
     T_GITHUB_USER: "github-eks-anywhere-flux-bot:github-user"
     T_GIT_REPOSITORY: "github-eks-anywhere-flux-bot:github-repository"
@@ -38,6 +34,16 @@ phases:
         if ! [[ ${CODEBUILD_INITIATOR} =~ "codepipeline" ]]; then
           make build-eks-a-for-e2e build-integration-test-binary e2e-tests-binary E2E_TAGS="e2e docker" E2E_OUTPUT_FILE=bin/docker/e2e.test
         fi
+      - PACKAGES_ROLE=$(aws sts assume-role --role-arn $PACKAGES_ROLE_ARN --role-session-name test)
+      - export PACKAGES_ROLE
+      - export EKSA_AWS_ACCESS_KEY_ID=$(echo "${PACKAGES_ROLE}" | jq -r '.Credentials.AccessKeyId')
+      - export EKSA_AWS_SECRET_ACCESS_KEY=$(echo "${PACKAGES_ROLE}" | jq -r '.Credentials.SecretAccessKey')
+      - export EKSA_AWS_SESSION_TOKEN=$(echo "${PACKAGES_ROLE}" | jq -r '.Credentials.SessionToken')
+      - NON_REGIONAL_PACKAGES_ROLE=$(aws sts assume-role --role-arn $NON_REGIONAL_PACKAGES_ROLE_ARN --role-session-name test-non-regional)
+      - export NON_REGIONAL_PACKAGES_ROLE
+      - export NON_REGIONAL_EKSA_AWS_ACCESS_KEY_ID=$(echo "${NON_REGIONAL_PACKAGES_ROLE}" | jq -r '.Credentials.AccessKeyId')
+      - export NON_REGIONAL_EKSA_AWS_SECRET_ACCESS_KEY=$(echo "${NON_REGIONAL_PACKAGES_ROLE}" | jq -r '.Credentials.SecretAccessKey')
+      - export NON_REGIONAL_EKSA_AWS_SESSION_TOKEN=$(echo "${NON_REGIONAL_PACKAGES_ROLE}" | jq -r '.Credentials.SessionToken')
   build:
     commands:
       - export JOB_ID=$CODEBUILD_BUILD_ID
