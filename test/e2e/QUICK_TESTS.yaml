@@ -3,7 +3,9 @@ quick_tests:
 - TestDocker.*132
 # vSphere
 - ^TestVSphereKubernetes130To131RedHatUpgrade$
-- TestVSphereKubernetes131To132StackedEtcdRedHatUpgrade
+- TestVSphereKubernetes130To131StackedEtcdRedHatUpgrade
+- ^TestVSphereKubernetes131To132RedHat9Upgrade$
+- TestVSphereKubernetes131To132StackedEtcdRedHat9Upgrade
 - ^TestVSphereKubernetes131UbuntuTo132Upgrade$
 - TestVSphereKubernetes131UbuntuTo132StackedEtcdUpgrade
 - TestVSphereKubernetes131To132Ubuntu2204Upgrade
