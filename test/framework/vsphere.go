@@ -160,6 +160,31 @@ func WithRedHat131VSphere() VSphereOpt {
 	return withVSphereKubeVersionAndOS(anywherev1.Kube131, RedHat8, nil)
 }
 
+// WithRedHat9128VSphere vsphere test with Redhat 9 for Kubernetes 1.28.
+func WithRedHat9128VSphere() VSphereOpt {
+	return withVSphereKubeVersionAndOS(anywherev1.Kube128, RedHat9, nil)
+}
+
+// WithRedHat9129VSphere vsphere test with Redhat 9 for Kubernetes 1.29.
+func WithRedHat9129VSphere() VSphereOpt {
+	return withVSphereKubeVersionAndOS(anywherev1.Kube129, RedHat9, nil)
+}
+
+// WithRedHat9130VSphere vsphere test with Redhat 9 for Kubernetes 1.30.
+func WithRedHat9130VSphere() VSphereOpt {
+	return withVSphereKubeVersionAndOS(anywherev1.Kube130, RedHat9, nil)
+}
+
+// WithRedHat9131VSphere vsphere test with Redhat 9 for Kubernetes 1.31.
+func WithRedHat9131VSphere() VSphereOpt {
+	return withVSphereKubeVersionAndOS(anywherev1.Kube131, RedHat9, nil)
+}
+
+// WithRedHat9132VSphere vsphere test with Redhat 9 for Kubernetes 1.32.
+func WithRedHat9132VSphere() VSphereOpt {
+	return withVSphereKubeVersionAndOS(anywherev1.Kube132, RedHat9, nil)
+}
+
 // WithUbuntu128 returns a VSphereOpt that adds API fillers to use a Ubuntu vSphere template for k8s 1.28
 // and the "ubuntu" osFamily in all machine configs.
 func WithUbuntu128() VSphereOpt {
@@ -577,9 +602,29 @@ func (v *VSphere) Redhat131Template() api.VSphereFiller {
 	return v.templateForKubeVersionAndOS(anywherev1.Kube131, RedHat8, nil)
 }
 
-// Redhat132Template returns vsphere filler for 1.32 Redhat.
-func (v *VSphere) Redhat132Template() api.VSphereFiller {
-	return v.templateForKubeVersionAndOS(anywherev1.Kube132, RedHat8, nil)
+// Redhat9128Template returns vsphere filler for 1.28 Redhat 9.
+func (v *VSphere) Redhat9128Template() api.VSphereFiller {
+	return v.templateForKubeVersionAndOS(anywherev1.Kube128, RedHat9, nil)
+}
+
+// Redhat9129Template returns vsphere filler for 1.29 Redhat 9.
+func (v *VSphere) Redhat9129Template() api.VSphereFiller {
+	return v.templateForKubeVersionAndOS(anywherev1.Kube129, RedHat9, nil)
+}
+
+// Redhat9130Template returns vsphere filler for 1.30 Redhat 9.
+func (v *VSphere) Redhat9130Template() api.VSphereFiller {
+	return v.templateForKubeVersionAndOS(anywherev1.Kube130, RedHat9, nil)
+}
+
+// Redhat9131Template returns vsphere filler for 1.31 Redhat 9.
+func (v *VSphere) Redhat9131Template() api.VSphereFiller {
+	return v.templateForKubeVersionAndOS(anywherev1.Kube131, RedHat9, nil)
+}
+
+// Redhat9132Template returns vsphere filler for 1.32 Redhat 9.
+func (v *VSphere) Redhat9132Template() api.VSphereFiller {
+	return v.templateForKubeVersionAndOS(anywherev1.Kube132, RedHat9, nil)
 }
 
 func (v *VSphere) getDevRelease() *releasev1.EksARelease {
