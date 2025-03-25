@@ -548,6 +548,25 @@ func TestFactoryBuildWithPackageControllerClientProxy(t *testing.T) {
 					Name: "test-cluster",
 				},
 				Spec: anywherev1.ClusterSpec{
+					ControlPlaneConfiguration: anywherev1.ControlPlaneConfiguration{
+						Count: 3,
+						Endpoint: &anywherev1.Endpoint{
+							Host: "test-ip",
+						},
+						MachineGroupRef: &anywherev1.Ref{
+							Kind: anywherev1.VSphereMachineConfigKind,
+							Name: "eksa-unit-test",
+						},
+					},
+					ClusterNetwork: anywherev1.ClusterNetwork{
+						CNIConfig: &anywherev1.CNIConfig{Cilium: &anywherev1.CiliumConfig{}},
+						Pods: anywherev1.Pods{
+							CidrBlocks: []string{"192.168.0.0/16"},
+						},
+						Services: anywherev1.Services{
+							CidrBlocks: []string{"10.96.0.0/12"},
+						},
+					},
 					ProxyConfiguration: &anywherev1.ProxyConfiguration{
 						HttpProxy:  "1.1.1.1",
 						HttpsProxy: "1.1.1.1",
