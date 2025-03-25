@@ -870,6 +870,50 @@ func (g *Govc) GetResourcePoolPath(ctx context.Context, datacenter string, resou
 	return foundPool, nil
 }
 
+func (g *Govc) GetComputeClusterPath(ctx context.Context, datacenter string, computeCluster string, envMap map[string]string) (string, error) {
+	var computeClusterResponse bytes.Buffer
+	params := []string{"find", "-json", "/" + datacenter, "-type", "c", "-name", filepath.Base(computeCluster)}
+
+	err := g.Retry(func() error {
+		var err error
+		computeClusterResponse, err = g.ExecuteWithEnv(ctx, envMap, params...)
+		return err
+	})
+	if err != nil {
+		return "", fmt.Errorf("getting compute cluster: %v", err)
+	}
+
+	computeClusterJson := computeClusterResponse.String()
+	computeClusterJson = strings.TrimSuffix(computeClusterJson, "\n")
+	if computeClusterJson == "null" || computeClusterJson == "" {
+		return "", fmt.Errorf("compute cluster '%s' not found", computeCluster)
+	}
+
+	computeClusterInfo := make([]string, 0)
+	if err = json.Unmarshal([]byte(computeClusterJson), &computeClusterInfo); err != nil {
+		return "", fmt.Errorf("failed unmarshalling govc response: %v", err)
+	}
+
+	computeCluster = strings.TrimPrefix(computeCluster, "*/")
+	computeClusterFound := false
+	var foundCluster string
+	for _, cc := range computeClusterInfo {
+		if strings.HasSuffix(cc, computeCluster) {
+			if computeClusterFound {
+				return "", fmt.Errorf("specified compute cluster '%s' maps to multiple paths within the datacenter '%s'", computeCluster, datacenter)
+			}
+			computeClusterFound = true
+			foundCluster = cc
+		}
+	}
+	if !computeClusterFound {
+		return "", fmt.Errorf("compute cluster '%s' not found", computeCluster)
+	}
+
+	logger.MarkPass("Compute cluster validated")
+	return foundCluster, nil
+}
+
 // ValidateVCenterSetupMachineConfig validates that all resources specified in a
 // VSphereMachineConfig exist and are accessible.
 func (g *Govc) ValidateVCenterSetupMachineConfig(ctx context.Context, datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConfig *v1alpha1.VSphereMachineConfig, _ *bool) error {
@@ -924,6 +968,12 @@ func (g *Govc) ValidateFailureDomainConfig(ctx context.Context, datacenterConfig
 		return err
 	}
 	failureDomain.ResourcePool = resourcePool
+
+	computeCluster, err := g.GetComputeClusterPath(ctx, datacenterConfig.Spec.Datacenter, failureDomain.ComputeCluster, envMap)
+	if err != nil {
+		return err
+	}
+	failureDomain.ComputeCluster = computeCluster
 
 	return nil
 }
