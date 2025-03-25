@@ -291,6 +291,9 @@ func ValidateBottlerocketKubeletConfig(spec *cluster.Spec) error {
 
 // ValidateExtendedKubernetesSupport validates the extended kubernetes version support for create and upgrade operations.
 func ValidateExtendedKubernetesSupport(ctx context.Context, clusterSpec v1alpha1.Cluster, reader *manifests.Reader, k kubernetes.Client, bundlesOverride string) error {
+	if clusterSpec.Spec.DatacenterRef.Kind == "SnowDatacenterConfig" {
+		return nil
+	}
 	var b *releasev1alpha1.Bundles
 	var err error
 	if bundlesOverride != "" {

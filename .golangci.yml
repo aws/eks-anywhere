@@ -1,49 +1,53 @@
-run:
-  timeout: 5m
-
+version: "2"
 linters:
   enable:
-    - gofumpt
-    - gci
+    - gocyclo
     - godot
     - nakedret
-    - gocyclo
     - revive
-
-linters-settings:
-  gci:
-    sections:
-      - standard
-      - default
-      - prefix(github.com/aws/eks-anywhere)
-    custom-order: true
-    skip-generated: false
-  godot:
-    exclude:
-      # Exclude todo comments.
-      - "(?i)^\\s*todo"
-    period: true
-  nakedret:
-    # never allow naked returns
-    max-func-lines: 0
-  gocyclo:
-    # Minimal code complexity to report.
-    min-complexity: 10
-
+  settings:
+    gocyclo:
+      min-complexity: 10
+    godot:
+      exclude:
+        - (?i)^\s*todo
+      period: true
+  exclusions:
+    generated: lax
+    presets:
+      - common-false-positives
+      - std-error-handling
+    paths:
+      - zz_generated.*\.go$
+      - .*/mocks
+      - manager/tilt_modules
+      - internal/aws-sdk-go-v2
+      - pkg/providers/snow/api/v1beta1
+      - third_party$
+      - builtin$
+      - examples$
 issues:
-  max-same-issues: 0
   max-issues-per-linter: 0
-
-  exclude-files:
-    - "zz_generated.*\\.go$"
-
-  exclude-dirs:
-    - ".*/mocks"
-    - "manager/tilt_modules"
-    - "internal/aws-sdk-go-v2"
-    - "pkg/providers/snow/api/v1beta1"
-
-  include:
-    - EXC0012 # EXC0012 revive: exported (.+) should have comment( \(or a comment on this block\))? or be unexported
-    - EXC0014 # EXC0014 revive: comment on exported (.+) should be of the form "(.+)..."
-    - EXC0009 # EXC0009 revive: (Expect directory permissions to be 0750 or less|Expect file permissions to be 0600 or less)
+  max-same-issues: 0
+formatters:
+  enable:
+    - gci
+    - gofumpt
+  settings:
+    gci:
+      sections:
+        - standard
+        - default
+        - prefix(github.com/aws/eks-anywhere)
+      custom-order: true
+  exclusions:
+    generated: lax
+    paths:
+      - zz_generated.*\.go$
+      - .*/mocks
+      - manager/tilt_modules
+      - internal/aws-sdk-go-v2
+      - pkg/providers/snow/api/v1beta1
+      - third_party$
+      - builtin$
+      - examples$

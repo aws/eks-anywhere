@@ -642,6 +642,9 @@ func validateEksaRelease(ctx context.Context, client client.Client, cluster *any
 }
 
 func validateExtendedK8sVersionSupport(ctx context.Context, client client.Client, cluster *anywherev1.Cluster) error {
+	if cluster.Spec.DatacenterRef.Kind == "SnowDatacenterConfig" {
+		return nil
+	}
 	bundle, err := c.BundlesForCluster(ctx, clientutil.NewKubeClient(client), cluster)
 	if err != nil {
 		reason := anywherev1.BundleNotFoundReason
