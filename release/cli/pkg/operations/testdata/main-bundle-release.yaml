@@ -112,26 +112,26 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:c25d1b1ed756860210c703ca8f768e8f06b9a2ad71fd8cab57caa54db17cd779
+        imageDigest: sha256:1cc9b4eea8d7cbb5f40147fdbcc9fcef3c51082ee15f4ca776686065a49fc895
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.15.13-eksa.2
+        uri: public.ecr.aws/isovalent/cilium:v1.15.14-eksa.1
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:07775ba8f2878c8dbe110de2305a872994792c1464ac9acf6a824e37e8c4788d
+        imageDigest: sha256:a00256d7fa2dc3a68e8864507ed6393a597330f713a0aa9f657beba8f01291e7
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.15.13-eksa.2
+        uri: public.ecr.aws/isovalent/cilium:1.15.14-eksa.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.15.13-eksa.2/cilium.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.15.14-eksa.1/cilium.yaml
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:d1d70f9a4fdbaa238c8fdf2f08c311e066a81bb4c2e253b1373c246a091ff2ff
+        imageDigest: sha256:3d3c03c2faeb33cbd2baddb1298ab67123645d4a3446d21d08bb6a5898df9c52
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.15.13-eksa.2
-      version: v1.15.13-eksa.2
+        uri: public.ecr.aws/isovalent/operator-generic:v1.15.14-eksa.1
+      version: v1.15.14-eksa.1
     cloudStack:
       clusterAPIController:
         arch:
@@ -474,12 +474,12 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: credential-provider-package
         os: linux
-        uri: public.ecr.aws/release-container-registry/credential-provider-package:v0.4.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/credential-provider-package:v0.4.6-eks-a-v0.0.0-dev-build.1
       helmChart:
         description: Helm chart for eks-anywhere-packages
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.4.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.4.6-eks-a-v0.0.0-dev-build.1
       packageController:
         arch:
         - amd64
@@ -488,7 +488,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.4.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.4.6-eks-a-v0.0.0-dev-build.1
       tokenRefresher:
         arch:
         - amd64
@@ -497,8 +497,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: ecr-token-refresher
         os: linux
-        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.4.5-eks-a-v0.0.0-dev-build.1
-      version: v0.4.5+abcdef1
+        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.4.6-eks-a-v0.0.0-dev-build.1
+      version: v0.4.6+abcdef1
     snow:
       bottlerocketBootstrapSnow:
         arch:
@@ -939,26 +939,26 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:c25d1b1ed756860210c703ca8f768e8f06b9a2ad71fd8cab57caa54db17cd779
+        imageDigest: sha256:1cc9b4eea8d7cbb5f40147fdbcc9fcef3c51082ee15f4ca776686065a49fc895
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.15.13-eksa.2
+        uri: public.ecr.aws/isovalent/cilium:v1.15.14-eksa.1
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:07775ba8f2878c8dbe110de2305a872994792c1464ac9acf6a824e37e8c4788d
+        imageDigest: sha256:a00256d7fa2dc3a68e8864507ed6393a597330f713a0aa9f657beba8f01291e7
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.15.13-eksa.2
+        uri: public.ecr.aws/isovalent/cilium:1.15.14-eksa.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.15.13-eksa.2/cilium.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.15.14-eksa.1/cilium.yaml
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:d1d70f9a4fdbaa238c8fdf2f08c311e066a81bb4c2e253b1373c246a091ff2ff
+        imageDigest: sha256:3d3c03c2faeb33cbd2baddb1298ab67123645d4a3446d21d08bb6a5898df9c52
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.15.13-eksa.2
-      version: v1.15.13-eksa.2
+        uri: public.ecr.aws/isovalent/operator-generic:v1.15.14-eksa.1
+      version: v1.15.14-eksa.1
     cloudStack:
       clusterAPIController:
         arch:
@@ -1301,12 +1301,12 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: credential-provider-package
         os: linux
-        uri: public.ecr.aws/release-container-registry/credential-provider-package:v0.4.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/credential-provider-package:v0.4.6-eks-a-v0.0.0-dev-build.1
       helmChart:
         description: Helm chart for eks-anywhere-packages
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.4.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.4.6-eks-a-v0.0.0-dev-build.1
       packageController:
         arch:
         - amd64
@@ -1315,7 +1315,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.4.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.4.6-eks-a-v0.0.0-dev-build.1
       tokenRefresher:
         arch:
         - amd64
@@ -1324,8 +1324,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: ecr-token-refresher
         os: linux
-        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.4.5-eks-a-v0.0.0-dev-build.1
-      version: v0.4.5+abcdef1
+        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.4.6-eks-a-v0.0.0-dev-build.1
+      version: v0.4.6+abcdef1
     snow:
       bottlerocketBootstrapSnow:
         arch:
@@ -1766,26 +1766,26 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:c25d1b1ed756860210c703ca8f768e8f06b9a2ad71fd8cab57caa54db17cd779
+        imageDigest: sha256:1cc9b4eea8d7cbb5f40147fdbcc9fcef3c51082ee15f4ca776686065a49fc895
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.15.13-eksa.2
+        uri: public.ecr.aws/isovalent/cilium:v1.15.14-eksa.1
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:07775ba8f2878c8dbe110de2305a872994792c1464ac9acf6a824e37e8c4788d
+        imageDigest: sha256:a00256d7fa2dc3a68e8864507ed6393a597330f713a0aa9f657beba8f01291e7
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.15.13-eksa.2
+        uri: public.ecr.aws/isovalent/cilium:1.15.14-eksa.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.15.13-eksa.2/cilium.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.15.14-eksa.1/cilium.yaml
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:d1d70f9a4fdbaa238c8fdf2f08c311e066a81bb4c2e253b1373c246a091ff2ff
+        imageDigest: sha256:3d3c03c2faeb33cbd2baddb1298ab67123645d4a3446d21d08bb6a5898df9c52
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.15.13-eksa.2
-      version: v1.15.13-eksa.2
+        uri: public.ecr.aws/isovalent/operator-generic:v1.15.14-eksa.1
+      version: v1.15.14-eksa.1
     cloudStack:
       clusterAPIController:
         arch:
@@ -2128,12 +2128,12 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: credential-provider-package
         os: linux
-        uri: public.ecr.aws/release-container-registry/credential-provider-package:v0.4.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/credential-provider-package:v0.4.6-eks-a-v0.0.0-dev-build.1
       helmChart:
         description: Helm chart for eks-anywhere-packages
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.4.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.4.6-eks-a-v0.0.0-dev-build.1
       packageController:
         arch:
         - amd64
@@ -2142,7 +2142,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.4.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.4.6-eks-a-v0.0.0-dev-build.1
       tokenRefresher:
         arch:
         - amd64
@@ -2151,8 +2151,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: ecr-token-refresher
         os: linux
-        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.4.5-eks-a-v0.0.0-dev-build.1
-      version: v0.4.5+abcdef1
+        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.4.6-eks-a-v0.0.0-dev-build.1
+      version: v0.4.6+abcdef1
     snow:
       bottlerocketBootstrapSnow:
         arch:
@@ -2593,26 +2593,26 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:c25d1b1ed756860210c703ca8f768e8f06b9a2ad71fd8cab57caa54db17cd779
+        imageDigest: sha256:1cc9b4eea8d7cbb5f40147fdbcc9fcef3c51082ee15f4ca776686065a49fc895
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.15.13-eksa.2
+        uri: public.ecr.aws/isovalent/cilium:v1.15.14-eksa.1
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:07775ba8f2878c8dbe110de2305a872994792c1464ac9acf6a824e37e8c4788d
+        imageDigest: sha256:a00256d7fa2dc3a68e8864507ed6393a597330f713a0aa9f657beba8f01291e7
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.15.13-eksa.2
+        uri: public.ecr.aws/isovalent/cilium:1.15.14-eksa.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.15.13-eksa.2/cilium.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.15.14-eksa.1/cilium.yaml
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:d1d70f9a4fdbaa238c8fdf2f08c311e066a81bb4c2e253b1373c246a091ff2ff
+        imageDigest: sha256:3d3c03c2faeb33cbd2baddb1298ab67123645d4a3446d21d08bb6a5898df9c52
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.15.13-eksa.2
-      version: v1.15.13-eksa.2
+        uri: public.ecr.aws/isovalent/operator-generic:v1.15.14-eksa.1
+      version: v1.15.14-eksa.1
     cloudStack:
       clusterAPIController:
         arch:
@@ -2955,12 +2955,12 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: credential-provider-package
         os: linux
-        uri: public.ecr.aws/release-container-registry/credential-provider-package:v0.4.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/credential-provider-package:v0.4.6-eks-a-v0.0.0-dev-build.1
       helmChart:
         description: Helm chart for eks-anywhere-packages
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.4.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.4.6-eks-a-v0.0.0-dev-build.1
       packageController:
         arch:
         - amd64
@@ -2969,7 +2969,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.4.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.4.6-eks-a-v0.0.0-dev-build.1
       tokenRefresher:
         arch:
         - amd64
@@ -2978,8 +2978,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: ecr-token-refresher
         os: linux
-        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.4.5-eks-a-v0.0.0-dev-build.1
-      version: v0.4.5+abcdef1
+        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.4.6-eks-a-v0.0.0-dev-build.1
+      version: v0.4.6+abcdef1
     snow:
       bottlerocketBootstrapSnow:
         arch:
@@ -3420,26 +3420,26 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:c25d1b1ed756860210c703ca8f768e8f06b9a2ad71fd8cab57caa54db17cd779
+        imageDigest: sha256:1cc9b4eea8d7cbb5f40147fdbcc9fcef3c51082ee15f4ca776686065a49fc895
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.15.13-eksa.2
+        uri: public.ecr.aws/isovalent/cilium:v1.15.14-eksa.1
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:07775ba8f2878c8dbe110de2305a872994792c1464ac9acf6a824e37e8c4788d
+        imageDigest: sha256:a00256d7fa2dc3a68e8864507ed6393a597330f713a0aa9f657beba8f01291e7
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.15.13-eksa.2
+        uri: public.ecr.aws/isovalent/cilium:1.15.14-eksa.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.15.13-eksa.2/cilium.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.15.14-eksa.1/cilium.yaml
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:d1d70f9a4fdbaa238c8fdf2f08c311e066a81bb4c2e253b1373c246a091ff2ff
+        imageDigest: sha256:3d3c03c2faeb33cbd2baddb1298ab67123645d4a3446d21d08bb6a5898df9c52
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.15.13-eksa.2
-      version: v1.15.13-eksa.2
+        uri: public.ecr.aws/isovalent/operator-generic:v1.15.14-eksa.1
+      version: v1.15.14-eksa.1
     cloudStack:
       clusterAPIController:
         arch:
@@ -3782,12 +3782,12 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: credential-provider-package
         os: linux
-        uri: public.ecr.aws/release-container-registry/credential-provider-package:v0.4.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/credential-provider-package:v0.4.6-eks-a-v0.0.0-dev-build.1
       helmChart:
         description: Helm chart for eks-anywhere-packages
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.4.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.4.6-eks-a-v0.0.0-dev-build.1
       packageController:
         arch:
         - amd64
@@ -3796,7 +3796,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.4.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.4.6-eks-a-v0.0.0-dev-build.1
       tokenRefresher:
         arch:
         - amd64
@@ -3805,8 +3805,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: ecr-token-refresher
         os: linux
-        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.4.5-eks-a-v0.0.0-dev-build.1
-      version: v0.4.5+abcdef1
+        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.4.6-eks-a-v0.0.0-dev-build.1
+      version: v0.4.6+abcdef1
     snow:
       bottlerocketBootstrapSnow:
         arch:
