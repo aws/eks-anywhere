@@ -1671,7 +1671,22 @@ func (f *Factory) WithNutanixClientCache() *Factory {
 func getProxyConfiguration(clusterSpec *cluster.Spec) (httpProxy, httpsProxy string, noProxy []string) {
 	proxyConfiguration := clusterSpec.Cluster.Spec.ProxyConfiguration
 	if proxyConfiguration != nil {
-		return proxyConfiguration.HttpProxy, proxyConfiguration.HttpsProxy, proxyConfiguration.NoProxy
+		capacity := len(clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks) +
+			len(clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks) +
+			len(clusterSpec.Cluster.Spec.ProxyConfiguration.NoProxy) + 1
+
+		noProxyList := make([]string, 0, capacity)
+		noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks...)
+		noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks...)
+		noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ProxyConfiguration.NoProxy...)
+
+		if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint != nil && clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host != "" {
+			noProxyList = append(
+				noProxyList,
+				clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
+			)
+		}
+		return proxyConfiguration.HttpProxy, proxyConfiguration.HttpsProxy, noProxyList
 	}
 	return "", "", nil
 }
