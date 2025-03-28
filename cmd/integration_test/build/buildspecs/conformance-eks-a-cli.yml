@@ -150,7 +150,7 @@ phases:
       - source ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/create_infra_config.sh
       - ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/start_docker.sh
       - make conformance-tests
-      - PACKAGES_ROLE=$(aws sts assume-role --role-arn $PACKAGES_ROLE_ARN --role-session-name test --duration-seconds 43200)
+      - PACKAGES_ROLE=$(aws sts assume-role --role-arn $PACKAGES_ROLE_ARN --role-session-name test --duration-seconds 3600)
       - export PACKAGES_ROLE
       - export EKSA_AWS_ACCESS_KEY_ID=$(echo "${PACKAGES_ROLE}" | jq -r '.Credentials.AccessKeyId')
       - export EKSA_AWS_SECRET_ACCESS_KEY=$(echo "${PACKAGES_ROLE}" | jq -r '.Credentials.SecretAccessKey')

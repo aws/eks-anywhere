@@ -80,12 +80,12 @@ phases:
         -n ${CLUSTER_NAME_PREFIX}
         --delete-duplicate-networks
         -v 6
-      - PACKAGES_ROLE=$(aws sts assume-role --role-arn $PACKAGES_ROLE_ARN --role-session-name test --duration-seconds 43200)
+      - PACKAGES_ROLE=$(aws sts assume-role --role-arn $PACKAGES_ROLE_ARN --role-session-name test --duration-seconds 3600)
       - export PACKAGES_ROLE
       - export EKSA_AWS_ACCESS_KEY_ID=$(echo "${PACKAGES_ROLE}" | jq -r '.Credentials.AccessKeyId')
       - export EKSA_AWS_SECRET_ACCESS_KEY=$(echo "${PACKAGES_ROLE}" | jq -r '.Credentials.SecretAccessKey')
       - export EKSA_AWS_SESSION_TOKEN=$(echo "${PACKAGES_ROLE}" | jq -r '.Credentials.SessionToken')
-      - CERT_MANAGER_ROLE=$(aws sts assume-role --role-arn $CERT_MANAGER_ROLE_ARN --role-session-name test --duration-seconds 43200)
+      - CERT_MANAGER_ROLE=$(aws sts assume-role --role-arn $CERT_MANAGER_ROLE_ARN --role-session-name test --duration-seconds 3600)
       - export CERT_MANAGER_ROLE
       - export ROUTE53_ACCESS_KEY_ID=$(echo "${CERT_MANAGER_ROLE}" | jq -r '.Credentials.AccessKeyId')
       - export ROUTE53_SECRET_ACCESS_KEY=$(echo "${CERT_MANAGER_ROLE}" | jq -r '.Credentials.SecretAccessKey')
