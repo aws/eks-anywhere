@@ -202,6 +202,8 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) []validat
 					Err:         validations.ValidateEksaVersionSkew(ctx, k, u.Opts.ManagementCluster, u.Opts.Spec),
 				}
 			})
+	} else {
+		u.Opts.Spec.Cluster.DisableEksaVersionSkewCheck()
 	}
 	return upgradeValidations
 }
