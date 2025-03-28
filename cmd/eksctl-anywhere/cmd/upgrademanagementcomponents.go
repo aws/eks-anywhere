@@ -9,11 +9,13 @@ import (
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/types"
+	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/workflows/management"
 )
 
 type upgradeManagementComponentsOptions struct {
 	clusterOptions
+	skipValidations []string
 }
 
 var umco = &upgradeManagementComponentsOptions{}
@@ -84,11 +86,12 @@ var upgradeManagementComponentsCmd = &cobra.Command{
 			KubeconfigFile: kubeconfig.FromClusterName(clusterSpec.Cluster.Name),
 		}
 
-		validator := management.NewUMCValidator(managementCluster, clusterSpec.EKSARelease, deps.UnAuthKubectlClient)
+		validator := management.NewUMCValidator(managementCluster, clusterSpec.EKSARelease, deps.UnAuthKubectlClient, umco.skipValidations)
 		return runner.Run(ctx, clusterSpec, managementCluster, validator)
 	},
 }
 
 func init() {
 	upgradeCmd.AddCommand(upgradeManagementComponentsCmd)
+	upgradeManagementComponentsCmd.Flags().StringArrayVar(&umco.skipValidations, "skip-validations", []string{}, fmt.Sprintf("Bypass upgrade management components validations by name. Valid arguments you can pass are --skip-validations=%s", validations.EksaVersionSkew))
 }

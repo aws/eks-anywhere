@@ -3142,6 +3142,46 @@ func TestClusterControlPlaneIPCheckDisabled(t *testing.T) {
 	}
 }
 
+func TestClusterDisableEksaVersionSkewCheck(t *testing.T) {
+	cluster := &v1alpha1.Cluster{}
+	cluster.DisableEksaVersionSkewCheck()
+	got := cluster.EksaVersionSkewCheckDisabled()
+
+	if !got {
+		t.Error("DisableControlPlaneIPCheck() failed: expected control plane IP check to be disabled")
+	}
+}
+
+func TestClusterEksaVersionSkewCheckDisabled(t *testing.T) {
+	tests := []struct {
+		name    string
+		cluster *v1alpha1.Cluster
+		want    bool
+	}{
+		{
+			name: "annotation exists",
+			want: true,
+			cluster: baseCluster(func(c *v1alpha1.Cluster) {
+				c.DisableEksaVersionSkewCheck()
+			}),
+		},
+		{
+			name: "annotation does not exist",
+			want: false,
+			cluster: baseCluster(func(c *v1alpha1.Cluster) {
+				c.Annotations = nil
+			}),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.cluster.EksaVersionSkewCheckDisabled(); got != tt.want {
+				t.Errorf("ControlPlaneIPCheckDisabled() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestWorkerNodesUpgradeRolloutStrategyEqual(t *testing.T) {
 	tests := []struct {
 		name string

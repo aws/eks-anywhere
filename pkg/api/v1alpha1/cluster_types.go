@@ -43,6 +43,10 @@ const (
 	// skipIPCheckAnnotation skips the availability control plane IP validation during cluster creation. Use only if your network configuration is conflicting with the default port scan.
 	skipIPCheckAnnotation = "anywhere.eks.amazonaws.com/skip-ip-check"
 
+	// skipEksaVersionSkewCheck is an annotation that bypasses the EKS-A version compatibility check during upgrades.
+	// WARNING: Use this with caution as skipping minor versions could break component compatibility and cause cluster instability or failures.
+	skipEksaVersionSkewCheck = "anywhere.eks.amazonaws.com/skip-eksa-version-skew-check"
+
 	// managementAnnotation points to the name of a management cluster
 	// cluster object.
 	managementAnnotation = "anywhere.eks.amazonaws.com/managed-by"
@@ -1408,6 +1412,22 @@ func (c *Cluster) DisableControlPlaneIPCheck() {
 // ControlPlaneIPCheckDisabled checks it the `skip-ip-check` annotation is set on the Cluster object.
 func (c *Cluster) ControlPlaneIPCheckDisabled() bool {
 	if s, ok := c.Annotations[skipIPCheckAnnotation]; ok {
+		return s == "true"
+	}
+	return false
+}
+
+// DisableEksaVersionSkewCheck sets the `skip-eksa-version-skew-check` annotation on the Cluster object.
+func (c *Cluster) DisableEksaVersionSkewCheck() {
+	if c.Annotations == nil {
+		c.Annotations = make(map[string]string, 1)
+	}
+	c.Annotations[skipEksaVersionSkewCheck] = "true"
+}
+
+// EksaVersionSkewCheckDisabled checks if the `skip-eksa-version-skew-check` annotation is set on the Cluster object.
+func (c *Cluster) EksaVersionSkewCheckDisabled() bool {
+	if s, ok := c.Annotations[skipEksaVersionSkewCheck]; ok {
 		return s == "true"
 	}
 	return false
