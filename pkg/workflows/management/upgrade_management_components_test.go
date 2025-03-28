@@ -4,18 +4,22 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/internal/test"
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	writermocks "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	providermocks "github.com/aws/eks-anywhere/pkg/providers/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
+	vm "github.com/aws/eks-anywhere/pkg/validations/mocks"
 	"github.com/aws/eks-anywhere/pkg/workflows/interfaces/mocks"
 )
 
@@ -168,5 +172,121 @@ func TestRunnerStopsWhenValidationFailed(t *testing.T) {
 	err := tt.runner.Run(tt.ctx, tt.newSpec, tt.managementCluster, tt.mocks.validator)
 	if err == nil {
 		t.Fatalf("UpgradeManagementComponents.Run() err == nil, want err != nil")
+	}
+}
+
+func TestPreflightValidationsSkipVersionSkew(t *testing.T) {
+	tests := []struct {
+		testName        string
+		skipValidations []string
+		setupMocks      func(*upgradeManagementComponentsTest)
+		wantValidations int
+	}{
+		{
+			testName:        "no skip validations - includes version skew check",
+			skipValidations: []string{},
+			setupMocks: func(tt *upgradeManagementComponentsTest) {
+				tt.mocks.validator.EXPECT().PreflightValidations(tt.ctx).Return(nil)
+			},
+			wantValidations: 3,
+		},
+		{
+			testName:        "skip version skew validation",
+			skipValidations: []string{validations.EksaVersionSkew},
+			setupMocks: func(tt *upgradeManagementComponentsTest) {
+				tt.mocks.validator.EXPECT().PreflightValidations(tt.ctx).Return(nil)
+			},
+			wantValidations: 2,
+		},
+		{
+			testName:        "skip non-existent validation - should include version skew",
+			skipValidations: []string{"non-existent"},
+			setupMocks: func(tt *upgradeManagementComponentsTest) {
+				tt.mocks.validator.EXPECT().PreflightValidations(tt.ctx).Return(nil)
+			},
+			wantValidations: 3,
+		},
+		{
+			testName:        "multiple skip validations - only version skew should be skipped",
+			skipValidations: []string{validations.EksaVersionSkew, "other-validation"},
+			setupMocks: func(tt *upgradeManagementComponentsTest) {
+				tt.mocks.validator.EXPECT().PreflightValidations(tt.ctx).Return(nil)
+			},
+			wantValidations: 2,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			compTest := newUpgradeManagementComponentsTest(t)
+			g := NewWithT(t)
+			tt.setupMocks(compTest)
+			currentManagementComponents := cluster.ManagementComponentsFromBundles(compTest.currentSpec.Bundles)
+			newManagementComponents := cluster.ManagementComponentsFromBundles(compTest.newSpec.Bundles)
+			client := test.NewFakeKubeClient(compTest.currentSpec.Cluster, compTest.currentSpec.EKSARelease, compTest.currentSpec.Bundles)
+			mockCtrl := gomock.NewController(t)
+			k := vm.NewMockKubectlClient(mockCtrl)
+			compTest.mocks.clusterManager.EXPECT().GetCurrentClusterSpec(compTest.ctx, gomock.Any(), compTest.managementCluster.Name).Return(compTest.currentSpec, nil)
+			compTest.mocks.provider.EXPECT().Name()
+			compTest.mocks.provider.EXPECT().SetupAndValidateUpgradeManagementComponents(compTest.ctx, compTest.newSpec)
+			compTest.mocks.provider.EXPECT().PreCoreComponentsUpgrade(gomock.Any(), gomock.Any(), newManagementComponents, gomock.Any())
+			compTest.mocks.clientFactory.EXPECT().BuildClientFromKubeconfig(compTest.managementCluster.KubeconfigFile).Return(client, nil)
+			compTest.mocks.capiManager.EXPECT().Upgrade(compTest.ctx, compTest.managementCluster, compTest.mocks.provider, currentManagementComponents, newManagementComponents, compTest.newSpec).Return(capiChangeDiff, nil)
+			compTest.mocks.gitOpsManager.EXPECT().Install(compTest.ctx, compTest.managementCluster, newManagementComponents, compTest.currentSpec, compTest.newSpec).Return(nil)
+			compTest.mocks.gitOpsManager.EXPECT().Upgrade(compTest.ctx, compTest.managementCluster, currentManagementComponents, newManagementComponents, compTest.currentSpec, compTest.newSpec).Return(fluxChangeDiff, nil)
+			compTest.mocks.clusterManager.EXPECT().Upgrade(compTest.ctx, compTest.managementCluster, currentManagementComponents, newManagementComponents, compTest.newSpec)
+			compTest.mocks.eksdUpgrader.EXPECT().Upgrade(compTest.ctx, compTest.managementCluster, compTest.currentSpec, compTest.newSpec).Return(nil)
+			compTest.mocks.clusterManager.EXPECT().ApplyBundles(
+				compTest.ctx, compTest.newSpec, compTest.managementCluster,
+			).Return(nil)
+			compTest.mocks.clusterManager.EXPECT().ApplyReleases(
+				compTest.ctx, compTest.newSpec, compTest.managementCluster,
+			).Return(nil)
+			compTest.mocks.eksdInstaller.EXPECT().InstallEksdManifest(
+				compTest.ctx, compTest.newSpec, compTest.managementCluster,
+			).Return(nil)
+			k.EXPECT().ValidateControlPlaneNodes(compTest.ctx, compTest.managementCluster, compTest.managementCluster.Name).Return(nil)
+			k.EXPECT().ValidateClustersCRD(compTest.ctx, compTest.managementCluster).Return(nil)
+
+			version := v1alpha1.EksaVersion("v0.20.6")
+			mgmt := &v1alpha1.Cluster{
+				ObjectMeta: v1.ObjectMeta{
+					Name: "mgmt-cluster",
+				},
+				Spec: v1alpha1.ClusterSpec{
+					KubernetesVersion: "1.30",
+					ManagementCluster: v1alpha1.ManagementCluster{
+						Name: "mgmt-cluster",
+					},
+					EksaVersion: &version,
+				},
+			}
+
+			if !slices.Contains(tt.skipValidations, validations.EksaVersionSkew) {
+				k.EXPECT().GetEksaCluster(compTest.ctx, compTest.managementCluster, compTest.managementCluster.Name).Return(mgmt, nil)
+			}
+			validator := NewUMCValidator(compTest.managementCluster, compTest.newSpec.EKSARelease, k, tt.skipValidations)
+			err := compTest.runner.Run(compTest.ctx, compTest.newSpec, compTest.managementCluster, compTest.mocks.validator)
+			g.Expect(err).To(BeNil())
+
+			preflights := validator.PreflightValidations(compTest.ctx)
+			g.Expect(preflights).To(HaveLen(tt.wantValidations))
+			hasVersionSkew := false
+			for _, v := range preflights {
+				result := v()
+				g.Expect(result).ToNot(BeNil())
+				g.Expect(result.Name).ToNot(BeEmpty())
+
+				if result.Name == "validate compatibility of management components version to cluster eksaVersion" {
+					hasVersionSkew = true
+				}
+			}
+
+			if slices.Contains(tt.skipValidations, validations.EksaVersionSkew) {
+				g.Expect(hasVersionSkew).To(BeFalse(), "version skew validation should be skipped")
+			} else {
+				g.Expect(hasVersionSkew).To(BeTrue(), "version skew validation should be present")
+			}
+		})
 	}
 }

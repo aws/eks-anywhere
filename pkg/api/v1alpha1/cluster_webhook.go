@@ -103,7 +103,9 @@ func (r *Cluster) ValidateUpdate(old runtime.Object) (admission.Warnings, error)
 
 	allErrs = append(allErrs, validateEksaVersionCluster(r, oldCluster)...)
 
-	allErrs = append(allErrs, ValidateEksaVersionSkew(r, oldCluster)...)
+	if !r.EksaVersionSkewCheckDisabled() {
+		allErrs = append(allErrs, ValidateEksaVersionSkew(r, oldCluster)...)
+	}
 
 	allErrs = append(allErrs, ValidateWorkerKubernetesVersionSkew(r, oldCluster)...)
 
