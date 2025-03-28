@@ -756,23 +756,22 @@ func (g *Govc) NetworkExists(ctx context.Context, network string) (bool, error) 
 	return exists, nil
 }
 
-func (g *Govc) ValidateVCenterSetupMachineConfig(ctx context.Context, datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConfig *v1alpha1.VSphereMachineConfig, _ *bool) error {
-	envMap, err := g.validateAndSetupCreds()
+// GetDatastorePath validates and returns the full path to a datastore in the specified datacenter.
+// Returns an error if the datastore doesn't exist or if the path is invalid.
+func (g *Govc) GetDatastorePath(ctx context.Context, datacenter string, datastorePath string, envMap map[string]string) (string, error) {
+	fullPath, err := prependPath(datastore, datastorePath, datacenter)
 	if err != nil {
-		return fmt.Errorf("failed govc validations: %v", err)
+		return "", err
 	}
-	machineConfig.Spec.Datastore, err = prependPath(datastore, machineConfig.Spec.Datastore, datacenterConfig.Spec.Datacenter)
-	if err != nil {
-		return err
-	}
-	params := []string{"datastore.info", machineConfig.Spec.Datastore}
+
+	params := []string{"datastore.info", fullPath}
 	err = g.Retry(func() error {
 		_, err = g.ExecuteWithEnv(ctx, envMap, params...)
 		if err != nil {
-			datastorePath := filepath.Dir(machineConfig.Spec.Datastore)
-			isValidDatastorePath := g.isValidPath(ctx, envMap, datastorePath)
+			parentPath := filepath.Dir(fullPath)
+			isValidDatastorePath := g.isValidPath(ctx, envMap, parentPath)
 			if isValidDatastorePath {
-				leafDir := filepath.Base(machineConfig.Spec.Datastore)
+				leafDir := filepath.Base(fullPath)
 				return fmt.Errorf("valid path, but '%s' is not a datastore", leafDir)
 			} else {
 				return fmt.Errorf("failed to get datastore: %v", err)
@@ -781,79 +780,151 @@ func (g *Govc) ValidateVCenterSetupMachineConfig(ctx context.Context, datacenter
 		return nil
 	})
 	if err != nil {
-		return fmt.Errorf("failed to get datastore: %v", err)
+		return "", fmt.Errorf("failed to get datastore: %v", err)
 	}
 	logger.MarkPass("Datastore validated")
+	return fullPath, nil
+}
 
-	if len(machineConfig.Spec.Folder) > 0 {
-		machineConfig.Spec.Folder, err = prependPath(vm, machineConfig.Spec.Folder, datacenterConfig.Spec.Datacenter)
-		if err != nil {
-			return err
-		}
-		params = []string{"folder.info", machineConfig.Spec.Folder}
-		err = g.Retry(func() error {
-			_, err := g.ExecuteWithEnv(ctx, envMap, params...)
-			if err != nil {
-				err = g.createFolder(ctx, envMap, machineConfig)
-				if err != nil {
-					currPath := "/" + datacenterConfig.Spec.Datacenter + "/"
-					dirs := strings.Split(machineConfig.Spec.Folder, "/")
-					for _, dir := range dirs[2:] {
-						currPath += dir + "/"
-						if !g.isValidPath(ctx, envMap, currPath) {
-							return fmt.Errorf("%s is an invalid intermediate directory", currPath)
-						}
-					}
-					return err
-				}
-			}
-			return nil
-		})
-		if err != nil {
-			return fmt.Errorf("failed to get folder: %v", err)
-		}
-		logger.MarkPass("Folder validated")
+// GetFolderPath validates or creates a folder in the specified datacenter.
+// Returns the full path to the folder or an error if creation fails.
+func (g *Govc) GetFolderPath(ctx context.Context, datacenter string, folder string, envMap map[string]string) (string, error) {
+	if len(folder) == 0 {
+		return "", nil
 	}
 
-	var poolInfoResponse bytes.Buffer
-	params = []string{"find", "-json", "/" + datacenterConfig.Spec.Datacenter, "-type", "p", "-name", filepath.Base(machineConfig.Spec.ResourcePool)}
+	fullPath, err := prependPath(vm, folder, datacenter)
+	if err != nil {
+		return "", err
+	}
+
+	params := []string{"folder.info", fullPath}
 	err = g.Retry(func() error {
+		_, err := g.ExecuteWithEnv(ctx, envMap, params...)
+		if err != nil {
+			err = g.createFolder(ctx, envMap, fullPath)
+			if err != nil {
+				currPath := "/" + datacenter + "/"
+				dirs := strings.Split(fullPath, "/")
+				for _, dir := range dirs[2:] {
+					currPath += dir + "/"
+					if !g.isValidPath(ctx, envMap, currPath) {
+						return fmt.Errorf("%s is an invalid intermediate directory", currPath)
+					}
+				}
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to get folder: %v", err)
+	}
+	logger.MarkPass("Folder validated")
+	return fullPath, nil
+}
+
+// GetResourcePoolPath finds and validates a resource pool in the specified datacenter.
+// Returns an error if the pool doesn't exist or if multiple matching pools are found.
+func (g *Govc) GetResourcePoolPath(ctx context.Context, datacenter string, resourcePool string, envMap map[string]string) (string, error) {
+	var poolInfoResponse bytes.Buffer
+	params := []string{"find", "-json", "/" + datacenter, "-type", "p", "-name", filepath.Base(resourcePool)}
+
+	err := g.Retry(func() error {
+		var err error
 		poolInfoResponse, err = g.ExecuteWithEnv(ctx, envMap, params...)
 		return err
 	})
 	if err != nil {
-		return fmt.Errorf("getting resource pool: %v", err)
+		return "", fmt.Errorf("getting resource pool: %v", err)
 	}
 
 	poolInfoJson := poolInfoResponse.String()
 	poolInfoJson = strings.TrimSuffix(poolInfoJson, "\n")
 	if poolInfoJson == "null" || poolInfoJson == "" {
-		return fmt.Errorf("resource pool '%s' not found", machineConfig.Spec.ResourcePool)
+		return "", fmt.Errorf("resource pool '%s' not found", resourcePool)
 	}
 
 	poolInfo := make([]string, 0)
 	if err = json.Unmarshal([]byte(poolInfoJson), &poolInfo); err != nil {
-		return fmt.Errorf("failed unmarshalling govc response: %v", err)
+		return "", fmt.Errorf("failed unmarshalling govc response: %v", err)
 	}
 
-	machineConfig.Spec.ResourcePool = strings.TrimPrefix(machineConfig.Spec.ResourcePool, "*/")
+	resourcePool = strings.TrimPrefix(resourcePool, "*/")
 	bPoolFound := false
 	var foundPool string
 	for _, p := range poolInfo {
-		if strings.HasSuffix(p, machineConfig.Spec.ResourcePool) {
+		if strings.HasSuffix(p, resourcePool) {
 			if bPoolFound {
-				return fmt.Errorf("specified resource pool '%s' maps to multiple paths within the datacenter '%s'", machineConfig.Spec.ResourcePool, datacenterConfig.Spec.Datacenter)
+				return "", fmt.Errorf("specified resource pool '%s' maps to multiple paths within the datacenter '%s'", resourcePool, datacenter)
 			}
 			bPoolFound = true
 			foundPool = p
 		}
 	}
 	if !bPoolFound {
-		return fmt.Errorf("resource pool '%s' not found", machineConfig.Spec.ResourcePool)
+		return "", fmt.Errorf("resource pool '%s' not found", resourcePool)
 	}
-	machineConfig.Spec.ResourcePool = foundPool
 
 	logger.MarkPass("Resource pool validated")
+	return foundPool, nil
+}
+
+// ValidateVCenterSetupMachineConfig validates that all resources specified in a
+// VSphereMachineConfig exist and are accessible.
+func (g *Govc) ValidateVCenterSetupMachineConfig(ctx context.Context, datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConfig *v1alpha1.VSphereMachineConfig, _ *bool) error {
+	envMap, err := g.validateAndSetupCreds()
+	if err != nil {
+		return fmt.Errorf("failed govc validations: %v", err)
+	}
+
+	datastore, err := g.GetDatastorePath(ctx, datacenterConfig.Spec.Datacenter, machineConfig.Spec.Datastore, envMap)
+	if err != nil {
+		return err
+	}
+	machineConfig.Spec.Datastore = datastore
+
+	folder, err := g.GetFolderPath(ctx, datacenterConfig.Spec.Datacenter, machineConfig.Spec.Folder, envMap)
+	if err != nil {
+		return err
+	}
+	machineConfig.Spec.Folder = folder
+
+	resourcePool, err := g.GetResourcePoolPath(ctx, datacenterConfig.Spec.Datacenter, machineConfig.Spec.ResourcePool, envMap)
+	if err != nil {
+		return err
+	}
+	machineConfig.Spec.ResourcePool = resourcePool
+
+	return nil
+}
+
+// ValidateFailureDomainConfig validates that all resources specified in a VSphere
+// failure domain exist and are accessible.
+func (g *Govc) ValidateFailureDomainConfig(ctx context.Context, datacenterConfig *v1alpha1.VSphereDatacenterConfig, failureDomain *v1alpha1.FailureDomain) error {
+	envMap, err := g.validateAndSetupCreds()
+	if err != nil {
+		return fmt.Errorf("failed govc validations: %v", err)
+	}
+
+	datastore, err := g.GetDatastorePath(ctx, datacenterConfig.Spec.Datacenter, failureDomain.Datastore, envMap)
+	if err != nil {
+		return err
+	}
+	failureDomain.Datastore = datastore
+
+	folder, err := g.GetFolderPath(ctx, datacenterConfig.Spec.Datacenter, failureDomain.Folder, envMap)
+	if err != nil {
+		return err
+	}
+	failureDomain.Folder = folder
+
+	resourcePool, err := g.GetResourcePoolPath(ctx, datacenterConfig.Spec.Datacenter, failureDomain.ResourcePool, envMap)
+	if err != nil {
+		return err
+	}
+	failureDomain.ResourcePool = resourcePool
+
 	return nil
 }
 
@@ -872,8 +943,8 @@ func prependPath(folderType FolderType, folderPath string, datacenter string) (s
 	return modPath, nil
 }
 
-func (g *Govc) createFolder(ctx context.Context, envMap map[string]string, machineConfig *v1alpha1.VSphereMachineConfig) error {
-	params := []string{"folder.create", machineConfig.Spec.Folder}
+func (g *Govc) createFolder(ctx context.Context, envMap map[string]string, folderPath string) error {
+	params := []string{"folder.create", folderPath}
 	err := g.Retry(func() error {
 		_, err := g.ExecuteWithEnv(ctx, envMap, params...)
 		if err != nil {

@@ -78,47 +78,81 @@ func (v *Validator) ValidateVCenterConfig(ctx context.Context, datacenterConfig 
 	if err := v.validateDatacenter(ctx, datacenterConfig.Spec.Datacenter); err != nil {
 		return err
 	}
-	logger.MarkPass("Datacenter validated")
 
 	if err := v.validateNetwork(ctx, datacenterConfig.Spec.Network); err != nil {
 		return err
 	}
-	logger.MarkPass("Network validated")
 
 	return nil
 }
 
 // ValidateFailureDomains validates the provided list of failure domains.
-func (v *Validator) ValidateFailureDomains(vsphereClusterSpec *Spec) error {
+func (v *Validator) ValidateFailureDomains(ctx context.Context, vsphereClusterSpec *Spec) error {
+	failureDomains := vsphereClusterSpec.VSphereDatacenter.Spec.FailureDomains
+
 	if !features.IsActive(features.VsphereFailureDomainEnabled()) {
-		if len(vsphereClusterSpec.VSphereDatacenter.Spec.FailureDomains) > 0 {
-			return fmt.Errorf("Failure Domains feature is not enabled. Please set the env variable %v", features.VSphereFailureDomainEnabledEnvVar)
+		if len(failureDomains) > 0 {
+			return fmt.Errorf("failure domains feature is not enabled. Please set the env variable %v", features.VSphereFailureDomainEnabledEnvVar)
 		}
 		return nil
 	}
 
-	providedFailureDomains := collection.MapSet(vsphereClusterSpec.VSphereDatacenter.Spec.FailureDomains, func(fd anywherev1.FailureDomain) string {
+	providedFailureDomains := collection.MapSet(failureDomains, func(fd anywherev1.FailureDomain) string {
 		return fd.Name
 	})
 
-	for _, wng := range vsphereClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
+	failureDomainsAssigned, err := v.validateWorkerNodeGroupDomains(vsphereClusterSpec, providedFailureDomains)
+	if err != nil {
+		return err
+	}
 
+	if !failureDomainsAssigned {
+		// TODO: Error message here if Failure Domain not being used by workernodegroups?
+		// Skipping further validation currently
+		// return fmt.Errorf("failure domain defined, but no worker node group references")
+		return nil
+	}
+
+	if err := v.validateFailureDomainResources(ctx, vsphereClusterSpec, failureDomains); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (v *Validator) validateWorkerNodeGroupDomains(vsphereClusterSpec *Spec, providedFailureDomains collection.Set[string]) (bool, error) {
+	failureDomainsAssigned := false
+	for _, wng := range vsphereClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
 		if len(wng.FailureDomains) == 0 {
 			continue
 		}
 
 		if len(wng.FailureDomains) > 1 {
-			return fmt.Errorf("multiple failure domains provided in the worker node group: %s. Please provide only one failure domain", wng.Name)
+			return failureDomainsAssigned, fmt.Errorf("multiple failure domains provided in the worker node group: %s. Please provide only one failure domain", wng.Name)
 		}
 
 		assignedFailureDomain := wng.FailureDomains[0]
-
 		if !providedFailureDomains.Contains(assignedFailureDomain) {
-			return fmt.Errorf("provided invalid failure domain %s in the worker node group %s", assignedFailureDomain, wng.Name)
+			return failureDomainsAssigned, fmt.Errorf("provided invalid failure domain %s in the worker node group %s", assignedFailureDomain, wng.Name)
+		}
+		failureDomainsAssigned = true
+	}
+	return failureDomainsAssigned, nil
+}
+
+func (v *Validator) validateFailureDomainResources(ctx context.Context, vsphereClusterSpec *Spec, failureDomains []anywherev1.FailureDomain) error {
+	for index, fd := range failureDomains {
+		message := fmt.Sprintf("Start failure domain validation for '%s' ", failureDomains[index].Name)
+		logger.Info(message)
+		if err := v.validateNetwork(ctx, fd.Network); err != nil {
+			return err
 		}
 
+		if err := v.govc.ValidateFailureDomainConfig(ctx, vsphereClusterSpec.VSphereDatacenter, &fd); err != nil {
+			return err
+		}
 	}
-
+	logger.Info("Finished failure domain validations")
 	return nil
 }
 
@@ -343,6 +377,7 @@ func (v *Validator) validateDatacenter(ctx context.Context, datacenter string) e
 	if !exists {
 		return fmt.Errorf("datacenter %s not found", datacenter)
 	}
+	logger.MarkPass("Datacenter validated")
 
 	return nil
 }
@@ -356,6 +391,7 @@ func (v *Validator) validateNetwork(ctx context.Context, network string) error {
 	if !exists {
 		return fmt.Errorf("network %s not found", network)
 	}
+	logger.MarkPass("Network validated")
 
 	return nil
 }

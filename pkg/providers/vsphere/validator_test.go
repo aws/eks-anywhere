@@ -23,6 +23,13 @@ import (
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
+type testConfig struct {
+	name                       string
+	spec                       *Spec
+	expectedErr                string
+	enableVsphereFailureDomain bool
+}
+
 func TestValidatorValidatePrivs(t *testing.T) {
 	v := Validator{}
 
@@ -370,49 +377,7 @@ func TestValidatorValidateMachineConfigTemplateDoesNotExist(t *testing.T) {
 }
 
 func TestValidateFailureDomains(t *testing.T) {
-	tests := []struct {
-		name                       string
-		spec                       *Spec
-		expectedErr                string
-		enableVsphereFailureDomain bool
-	}{
-		{
-			name:                       "TestValidateFailureDomains success case",
-			enableVsphereFailureDomain: true,
-			spec: &Spec{
-				Spec: &cluster.Spec{
-					Config: &cluster.Config{
-						Cluster: &v1alpha1.Cluster{
-							Spec: v1alpha1.ClusterSpec{
-								WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{
-									{
-										Name:           "wd-1",
-										FailureDomains: []string{"fd-1"},
-									},
-								},
-							},
-						},
-						VSphereDatacenter: &v1alpha1.VSphereDatacenterConfig{
-							Spec: v1alpha1.VSphereDatacenterConfigSpec{
-								Datacenter: "myDatacenter",
-								Server:     "myServer",
-								Network:    "/myDatacenter/network/myNetwork",
-								FailureDomains: []v1alpha1.FailureDomain{
-									{
-										Name:           "fd-1",
-										ComputeCluster: "myComputeCluster",
-										ResourcePool:   "myResourcePool",
-										Datastore:      "myDatastore",
-										Folder:         "myFolder",
-										Network:        "/myDatacenter/network/myNetwork",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
+	tests := []testConfig{
 		{
 			name:                       "TestValidateFailureDomains with feature flag disabled and with failure domains",
 			enableVsphereFailureDomain: false,
@@ -432,7 +397,7 @@ func TestValidateFailureDomains(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: "Failure Domains feature is not enabled",
+			expectedErr: "failure domains feature is not enabled",
 		},
 		{
 			name:                       "TestValidateFailureDomains with feature flag disabled and without failure domains",
@@ -581,6 +546,8 @@ func TestValidateFailureDomains(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+
 			t.Setenv(features.VSphereFailureDomainEnabledEnvVar, strconv.FormatBool(tt.enableVsphereFailureDomain))
 			ctrl := gomock.NewController(t)
 			govc := govcmocks.NewMockProviderGovcClient(ctrl)
@@ -588,7 +555,8 @@ func TestValidateFailureDomains(t *testing.T) {
 			v := Validator{
 				govc: govc,
 			}
-			err := v.ValidateFailureDomains(tt.spec)
+
+			err := v.ValidateFailureDomains(ctx, tt.spec)
 			if tt.expectedErr != "" {
 				assert.Contains(t, err.Error(), tt.expectedErr)
 			} else {
@@ -597,6 +565,185 @@ func TestValidateFailureDomains(t *testing.T) {
 			features.ClearCache()
 		})
 	}
+}
+
+func TestValidateFailureDomainsSuccess(t *testing.T) {
+	spec := &Spec{
+		Spec: &cluster.Spec{
+			Config: &cluster.Config{
+				Cluster: &v1alpha1.Cluster{
+					Spec: v1alpha1.ClusterSpec{
+						WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{
+							{
+								Name:           "wd-1",
+								FailureDomains: []string{"fd-1"},
+							},
+						},
+					},
+				},
+				VSphereDatacenter: &v1alpha1.VSphereDatacenterConfig{
+					Spec: v1alpha1.VSphereDatacenterConfigSpec{
+						Datacenter: "myDatacenter",
+						Server:     "myServer",
+						Network:    "/myDatacenter/network/myNetwork",
+						FailureDomains: []v1alpha1.FailureDomain{
+							{
+								Name:           "fd-1",
+								ComputeCluster: "myComputeCluster",
+								ResourcePool:   "myResourcePool",
+								Datastore:      "myDatastore",
+								Folder:         "myFolder",
+								Network:        "/myDatacenter/network/myNetwork",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	ctx := context.Background()
+	t.Setenv(features.VSphereFailureDomainEnabledEnvVar, strconv.FormatBool(true))
+	ctrl := gomock.NewController(t)
+	govc := govcmocks.NewMockProviderGovcClient(ctrl)
+
+	govc.EXPECT().
+		NetworkExists(ctx, "/myDatacenter/network/myNetwork").
+		Return(true, nil)
+
+	govc.EXPECT().
+		ValidateFailureDomainConfig(
+			ctx,
+			spec.VSphereDatacenter,
+			&spec.VSphereDatacenter.Spec.FailureDomains[0],
+		).
+		Return(nil)
+
+	v := Validator{
+		govc: govc,
+	}
+
+	err := v.ValidateFailureDomains(ctx, spec)
+	assert.NoError(t, err)
+	features.ClearCache()
+}
+
+func TestValidateFailureDomainsNetworkNotFound(t *testing.T) {
+	spec := &Spec{
+		Spec: &cluster.Spec{
+			Config: &cluster.Config{
+				Cluster: &v1alpha1.Cluster{
+					Spec: v1alpha1.ClusterSpec{
+						WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{
+							{
+								Name:           "wd-1",
+								FailureDomains: []string{"fd-1"},
+							},
+						},
+					},
+				},
+				VSphereDatacenter: &v1alpha1.VSphereDatacenterConfig{
+					Spec: v1alpha1.VSphereDatacenterConfigSpec{
+						Datacenter: "myDatacenter",
+						Server:     "myServer",
+						Network:    "/myDatacenter/network/myNetwork",
+						FailureDomains: []v1alpha1.FailureDomain{
+							{
+								Name:           "fd-1",
+								ComputeCluster: "myComputeCluster",
+								ResourcePool:   "myResourcePool",
+								Datastore:      "myDatastore",
+								Folder:         "myFolder",
+								Network:        "/myDatacenter/network/myNetwork",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	ctx := context.Background()
+	t.Setenv(features.VSphereFailureDomainEnabledEnvVar, "true")
+
+	ctrl := gomock.NewController(t)
+	govc := govcmocks.NewMockProviderGovcClient(ctrl)
+
+	govc.EXPECT().
+		NetworkExists(ctx, "/myDatacenter/network/myNetwork").
+		Return(false, fmt.Errorf("network not found"))
+
+	v := Validator{govc: govc}
+
+	err := v.ValidateFailureDomains(ctx, spec)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "network not found")
+
+	features.ClearCache()
+}
+
+func TestValidateFailureDomainsDatastoreNotFound(t *testing.T) {
+	spec := &Spec{
+		Spec: &cluster.Spec{
+			Config: &cluster.Config{
+				Cluster: &v1alpha1.Cluster{
+					Spec: v1alpha1.ClusterSpec{
+						WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{
+							{
+								Name:           "wd-1",
+								FailureDomains: []string{"fd-1"},
+							},
+						},
+					},
+				},
+				VSphereDatacenter: &v1alpha1.VSphereDatacenterConfig{
+					Spec: v1alpha1.VSphereDatacenterConfigSpec{
+						Datacenter: "myDatacenter",
+						Server:     "myServer",
+						Network:    "/myDatacenter/network/myNetwork",
+						FailureDomains: []v1alpha1.FailureDomain{
+							{
+								Name:           "fd-1",
+								ComputeCluster: "myComputeCluster",
+								ResourcePool:   "myResourcePool",
+								Datastore:      "myDatastore",
+								Folder:         "myFolder",
+								Network:        "/myDatacenter/network/myNetwork",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	ctx := context.Background()
+	t.Setenv(features.VSphereFailureDomainEnabledEnvVar, strconv.FormatBool(true))
+
+	ctrl := gomock.NewController(t)
+	govc := govcmocks.NewMockProviderGovcClient(ctrl)
+
+	govc.EXPECT().
+		NetworkExists(ctx, "/myDatacenter/network/myNetwork").
+		Return(true, nil)
+
+	govc.EXPECT().
+		ValidateFailureDomainConfig(
+			ctx,
+			spec.VSphereDatacenter,
+			&spec.VSphereDatacenter.Spec.FailureDomains[0],
+		).
+		Return(fmt.Errorf("datastore not found"))
+
+	v := Validator{govc: govc}
+
+	err := v.ValidateFailureDomains(ctx, spec)
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "datastore not found")
+
+	features.ClearCache()
 }
 
 func TestValidateBRHardDiskSize(t *testing.T) {
