@@ -79,7 +79,7 @@ phases:
         if ! [[ ${CODEBUILD_INITIATOR} =~ "codepipeline" ]]; then
           make build-eks-a-for-e2e build-integration-test-binary e2e-tests-binary E2E_TAGS="e2e tinkerbell" E2E_OUTPUT_FILE=bin/tinkerbell/e2e.test
         fi
-      - PACKAGES_ROLE=$(aws sts assume-role --role-arn $PACKAGES_ROLE_ARN --role-session-name test)
+      - PACKAGES_ROLE=$(aws sts assume-role --role-arn $PACKAGES_ROLE_ARN --role-session-name test --duration-seconds 43200)
       - export PACKAGES_ROLE
       - export EKSA_AWS_ACCESS_KEY_ID=$(echo "${PACKAGES_ROLE}" | jq -r '.Credentials.AccessKeyId')
       - export EKSA_AWS_SECRET_ACCESS_KEY=$(echo "${PACKAGES_ROLE}" | jq -r '.Credentials.SecretAccessKey')
