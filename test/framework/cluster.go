@@ -1808,25 +1808,11 @@ var certManagerSecret string
 func (e *ClusterE2ETest) verifyLetsEncryptCert() error {
 	ctx := context.Background()
 	letsEncryptCert := "test-cert"
-	accessKey, secretAccess, region, zoneID := GetRoute53Configs()
+	region, zoneID := GetRoute53Configs()
+
 	data := map[string]interface{}{
-		"route53SecretAccessKey": secretAccess,
-	}
-
-	certManagerSecretData, err := templater.Execute(certManagerSecret, data)
-	if err != nil {
-		return fmt.Errorf("failed creating cert manager secret: %v", err)
-	}
-
-	err = e.KubectlClient.ApplyKubeSpecFromBytes(ctx, e.Cluster(), certManagerSecretData)
-	if err != nil {
-		return fmt.Errorf("error creating cert manager secret: %v", err)
-	}
-
-	data = map[string]interface{}{
-		"route53AccessKeyId": accessKey,
-		"route53ZoneId":      zoneID,
-		"route53Region":      region,
+		"route53ZoneId": zoneID,
+		"route53Region": region,
 	}
 
 	certManagerIssuerData, err := templater.Execute(certManagerLetsEncryptIssuer, data)
@@ -2058,6 +2044,39 @@ func (e *ClusterE2ETest) InstallAutoScaler(workloadClusterName, targetNamespace 
 		packageMetadataNamespace)
 	if err != nil {
 		e.T.Fatalf("Error installing cluster autoscaler package: %s", err)
+	}
+}
+
+//go:embed testdata/certmanager/certmanager_package.yaml
+var certManagerPackageTemplate string
+
+// InstallCertManagerPackageWithAwsCredentials installs cert-manager package by setting aws credentials in the pod.
+func (e *ClusterE2ETest) InstallCertManagerPackageWithAwsCredentials(prefix, packageName, namespace string) {
+	generatedName := fmt.Sprintf("%s-%s", prefix, packageName)
+	targetNamespace := namespace
+	namespace = fmt.Sprintf("%s-%s", namespace, e.ClusterName)
+	ctx := context.Background()
+	accessKeyID := os.Getenv(route53AccessKey)
+	secretKey := os.Getenv(route53SecretKey)
+	sessionToken := os.Getenv(route53SessionToken)
+	data := map[string]interface{}{
+		"targetNamespace": targetNamespace,
+		"namespace":       namespace,
+		"name":            generatedName,
+		"accessKeyId":     accessKeyID,
+		"secretKey":       secretKey,
+		"sessionToken":    sessionToken,
+	}
+
+	certManagerPackageDeployment, err := templater.Execute(certManagerPackageTemplate, data)
+	if err != nil {
+		e.T.Fatalf("Failed creating cert-manager Package Deployment: %s", err)
+	}
+
+	err = e.KubectlClient.ApplyKubeSpecFromBytesWithNamespace(ctx, e.Cluster(), certManagerPackageDeployment,
+		namespace)
+	if err != nil {
+		e.T.Fatalf("Error installing cert-manager pacakge: %s", err)
 	}
 }
 
