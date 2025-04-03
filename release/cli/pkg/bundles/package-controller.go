@@ -97,19 +97,19 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests releasetypes.
 				sourceBranch = imageArtifact.SourcedFromBranch
 				bundleImageArtifact := anywherev1alpha1.Image{}
 				if strings.HasSuffix(imageArtifact.AssetName, "helm") {
-					imageDigest, err := imageDigests.Load(imageArtifact.ReleaseImageURI)
+					imageDigest, err := imageDigests.Load(imageArtifact.SourceImageURI)
 					if err != nil {
 						return anywherev1alpha1.PackageBundle{}, fmt.Errorf("loading digest from image digests table: %v", err)
 					}
 					if r.DevRelease && Helmsha != "" && Helmtag != "" {
 						imageDigest = Helmsha
-						imageArtifact.ReleaseImageURI = replaceTag(imageArtifact.ReleaseImageURI, Helmtag)
+						imageArtifact.SourceImageURI = replaceTag(imageArtifact.SourceImageURI, Helmtag)
 					}
 					assetName := strings.TrimSuffix(imageArtifact.AssetName, "-helm")
 					bundleImageArtifact = anywherev1alpha1.Image{
 						Name:        assetName,
 						Description: fmt.Sprintf("Helm chart for %s", assetName),
-						URI:         imageArtifact.ReleaseImageURI,
+						URI:         imageArtifact.SourceImageURI,
 						ImageDigest: imageDigest,
 					}
 				} else {
