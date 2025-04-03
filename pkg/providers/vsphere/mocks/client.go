@@ -226,6 +226,36 @@ func (mr *MockProviderGovcClientMockRecorder) GetCertThumbprint(arg0 interface{}
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCertThumbprint", reflect.TypeOf((*MockProviderGovcClient)(nil).GetCertThumbprint), arg0)
 }
 
+// GetDatastorePath mocks base method.
+func (m *MockProviderGovcClient) GetDatastorePath(arg0 context.Context, arg1, arg2 string, arg3 map[string]string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDatastorePath", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDatastorePath indicates an expected call of GetDatastorePath.
+func (mr *MockProviderGovcClientMockRecorder) GetDatastorePath(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDatastorePath", reflect.TypeOf((*MockProviderGovcClient)(nil).GetDatastorePath), arg0, arg1, arg2, arg3)
+}
+
+// GetFolderPath mocks base method.
+func (m *MockProviderGovcClient) GetFolderPath(arg0 context.Context, arg1, arg2 string, arg3 map[string]string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetFolderPath", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetFolderPath indicates an expected call of GetFolderPath.
+func (mr *MockProviderGovcClientMockRecorder) GetFolderPath(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFolderPath", reflect.TypeOf((*MockProviderGovcClient)(nil).GetFolderPath), arg0, arg1, arg2, arg3)
+}
+
 // GetHardDiskSize mocks base method.
 func (m *MockProviderGovcClient) GetHardDiskSize(arg0 context.Context, arg1, arg2 string) (map[string]float64, error) {
 	m.ctrl.T.Helper()
@@ -274,6 +304,21 @@ func (mr *MockProviderGovcClientMockRecorder) GetResourcePoolInfo(arg0, arg1, ar
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0, arg1, arg2}, arg3...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetResourcePoolInfo", reflect.TypeOf((*MockProviderGovcClient)(nil).GetResourcePoolInfo), varargs...)
+}
+
+// GetResourcePoolPath mocks base method.
+func (m *MockProviderGovcClient) GetResourcePoolPath(arg0 context.Context, arg1, arg2 string, arg3 map[string]string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetResourcePoolPath", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetResourcePoolPath indicates an expected call of GetResourcePoolPath.
+func (mr *MockProviderGovcClientMockRecorder) GetResourcePoolPath(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetResourcePoolPath", reflect.TypeOf((*MockProviderGovcClient)(nil).GetResourcePoolPath), arg0, arg1, arg2, arg3)
 }
 
 // GetTags mocks base method.
@@ -496,6 +541,20 @@ func (m *MockProviderGovcClient) UserExists(arg0 context.Context, arg1 string) (
 func (mr *MockProviderGovcClientMockRecorder) UserExists(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserExists", reflect.TypeOf((*MockProviderGovcClient)(nil).UserExists), arg0, arg1)
+}
+
+// ValidateFailureDomainConfig mocks base method.
+func (m *MockProviderGovcClient) ValidateFailureDomainConfig(arg0 context.Context, arg1 *v1alpha1.VSphereDatacenterConfig, arg2 *v1alpha1.FailureDomain) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ValidateFailureDomainConfig", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ValidateFailureDomainConfig indicates an expected call of ValidateFailureDomainConfig.
+func (mr *MockProviderGovcClientMockRecorder) ValidateFailureDomainConfig(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateFailureDomainConfig", reflect.TypeOf((*MockProviderGovcClient)(nil).ValidateFailureDomainConfig), arg0, arg1, arg2)
 }
 
 // ValidateVCenterAuthentication mocks base method.
