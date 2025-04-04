@@ -120,7 +120,10 @@ func GetChartImageTags(d *helmDriver, helmDest string) (*Requires, error) {
 }
 
 func ModifyAndPushChartYaml(i releasetypes.ImageArtifact, r *releasetypes.ReleaseConfig, d *helmDriver, helmDest string, eksaArtifacts map[string][]releasetypes.Artifact, shaMap map[string]anywherev1alpha1.Image) error {
-	helmChart := strings.Split(i.SourceImageURI, ":")
+	helmChart := strings.Split(i.ReleaseImageURI, ":")
+	if packagesutils.NeedsPackagesAccountArtifacts(r) && (i.AssetName == "eks-anywhere-packages" || i.AssetName == "ecr-token-refresher" || i.AssetName == "credential-provider-package") {
+		helmChart = strings.Split(i.SourceImageURI, ":")
+	}
 	helmtag := helmChart[1]
 
 	// Overwrite Chart.yaml
