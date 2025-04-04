@@ -120,7 +120,7 @@ func GetChartImageTags(d *helmDriver, helmDest string) (*Requires, error) {
 }
 
 func ModifyAndPushChartYaml(i releasetypes.ImageArtifact, r *releasetypes.ReleaseConfig, d *helmDriver, helmDest string, eksaArtifacts map[string][]releasetypes.Artifact, shaMap map[string]anywherev1alpha1.Image) error {
-	helmChart := strings.Split(i.SourceImageURI, ":")
+	helmChart := strings.Split(i.ReleaseImageURI, ":")
 	helmtag := helmChart[1]
 
 	// Overwrite Chart.yaml
@@ -485,7 +485,7 @@ func GetPackagesImageTags(packagesArtifacts map[string][]releasetypes.Artifact) 
 	for _, artifacts := range packagesArtifacts {
 		for _, artifact := range artifacts {
 			if artifact.Image != nil {
-				m[artifact.Image.AssetName] = artifact.Image.SourceImageURI
+				m[artifact.Image.AssetName] = artifact.Image.ReleaseImageURI
 			}
 		}
 	}
