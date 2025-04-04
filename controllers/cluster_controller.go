@@ -28,6 +28,8 @@ import (
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/controller/handlers"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
+	"github.com/aws/eks-anywhere/pkg/features"
+	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 	"github.com/aws/eks-anywhere/pkg/validations"
@@ -486,6 +488,18 @@ func (r *ClusterReconciler) reconcileDelete(ctx context.Context, log logr.Logger
 	if cluster.IsReconcilePaused() && !cluster.CanDeleteWhenPaused() {
 		log.Info("Cluster reconciliation is paused, won't process cluster deletion")
 		return ctrl.Result{}, nil
+	}
+
+	// Creates vspheredeploymentzone and vspherefailuredomain CR on bootstrap cluster prior to delete
+	// These CRs are not migrated over during pivot and must be present to cleanly delete vspheremachines
+	if cluster.Spec.DatacenterRef.Kind == "VSphereDatacenterConfig" && features.IsActive(features.VsphereFailureDomainEnabled()) {
+		log.Info("Creating vspheredeploymentzones and vspherefailuredomains on bootstrap")
+		mover := vsphere.NewFailureDomainMover(log, r.client, cluster)
+
+		if err := mover.ApplyFailureDomains(ctx); err != nil {
+			return ctrl.Result{}, err
+		}
+
 	}
 
 	capiCluster := &clusterv1.Cluster{}
