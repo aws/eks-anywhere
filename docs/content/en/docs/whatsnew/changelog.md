@@ -9,6 +9,7 @@ description: >
 ---
 
 {{% alert title="Announcements" color="warning" %}}
+* Due to a bug in Helm version `v3.17.1`, we recommend that you upgrade to `v0.22.2` or above in an Airgapped environment with proxy enabled. More details listed [here](https://github.com/aws/eks-anywhere-build-tooling/pull/4497) 
 * Due to a bug in Cilium introduced in 1.14, which is present in `v0.21.0`-`v0.21.6`, we recommend that you upgrade to `v0.21.7` or above to fix an issue when using hostport. More details listed [here](https://github.com/aws/eks-anywhere-build-tooling/pull/4330)
 * Due to a bug in the `sigs.k8s.io/yaml` module that EKS Anywhere uses, Kubernetes versions whose minor versions are multiples of 10, such as `1.30`, `1.40`, etc, will be parsed as `float64` instead of `string` if specified without quotes in the cluster config file. This causes the trailing zero to get dropped and be evaluated as `1.3` and `1.4` respectively. This issue has been fixed in EKS Anywhere release `v0.21.5` so we recommend you to upgrade to that version for a better user experience. If you are unable to upgrade to `v0.21.5`, you must use single or double quotes around Kubernetes version(s) whose minor versions are multiples of 10.
   Refer to the following links for more information regarding this issue:
@@ -38,6 +39,34 @@ description: >
 {{% alert title="General Information" color="info" %}}
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
+
+## [v0.22.2](https://github.com/aws/eks-anywhere/releases/tag/v0.22.2)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.26.2 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     ✔      |    ✔    |     ✔      |  —   |
+
+### Changed
+- EKS Distro:
+  - [`v1-32-eks-10`](https://distro.eks.amazonaws.com/releases/1-32/10/)
+  - [`v1-31-eks-17`](https://distro.eks.amazonaws.com/releases/1-31/17/)
+  - [`v1-30-eks-28`](https://distro.eks.amazonaws.com/releases/1-30/28/)
+  - [`v1-29-eks-35`](https://distro.eks.amazonaws.com/releases/1-29/35/)
+  - [`v1-28-eks-46`](https://distro.eks.amazonaws.com/releases/1-28/46/)
+- Helm: `v3.17.1` to `v3.16.4`
+- Rufio: `v0.6.4` to `v0.6.5`
+- Cilium: `v1.15.13-eksa.2` to `v1.15.14-eksa.1`
+- Curated package controller: `v0.4.5` to `v0.4.6`
+- Capas: `v0.2.0` to `v0.2.1`
+
+### Fixed
+- Fix airgapped proxy enviroment issue with the new Helm version `v3.17.1` by downgrading helm to `v3.16.4` ([#4497](https://github.com/aws/eks-anywhere-build-tooling/pull/4497))
+
 
 ## [v0.22.1](https://github.com/aws/eks-anywhere/releases/tag/v0.22.1)
 
