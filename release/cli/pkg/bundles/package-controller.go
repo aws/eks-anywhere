@@ -103,7 +103,11 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests releasetypes.
 					}
 					if r.DevRelease && Helmsha != "" && Helmtag != "" {
 						imageDigest = Helmsha
-						imageArtifact.ReleaseImageURI = replaceTag(imageArtifact.ReleaseImageURI, Helmtag)
+						if imageArtifact.AssetName == "eks-anywhere-packages-helm" {
+							imageArtifact.SourceImageURI = replaceTag(imageArtifact.SourceImageURI, Helmtag)
+						} else {
+							imageArtifact.ReleaseImageURI = replaceTag(imageArtifact.ReleaseImageURI, Helmtag)
+						}
 					}
 					assetName := strings.TrimSuffix(imageArtifact.AssetName, "-helm")
 					bundleImageArtifact = anywherev1alpha1.Image{
