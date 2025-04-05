@@ -51,15 +51,15 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests releasetypes.
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	artifactHashes := []string{}
 
-	// Find latest Package Dev build for the Helm chart and Image which will always start with `0.0.0` and is built off of the package Github repo main on every commit.
+	// Find latest Package Dev build for the Helm chart and Image and is built off of the package Github repo main on every commit.
 	// If we can't find the build starting with our substring, we default to the original dev tag.
 	// If we do find the Tag in Private ECR, but it doesn't exist in Public ECR Copy the image over so the helm chart will work correctly.
 	if r.DevRelease && !r.DryRun {
-		Helmtag, Helmsha, err = ecr.FilterECRRepoByTagPrefix(r.SourceClients.Packages.EcrClient, "eks-anywhere-packages", "0.0.0", true)
+		Helmtag, Helmsha, err = ecr.FilterECRRepoByTagPrefix(r.SourceClients.Packages.EcrClient, "eks-anywhere-packages", "", true)
 		if err != nil {
 			fmt.Printf("Error getting dev version helm tag EKS Anywhere package controller, using latest version %v", err)
 		}
-		Imagetag, Imagesha, err = ecr.FilterECRRepoByTagPrefix(r.SourceClients.Packages.EcrClient, "eks-anywhere-packages", "v0.0.0", true)
+		Imagetag, Imagesha, err = ecr.FilterECRRepoByTagPrefix(r.SourceClients.Packages.EcrClient, "eks-anywhere-packages", "", true)
 		if err != nil {
 			fmt.Printf("Error getting dev version Image tag EKS Anywhere package controller, using latest version %v", err)
 		}
@@ -74,7 +74,7 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests releasetypes.
 				fmt.Printf("Error copying dev EKS Anywhere package controller image, to ECR Public: %v", err)
 			}
 		}
-		Tokentag, TokenSha, err = ecr.FilterECRRepoByTagPrefix(r.SourceClients.Packages.EcrClient, "ecr-token-refresher", "v0.0.0", true)
+		Tokentag, TokenSha, err = ecr.FilterECRRepoByTagPrefix(r.SourceClients.Packages.EcrClient, "ecr-token-refresher", "", true)
 		if err != nil {
 			fmt.Printf("Error getting dev version Image tag EKS Anywhere package token refresher, using latest version %v", err)
 		}
