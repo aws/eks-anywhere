@@ -2,11 +2,13 @@ package controllers_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/go-logr/logr"
 	"github.com/go-logr/logr/testr"
 	"github.com/golang/mock/gomock"
@@ -41,6 +43,11 @@ import (
 	vspherereconcilermocks "github.com/aws/eks-anywhere/pkg/providers/vsphere/reconciler/mocks"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
+	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
+	k8serror "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
+	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
+	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
 )
 
 var clusterName = "test-cluster"
@@ -103,7 +110,26 @@ func newVsphereClusterReconcilerTest(t *testing.T, objs ...runtime.Object) *vsph
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).
 		WithStatusSubresource(&anywherev1.Cluster{}).
-		Build()
+		WithInterceptorFuncs(interceptor.Funcs{
+			Patch: func(ctx context.Context, clnt client.WithWatch, obj client.Object, patch client.Patch, opts ...client.PatchOption) error {
+				// Apply patches are supposed to upsert, but fake client fails if the object doesn't exist,
+				// if an apply patch occurs for an object that doesn't yet exist, create it.
+				// https://github.com/kubernetes-sigs/controller-runtime/issues/2341
+				if patch.Type() != types.ApplyPatchType {
+					return clnt.Patch(ctx, obj, patch, opts...)
+				}
+				check, ok := obj.DeepCopyObject().(client.Object)
+				if !ok {
+					return errors.New("could not check for object in fake client")
+				}
+				if err := clnt.Get(ctx, client.ObjectKeyFromObject(obj), check); k8serror.IsNotFound(err) {
+					if err := clnt.Create(ctx, check); err != nil {
+						return fmt.Errorf("could not inject object creation for fake: %w", err)
+					}
+				}
+				return clnt.Patch(ctx, obj, patch, opts...)
+			},
+		}).Build()
 	iam := mocks.NewMockAWSIamConfigReconciler(ctrl)
 	clusterValidator := mocks.NewMockClusterValidator(ctrl)
 
@@ -1245,6 +1271,222 @@ func TestClusterReconcilerDeleteNoCAPIClusterSuccess(t *testing.T) {
 	g.Expect(apierrors.IsNotFound(tt.client.Get(context.TODO(), req.NamespacedName, &anywherev1.Cluster{}))).To(BeTrue())
 }
 
+func TestClusterReconcilerFailureDomainCreation(t *testing.T) {
+	g := NewWithT(t)
+	features.ClearCache()
+	t.Setenv("VSPHERE_FAILURE_DOMAIN_ENABLED", "true")
+	eksaRelease := test.EKSARelease()
+	eksdRelease := createEKSDRelease()
+	secret := createSecret()
+	cluster := vsphereClusterWithFailureDomains()
+	cluster.Annotations = map[string]string{v1alpha1.ManagedByCLIAnnotation: "true"}
+
+	now := metav1.Now()
+	cluster.DeletionTimestamp = &now
+	cluster.Finalizers = []string{controllers.ClusterFinalizerName}
+
+	datacenterConfig := vsphereDataCenterWithFailureDomains(cluster)
+	bundle := createBundle()
+	machineConfigCP := vsphereCPMachineConfig()
+	machineConfigWN := vsphereWorkerMachineConfig()
+
+	objs := []runtime.Object{
+		cluster,
+		datacenterConfig,
+		secret,
+		bundle,
+		machineConfigCP,
+		machineConfigWN,
+		eksaRelease,
+		eksdRelease,
+	}
+
+	tt := newVsphereClusterReconcilerTest(t, objs...)
+
+	req := clusterRequest(cluster)
+
+	ctx := context.Background()
+
+	fdz := &vspherev1.VSphereDeploymentZone{}
+	fd := &vspherev1.VSphereFailureDomain{}
+
+	// Run reconciliation
+	_, err := tt.reconciler.Reconcile(ctx, req)
+	if err != nil {
+		t.Fatalf("reconcile: (%v)", err)
+	}
+
+	// vpsheredeploymentzone and vspherefailuredomain should exist
+	err = tt.client.Get(ctx, client.ObjectKey{Name: "test-cluster-datacenter-fd-1"}, fdz)
+	g.Expect(err).To(BeNil())
+	g.Expect(fdz.Name).To(Equal("test-cluster-datacenter-fd-1"))
+	g.Expect(fdz.Spec.FailureDomain).To(Equal("test-cluster-datacenter-fd-1"))
+
+	err = tt.client.Get(ctx, client.ObjectKey{Name: "test-cluster-datacenter-fd-1"}, fd)
+	g.Expect(err).To(BeNil())
+	g.Expect(fd.Name).To(Equal("test-cluster-datacenter-fd-1"))
+	features.ClearCache()
+}
+
+func TestClusterReconcilerFailureDomainsFailure(t *testing.T) {
+	g := NewWithT(t)
+	features.ClearCache()
+	t.Setenv("VSPHERE_FAILURE_DOMAIN_ENABLED", "true")
+	eksaRelease := test.EKSARelease()
+	eksdRelease := createEKSDRelease()
+	secret := createSecret()
+	cluster := vsphereClusterWithFailureDomains()
+	cluster.Annotations = map[string]string{v1alpha1.ManagedByCLIAnnotation: "true"}
+
+	now := metav1.Now()
+	cluster.DeletionTimestamp = &now
+	cluster.Finalizers = []string{controllers.ClusterFinalizerName}
+
+	datacenterConfig := vsphereDataCenterWithFailureDomains(cluster)
+	bundle := createBundle()
+	machineConfigCP := vsphereCPMachineConfig()
+	machineConfigWN := vsphereWorkerMachineConfig()
+
+	objs := []runtime.Object{
+		cluster,
+		datacenterConfig,
+		secret,
+		bundle,
+		machineConfigCP,
+		machineConfigWN,
+		eksaRelease,
+		eksdRelease,
+	}
+
+	tt := newVsphereClusterReconcilerTest(t, objs...)
+	req := clusterRequest(cluster)
+
+	ctx := context.Background()
+
+	fdz := &vspherev1.VSphereDeploymentZone{}
+	fd := &vspherev1.VSphereFailureDomain{}
+
+	// Run reconciliation
+	_, err := tt.reconciler.Reconcile(ctx, req)
+	if err != nil {
+		t.Fatalf("reconcile: (%v)", err)
+	}
+
+	// vpsheredeploymentzone and vspherefailuredomain don't exist
+	err = tt.client.Get(ctx, client.ObjectKey{Name: "test-cluster-datacenter-nonexisting"}, fdz)
+	g.Expect(err).ToNot(BeNil())
+
+	err = tt.client.Get(ctx, client.ObjectKey{Name: "test-cluster-datacenter-nonexisting"}, fd)
+	g.Expect(err).ToNot(BeNil())
+}
+
+func createEKSDRelease() *eksdv1alpha1.Release {
+	return &eksdv1alpha1.Release{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test",
+			Namespace: "eksa-system",
+		},
+		Spec: eksdv1alpha1.ReleaseSpec{
+			Channel: "1-32",
+			Number:  1,
+		},
+		Status: createEKSDReleaseStatus(),
+	}
+}
+
+func createEKSDReleaseStatus() eksdv1alpha1.ReleaseStatus {
+	return eksdv1alpha1.ReleaseStatus{
+		Components: []eksdv1alpha1.Component{
+			createKubernetesComponent(),
+			createEtcdComponent(),
+			createCSIComponent(),
+		},
+	}
+}
+
+func createKubernetesComponent() eksdv1alpha1.Component {
+	return eksdv1alpha1.Component{
+		Name: "kubernetes",
+		Assets: []eksdv1alpha1.Asset{
+			{
+				Name: "kube-apiserver-image",
+				Image: &eksdv1alpha1.AssetImage{
+					URI: "public.ecr.aws/eks-distro/kubernetes/kube-apiserver:v1.32.0-eks-1-32-1",
+				},
+			},
+		},
+	}
+}
+
+func createEtcdComponent() eksdv1alpha1.Component {
+	return eksdv1alpha1.Component{
+		Name:   "etcd",
+		GitTag: "v3.5.0",
+		Assets: []eksdv1alpha1.Asset{
+			{
+				Name: "etcd-image",
+				Image: &eksdv1alpha1.AssetImage{
+					URI: "public.ecr.aws/eks-distro/etcd-io/etcd:v3.5.0-eks-1-32-1",
+				},
+			},
+		},
+	}
+}
+
+func createCSIComponent() eksdv1alpha1.Component {
+	return eksdv1alpha1.Component{
+		Assets: []eksdv1alpha1.Asset{
+			{
+				Name: "node-driver-registrar-image",
+				Image: &eksdv1alpha1.AssetImage{
+					URI: "public.ecr.aws/eks-distro/kubernetes-csi/node-driver-registrar:v2.5.0-eks-1-32-1",
+				},
+			},
+			{
+				Name: "livenessprobe-image",
+				Image: &eksdv1alpha1.AssetImage{
+					URI: "public.ecr.aws/eks-distro/kubernetes-csi/livenessprobe:v2.7.0-eks-1-32-1",
+				},
+			},
+			{
+				Name: "external-attacher-image",
+				Image: &eksdv1alpha1.AssetImage{
+					URI: "public.ecr.aws/eks-distro/kubernetes-csi/external-attacher:v3.4.0-eks-1-32-1",
+				},
+			},
+			{
+				Name: "external-provisioner-image",
+				Image: &eksdv1alpha1.AssetImage{
+					URI: "public.ecr.aws/eks-distro/kubernetes-csi/external-provisioner:v3.2.0-eks-1-32-1",
+				},
+			},
+			{
+				Name: "pause-image",
+				Image: &eksdv1alpha1.AssetImage{
+					URI: "public.ecr.aws/eks-distro/kubernetes/pause:v1.32.0-eks-1-32-1",
+				},
+			},
+			{
+				Name: "coredns-image",
+				Image: &eksdv1alpha1.AssetImage{
+					URI: "public.ecr.aws/eks-distro/coredns/coredns:v1.8.7-eks-1-32-1",
+				},
+			},
+			{
+				Name: "aws-iam-authenticator-image",
+				Image: &eksdv1alpha1.AssetImage{
+					URI: "public.ecr.aws/eks-distro/kubernetes-sigs/aws-iam-authenticator:v0.5.9-eks-1-32-1",
+				},
+			},
+			{
+				Name: "kube-proxy-image",
+				Image: &eksdv1alpha1.AssetImage{
+					URI: "public.ecr.aws/eks-distro/kubernetes/kube-proxy:v1.32.0-eks-1-32-1",
+				},
+			},
+		},
+	}
+}
 func TestClusterReconcilerSkipDontInstallPackagesOnSelfManaged(t *testing.T) {
 	ctx := context.Background()
 	version := test.DevEksaVersion()
@@ -1731,6 +1973,45 @@ func vsphereDataCenter(cluster *anywherev1.Cluster) *anywherev1.VSphereDatacente
 	}
 }
 
+func vsphereDataCenterWithFailureDomains(cluster *anywherev1.Cluster) *anywherev1.VSphereDatacenterConfig {
+	return &anywherev1.VSphereDatacenterConfig{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "VSphereDatacenterConfig",
+			APIVersion: "anywhere.eks.amazonaws.com/v1alpha1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "datacenter",
+			Namespace: cluster.Namespace,
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					APIVersion: anywherev1.GroupVersion.String(),
+					Kind:       anywherev1.ClusterKind,
+					Name:       cluster.Name,
+				},
+			},
+		},
+		Spec: anywherev1.VSphereDatacenterConfigSpec{
+			Thumbprint: "aaa",
+			Server:     "ssss",
+			Datacenter: "daaa",
+			Network:    "networkA",
+			FailureDomains: []anywherev1.FailureDomain{
+				{
+					Name:           "fd-1",
+					ComputeCluster: "aaa",
+					ResourcePool:   "sss",
+					Datastore:      "ddd",
+					Folder:         "eee",
+					Network:        "fff",
+				},
+			},
+		},
+		Status: anywherev1.VSphereDatacenterConfigStatus{
+			SpecValid: true,
+		},
+	}
+}
+
 func vsphereCluster() *anywherev1.Cluster {
 	version := test.DevEksaVersion()
 	return &anywherev1.Cluster{
@@ -1768,6 +2049,64 @@ func vsphereCluster() *anywherev1.Cluster {
 					},
 					Name:   "md-0",
 					Labels: nil,
+				},
+			},
+			EksaVersion: &version,
+			MachineHealthCheck: &anywherev1.MachineHealthCheck{
+				UnhealthyMachineTimeout: &metav1.Duration{
+					Duration: constants.DefaultUnhealthyMachineTimeout,
+				},
+				NodeStartupTimeout: &metav1.Duration{
+					Duration: constants.DefaultNodeStartupTimeout,
+				},
+			},
+		},
+		Status: anywherev1.ClusterStatus{
+			ReconciledGeneration: 1,
+		},
+	}
+}
+
+func vsphereClusterWithFailureDomains() *anywherev1.Cluster {
+	version := test.DevEksaVersion()
+	return &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      clusterName,
+			Namespace: namespace,
+		},
+		Spec: anywherev1.ClusterSpec{
+			ClusterNetwork: anywherev1.ClusterNetwork{
+				CNIConfig: &anywherev1.CNIConfig{
+					Cilium: &anywherev1.CiliumConfig{},
+				},
+			},
+			DatacenterRef: anywherev1.Ref{
+				Kind: "VSphereDatacenterConfig",
+				Name: "datacenter",
+			},
+			KubernetesVersion: anywherev1.Kube132,
+			ControlPlaneConfiguration: anywherev1.ControlPlaneConfiguration{
+				Count: 1,
+				Endpoint: &anywherev1.Endpoint{
+					Host: "1.1.1.1",
+				},
+				MachineGroupRef: &anywherev1.Ref{
+					Kind: "VSphereMachineConfig",
+					Name: clusterName + "-cp",
+				},
+			},
+			WorkerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
+				{
+					Count: ptr.Int(1),
+					MachineGroupRef: &anywherev1.Ref{
+						Kind: "VSphereMachineConfig",
+						Name: clusterName + "-wn",
+					},
+					Name:   "md-0",
+					Labels: nil,
+					FailureDomains: []string{
+						"fd-1",
+					},
 				},
 			},
 			EksaVersion: &version,
