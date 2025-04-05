@@ -27,6 +27,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/controller/handlers"
+	"github.com/aws/eks-anywhere/pkg/controller/serverside"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
@@ -492,12 +493,13 @@ func (r *ClusterReconciler) reconcileDelete(ctx context.Context, log logr.Logger
 
 	// Creates vspheredeploymentzone and vspherefailuredomain CR on bootstrap cluster prior to delete
 	// These CRs are not migrated over during pivot and must be present to cleanly delete vspheremachines
-	if cluster.Spec.DatacenterRef.Kind == "VSphereDatacenterConfig" && features.IsActive(features.VsphereFailureDomainEnabled()) {
-		log.Info("Creating vspheredeploymentzones and vspherefailuredomains on bootstrap")
-		mover := vsphere.NewFailureDomainMover(log, r.client, cluster)
-
-		if err := mover.ApplyFailureDomains(ctx); err != nil {
-			return ctrl.Result{}, err
+	// This solution isn't ideal, but would require redesign
+	if cluster.Spec.DatacenterRef.Kind == "VSphereDatacenterConfig" && cluster.IsSelfManaged() {
+		if features.IsActive(features.VsphereFailureDomainEnabled()) {
+			log.Info("Creating vspheredeploymentzones and vspherefailuredomains on bootstrap")
+			if err := r.applyFailureDomains(ctx, log, cluster); err != nil {
+				return ctrl.Result{}, err
+			}
 		}
 
 	}
@@ -553,6 +555,47 @@ func (r *ClusterReconciler) buildClusterConfig(ctx context.Context, clus *anywhe
 	}
 
 	return config, nil
+}
+
+func (r *ClusterReconciler) applyFailureDomains(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) error {
+	clusterSpec, err := r.buildSpec(ctx, cluster)
+	if err != nil {
+		return err
+	}
+
+	fd, err := r.buildFailureDomainSpec(log, clusterSpec)
+	if err != nil {
+		return err
+	}
+
+	if err := r.reconcileObjects(ctx, fd); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *ClusterReconciler) buildSpec(ctx context.Context, cluster *anywherev1.Cluster) (*c.Spec, error) {
+	clusterSpec, err := c.BuildSpec(ctx, clientutil.NewKubeClient(r.client), cluster)
+	if err != nil {
+		return nil, err
+	}
+	return clusterSpec, nil
+}
+
+func (r *ClusterReconciler) buildFailureDomainSpec(log logr.Logger, cluster *c.Spec) (*vsphere.FailureDomains, error) {
+	fd, err := vsphere.FailureDomainsSpec(log, cluster)
+	if err != nil {
+		return nil, err
+	}
+	return fd, nil
+}
+
+func (r *ClusterReconciler) reconcileObjects(ctx context.Context, fd *vsphere.FailureDomains) error {
+	if err := serverside.ReconcileObjects(ctx, r.client, fd.Objects()); err != nil {
+		return err
+	}
+	return nil
+
 }
 
 func (r *ClusterReconciler) ensureClusterOwnerReferences(ctx context.Context, clus *anywherev1.Cluster, config *c.Config) error {
