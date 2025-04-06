@@ -105,7 +105,6 @@ func DescribeImagesPaginated(ecrClient *ecr.ECR, describeInput *ecr.DescribeImag
 func GetLatestImage(ecrClient *ecr.ECR, repoName, branchName string, isHelmChart bool) (string, string, error) {
 	imageDetails, err := DescribeImagesPaginated(ecrClient, &ecr.DescribeImagesInput{
 		RepositoryName: aws.String(repoName),
-		RegistryId: aws.String("067575901363"),
 	})
 	if len(imageDetails) == 0 {
 		return "", "", fmt.Errorf("no image details obtained with DescribeImages API for %s repo: %v", repoName, err)
