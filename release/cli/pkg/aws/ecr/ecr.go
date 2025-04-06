@@ -17,6 +17,7 @@ package ecr
 import (
 	"encoding/base64"
 	"fmt"
+	"reflect"
 	"strings"
 	"time"
 
@@ -101,114 +102,94 @@ func DescribeImagesPaginated(ecrClient *ecr.ECR, describeInput *ecr.DescribeImag
 	return images, nil
 }
 
-// GetLatestImage takes a repository as input and returns the latest pushed image along with it's sha256 digest.
-func GetLatestImage(ecrClient *ecr.ECR, repoName, branchName string, isHelmChart bool) (string, string, error) {
+// FilterECRRepoByTagPrefix will take a substring, and a repository as input and find the latest pushed image matching that substring.
+func FilterECRRepoByTagPrefix(ecrClient *ecr.ECR, repoName, prefix string, hasTag bool) (string, string, error) {
 	imageDetails, err := DescribeImagesPaginated(ecrClient, &ecr.DescribeImagesInput{
 		RepositoryName: aws.String(repoName),
 	})
 	if len(imageDetails) == 0 {
-		return "", "", fmt.Errorf("no image details obtained with DescribeImages API for %s repo: %v", repoName, err)
+		return "", "", fmt.Errorf("no image details obtained: %v", err)
 	}
 	if err != nil {
 		return "", "", errors.Cause(err)
 	}
-	
-	filteredImageDetails := filterImageDetailsWithBranchName(imageDetails, branchName, isHelmChart)
-	if len(filteredImageDetails) == 0 {
-		return "", "", fmt.Errorf("no images found with the required filters")
+	var filteredImageDetails []*ecr.ImageDetail
+	if hasTag {
+		filteredImageDetails = imageTagFilter(imageDetails, prefix)
+	} else {
+		filteredImageDetails = imageTagFilterWithout(imageDetails, prefix)
 	}
 
-	version, sha, err := getLatestOCIShaTag(filteredImageDetails)
+	// Filter out any tags that don't match our prefix for doubletagged scenarios
+	for _, detail := range filteredImageDetails {
+		for _, tag := range detail.ImageTags {
+			if tag != nil && !strings.HasPrefix(*tag, prefix) {
+				detail.ImageTags = removeStringSlice(detail.ImageTags, *tag)
+			}
+		}
+	}
+
+	// In case we don't find any tag substring matches, we still want to populate the bundle with the latest version.
+	if len(filteredImageDetails) < 1 {
+		filteredImageDetails = imageDetails
+	}
+	version, sha, err := getLastestOCIShaTag(filteredImageDetails)
 	if err != nil {
 		return "", "", err
 	}
 	return version, sha, nil
 }
 
-// filterImageDetailsWithBranchName filters ECR image details based on tag content and branch naming conventions.
-func filterImageDetailsWithBranchName(imageDetails []*ecr.ImageDetail, branchName string, isHelmChart bool) []*ecr.ImageDetail {
-	filteredImageDetails := []*ecr.ImageDetail{}
-	for _, detail := range imageDetails {
-		// Skip invalid image entries
-		if detail.ImagePushedAt == nil || detail.ImageDigest == nil || detail.ImageTags == nil || len(detail.ImageTags) == 0 {
-			continue
-		}
-
-		// Exclude image if any tag contains "cache"
-		skip := false
+// imageTagFilter is used when filtering a list of ECR images for a specific tag or tag substring
+func imageTagFilter(details []*ecr.ImageDetail, substring string) []*ecr.ImageDetail {
+	var filteredDetails []*ecr.ImageDetail
+	for _, detail := range details {
 		for _, tag := range detail.ImageTags {
-			if strings.Contains(*tag, "cache") {
-				skip = true
-				break
+			if strings.HasPrefix(*tag, substring) {
+				filteredDetails = append(filteredDetails, detail)
 			}
 		}
-		if skip {
-			continue
-		}
-
-		// Helm chart filtering logic:
-		// - If isHelmChart is false: exclude any image that has a tag containing "helm"
-		// - If isHelmChart is true: exclude any image that does not have at least one tag containing "helm"
-		if !isHelmChart {
-			for _, tag := range detail.ImageTags {
-				if strings.Contains(*tag, "helm") {
-					skip = true
-					break
-				}
-			}
-			if skip {
-				continue
-			}
-		} else {
-			containsHelm := false
-			for _, tag := range detail.ImageTags {
-				if strings.Contains(*tag, "helm") {
-					containsHelm = true
-					break
-				}
-			}
-			if !containsHelm {
-				continue
-			}
-		}
-
-		if branchName == "main" {
-			// Exclude image if any tag contains "release"
-			for _, tag := range detail.ImageTags {
-				if strings.Contains(*tag, "release") {
-					skip = true
-					break
-				}
-			}
-			if skip {
-				continue
-			}
-		} else {
-			// Exclude image if none of the tags contain the branchName
-			containsBranch := false
-			for _, tag := range detail.ImageTags {
-				if strings.Contains(*tag, branchName) {
-					containsBranch = true
-					break
-				}
-			}
-			if !containsBranch {
-				continue
-			}
-		}
-		filteredImageDetails = append(filteredImageDetails, detail)
 	}
-	return filteredImageDetails
+	return filteredDetails
 }
 
-// getLatestOCIShaTag is used to find the tag/sha of the latest pushed OCI image from a list.
-func getLatestOCIShaTag(details []*ecr.ImageDetail) (string, string, error) {
+// imageTagFilterWithout is used when filtering a list of ECR images for images without a specific tag or tag substring
+func imageTagFilterWithout(details []*ecr.ImageDetail, substring string) []*ecr.ImageDetail {
+	var filteredDetails []*ecr.ImageDetail
+	for _, detail := range details {
+		for _, tag := range detail.ImageTags {
+			if !strings.HasPrefix(*tag, substring) {
+				filteredDetails = append(filteredDetails, detail)
+			}
+		}
+	}
+	return filteredDetails
+}
+
+// getLastestOCIShaTag is used to find the tag/sha of the latest pushed OCI image from a list.
+func getLastestOCIShaTag(details []*ecr.ImageDetail) (string, string, error) {
 	latest := &ecr.ImageDetail{}
 	latest.ImagePushedAt = &time.Time{}
 	for _, detail := range details {
-		if latest.ImagePushedAt.Before(*detail.ImagePushedAt) {
+		if len(details) < 1 || detail.ImagePushedAt == nil || detail.ImageDigest == nil || detail.ImageTags == nil || len(detail.ImageTags) == 0 {
+			continue
+		}
+		if detail.ImagePushedAt != nil && latest.ImagePushedAt.Before(*detail.ImagePushedAt) {
 			latest = detail
 		}
 	}
+	if reflect.DeepEqual(latest, ecr.ImageDetail{}) {
+		return "", "", fmt.Errorf("error no images found")
+	}
 	return *latest.ImageTags[0], *latest.ImageDigest, nil
+}
+
+// removeStringSlice removes a named string from a slice, without knowing it's index or it being ordered.
+func removeStringSlice(l []*string, item string) []*string {
+	for i, other := range l {
+		if *other == item {
+			return append(l[:i], l[i+1:]...)
+		}
+	}
+	return l
 }
