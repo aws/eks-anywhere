@@ -106,6 +106,7 @@ func DescribeImagesPaginated(ecrClient *ecr.ECR, describeInput *ecr.DescribeImag
 func FilterECRRepoByTagPrefix(ecrClient *ecr.ECR, repoName, prefix string, hasTag bool) (string, string, error) {
 	imageDetails, err := DescribeImagesPaginated(ecrClient, &ecr.DescribeImagesInput{
 		RepositoryName: aws.String(repoName),
+		RegistryId: aws.String("067575901363"),
 	})
 	if len(imageDetails) == 0 {
 		return "", "", fmt.Errorf("no image details obtained: %v", err)
