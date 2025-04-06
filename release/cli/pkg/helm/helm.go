@@ -488,12 +488,12 @@ func GetPackagesImageTags(packagesArtifacts map[string][]releasetypes.Artifact) 
 	for _, artifacts := range packagesArtifacts {
 		for _, artifact := range artifacts {
 			if artifact.Image != nil {
-				m[artifact.Image.AssetName] = artifact.Image.SourceImageURI
+				m[artifact.Image.AssetName] = artifact.Image.ReleaseImageURI
 			}
 		}
 	}
 	if len(m) == 0 {
-		return nil, fmt.Errorf("No assets found for eks-anywhere-packages, or ecr-token-refresher in packagesArtifacts")
+		return nil, fmt.Errorf("no assets found for eks-anywhere-packages, or ecr-token-refresher in packagesArtifacts")
 	}
 	return m, nil
 }
