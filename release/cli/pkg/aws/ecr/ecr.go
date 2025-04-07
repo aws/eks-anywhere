@@ -31,14 +31,7 @@ import (
 
 func GetImageDigest(imageUri, imageContainerRegistry string, ecrClient *ecr.ECR) (string, error) {
 	repository, tag := artifactutils.SplitImageUri(imageUri, imageContainerRegistry)
-	// We are not getting the accountId from the registry because this function 
-	// is also called to fetch public ECR images for prod bundles and in that case, 
-	// the imageContainerRegistry would be public.ecr.aws which would not have the 
-	// accountId and that's why we set it to the build account by default.
-	accountId := "857151390494" // By default, use build account registry id
-	if strings.Contains(imageUri, "067575901363") {
-		accountId = "067575901363"
-	}
+	accountId := strings.Split(imageContainerRegistry, ".")[0]
 	imageDetails, err := DescribeImagesPaginated(ecrClient,
 		&ecr.DescribeImagesInput{
 			ImageIds: []*ecr.ImageIdentifier{
