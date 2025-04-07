@@ -103,11 +103,7 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests releasetypes.
 					}
 					if r.DevRelease && Helmsha != "" && Helmtag != "" {
 						imageDigest = Helmsha
-						if imageArtifact.AssetName == "eks-anywhere-packages-helm" {
-							imageArtifact.SourceImageURI = replaceTag(imageArtifact.SourceImageURI, Helmtag)
-						} else {
-							imageArtifact.ReleaseImageURI = replaceTag(imageArtifact.ReleaseImageURI, Helmtag)
-						}
+						imageArtifact.ReleaseImageURI = replaceTag(imageArtifact.ReleaseImageURI, Helmtag)
 					}
 					assetName := strings.TrimSuffix(imageArtifact.AssetName, "-helm")
 					bundleImageArtifact = anywherev1alpha1.Image{
@@ -121,12 +117,12 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests releasetypes.
 					if err != nil {
 						return anywherev1alpha1.PackageBundle{}, fmt.Errorf("loading digest from image digests table: %v", err)
 					}
-					if strings.HasSuffix(imageArtifact.AssetName, "eks-anywhere-packages") && r.DevRelease && Imagesha != "" && Imagetag != "" {
+					if strings.HasSuffix(imageArtifact.AssetName, "eks-anywhere-packages") && r.DevRelease && TokenSha != "" && Tokentag != "" {
 						imageDigest = Imagesha
-						imageArtifact.SourceImageURI = replaceTag(imageArtifact.SourceImageURI, Imagetag)
-					} else if strings.HasSuffix(imageArtifact.AssetName, "ecr-token-refresher") && r.DevRelease && TokenSha != "" && Tokentag != "" {
+						imageArtifact.ReleaseImageURI = replaceTag(imageArtifact.ReleaseImageURI, Imagetag)
+					} else if strings.HasSuffix(imageArtifact.AssetName, "ecr-token-refresher") && r.DevRelease && Imagesha != "" && Imagetag != "" {
 						imageDigest = TokenSha
-						imageArtifact.SourceImageURI = replaceTag(imageArtifact.SourceImageURI, Tokentag)
+						imageArtifact.ReleaseImageURI = replaceTag(imageArtifact.ReleaseImageURI, Tokentag)
 					}
 					bundleImageArtifact = anywherev1alpha1.Image{
 						Name:        imageArtifact.AssetName,
