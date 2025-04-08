@@ -116,7 +116,7 @@ func CopyToDestination(sourceAuthConfig, releaseAuthConfig *docker.AuthConfigura
 	releaseRegistryUsername := releaseAuthConfig.Username
 	releaseRegistryPassword := releaseAuthConfig.Password
 	err := retrier.Retry(func() error {
-		cmd := exec.Command("skopeo", "copy", "--src-creds", fmt.Sprintf("%s:%s", sourceRegistryUsername, sourceRegistryPassword), "--dest-creds", fmt.Sprintf("%s:%s", releaseRegistryUsername, releaseRegistryPassword), fmt.Sprintf("docker://%s", sourceImageUri), fmt.Sprintf("docker://%s", releaseImageUri), "-f", "oci", "--all")
+		cmd := exec.Command("skopeo", "--debug", "copy", "--src-creds", fmt.Sprintf("%s:%s", sourceRegistryUsername, sourceRegistryPassword), "--dest-creds", fmt.Sprintf("%s:%s", releaseRegistryUsername, releaseRegistryPassword), fmt.Sprintf("docker://%s", sourceImageUri), fmt.Sprintf("docker://%s", releaseImageUri), "-f", "oci", "--all")
 		out, err := commandutils.ExecCommand(cmd)
 		fmt.Println(out)
 		if err != nil {
