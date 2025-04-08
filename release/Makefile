@@ -14,6 +14,7 @@ RELEASE_BUCKET?=release-bucket
 SOURCE_CONTAINER_REGISTRY?=$(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com
 PACKAGES_SOURCE_CONTAINER_REGISTRY?=$(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com
 RELEASE_CONTAINER_REGISTRY?=$(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com
+PACKAGES_RELEASE_CONTAINER_REGISTRY?=$(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com
 CDN?=https://$(RELEASE_BUCKET)
 CLI_REPO_URL?=https://github.com/aws/eks-anywhere.git
 BUILD_REPO_URL?=https://github.com/aws/eks-anywhere-build-tooling.git
@@ -133,7 +134,7 @@ run: manifests generate fmt vet ## Run a controller from your host.
 ##@ ReleaseTestGenerateManifestAssets
 
 dev-release: build ## Perform a dev release of EKS-A bundles and CLI manifests
-	scripts/release.sh $(REPO_ROOT)/release/downloaded-artifacts $(SOURCE_BUCKET) $(RELEASE_BUCKET) $(CDN) $(SOURCE_CONTAINER_REGISTRY) $(PACKAGES_SOURCE_CONTAINER_REGISTRY) $(RELEASE_CONTAINER_REGISTRY) $(BUILD_REPO_URL) $(CLI_REPO_URL) $(BUILD_REPO_BRANCH_NAME) $(CLI_REPO_BRANCH_NAME) $(DRY_RUN) $(WEEKLY)
+	scripts/release.sh $(REPO_ROOT)/release/downloaded-artifacts $(SOURCE_BUCKET) $(RELEASE_BUCKET) $(CDN) $(SOURCE_CONTAINER_REGISTRY) $(PACKAGES_SOURCE_CONTAINER_REGISTRY) $(RELEASE_CONTAINER_REGISTRY) $(PACKAGES_RELEASE_CONTAINER_REGISTRY) $(BUILD_REPO_URL) $(CLI_REPO_URL) $(BUILD_REPO_BRANCH_NAME) $(CLI_REPO_BRANCH_NAME) $(DRY_RUN) $(WEEKLY)
 
 bundle-release: build ## Perform EKS-A versioned bundles release
 	scripts/bundle-release.sh $(REPO_ROOT)/release/downloaded-artifacts $(SOURCE_BUCKET) $(RELEASE_BUCKET) $(CDN) $(BUNDLE_NUMBER) $(CLI_MIN_VERSION) $(CLI_MAX_VERSION) $(SOURCE_CONTAINER_REGISTRY) $(PACKAGES_SOURCE_CONTAINER_REGISTRY) $(RELEASE_CONTAINER_REGISTRY) $(RELEASE_ENVIRONMENT) $(BUILD_REPO_BRANCH_NAME) $(CLI_REPO_BRANCH_NAME) $(BUILD_REPO_URL) $(CLI_REPO_URL)
