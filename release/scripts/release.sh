@@ -33,12 +33,13 @@ CDN="${4?Specify fourth argument - cdn}"
 SOURCE_CONTAINER_REGISTRY="${5?Specify fifth argument - source container registry}"
 PACKAGES_SOURCE_CONTAINER_REGISTRY="${6?Specify sixth argument - packages source container registry}"
 RELEASE_CONTAINER_REGISTRY="${7?Specify seventh argument - release container registry}"
-BUILD_REPO_URL="${8?Specify eighth argument - Build repo URL}"
-CLI_REPO_URL="${9?Specify ninth argument - CLI repo URL}"
-BUILD_REPO_BRANCH_NAME="${10?Specify tenth argument - Build repo branch name}"
-CLI_REPO_BRANCH_NAME="${11?Specify eleventh argument - CLI repo branch name}"
-DRY_RUN="${12?Specify twelfth argument - Dry run}"
-WEEKLY="${13?Specify thirteenth argument - Weekly release}"
+PACKAGES_RELEASE_CONTAINER_REGISTRY="${8?Specify eighth argument - packages release container registry}"
+BUILD_REPO_URL="${9?Specify ninth argument - Build repo URL}"
+CLI_REPO_URL="${10?Specify tenth argument - CLI repo URL}"
+BUILD_REPO_BRANCH_NAME="${11?Specify eleventh argument - Build repo branch name}"
+CLI_REPO_BRANCH_NAME="${12?Specify twelfth argument - CLI repo branch name}"
+DRY_RUN="${13?Specify thirteenth argument - Dry run}"
+WEEKLY="${14?Specify fourteenth argument - Weekly release}"
 
 mkdir -p "${ARTIFACTS_DIR}"
 
@@ -59,6 +60,7 @@ ${BASE_DIRECTORY}/release/bin/eks-anywhere-release release \
     --cdn "${CDN}" \
     --release-bucket "${RELEASE_BUCKET}" \
     --release-container-registry "${RELEASE_CONTAINER_REGISTRY}" \
+    --packages-release-container-registry "${PACKAGES_RELEASE_CONTAINER_REGISTRY}" \
     --dev-release=true \
     --dry-run=${DRY_RUN} \
     --weekly=${WEEKLY} \

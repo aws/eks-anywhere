@@ -37,6 +37,8 @@ func DescribeTag(gitRoot string) (string, error) {
 	return commandutils.ExecCommand(cmd)
 }
 
+// GetRepoTagsDescending retrieves all Git tags in the specified repository root that match the pattern "v*"
+// and returns them as a single string sorted in descending semantic version order (e.g., v3.0.0, v2.1.0, v1.0.0).
 func GetRepoTagsDescending(gitRoot string) (string, error) {
 	cmd := exec.Command("git", "-C", gitRoot, "tag", "-l", "v*", "--sort", "-v:refname")
 	return commandutils.ExecCommand(cmd)

@@ -25,6 +25,8 @@ import (
 	releasetypes "github.com/aws/eks-anywhere/release/cli/pkg/types"
 )
 
+// BuildToolingGitTagAssigner reads the Git tag from the eks-anywhere-build-tooling repository using the branch name.
+// If overrideBranch is provided, it takes precedence over the default branch from the release config.
 func BuildToolingGitTagAssigner(rc *releasetypes.ReleaseConfig, gitTagPath, overrideBranch string) (string, error) {
 	branchName := rc.BuildRepoBranchName
 	if overrideBranch != "" {
@@ -38,6 +40,10 @@ func BuildToolingGitTagAssigner(rc *releasetypes.ReleaseConfig, gitTagPath, over
 	return gitTag, nil
 }
 
+// CliGitTagAssigner determines the Git tag to use for the CLI repository based on the release configuration.
+// If the release is a development release (DevRelease is true), it fetches the list of version tags from the repository
+// and returns the most recent (highest) tag in descending semantic version order.
+// Otherwise, it uses the explicitly defined ReleaseVersion from the release configuration.
 func CliGitTagAssigner(rc *releasetypes.ReleaseConfig, gitTagPath, overrideBranch string) (string, error) {
 	var gitTag string
 
@@ -54,10 +60,15 @@ func CliGitTagAssigner(rc *releasetypes.ReleaseConfig, gitTagPath, overrideBranc
 	return gitTag, nil
 }
 
+// NonExistentTagAssigner is a placeholder GitTagAssigner that always returns the tag "non-existent".
+// This can be used in scenarios where Git tagging is irrelevant.
 func NonExistentTagAssigner(rc *releasetypes.ReleaseConfig, gitTagPath, overrideBranch string) (string, error) {
 	return "non-existent", nil
 }
 
+// GetGitTagAssigner returns the GitTagAssigner function to be used for the asset configuration.
+// If a custom GitTagAssigner is defined in the AssetConfig, it returns that.
+// Otherwise, it defaults to using the BuildToolingGitTagAssigner.
 func GetGitTagAssigner(ac *assettypes.AssetConfig) assettypes.GitTagAssigner {
 	if ac.GitTagAssigner != nil {
 		return assettypes.GitTagAssigner(ac.GitTagAssigner)

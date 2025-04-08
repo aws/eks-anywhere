@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// package v1alpha1 contains API Schema definitions for the release v1alpha1 API group
+// Package v1alpha1 contains API Schema definitions for the release v1alpha1 API group
 // +kubebuilder:object:generate=true
 // +groupName=anywhere.eks.amazonaws.com
 package v1alpha1
