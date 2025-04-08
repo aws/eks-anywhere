@@ -75,6 +75,7 @@ var releaseCmd = &cobra.Command{
 		sourceContainerRegistry := viper.GetString("source-container-registry")
 		packagesSourceContainerRegistry := viper.GetString("packages-source-container-registry")
 		releaseContainerRegistry := viper.GetString("release-container-registry")
+		packagesReleaseContainerRegistry := viper.GetString("packages-release-container-registry")
 		cdn := viper.GetString("cdn")
 		devRelease := viper.GetBool("dev-release")
 		dryRun := viper.GetBool("dry-run")
@@ -96,31 +97,32 @@ var releaseCmd = &cobra.Command{
 		}
 
 		releaseConfig := &releasetypes.ReleaseConfig{
-			CliRepoSource:                   cliRepoDir,
-			BuildRepoSource:                 buildRepoDir,
-			CliRepoUrl:                      cliRepoUrl,
-			BuildRepoUrl:                    buildRepoUrl,
-			BuildRepoBranchName:             buildRepoBranchName,
-			CliRepoBranchName:               cliRepoBranchName,
-			ArtifactDir:                     artifactDir,
-			SourceBucket:                    sourceBucket,
-			ReleaseBucket:                   releaseBucket,
-			SourceContainerRegistry:         sourceContainerRegistry,
-			PackagesSourceContainerRegistry: packagesSourceContainerRegistry,
-			ReleaseContainerRegistry:        releaseContainerRegistry,
-			CDN:                             cdn,
-			BundleNumber:                    bundleNumber,
-			ReleaseNumber:                   releaseNumber,
-			ReleaseVersion:                  releaseVersion,
-			ReleaseDate:                     releaseDate,
-			ReleaseTime:                     releaseTime,
-			DevRelease:                      devRelease,
-			BundleRelease:                   bundleRelease,
-			DryRun:                          dryRun,
-			Weekly:                          weekly,
-			ReleaseEnvironment:              releaseEnvironment,
-			AwsSignerProfileArn:             awsSignerProfileArn,
-			MaxReleasesInManifest:           -1,
+			CliRepoSource:                    cliRepoDir,
+			BuildRepoSource:                  buildRepoDir,
+			CliRepoUrl:                       cliRepoUrl,
+			BuildRepoUrl:                     buildRepoUrl,
+			BuildRepoBranchName:              buildRepoBranchName,
+			CliRepoBranchName:                cliRepoBranchName,
+			ArtifactDir:                      artifactDir,
+			SourceBucket:                     sourceBucket,
+			ReleaseBucket:                    releaseBucket,
+			SourceContainerRegistry:          sourceContainerRegistry,
+			PackagesSourceContainerRegistry:  packagesSourceContainerRegistry,
+			ReleaseContainerRegistry:         releaseContainerRegistry,
+			PackagesReleaseContainerRegistry: packagesReleaseContainerRegistry,
+			CDN:                              cdn,
+			BundleNumber:                     bundleNumber,
+			ReleaseNumber:                    releaseNumber,
+			ReleaseVersion:                   releaseVersion,
+			ReleaseDate:                      releaseDate,
+			ReleaseTime:                      releaseTime,
+			DevRelease:                       devRelease,
+			BundleRelease:                    bundleRelease,
+			DryRun:                           dryRun,
+			Weekly:                           weekly,
+			ReleaseEnvironment:               releaseEnvironment,
+			AwsSignerProfileArn:              awsSignerProfileArn,
+			MaxReleasesInManifest:            -1,
 		}
 
 		err := operations.SetRepoHeads(releaseConfig)
@@ -376,6 +378,7 @@ func init() {
 	releaseCmd.Flags().String("source-container-registry", "", "The container registry to pull images from for a dev release")
 	releaseCmd.Flags().String("packages-source-container-registry", "", "The container registry to pull packages images from for a dev release")
 	releaseCmd.Flags().String("release-container-registry", "", "The container registry that images wll be pushed to")
+	releaseCmd.Flags().String("packages-release-container-registry", "", "The container registry to push packages images to for a dev release")
 	releaseCmd.Flags().Bool("dev-release", true, "Flag to indicate a dev release")
 	releaseCmd.Flags().Bool("bundle-release", true, "Flag to indicate a bundle release")
 	releaseCmd.Flags().String("release-environment", "", "Release environment")
