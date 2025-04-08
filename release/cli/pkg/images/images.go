@@ -45,6 +45,11 @@ import (
 	packagesutils "github.com/aws/eks-anywhere/release/cli/pkg/util/packages"
 )
 
+// PollForExistence checks if a Docker image exists in a container registry by polling the registry's manifest endpoint.
+// It is primarily used to ensure that a given image (identified by URI and tag) is available before proceeding with operations like image copying.
+// For development environments or dev releases, it targets the private registry; otherwise, it targets the public ECR registry.
+// If the image is not found (manifest returns "MANIFEST_UNKNOWN"), it retries the request up to 60 times over a 60-minute window (every 30 seconds),
+// but only for the "main" branch and if the error is specifically an "requested image not found" error.
 func PollForExistence(devRelease bool, authConfig *docker.AuthConfiguration, imageUri, imageContainerRegistry, releaseEnvironment, branchName string) error {
 	repository, tag := artifactutils.SplitImageUri(imageUri, imageContainerRegistry)
 
@@ -215,16 +220,21 @@ func GetSourceImageURI(r *releasetypes.ReleaseConfig, name, repoName string, tag
 func GetReleaseImageURI(r *releasetypes.ReleaseConfig, name, repoName string, tagOptions map[string]string, imageTagConfiguration assettypes.ImageTagConfiguration, trimVersionSignifier, hasSeparateTagPerReleaseBranch bool) (string, error) {
 	var releaseImageUri string
 
+	releaseContainerRegistry := r.ReleaseContainerRegistry
+	if r.DevRelease && !r.DryRun && (repoName == "eks-anywhere-packages" || repoName == "ecr-token-refresher" || repoName == "credential-provider-package") {
+		releaseContainerRegistry = r.PackagesReleaseContainerRegistry
+	}
+
 	if imageTagConfiguration.ReleaseImageTagFormat != "" {
 		releaseImageTagPrefix := generateFormattedTagPrefix(imageTagConfiguration.ReleaseImageTagFormat, tagOptions)
 		releaseImageUri = fmt.Sprintf("%s/%s:%s-eks-a",
-			r.ReleaseContainerRegistry,
+			releaseContainerRegistry,
 			repoName,
 			releaseImageTagPrefix,
 		)
 	} else {
 		releaseImageUri = fmt.Sprintf("%s/%s:%s-eks-a",
-			r.ReleaseContainerRegistry,
+			releaseContainerRegistry,
 			repoName,
 			tagOptions["gitTag"],
 		)
@@ -283,6 +293,13 @@ func GetReleaseImageURI(r *releasetypes.ReleaseConfig, name, repoName string, ta
 	return releaseImageUri, nil
 }
 
+// generateFormattedTagPrefix replaces placeholders in the imageTagFormat string with corresponding values from tagOptions.
+// Placeholders are denoted by angle brackets (e.g., <env>, <version>).
+// Example:
+//
+//	imageTagFormat: "release-<env>-<version>"
+//	tagOptions: map[string]string{"env": "prod", "version": "1.2.3"}
+//	returns: "release-prod-1.2.3"
 func generateFormattedTagPrefix(imageTagFormat string, tagOptions map[string]string) string {
 	formattedTag := imageTagFormat
 	re := regexp.MustCompile(`<(\w+)>`)
