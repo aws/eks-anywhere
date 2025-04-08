@@ -31,6 +31,7 @@ import (
 
 func GetImageDigest(imageUri, imageContainerRegistry string, ecrClient *ecr.ECR) (string, error) {
 	repository, tag := artifactutils.SplitImageUri(imageUri, imageContainerRegistry)
+	accountId := strings.Split(imageContainerRegistry, ".")[0]
 	imageDetails, err := DescribeImagesPaginated(ecrClient,
 		&ecr.DescribeImagesInput{
 			ImageIds: []*ecr.ImageIdentifier{
@@ -39,6 +40,7 @@ func GetImageDigest(imageUri, imageContainerRegistry string, ecrClient *ecr.ECR)
 				},
 			},
 			RepositoryName: aws.String(repository),
+			RegistryId:     aws.String(accountId),
 		},
 	)
 	if err != nil {
@@ -106,6 +108,7 @@ func DescribeImagesPaginated(ecrClient *ecr.ECR, describeInput *ecr.DescribeImag
 func FilterECRRepoByTagPrefix(ecrClient *ecr.ECR, repoName, prefix string, hasTag bool) (string, string, error) {
 	imageDetails, err := DescribeImagesPaginated(ecrClient, &ecr.DescribeImagesInput{
 		RepositoryName: aws.String(repoName),
+		RegistryId:     aws.String("067575901363"),
 	})
 	if len(imageDetails) == 0 {
 		return "", "", fmt.Errorf("no image details obtained: %v", err)
