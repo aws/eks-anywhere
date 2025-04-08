@@ -500,7 +500,6 @@ func (r *ClusterReconciler) reconcileDelete(ctx context.Context, log logr.Logger
 				return ctrl.Result{}, err
 			}
 		}
-
 	}
 
 	capiCluster := &clusterv1.Cluster{}
@@ -594,7 +593,6 @@ func (r *ClusterReconciler) reconcileObjects(ctx context.Context, fd *vsphere.Fa
 		return err
 	}
 	return nil
-
 }
 
 func (r *ClusterReconciler) ensureClusterOwnerReferences(ctx context.Context, clus *anywherev1.Cluster, config *c.Config) error {
