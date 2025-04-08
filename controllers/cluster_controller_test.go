@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aws/eks-anywhere/pkg/features"
+	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	"github.com/go-logr/logr"
 	"github.com/go-logr/logr/testr"
 	"github.com/golang/mock/gomock"
@@ -17,12 +17,15 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
+	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util/conditions"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -31,10 +34,11 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/internal/test/envtest"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/cluster"
+	c "github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/govmomi"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 	vspheremocks "github.com/aws/eks-anywhere/pkg/providers/vsphere/mocks"
@@ -42,11 +46,6 @@ import (
 	vspherereconcilermocks "github.com/aws/eks-anywhere/pkg/providers/vsphere/reconciler/mocks"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
-	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
-	k8serror "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/types"
-	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
-	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
 )
 
 var clusterName = "test-cluster"
@@ -109,6 +108,51 @@ func newVsphereClusterReconcilerTest(t *testing.T, objs ...runtime.Object) *vsph
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).
 		WithStatusSubresource(&anywherev1.Cluster{}).
+		Build()
+	iam := mocks.NewMockAWSIamConfigReconciler(ctrl)
+	clusterValidator := mocks.NewMockClusterValidator(ctrl)
+
+	vcb := govmomi.NewVMOMIClientBuilder()
+
+	validator := vsphere.NewValidator(govcClient, vcb)
+	defaulter := vsphere.NewDefaulter(govcClient)
+	cniReconciler := vspherereconcilermocks.NewMockCNIReconciler(ctrl)
+	ipValidator := vspherereconcilermocks.NewMockIPValidator(ctrl)
+	mhcReconciler := mocks.NewMockMachineHealthCheckReconciler(ctrl)
+
+	reconciler := vspherereconciler.New(
+		cl,
+		validator,
+		defaulter,
+		cniReconciler,
+		nil,
+		ipValidator,
+	)
+	registry := clusters.NewProviderClusterReconcilerRegistryBuilder().
+		Add(anywherev1.VSphereDatacenterKind, reconciler).
+		Build()
+
+	mockPkgs := mocks.NewMockPackagesClient(ctrl)
+	mockPkgs.EXPECT().
+		ReconcileDelete(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil).AnyTimes()
+
+	r := controllers.NewClusterReconciler(cl, &registry, iam, clusterValidator, mockPkgs, mhcReconciler, nil)
+
+	return &vsphereClusterReconcilerTest{
+		govcClient: govcClient,
+		reconciler: r,
+		client:     cl,
+	}
+}
+
+func newVsphereClusterReconcilerWithFailureDomainsTest(t *testing.T, objs ...runtime.Object) *vsphereClusterReconcilerTest {
+	ctrl := gomock.NewController(t)
+	govcClient := vspheremocks.NewMockProviderGovcClient(ctrl)
+
+	cb := fake.NewClientBuilder()
+	cl := cb.WithRuntimeObjects(objs...).
+		WithStatusSubresource(&anywherev1.Cluster{}).
 		WithInterceptorFuncs(interceptor.Funcs{
 			Patch: func(ctx context.Context, clnt client.WithWatch, obj client.Object, patch client.Patch, opts ...client.PatchOption) error {
 				// Apply patches are supposed to upsert, but fake client fails if the object doesn't exist,
@@ -121,7 +165,7 @@ func newVsphereClusterReconcilerTest(t *testing.T, objs ...runtime.Object) *vsph
 				if !ok {
 					return errors.New("could not check for object in fake client")
 				}
-				if err := clnt.Get(ctx, client.ObjectKeyFromObject(obj), check); k8serror.IsNotFound(err) {
+				if err := clnt.Get(ctx, client.ObjectKeyFromObject(obj), check); apierrors.IsNotFound(err) {
 					if err := clnt.Create(ctx, check); err != nil {
 						return fmt.Errorf("could not inject object creation for fake: %w", err)
 					}
@@ -157,7 +201,7 @@ func newVsphereClusterReconcilerTest(t *testing.T, objs ...runtime.Object) *vsph
 		ReconcileDelete(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil).AnyTimes()
 
-	r := controllers.NewClusterReconciler(cl, &registry, iam, clusterValidator, mockPkgs, mhcReconciler)
+	r := controllers.NewClusterReconciler(cl, &registry, iam, clusterValidator, mockPkgs, mhcReconciler, controllers.NewFailureDomainMover(cl))
 
 	return &vsphereClusterReconcilerTest{
 		govcClient: govcClient,
@@ -215,7 +259,7 @@ func TestClusterReconcilerReconcileSelfManagedCluster(t *testing.T) {
 	providerReconciler.EXPECT().Reconcile(ctx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(selfManagedCluster))
 	mhcReconciler.EXPECT().Reconcile(ctx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(selfManagedCluster)).Return(nil)
 
-	r := controllers.NewClusterReconciler(c, registry, iam, clusterValidator, mockPkgs, mhcReconciler)
+	r := controllers.NewClusterReconciler(c, registry, iam, clusterValidator, mockPkgs, mhcReconciler, nil)
 	result, err := r.Reconcile(ctx, clusterRequest(selfManagedCluster))
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(result).To(Equal(ctrl.Result{}))
@@ -260,7 +304,7 @@ func TestClusterReconcilerReconcileUnclearedClusterFailure(t *testing.T) {
 
 	providerReconciler.EXPECT().Reconcile(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
 
-	r := controllers.NewClusterReconciler(client, registry, iam, clusterValidator, mockPkgs, mhcReconciler)
+	r := controllers.NewClusterReconciler(client, registry, iam, clusterValidator, mockPkgs, mhcReconciler, nil)
 
 	result, err := r.Reconcile(ctx, clusterRequest(config.Cluster))
 	g.Expect(err).ToNot(HaveOccurred())
@@ -567,7 +611,7 @@ func TestClusterReconcilerReconcileConditions(t *testing.T) {
 
 			mhcReconciler.EXPECT().Reconcile(logCtx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(config.Cluster)).Return(nil)
 
-			r := controllers.NewClusterReconciler(testClient, registry, iam, clusterValidator, mockPkgs, mhcReconciler)
+			r := controllers.NewClusterReconciler(testClient, registry, iam, clusterValidator, mockPkgs, mhcReconciler, nil)
 
 			result, err := r.Reconcile(logCtx, clusterRequest(config.Cluster))
 
@@ -834,7 +878,7 @@ func TestClusterReconcilerReconcileSelfManagedClusterConditions(t *testing.T) {
 			)
 			mhcReconciler.EXPECT().Reconcile(logCtx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(config.Cluster)).Return(nil)
 
-			r := controllers.NewClusterReconciler(testClient, registry, iam, clusterValidator, mockPkgs, mhcReconciler)
+			r := controllers.NewClusterReconciler(testClient, registry, iam, clusterValidator, mockPkgs, mhcReconciler, nil)
 
 			result, err := r.Reconcile(logCtx, clusterRequest(config.Cluster))
 
@@ -992,7 +1036,7 @@ func TestClusterReconcilerReconcileGenerations(t *testing.T) {
 				providerReconciler.EXPECT().Reconcile(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
 			}
 
-			r := controllers.NewClusterReconciler(client, registry, iam, clusterValidator, mockPkgs, mhcReconciler)
+			r := controllers.NewClusterReconciler(client, registry, iam, clusterValidator, mockPkgs, mhcReconciler, nil)
 
 			result, err := r.Reconcile(ctx, clusterRequest(config.Cluster))
 			g.Expect(err).ToNot(HaveOccurred())
@@ -1044,7 +1088,7 @@ func TestClusterReconcilerReconcilePausedCluster(t *testing.T) {
 	mhcReconciler := mocks.NewMockMachineHealthCheckReconciler(ctrl)
 
 	registry := newRegistryMock(providerReconciler)
-	r := controllers.NewClusterReconciler(c, registry, iam, clusterValidator, nil, mhcReconciler)
+	r := controllers.NewClusterReconciler(c, registry, iam, clusterValidator, nil, mhcReconciler, nil)
 	g.Expect(r.Reconcile(ctx, clusterRequest(cluster))).To(Equal(reconcile.Result{}))
 	api := envtest.NewAPIExpecter(t, c)
 
@@ -1093,7 +1137,7 @@ func TestClusterReconcilerReconcileDeletedSelfManagedCluster(t *testing.T) {
 		WithStatusSubresource(selfManagedCluster).
 		Build()
 
-	r := controllers.NewClusterReconciler(c, registry, iam, clusterValidator, nil, mhcReconciler)
+	r := controllers.NewClusterReconciler(c, registry, iam, clusterValidator, nil, mhcReconciler, nil)
 	_, err := r.Reconcile(ctx, clusterRequest(selfManagedCluster))
 	g.Expect(err).To(MatchError(ContainSubstring("deleting self-managed clusters is not supported")))
 }
@@ -1135,7 +1179,7 @@ func TestClusterReconcilerReconcileSelfManagedClusterRegAuthFailNoSecret(t *test
 	bundles := createBundle()
 	c := fake.NewClientBuilder().WithRuntimeObjects(selfManagedCluster, eksaRelease, bundles).Build()
 
-	r := controllers.NewClusterReconciler(c, registry, iam, clusterValidator, nil, mhcReconciler)
+	r := controllers.NewClusterReconciler(c, registry, iam, clusterValidator, nil, mhcReconciler, nil)
 	_, err := r.Reconcile(ctx, clusterRequest(selfManagedCluster))
 	g.Expect(err).To(MatchError(ContainSubstring("fetching registry auth secret")))
 }
@@ -1218,7 +1262,7 @@ func TestClusterReconcilerReconcileDeletePausedCluster(t *testing.T) {
 		WithStatusSubresource(cluster).
 		Build()
 
-	r := controllers.NewClusterReconciler(c, newRegistryForDummyProviderReconciler(), iam, clusterValidator, nil, mhcReconciler)
+	r := controllers.NewClusterReconciler(c, newRegistryForDummyProviderReconciler(), iam, clusterValidator, nil, mhcReconciler, nil)
 	g.Expect(r.Reconcile(ctx, clusterRequest(cluster))).To(Equal(reconcile.Result{}))
 	api := envtest.NewAPIExpecter(t, c)
 
@@ -1278,7 +1322,7 @@ func TestClusterReconcilerFailureDomainCreation(t *testing.T) {
 	eksdRelease := createEKSDRelease()
 	secret := createSecret()
 	cluster := vsphereClusterWithFailureDomains()
-	cluster.Annotations = map[string]string{v1alpha1.ManagedByCLIAnnotation: "true"}
+	cluster.Annotations = map[string]string{anywherev1.ManagedByCLIAnnotation: "true"}
 
 	now := metav1.Now()
 	cluster.DeletionTimestamp = &now
@@ -1300,7 +1344,7 @@ func TestClusterReconcilerFailureDomainCreation(t *testing.T) {
 		eksdRelease,
 	}
 
-	tt := newVsphereClusterReconcilerTest(t, objs...)
+	tt := newVsphereClusterReconcilerWithFailureDomainsTest(t, objs...)
 
 	req := clusterRequest(cluster)
 
@@ -1335,7 +1379,7 @@ func TestClusterReconcilerFailureDomainsFailure(t *testing.T) {
 	eksdRelease := createEKSDRelease()
 	secret := createSecret()
 	cluster := vsphereClusterWithFailureDomains()
-	cluster.Annotations = map[string]string{v1alpha1.ManagedByCLIAnnotation: "true"}
+	cluster.Annotations = map[string]string{anywherev1.ManagedByCLIAnnotation: "true"}
 
 	now := metav1.Now()
 	cluster.DeletionTimestamp = &now
@@ -1357,7 +1401,7 @@ func TestClusterReconcilerFailureDomainsFailure(t *testing.T) {
 		eksdRelease,
 	}
 
-	tt := newVsphereClusterReconcilerTest(t, objs...)
+	tt := newVsphereClusterReconcilerWithFailureDomainsTest(t, objs...)
 	req := clusterRequest(cluster)
 
 	ctx := context.Background()
@@ -1377,6 +1421,105 @@ func TestClusterReconcilerFailureDomainsFailure(t *testing.T) {
 
 	err = tt.client.Get(ctx, client.ObjectKey{Name: "test-cluster-datacenter-nonexisting"}, fd)
 	g.Expect(err).ToNot(BeNil())
+}
+
+func TestFailureDomainMover_ApplyFailureDomains(t *testing.T) {
+	g := NewWithT(t)
+	testCases := []struct {
+		name          string
+		setupMocks    func(mockSpecBuilder *mocks.MockSpecBuilder, mockFDSpecBuilder *mocks.MockFailureDomainSpecBuilder, mockObjectReconciler *mocks.MockObjectReconciler)
+		expectedError string
+	}{
+		{
+			name: "BuildSpec error",
+			setupMocks: func(mockSpecBuilder *mocks.MockSpecBuilder, _ *mocks.MockFailureDomainSpecBuilder, _ *mocks.MockObjectReconciler) {
+				mockSpecBuilder.EXPECT().
+					BuildSpec(gomock.Any(), gomock.Any()).
+					Return(nil, errors.New("build spec error"))
+			},
+			expectedError: "build spec error",
+		},
+		{
+			name: "BuildFailureDomainSpec error",
+			setupMocks: func(mockSpecBuilder *mocks.MockSpecBuilder, mockFDSpecBuilder *mocks.MockFailureDomainSpecBuilder, _ *mocks.MockObjectReconciler) {
+				mockSpecBuilder.EXPECT().
+					BuildSpec(gomock.Any(), gomock.Any()).
+					Return(&c.Spec{}, nil)
+
+				mockFDSpecBuilder.EXPECT().
+					BuildFailureDomainSpec(gomock.Any(), gomock.Any()).
+					Return(nil, errors.New("build failure domain spec error"))
+			},
+			expectedError: "build failure domain spec error",
+		},
+		{
+			name: "ReconcileObjects error",
+			setupMocks: func(mockSpecBuilder *mocks.MockSpecBuilder, mockFDSpecBuilder *mocks.MockFailureDomainSpecBuilder, mockObjectReconciler *mocks.MockObjectReconciler) {
+				mockSpecBuilder.EXPECT().
+					BuildSpec(gomock.Any(), gomock.Any()).
+					Return(&c.Spec{}, nil)
+
+				mockFDSpecBuilder.EXPECT().
+					BuildFailureDomainSpec(gomock.Any(), gomock.Any()).
+					Return(&vsphere.FailureDomains{}, nil)
+
+				mockObjectReconciler.EXPECT().
+					ReconcileObjects(gomock.Any(), gomock.Any()).
+					Return(errors.New("reconcile objects error"))
+			},
+			expectedError: "reconcile objects error",
+		},
+		{
+			name: "Success path - all methods succeed",
+			setupMocks: func(mockSpecBuilder *mocks.MockSpecBuilder, mockFDSpecBuilder *mocks.MockFailureDomainSpecBuilder, mockObjectReconciler *mocks.MockObjectReconciler) {
+				mockSpecBuilder.EXPECT().
+					BuildSpec(gomock.Any(), gomock.Any()).
+					Return(&c.Spec{}, nil)
+
+				mockFDSpecBuilder.EXPECT().
+					BuildFailureDomainSpec(gomock.Any(), gomock.Any()).
+					Return(&vsphere.FailureDomains{}, nil)
+
+				mockObjectReconciler.EXPECT().
+					ReconcileObjects(gomock.Any(), gomock.Any()).
+					Return(nil)
+			},
+			expectedError: "",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockSpecBuilder := mocks.NewMockSpecBuilder(ctrl)
+			mockFDSpecBuilder := mocks.NewMockFailureDomainSpecBuilder(ctrl)
+			mockObjectReconciler := mocks.NewMockObjectReconciler(ctrl)
+
+			// Set up expectations based on test case
+			tc.setupMocks(mockSpecBuilder, mockFDSpecBuilder, mockObjectReconciler)
+
+			mover := controllers.NewFailureDomainMoverWithDependencies(
+				mockSpecBuilder,
+				mockFDSpecBuilder,
+				mockObjectReconciler,
+			)
+
+			ctx := context.Background()
+			log := logr.Discard()
+			cluster := &anywherev1.Cluster{}
+
+			err := mover.ApplyFailureDomains(ctx, log, cluster)
+
+			if tc.expectedError == "" {
+				g.Expect(err).NotTo(HaveOccurred())
+			} else {
+				g.Expect(err).To(HaveOccurred())
+				g.Expect(err.Error()).To(ContainSubstring(tc.expectedError))
+			}
+		})
+	}
 }
 
 func createEKSDRelease() *eksdv1alpha1.Release {
@@ -1486,6 +1629,7 @@ func createCSIComponent() eksdv1alpha1.Component {
 		},
 	}
 }
+
 func TestClusterReconcilerSkipDontInstallPackagesOnSelfManaged(t *testing.T) {
 	ctx := context.Background()
 	version := test.DevEksaVersion()
@@ -1523,7 +1667,7 @@ func TestClusterReconcilerSkipDontInstallPackagesOnSelfManaged(t *testing.T) {
 	mockPkgs.EXPECT().ReconcileDelete(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
 	mhcReconciler := mocks.NewMockMachineHealthCheckReconciler(ctrl)
 	mhcReconciler.EXPECT().Reconcile(ctx, gomock.Any(), sameName(cluster)).Return(nil)
-	r := controllers.NewClusterReconciler(mockClient, nullRegistry, nil, nil, mockPkgs, mhcReconciler)
+	r := controllers.NewClusterReconciler(mockClient, nullRegistry, nil, nil, mockPkgs, mhcReconciler, nil)
 	_, err := r.Reconcile(ctx, clusterRequest(cluster))
 	if err != nil {
 		t.Fatalf("expected err to be nil, got %s", err)
@@ -1572,7 +1716,7 @@ func TestClusterReconcilerDontDeletePackagesOnSelfManaged(t *testing.T) {
 	// need to be aware and adapt appropriately.
 	mockPkgs := mocks.NewMockPackagesClient(ctrl)
 	mockPkgs.EXPECT().ReconcileDelete(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
-	r := controllers.NewClusterReconciler(mockClient, nullRegistry, nil, nil, mockPkgs, nil)
+	r := controllers.NewClusterReconciler(mockClient, nullRegistry, nil, nil, mockPkgs, nil, nil)
 	_, err := r.Reconcile(ctx, clusterRequest(cluster))
 	if err == nil || !strings.Contains(err.Error(), "deleting self-managed clusters is not supported") {
 		t.Fatalf("unexpected error %s", err)
@@ -1628,7 +1772,7 @@ func TestClusterReconcilerPackagesDeletion(s *testing.T) {
 		mockValid := mocks.NewMockClusterValidator(ctrl)
 		mhcReconciler := mocks.NewMockMachineHealthCheckReconciler(ctrl)
 
-		r := controllers.NewClusterReconciler(fakeClient, nullRegistry, mockIAM, mockValid, mockPkgs, mhcReconciler)
+		r := controllers.NewClusterReconciler(fakeClient, nullRegistry, mockIAM, mockValid, mockPkgs, mhcReconciler, nil)
 		_, err := r.Reconcile(logCtx, clusterRequest(cluster))
 		if err == nil || !strings.Contains(err.Error(), "test error") {
 			t.Errorf("expected packages client deletion error, got %s", err)
@@ -1704,7 +1848,7 @@ func TestClusterReconcilerPackagesInstall(s *testing.T) {
 			EnableFullLifecycle(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			Times(0)
 
-		r := controllers.NewClusterReconciler(fakeClient, nullRegistry, mockIAM, mockValid, mockPkgs, mhcReconciler)
+		r := controllers.NewClusterReconciler(fakeClient, nullRegistry, mockIAM, mockValid, mockPkgs, mhcReconciler, nil)
 		_, err := r.Reconcile(logCtx, clusterRequest(cluster))
 		if err != nil {
 			t.Errorf("expected nil error, got %s", err)
@@ -1753,7 +1897,7 @@ func TestClusterReconcilerValidateManagementEksaVersionFail(t *testing.T) {
 	iam.EXPECT().EnsureCASecret(logCtx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(config.Cluster)).Return(controller.Result{}, nil)
 	clusterValidator.EXPECT().ValidateManagementClusterName(logCtx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(config.Cluster)).Return(nil)
 
-	r := controllers.NewClusterReconciler(testClient, registry, iam, clusterValidator, mockPkgs, nil)
+	r := controllers.NewClusterReconciler(testClient, registry, iam, clusterValidator, mockPkgs, nil, nil)
 
 	_, err := r.Reconcile(logCtx, clusterRequest(config.Cluster))
 
@@ -1800,7 +1944,7 @@ func TestClusterReconcilerNotAvailableEksaVersion(t *testing.T) {
 	iam.EXPECT().EnsureCASecret(logCtx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(config.Cluster)).Return(controller.Result{}, nil)
 	clusterValidator.EXPECT().ValidateManagementClusterName(logCtx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(config.Cluster)).Return(nil)
 
-	r := controllers.NewClusterReconciler(testClient, registry, iam, clusterValidator, mockPkgs, nil)
+	r := controllers.NewClusterReconciler(testClient, registry, iam, clusterValidator, mockPkgs, nil, nil)
 
 	req := clusterRequest(config.Cluster)
 	_, err := r.Reconcile(logCtx, req)
@@ -2156,8 +2300,8 @@ func (s *sameNameCluster) String() string {
 	return fmt.Sprintf("has name %s and namespace %s", s.c.Name, s.c.Namespace)
 }
 
-func baseTestVsphereCluster() (*cluster.Config, *releasev1.Bundles) {
-	config := &cluster.Config{
+func baseTestVsphereCluster() (*c.Config, *releasev1.Bundles) {
+	config := &c.Config{
 		VSphereMachineConfigs: map[string]*anywherev1.VSphereMachineConfig{},
 		OIDCConfigs:           map[string]*anywherev1.OIDCConfig{},
 		AWSIAMConfigs:         map[string]*anywherev1.AWSIamConfig{},
