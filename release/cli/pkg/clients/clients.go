@@ -43,6 +43,7 @@ type SourceClients struct {
 type ReleaseClients struct {
 	S3        *ReleaseS3Clients
 	ECRPublic *ReleaseECRPublicClient
+	Packages  *ReleaseECRPublicClient
 }
 
 type SourceS3Clients struct {
@@ -129,6 +130,13 @@ func CreateDevReleaseClients(dryRun bool) (*SourceClients, *ReleaseClients, erro
 		return nil, nil, errors.Cause(err)
 	}
 
+	// Get packages release ECR Public auth config
+	packagesECRPublicClient := ecrpublicsdk.New(packagesSession)
+	packagesReleaseAuthConfig, err := ecrpublic.GetAuthConfig(packagesECRPublicClient)
+	if err != nil {
+		return nil, nil, errors.Cause(err)
+	}
+
 	// Constructing source clients
 	sourceClients := &SourceClients{
 		S3: &SourceS3Clients{
@@ -154,6 +162,10 @@ func CreateDevReleaseClients(dryRun bool) (*SourceClients, *ReleaseClients, erro
 		ECRPublic: &ReleaseECRPublicClient{
 			Client:     ecrPublicClient,
 			AuthConfig: releaseAuthConfig,
+		},
+		Packages: &ReleaseECRPublicClient{
+			Client:     packagesECRPublicClient,
+			AuthConfig: packagesReleaseAuthConfig,
 		},
 	}
 
