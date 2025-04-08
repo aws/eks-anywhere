@@ -175,6 +175,9 @@ func handleImageUpload(_ context.Context, r *releasetypes.ReleaseConfig, package
 			sourceEcrClient = r.SourceClients.Packages.EcrClient
 		}
 		releaseContainerRegistry := r.ReleaseContainerRegistry
+		if r.DevRelease && !r.DryRun && (strings.Contains(releaseImageUri, "eks-anywhere-packages") || strings.Contains(releaseImageUri, "ecr-token-refresher") || strings.Contains(releaseImageUri, "credential-provider-package")) {
+			releaseContainerRegistry = r.PackagesReleaseContainerRegistry
+		}
 		releaseEcrPublicClient := r.ReleaseClients.ECRPublic.Client
 		fmt.Printf("Source Image - %s\n", sourceImageUri)
 		fmt.Printf("Destination Image - %s\n", releaseImageUri)
