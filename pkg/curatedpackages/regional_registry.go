@@ -112,9 +112,6 @@ func ParseAWSConfig(ctx context.Context, awsConfig string) (*aws.Config, error) 
 		return nil, err
 	}
 	defer os.Remove(file.Name())
-	if err != nil {
-		return nil, err
-	}
 
 	cfg, err := config.LoadDefaultConfig(ctx,
 		config.WithSharedConfigFiles([]string{file.Name()}),
