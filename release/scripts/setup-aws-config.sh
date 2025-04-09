@@ -23,10 +23,20 @@ function set_aws_config() {
     release_type="$2"
     if [ "$release_environment" = "" ] || ([ "$release_environment" = "development" ] && [ "$release_type" = "bundle" ]); then
         cat << EOF > awscliconfig
-[profile packages-beta]
+[profile packages-beta-pdx]
 role_arn=$PACKAGES_ECR_ROLE
 region=us-west-2
 credential_source=EcsContainer
+
+EOF
+    fi
+    if [ "$release_environment" = "" ]; then
+        cat << EOF > awscliconfig
+[profile packages-beta-iad]
+role_arn=$PACKAGES_ECR_ROLE
+region=us-east-1
+credential_source=EcsContainer
+
 EOF
     fi
     if [ "$release_environment" = "development" ] || [ "$release_environment" = "production" ]; then
