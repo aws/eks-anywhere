@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -457,5 +458,166 @@ func TestKindGetKubeconfig(t *testing.T) {
 	_, err := k.GetKubeconfig(ctx, clusterName)
 	if err != nil {
 		t.Fatalf("Kind.GetKubeconfig() error = %v, wantErr nil", err)
+	}
+}
+
+func TestKindCreateAuditPolicyWriteFailure(t *testing.T) {
+	// Create a temporary directory that will be used by the test
+	tempDir, err := os.MkdirTemp("", "kind-test-*")
+	if err != nil {
+		t.Fatalf("Failed to create temp directory: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	clusterName := "write-fail-cluster"
+	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Cluster.Name = clusterName
+		s.VersionsBundles["1.19"] = versionBundle
+		s.Cluster.Spec.ClusterNetwork = v1alpha1.ClusterNetwork{
+			Pods: v1alpha1.Pods{
+				CidrBlocks: []string{"1.1.1.1"},
+			},
+			Services: v1alpha1.Services{
+				CidrBlocks: []string{"2.2.2.2"},
+			},
+		}
+	})
+
+	// Create the kubernetes directory with normal permissions
+	kubernetesDir := filepath.Join(tempDir, clusterName, "generated", "kubernetes")
+	if err := os.MkdirAll(kubernetesDir, 0o755); err != nil {
+		t.Fatalf("Failed to create directory: %v", err)
+	}
+
+	// Create a dummy audit-policy.yaml file
+	auditPolicyPath := filepath.Join(kubernetesDir, "audit-policy.yaml")
+	if err := os.WriteFile(auditPolicyPath, []byte("dummy content"), 0o644); err != nil {
+		t.Fatalf("Failed to create file: %v", err)
+	}
+
+	// Make the file read-only to force a write error
+	// This will allow directory creation to succeed but file writing to fail
+	if err := os.Chmod(auditPolicyPath, 0o444); err != nil {
+		t.Fatalf("Failed to change file permissions: %v", err)
+	}
+
+	// Override the cluster name to point to our test directory
+	clusterSpec.Cluster.Name = filepath.Join(tempDir, clusterName)
+
+	ctx := context.Background()
+	_, writer := test.NewWriter(t)
+	mockCtrl := gomock.NewController(t)
+	executable := mockexecutables.NewMockExecutable(mockCtrl)
+
+	k := executables.NewKind(executable, writer)
+
+	_, err = k.CreateBootstrapCluster(ctx, clusterSpec)
+
+	if err == nil {
+		t.Fatal("Expected an error when trying to write to a read-only file, but got nil")
+	}
+}
+
+func TestKindCreateAuditPolicyMkdirFailure(t *testing.T) {
+	// Create a temporary directory that will be used by the test
+	tempDir, err := os.MkdirTemp("", "kind-test-*")
+	if err != nil {
+		t.Fatalf("Failed to create temp directory: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	clusterName := "mkdir-fail-cluster"
+	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Cluster.Name = clusterName
+		s.VersionsBundles["1.19"] = versionBundle
+		s.Cluster.Spec.ClusterNetwork = v1alpha1.ClusterNetwork{
+			Pods: v1alpha1.Pods{
+				CidrBlocks: []string{"1.1.1.1"},
+			},
+			Services: v1alpha1.Services{
+				CidrBlocks: []string{"2.2.2.2"},
+			},
+		}
+	})
+
+	// Create the parent directory structure
+	parentDir := filepath.Join(tempDir, clusterName, "generated")
+	if err := os.MkdirAll(parentDir, 0o755); err != nil {
+		t.Fatalf("Failed to create parent directory: %v", err)
+	}
+
+	// Create a file instead of a directory at the kubernetes path
+	// This will cause MkdirAll to fail because it can't create a directory where a file exists
+	kubernetesFilePath := filepath.Join(parentDir, "kubernetes")
+	if err := os.WriteFile(kubernetesFilePath, []byte("This is a file, not a directory"), 0o644); err != nil {
+		t.Fatalf("Failed to create file: %v", err)
+	}
+
+	clusterSpec.Cluster.Name = filepath.Join(tempDir, clusterName)
+
+	ctx := context.Background()
+	_, writer := test.NewWriter(t)
+	mockCtrl := gomock.NewController(t)
+	executable := mockexecutables.NewMockExecutable(mockCtrl)
+
+	k := executables.NewKind(executable, writer)
+
+	_, err = k.CreateBootstrapCluster(ctx, clusterSpec)
+
+	if err == nil {
+		t.Fatal("Expected an error when trying to create a directory where a file exists, but got nil")
+	}
+}
+
+func TestKindCreateBootstrapClusterAuditPolicyError(t *testing.T) {
+	// Create a temporary directory for testing
+	tempDir, err := os.MkdirTemp("", "kind-test-*")
+	if err != nil {
+		t.Fatalf("Failed to create temp directory: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	clusterName := "audit-policy-error-cluster"
+	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Cluster.Name = clusterName
+		s.VersionsBundles["1.19"] = versionBundle
+		s.Cluster.Spec.ClusterNetwork = v1alpha1.ClusterNetwork{
+			Pods: v1alpha1.Pods{
+				CidrBlocks: []string{"1.1.1.1"},
+			},
+			Services: v1alpha1.Services{
+				CidrBlocks: []string{"2.2.2.2"},
+			},
+		}
+	})
+
+	// Create the parent directory structure
+	parentDir := filepath.Join(tempDir, clusterName, "generated")
+	if err := os.MkdirAll(parentDir, 0o755); err != nil {
+		t.Fatalf("Failed to create parent directory: %v", err)
+	}
+
+	// Create a file instead of a directory at the kubernetes path to force an error
+	kubernetesPath := filepath.Join(parentDir, "kubernetes")
+	if err := os.WriteFile(kubernetesPath, []byte("This is a file, not a directory"), 0o644); err != nil {
+		t.Fatalf("Failed to create file: %v", err)
+	}
+
+	// Override the cluster name to point to our test directory
+	clusterSpec.Cluster.Name = filepath.Join(tempDir, clusterName)
+
+	ctx := context.Background()
+
+	_, writer := test.NewWriter(t)
+
+	mockCtrl := gomock.NewController(t)
+	executable := mockexecutables.NewMockExecutable(mockCtrl)
+
+	k := executables.NewKind(executable, writer)
+
+	_, err = k.CreateBootstrapCluster(ctx, clusterSpec)
+
+	if err == nil {
+		t.Fatal("Expected an error when CreateAuditPolicy fails, but got nil")
 	}
 }

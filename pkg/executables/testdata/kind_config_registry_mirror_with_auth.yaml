@@ -16,6 +16,26 @@ kubeadmConfigPatches:
         imageTag: v3.4.14-eks-1-19-2
     imageRepository: registry-mirror.test:443/eks-anywhere/eks-distro/kubernetes
     kubernetesVersion: v1.19.6-eks-1-19-2
+    apiServer:
+        # enable auditing flags on the API server
+        extraArgs:
+          audit-log-maxage: "30"
+          audit-log-maxbackup: "10"
+          audit-log-maxsize: "512"
+          audit-log-path: /var/log/kubernetes/api-audit.log
+          audit-policy-file: /etc/kubernetes/policies/audit-policy.yaml
+        # mount new files / directories on the control plane
+        extraVolumes:
+          - name: audit-policies
+            hostPath: /etc/kubernetes/policies
+            mountPath: /etc/kubernetes/policies
+            readOnly: true
+            pathType: DirectoryOrCreate
+          - name: audit-logs
+            hostPath: /var/log/kubernetes
+            mountPath: /var/log/kubernetes
+            readOnly: false
+            pathType: DirectoryOrCreate
 containerdConfigPatches:
   - |
     [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
@@ -28,3 +48,9 @@ containerdConfigPatches:
       [plugins."io.containerd.grpc.v1.cri".registry.configs."registry-mirror.test:443".auth]
         username = "username"
         password = "password"
+nodes:
+- role: control-plane
+  extraMounts:
+  - hostPath: test_cluster/generated/kubernetes/audit-policy.yaml
+    containerPath: /etc/kubernetes/policies/audit-policy.yaml
+    readOnly: true
