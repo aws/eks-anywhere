@@ -89,12 +89,23 @@ func CreateDevReleaseClients(dryRun bool) (*SourceClients, *ReleaseClients, erro
 		return nil, nil, errors.Cause(err)
 	}
 
-	// Session for beta-pdx-packages
-	packagesSession, err := session.NewSessionWithOptions(session.Options{
+	// PDX Session for beta-pdx-packages
+	packagesPDXSession, err := session.NewSessionWithOptions(session.Options{
 		Config: aws.Config{
 			Region: aws.String("us-west-2"),
 		},
-		Profile: "packages-beta",
+		Profile: "packages-beta-pdx",
+	})
+	if err != nil {
+		return nil, nil, errors.Cause(err)
+	}
+
+	// IAD Session for beta-pdx-packages
+	packagesIADSession, err := session.NewSessionWithOptions(session.Options{
+		Config: aws.Config{
+			Region: aws.String("us-east-1"),
+		},
+		Profile: "packages-beta-iad",
 	})
 	if err != nil {
 		return nil, nil, errors.Cause(err)
@@ -113,7 +124,7 @@ func CreateDevReleaseClients(dryRun bool) (*SourceClients, *ReleaseClients, erro
 	}
 
 	// Get packages source ECR auth config
-	packagesECRClient := ecrsdk.New(packagesSession)
+	packagesECRClient := ecrsdk.New(packagesPDXSession)
 	packagesSourceAuthConfig, err := ecr.GetAuthConfig(packagesECRClient)
 	if err != nil {
 		return nil, nil, errors.Cause(err)
@@ -127,7 +138,7 @@ func CreateDevReleaseClients(dryRun bool) (*SourceClients, *ReleaseClients, erro
 	}
 
 	// Get packages release ECR Public auth config
-	packagesECRPublicClient := ecrpublicsdk.New(packagesSession)
+	packagesECRPublicClient := ecrpublicsdk.New(packagesIADSession)
 	packagesReleaseAuthConfig, err := ecrpublic.GetAuthConfig(packagesECRPublicClient)
 	if err != nil {
 		return nil, nil, errors.Cause(err)
@@ -221,7 +232,7 @@ func CreateStagingReleaseClients(bundleRelease bool) (*SourceClients, *ReleaseCl
 	var packagesSourceAuthConfig *docker.AuthConfiguration
 	if bundleRelease {
 		// Session for beta-pdx-packages
-		packagesSession, err := session.NewSessionWithOptions(session.Options{
+		packagesPDXSession, err := session.NewSessionWithOptions(session.Options{
 			Config: aws.Config{
 				Region: aws.String("us-west-2"),
 			},
@@ -232,7 +243,7 @@ func CreateStagingReleaseClients(bundleRelease bool) (*SourceClients, *ReleaseCl
 		}
 
 		// Get packages source ECR auth config
-		packagesECRClient = ecrsdk.New(packagesSession)
+		packagesECRClient = ecrsdk.New(packagesPDXSession)
 		packagesSourceAuthConfig, err = ecr.GetAuthConfig(packagesECRClient)
 		if err != nil {
 			return nil, nil, errors.Cause(err)
