@@ -31,7 +31,7 @@ credential_source=EcsContainer
 EOF
     fi
     if [ "$release_environment" = "" ]; then
-        cat << EOF > awscliconfig
+        cat << EOF >> awscliconfig
 [profile packages-beta-iad]
 role_arn=$PACKAGES_ECR_ROLE
 region=us-east-1
