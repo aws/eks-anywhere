@@ -25,6 +25,9 @@ const kindPath = "kind"
 //go:embed config/kind.yaml
 var kindConfigTemplate string
 
+//go:embed config/audit-policy.yaml
+var auditPolicy string
+
 const configFileName = "kind_tmp.yaml"
 
 type Kind struct {
@@ -57,6 +60,7 @@ type kindExecConfig struct {
 	DisableDefaultCNI    bool
 	PodSubnet            string
 	ServiceSubnet        string
+	AuditPolicyPath      string
 }
 
 func NewKind(executable Executable, writer filewriter.FileWriter) *Kind {
@@ -64,6 +68,20 @@ func NewKind(executable Executable, writer filewriter.FileWriter) *Kind {
 		writer:     writer,
 		Executable: executable,
 	}
+}
+
+// CreateAuditPolicy creates an audit policy file to be used by the bootstrap cluster's api server.
+func (k *Kind) CreateAuditPolicy(clusterSpec *cluster.Spec) error {
+	auditPath := filepath.Join(clusterSpec.Cluster.Name, "generated", "kubernetes")
+	if err := os.MkdirAll(auditPath, os.ModePerm); err != nil {
+		return err
+	}
+	if err := os.WriteFile(filepath.Join(auditPath, "audit-policy.yaml"), []byte(auditPolicy), 0o644); err != nil {
+		return errors.New("error writing the audit policy file")
+	}
+	auditPath = filepath.Join(auditPath, "audit-policy.yaml")
+	k.execConfig.AuditPolicyPath = auditPath
+	return nil
 }
 
 func (k *Kind) CreateBootstrapCluster(ctx context.Context, clusterSpec *cluster.Spec, opts ...bootstrapper.BootstrapClusterClientOption) (kubeconfig string, err error) {
@@ -227,6 +245,9 @@ func (k *Kind) setupExecConfig(clusterSpec *cluster.Spec) error {
 			k.execConfig.RegistryUsername = username
 			k.execConfig.RegistryPassword = password
 		}
+	}
+	if err := k.CreateAuditPolicy(clusterSpec); err != nil {
+		return err
 	}
 	return nil
 }
