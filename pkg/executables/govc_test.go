@@ -1000,7 +1000,7 @@ func TestValidateVCenterSetupMachineConfigDatastoreFailure(t *testing.T) {
 		Spec: v1alpha1.VSphereMachineConfigSpec{
 			Datastore:    "/SDDC Datacenter/datastore/testDatastore",
 			Folder:       "/SDDC Datacenter/vm/test",
-			ResourcePool: "*/Resources/Compute ResourcePool",
+			ResourcePool: "*/Resources/Compute-ResourcePool",
 		},
 	}
 
@@ -1034,7 +1034,7 @@ func TestValidateVCenterSetupMachineConfigFolderFailure(t *testing.T) {
 		Spec: v1alpha1.VSphereMachineConfigSpec{
 			Datastore:    "/SDDC Datacenter/datastore/testDatastore",
 			Folder:       "/SDDC Datacenter/vm/test",
-			ResourcePool: "*/Resources/Compute ResourcePool",
+			ResourcePool: "*/Resources/Compute-ResourcePool",
 		},
 	}
 
@@ -1071,7 +1071,7 @@ func TestValidateVCenterSetupMachineConfigResourcePoolFailure(t *testing.T) {
 		Spec: v1alpha1.VSphereMachineConfigSpec{
 			Datastore:    "/SDDC Datacenter/datastore/testDatastore",
 			Folder:       "/SDDC Datacenter/vm/test",
-			ResourcePool: "*/Resources/Compute ResourcePool",
+			ResourcePool: "*/Resources/Compute-ResourcePool",
 		},
 	}
 
@@ -1107,7 +1107,7 @@ func TestValidateFailureDomainConfigDatastoreFailure(t *testing.T) {
 		Name:         "fd-1",
 		Datastore:    "/SDDC Datacenter/datastore/testDatastore",
 		Folder:       "/SDDC Datacenter/vm/test",
-		ResourcePool: "*/Resources/Compute ResourcePool",
+		ResourcePool: "*/Resources/Compute-ResourcePool",
 	}
 
 	_, g, executable, env := setup(t)
@@ -1138,7 +1138,7 @@ func TestValidateFailureDomainConfigFolderFailure(t *testing.T) {
 		Name:         "fd-1",
 		Datastore:    "/SDDC Datacenter/datastore/testDatastore",
 		Folder:       "/SDDC Datacenter/vm/test",
-		ResourcePool: "*/Resources/Compute ResourcePool",
+		ResourcePool: "*/Resources/Compute-ResourcePool",
 	}
 
 	_, g, executable, env := setup(t)
@@ -1172,7 +1172,7 @@ func TestValidateFailureDomainConfigResourcePoolFailure(t *testing.T) {
 		Name:         "fd-1",
 		Datastore:    "/SDDC Datacenter/datastore/testDatastore",
 		Folder:       "/SDDC Datacenter/vm/test",
-		ResourcePool: "*/Resources/Compute ResourcePool",
+		ResourcePool: "*/Resources/Compute-ResourcePool",
 	}
 
 	_, g, executable, env := setup(t)
@@ -1189,6 +1189,43 @@ func TestValidateFailureDomainConfigResourcePoolFailure(t *testing.T) {
 
 	gt.Expect(err).ToNot(BeNil())
 	gt.Expect(err.Error()).To(ContainSubstring("resource pool '*/Resources/Compute ResourcePool' not found"))
+}
+
+func TestValidateFailureDomainConfigComputeClusterFailure(t *testing.T) {
+	ctx := context.Background()
+	datacenterConfig := v1alpha1.VSphereDatacenterConfig{
+		Spec: v1alpha1.VSphereDatacenterConfigSpec{
+			Datacenter: "SDDC Datacenter",
+			Network:    "/SDDC Datacenter/network/test network",
+			Server:     "vcenter.123.vmwarevmc.com",
+			Insecure:   true,
+		},
+	}
+	failureDomain := v1alpha1.FailureDomain{
+		Name:           "fd-1",
+		Datastore:      "/SDDC Datacenter/datastore/testDatastore",
+		Folder:         "/SDDC Datacenter/vm/test",
+		ResourcePool:   "*/Resources/Compute-ResourcePool",
+		ComputeCluster: "*/Cluster-1",
+	}
+
+	_, g, executable, env := setup(t)
+	g.Retrier = retrier.NewWithMaxRetries(5, 0)
+	gt := NewWithT(t)
+
+	gomock.InOrder(
+		executable.EXPECT().ExecuteWithEnv(ctx, env, gomock.Any()).Return(bytes.Buffer{}, nil),
+		executable.EXPECT().ExecuteWithEnv(ctx, env, gomock.Any()).Return(bytes.Buffer{}, nil),
+		executable.EXPECT().ExecuteWithEnv(ctx, gomock.Any(), gomock.Any()).
+			Return(*bytes.NewBufferString(`["/SDDC-Datacenter/host/Cluster-1/Resources/Compute-ResourcePool"]`), nil),
+		executable.EXPECT().ExecuteWithEnv(ctx, env, gomock.Any()).Return(bytes.Buffer{}, nil).AnyTimes(),
+		executable.EXPECT().ExecuteWithEnv(ctx, env, gomock.Any()).Return(bytes.Buffer{}, nil).AnyTimes(),
+	)
+
+	err := g.ValidateFailureDomainConfig(ctx, &datacenterConfig, &failureDomain)
+
+	gt.Expect(err).ToNot(BeNil())
+	gt.Expect(err.Error()).To(ContainSubstring("compute cluster '*/Cluster-1' not found"))
 }
 
 func TestGovcValidateVCenterSetupMachineConfig(t *testing.T) {
