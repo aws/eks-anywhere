@@ -377,7 +377,7 @@ func (pc *PackageControllerClient) waitForActiveBundle(ctx context.Context) erro
 				return
 			}
 
-			if pbc != nil && pbc.Spec.ActiveBundle != "" {
+			if pbc.Spec.ActiveBundle != "" {
 				logger.V(6).Info("found packages bundle controller active bundle",
 					"name", pbc.Spec.ActiveBundle)
 				readyCnt++

@@ -870,6 +870,8 @@ func (g *Govc) GetResourcePoolPath(ctx context.Context, datacenter string, resou
 	return foundPool, nil
 }
 
+// GetComputeClusterPath finds and validates a compute cluster in the specified datacenter.
+// Returns an error if the compute cluster doesn't exist or if multiple matching compute clusters are found.
 func (g *Govc) GetComputeClusterPath(ctx context.Context, datacenter string, computeCluster string, envMap map[string]string) (string, error) {
 	var computeClusterResponse bytes.Buffer
 	params := []string{"find", "-json", "/" + datacenter, "-type", "c", "-name", filepath.Base(computeCluster)}
@@ -883,14 +885,14 @@ func (g *Govc) GetComputeClusterPath(ctx context.Context, datacenter string, com
 		return "", fmt.Errorf("getting compute cluster: %v", err)
 	}
 
-	computeClusterJson := computeClusterResponse.String()
-	computeClusterJson = strings.TrimSuffix(computeClusterJson, "\n")
-	if computeClusterJson == "null" || computeClusterJson == "" {
+	computeClusterJSON := computeClusterResponse.String()
+	computeClusterJSON = strings.TrimSuffix(computeClusterJSON, "\n")
+	if computeClusterJSON == "null" || computeClusterJSON == "" {
 		return "", fmt.Errorf("compute cluster '%s' not found", computeCluster)
 	}
 
 	computeClusterInfo := make([]string, 0)
-	if err = json.Unmarshal([]byte(computeClusterJson), &computeClusterInfo); err != nil {
+	if err = json.Unmarshal([]byte(computeClusterJSON), &computeClusterInfo); err != nil {
 		return "", fmt.Errorf("failed unmarshalling govc response: %v", err)
 	}
 

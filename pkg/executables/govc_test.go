@@ -1090,7 +1090,7 @@ func TestValidateVCenterSetupMachineConfigResourcePoolFailure(t *testing.T) {
 	err := g.ValidateVCenterSetupMachineConfig(ctx, &datacenterConfig, &machineConfig, &selfSigned)
 
 	gt.Expect(err).ToNot(BeNil())
-	gt.Expect(err.Error()).To(ContainSubstring("resource pool '*/Resources/Compute ResourcePool' not found"))
+	gt.Expect(err.Error()).To(ContainSubstring("resource pool '*/Resources/Compute-ResourcePool' not found"))
 }
 
 func TestValidateFailureDomainConfigDatastoreFailure(t *testing.T) {
@@ -1188,7 +1188,7 @@ func TestValidateFailureDomainConfigResourcePoolFailure(t *testing.T) {
 	err := g.ValidateFailureDomainConfig(ctx, &datacenterConfig, &failureDomain)
 
 	gt.Expect(err).ToNot(BeNil())
-	gt.Expect(err.Error()).To(ContainSubstring("resource pool '*/Resources/Compute ResourcePool' not found"))
+	gt.Expect(err.Error()).To(ContainSubstring("resource pool '*/Resources/Compute-ResourcePool' not found"))
 }
 
 func TestValidateFailureDomainConfigComputeClusterFailure(t *testing.T) {

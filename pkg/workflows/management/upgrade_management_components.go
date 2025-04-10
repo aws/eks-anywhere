@@ -54,24 +54,26 @@ func NewUpgradeManagementComponentsRunner(
 // UMCValidator is a struct that holds a cluster and a kubectl executable.
 // It is used to perform preflight validations on the cluster.
 type UMCValidator struct {
-	cluster     *types.Cluster
-	eksaRelease *v1releasealpha1.EKSARelease
-	kubectl     validations.KubectlClient
+	cluster         *types.Cluster
+	eksaRelease     *v1releasealpha1.EKSARelease
+	kubectl         validations.KubectlClient
+	skipValidations []string
 }
 
 // NewUMCValidator is a constructor function that creates a new instance of UMCValidator.
-func NewUMCValidator(cluster *types.Cluster, eksaRelease *v1releasealpha1.EKSARelease, kubectl validations.KubectlClient) *UMCValidator {
+func NewUMCValidator(cluster *types.Cluster, eksaRelease *v1releasealpha1.EKSARelease, kubectl validations.KubectlClient, skipValidations []string) *UMCValidator {
 	return &UMCValidator{
-		cluster:     cluster,
-		eksaRelease: eksaRelease,
-		kubectl:     kubectl,
+		cluster:         cluster,
+		eksaRelease:     eksaRelease,
+		kubectl:         kubectl,
+		skipValidations: skipValidations,
 	}
 }
 
 // PreflightValidations is a method of the UMCValidator struct.
 // It performs preflight validations on the cluster and returns a slice of Validation objects.
 func (u *UMCValidator) PreflightValidations(ctx context.Context) []validations.Validation {
-	return []validations.Validation{
+	preflightValidations := []validations.Validation{
 		func() *validations.ValidationResult {
 			return &validations.ValidationResult{
 				Name:        "control plane ready",
@@ -86,14 +88,34 @@ func (u *UMCValidator) PreflightValidations(ctx context.Context) []validations.V
 				Err:         u.kubectl.ValidateClustersCRD(ctx, u.cluster),
 			}
 		},
-		func() *validations.ValidationResult {
+	}
+
+	var skipVersionSkew bool
+
+	// When upgrading management components, the only preflight check that can be skipped
+	// is the EKS-A version skew validation. While the skipValidations flag accepts multiple
+	// values for consistency with the cluster upgrade command, only the EKS-A version skew
+	// check (validations.EksaVersionSkew) will be honored - all other skip requests will
+	// be ignored.
+	if len(u.skipValidations) != 0 {
+		for _, val := range u.skipValidations {
+			if val == validations.EksaVersionSkew {
+				skipVersionSkew = true
+			}
+		}
+	}
+	if !skipVersionSkew {
+		eksaVersionSkewValidation := func() *validations.ValidationResult {
 			return &validations.ValidationResult{
 				Name:        "validate compatibility of management components version to cluster eksaVersion",
 				Remediation: "",
 				Err:         validations.ValidateManagementComponentsVersionSkew(ctx, u.kubectl, u.cluster, u.eksaRelease),
 			}
-		},
+		}
+		preflightValidations = append(preflightValidations, eksaVersionSkewValidation)
 	}
+
+	return preflightValidations
 }
 
 // Run Upgrade implements upgrade functionality for management cluster's upgrade operation.
