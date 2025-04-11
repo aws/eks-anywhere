@@ -262,7 +262,7 @@ func getImageDigest(_ context.Context, r *releasetypes.ReleaseConfig, artifact r
 		releaseImageUri := artifact.Image.ReleaseImageURI
 		releaseContainerRegistry := r.ReleaseContainerRegistry
 		ecrPublicClient := r.ReleaseClients.ECRPublic.Client
-		if r.DevRelease  && (strings.Contains(releaseImageUri, "eks-anywhere-packages") || strings.Contains(releaseImageUri, "ecr-token-refresher") || strings.Contains(releaseImageUri, "credential-provider-package")) {
+		if r.DevRelease && (strings.Contains(releaseImageUri, "eks-anywhere-packages") || strings.Contains(releaseImageUri, "ecr-token-refresher") || strings.Contains(releaseImageUri, "credential-provider-package")) {
 			ecrPublicClient = r.ReleaseClients.Packages.Client
 			releaseContainerRegistry = r.PackagesReleaseContainerRegistry
 		}
