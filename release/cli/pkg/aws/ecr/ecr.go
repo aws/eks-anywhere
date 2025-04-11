@@ -31,7 +31,6 @@ import (
 
 func GetImageDigest(imageUri, imageContainerRegistry string, ecrClient *ecr.ECR) (string, error) {
 	repository, tag := artifactutils.SplitImageUri(imageUri, imageContainerRegistry)
-	accountId := strings.Split(imageContainerRegistry, ".")[0]
 	imageDetails, err := DescribeImagesPaginated(ecrClient,
 		&ecr.DescribeImagesInput{
 			ImageIds: []*ecr.ImageIdentifier{
@@ -40,7 +39,6 @@ func GetImageDigest(imageUri, imageContainerRegistry string, ecrClient *ecr.ECR)
 				},
 			},
 			RepositoryName: aws.String(repository),
-			RegistryId:     aws.String(accountId),
 		},
 	)
 	if err != nil {

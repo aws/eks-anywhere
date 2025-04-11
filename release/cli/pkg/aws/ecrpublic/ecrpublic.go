@@ -28,10 +28,6 @@ import (
 
 func GetImageDigest(imageUri, imageContainerRegistry string, ecrPublicClient *ecrpublic.ECRPublic) (string, error) {
 	repository, tag := artifactutils.SplitImageUri(imageUri, imageContainerRegistry)
-	accountId := "857151390494" // Use build account id by default
-	if strings.Contains(imageUri, "x3k6m8v0") {
-		accountId = "067575901363" // Use packages beta account id for packages images
-	}
 	describeImagesOutput, err := ecrPublicClient.DescribeImages(
 		&ecrpublic.DescribeImagesInput{
 			ImageIds: []*ecrpublic.ImageIdentifier{
@@ -40,7 +36,6 @@ func GetImageDigest(imageUri, imageContainerRegistry string, ecrPublicClient *ec
 				},
 			},
 			RepositoryName: aws.String(repository),
-			RegistryId:     aws.String(accountId),
 		},
 	)
 	if err != nil {
