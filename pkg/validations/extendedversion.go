@@ -12,6 +12,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/signature"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -126,4 +127,22 @@ func validateLicenseKeyIsUnique(ctx context.Context, clusterName string, license
 		}
 	}
 	return nil
+}
+
+// ShouldSkipBundleSignatureValidation returns true if the eksa version is less than v0.22.0
+// and false otherwise. This is to skip signature validation for older eksa versions.
+func ShouldSkipBundleSignatureValidation(eksaVersion *string) (bool, error) {
+	if eksaVersion == nil {
+		return true, nil
+	}
+	eksaVersionSemver, err := semver.New(string(*eksaVersion))
+	if err != nil {
+		return false, fmt.Errorf("getting semver for current eksa version %s: %v", *eksaVersion, err)
+	}
+	// v0.22.0 is the first version to support extended kubernetes support
+	semverV022, err := semver.New(releaseV022)
+	if err != nil {
+		return false, fmt.Errorf("parsing eks-a version: %v", err)
+	}
+	return eksaVersionSemver.Compare(semverV022) == -1, nil
 }
