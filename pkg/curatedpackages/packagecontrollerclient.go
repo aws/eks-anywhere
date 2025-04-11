@@ -245,7 +245,7 @@ func (pc *PackageControllerClient) GetCuratedPackagesRegistries(ctx context.Cont
 	sourceRegistry = prodPublicRegistryURI
 	defaultImageRegistry = prodNonRegionalPrivateRegistryURI
 	registry := prodPublicRegistryAlias
-	if strings.Contains(pc.chart.Image(), devNonRegionalPublicRegistryAlias) {
+	if strings.Contains(pc.chart.Image(), devRegionalPublicRegistryAlias) {
 		registry = devRegionalPublicRegistryAlias
 		defaultImageRegistry = devRegionalPrivateRegistryURI
 		sourceRegistry = devRegionalPublicRegistryURI
