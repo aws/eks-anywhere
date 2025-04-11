@@ -73,7 +73,7 @@ metadata:
   name: my-cluster-name-cp
 spec:
   hardwareSelector: {}
-  osFamily: bottlerocket
+  osFamily: ubuntu
   templateRef: {}
   users:
   - name: ec2-user
@@ -87,7 +87,7 @@ metadata:
   name: my-cluster-name
 spec:
   hardwareSelector: {}
-  osFamily: bottlerocket
+  osFamily: ubuntu
   templateRef:
     kind: TinkerbellTemplateConfig
     name: my-cluster-name
@@ -317,7 +317,7 @@ spec:
     node: "cp-machine"
 ```
 ### osFamily (required)
-Operating system on the machine. Permitted values: `bottlerocket`, `ubuntu`, `redhat` (Default: `bottlerocket`).
+Operating system on the machine. Permitted values: `ubuntu` and `redhat` (Default: `ubuntu`).
 
 ### osImageURL (optional)
 Optional field to replace the default Bottlerocket operating system. EKS Anywhere can only auto-import Bottlerocket. In order to use Ubuntu or RHEL see [building baremetal node images]({{< relref "../../osmgmt/artifacts/#build-bare-metal-node-images" >}}). This field is also useful if you want to provide a customized operating system image or simply host the standard image locally. To upgrade a node or group of nodes to a new operating system version (ie. RHEL 8.7 to RHEL 8.8), modify this field to point to the new operating system image URL and run [upgrade cluster command]({{< relref "../../clustermgmt/cluster-upgrades/baremetal-upgrades/#upgrade-cluster-command" >}}).
