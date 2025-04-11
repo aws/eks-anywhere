@@ -226,6 +226,21 @@ func (mr *MockProviderGovcClientMockRecorder) GetCertThumbprint(arg0 interface{}
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCertThumbprint", reflect.TypeOf((*MockProviderGovcClient)(nil).GetCertThumbprint), arg0)
 }
 
+// GetComputeClusterPath mocks base method.
+func (m *MockProviderGovcClient) GetComputeClusterPath(arg0 context.Context, arg1, arg2 string, arg3 map[string]string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetComputeClusterPath", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetComputeClusterPath indicates an expected call of GetComputeClusterPath.
+func (mr *MockProviderGovcClientMockRecorder) GetComputeClusterPath(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetComputeClusterPath", reflect.TypeOf((*MockProviderGovcClient)(nil).GetComputeClusterPath), arg0, arg1, arg2, arg3)
+}
+
 // GetDatastorePath mocks base method.
 func (m *MockProviderGovcClient) GetDatastorePath(arg0 context.Context, arg1, arg2 string, arg3 map[string]string) (string, error) {
 	m.ctrl.T.Helper()

@@ -128,6 +128,11 @@ func (pc *DummyProviderGovcClient) GetDatastorePath(ctx context.Context, datacen
 }
 
 //nolint:revive
+func (pc *DummyProviderGovcClient) GetComputeClusterPath(ctx context.Context, datacenter string, computeCluster string, envMap map[string]string) (string, error) {
+	return "", nil
+}
+
+//nolint:revive
 func (pc *DummyProviderGovcClient) ValidateFailureDomainConfig(ctx context.Context, datacenterConfig *v1alpha1.VSphereDatacenterConfig, failureDomain *v1alpha1.FailureDomain) error {
 	return nil
 }
