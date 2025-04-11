@@ -463,221 +463,6 @@ func TestDeployTemplateFromLibraryErrorMarkAsTemplate(t *testing.T) {
 	tt.assertDeployTemplateError(t)
 }
 
-func TestGetResourcePoolPathSuccessRelativePath(t *testing.T) {
-	ctx := context.Background()
-	datacenter := "SDDC-Datacenter"
-	resourcePool := "*/Resources/Compute-ResourcePool"
-
-	_, g, executable, env := setup(t)
-	gt := NewWithT(t)
-
-	executable.EXPECT().ExecuteWithEnv(
-		ctx,
-		env,
-		"find",
-		"-json",
-		"/"+datacenter,
-		"-type",
-		"p",
-		"-name",
-		"Compute-ResourcePool",
-	).Return(*bytes.NewBufferString("[\"/SDDC-Datacenter/host/Cluster-1/Resources/Compute-ResourcePool\"]"), nil)
-
-	path, err := g.GetResourcePoolPath(ctx, datacenter, resourcePool, env)
-	gt.Expect(err).To(BeNil())
-	gt.Expect(path).To(Equal("/SDDC-Datacenter/host/Cluster-1/Resources/Compute-ResourcePool"))
-}
-
-func TestGetResourcePoolPathSuccessFullPath(t *testing.T) {
-	ctx := context.Background()
-	datacenter := "SDDC-Datacenter"
-	resourcePool := "/SDDC-Datacenter/host/Cluster-1/Resources/Compute-ResourcePool"
-
-	_, g, executable, env := setup(t)
-	gt := NewWithT(t)
-
-	executable.EXPECT().ExecuteWithEnv(
-		ctx,
-		env,
-		"find",
-		"-json",
-		"/"+datacenter,
-		"-type",
-		"p",
-		"-name",
-		"Compute-ResourcePool",
-	).Return(*bytes.NewBufferString("[\"/SDDC-Datacenter/host/Cluster-1/Resources/Compute-ResourcePool\"]"), nil)
-
-	path, err := g.GetResourcePoolPath(ctx, datacenter, resourcePool, env)
-	gt.Expect(err).To(BeNil())
-	gt.Expect(path).To(Equal("/SDDC-Datacenter/host/Cluster-1/Resources/Compute-ResourcePool"))
-}
-
-func TestGetComputeClusterPathSuccessRelativePath(t *testing.T) {
-	ctx := context.Background()
-	datacenter := "SDDC-Datacenter"
-	computeCluster := "*/Cluster-1"
-
-	_, g, executable, env := setup(t)
-	gt := NewWithT(t)
-
-	executable.EXPECT().ExecuteWithEnv(
-		ctx,
-		env,
-		"find",
-		"-json",
-		"/"+datacenter,
-		"-type",
-		"c",
-		"-name",
-		"Cluster-1",
-	).Return(*bytes.NewBufferString("[\"/SDDC-Datacenter/host/Cluster-1\"]"), nil)
-
-	path, err := g.GetComputeClusterPath(ctx, datacenter, computeCluster, env)
-	gt.Expect(err).To(BeNil())
-	gt.Expect(path).To(Equal("/SDDC-Datacenter/host/Cluster-1"))
-}
-
-func TestGetComputeClusterPathSuccessFullPath(t *testing.T) {
-	ctx := context.Background()
-	datacenter := "SDDC-Datacenter"
-	computeCluster := "/SDDC-Datacenter/host/Cluster-1"
-
-	_, g, executable, env := setup(t)
-	gt := NewWithT(t)
-
-	executable.EXPECT().ExecuteWithEnv(
-		ctx,
-		env,
-		"find",
-		"-json",
-		"/"+datacenter,
-		"-type",
-		"c",
-		"-name",
-		"Cluster-1",
-	).Return(*bytes.NewBufferString("[\"/SDDC-Datacenter/host/Cluster-1\"]"), nil)
-
-	path, err := g.GetComputeClusterPath(ctx, datacenter, computeCluster, env)
-	gt.Expect(err).To(BeNil())
-	gt.Expect(path).To(Equal("/SDDC-Datacenter/host/Cluster-1"))
-}
-
-func TestGetComputeClusterPathErrorMultipleClustersFound(t *testing.T) {
-	ctx := context.Background()
-	datacenter := "SDDC-Datacenter"
-	computeCluster := "*/Cluster-1"
-	trimmedCluster := strings.TrimPrefix(computeCluster, "*/")
-
-	_, g, executable, env := setup(t)
-	gt := NewWithT(t)
-
-	g.Retrier = retrier.NewWithMaxRetries(1, 0)
-
-	executable.EXPECT().
-		ExecuteWithEnv(ctx, env, "find", "-json", "/"+datacenter, "-type", "c", "-name", filepath.Base(computeCluster)).
-		Return(*bytes.NewBufferString(`["/SDDC-Datacenter/host/Cluster-1", "/SDDC-Datacenter/host/sub-folder/Cluster-1"]`), nil)
-
-	_, err := g.GetComputeClusterPath(ctx, datacenter, computeCluster, env)
-	gt.Expect(err).NotTo(BeNil())
-	gt.Expect(err.Error()).To(Equal(fmt.Sprintf("specified compute cluster '%s' maps to multiple paths within the datacenter '%s'", trimmedCluster, datacenter)))
-}
-
-func TestGetComputeClusterPathErrorInvalidJSONResponse(t *testing.T) {
-	ctx := context.Background()
-	datacenter := "SDDC-Datacenter"
-	computeCluster := "*/Cluster-1"
-
-	_, g, executable, env := setup(t)
-	gt := NewWithT(t)
-
-	g.Retrier = retrier.NewWithMaxRetries(1, 0)
-
-	executable.EXPECT().
-		ExecuteWithEnv(ctx, env, "find", "-json", "/"+datacenter, "-type", "c", "-name", filepath.Base(computeCluster)).
-		Return(*bytes.NewBufferString(`{"this": "is not a string array"}`), nil)
-
-	_, err := g.GetComputeClusterPath(ctx, datacenter, computeCluster, env)
-	gt.Expect(err).NotTo(BeNil())
-	gt.Expect(err.Error()).To(Equal("failed unmarshalling govc response: json: cannot unmarshal object into Go value of type []string"))
-}
-
-func TestGetComputeClusterPathErrorFailedToGetComputeCluster(t *testing.T) {
-	ctx := context.Background()
-	datacenter := "SDDC-Datacenter"
-	computeCluster := "*/Cluster-1"
-
-	_, g, executable, env := setup(t)
-	gt := NewWithT(t)
-
-	g.Retrier = retrier.NewWithMaxRetries(1, 0)
-
-	executable.EXPECT().
-		ExecuteWithEnv(ctx, env, "find", "-json", "/"+datacenter, "-type", "c", "-name", filepath.Base(computeCluster)).
-		Return(bytes.Buffer{}, errors.New("failed to execute find command"))
-
-	_, err := g.GetComputeClusterPath(ctx, datacenter, computeCluster, env)
-	gt.Expect(err).NotTo(BeNil())
-	gt.Expect(err.Error()).To(Equal("getting compute cluster: failed to execute find command"))
-}
-
-func TestGetComputeClusterPathErrorComputeClusterNotFound(t *testing.T) {
-	ctx := context.Background()
-	datacenter := "SDDC-Datacenter"
-	computeCluster := "*/NonExistentCluster"
-
-	_, g, executable, env := setup(t)
-	gt := NewWithT(t)
-
-	g.Retrier = retrier.NewWithMaxRetries(1, 0)
-
-	// Return an empty JSON array, simulating no results found
-	executable.EXPECT().
-		ExecuteWithEnv(ctx, env, "find", "-json", "/"+datacenter, "-type", "c", "-name", filepath.Base(computeCluster)).
-		Return(*bytes.NewBufferString("[]"), nil)
-
-	_, err := g.GetComputeClusterPath(ctx, datacenter, computeCluster, env)
-	gt.Expect(err).NotTo(BeNil())
-	gt.Expect(err.Error()).To(Equal("compute cluster 'NonExistentCluster' not found"))
-}
-
-func TestGetComputeClusterPathErrorNullOrEmptyResponse(t *testing.T) {
-	ctx := context.Background()
-	datacenter := "SDDC-Datacenter"
-	computeCluster := "*/Cluster-1"
-
-	tests := []struct {
-		name     string
-		response string
-	}{
-		{
-			name:     "null response",
-			response: "null",
-		},
-		{
-			name:     "empty response",
-			response: "",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			_, g, executable, env := setup(t)
-			gt := NewWithT(t)
-
-			g.Retrier = retrier.NewWithMaxRetries(1, 0)
-
-			executable.EXPECT().
-				ExecuteWithEnv(ctx, env, "find", "-json", "/"+datacenter, "-type", "c", "-name", filepath.Base(computeCluster)).
-				Return(*bytes.NewBufferString(tt.response), nil)
-
-			_, err := g.GetComputeClusterPath(ctx, datacenter, computeCluster, env)
-			gt.Expect(err).NotTo(BeNil())
-			gt.Expect(err.Error()).To(Equal(fmt.Sprintf("compute cluster '%s' not found", computeCluster)))
-		})
-	}
-}
-
 func TestGetResourcePoolPathSuccess(t *testing.T) {
 	ctx := context.Background()
 	datacenter := "SDDC-Datacenter"
@@ -1000,7 +785,7 @@ func TestValidateVCenterSetupMachineConfigDatastoreFailure(t *testing.T) {
 		Spec: v1alpha1.VSphereMachineConfigSpec{
 			Datastore:    "/SDDC Datacenter/datastore/testDatastore",
 			Folder:       "/SDDC Datacenter/vm/test",
-			ResourcePool: "*/Resources/Compute-ResourcePool",
+			ResourcePool: "*/Resources/Compute ResourcePool",
 		},
 	}
 
@@ -1034,7 +819,7 @@ func TestValidateVCenterSetupMachineConfigFolderFailure(t *testing.T) {
 		Spec: v1alpha1.VSphereMachineConfigSpec{
 			Datastore:    "/SDDC Datacenter/datastore/testDatastore",
 			Folder:       "/SDDC Datacenter/vm/test",
-			ResourcePool: "*/Resources/Compute-ResourcePool",
+			ResourcePool: "*/Resources/Compute ResourcePool",
 		},
 	}
 
@@ -1071,7 +856,7 @@ func TestValidateVCenterSetupMachineConfigResourcePoolFailure(t *testing.T) {
 		Spec: v1alpha1.VSphereMachineConfigSpec{
 			Datastore:    "/SDDC Datacenter/datastore/testDatastore",
 			Folder:       "/SDDC Datacenter/vm/test",
-			ResourcePool: "*/Resources/Compute-ResourcePool",
+			ResourcePool: "*/Resources/Compute ResourcePool",
 		},
 	}
 
@@ -1090,7 +875,7 @@ func TestValidateVCenterSetupMachineConfigResourcePoolFailure(t *testing.T) {
 	err := g.ValidateVCenterSetupMachineConfig(ctx, &datacenterConfig, &machineConfig, &selfSigned)
 
 	gt.Expect(err).ToNot(BeNil())
-	gt.Expect(err.Error()).To(ContainSubstring("resource pool '*/Resources/Compute-ResourcePool' not found"))
+	gt.Expect(err.Error()).To(ContainSubstring("resource pool '*/Resources/Compute ResourcePool' not found"))
 }
 
 func TestValidateFailureDomainConfigDatastoreFailure(t *testing.T) {
@@ -1107,7 +892,7 @@ func TestValidateFailureDomainConfigDatastoreFailure(t *testing.T) {
 		Name:         "fd-1",
 		Datastore:    "/SDDC Datacenter/datastore/testDatastore",
 		Folder:       "/SDDC Datacenter/vm/test",
-		ResourcePool: "*/Resources/Compute-ResourcePool",
+		ResourcePool: "*/Resources/Compute ResourcePool",
 	}
 
 	_, g, executable, env := setup(t)
@@ -1138,7 +923,7 @@ func TestValidateFailureDomainConfigFolderFailure(t *testing.T) {
 		Name:         "fd-1",
 		Datastore:    "/SDDC Datacenter/datastore/testDatastore",
 		Folder:       "/SDDC Datacenter/vm/test",
-		ResourcePool: "*/Resources/Compute-ResourcePool",
+		ResourcePool: "*/Resources/Compute ResourcePool",
 	}
 
 	_, g, executable, env := setup(t)
@@ -1172,7 +957,7 @@ func TestValidateFailureDomainConfigResourcePoolFailure(t *testing.T) {
 		Name:         "fd-1",
 		Datastore:    "/SDDC Datacenter/datastore/testDatastore",
 		Folder:       "/SDDC Datacenter/vm/test",
-		ResourcePool: "*/Resources/Compute-ResourcePool",
+		ResourcePool: "*/Resources/Compute ResourcePool",
 	}
 
 	_, g, executable, env := setup(t)
@@ -1188,44 +973,7 @@ func TestValidateFailureDomainConfigResourcePoolFailure(t *testing.T) {
 	err := g.ValidateFailureDomainConfig(ctx, &datacenterConfig, &failureDomain)
 
 	gt.Expect(err).ToNot(BeNil())
-	gt.Expect(err.Error()).To(ContainSubstring("resource pool '*/Resources/Compute-ResourcePool' not found"))
-}
-
-func TestValidateFailureDomainConfigComputeClusterFailure(t *testing.T) {
-	ctx := context.Background()
-	datacenterConfig := v1alpha1.VSphereDatacenterConfig{
-		Spec: v1alpha1.VSphereDatacenterConfigSpec{
-			Datacenter: "SDDC Datacenter",
-			Network:    "/SDDC Datacenter/network/test network",
-			Server:     "vcenter.123.vmwarevmc.com",
-			Insecure:   true,
-		},
-	}
-	failureDomain := v1alpha1.FailureDomain{
-		Name:           "fd-1",
-		Datastore:      "/SDDC Datacenter/datastore/testDatastore",
-		Folder:         "/SDDC Datacenter/vm/test",
-		ResourcePool:   "*/Resources/Compute-ResourcePool",
-		ComputeCluster: "*/Cluster-1",
-	}
-
-	_, g, executable, env := setup(t)
-	g.Retrier = retrier.NewWithMaxRetries(5, 0)
-	gt := NewWithT(t)
-
-	gomock.InOrder(
-		executable.EXPECT().ExecuteWithEnv(ctx, env, gomock.Any()).Return(bytes.Buffer{}, nil),
-		executable.EXPECT().ExecuteWithEnv(ctx, env, gomock.Any()).Return(bytes.Buffer{}, nil),
-		executable.EXPECT().ExecuteWithEnv(ctx, gomock.Any(), gomock.Any()).
-			Return(*bytes.NewBufferString(`["/SDDC-Datacenter/host/Cluster-1/Resources/Compute-ResourcePool"]`), nil),
-		executable.EXPECT().ExecuteWithEnv(ctx, env, gomock.Any()).Return(bytes.Buffer{}, nil).AnyTimes(),
-		executable.EXPECT().ExecuteWithEnv(ctx, env, gomock.Any()).Return(bytes.Buffer{}, nil).AnyTimes(),
-	)
-
-	err := g.ValidateFailureDomainConfig(ctx, &datacenterConfig, &failureDomain)
-
-	gt.Expect(err).ToNot(BeNil())
-	gt.Expect(err.Error()).To(ContainSubstring("compute cluster '*/Cluster-1' not found"))
+	gt.Expect(err.Error()).To(ContainSubstring("resource pool '*/Resources/Compute ResourcePool' not found"))
 }
 
 func TestGovcValidateVCenterSetupMachineConfig(t *testing.T) {
