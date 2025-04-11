@@ -63,13 +63,13 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests releasetypes.
 		if err != nil {
 			fmt.Printf("Error getting dev version Image tag EKS Anywhere package controller, using latest version %v", err)
 		}
-		PackageImage, err := ecrpublic.CheckImageExistence(fmt.Sprintf("%s/%s:%s", r.PackagesReleaseContainerRegistry, "eks-anywhere-packages", Imagetag), r.PackagesReleaseContainerRegistry, r.ReleaseClients.ECRPublic.Client)
+		PackageImage, err := ecrpublic.CheckImageExistence(fmt.Sprintf("%s/%s:%s", r.PackagesReleaseContainerRegistry, "eks-anywhere-packages", Imagetag), r.PackagesReleaseContainerRegistry, r.ReleaseClients.Packages.Client)
 		if err != nil {
 			fmt.Printf("Error checking image version existance for EKS Anywhere package controller, using latest version: %v", err)
 		}
 		if !PackageImage {
 			fmt.Printf("Did not find the required helm image in Public ECR... copying image: %v\n", fmt.Sprintf("%s/%s:%s", r.PackagesReleaseContainerRegistry, "eks-anywhere-packages", Imagetag))
-			err := images.CopyToDestination(r.SourceClients.Packages.AuthConfig, r.ReleaseClients.ECRPublic.AuthConfig, fmt.Sprintf("%s/%s:%s", r.PackagesSourceContainerRegistry, "eks-anywhere-packages", Imagetag), fmt.Sprintf("%s/%s:%s", r.PackagesReleaseContainerRegistry, "eks-anywhere-packages", Imagetag))
+			err := images.CopyToDestination(r.SourceClients.Packages.AuthConfig, r.ReleaseClients.Packages.AuthConfig, fmt.Sprintf("%s/%s:%s", r.PackagesSourceContainerRegistry, "eks-anywhere-packages", Imagetag), fmt.Sprintf("%s/%s:%s", r.PackagesReleaseContainerRegistry, "eks-anywhere-packages", Imagetag))
 			if err != nil {
 				fmt.Printf("Error copying dev EKS Anywhere package controller image, to ECR Public: %v", err)
 			}
@@ -78,13 +78,13 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests releasetypes.
 		if err != nil {
 			fmt.Printf("Error getting dev version Image tag EKS Anywhere package token refresher, using latest version %v", err)
 		}
-		TokenImage, err := ecrpublic.CheckImageExistence(fmt.Sprintf("%s/%s:%s", r.PackagesReleaseContainerRegistry, "ecr-token-refresher", Tokentag), r.PackagesReleaseContainerRegistry, r.ReleaseClients.ECRPublic.Client)
+		TokenImage, err := ecrpublic.CheckImageExistence(fmt.Sprintf("%s/%s:%s", r.PackagesReleaseContainerRegistry, "ecr-token-refresher", Tokentag), r.PackagesReleaseContainerRegistry, r.ReleaseClients.Packages.Client)
 		if err != nil {
 			fmt.Printf("Error checking image version existance for EKS Anywhere package token refresher, using latest version: %v", err)
 		}
 		if !TokenImage {
 			fmt.Printf("Did not find the required helm image in Public ECR... copying image: %v\n", fmt.Sprintf("%s/%s:%s", r.PackagesReleaseContainerRegistry, "ecr-token-refresher", Tokentag))
-			err := images.CopyToDestination(r.SourceClients.Packages.AuthConfig, r.ReleaseClients.ECRPublic.AuthConfig, fmt.Sprintf("%s/%s:%s", r.PackagesSourceContainerRegistry, "ecr-token-refresher", Tokentag), fmt.Sprintf("%s/%s:%s", r.PackagesReleaseContainerRegistry, "ecr-token-refresher", Tokentag))
+			err := images.CopyToDestination(r.SourceClients.Packages.AuthConfig, r.ReleaseClients.Packages.AuthConfig, fmt.Sprintf("%s/%s:%s", r.PackagesSourceContainerRegistry, "ecr-token-refresher", Tokentag), fmt.Sprintf("%s/%s:%s", r.PackagesReleaseContainerRegistry, "ecr-token-refresher", Tokentag))
 			if err != nil {
 				fmt.Printf("Error copying dev EKS Anywhere package token refresher image, to ECR Public: %v", err)
 			}
