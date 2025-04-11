@@ -20,6 +20,7 @@ import (
 
 	. "github.com/onsi/gomega"
 
+	anywherev1constants "github.com/aws/eks-anywhere/pkg/constants"
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	"github.com/aws/eks-anywhere/release/cli/pkg/constants"
 )
@@ -34,7 +35,7 @@ func TestGetBundleSignature(t *testing.T) {
 		{
 			testName:        "Nil bundle",
 			bundle:          nil,
-			key:             constants.KmsKey,
+			key:             constants.BundlesKmsKey,
 			expectErrSubstr: "computing digest:",
 		},
 		{
@@ -48,7 +49,7 @@ func TestGetBundleSignature(t *testing.T) {
 					},
 				},
 			},
-			key:             constants.KmsKey,
+			key:             constants.BundlesKmsKey,
 			expectErrSubstr: "",
 		},
 		{
@@ -102,7 +103,7 @@ func TestGetBundleSignature(t *testing.T) {
 					},
 				},
 			},
-			key:             constants.KmsKey,
+			key:             constants.BundlesKmsKey,
 			expectErrSubstr: "",
 		},
 	}
@@ -133,7 +134,7 @@ func TestGetBundleSignature(t *testing.T) {
 	}
 }
 
-func TestGetDigest(t *testing.T) {
+func TestGetBundleDigest(t *testing.T) {
 	testCases := []struct {
 		testName        string
 		bundle          *anywherev1alpha1.Bundles
@@ -177,7 +178,7 @@ func TestGetDigest(t *testing.T) {
 		t.Run(tt.testName, func(t *testing.T) {
 			g := NewWithT(t)
 
-			digest, filtered, err := getDigest(tt.bundle)
+			digest, filtered, err := getBundleDigest(tt.bundle)
 			if tt.expectErrSubstr == "" {
 				g.Expect(err).NotTo(HaveOccurred(), "Expected success but got error")
 				g.Expect(digest).NotTo(BeZero(),
@@ -270,7 +271,7 @@ func TestFilterExcludes(t *testing.T) {
 		t.Run(tt.testName, func(t *testing.T) {
 			g := NewWithT(t)
 
-			filtered, err := filterExcludes([]byte(tt.jsonPayload))
+			filtered, err := filterExcludes([]byte(tt.jsonPayload), anywherev1constants.Excludes)
 
 			if tt.expectErrSubstr == "" {
 				g.Expect(err).NotTo(HaveOccurred(),

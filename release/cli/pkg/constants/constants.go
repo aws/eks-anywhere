@@ -60,6 +60,9 @@ const (
 	// Default region used to create KMS client
 	DefaultRegion = "us-west-2"
 
-	// KMS key alias
-	KmsKey = "arn:aws:kms:us-west-2:857151390494:alias/signingEKSABundlesKey"
+	// KMS key alias for signing EKS-A Bundles Manifest
+	BundlesKmsKey = "arn:aws:kms:us-west-2:857151390494:alias/signingEKSABundlesKey"
+
+	// KMS key alias for signing EKS Distro Manifest
+	EKSDistroManifestKmsKey = "arn:aws:kms:us-west-2:857151390494:alias/signingEKSDistroManifestKey"
 )

@@ -41,7 +41,7 @@ func ValidateSignature(bundle *anywherev1alpha1.Bundles, pubKey string) (valid b
 		return false, errors.New("missing signature annotation")
 	}
 
-	digest, _, err := getDigest(bundle)
+	digest, _, err := getBundleDigest(bundle)
 	if err != nil {
 		return false, err
 	}
@@ -59,10 +59,10 @@ func ValidateSignature(bundle *anywherev1alpha1.Bundles, pubKey string) (valid b
 	return ecdsa.VerifyASN1(pubkey, digest[:], sig), nil
 }
 
-// getDigest converts the Bundles manifest to JSON, excludes certain fields, then
+// getBundleDigest converts the Bundles manifest to JSON, excludes certain fields, then
 // computes the SHA256 hash of the filtered manifest. It returns the digest and
 // the final bytes used to produce that digest.
-func getDigest(bundle *anywherev1alpha1.Bundles) ([32]byte, []byte, error) {
+func getBundleDigest(bundle *anywherev1alpha1.Bundles) ([32]byte, []byte, error) {
 	var zero [32]byte
 
 	// Marshal Bundles object to YAML

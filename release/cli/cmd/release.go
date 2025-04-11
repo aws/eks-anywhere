@@ -232,6 +232,12 @@ var releaseCmd = &cobra.Command{
 				os.Exit(1)
 			}
 
+			err = operations.SignEKSDistroManifest(context.Background(), bundle)
+			if err != nil {
+				fmt.Printf("Error signing eks distro manifest: %+v\n", err)
+				os.Exit(1)
+			}
+
 			bundleManifest, err := yaml.Marshal(bundle)
 			if err != nil {
 				fmt.Printf("Error marshaling bundles manifest: %+v\n", err)

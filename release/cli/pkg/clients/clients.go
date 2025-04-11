@@ -362,7 +362,7 @@ func CreateProdReleaseClients() (*SourceClients, *ReleaseClients, error) {
 	return sourceClients, releaseClients, nil
 }
 
-// Function to create KMS client for bundle manifest signing.
+// Function to create KMS client for bundle manifest signing and eks distro manifest signing.
 func CreateKMSClient(ctx context.Context) (*kms.Client, error) {
 	conf, err := config.LoadDefaultConfig(ctx, config.WithRegion(constants.DefaultRegion))
 	if err != nil {
