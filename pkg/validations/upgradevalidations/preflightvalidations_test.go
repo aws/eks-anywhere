@@ -318,7 +318,7 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 		},
 	}
 
-	ver := test.DevEksaVersion()
+	ver := anywherev1.EksaVersion("v0.22.0")
 
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Cluster.Name = testclustername
@@ -356,7 +356,7 @@ func TestPreflightValidationsTinkerbell(t *testing.T) {
 			helm := stackmocks.NewMockHelm(mockCtrl)
 			writer := filewritermocks.NewMockFileWriter(mockCtrl)
 			tlsValidator := mocks.NewMockTlsValidator(mockCtrl)
-			version := test.DevEksaVersion()
+			version := anywherev1.EksaVersion("v0.22.0")
 			provider := newProvider(defaultDatacenterSpec, givenTinkerbellMachineConfigs(t), clusterSpec.Cluster, writer, docker, helm, kubectl, false)
 			opts := &validations.Opts{
 				Kubectl:           k,
@@ -1066,7 +1066,7 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 		},
 	}
 
-	ver := test.DevEksaVersion()
+	ver := anywherev1.EksaVersion("v0.22.0")
 
 	defaultClusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Cluster.Name = testclustername
@@ -1140,8 +1140,13 @@ func TestPreflightValidationsVsphere(t *testing.T) {
 			if tc.modifyDefaultSpecFunc != nil {
 				tc.modifyDefaultSpecFunc(clusterSpec)
 			}
-			objects := []client.Object{test.EKSARelease()}
-			version := test.DevEksaVersion()
+
+			eksaReleaseV022 := test.EKSARelease()
+			eksaReleaseV022.Name = "eksa-v0-22-0"
+			eksaReleaseV022.Spec.Version = "eksa-v0-22-0"
+
+			objects := []client.Object{eksaReleaseV022}
+			version := anywherev1.EksaVersion("v0.22.0")
 			opts := &validations.Opts{
 				Kubectl:           k,
 				Spec:              clusterSpec,
@@ -1310,7 +1315,7 @@ func TestPreFlightValidationsGit(t *testing.T) {
 		},
 	}
 
-	ver := test.DevEksaVersion()
+	ver := anywherev1.EksaVersion("v0.22.0")
 
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Cluster.Name = testclustername
@@ -1382,7 +1387,7 @@ func TestPreFlightValidationsGit(t *testing.T) {
 			}
 
 			provider := mockproviders.NewMockProvider(mockCtrl)
-			version := test.DevEksaVersion()
+			version := anywherev1.EksaVersion("v0.22.0")
 			opts := &validations.Opts{
 				Kubectl:           k,
 				Spec:              clusterSpec,
