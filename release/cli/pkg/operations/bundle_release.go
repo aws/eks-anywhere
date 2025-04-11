@@ -259,7 +259,14 @@ func getImageDigest(_ context.Context, r *releasetypes.ReleaseConfig, artifact r
 		}
 		imageDigest = fmt.Sprintf("sha256:%s", sha256sum)
 	} else {
-		imageDigest, err = ecrpublic.GetImageDigest(artifact.Image.ReleaseImageURI, r.ReleaseContainerRegistry, r.ReleaseClients.ECRPublic.Client)
+		releaseImageUri := artifact.Image.ReleaseImageURI
+		releaseContainerRegistry := r.ReleaseContainerRegistry
+		ecrPublicClient := r.ReleaseClients.ECRPublic.Client
+		if r.DevRelease  && (strings.Contains(releaseImageUri, "eks-anywhere-packages") || strings.Contains(releaseImageUri, "ecr-token-refresher") || strings.Contains(releaseImageUri, "credential-provider-package")) {
+			ecrPublicClient = r.ReleaseClients.Packages.Client
+			releaseContainerRegistry = r.PackagesReleaseContainerRegistry
+		}
+		imageDigest, err = ecrpublic.GetImageDigest(releaseImageUri, releaseContainerRegistry, ecrPublicClient)
 		if err != nil {
 			return "", errors.Cause(err)
 		}
