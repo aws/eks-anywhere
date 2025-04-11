@@ -114,14 +114,24 @@ const (
 	SignatureAnnotation = "anywhere.eks.amazonaws.com/signature"
 	// ExcludesAnnotation applied to the bundle during bundle manifest signing.
 	ExcludesAnnotation = "anywhere.eks.amazonaws.com/excludes"
+	// SignatureAnnotation applied to the bundle during eks distro manifest signing.
+	EKSDistroSignatureAnnotation = "distro.eks.amazonaws.com/signature"
+	// ExcludesAnnotation applied to the bundle during eks distro manifest signing.
+	EKSDistroExcludesAnnotation = "distro.eks.amazonaws.com/excludes"
 	// Excludes is a base64-encoded, newline-delimited list of JSON/YAML paths to remove
 	// from the Bundles manifest prior to computing the digest. You can add or remove
 	// fields depending on your signing requirements.
 	// We are excluding some fields from the versionbundle object from signing/verifying the signature to allow users to override images.
 	// To check the fields we are excluding for signing/verifying the signature base64 decode the Excludes field.
 	Excludes = "LnNwZWMudmVyc2lvbnNCdW5kbGVzW10uYm9vdHN0cmFwCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLmJvdHRsZXJvY2tldEhvc3RDb250YWluZXJzCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLmNlcnRNYW5hZ2VyCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLmNpbGl1bQouc3BlYy52ZXJzaW9uc0J1bmRsZXNbXS5jbG91ZFN0YWNrCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLmNsdXN0ZXJBUEkKLnNwZWMudmVyc2lvbnNCdW5kbGVzW10uY29udHJvbFBsYW5lCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLmRvY2tlcgouc3BlYy52ZXJzaW9uc0J1bmRsZXNbXS5la3NhCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLmVrc0QuY29tcG9uZW50cwouc3BlYy52ZXJzaW9uc0J1bmRsZXNbXS5la3NELm1hbmlmZXN0VXJsCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLmV0Y2RhZG1Cb290c3RyYXAKLnNwZWMudmVyc2lvbnNCdW5kbGVzW10uZXRjZGFkbUNvbnRyb2xsZXIKLnNwZWMudmVyc2lvbnNCdW5kbGVzW10uZmx1eAouc3BlYy52ZXJzaW9uc0J1bmRsZXNbXS5oYXByb3h5Ci5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLmtpbmRuZXRkCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLm51dGFuaXgKLnNwZWMudmVyc2lvbnNCdW5kbGVzW10ucGFja2FnZUNvbnRyb2xsZXIKLnNwZWMudmVyc2lvbnNCdW5kbGVzW10uc25vdwouc3BlYy52ZXJzaW9uc0J1bmRsZXNbXS50aW5rZXJiZWxsCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLnVwZ3JhZGVyCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLnZTcGhlcmU="
-	// KMSPublicKey to verify bundle signature.
+	// EKSDistroExcludes is a base64-encoded, newline-delimited list of JSON/YAML paths to remove
+	// from the EKS Distro manifest prior to computing the digest. You can add or remove
+	// fields depending on your signing requirements.
+	EKSDistroExcludes = "Cg=="
+	// KMSPublicKey to verify bundle manifest signature.
 	KMSPublicKey = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEFZU/Z6VVMU9HioT7rGkPdJg3frC2xyQZhWFIrz5HeZEfeQ2nAdnJMLrs2Qr3V9xVrJrHA54wnIHDoPGbEhojqg=="
+	// KMSPublicKey to verify eks distro manifest signature.
+	EKSDistroKMSPublicKey = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEfqjUloL1WPdxB5JPOY18mIgjx0zD0SyWe9N1Fxjv7A8JwyKQycqirw2us7zoxoC5bnWD4lT53uv8skx3E/cHaw=="
 )
 
 type Operation int

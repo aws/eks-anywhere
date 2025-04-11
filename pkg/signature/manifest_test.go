@@ -174,7 +174,7 @@ func TestValidateSignature(t *testing.T) {
 	}
 }
 
-func TestGetDigest(t *testing.T) {
+func TestGetBundleDigest(t *testing.T) {
 	testCases := []struct {
 		testName        string
 		bundle          *anywherev1alpha1.Bundles
@@ -218,7 +218,7 @@ func TestGetDigest(t *testing.T) {
 		t.Run(tt.testName, func(t *testing.T) {
 			g := gomega.NewWithT(t)
 
-			digest, filtered, err := getDigest(tt.bundle)
+			digest, filtered, err := getBundleDigest(tt.bundle)
 			if tt.expectErrSubstr == "" {
 				g.Expect(err).NotTo(gomega.HaveOccurred(), "Expected success but got error")
 				g.Expect(digest).NotTo(gomega.BeZero(),
