@@ -237,15 +237,47 @@ func SignBundleManifest(ctx context.Context, bundle *anywherev1alpha1.Bundles) e
 	}
 	bundle.Annotations[anywhereconstants.ExcludesAnnotation] = anywhereconstants.Excludes
 
-	fmt.Printf("Generating bundle signature with key: %s\n", constants.KmsKey)
+	fmt.Printf("Generating bundle manifest signature with KMS key: %s\n", constants.BundlesKmsKey)
 
-	signature, err := sig.GetBundleSignature(ctx, bundle, constants.KmsKey)
+	signature, err := sig.GetBundleSignature(ctx, bundle, constants.BundlesKmsKey)
 	if err != nil {
 		return err
 	}
 	bundle.Annotations[anywhereconstants.SignatureAnnotation] = signature
 
 	fmt.Printf("%s Successfully signed bundle manifest\n", constants.SuccessIcon)
+	return nil
+}
+
+// SignEKSDistroManifest is the top-level function that computes the EKS Distro
+// manifest signature using AWS KMS and attaches that signature as an
+// annotation on the Bundles object for each supported kubernetes version.
+func SignEKSDistroManifest(ctx context.Context, bundle *anywherev1alpha1.Bundles) error {
+	fmt.Println("\n==========================================================")
+	fmt.Println("               EKS Distro Manifest Signing")
+	fmt.Println("==========================================================")
+
+	if bundle.Annotations == nil {
+		bundle.Annotations = make(map[string]string, 1)
+	}
+	bundle.Annotations[anywhereconstants.EKSDistroExcludesAnnotation] = anywhereconstants.EKSDistroExcludes
+
+	for _, versionsBundle := range bundle.Spec.VersionsBundles {
+		releaseChannel := versionsBundle.EksD.ReleaseChannel
+		releaseUrl := versionsBundle.EksD.EksDReleaseUrl
+
+		fmt.Printf("Generating eks distro manifest signature for %s release channel with KMS key: %s\n", releaseChannel, constants.EKSDistroManifestKmsKey)
+
+		signature, err := sig.GetEKSDistroManifestSignature(ctx, bundle, constants.EKSDistroManifestKmsKey, releaseUrl)
+		if err != nil {
+			return err
+		}
+
+		signatureAnnotation := anywhereconstants.EKSDistroSignatureAnnotation + "/" + releaseChannel
+		bundle.Annotations[signatureAnnotation] = signature
+	}
+
+	fmt.Printf("%s Successfully signed eks distro manifest\n", constants.SuccessIcon)
 	return nil
 }
 
