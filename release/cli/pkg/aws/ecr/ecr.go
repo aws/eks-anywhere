@@ -103,10 +103,9 @@ func DescribeImagesPaginated(ecrClient *ecr.ECR, describeInput *ecr.DescribeImag
 }
 
 // FilterECRRepoByTagPrefix will take a substring, and a repository as input and find the latest pushed image matching that substring.
-func FilterECRRepoByTagPrefix(ecrClient *ecr.ECR, repoName, prefix string, hasTag bool) (string, string, error) {
+func FilterECRRepoByTagPrefix(ecrClient *ecr.ECR, repoName, prefix, branchName string, isHelmChart bool) (string, string, error) {
 	imageDetails, err := DescribeImagesPaginated(ecrClient, &ecr.DescribeImagesInput{
 		RepositoryName: aws.String(repoName),
-		RegistryId:     aws.String("067575901363"),
 	})
 	if len(imageDetails) == 0 {
 		return "", "", fmt.Errorf("no image details obtained: %v", err)
@@ -115,13 +114,9 @@ func FilterECRRepoByTagPrefix(ecrClient *ecr.ECR, repoName, prefix string, hasTa
 		return "", "", errors.Cause(err)
 	}
 	var filteredImageDetails []*ecr.ImageDetail
-	if hasTag {
-		filteredImageDetails = imageTagFilter(imageDetails, prefix)
-	} else {
-		filteredImageDetails = imageTagFilterWithout(imageDetails, prefix)
-	}
+	filteredImageDetails = imageTagFilter(imageDetails, prefix)
 
-	// Filter out any tags that don't match our prefix for doubletagged scenarios
+	// Filter out any tags that don't match our prefix for images with multiple tags
 	for _, detail := range filteredImageDetails {
 		for _, tag := range detail.ImageTags {
 			if tag != nil && !strings.HasPrefix(*tag, prefix) {
@@ -132,9 +127,10 @@ func FilterECRRepoByTagPrefix(ecrClient *ecr.ECR, repoName, prefix string, hasTa
 
 	// In case we don't find any tag substring matches, we still want to populate the bundle with the latest version.
 	if len(filteredImageDetails) < 1 {
+		fmt.Printf("no images found with %s tag prefix\n", prefix)
 		filteredImageDetails = imageDetails
 	}
-	version, sha, err := getLastestOCIShaTag(filteredImageDetails)
+	version, sha, err := getLatestOCIShaTag(filteredImageDetails, branchName, isHelmChart)
 	if err != nil {
 		return "", "", err
 	}
@@ -154,33 +150,48 @@ func imageTagFilter(details []*ecr.ImageDetail, substring string) []*ecr.ImageDe
 	return filteredDetails
 }
 
-// imageTagFilterWithout is used when filtering a list of ECR images for images without a specific tag or tag substring
-func imageTagFilterWithout(details []*ecr.ImageDetail, substring string) []*ecr.ImageDetail {
-	var filteredDetails []*ecr.ImageDetail
-	for _, detail := range details {
-		for _, tag := range detail.ImageTags {
-			if !strings.HasPrefix(*tag, substring) {
-				filteredDetails = append(filteredDetails, detail)
-			}
-		}
-	}
-	return filteredDetails
-}
-
-// getLastestOCIShaTag is used to find the tag/sha of the latest pushed OCI image from a list.
-func getLastestOCIShaTag(details []*ecr.ImageDetail) (string, string, error) {
+// getLatestOCIShaTag is used to find the tag/sha of the latest pushed OCI image from a list.
+func getLatestOCIShaTag(details []*ecr.ImageDetail, branchName string, isHelmChart bool) (string, string, error) {
 	latest := &ecr.ImageDetail{}
 	latest.ImagePushedAt = &time.Time{}
 	for _, detail := range details {
 		if len(details) < 1 || detail.ImagePushedAt == nil || detail.ImageDigest == nil || detail.ImageTags == nil || len(detail.ImageTags) == 0 {
 			continue
 		}
+
+		if isHelmChart {
+			skip := false
+			if branchName == "main" {
+				// Exclude image if any tag contains "release"
+				for _, tag := range detail.ImageTags {
+					if strings.Contains(*tag, "release") {
+						skip = true
+						break
+					}
+				}
+				if skip {
+					continue
+				}
+			} else {
+				// Exclude image if none of the tags contain the branchName
+				for _, tag := range detail.ImageTags {
+					if strings.Contains(*tag, branchName) {
+						skip = true
+						break
+					}
+				}
+				if !skip {
+					continue
+				}
+			}
+		}
+
 		if detail.ImagePushedAt != nil && latest.ImagePushedAt.Before(*detail.ImagePushedAt) {
 			latest = detail
 		}
 	}
 	if reflect.DeepEqual(latest, ecr.ImageDetail{}) {
-		return "", "", fmt.Errorf("error no images found")
+		return "", "", fmt.Errorf("no images found")
 	}
 	return *latest.ImageTags[0], *latest.ImageDigest, nil
 }
