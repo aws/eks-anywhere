@@ -108,7 +108,6 @@ type ProviderGovcClient interface {
 	GetFolderPath(ctx context.Context, datacenter string, folder string, envMap map[string]string) (string, error)
 	GetDatastorePath(ctx context.Context, datacenter string, datastorePath string, envMap map[string]string) (string, error)
 	GetResourcePoolPath(ctx context.Context, datacenter string, resourcePool string, envMap map[string]string) (string, error)
-	GetComputeClusterPath(ctx context.Context, datacenter string, computeCluster string, envMap map[string]string) (string, error)
 	CreateLibrary(ctx context.Context, datastore, library string) error
 	DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, datacenter, datastore, network, resourcePool string, resizeDisk2 bool) error
 	ImportTemplate(ctx context.Context, library, ovaURL, name string) error
