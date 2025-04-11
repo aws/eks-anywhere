@@ -19,10 +19,13 @@ set -x
 set -o pipefail
 
 function set_aws_config() {
+    export AWS_SDK_LOAD_CONFIG=1
+    export AWS_CONFIG_FILE=$(pwd)/awscliconfig
+
     release_environment="$1"
     release_type="$2"
     if [ "$release_environment" = "" ] || ([ "$release_environment" = "development" ] && [ "$release_type" = "bundle" ]); then
-        cat << EOF > awscliconfig
+        cat << EOF > ${AWS_CONFIG_FILE}
 [profile packages-beta-pdx]
 role_arn=$PACKAGES_ECR_ROLE
 region=us-west-2
@@ -31,7 +34,7 @@ credential_source=EcsContainer
 EOF
     fi
     if [ "$release_environment" = "" ]; then
-        cat << EOF >> awscliconfig
+        cat << EOF >> ${AWS_CONFIG_FILE}
 [profile packages-beta-iad]
 role_arn=$PACKAGES_ECR_ROLE
 region=us-east-1
@@ -44,7 +47,7 @@ EOF
             echo "Empty STAGING_ARTIFACT_DEPLOYMENT_ROLE"
             exit 1
         fi
-        cat << EOF >> awscliconfig
+        cat << EOF >> ${AWS_CONFIG_FILE}
 [profile artifacts-staging]
 role_arn=$STAGING_ARTIFACT_DEPLOYMENT_ROLE
 region=us-east-1
@@ -56,14 +59,12 @@ EOF
                 echo "Empty PROD_ARTIFACT_DEPLOYMENT_ROLE"
                 exit 1
             fi
-            cat << EOF >> awscliconfig
+            cat << EOF >> ${AWS_CONFIG_FILE}
 [profile artifacts-production]
 role_arn=$PROD_ARTIFACT_DEPLOYMENT_ROLE
 region=us-east-1
 credential_source=EcsContainer
 EOF
         fi
-fi
-
-    export AWS_CONFIG_FILE=$(pwd)/awscliconfig
+    fi
 }
