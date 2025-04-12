@@ -25,7 +25,7 @@ func runCertManagerRemoteClusterInstallSimpleFlow(test *framework.MulticlusterE2
 		test.ManagementCluster.SetPackageBundleActive()
 		packageName := "cert-manager"
 		packagePrefix := "test"
-		test.ManagementCluster.InstallCertManagerPackageWithAwsCredentials(packagePrefix, packageName, EksaPackagesNamespace)
+		test.ManagementCluster.InstallCertManagerPackageWithAwsCredentials(packagePrefix, packageName, EksaPackagesNamespace, e.ClusterName)
 		e.VerifyCertManagerPackageInstalled(packagePrefix, EksaPackagesNamespace, cmPackageName, withCluster(test.ManagementCluster))
 		e.CleanupCerts(withCluster(test.ManagementCluster))
 		e.DeleteClusterWithKubectl()
