@@ -45,8 +45,8 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests releasetypes.
 
 	var sourceBranch string
 	var componentChecksum string
-	var Helmtag, Imagetag, Tokentag string
-	var Helmsha, Imagesha, TokenSha string
+	var Helmtag, Imagetag, Tokentag, Credentialtag string
+	var Helmsha, Imagesha, Tokensha, Credentialsha string
 	var err error
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	artifactHashes := []string{}
@@ -65,7 +65,7 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests releasetypes.
 		}
 		PackageImage, err := ecrpublic.CheckImageExistence(fmt.Sprintf("%s/%s:%s", r.PackagesReleaseContainerRegistry, "eks-anywhere-packages", Imagetag), r.PackagesReleaseContainerRegistry, r.ReleaseClients.Packages.Client)
 		if err != nil {
-			fmt.Printf("Error checking image version existance for EKS Anywhere package controller, using latest version: %v", err)
+			fmt.Printf("Error checking image version existence for EKS Anywhere package controller, using latest version: %v", err)
 		}
 		if !PackageImage {
 			fmt.Printf("Did not find the required helm image in Public ECR... copying image: %v\n", fmt.Sprintf("%s/%s:%s", r.PackagesReleaseContainerRegistry, "eks-anywhere-packages", Imagetag))
@@ -74,19 +74,34 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests releasetypes.
 				fmt.Printf("Error copying dev EKS Anywhere package controller image, to ECR Public: %v", err)
 			}
 		}
-		Tokentag, TokenSha, err = ecr.FilterECRRepoByTagPrefix(r.SourceClients.Packages.EcrClient, "ecr-token-refresher", "v0.0.0", r.BuildRepoBranchName, false)
+		Tokentag, Tokensha, err = ecr.FilterECRRepoByTagPrefix(r.SourceClients.Packages.EcrClient, "ecr-token-refresher", "v0.0.0", r.BuildRepoBranchName, false)
 		if err != nil {
 			fmt.Printf("Error getting dev version Image tag EKS Anywhere package token refresher, using latest version %v", err)
 		}
 		TokenImage, err := ecrpublic.CheckImageExistence(fmt.Sprintf("%s/%s:%s", r.PackagesReleaseContainerRegistry, "ecr-token-refresher", Tokentag), r.PackagesReleaseContainerRegistry, r.ReleaseClients.Packages.Client)
 		if err != nil {
-			fmt.Printf("Error checking image version existance for EKS Anywhere package token refresher, using latest version: %v", err)
+			fmt.Printf("Error checking image version existence for EKS Anywhere package token refresher, using latest version: %v", err)
 		}
 		if !TokenImage {
 			fmt.Printf("Did not find the required helm image in Public ECR... copying image: %v\n", fmt.Sprintf("%s/%s:%s", r.PackagesReleaseContainerRegistry, "ecr-token-refresher", Tokentag))
 			err := images.CopyToDestination(r.SourceClients.Packages.AuthConfig, r.ReleaseClients.Packages.AuthConfig, fmt.Sprintf("%s/%s:%s", r.PackagesSourceContainerRegistry, "ecr-token-refresher", Tokentag), fmt.Sprintf("%s/%s:%s", r.PackagesReleaseContainerRegistry, "ecr-token-refresher", Tokentag))
 			if err != nil {
 				fmt.Printf("Error copying dev EKS Anywhere package token refresher image, to ECR Public: %v", err)
+			}
+		}
+		Credentialtag, Credentialsha, err = ecr.FilterECRRepoByTagPrefix(r.SourceClients.Packages.EcrClient, "credential-provider-package", "v0.0.0", r.BuildRepoBranchName, false)
+		if err != nil {
+			fmt.Printf("Error getting dev version Image tag EKS Anywhere package credential provider, using latest version %v", err)
+		}
+		CredentialImage, err := ecrpublic.CheckImageExistence(fmt.Sprintf("%s/%s:%s", r.PackagesReleaseContainerRegistry, "credential-provider-package", Credentialtag), r.PackagesReleaseContainerRegistry, r.ReleaseClients.Packages.Client)
+		if err != nil {
+			fmt.Printf("Error checking image version existence for EKS Anywhere package credential provider, using latest version: %v", err)
+		}
+		if !CredentialImage {
+			fmt.Printf("Did not find the required helm image in Public ECR... copying image: %v\n", fmt.Sprintf("%s/%s:%s", r.PackagesReleaseContainerRegistry, "credential-provider-package", Credentialtag))
+			err := images.CopyToDestination(r.SourceClients.Packages.AuthConfig, r.ReleaseClients.Packages.AuthConfig, fmt.Sprintf("%s/%s:%s", r.PackagesSourceContainerRegistry, "credential-provider-package", Credentialtag), fmt.Sprintf("%s/%s:%s", r.PackagesReleaseContainerRegistry, "credential-provider-package", Credentialtag))
+			if err != nil {
+				fmt.Printf("Error copying dev EKS Anywhere package credential provider image, to ECR Public: %v", err)
 			}
 		}
 	}
@@ -120,9 +135,12 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests releasetypes.
 					if strings.HasSuffix(imageArtifact.AssetName, "eks-anywhere-packages") && r.DevRelease && Imagesha != "" && Imagetag != "" {
 						imageDigest = Imagesha
 						imageArtifact.ReleaseImageURI = replaceTag(imageArtifact.ReleaseImageURI, Imagetag)
-					} else if strings.HasSuffix(imageArtifact.AssetName, "ecr-token-refresher") && r.DevRelease && TokenSha != "" && Tokentag != "" {
-						imageDigest = TokenSha
+					} else if strings.HasSuffix(imageArtifact.AssetName, "ecr-token-refresher") && r.DevRelease && Tokensha != "" && Tokentag != "" {
+						imageDigest = Tokensha
 						imageArtifact.ReleaseImageURI = replaceTag(imageArtifact.ReleaseImageURI, Tokentag)
+					} else if strings.HasSuffix(imageArtifact.AssetName, "credential-provider-package") && r.DevRelease && Credentialsha != "" && Credentialtag != "" {
+						imageDigest = Credentialsha
+						imageArtifact.ReleaseImageURI = replaceTag(imageArtifact.ReleaseImageURI, Credentialtag)
 					}
 					bundleImageArtifact = anywherev1alpha1.Image{
 						Name:        imageArtifact.AssetName,
