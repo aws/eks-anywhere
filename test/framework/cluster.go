@@ -2051,10 +2051,10 @@ func (e *ClusterE2ETest) InstallAutoScaler(workloadClusterName, targetNamespace 
 var certManagerPackageTemplate string
 
 // InstallCertManagerPackageWithAwsCredentials installs cert-manager package by setting aws credentials in the pod.
-func (e *ClusterE2ETest) InstallCertManagerPackageWithAwsCredentials(prefix, packageName, namespace string) {
+func (e *ClusterE2ETest) InstallCertManagerPackageWithAwsCredentials(prefix, packageName, namespace, workloadClusterName string) {
 	generatedName := fmt.Sprintf("%s-%s", prefix, packageName)
 	targetNamespace := namespace
-	namespace = fmt.Sprintf("%s-%s", namespace, e.ClusterName)
+	namespace = fmt.Sprintf("%s-%s", namespace, workloadClusterName)
 	ctx := context.Background()
 	accessKeyID := os.Getenv(route53AccessKey)
 	secretKey := os.Getenv(route53SecretKey)
