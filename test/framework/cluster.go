@@ -1997,10 +1997,10 @@ func (e *ClusterE2ETest) InstallAutoScaler(workloadClusterName, targetNamespace 
 var certManagerPackageTemplate string
 
 // InstallCertManagerPackageWithAwsCredentials installs cert-manager package by setting aws credentials in the pod.
-func (e *ClusterE2ETest) InstallCertManagerPackageWithAwsCredentials(prefix, packageName, namespace string) {
+func (e *ClusterE2ETest) InstallCertManagerPackageWithAwsCredentials(prefix, packageName, namespace, clusterName string) {
 	generatedName := fmt.Sprintf("%s-%s", prefix, packageName)
 	targetNamespace := namespace
-	namespace = fmt.Sprintf("%s-%s", namespace, e.ClusterName)
+	namespace = fmt.Sprintf("%s-%s", namespace, clusterName)
 	ctx := context.Background()
 	accessKeyID := os.Getenv(route53AccessKey)
 	secretKey := os.Getenv(route53SecretKey)
@@ -2016,13 +2016,13 @@ func (e *ClusterE2ETest) InstallCertManagerPackageWithAwsCredentials(prefix, pac
 
 	certManagerPackageDeployment, err := templater.Execute(certManagerPackageTemplate, data)
 	if err != nil {
-		e.T.Fatalf("Failed creating cert-manager Package Deployment: %s", err)
+		e.T.Fatalf("Failed creating cert-manager package deployment: %s", err)
 	}
 
 	err = e.KubectlClient.ApplyKubeSpecFromBytesWithNamespace(ctx, e.Cluster(), certManagerPackageDeployment,
 		namespace)
 	if err != nil {
-		e.T.Fatalf("Error installing cert-manager pacakge: %s", err)
+		e.T.Fatalf("Error installing cert-manager package: %s", err)
 	}
 }
 
