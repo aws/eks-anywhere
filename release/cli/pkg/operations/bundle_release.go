@@ -273,7 +273,7 @@ func SignEKSDistroManifest(ctx context.Context, bundle *anywherev1alpha1.Bundles
 			return err
 		}
 
-		signatureAnnotation := anywhereconstants.EKSDistroSignatureAnnotation + "/" + releaseChannel
+		signatureAnnotation := anywhereconstants.EKSDistroSignatureAnnotation + "-" + releaseChannel
 		bundle.Annotations[signatureAnnotation] = signature
 	}
 
