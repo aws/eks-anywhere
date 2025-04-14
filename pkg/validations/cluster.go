@@ -21,7 +21,10 @@ import (
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
-const supportedManagementComponentsMinorVersionIncrement int64 = 1
+const (
+	supportedManagementComponentsMinorVersionIncrement int64 = 1
+	releaseV022                                              = "v0.22.0"
+)
 
 // ValidateOSForRegistryMirror checks if the OS is valid for the provided registry mirror configuration.
 func ValidateOSForRegistryMirror(clusterSpec *cluster.Spec, provider providers.Provider) error {
@@ -300,7 +303,12 @@ func ValidateExtendedKubernetesSupport(ctx context.Context, clusterSpec v1alpha1
 		b, err = bundles.Read(reader, bundlesOverride)
 	} else {
 		eksaVersion := clusterSpec.Spec.EksaVersion
-		if eksaVersion == nil {
+		skip, err := ShouldSkipBundleSignatureValidation((*string)(eksaVersion))
+		if err != nil {
+			return err
+		}
+		// Skip the signature validation for those versions prior to 'v0.22.0'
+		if skip {
 			return nil
 		}
 		b, err = reader.ReadBundlesForVersion(string(*eksaVersion))

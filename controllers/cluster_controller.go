@@ -38,6 +38,7 @@ const (
 	defaultRequeueTime = time.Minute
 	// ClusterFinalizerName is the finalizer added to clusters to handle deletion.
 	ClusterFinalizerName = "clusters.anywhere.eks.amazonaws.com/finalizer"
+	releaseV022          = "v0.22.0"
 )
 
 // ClusterReconciler reconciles a Cluster object.
@@ -642,9 +643,20 @@ func validateEksaRelease(ctx context.Context, client client.Client, cluster *any
 }
 
 func validateExtendedK8sVersionSupport(ctx context.Context, client client.Client, cluster *anywherev1.Cluster) error {
-	if cluster.Spec.DatacenterRef.Kind == "SnowDatacenterConfig" {
+	eksaVersion := cluster.Spec.EksaVersion
+	if cluster.Spec.DatacenterRef.Kind == "SnowDatacenterConfig" || eksaVersion == nil {
 		return nil
 	}
+	skip, err := validations.ShouldSkipBundleSignatureValidation((*string)(eksaVersion))
+	if err != nil {
+		return err
+	}
+
+	// Skip the signature validation for those versions prior to 'v0.22.0'
+	if skip {
+		return nil
+	}
+
 	bundle, err := c.BundlesForCluster(ctx, clientutil.NewKubeClient(client), cluster)
 	if err != nil {
 		reason := anywherev1.BundleNotFoundReason
