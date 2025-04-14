@@ -422,7 +422,7 @@ func TestClusterReconcilerWorkloadClusterMgmtClusterNameFail(t *testing.T) {
 func TestClusterReconcilerNoBundleFound(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
-	version := test.DevEksaVersion()
+	version := anywherev1.EksaVersion("v0.22.0")
 
 	cluster := &anywherev1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
@@ -445,7 +445,10 @@ func TestClusterReconcilerNoBundleFound(t *testing.T) {
 
 	clusterValidator := mocks.NewMockClusterValidator(controller)
 	registry := newRegistryMock(providerReconciler)
-	c := fake.NewClientBuilder().WithRuntimeObjects(cluster, kcp, test.EKSARelease()).
+	eksaReleaseV022 := test.EKSARelease()
+	eksaReleaseV022.Name = "eksa-v0-22-0"
+	eksaReleaseV022.Spec.Version = "eksa-v0-22-0"
+	c := fake.NewClientBuilder().WithRuntimeObjects(cluster, kcp, eksaReleaseV022).
 		WithStatusSubresource(cluster).
 		Build()
 	mockPkgs := mocks.NewMockPackagesClient(controller)
@@ -458,7 +461,7 @@ func TestClusterReconcilerNoBundleFound(t *testing.T) {
 func TestClusterReconcilerFailSignatureValidation(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
-	version := test.DevEksaVersion()
+	version := anywherev1.EksaVersion("v0.22.0")
 
 	cluster := &anywherev1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
@@ -471,7 +474,9 @@ func TestClusterReconcilerFailSignatureValidation(t *testing.T) {
 			ReconciledGeneration: 1,
 		},
 	}
-	eksaRelease := test.EKSARelease()
+	eksaReleaseV022 := test.EKSARelease()
+	eksaReleaseV022.Name = "eksa-v0-22-0"
+	eksaReleaseV022.Spec.Version = "eksa-v0-22-0"
 	bundles := createBundle()
 	bundles.Spec.VersionsBundles[0].KubeVersion = "1.25"
 
@@ -484,7 +489,7 @@ func TestClusterReconcilerFailSignatureValidation(t *testing.T) {
 
 	clusterValidator := mocks.NewMockClusterValidator(controller)
 	registry := newRegistryMock(providerReconciler)
-	c := fake.NewClientBuilder().WithRuntimeObjects(cluster, kcp, eksaRelease, bundles).
+	c := fake.NewClientBuilder().WithRuntimeObjects(cluster, kcp, eksaReleaseV022, bundles).
 		WithStatusSubresource(cluster).
 		Build()
 	mockPkgs := mocks.NewMockPackagesClient(controller)
