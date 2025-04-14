@@ -28,7 +28,6 @@ import (
 	"github.com/aws/eks-anywhere/controllers/mocks"
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/internal/test/envtest"
-	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -202,7 +201,7 @@ func TestClusterReconcilerReconcileUnclearedClusterFailure(t *testing.T) {
 	config.Cluster.Spec.EksaVersion = &version
 	config.Cluster.Generation = 1
 
-	config.Cluster.SetFailure(v1alpha1.FailureReasonType("InvalidCluster"), "invalid cluster")
+	config.Cluster.SetFailure(anywherev1.FailureReasonType("InvalidCluster"), "invalid cluster")
 
 	kcp := testKubeadmControlPlaneFromCluster(config.Cluster)
 	machineDeployments := machineDeploymentsFromCluster(config.Cluster)
@@ -518,7 +517,7 @@ func TestClusterReconcilerReconcileConditions(t *testing.T) {
 				func(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) {
 					kcpReadyCondition := conditions.Get(kcp, clusterv1.ReadyCondition)
 					if kcpReadyCondition == nil ||
-						(kcpReadyCondition != nil && kcpReadyCondition.Status == "False") {
+						(kcpReadyCondition.Status == "False") {
 						conditions.MarkFalse(cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.ControlPlaneNotReadyReason, clusterv1.ConditionSeverityInfo, "")
 						return
 					}
@@ -794,7 +793,7 @@ func TestClusterReconcilerReconcileSelfManagedClusterConditions(t *testing.T) {
 				func(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) {
 					kcpReadyCondition := conditions.Get(kcp, clusterv1.ReadyCondition)
 					if kcpReadyCondition == nil ||
-						(kcpReadyCondition != nil && kcpReadyCondition.Status == "False") {
+						(kcpReadyCondition.Status == "False") {
 						conditions.MarkFalse(cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.ControlPlaneNotReadyReason, clusterv1.ConditionSeverityInfo, "")
 						return
 					}

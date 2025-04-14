@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/onsi/gomega"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -49,7 +50,7 @@ func TestValidateSignature(t *testing.T) {
 				},
 			},
 			valid:   false,
-			wantErr: fmt.Errorf("missing signature annotation"),
+			wantErr: fmt.Errorf("missing bundle signature annotation"),
 		},
 		{
 			name: "invalid signature",
@@ -69,7 +70,7 @@ func TestValidateSignature(t *testing.T) {
 				},
 			},
 			valid:   false,
-			wantErr: fmt.Errorf("signature in metadata isn't base64 encoded"),
+			wantErr: fmt.Errorf("bundle signature in metadata isn't base64 encoded"),
 		},
 		{
 			name: "invalid public key",
@@ -174,6 +175,114 @@ func TestValidateSignature(t *testing.T) {
 	}
 }
 
+func TestValidateEKSDistroManifestSignature(t *testing.T) {
+	// Create a dummy release with some nonempty Spec (so filtering produces a valid JSON payload).
+	testRelease := &eksdv1alpha1.Release{
+		TypeMeta: v1.TypeMeta{
+			Kind:       "Release",
+			APIVersion: eksdv1alpha1.GroupVersion.String(),
+		},
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "kubernetes-1-28-46",
+			Namespace: constants.EksaSystemNamespace,
+		},
+		Spec: eksdv1alpha1.ReleaseSpec{
+			Channel: "1-28",
+			Number:  46,
+		},
+		Status: eksdv1alpha1.ReleaseStatus{
+			Components: []eksdv1alpha1.Component{
+				{
+					Name:   "metrics-server",
+					GitTag: "v0.7.2",
+					Assets: []eksdv1alpha1.Asset{
+						{
+							Name: "metrics-server-image",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	tests := []struct {
+		name           string
+		release        *eksdv1alpha1.Release
+		signature      string
+		publicKey      string
+		releaseChannel string
+		valid          bool
+		wantErr        error
+	}{
+		{
+			name:           "no eks distro manifest signature",
+			release:        testRelease,
+			signature:      "",
+			publicKey:      constants.EKSDistroKMSPublicKey,
+			releaseChannel: "1-28",
+			valid:          false,
+			wantErr:        fmt.Errorf("missing 1-28 eks distro manifest signature annotation"),
+		},
+		{
+			name:           "invalid signature",
+			release:        testRelease,
+			signature:      "invalid",
+			publicKey:      constants.EKSDistroKMSPublicKey,
+			releaseChannel: "1-29",
+			valid:          false,
+			wantErr:        fmt.Errorf("eks distro manifest signature in metadata for 1-29 release channel isn't base64 encoded"),
+		},
+		{
+			name:           "invalid public key",
+			release:        testRelease,
+			signature:      "MEUCICV1iiNA4owIUdZBIowSgWjTKx+JT5/CE8PzmF2CBD5+AiEAk8Fcc1X/LNGm0YCyZISWFhbh4qdc7ENyYCU3DB0u4b0=",
+			publicKey:      "invalid",
+			releaseChannel: "test-channel",
+			valid:          false,
+			wantErr:        fmt.Errorf("decoding the public key as string"),
+		},
+		{
+			name:           "invalid encoded public key",
+			release:        testRelease,
+			signature:      "MEUCICV1iiNA4owIUdZBIowSgWjTKx+JT5/CE8PzmF2CBD5+AiEAk8Fcc1X/LNGm0YCyZISWFhbh4qdc7ENyYCU3DB0u4b0=",
+			publicKey:      "TUVVQ0lDVjFpaU5BNG93SVVkWkJJb3dTZ1dqVEt4K0pUNS9DRThQem1GMkNCRDUrQWlFQWs4RmNjMVgvTE5HbTBZQ3laSVNXRmhiaDRxZGM3RU55WUNVM0RCMHU0YjA9Cg==",
+			releaseChannel: "test-channel",
+			valid:          false,
+			wantErr:        fmt.Errorf("parsing the public key (not PKIX)"),
+		},
+		{
+			name:           "signature verification fail",
+			release:        testRelease,
+			signature:      "MEUCICV1iiNA4owIUdZBIowSgWjTKx+JT5/CE8PzmF2CBD5+AiEAk8Fcc1X/LNGm0YCyZISWFhbh4qdc7ENyYCU3DB0u4b0=",
+			publicKey:      constants.EKSDistroKMSPublicKey,
+			releaseChannel: "test-channel",
+			valid:          false,
+			wantErr:        nil,
+		},
+		{
+			name:           "signature verification succeeded",
+			release:        testRelease,
+			signature:      "MEUCIQC3uP3Dhfb/nhCeir0Hwtf4bddKVfVIauFWBidT18XZOwIgHjzH1mOxBm1N2l2w9wBVy9W1o6CQXpdDz7UcbCszZYc=",
+			publicKey:      constants.EKSDistroKMSPublicKey,
+			releaseChannel: "1-28",
+			valid:          true,
+			wantErr:        nil,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			valid, err := ValidateEKSDistroManifestSignature(tc.release, tc.signature, tc.publicKey, tc.releaseChannel)
+			if err != nil && (tc.wantErr == nil || !strings.Contains(err.Error(), tc.wantErr.Error())) {
+				t.Errorf("%v got = %v, \nwant %v", tc.name, err, tc.wantErr)
+			}
+			if valid != tc.valid {
+				t.Errorf("%v got = %v, \nwant %v", tc.name, valid, tc.valid)
+			}
+		})
+	}
+}
+
 func TestGetBundleDigest(t *testing.T) {
 	testCases := []struct {
 		testName        string
@@ -220,17 +329,70 @@ func TestGetBundleDigest(t *testing.T) {
 
 			digest, filtered, err := getBundleDigest(tt.bundle)
 			if tt.expectErrSubstr == "" {
-				g.Expect(err).NotTo(gomega.HaveOccurred(), "Expected success but got error")
-				g.Expect(digest).NotTo(gomega.BeZero(),
-					"Expected digest to be non-zero array")
-				g.Expect(filtered).NotTo(gomega.BeEmpty(),
-					"Expected filtered bytes to be non-empty")
+				g.Expect(err).NotTo(gomega.HaveOccurred(), "Expected success but got error: %v", err)
+				g.Expect(digest).NotTo(gomega.BeZero(), "Expected digest to be non-zero")
+				g.Expect(filtered).NotTo(gomega.BeEmpty(), "Expected filtered bytes to be non-empty")
 			} else {
-				g.Expect(err).To(gomega.HaveOccurred(),
-					"Expected error but got none")
-				g.Expect(err.Error()).To(gomega.ContainSubstring(tt.expectErrSubstr),
-					"Error message should contain substring %q, got: %v",
-					tt.expectErrSubstr, err)
+				g.Expect(err).To(gomega.HaveOccurred(), "Expected error but got none")
+				g.Expect(err.Error()).To(gomega.ContainSubstring(tt.expectErrSubstr), "Error message should contain substring %q, got: %v", tt.expectErrSubstr, err)
+				g.Expect(digest).To(gomega.BeZero())
+				g.Expect(filtered).To(gomega.BeNil())
+			}
+		})
+	}
+}
+
+func TestGetEKSDistroReleaseDigest(t *testing.T) {
+	testCases := []struct {
+		testName        string
+		release         *eksdv1alpha1.Release
+		expectErrSubstr string
+	}{
+		{
+			testName: "Simple valid release",
+			release: &eksdv1alpha1.Release{
+				TypeMeta: v1.TypeMeta{
+					Kind:       "Release",
+					APIVersion: eksdv1alpha1.GroupVersion.String(),
+				},
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "kubernetes-1-28-46",
+					Namespace: constants.EksaSystemNamespace,
+				},
+				Spec: eksdv1alpha1.ReleaseSpec{
+					Channel: "1-28",
+					Number:  46,
+				},
+				Status: eksdv1alpha1.ReleaseStatus{
+					Components: []eksdv1alpha1.Component{
+						{
+							Name:   "metrics-server",
+							GitTag: "v0.7.2",
+							Assets: []eksdv1alpha1.Asset{
+								{
+									Name: "metrics-server-image",
+								},
+							},
+						},
+					},
+				},
+			},
+			expectErrSubstr: "",
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.testName, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+
+			digest, filtered, err := getEKSDistroReleaseDigest(tt.release)
+			if tt.expectErrSubstr == "" {
+				g.Expect(err).NotTo(gomega.HaveOccurred(), "Expected success but got error: %v", err)
+				g.Expect(digest).NotTo(gomega.BeZero(), "Expected digest to be non-zero")
+				g.Expect(filtered).NotTo(gomega.BeEmpty(), "Expected filtered bytes to be non-empty")
+			} else {
+				g.Expect(err).To(gomega.HaveOccurred(), "Expected error but got none")
+				g.Expect(err.Error()).To(gomega.ContainSubstring(tt.expectErrSubstr), "Error message should contain substring %q, got: %v", tt.expectErrSubstr, err)
 				g.Expect(digest).To(gomega.BeZero())
 				g.Expect(filtered).To(gomega.BeNil())
 			}
@@ -316,7 +478,7 @@ func TestFilterExcludes(t *testing.T) {
 		t.Run(tt.testName, func(t *testing.T) {
 			g := gomega.NewWithT(t)
 
-			filtered, err := filterExcludes([]byte(tt.jsonPayload))
+			filtered, err := filterExcludes([]byte(tt.jsonPayload), constants.Excludes)
 
 			if tt.expectErrSubstr == "" {
 				g.Expect(err).NotTo(gomega.HaveOccurred(),
