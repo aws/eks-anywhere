@@ -35,7 +35,7 @@ func newPreflightValidationsTest(t *testing.T) *preflightValidationsTest {
 	ctrl := gomock.NewController(t)
 	k := mocks.NewMockKubectlClient(ctrl)
 
-	version := test.DevEksaVersion()
+	version := anywherev1.EksaVersion("v0.22.0")
 
 	c := &types.Cluster{
 		KubeconfigFile: "kubeconfig",
@@ -53,7 +53,11 @@ func newPreflightValidationsTest(t *testing.T) *preflightValidationsTest {
 		}
 	})
 
-	objects := []client.Object{test.EKSARelease()}
+	eksaReleaseV022 := test.EKSARelease()
+	eksaReleaseV022.Name = "eksa-v0-22-0"
+	eksaReleaseV022.Spec.Version = "eksa-v0-22-0"
+
+	objects := []client.Object{eksaReleaseV022}
 	opts := &validations.Opts{
 		Kubectl:           k,
 		Spec:              clusterSpec,
