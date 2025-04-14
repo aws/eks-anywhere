@@ -10,7 +10,7 @@ Bottlerocket, Ubuntu, and Red Hat Enterprise Linux (RHEL) can be used as operati
 
 Reference the table below for the operating systems supported per deployment option for the latest version of EKS Anywhere. See [Admin machine]({{<  relref "/docs/getting-started/install" >}}) for supported operating systems.
 
-|| vSphere | Bare metal | Snow | CloudStack | Nutanix |
+|| vSphere | Bare Metal | Snow | CloudStack | Nutanix |
 | --- | :---: | :---: | :---: | :---: | :---: |
 | Bottlerocket | &#10004; | &mdash; | &mdash; | &mdash; | &mdash; |
 | Ubuntu | &#10004; | &#10004; | &#10004; | &mdash; | &#10004; |
@@ -22,9 +22,9 @@ Reference the table below for the operating systems supported per deployment opt
 | Ubuntu | 20.04.x, 22.04.x |
 | RHEL | 8.x, 9.x<sup>*</sup> |
 
-<sup>*</sup>Nutanix and CloudStack only
+<sup>*</sup>Nutanix, CloudStack and Bare Metal
 
-With the vSphere, bare metal, Snow, CloudStack and Nutanix deployment options, EKS Anywhere provisions the operating system when new machines are deployed during cluster creation, upgrade, and scaling operations. You can configure the operating system to use through the EKS Anywhere cluster spec, which varies by deployment option. See the deployment option sections below for an overview of how the operating system configuration works per deployment option.
+With the vSphere, Bare Metal, Snow, CloudStack and Nutanix deployment options, EKS Anywhere provisions the operating system when new machines are deployed during cluster creation, upgrade, and scaling operations. You can configure the operating system to use through the EKS Anywhere cluster spec, which varies by deployment option. See the deployment option sections below for an overview of how the operating system configuration works per deployment option.
 
 ## vSphere
 To configure the operating system to use for EKS Anywhere clusters on vSphere, use the [`VSphereMachingConfig` `spec.template` field]({{< ref "/docs/getting-started/vsphere/vsphere-spec#template-optional" >}}). The template name corresponds to the template you imported into your vSphere environment. See the [Customize OVAs]({{< ref "/docs/getting-started/vsphere/customize/customize-ovas" >}}) and [Import OVAs]({{< ref "/docs/getting-started/vsphere/customize/vsphere-ovas" >}}) documentation pages for more information. Changing the template after cluster creation will result in the deployment of new machines.
