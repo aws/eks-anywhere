@@ -39,6 +39,11 @@ type VSphereClientBuilder interface {
 	Build(ctx context.Context, host string, username string, password string, insecure bool, datacenter string) (govmomi.VSphereClient, error)
 }
 
+// ResourcePaths defines an interface for objects that contain vSphere resource path information.
+type ResourcePaths interface {
+	ResourcePaths() map[string]string
+}
+
 type Validator struct {
 	govc                 ProviderGovcClient
 	vSphereClientBuilder VSphereClientBuilder
@@ -396,21 +401,28 @@ func (v *Validator) validateNetwork(ctx context.Context, network string) error {
 	return nil
 }
 
-func (v *Validator) collectSpecMachineConfigs(ctx context.Context, spec *Spec) ([]*anywherev1.VSphereMachineConfig, error) {
+func (v *Validator) collectResourcePathConfig(_ context.Context, spec *Spec) ([]ResourcePaths, error) {
+	resourcePaths := []ResourcePaths{}
 	controlPlaneMachineConfig := spec.controlPlaneMachineConfig()
-	machineConfigs := []*anywherev1.VSphereMachineConfig{controlPlaneMachineConfig}
+	resourcePaths = append(resourcePaths, controlPlaneMachineConfig)
 
 	for _, workerNodeGroupConfiguration := range spec.Cluster.Spec.WorkerNodeGroupConfigurations {
 		workerNodeGroupMachineConfig := spec.workerMachineConfig(workerNodeGroupConfiguration)
-		machineConfigs = append(machineConfigs, workerNodeGroupMachineConfig)
+		resourcePaths = append(resourcePaths, workerNodeGroupMachineConfig)
 	}
 
 	if spec.Cluster.Spec.ExternalEtcdConfiguration != nil {
 		etcdMachineConfig := spec.etcdMachineConfig()
-		machineConfigs = append(machineConfigs, etcdMachineConfig)
+		resourcePaths = append(resourcePaths, etcdMachineConfig)
 	}
 
-	return machineConfigs, nil
+	if spec.VSphereDatacenter.Spec.FailureDomains != nil {
+		for _, failureDomain := range spec.VSphereDatacenter.Spec.FailureDomains {
+			resourcePaths = append(resourcePaths, &failureDomain)
+		}
+	}
+
+	return resourcePaths, nil
 }
 
 func (v *Validator) validateVsphereUserPrivs(ctx context.Context, vSphereClusterSpec *Spec) error {
@@ -441,7 +453,7 @@ func markPrivsValidationPass(passed bool, username string) {
 }
 
 func (v *Validator) validateUserPrivs(ctx context.Context, spec *Spec, vuc *config.VSphereUserConfig) (bool, error) {
-	machineConfigs, err := v.collectSpecMachineConfigs(ctx, spec)
+	resourcePaths, err := v.collectResourcePathConfig(ctx, spec)
 	if err != nil {
 		return false, err
 	}
@@ -461,58 +473,76 @@ func (v *Validator) validateUserPrivs(ctx context.Context, spec *Spec, vuc *conf
 	}
 
 	seen := map[string]interface{}{}
-	for _, mc := range machineConfigs {
-
-		if _, ok := seen[mc.Spec.Datastore]; !ok {
+	for _, mc := range resourcePaths {
+		datastore := mc.ResourcePaths()["datastore"]
+		if _, ok := seen[datastore]; !ok {
 			requiredPrivAssociations = append(requiredPrivAssociations, PrivAssociation{
 				objectType:   govmomi.VSphereTypeDatastore,
 				privsContent: config.VSphereUserPrivsFile,
-				path:         mc.Spec.Datastore,
+				path:         datastore,
 			},
 			)
-			seen[mc.Spec.Datastore] = 1
+			seen[datastore] = 1
 		}
-		if _, ok := seen[mc.Spec.ResourcePool]; !ok {
-			// do something here
+		resourcePool := mc.ResourcePaths()["resourcePool"]
+		if _, ok := seen[resourcePool]; !ok {
 			requiredPrivAssociations = append(requiredPrivAssociations, PrivAssociation{
 				objectType:   govmomi.VSphereTypeResourcePool,
 				privsContent: config.VSphereUserPrivsFile,
-				path:         mc.Spec.ResourcePool,
+				path:         resourcePool,
 			})
-			seen[mc.Spec.ResourcePool] = 1
+			seen[resourcePool] = 1
 		}
-		if _, ok := seen[mc.Spec.Folder]; !ok {
-			// validate Administrator role (all privs) on VM folder and Template folder
+		folder := mc.ResourcePaths()["folder"]
+		if _, ok := seen[folder]; !ok {
 			requiredPrivAssociations = append(requiredPrivAssociations, PrivAssociation{
 				objectType:   govmomi.VSphereTypeFolder,
 				privsContent: config.VSphereAdminPrivsFile,
-				path:         mc.Spec.Folder,
+				path:         folder,
 			})
-			seen[mc.Spec.Folder] = 1
+			seen[folder] = 1
 		}
 
-		if _, ok := seen[mc.Spec.Template]; !ok {
-			// ToDo: add more sophisticated validation around a scenario where someone has uploaded templates
-			// on their own and does not want to allow EKSA user write access to templates
-			// Verify privs on the template
-			requiredPrivAssociations = append(requiredPrivAssociations, PrivAssociation{
-				objectType:   govmomi.VSphereTypeVirtualMachine,
-				privsContent: config.VSphereAdminPrivsFile,
-				path:         mc.Spec.Template,
-			})
-			seen[mc.Spec.Template] = 1
+		switch v := mc.(type) {
+		case *anywherev1.FailureDomain:
+			computecluster := v.ResourcePaths()["computeCluster"]
+			if _, ok := seen[computecluster]; !ok {
+				requiredPrivAssociations = append(requiredPrivAssociations, PrivAssociation{
+					objectType:   govmomi.VSphereTypeComputeCluster,
+					privsContent: config.VSphereAdminPrivsFile,
+					path:         computecluster,
+				})
+				seen[computecluster] = 1
+			}
+
+		case *anywherev1.VSphereMachineConfig:
+			template := v.ResourcePaths()["template"]
+			if _, ok := seen[template]; !ok {
+				// ToDo: add more sophisticated validation around a scenario where someone has uploaded templates
+				// on their own and does not want to allow EKSA user write access to templates
+				// Verify privs on the template
+				requiredPrivAssociations = append(requiredPrivAssociations, PrivAssociation{
+					objectType:   govmomi.VSphereTypeVirtualMachine,
+					privsContent: config.VSphereAdminPrivsFile,
+					path:         template,
+				})
+				seen[template] = 1
+			}
+
+			if _, ok := seen[filepath.Dir(template)]; !ok {
+				requiredPrivAssociations = append(requiredPrivAssociations, PrivAssociation{
+					objectType:   govmomi.VSphereTypeFolder,
+					privsContent: config.VSphereAdminPrivsFile,
+					path:         filepath.Dir(template),
+				})
+
+				seen[filepath.Dir(template)] = 1
+			}
+
+		default:
+			return false, errors.New("unexpected type in missing validateUserPrivs")
 		}
 
-		if _, ok := seen[filepath.Dir(mc.Spec.Template)]; !ok {
-			// Verify privs on the template directory
-			requiredPrivAssociations = append(requiredPrivAssociations, PrivAssociation{
-				objectType:   govmomi.VSphereTypeFolder,
-				privsContent: config.VSphereAdminPrivsFile,
-				path:         filepath.Dir(mc.Spec.Template),
-			})
-
-			seen[filepath.Dir(mc.Spec.Template)] = 1
-		}
 	}
 
 	host := spec.VSphereDatacenter.Spec.Server

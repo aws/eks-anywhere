@@ -434,7 +434,7 @@ func (p *vsphereProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cl
 
 	if !p.skippedValidations[validations.VSphereUserPriv] {
 		if err := p.validator.validateVsphereUserPrivs(ctx, vSphereClusterSpec); err != nil {
-			return fmt.Errorf("validating vsphere user privileges: %v", err)
+			return fmt.Errorf("validating vsphere user privileges: %w, please refer to %s for required permissions or use -v 3 for full missing permissions", err, vSpherePermissionDoc)
 		}
 	}
 
