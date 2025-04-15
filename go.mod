@@ -2,7 +2,7 @@ module github.com/aws/eks-anywhere
 
 go 1.23.0
 
-toolchain go1.23.6
+toolchain go1.23.8
 
 require (
 	github.com/Masterminds/sprig v2.22.0+incompatible

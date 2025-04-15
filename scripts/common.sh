@@ -85,6 +85,12 @@ function build::common::upload_artifacts() {
 
 function build::gather_licenses() {
   local -r golang_version=$1
+  # Setting this variable to local so that it always uses the local
+  # bundled toolchain regardless of the version specified in go.mod file
+  # It was introduced in this commit from Go1.21 onwards:
+  # https://github.com/golang/go/commit/83dfe5cf62234427eae04131dc6e4551fd283463
+  # Upstream issue:- https://github.com/google/go-licenses/issues/244
+  export GOTOOLCHAIN=local
 
   build::common::use_go_version $golang_version
   if ! command -v go-licenses &> /dev/null
