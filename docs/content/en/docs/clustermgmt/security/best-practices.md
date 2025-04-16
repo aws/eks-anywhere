@@ -82,13 +82,16 @@ For more information about creating limited roles for day-to-day administration 
 The critical namespaces include:
 
 * `eksa-system`
-* `capv-system`
+* `eksa-packages`
 * `flux-system`
+* `capv-system` (or the respective provider you are using)
 * `capi-system`
 * `capi-webhook-system`
 * `capi-kubeadm-control-plane-system`
 * `capi-kubeadm-bootstrap-system`
 * `cert-manager`
+* `etcdadm-controller-system`
+* `etcdadm-bootstrap-provider-system`
 * `kube-system` (as with any Kubernetes cluster, this namespace is critical to the functioning of your cluster and should be treated with the highest level of sensitivity.)
 
 
