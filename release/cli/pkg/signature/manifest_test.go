@@ -16,6 +16,7 @@ package signature
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -23,6 +24,8 @@ import (
 	anywherev1constants "github.com/aws/eks-anywhere/pkg/constants"
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	"github.com/aws/eks-anywhere/release/cli/pkg/constants"
+
+	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 )
 
 func TestGetBundleSignature(t *testing.T) {
@@ -116,19 +119,58 @@ func TestGetBundleSignature(t *testing.T) {
 			sig, err := GetBundleSignature(ctx, tt.bundle, tt.key)
 
 			if tt.expectErrSubstr == "" {
-				// Expecting no particular error substring -> test for success
-				g.Expect(err).NotTo(HaveOccurred(),
-					"Expected no error but got error: %v", err)
-				g.Expect(sig).NotTo(BeEmpty(),
-					"Expected signature string to be non-empty on success")
+				g.Expect(err).NotTo(HaveOccurred(), "Expected no error but got: %v", err)
+				g.Expect(sig).NotTo(BeEmpty(), "Expected non-empty signature on success")
 			} else {
-				// Expecting an error substring -> test for error presence
-				g.Expect(err).To(HaveOccurred(),
-					"Expected an error but got none")
-				g.Expect(err.Error()).To(ContainSubstring(tt.expectErrSubstr),
-					"Error message should contain substring %q, got: %v", tt.expectErrSubstr, err)
-				g.Expect(sig).To(BeEmpty(),
-					"Expected signature to be empty when error occurs")
+				g.Expect(err).To(HaveOccurred(), "Expected error but got none")
+				g.Expect(err.Error()).To(ContainSubstring(tt.expectErrSubstr), "Error message should contain substring %q, got: %v", tt.expectErrSubstr, err)
+				g.Expect(sig).To(BeEmpty(), "Expected empty signature when error occurs")
+			}
+		})
+	}
+}
+
+func TestGetEKSDistroManifestSignature(t *testing.T) {
+	testCases := []struct {
+		testName        string
+		bundle          *anywherev1alpha1.Bundles
+		key             string
+		releaseUrl      string
+		expectErrSubstr string
+	}{
+		{
+			testName:        "Invalid release URL",
+			bundle:          &anywherev1alpha1.Bundles{},
+			key:             constants.EKSDistroManifestKmsKey,
+			releaseUrl:      "invalid-test-url",
+			expectErrSubstr: "getting eks distro release",
+		},
+		{
+			testName:        "Valid eks distro manifest signature generation",
+			bundle:          &anywherev1alpha1.Bundles{},
+			key:             constants.EKSDistroManifestKmsKey,
+			releaseUrl:      "https://distro.eks.amazonaws.com/kubernetes-1-28/kubernetes-1-28-eks-46.yaml",
+			expectErrSubstr: "",
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.testName, func(t *testing.T) {
+			g := NewWithT(t)
+
+			ctx := context.Background()
+			sig, err := GetEKSDistroManifestSignature(ctx, tt.bundle, tt.key, tt.releaseUrl)
+			if tt.testName == "Valid eks distro manifest signature generation" {
+				fmt.Println(sig)
+			}
+			
+			if tt.expectErrSubstr == "" {
+				g.Expect(err).NotTo(HaveOccurred(), "Expected no error but got: %v", err)
+				g.Expect(sig).NotTo(BeEmpty(), "Expected non-empty signature on success")
+			} else {
+				g.Expect(err).To(HaveOccurred(), "Expected error but got none")
+				g.Expect(err.Error()).To(ContainSubstring(tt.expectErrSubstr), "Error should contain substring %q, got: %v", tt.expectErrSubstr, err)
+				g.Expect(sig).To(BeEmpty(), "Expected empty signature when error occurs")
 			}
 		})
 	}
@@ -180,17 +222,67 @@ func TestGetBundleDigest(t *testing.T) {
 
 			digest, filtered, err := getBundleDigest(tt.bundle)
 			if tt.expectErrSubstr == "" {
-				g.Expect(err).NotTo(HaveOccurred(), "Expected success but got error")
-				g.Expect(digest).NotTo(BeZero(),
-					"Expected digest to be non-zero array")
-				g.Expect(filtered).NotTo(BeEmpty(),
-					"Expected filtered bytes to be non-empty")
+				g.Expect(err).NotTo(HaveOccurred(), "Expected success but got error: %v", err)
+				g.Expect(digest).NotTo(BeZero(), "Expected non-zero digest")
+				g.Expect(filtered).NotTo(BeEmpty(), "Expected non-empty filtered output")
 			} else {
-				g.Expect(err).To(HaveOccurred(),
-					"Expected error but got none")
-				g.Expect(err.Error()).To(ContainSubstring(tt.expectErrSubstr),
-					"Error message should contain substring %q, got: %v",
-					tt.expectErrSubstr, err)
+				g.Expect(err).To(HaveOccurred(), "Expected error but got none")
+				g.Expect(err.Error()).To(ContainSubstring(tt.expectErrSubstr), "Error message should contain substring %q, got: %v", tt.expectErrSubstr, err)
+				g.Expect(digest).To(BeZero())
+				g.Expect(filtered).To(BeNil())
+			}
+		})
+	}
+}
+
+func TestGetEKSDistroReleaseDigest(t *testing.T) {
+	testCases := []struct {
+		testName        string
+		release         *eksdv1alpha1.Release
+		expectErrSubstr string
+	}{
+		{
+			testName:        "Simple valid eks distro release",
+			release:         &eksdv1alpha1.Release{},
+			expectErrSubstr: "",
+		},
+		{
+			testName: "Populated eks distro release",
+			release: &eksdv1alpha1.Release{
+				Spec: eksdv1alpha1.ReleaseSpec{
+					Channel: "1-28",
+					Number: 46,
+				},
+				Status: eksdv1alpha1.ReleaseStatus{
+					Components: []eksdv1alpha1.Component{
+						{
+							Name:   "metrics-server",
+							GitTag: "v0.7.2",
+							Assets: []eksdv1alpha1.Asset{
+								{
+									Name: "metrics-server-image",
+								},
+							},
+						},
+					},
+				},
+			},
+			expectErrSubstr: "",
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.testName, func(t *testing.T) {
+			g := NewWithT(t)
+
+			digest, filtered, err := getEKSDistroReleaseDigest(tt.release)
+			if tt.expectErrSubstr == "" {
+				g.Expect(err).NotTo(HaveOccurred(), "Expected success but got error: %v", err)
+				g.Expect(digest).NotTo(BeZero(), "Expected non-zero digest")
+				g.Expect(filtered).NotTo(BeEmpty(), "Expected non-empty filtered output")
+			} else {
+				g.Expect(err).To(HaveOccurred(), "Expected error but got none")
+				g.Expect(err.Error()).To(ContainSubstring(tt.expectErrSubstr), "Error message should contain substring %q, got: %v", tt.expectErrSubstr, err)
 				g.Expect(digest).To(BeZero())
 				g.Expect(filtered).To(BeNil())
 			}

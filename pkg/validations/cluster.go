@@ -176,7 +176,7 @@ func ValidateManagementEksaVersion(mgmtCluster, cluster *v1alpha1.Cluster) error
 		reason := v1alpha1.EksaVersionInvalidReason
 		cluster.Status.FailureMessage = ptr.String(errMsg)
 		cluster.Status.FailureReason = &reason
-		return fmt.Errorf(errMsg)
+		return errors.New(errMsg)
 	}
 
 	// reset failure message if old matches this validation
