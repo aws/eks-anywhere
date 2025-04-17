@@ -6,7 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
@@ -24,7 +23,6 @@ func TestValidateExtendedK8sVersionSupport(t *testing.T) {
 		name        string
 		cluster     anywherev1.Cluster
 		bundle      *v1alpha1.Bundles
-		eksdRelease *eksdv1alpha1.Release
 		wantErr     error
 	}{
 		{
@@ -87,33 +85,6 @@ func TestValidateExtendedK8sVersionSupport(t *testing.T) {
 				},
 			},
 			bundle: validBundle(),
-			eksdRelease: &eksdv1alpha1.Release{
-				TypeMeta: v1.TypeMeta{
-					Kind:       "Release",
-					APIVersion: eksdv1alpha1.GroupVersion.String(),
-				},
-				ObjectMeta: v1.ObjectMeta{
-					Name:      "kubernetes-1-28-46",
-					Namespace: constants.EksaSystemNamespace,
-				},
-				Spec: eksdv1alpha1.ReleaseSpec{
-					Channel: "1-28",
-					Number:  46,
-				},
-				Status: eksdv1alpha1.ReleaseStatus{
-					Components: []eksdv1alpha1.Component{
-						{
-							Name:   "metrics-server",
-							GitTag: "v0.7.2",
-							Assets: []eksdv1alpha1.Asset{
-								{
-									Name: "metrics-server-image",
-								},
-							},
-						},
-					},
-				},
-			},
 			wantErr: fmt.Errorf("licenseToken is required for extended kubernetes support"),
 		},
 		{
@@ -125,33 +96,6 @@ func TestValidateExtendedK8sVersionSupport(t *testing.T) {
 				},
 			},
 			bundle:  validBundle(),
-			eksdRelease: &eksdv1alpha1.Release{
-				TypeMeta: v1.TypeMeta{
-					Kind:       "Release",
-					APIVersion: eksdv1alpha1.GroupVersion.String(),
-				},
-				ObjectMeta: v1.ObjectMeta{
-					Name:      "kubernetes-1-28-46",
-					Namespace: constants.EksaSystemNamespace,
-				},
-				Spec: eksdv1alpha1.ReleaseSpec{
-					Channel: "1-28",
-					Number:  46,
-				},
-				Status: eksdv1alpha1.ReleaseStatus{
-					Components: []eksdv1alpha1.Component{
-						{
-							Name:   "metrics-server",
-							GitTag: "v0.7.2",
-							Assets: []eksdv1alpha1.Asset{
-								{
-									Name: "metrics-server-image",
-								},
-							},
-						},
-					},
-				},
-			},
 			wantErr: fmt.Errorf("getting licenseToken"),
 		},
 	}
@@ -159,11 +103,6 @@ func TestValidateExtendedK8sVersionSupport(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(_ *testing.T) {
 			client := test.NewFakeKubeClient()
-			if tc.eksdRelease != nil {
-				cb := fake.NewClientBuilder()
-				cl := cb.WithRuntimeObjects(tc.eksdRelease).Build()
-				client = test.NewKubeClient(cl)
-			}
 
 			err := ValidateExtendedK8sVersionSupport(ctx, tc.cluster, tc.bundle, client)
 			if err != nil && !strings.Contains(err.Error(), tc.wantErr.Error()) {
@@ -246,7 +185,7 @@ func validBundle() *v1alpha1.Bundles {
 		ObjectMeta: v1.ObjectMeta{
 			Annotations: map[string]string{
 				constants.SignatureAnnotation:                                  "MEUCIC1XI8WELDFzpbc3GEy8N0ZHIGWYmuoxVhK7nNU7lB3JAiEAkw3jtXn3eHnRuuo/P9Nr+Z6X8FXhTGVv+0ZiOpx7Sls=",
-				fmt.Sprintf("%s-1-28", constants.EKSDistroSignatureAnnotation): "MEUCIQC3uP3Dhfb/nhCeir0Hwtf4bddKVfVIauFWBidT18XZOwIgHjzH1mOxBm1N2l2w9wBVy9W1o6CQXpdDz7UcbCszZYc=",
+				fmt.Sprintf("%s-1-28", constants.EKSDistroSignatureAnnotation): "MEUCIG6ESJds+DgstQDs2ScLGgEVxtNKNpf8rY1cl2DbA3hvAiEAsxL4SWCopeAy9vzNWTxBRq22/oPdtr8w8Cp4yCER9TE=",
 			},
 		},
 		Spec: v1alpha1.BundlesSpec{
