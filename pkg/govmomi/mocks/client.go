@@ -131,6 +131,21 @@ func (m *MockVMOMIFinder) EXPECT() *MockVMOMIFinderMockRecorder {
 	return m.recorder
 }
 
+// ClusterComputeResource mocks base method.
+func (m *MockVMOMIFinder) ClusterComputeResource(arg0 context.Context, arg1 string) (*object.ClusterComputeResource, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ClusterComputeResource", arg0, arg1)
+	ret0, _ := ret[0].(*object.ClusterComputeResource)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ClusterComputeResource indicates an expected call of ClusterComputeResource.
+func (mr *MockVMOMIFinderMockRecorder) ClusterComputeResource(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ClusterComputeResource", reflect.TypeOf((*MockVMOMIFinder)(nil).ClusterComputeResource), arg0, arg1)
+}
+
 // Datacenter mocks base method.
 func (m *MockVMOMIFinder) Datacenter(arg0 context.Context, arg1 string) (*object.Datacenter, error) {
 	m.ctrl.T.Helper()

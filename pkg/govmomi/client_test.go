@@ -2,7 +2,7 @@ package govmomi_test
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"reflect"
 	"testing"
 
@@ -83,6 +83,19 @@ func TestGetPrivsOnEntity(t *testing.T) {
 			},
 		},
 		{
+			name:      "test compute cluster call happy path",
+			objType:   govmomi.VSphereTypeComputeCluster,
+			path:      "Datacenter/host/EKS-A",
+			wantPrivs: wantPrivs,
+			wantErr:   "",
+			prepare: func(f *fields) {
+				obj := object.ClusterComputeResource{}
+				objRefs := []types.ManagedObjectReference{obj.Reference()}
+				f.AuthorizationManager.EXPECT().FetchUserPrivilegeOnEntities(ctx, objRefs, username).Return(results, nil)
+				f.Finder.EXPECT().ClusterComputeResource(ctx, f.Path).Return(&obj, nil)
+			},
+		},
+		{
 			name:      "test virtual machine call happy path",
 			objType:   govmomi.VSphereTypeVirtualMachine,
 			path:      "Datacenter/vm/Templates/MyVMTemplate",
@@ -115,7 +128,7 @@ func TestGetPrivsOnEntity(t *testing.T) {
 			wantPrivs: []string{},
 			wantErr:   errMsg,
 			prepare: func(f *fields) {
-				f.Finder.EXPECT().Network(ctx, f.Path).Return(nil, fmt.Errorf(errMsg))
+				f.Finder.EXPECT().Network(ctx, f.Path).Return(nil, errors.New(errMsg))
 			},
 		},
 		{
@@ -126,8 +139,8 @@ func TestGetPrivsOnEntity(t *testing.T) {
 			wantErr:   errMsg,
 			prepare: func(f *fields) {
 				obj := object.VirtualMachine{}
-				objRefs := []types.ManagedObjectReference{obj.Common.Reference()}
-				f.AuthorizationManager.EXPECT().FetchUserPrivilegeOnEntities(ctx, objRefs, username).Return(nil, fmt.Errorf(errMsg))
+				objRefs := []types.ManagedObjectReference{obj.Reference()}
+				f.AuthorizationManager.EXPECT().FetchUserPrivilegeOnEntities(ctx, objRefs, username).Return(nil, errors.New(errMsg))
 				f.Finder.EXPECT().VirtualMachine(ctx, f.Path).Return(&obj, nil)
 			},
 		},
@@ -138,7 +151,17 @@ func TestGetPrivsOnEntity(t *testing.T) {
 			wantPrivs: []string{},
 			wantErr:   errMsg,
 			prepare: func(f *fields) {
-				f.Finder.EXPECT().ResourcePool(ctx, f.Path).Return(nil, fmt.Errorf(errMsg))
+				f.Finder.EXPECT().ResourcePool(ctx, f.Path).Return(nil, errors.New(errMsg))
+			},
+		},
+		{
+			name:      "test compute cluster call missing object",
+			objType:   govmomi.VSphereTypeComputeCluster,
+			path:      "Datacenter/host/EKS-A-Missing",
+			wantPrivs: []string{},
+			wantErr:   errMsg,
+			prepare: func(f *fields) {
+				f.Finder.EXPECT().ClusterComputeResource(ctx, f.Path).Return(nil, errors.New(errMsg))
 			},
 		},
 		{
