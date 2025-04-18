@@ -16,6 +16,7 @@ package signature
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -132,18 +133,21 @@ func TestGetBundleSignature(t *testing.T) {
 func TestGetEKSDistroManifestSignature(t *testing.T) {
 	testCases := []struct {
 		testName        string
+		bundle          *anywherev1alpha1.Bundles
 		key             string
 		releaseUrl      string
 		expectErrSubstr string
 	}{
 		{
 			testName:        "Invalid release URL",
+			bundle:          &anywherev1alpha1.Bundles{},
 			key:             constants.EKSDistroManifestKmsKey,
 			releaseUrl:      "invalid-test-url",
 			expectErrSubstr: "getting eks distro release",
 		},
 		{
 			testName:        "Valid eks distro manifest signature generation",
+			bundle:          &anywherev1alpha1.Bundles{},
 			key:             constants.EKSDistroManifestKmsKey,
 			releaseUrl:      "https://distro.eks.amazonaws.com/kubernetes-1-28/kubernetes-1-28-eks-46.yaml",
 			expectErrSubstr: "",
@@ -155,7 +159,10 @@ func TestGetEKSDistroManifestSignature(t *testing.T) {
 			g := NewWithT(t)
 
 			ctx := context.Background()
-			sig, err := GetEKSDistroManifestSignature(ctx, tt.key, tt.releaseUrl)
+			sig, err := GetEKSDistroManifestSignature(ctx, tt.bundle, tt.key, tt.releaseUrl)
+			if tt.testName == "Valid eks distro manifest signature generation" {
+				fmt.Println(sig)
+			}
 			
 			if tt.expectErrSubstr == "" {
 				g.Expect(err).NotTo(HaveOccurred(), "Expected no error but got: %v", err)

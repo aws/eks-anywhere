@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -49,11 +47,11 @@ func ValidateExtendedK8sVersionSupport(ctx context.Context, clusterSpec anywhere
 		releaseChannel := versionsBundle.EksD.ReleaseChannel
 		signatureAnnotation := constants.EKSDistroSignatureAnnotation + "-" + releaseChannel
 		sig := bundle.Annotations[signatureAnnotation]
-		releaseURL := versionsBundle.EksD.EksDReleaseUrl
 		releaseManifest := &eksdv1alpha1.Release{}
-		if strings.Contains(releaseURL, "eks-anywhere-downloads") {
+		if strings.Contains(versionsBundle.EksD.EksDReleaseUrl, "eks-anywhere-downloads") {
+			releaseManifestFilePath := versionsBundle.EksD.EksDReleaseUrl
 			// Read the EKS-D release manifest file from the given path.
-			contents, err := os.ReadFile(releaseURL)
+			contents, err := os.ReadFile(releaseManifestFilePath)
 			if err != nil {
 				return fmt.Errorf("reading eksd release manifest file: %w", err)
 			}
@@ -62,9 +60,8 @@ func ValidateExtendedK8sVersionSupport(ctx context.Context, clusterSpec anywhere
 				return fmt.Errorf("unmarshalling eksd release manifest file: %w", err)
 			}
 		} else {
-			releaseManifest, err = getEksdRelease(releaseURL)
-			if err != nil {
-				return fmt.Errorf("getting eks distro release: %w", err)
+			if err := k.Get(ctx, versionsBundle.EksD.Name, constants.EksaSystemNamespace, releaseManifest); err != nil {
+				return fmt.Errorf("getting %s eks distro release: %w", versionsBundle.EksD.Name, err)
 			}
 		}
 		if err := validateEKSDistroManifestSignature(releaseManifest, sig, releaseChannel); err != nil {
@@ -176,35 +173,6 @@ func validateLicenseKeyIsUnique(ctx context.Context, clusterName string, license
 		}
 	}
 	return nil
-}
-
-func getEksdRelease(eksdReleaseURL string) (*eksdv1alpha1.Release, error) {
-	content, err := readHTTPFile(eksdReleaseURL)
-	if err != nil {
-		return nil, err
-	}
-
-	eksd := &eksdv1alpha1.Release{}
-	if err = yaml.UnmarshalStrict(content, eksd); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal eksd manifest: %w", err)
-	}
-
-	return eksd, nil
-}
-
-func readHTTPFile(uri string) ([]byte, error) {
-	resp, err := http.Get(uri)
-	if err != nil {
-		return nil, fmt.Errorf("failed reading file from url [%s]: %w", uri, err)
-	}
-	defer resp.Body.Close()
-
-	data, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed reading file from url [%s]: %w", uri, err)
-	}
-
-	return data, nil
 }
 
 // ShouldSkipBundleSignatureValidation returns true if the eksa version is less than v0.22.0
