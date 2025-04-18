@@ -51,6 +51,18 @@ type FailureDomain struct {
 	Network string `json:"network"`
 }
 
+// ResourcePaths returns a map of vSphere resource paths defined in the FailureDomain.
+// It collects the ComputeCluster, ResourcePool, Datastore, and Folder paths
+// into a structured map for easier access and validation during cluster operations.
+func (fd *FailureDomain) ResourcePaths() map[string]string {
+	return map[string]string{
+		"computeCluster": fd.ComputeCluster,
+		"resourcePool":   fd.ResourcePool,
+		"datastore":      fd.Datastore,
+		"folder":         fd.Folder,
+	}
+}
+
 // VSphereDatacenterConfigStatus defines the observed state of VSphereDatacenterConfig.
 type VSphereDatacenterConfigStatus struct { // Important: Run "make generate" to regenerate code after modifying this file
 	// SpecValid is set to true if vspheredatacenterconfig is validated.

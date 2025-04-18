@@ -30,6 +30,18 @@ type VSphereMachineConfigSpec struct {
 	HostOSConfiguration *HostOSConfiguration `json:"hostOSConfiguration,omitempty"`
 }
 
+// ResourcePaths returns a map of vSphere resource paths defined in the VSphereMachineConfig.
+// It collects the Template, ResourcePool, Datastore, and Folder paths
+// into a structured map for easier access and validation during cluster operations.
+func (c *VSphereMachineConfig) ResourcePaths() map[string]string {
+	return map[string]string{
+		"folder":       c.Spec.Folder,
+		"datastore":    c.Spec.Datastore,
+		"resourcePool": c.Spec.ResourcePool,
+		"template":     c.Spec.Template,
+	}
+}
+
 func (c *VSphereMachineConfig) PauseReconcile() {
 	c.Annotations[pausedAnnotation] = "true"
 }

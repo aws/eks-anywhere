@@ -376,6 +376,99 @@ func TestValidatorValidateMachineConfigTemplateDoesNotExist(t *testing.T) {
 	g.Expect(err).To(MatchError("validating template: not found"))
 }
 
+func TestValidatorValidateUserPrivsWithComputeCluster(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	govc := govcmocks.NewMockProviderGovcClient(ctrl)
+	vscb := govcmocks.NewMockVSphereClientBuilder(ctrl)
+	vsc := mocks.NewMockVSphereClient(ctrl)
+
+	v := Validator{
+		govc:                 govc,
+		vSphereClientBuilder: vscb,
+	}
+
+	ctx := context.Background()
+
+	// Create a spec with a machine config that has a compute cluster
+	spec := clusterSpec(
+		func(s *Spec) {
+			// Add a failure domain with compute cluster
+			s.VSphereDatacenter.Spec.FailureDomains = []v1alpha1.FailureDomain{
+				{
+					Name:           "fd-1",
+					ComputeCluster: "test-compute-cluster",
+					ResourcePool:   "test-resource-pool",
+					Datastore:      "test-datastore",
+					Folder:         "test-folder",
+					Network:        "test-network",
+				},
+			}
+		},
+	)
+
+	// Setup VSphere user config
+	vuc := config.NewVsphereUserConfig()
+	vuc.EksaVsphereUsername = "test-user"
+	vuc.EksaVspherePassword = "test-password"
+
+	var privs []string
+	err := json.Unmarshal([]byte(config.VSphereAdminPrivsFile), &privs)
+	if err != nil {
+		t.Fatalf("failed to validate privs: %v", err)
+	}
+
+	// Setup expectations for the VSphere client
+	vscb.EXPECT().Build(
+		ctx,
+		spec.VSphereDatacenter.Spec.Server,
+		vuc.EksaVsphereUsername,
+		vuc.EksaVspherePassword,
+		spec.VSphereDatacenter.Spec.Insecure,
+		spec.VSphereDatacenter.Spec.Datacenter,
+	).Return(vsc, nil)
+
+	// Mock the username call
+	vsc.EXPECT().Username().Return(vuc.EksaVsphereUsername).AnyTimes()
+
+	// Mock the privilege checks
+	// For root folder
+	vsc.EXPECT().GetPrivsOnEntity(
+		ctx,
+		vsphereRootPath,
+		govmomi.VSphereTypeFolder,
+		vuc.EksaVsphereUsername,
+	).Return(privs, nil)
+
+	// For network
+	vsc.EXPECT().GetPrivsOnEntity(
+		ctx,
+		spec.VSphereDatacenter.Spec.Network,
+		govmomi.VSphereTypeNetwork,
+		vuc.EksaVsphereUsername,
+	).Return(privs, nil)
+
+	// For compute cluster - this is what we're specifically testing
+	vsc.EXPECT().GetPrivsOnEntity(
+		ctx,
+		"test-compute-cluster",
+		govmomi.VSphereTypeComputeCluster,
+		vuc.EksaVsphereUsername,
+	).Return(privs, nil)
+
+	// For other resources that would be checked
+	vsc.EXPECT().GetPrivsOnEntity(
+		ctx,
+		gomock.Any(),
+		gomock.Any(),
+		vuc.EksaVsphereUsername,
+	).Return(privs, nil).AnyTimes()
+
+	passed, err := v.validateUserPrivs(ctx, spec, vuc)
+
+	assert.True(t, passed)
+	assert.NoError(t, err)
+}
+
 func TestValidateFailureDomains(t *testing.T) {
 	tests := []testConfig{
 		{
