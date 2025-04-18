@@ -84,7 +84,7 @@ func GetBundleSignature(ctx context.Context, bundle *anywherev1alpha1.Bundles, k
 
 // GetEKSDistroManifestSignature calls KMS and retrieves a signature, then base64-encodes it
 // to store in the Bundles manifest annotation.
-func GetEKSDistroManifestSignature(ctx context.Context, key, releaseUrl string) (string, error) {
+func GetEKSDistroManifestSignature(ctx context.Context, bundle *anywherev1alpha1.Bundles, key, releaseUrl string) (string, error) {
 	// Retrieve the eks-distro release from the release URL.
 	eksdRelease, err := filereader.GetEksdRelease(releaseUrl)
 	if err != nil {
