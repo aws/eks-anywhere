@@ -4,13 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
-	"strings"
 	"time"
 
-	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	"github.com/golang-jwt/jwt/v5"
-	"sigs.k8s.io/yaml"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
@@ -32,54 +28,19 @@ func ValidateExtendedK8sVersionSupport(ctx context.Context, clusterSpec anywhere
 		return fmt.Errorf("validating bundle signature: %w", err)
 	}
 
-	versionsBundle, err := cluster.GetVersionsBundle(clusterSpec.Spec.KubernetesVersion, bundle)
-	if err != nil {
-		return fmt.Errorf("getting versions bundle for %s kubernetes version: %w", clusterSpec.Spec.KubernetesVersion, err)
-	}
-
 	// Check whether the kubernetes version for the cluster is currently under extended support by comparing the endOfStandardSupport date from the bundle with the current date.
-	isExtended, err := isExtendedSupport(versionsBundle)
+	isExtended, err := isExtendedSupport(clusterSpec.Spec.KubernetesVersion, bundle)
 	if err != nil {
 		return err
 	}
 	if isExtended {
-		// Validate EKS Distro manifest has not been modified by verifying the signature in the EKS-A bundle annotation
-		releaseChannel := versionsBundle.EksD.ReleaseChannel
-		signatureAnnotation := constants.EKSDistroSignatureAnnotation + "-" + releaseChannel
-		sig := bundle.Annotations[signatureAnnotation]
-		releaseManifest := &eksdv1alpha1.Release{}
-		if strings.Contains(versionsBundle.EksD.EksDReleaseUrl, "eks-anywhere-downloads") {
-			releaseManifestFilePath := versionsBundle.EksD.EksDReleaseUrl
-			// Read the EKS-D release manifest file from the given path.
-			contents, err := os.ReadFile(releaseManifestFilePath)
-			if err != nil {
-				return fmt.Errorf("reading eksd release manifest file: %w", err)
-			}
-			// Unmarshal the file contents into the releaseManifest variable.
-			if err := yaml.Unmarshal(contents, releaseManifest); err != nil {
-				return fmt.Errorf("unmarshalling eksd release manifest file: %w", err)
-			}
-		} else {
-			if err := k.Get(ctx, versionsBundle.EksD.Name, constants.EksaSystemNamespace, releaseManifest); err != nil {
-				return fmt.Errorf("getting %s eks distro release: %w", versionsBundle.EksD.Name, err)
-			}
-		}
-		if err := validateEKSDistroManifestSignature(releaseManifest, sig, releaseChannel); err != nil {
-			return fmt.Errorf("validating eks distro manifest signature: %w", err)
-		}
-
-		// Validate that the claims in the license token have not been modified by verifying the signature in the token
 		token, err := getLicense(clusterSpec.Spec.LicenseToken)
 		if err != nil {
 			return fmt.Errorf("getting licenseToken: %w", err)
 		}
-
-		// Validate that the license token has not expired yet
 		if err = validateLicense(token); err != nil {
 			return fmt.Errorf("validating licenseToken: %w", err)
 		}
-
-		// Validate that the same license token is not being used by multiple clusters
 		if clusterSpec.IsManaged() {
 			if err := validateLicenseKeyIsUnique(ctx, clusterSpec.Name, clusterSpec.Spec.LicenseToken, k); err != nil {
 				return fmt.Errorf("validating licenseToken is unique for cluster %s: %w", clusterSpec.Name, err)
@@ -101,19 +62,12 @@ func validateBundleSignature(bundle *v1alpha1.Bundles) error {
 	return nil
 }
 
-// validateEKSDistroManifestSignature validates eks distro manifest signature with the KMS public key.
-func validateEKSDistroManifestSignature(eksdReleaseManifest *eksdv1alpha1.Release, sig, releaseChannel string) error {
-	valid, err := signature.ValidateEKSDistroManifestSignature(eksdReleaseManifest, sig, constants.EKSDistroKMSPublicKey, releaseChannel)
+func isExtendedSupport(kubernetesVersion anywherev1.KubernetesVersion, bundle *v1alpha1.Bundles) (bool, error) {
+	versionsBundle, err := cluster.GetVersionsBundle(kubernetesVersion, bundle)
 	if err != nil {
-		return err
+		return false, fmt.Errorf("getting versions bundle for %s kubernetes version: %w", kubernetesVersion, err)
 	}
-	if !valid {
-		return fmt.Errorf("signature on the %s eks distro manifest is invalid", releaseChannel)
-	}
-	return nil
-}
 
-func isExtendedSupport(versionsBundle *v1alpha1.VersionsBundle) (bool, error) {
 	endOfStandardSupport, err := time.Parse("2006-01-02", versionsBundle.EndOfStandardSupport)
 	if err != nil {
 		return false, fmt.Errorf("parsing EndOfStandardSupport field format: %w", err)
