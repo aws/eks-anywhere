@@ -25,7 +25,13 @@ const (
 	tinkerbellImageUbuntu2204Kubernetes128EnvVar        = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_28"
 	tinkerbellImageUbuntu2204Kubernetes129EnvVar        = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_29"
 	tinkerbellImageUbuntu2204Kubernetes129RTOSEnvVar    = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_29_RTOS"
+	tinkerbellImageUbuntu2204Kubernetes130RTOSEnvVar    = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_30_RTOS"
+	tinkerbellImageUbuntu2204Kubernetes131RTOSEnvVar    = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_31_RTOS"
+	tinkerbellImageUbuntu2204Kubernetes132RTOSEnvVar    = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_32_RTOS"
 	tinkerbellImageUbuntu2204Kubernetes129GenericEnvVar = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_29_GENERIC"
+	tinkerbellImageUbuntu2204Kubernetes130GenericEnvVar = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_30_GENERIC"
+	tinkerbellImageUbuntu2204Kubernetes131GenericEnvVar = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_31_GENERIC"
+	tinkerbellImageUbuntu2204Kubernetes132GenericEnvVar = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_32_GENERIC"
 	tinkerbellImageUbuntu2204Kubernetes130EnvVar        = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_30"
 	tinkerbellImageUbuntu2204Kubernetes131EnvVar        = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_31"
 	tinkerbellImageUbuntu2204Kubernetes132EnvVar        = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_32"
@@ -57,7 +63,13 @@ var requiredTinkerbellEnvVars = []string{
 	tinkerbellImageUbuntu2204Kubernetes128EnvVar,
 	tinkerbellImageUbuntu2204Kubernetes129EnvVar,
 	tinkerbellImageUbuntu2204Kubernetes129RTOSEnvVar,
+	tinkerbellImageUbuntu2204Kubernetes130RTOSEnvVar,
+	tinkerbellImageUbuntu2204Kubernetes131RTOSEnvVar,
+	tinkerbellImageUbuntu2204Kubernetes132RTOSEnvVar,
 	tinkerbellImageUbuntu2204Kubernetes129GenericEnvVar,
+	tinkerbellImageUbuntu2204Kubernetes130GenericEnvVar,
+	tinkerbellImageUbuntu2204Kubernetes131GenericEnvVar,
+	tinkerbellImageUbuntu2204Kubernetes132GenericEnvVar,
 	tinkerbellImageUbuntu2204Kubernetes130EnvVar,
 	tinkerbellImageUbuntu2204Kubernetes131EnvVar,
 	tinkerbellImageUbuntu2204Kubernetes132EnvVar,
@@ -462,9 +474,39 @@ func Ubuntu2204Kubernetes129RTOSImage() api.TinkerbellFiller {
 	return imageForKubeVersionAndOS(anywherev1.Kube129, Ubuntu2204, "", "rtos")
 }
 
+// Ubuntu2204Kubernetes130RTOSImage represents an Ubuntu 22.04 RTOS raw image corresponding to Kubernetes 1.30.
+func Ubuntu2204Kubernetes130RTOSImage() api.TinkerbellFiller {
+	return imageForKubeVersionAndOS(anywherev1.Kube130, Ubuntu2204, "", "rtos")
+}
+
+// Ubuntu2204Kubernetes131RTOSImage represents an Ubuntu 22.04 RTOS raw image corresponding to Kubernetes 1.31.
+func Ubuntu2204Kubernetes131RTOSImage() api.TinkerbellFiller {
+	return imageForKubeVersionAndOS(anywherev1.Kube131, Ubuntu2204, "", "rtos")
+}
+
+// Ubuntu2204Kubernetes132RTOSImage represents an Ubuntu 22.04 RTOS raw image corresponding to Kubernetes 1.32.
+func Ubuntu2204Kubernetes132RTOSImage() api.TinkerbellFiller {
+	return imageForKubeVersionAndOS(anywherev1.Kube132, Ubuntu2204, "", "rtos")
+}
+
 // Ubuntu2204Kubernetes129GenericImage represents an Ubuntu 22.04 Generic raw image corresponding to Kubernetes 1.29.
 func Ubuntu2204Kubernetes129GenericImage() api.TinkerbellFiller {
 	return imageForKubeVersionAndOS(anywherev1.Kube129, Ubuntu2204, "", "generic")
+}
+
+// Ubuntu2204Kubernetes130GenericImage represents an Ubuntu 22.04 Generic raw image corresponding to Kubernetes 1.30.
+func Ubuntu2204Kubernetes130GenericImage() api.TinkerbellFiller {
+	return imageForKubeVersionAndOS(anywherev1.Kube130, Ubuntu2204, "", "generic")
+}
+
+// Ubuntu2204Kubernetes131GenericImage represents an Ubuntu 22.04 Generic raw image corresponding to Kubernetes 1.31.
+func Ubuntu2204Kubernetes131GenericImage() api.TinkerbellFiller {
+	return imageForKubeVersionAndOS(anywherev1.Kube131, Ubuntu2204, "", "generic")
+}
+
+// Ubuntu2204Kubernetes132GenericImage represents an Ubuntu 22.04 Generic raw image corresponding to Kubernetes 1.32.
+func Ubuntu2204Kubernetes132GenericImage() api.TinkerbellFiller {
+	return imageForKubeVersionAndOS(anywherev1.Kube132, Ubuntu2204, "", "generic")
 }
 
 // Ubuntu2204Kubernetes130Image represents an Ubuntu 22.04 raw image corresponding to Kubernetes 1.30.
