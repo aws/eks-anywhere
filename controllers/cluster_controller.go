@@ -390,7 +390,7 @@ func (r *ClusterReconciler) preClusterProviderReconcile(ctx context.Context, log
 		return controller.Result{}, err
 	}
 
-	if err := validateExtendedKubernetesSupport(ctx, r.client, cluster); err != nil {
+	if err := validateExtendedK8sVersionSupport(ctx, r.client, cluster); err != nil {
 		return controller.Result{}, err
 	}
 
@@ -464,7 +464,8 @@ func (r *ClusterReconciler) updateStatus(ctx context.Context, log logr.Logger, c
 
 	defaultCNIConfiguredCondition := conditions.Get(cluster, anywherev1.DefaultCNIConfiguredCondition)
 	if defaultCNIConfiguredCondition == nil ||
-		(defaultCNIConfiguredCondition.Status == "False" &&
+		(defaultCNIConfiguredCondition != nil &&
+			defaultCNIConfiguredCondition.Status == "False" &&
 			defaultCNIConfiguredCondition.Reason != anywherev1.SkipUpgradesForDefaultCNIConfiguredReason) {
 		summarizedConditionTypes = append(summarizedConditionTypes, anywherev1.DefaultCNIConfiguredCondition)
 	}
@@ -641,7 +642,7 @@ func validateEksaRelease(ctx context.Context, client client.Client, cluster *any
 	return nil
 }
 
-func validateExtendedKubernetesSupport(ctx context.Context, client client.Client, cluster *anywherev1.Cluster) error {
+func validateExtendedK8sVersionSupport(ctx context.Context, client client.Client, cluster *anywherev1.Cluster) error {
 	eksaVersion := cluster.Spec.EksaVersion
 	if cluster.Spec.DatacenterRef.Kind == "SnowDatacenterConfig" || eksaVersion == nil {
 		return nil

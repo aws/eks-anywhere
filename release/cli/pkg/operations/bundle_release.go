@@ -268,7 +268,7 @@ func SignEKSDistroManifest(ctx context.Context, bundle *anywherev1alpha1.Bundles
 
 		fmt.Printf("Generating eks distro manifest signature for %s release channel with KMS key: %s\n", releaseChannel, constants.EKSDistroManifestKmsKey)
 
-		signature, err := sig.GetEKSDistroManifestSignature(ctx, constants.EKSDistroManifestKmsKey, releaseUrl)
+		signature, err := sig.GetEKSDistroManifestSignature(ctx, bundle, constants.EKSDistroManifestKmsKey, releaseUrl)
 		if err != nil {
 			return err
 		}
