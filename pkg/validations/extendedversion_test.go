@@ -11,6 +11,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/test"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -18,12 +19,14 @@ import (
 
 func TestValidateExtendedK8sVersionSupport(t *testing.T) {
 	ctx := context.Background()
+	client := test.NewFakeKubeClient()
 
 	tests := []struct {
-		name        string
-		cluster     anywherev1.Cluster
-		bundle      *v1alpha1.Bundles
-		wantErr     error
+		name    string
+		cluster anywherev1.Cluster
+		bundle  *v1alpha1.Bundles
+		client  kubernetes.Client
+		wantErr error
 	}{
 		{
 			name:    "no bundle signature",
@@ -35,7 +38,7 @@ func TestValidateExtendedK8sVersionSupport(t *testing.T) {
 					},
 				},
 			},
-			wantErr: fmt.Errorf("missing bundle signature annotation"),
+			wantErr: fmt.Errorf("missing signature annotation"),
 		},
 		{
 			name: "kubernetes version not supported",
@@ -84,7 +87,7 @@ func TestValidateExtendedK8sVersionSupport(t *testing.T) {
 					LicenseToken:      "",
 				},
 			},
-			bundle: validBundle(),
+			bundle:  validBundle(),
 			wantErr: fmt.Errorf("licenseToken is required for extended kubernetes support"),
 		},
 		{
@@ -102,8 +105,6 @@ func TestValidateExtendedK8sVersionSupport(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(_ *testing.T) {
-			client := test.NewFakeKubeClient()
-
 			err := ValidateExtendedK8sVersionSupport(ctx, tc.cluster, tc.bundle, client)
 			if err != nil && !strings.Contains(err.Error(), tc.wantErr.Error()) {
 				t.Errorf("%v got = %v, \nwant %v", tc.name, err, tc.wantErr)
@@ -184,8 +185,7 @@ func validBundle() *v1alpha1.Bundles {
 		},
 		ObjectMeta: v1.ObjectMeta{
 			Annotations: map[string]string{
-				constants.SignatureAnnotation:                                  "MEUCIC1XI8WELDFzpbc3GEy8N0ZHIGWYmuoxVhK7nNU7lB3JAiEAkw3jtXn3eHnRuuo/P9Nr+Z6X8FXhTGVv+0ZiOpx7Sls=",
-				fmt.Sprintf("%s-1-28", constants.EKSDistroSignatureAnnotation): "MEUCIG6ESJds+DgstQDs2ScLGgEVxtNKNpf8rY1cl2DbA3hvAiEAsxL4SWCopeAy9vzNWTxBRq22/oPdtr8w8Cp4yCER9TE=",
+				constants.SignatureAnnotation: "MEYCIQC8Fuo81dxibtkvrOFZpbFXZGmJnhLN6bkJjx4YB0fGIQIhAJIxIAl3s26eXqcmS6kAyjDd0NXDlBbM0d/GCHcL2Xoo",
 			},
 		},
 		Spec: v1alpha1.BundlesSpec{
@@ -194,11 +194,6 @@ func validBundle() *v1alpha1.Bundles {
 				{
 					KubeVersion:          "1.28",
 					EndOfStandardSupport: "2024-12-31",
-					EksD: v1alpha1.EksDRelease{
-						Name:           "kubernetes-1-28-46",
-						ReleaseChannel: "1-28",
-						EksDReleaseUrl: "https://distro.eks.amazonaws.com/kubernetes-1-28/kubernetes-1-28-eks-46.yaml",
-					},
 				},
 			},
 		},
