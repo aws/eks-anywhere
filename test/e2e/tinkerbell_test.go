@@ -1683,7 +1683,7 @@ func TestTinkerbellAirgappedKubernetes132UbuntuProxyConfigFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewTinkerbell(t,
-			framework.WithUbuntu131Tinkerbell(),
+			framework.WithUbuntu132Tinkerbell(),
 			framework.WithHookImagesURLPath("http://"+localIp.String()+":8080"),
 		),
 		framework.WithClusterFiller(
