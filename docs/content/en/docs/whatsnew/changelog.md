@@ -9,6 +9,7 @@ description: >
 ---
 
 {{% alert title="Announcements" color="warning" %}}
+* If you are upgrading your management cluster to `v0.22.x` patch versions prior to `v0.22.3`, you may encounter a bug related to extended Kubernetes versions support that blocks lifecycle management (LCM) operations on workload clusters running versions prior to `v0.22.0`. To avoid this issue, we recommend upgrading your management cluster directly to `v0.22.3` before performing any workload cluster LCM operations.
 * If you are running EKS Anywhere versions `v0.22.0` or `v0.22.1` in an air-gapped environment with proxy enabled, you may be affected by a Helm `v3.17.1` bug that impacts proxy functionality in air-gapped environments. To resolve this, we recommend upgrading to EKS Anywhere `v0.22.2` or above. More details can be found [here](https://github.com/aws/eks-anywhere-build-tooling/pull/4497)
 * Due to a bug in Cilium introduced in 1.14, which is present in `v0.21.0`-`v0.21.6`, we recommend that you upgrade to `v0.21.7` or above to fix an issue when using hostport. More details listed [here](https://github.com/aws/eks-anywhere-build-tooling/pull/4330)
 * Due to a bug in the `sigs.k8s.io/yaml` module that EKS Anywhere uses, Kubernetes versions whose minor versions are multiples of 10, such as `1.30`, `1.40`, etc, will be parsed as `float64` instead of `string` if specified without quotes in the cluster config file. This causes the trailing zero to get dropped and be evaluated as `1.3` and `1.4` respectively. This issue has been fixed in EKS Anywhere release `v0.21.5` so we recommend you to upgrade to that version for a better user experience. If you are unable to upgrade to `v0.21.5`, you must use single or double quotes around Kubernetes version(s) whose minor versions are multiples of 10.
@@ -39,6 +40,24 @@ description: >
 {{% alert title="General Information" color="info" %}}
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
+
+## [v0.22.3](https://github.com/aws/eks-anywhere/releases/tag/v0.22.3)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.26.2 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+
+
+### Added
+- Add support for specifying vm_version in the image builder config ([#4510](https://github.com/aws/eks-anywhere-build-tooling/pull/4510))
+
+### Fixed
+- Skip bundle signature validation for EKS-A versions prior to v0.22.0 ([#9587](https://github.com/aws/eks-anywhere/pull/9587))
 
 ## [v0.22.2](https://github.com/aws/eks-anywhere/releases/tag/v0.22.2)
 
