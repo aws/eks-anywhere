@@ -51,7 +51,7 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests releasetypes.
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	artifactHashes := []string{}
 
-	// Find latest Package Dev build for the Helm chart and Image which will always start with `0.0.0` and is built off of the package Github repo main on every commit.
+	// Find latest Packages dev build for the Helm chart and Image which will always start with `0.0.0` for helm chart and `v0.0.0` for images respectively.
 	// If we can't find the build starting with our substring, we default to the original dev tag.
 	// If we do find the Tag in Private ECR, but it doesn't exist in Public ECR Copy the image over so the helm chart will work correctly.
 	if r.DevRelease && !r.DryRun {
@@ -157,7 +157,7 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests releasetypes.
 		}
 	}
 
-	if !r.DryRun && r.DevRelease && r.BuildRepoBranchName == "main" {
+	if !r.DryRun && r.DevRelease {
 		for _, componentName := range sortedComponentNames {
 			for _, artifact := range packagesArtifacts[componentName] {
 				if artifact.Image != nil {
