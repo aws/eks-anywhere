@@ -41,7 +41,7 @@ https://github.com/aws/aws-sdk-go-v2/service/ssooidc
 ** github.com/aws/aws-sdk-go-v2/service/sts; version v1.28.4 --
 https://github.com/aws/aws-sdk-go-v2/service/sts
 
-** github.com/aws/eks-anywhere; version 36a5783f8fd8e082b7b3b770f5d1f10b6b1fd5ec --
+** github.com/aws/eks-anywhere; version 7fd8ede9a4423bacfc46315c5a1e9e7bb75a40d9 --
 https://github.com/aws/eks-anywhere
 
 ** github.com/aws/eks-distro-build-tooling/release/api/v1alpha1; version v0.0.0-20211103003257-a7e2379eae5e --
@@ -56,13 +56,19 @@ https://github.com/aws/etcdadm-controller
 ** github.com/aws/smithy-go; version v1.20.3 --
 https://github.com/aws/smithy-go
 
-** github.com/containerd/containerd; version v1.7.12 --
+** github.com/containerd/containerd; version v1.7.27 --
 https://github.com/containerd/containerd
+
+** github.com/containerd/errdefs; version v0.3.0 --
+https://github.com/containerd/errdefs
 
 ** github.com/containerd/log; version v0.1.0 --
 https://github.com/containerd/log
 
-** github.com/distribution/reference; version v0.5.0 --
+** github.com/containerd/platforms; version v0.2.1 --
+https://github.com/containerd/platforms
+
+** github.com/distribution/reference; version v0.6.0 --
 https://github.com/distribution/reference
 
 ** github.com/docker/cli/cli/config; version v27.0.3+incompatible --
@@ -86,7 +92,7 @@ https://github.com/go-git/go-billy/v5
 ** github.com/go-git/go-git/v5; version v5.13.0 --
 https://github.com/go-git/go-git/v5
 
-** github.com/go-logr/logr; version v1.4.1 --
+** github.com/go-logr/logr; version v1.4.2 --
 https://github.com/go-logr/logr
 
 ** github.com/go-logr/stdr; version v1.2.2 --
@@ -185,19 +191,19 @@ https://github.com/xanzy/ssh-agent
 ** go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp; version v0.46.0 --
 https://github.com/open-telemetry/opentelemetry-go-contrib
 
-** go.opentelemetry.io/otel; version v1.20.0 --
+** go.opentelemetry.io/otel; version v1.21.0 --
 https://github.com/open-telemetry/opentelemetry-go
 
-** go.opentelemetry.io/otel/metric; version v1.20.0 --
+** go.opentelemetry.io/otel/metric; version v1.21.0 --
 https://github.com/open-telemetry/opentelemetry-go
 
-** go.opentelemetry.io/otel/trace; version v1.20.0 --
+** go.opentelemetry.io/otel/trace; version v1.21.0 --
 https://github.com/open-telemetry/opentelemetry-go
 
 ** gomodules.xyz/jsonpatch/v2; version v2.4.0 --
 https://github.com/gomodules/jsonpatch
 
-** google.golang.org/genproto/googleapis/rpc/status; version v0.0.0-20231120223509-83a465c0220f --
+** google.golang.org/genproto/googleapis/rpc/status; version v0.0.0-20240401170217-c3f982113cda --
 https://github.com/googleapis/go-genproto
 
 ** google.golang.org/grpc; version v1.59.0 --
@@ -1457,7 +1463,7 @@ https://github.com/vmware/govmomi
 ** github.com/vmware/govmomi/vim25/xml; version v0.37.2 --
 https://github.com/vmware/govmomi
 
-** golang.org/go; version go1.21.13 --
+** golang.org/go; version go1.23.8 --
 https://github.com/golang/go
 
 ** golang.org/x/mod/semver; version v0.19.0 --
@@ -1536,25 +1542,25 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ------
 
-** golang.org/x/crypto; version v0.31.0 --
+** golang.org/x/crypto; version v0.36.0 --
 https://golang.org/x/crypto
 
 ** golang.org/x/exp; version v0.0.0-20240719175910-8a7402abbf56 --
 https://golang.org/x/exp
 
-** golang.org/x/net; version v0.33.0 --
+** golang.org/x/net; version v0.37.0 --
 https://golang.org/x/net
 
-** golang.org/x/sync; version v0.10.0 --
+** golang.org/x/sync; version v0.12.0 --
 https://golang.org/x/sync
 
-** golang.org/x/sys; version v0.28.0 --
+** golang.org/x/sys; version v0.31.0 --
 https://golang.org/x/sys
 
-** golang.org/x/term; version v0.27.0 --
+** golang.org/x/term; version v0.30.0 --
 https://golang.org/x/term
 
-** golang.org/x/text; version v0.21.0 --
+** golang.org/x/text; version v0.23.0 --
 https://golang.org/x/text
 
 Copyright 2009 The Go Authors.
@@ -1587,7 +1593,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ------
 
-** google.golang.org/protobuf; version v1.34.1 --
+** google.golang.org/protobuf; version v1.35.2 --
 https://go.googlesource.com/protobuf
 
 Copyright (c) 2018 The Go Authors. All rights reserved.
@@ -1739,7 +1745,7 @@ Copyright (c) 2019 Mark Bates
 https://github.com/gocarina/gocsv
 Copyright (c) 2014 Jonathan Picques
 
-** github.com/golang-jwt/jwt/v5; version v5.2.1 --
+** github.com/golang-jwt/jwt/v5; version v5.2.2 --
 https://github.com/golang-jwt/jwt/v5
 Copyright (c) 2012 Dave Grijalva
 Copyright (c) 2021 golang-jwt maintainers
