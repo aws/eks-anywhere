@@ -944,9 +944,9 @@ func TestDockerKubernetes131to132GithubFluxEnabledUpgradeFromLatestMinorRelease(
 	)
 }
 
-func TestDockerKubernetes132WithOIDCManagementClusterUpgradeFromLatestSideEffects(t *testing.T) {
+func TestDockerKubernetes128WithOIDCManagementClusterUpgradeFromLatestSideEffects(t *testing.T) {
 	provider := framework.NewDocker(t)
-	runTestManagementClusterUpgradeSideEffects(t, provider, framework.DockerOS, v1alpha1.Kube132)
+	runTestManagementClusterUpgradeSideEffects(t, provider, framework.DockerOS, v1alpha1.Kube128)
 }
 
 // Workload Cluster API
@@ -1439,7 +1439,7 @@ func TestDockerKubernetesNonRegionalCuratedPackages(t *testing.T) {
 func TestDockerKubernetesUpgradeManagementComponents(t *testing.T) {
 	release := latestMinorRelease(t)
 	provider := framework.NewDocker(t)
-	runUpgradeManagementComponentsFlow(t, release, provider, v1alpha1.Kube132, "")
+	runUpgradeManagementComponentsFlow(t, release, provider, v1alpha1.Kube128, "")
 }
 
 // Etcd Scale tests
