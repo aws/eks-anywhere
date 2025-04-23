@@ -198,6 +198,7 @@ func runMulticlusterUpgradeFromReleaseFlowAPIWithFlux(test *framework.Multiclust
 }
 
 func runUpgradeManagementComponentsFlow(t *testing.T, release *releasev1.EksARelease, provider framework.Provider, kubeVersion anywherev1.KubernetesVersion, os framework.OS) {
+	licenseToken := framework.GetLicenseToken()
 	test := framework.NewClusterE2ETest(t, provider)
 	// create cluster with old eksa
 	test.GenerateClusterConfigForVersion(release.Version, "", framework.ExecuteWithEksaRelease(release))
@@ -206,6 +207,7 @@ func runUpgradeManagementComponentsFlow(t *testing.T, release *releasev1.EksARel
 			api.WithKubernetesVersion(kubeVersion),
 			api.WithControlPlaneCount(1),
 			api.WithWorkerNodeCount(1),
+			api.WithLicenseToken(licenseToken),
 		),
 		provider.WithKubeVersionAndOS(kubeVersion, os, release),
 	)
