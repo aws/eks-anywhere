@@ -41,7 +41,7 @@ description: >
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
 
-## [v0.22.3](https://github.com/aws/eks-anywhere/releases/tag/v0.22.3)
+## [v0.22.4](https://github.com/aws/eks-anywhere/releases/tag/v0.22.4)
 
 ### Supported OS version details
 |                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
@@ -52,6 +52,29 @@ description: >
 |      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
 |      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
 
+### Changed
+- EKS Distro:
+  - [`v1-32-eks-11`](https://distro.eks.amazonaws.com/releases/1-32/11/)
+  - [`v1-31-eks-18`](https://distro.eks.amazonaws.com/releases/1-31/18/)
+  - [`v1-30-eks-29`](https://distro.eks.amazonaws.com/releases/1-30/29/)
+  - [`v1-29-eks-36`](https://distro.eks.amazonaws.com/releases/1-29/36/)
+  - [`v1-28-eks-47`](https://distro.eks.amazonaws.com/releases/1-28/47/)
+- New base images with CVE fixes for Amazon Linux 2
+
+### Fixed
+- Fix bundles override flag issue for upgrade cluster command ([#9672](https://github.com/aws/eks-anywhere/pull/9672))
+- Address vulnerability [GO-2025-3595](https://pkg.go.dev/vuln/GO-2025-3595) in golang.org/x/net package v0.37.0 ([#9668](https://github.com/aws/eks-anywhere/pull/9668))
+
+## [v0.22.3](https://github.com/aws/eks-anywhere/releases/tag/v0.22.3)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.26.2 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
 
 ### Added
 - Add support for specifying vm_version in the image builder config ([#4510](https://github.com/aws/eks-anywhere-build-tooling/pull/4510))
