@@ -1,8 +1,21 @@
 skipped_tests:
 
+# vSphere
+# Upgrade from latest tests fails for RHEL9 fails on release-0.22 branch
+# because RHEL9 support for vSphere was added in v0.22.2 and the older EKS-D
+# versions that comes with the v0.21.x latest minor release doesn't have
+# the RHEL9 templates.
+- TestVSphereKubernetes128To129Redhat9UpgradeFromLatestMinorRelease
+- TestVSphereKubernetes129To130Redhat9UpgradeFromLatestMinorRelease
+- TestVSphereKubernetes130To131Redhat9UpgradeFromLatestMinorRelease
+- TestVSphereKubernetes131To132Redhat9UpgradeFromLatestMinorRelease
+
 # CloudStack
 # Airgapped tests due to an airgapped network not being setup properly on the cloudstack CI env.
 - TestCloudStackKubernetes132RedhatAirgappedProxy
+# Upgrade from latest tests fails for 1.32 kubernetes version on release-0.22 branch
+# because the latest minor release v0.21.x doesn't support 1.32 version
+- TestCloudStackKubernetes132WithOIDCManagementClusterUpgradeFromLatestSideEffects
 
 # Proxy API tests skipped due to being unable to run in cloudstack CI env. We should probably revisit these and see if we can unskip them now
 # as we have a proxy env set up in the cloudstack CI env now.
