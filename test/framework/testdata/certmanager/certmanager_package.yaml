@@ -12,7 +12,5 @@ spec:
         value: {{.accessKeyId}}
       - name: AWS_SECRET_ACCESS_KEY
         value: {{.secretKey}}
-{{- if .sessionToken }}
       - name: AWS_SESSION_TOKEN
         value: {{.sessionToken}}
-{{- end }}
