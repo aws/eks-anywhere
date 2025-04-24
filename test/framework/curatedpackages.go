@@ -54,6 +54,7 @@ var requiredCertManagerEnvVars = []string{
 	route53Region,
 	route53AccessKey,
 	route53SecretKey,
+	route53SessionToken,
 	route53ZoneID,
 }
 
