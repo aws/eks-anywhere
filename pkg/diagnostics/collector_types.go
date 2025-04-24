@@ -14,6 +14,7 @@ type Collect struct {
 	CopyFromHost     *copyFromHost     `json:"copyFromHost,omitempty"`
 	Exec             *exec             `json:"exec,omitempty"`
 	RunPod           *runPod           `json:"runPod,omitempty"`
+	Run              *Run              `json:"run,omitempty"`
 }
 
 type clusterResources struct {
@@ -93,4 +94,17 @@ type runPod struct {
 	PodSpec          *v1.PodSpec `json:"podSpec,omitempty"`
 	Timeout          string      `json:"timeout,omitempty"`
 	imagePullSecrets `json:",inline"`
+}
+
+// Run is used to define config for commands ran on host via troubleshoot.
+type Run struct {
+	CollectorName    string            `json:"collectorName,omitempty"`
+	Command          string            `json:"command"`
+	Args             []string          `json:"args"`
+	Env              []string          `json:"env,omitempty"`
+	IgnoreParentEnvs bool              `json:"ignoreParentEnvs,omitempty"`
+	InheritEnvs      []string          `json:"inheritEnvs,omitempty"`
+	OutputDir        string            `json:"outputDir,omitempty"`
+	Input            map[string]string `json:"input,omitempty"`
+	Timeout          string            `json:"timeout,omitempty"`
 }

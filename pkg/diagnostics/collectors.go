@@ -76,6 +76,17 @@ func (c *EKSACollectorFactory) EksaHostCollectors(machineConfigs []providers.Mac
 	return collectors
 }
 
+// HostCollectors returns the collectors that run on host machines.
+func (c *EKSACollectorFactory) HostCollectors(datacenter v1alpha1.Ref) []*Collect {
+	// Only Tinkerbell needs this right now to collect boots/smee logs in docker container.
+	switch datacenter.Kind {
+	case v1alpha1.TinkerbellDatacenterKind:
+		return c.hostTinkerbellCollectors()
+	default:
+		return nil
+	}
+}
+
 // DataCenterConfigCollectors returns the collectors for the provider datacenter config in the cluster spec.
 func (c *EKSACollectorFactory) DataCenterConfigCollectors(datacenter v1alpha1.Ref, spec *cluster.Spec) []*Collect {
 	switch datacenter.Kind {
@@ -170,6 +181,21 @@ func (c *EKSACollectorFactory) eksaDockerCollectors() []*Collect {
 			},
 		},
 	}
+}
+
+func (c *EKSACollectorFactory) hostTinkerbellCollectors() []*Collect {
+	collectors := []*Collect{
+		{
+			Run: &Run{
+				CollectorName: "boots-logs",
+				Command:       "docker",
+				Args:          []string{"logs", "boots"},
+				OutputDir:     "boots-logs",
+			},
+		},
+	}
+
+	return collectors
 }
 
 // ManagementClusterCollectors returns the collectors that only apply to management clusters.
