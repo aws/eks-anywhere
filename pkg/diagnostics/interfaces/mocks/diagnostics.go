@@ -600,6 +600,20 @@ func (mr *MockCollectorFactoryMockRecorder) FileCollectors(paths interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FileCollectors", reflect.TypeOf((*MockCollectorFactory)(nil).FileCollectors), paths)
 }
 
+// HostCollectors mocks base method.
+func (m *MockCollectorFactory) HostCollectors(datacenter v1alpha1.Ref) []*diagnostics.Collect {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HostCollectors", datacenter)
+	ret0, _ := ret[0].([]*diagnostics.Collect)
+	return ret0
+}
+
+// HostCollectors indicates an expected call of HostCollectors.
+func (mr *MockCollectorFactoryMockRecorder) HostCollectors(datacenter interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HostCollectors", reflect.TypeOf((*MockCollectorFactory)(nil).HostCollectors), datacenter)
+}
+
 // ManagementClusterCollectors mocks base method.
 func (m *MockCollectorFactory) ManagementClusterCollectors() []*diagnostics.Collect {
 	m.ctrl.T.Helper()

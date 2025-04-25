@@ -55,6 +55,7 @@ type AnalyzerFactory interface {
 type CollectorFactory interface {
 	PackagesCollectors() []*Collect
 	DefaultCollectors() []*Collect
+	HostCollectors(datacenter v1alpha1.Ref) []*Collect
 	FileCollectors(paths []string) []*Collect
 	ManagementClusterCollectors() []*Collect
 	EksaHostCollectors(configs []providers.MachineConfig) []*Collect

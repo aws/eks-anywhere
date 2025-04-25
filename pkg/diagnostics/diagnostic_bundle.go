@@ -34,6 +34,7 @@ const (
 
 type EksaDiagnosticBundle struct {
 	bundle           *supportBundle
+	hostBundle       *supportBundle
 	bundlePath       string
 	client           BundleClient
 	collectorFactory CollectorFactory
@@ -74,7 +75,8 @@ func newDiagnosticBundleManagementCluster(af AnalyzerFactory, cf CollectorFactor
 		WithDefaultAnalyzers().
 		WithManagementCluster(true).
 		WithDatacenterConfig(spec.Cluster.Spec.DatacenterRef, spec).
-		WithLogTextAnalyzers()
+		WithLogTextAnalyzers().
+		WithHostCollectors(spec.Cluster.Spec.DatacenterRef)
 
 	err := b.WriteBundleConfig()
 	if err != nil {
@@ -113,6 +115,7 @@ func newDiagnosticBundleFromSpec(af AnalyzerFactory, cf CollectorFactory, spec *
 		WithOidcConfig(spec.OIDCConfig).
 		WithExternalEtcd(spec.Cluster.Spec.ExternalEtcdConfiguration).
 		WithDatacenterConfig(spec.Cluster.Spec.DatacenterRef, spec).
+		WithHostCollectors(spec.Cluster.Spec.DatacenterRef).
 		WithMachineConfigs(provider.MachineConfigs(spec)).
 		WithManagementCluster(spec.Cluster.IsSelfManaged()).
 		WithDefaultAnalyzers().
@@ -204,6 +207,11 @@ func (e *EksaDiagnosticBundle) WriteBundleConfig() error {
 	if err != nil {
 		return fmt.Errorf("outputing yaml: %v", err)
 	}
+	bundleYaml, err = e.combineWithHostBundle(bundleYaml)
+	if err != nil {
+		return err
+	}
+
 	timestamp := time.Now().Format(time.RFC3339)
 	filename := fmt.Sprintf(generatedBundleNameFormat, e.clusterName(), timestamp)
 	e.bundlePath, err = e.writer.Write(filename, bundleYaml)
@@ -244,6 +252,28 @@ func (e *EksaDiagnosticBundle) WriteAnalysisToFile() (path string, err error) {
 	}
 	e.bundlePath = analysisPath
 	return analysisPath, nil
+}
+
+// WithHostCollectors configures host bundle with collectors that run on host machines.
+func (e *EksaDiagnosticBundle) WithHostCollectors(config v1alpha1.Ref) *EksaDiagnosticBundle {
+	hostBundle := &supportBundle{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "HostCollector",
+			APIVersion: troubleshootApiVersion,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "host-collector",
+		},
+		Spec: supportBundleSpec{},
+	}
+	e.hostBundle = hostBundle
+	return e.WithDefaultHostCollectors(config)
+}
+
+// WithDefaultHostCollectors collects the default collectors that run on the host machine.
+func (e *EksaDiagnosticBundle) WithDefaultHostCollectors(config v1alpha1.Ref) *EksaDiagnosticBundle {
+	e.hostBundle.Spec.Collectors = append(e.hostBundle.Spec.Collectors, e.collectorFactory.HostCollectors(config)...)
+	return e
 }
 
 func (e *EksaDiagnosticBundle) WithDefaultCollectors() *EksaDiagnosticBundle {
@@ -311,6 +341,36 @@ func (e *EksaDiagnosticBundle) WithMachineConfigs(configs []providers.MachineCon
 func (e *EksaDiagnosticBundle) WithLogTextAnalyzers() *EksaDiagnosticBundle {
 	e.bundle.Spec.Analyzers = append(e.bundle.Spec.Analyzers, e.analyzerFactory.EksaLogTextAnalyzers(e.bundle.Spec.Collectors)...)
 	return e
+}
+
+// hasHostCollectors checks if the host bundle has any collectors added.
+func (e *EksaDiagnosticBundle) hasHostCollectors() bool {
+	if e.hostBundle == nil {
+		return false
+	}
+	return len(e.hostBundle.Spec.Collectors) > 0
+}
+
+// combineWithHostBundle adds host bundle YAML to the main bundle YAML if host collectors exist.
+func (e *EksaDiagnosticBundle) combineWithHostBundle(bundleYaml []byte) ([]byte, error) {
+	if !e.hasHostCollectors() {
+		return bundleYaml, nil
+	}
+
+	hostYaml, err := yaml.Marshal(e.hostBundle)
+	if err != nil {
+		return nil, fmt.Errorf("marshaling host yaml: %v", err)
+	}
+
+	// Add a separator between the two YAML documents
+	separator := []byte("\n---\n")
+
+	// Combine the original bundle YAML with the host collector YAML
+	combinedYaml := append([]byte{}, bundleYaml...)
+	combinedYaml = append(combinedYaml, separator...)
+	combinedYaml = append(combinedYaml, hostYaml...)
+
+	return combinedYaml, nil
 }
 
 // createDiagnosticNamespace attempts to create the namespace eksa-diagnostics and associated RBAC objects.

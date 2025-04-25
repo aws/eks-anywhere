@@ -146,3 +146,55 @@ func TestNutanixCollectors(t *testing.T) {
 		g.Expect("eksa-diagnostics").To(Equal(collector.RunPod.Namespace))
 	}
 }
+
+func TestHostCollectors(t *testing.T) {
+	factory := diagnostics.NewDefaultCollectorFactory(test.NewFileReader())
+
+	tests := []struct {
+		name           string
+		datacenterKind string
+		expectNil      bool
+		expectedCount  int
+	}{
+		{
+			name:           "Tinkerbell datacenter",
+			datacenterKind: eksav1alpha1.TinkerbellDatacenterKind,
+			expectNil:      false,
+			expectedCount:  1,
+		},
+		{
+			name:           "VSphere datacenter",
+			datacenterKind: eksav1alpha1.VSphereDatacenterKind,
+			expectNil:      true,
+			expectedCount:  0,
+		},
+		{
+			name:           "Unknown datacenter",
+			datacenterKind: "UnknownDatacenterKind",
+			expectNil:      true,
+			expectedCount:  0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewGomegaWithT(t)
+			datacenter := eksav1alpha1.Ref{Kind: tt.datacenterKind}
+			collectors := factory.HostCollectors(datacenter)
+
+			if tt.expectNil {
+				g.Expect(collectors).To(BeNil(), "HostCollectors() should return nil for %s", tt.datacenterKind)
+			} else {
+				g.Expect(collectors).NotTo(BeNil(), "HostCollectors() should not return nil for %s", tt.datacenterKind)
+				g.Expect(collectors).To(HaveLen(tt.expectedCount), "HostCollectors() mismatch between number of desired collectors and actual")
+
+				if tt.datacenterKind == eksav1alpha1.TinkerbellDatacenterKind {
+					g.Expect(collectors[0].Run.CollectorName).To(Equal("boots-logs"))
+					g.Expect(collectors[0].Run.Command).To(Equal("docker"))
+					g.Expect(collectors[0].Run.Args).To(Equal([]string{"logs", "boots"}))
+					g.Expect(collectors[0].Run.OutputDir).To(Equal("boots-logs"))
+				}
+			}
+		})
+	}
+}
