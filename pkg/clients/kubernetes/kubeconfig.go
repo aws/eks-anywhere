@@ -54,3 +54,9 @@ func (c *KubeconfigClient) Delete(ctx context.Context, obj Object) error {
 func (c *KubeconfigClient) DeleteAllOf(ctx context.Context, obj Object, opts ...DeleteAllOfOption) error {
 	return c.client.DeleteAllOf(ctx, c.kubeconfig, obj, opts...)
 }
+
+// Patch patches the given obj in the Kubernetes cluster. obj must be a
+// struct pointer so that obj can be updated with the content returned by the Server.
+func (c *KubeconfigClient) Patch(ctx context.Context, obj Object, patch Patch, opts ...PatchOption) error {
+	return c.client.Patch(ctx, c.kubeconfig, obj, patch, opts...)
+}

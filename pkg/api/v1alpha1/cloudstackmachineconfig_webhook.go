@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	"context"
 	"fmt"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -18,6 +19,7 @@ var cloudstackmachineconfiglog = logf.Log.WithName("cloudstackmachineconfig-reso
 func (r *CloudStackMachineConfig) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
+		WithValidator(r).
 		Complete()
 }
 
@@ -26,28 +28,38 @@ func (r *CloudStackMachineConfig) SetupWebhookWithManager(mgr ctrl.Manager) erro
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
 //+kubebuilder:webhook:path=/validate-anywhere-eks-amazonaws-com-v1alpha1-cloudstackmachineconfig,mutating=false,failurePolicy=fail,sideEffects=None,groups=anywhere.eks.amazonaws.com,resources=cloudstackmachineconfigs,verbs=create;update,versions=v1alpha1,name=validation.cloudstackmachineconfig.anywhere.amazonaws.com,admissionReviewVersions={v1,v1beta1}
 
-var _ webhook.Validator = &CloudStackMachineConfig{}
+var _ webhook.CustomValidator = &CloudStackMachineConfig{}
 
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (r *CloudStackMachineConfig) ValidateCreate() (admission.Warnings, error) {
-	cloudstackmachineconfiglog.Info("validate create", "name", r.Name)
-	if err, fieldName, fieldValue := r.Spec.DiskOffering.Validate(); err != nil {
+// ValidateCreate implements webhook.CustomValidator so a webhook will be registered for the type.
+func (r *CloudStackMachineConfig) ValidateCreate(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
+	cloudstackConfig, ok := obj.(*CloudStackMachineConfig)
+	if !ok {
+		return nil, fmt.Errorf("expected a CloudStackMachineConfig but got %T", obj)
+	}
+
+	cloudstackmachineconfiglog.Info("validate create", "name", cloudstackConfig.Name)
+	if err, fieldName, fieldValue := cloudstackConfig.Spec.DiskOffering.Validate(); err != nil {
 		return nil, apierrors.NewBadRequest(fmt.Sprintf("disk offering %s:%v, preventing CloudStackMachineConfig resource creation: %v", fieldName, fieldValue, err))
 	}
-	if err, fieldName, fieldValue := r.Spec.Symlinks.Validate(); err != nil {
+	if err, fieldName, fieldValue := cloudstackConfig.Spec.Symlinks.Validate(); err != nil {
 		return nil, apierrors.NewBadRequest(fmt.Sprintf("symlinks %s:%v, preventing CloudStackMachineConfig resource creation: %v", fieldName, fieldValue, err))
 	}
 
 	// This is only needed for the webhook, which is why it is separate from the Validate method
-	if err := r.ValidateUsers(); err != nil {
+	if err := cloudstackConfig.ValidateUsers(); err != nil {
 		return nil, err
 	}
-	return nil, r.Validate()
+	return nil, cloudstackConfig.Validate()
 }
 
-// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (r *CloudStackMachineConfig) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	cloudstackmachineconfiglog.Info("validate update", "name", r.Name)
+// ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type.
+func (r *CloudStackMachineConfig) ValidateUpdate(_ context.Context, obj, old runtime.Object) (admission.Warnings, error) {
+	cloudstackConfig, ok := obj.(*CloudStackMachineConfig)
+	if !ok {
+		return nil, fmt.Errorf("expected a CloudStackMachineConfig but got %T", obj)
+	}
+
+	cloudstackmachineconfiglog.Info("validate update", "name", cloudstackConfig.Name)
 
 	oldCloudStackMachineConfig, ok := old.(*CloudStackMachineConfig)
 	if !ok {
@@ -60,39 +72,39 @@ func (r *CloudStackMachineConfig) ValidateUpdate(old runtime.Object) (admission.
 	}
 
 	// This is only needed for the webhook, which is why it is separate from the Validate method
-	if err := r.ValidateUsers(); err != nil {
+	if err := cloudstackConfig.ValidateUsers(); err != nil {
 		return nil, apierrors.NewInvalid(GroupVersion.WithKind(CloudStackMachineConfigKind).GroupKind(),
-			r.Name,
+			cloudstackConfig.Name,
 			field.ErrorList{
-				field.Invalid(field.NewPath("spec", "users"), r.Spec.Users, err.Error()),
+				field.Invalid(field.NewPath("spec", "users"), cloudstackConfig.Spec.Users, err.Error()),
 			})
 	}
 
 	var allErrs field.ErrorList
-	allErrs = append(allErrs, validateImmutableFieldsCloudStackMachineConfig(r, oldCloudStackMachineConfig)...)
+	allErrs = append(allErrs, validateImmutableFieldsCloudStackMachineConfig(cloudstackConfig, oldCloudStackMachineConfig)...)
 
-	if err, fieldName, fieldValue := r.Spec.DiskOffering.Validate(); err != nil {
+	if err, fieldName, fieldValue := cloudstackConfig.Spec.DiskOffering.Validate(); err != nil {
 		allErrs = append(
 			allErrs,
 			field.Invalid(field.NewPath("spec", "diskOffering", fieldName), fieldValue, err.Error()),
 		)
 	}
-	if err, fieldName, fieldValue := r.Spec.Symlinks.Validate(); err != nil {
+	if err, fieldName, fieldValue := cloudstackConfig.Spec.Symlinks.Validate(); err != nil {
 		allErrs = append(
 			allErrs,
 			field.Invalid(field.NewPath("spec", "symlinks", fieldName), fieldValue, err.Error()),
 		)
 	}
-	if err := r.ValidateUsers(); err != nil {
+	if err := cloudstackConfig.ValidateUsers(); err != nil {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "users"), r.Spec.Users, err.Error()))
+			field.Invalid(field.NewPath("spec", "users"), cloudstackConfig.Spec.Users, err.Error()))
 	}
-	if err := r.Validate(); err != nil {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
+	if err := cloudstackConfig.Validate(); err != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), cloudstackConfig.Spec, err.Error()))
 	}
 	if len(allErrs) > 0 {
-		return nil, apierrors.NewInvalid(GroupVersion.WithKind(CloudStackMachineConfigKind).GroupKind(), r.Name, allErrs)
+		return nil, apierrors.NewInvalid(GroupVersion.WithKind(CloudStackMachineConfigKind).GroupKind(), cloudstackConfig.Name, allErrs)
 	}
 
 	return nil, nil
@@ -129,9 +141,14 @@ func validateImmutableFieldsCloudStackMachineConfig(new, old *CloudStackMachineC
 	return allErrs
 }
 
-// ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (r *CloudStackMachineConfig) ValidateDelete() (admission.Warnings, error) {
-	cloudstackmachineconfiglog.Info("validate delete", "name", r.Name)
+// ValidateDelete implements webhook.CustomValidator so a webhook will be registered for the type.
+func (r *CloudStackMachineConfig) ValidateDelete(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
+	cloudstackConfig, ok := obj.(*CloudStackMachineConfig)
+	if !ok {
+		return nil, fmt.Errorf("expected a CloudStackMachineConfig but got %T", obj)
+	}
+
+	cloudstackmachineconfiglog.Info("validate delete", "name", cloudstackConfig.Name)
 
 	return nil, nil
 }

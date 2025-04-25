@@ -24,14 +24,14 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-func TestTinkerbellMachineValidateCreateCastFail(t *testing.T) {
+func TestTinkerbellMachineTemplateValidateCreateCastFail(t *testing.T) {
 	g := NewWithT(t)
 
 	// Create a different type that will cause the cast to fail
 	wrongType := &runtime.Unknown{}
 
 	// Create the config object that implements CustomValidator
-	config := &TinkerbellMachine{}
+	config := &TinkerbellMachineTemplate{}
 
 	// Call ValidateCreate with the wrong type
 	warnings, err := config.ValidateCreate(context.TODO(), wrongType)
@@ -39,35 +39,35 @@ func TestTinkerbellMachineValidateCreateCastFail(t *testing.T) {
 	// Verify that an error is returned
 	g.Expect(warnings).To(BeNil())
 	g.Expect(err).To(HaveOccurred())
-	g.Expect(err.Error()).To(ContainSubstring("expected a TinkerbellMachine"))
+	g.Expect(err.Error()).To(ContainSubstring("expected a TinkerbellMachineTemplate"))
 }
 
-func TestTinkerbellMachineValidateUpdateCastFail(t *testing.T) {
+func TestTinkerbellMachineTemplateValidateUpdateCastFail(t *testing.T) {
 	g := NewWithT(t)
 
 	// Create a different type that will cause the cast to fail
 	wrongType := &runtime.Unknown{}
 
 	// Create the config object that implements CustomValidator
-	config := &TinkerbellMachine{}
+	config := &TinkerbellMachineTemplate{}
 
 	// Call ValidateUpdate with the wrong type
-	warnings, err := config.ValidateUpdate(context.TODO(), wrongType, &TinkerbellMachine{})
+	warnings, err := config.ValidateUpdate(context.TODO(), wrongType, &TinkerbellMachineTemplate{})
 
 	// Verify that an error is returned
 	g.Expect(warnings).To(BeNil())
 	g.Expect(err).To(HaveOccurred())
-	g.Expect(err.Error()).To(ContainSubstring("expected a TinkerbellMachine"))
+	g.Expect(err.Error()).To(ContainSubstring("expected a TinkerbellMachineTemplate"))
 }
 
-func TestTinkerbellMachineValidateDeleteCastFail(t *testing.T) {
+func TestTinkerbellMachineTemplateValidateDeleteCastFail(t *testing.T) {
 	g := NewWithT(t)
 
 	// Create a different type that will cause the cast to fail
 	wrongType := &runtime.Unknown{}
 
 	// Create the config object that implements CustomValidator
-	config := &TinkerbellMachine{}
+	config := &TinkerbellMachineTemplate{}
 
 	// Call ValidateDelete with the wrong type
 	warnings, err := config.ValidateDelete(context.TODO(), wrongType)
@@ -75,5 +75,5 @@ func TestTinkerbellMachineValidateDeleteCastFail(t *testing.T) {
 	// Verify that an error is returned
 	g.Expect(warnings).To(BeNil())
 	g.Expect(err).To(HaveOccurred())
-	g.Expect(err.Error()).To(ContainSubstring("expected a TinkerbellMachine"))
+	g.Expect(err.Error()).To(ContainSubstring("expected a TinkerbellMachineTemplate"))
 }

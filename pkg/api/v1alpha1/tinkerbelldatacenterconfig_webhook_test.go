@@ -1,6 +1,7 @@
 package v1alpha1_test
 
 import (
+	"context"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -11,48 +12,54 @@ import (
 )
 
 func TestTinkerbellDatacenterValidateCreate(t *testing.T) {
+	ctx := context.Background()
 	dataCenterConfig := tinkerbellDatacenterConfig()
 
 	g := NewWithT(t)
-	g.Expect(dataCenterConfig.ValidateCreate()).Error().To(Succeed())
+	g.Expect(dataCenterConfig.ValidateCreate(ctx, &dataCenterConfig)).Error().To(Succeed())
 }
 
 func TestTinkerbellDatacenterValidateCreateFail(t *testing.T) {
+	ctx := context.Background()
 	dataCenterConfig := tinkerbellDatacenterConfig()
 	dataCenterConfig.Spec.TinkerbellIP = ""
 
 	g := NewWithT(t)
-	g.Expect(dataCenterConfig.ValidateCreate()).Error().To(HaveOccurred())
+	g.Expect(dataCenterConfig.ValidateCreate(ctx, &dataCenterConfig)).Error().To(HaveOccurred())
 }
 
 func TestTinkerbellDatacenterValidateUpdateSucceed(t *testing.T) {
+	ctx := context.Background()
 	tOld := tinkerbellDatacenterConfig()
 	tOld.Spec.TinkerbellIP = "1.1.1.1"
 	tNew := tOld.DeepCopy()
 
 	tNew.Spec.TinkerbellIP = "1.1.1.1"
 	g := NewWithT(t)
-	g.Expect(tNew.ValidateUpdate(&tOld)).Error().To(Succeed())
+	g.Expect(tNew.ValidateUpdate(ctx, tNew, &tOld)).Error().To(Succeed())
 }
 
 func TestTinkerbellDatacenterValidateUpdateSucceedOSImageURL(t *testing.T) {
+	ctx := context.Background()
 	tOld := tinkerbellDatacenterConfig()
 	tNew := tOld.DeepCopy()
 
 	tNew.Spec.OSImageURL = "https://os-image-url"
 	g := NewWithT(t)
-	g.Expect(tNew.ValidateUpdate(&tOld)).Error().To(Succeed())
+	g.Expect(tNew.ValidateUpdate(ctx, tNew, &tOld)).Error().To(Succeed())
 }
 
 func TestTinkerbellDatacenterValidateUpdateFailBadReq(t *testing.T) {
+	ctx := context.Background()
 	cOld := &v1alpha1.Cluster{}
 	c := &v1alpha1.TinkerbellDatacenterConfig{}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).Error().To(MatchError(ContainSubstring("expected a TinkerbellDatacenterConfig but got a *v1alpha1.Cluster")))
+	g.Expect(c.ValidateUpdate(ctx, c, cOld)).Error().To(MatchError(ContainSubstring("expected a TinkerbellDatacenterConfig but got a *v1alpha1.Cluster")))
 }
 
 func TestTinkerbellDatacenterValidateUpdateImmutable(t *testing.T) {
+	ctx := context.Background()
 	tests := []struct {
 		name    string
 		old     v1alpha1.TinkerbellDatacenterConfig
@@ -117,7 +124,7 @@ func TestTinkerbellDatacenterValidateUpdateImmutable(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			g := NewWithT(t)
 
-			_, err := tt.new.ValidateUpdate(&tt.old)
+			_, err := tt.new.ValidateUpdate(ctx, &tt.new, &tt.old)
 			if tt.wantErr == "" {
 				g.Expect(err).To(BeNil())
 			} else {
@@ -128,10 +135,11 @@ func TestTinkerbellDatacenterValidateUpdateImmutable(t *testing.T) {
 }
 
 func TestTinkerbellDatacenterValidateDelete(t *testing.T) {
+	ctx := context.Background()
 	tOld := tinkerbellDatacenterConfig()
 
 	g := NewWithT(t)
-	g.Expect(tOld.ValidateDelete()).Error().To(Succeed())
+	g.Expect(tOld.ValidateDelete(ctx, &tOld)).Error().To(Succeed())
 }
 
 type tinkerbellDatacenterConfigOpt func(*v1alpha1.TinkerbellDatacenterConfig)
@@ -154,4 +162,58 @@ func tinkerbellDatacenterConfig(opts ...tinkerbellDatacenterConfigOpt) v1alpha1.
 	}
 
 	return d
+}
+
+func TestTinkerbellDatacenterConfigValidateCreateCastFail(t *testing.T) {
+	g := NewWithT(t)
+
+	// Create a different type that will cause the cast to fail
+	wrongType := &v1alpha1.Cluster{}
+
+	// Create the config object that implements CustomValidator
+	config := &v1alpha1.TinkerbellDatacenterConfig{}
+
+	// Call ValidateCreate with the wrong type
+	warnings, err := config.ValidateCreate(context.TODO(), wrongType)
+
+	// Verify that an error is returned
+	g.Expect(warnings).To(BeNil())
+	g.Expect(err).To(HaveOccurred())
+	g.Expect(err.Error()).To(ContainSubstring("expected a TinkerbellDatacenterConfig"))
+}
+
+func TestTinkerbellDatacenterConfigValidateUpdateCastFail(t *testing.T) {
+	g := NewWithT(t)
+
+	// Create a different type that will cause the cast to fail
+	wrongType := &v1alpha1.Cluster{}
+
+	// Create the config object that implements CustomValidator
+	config := &v1alpha1.TinkerbellDatacenterConfig{}
+
+	// Call ValidateUpdate with the wrong type
+	warnings, err := config.ValidateUpdate(context.TODO(), wrongType, &v1alpha1.TinkerbellDatacenterConfig{})
+
+	// Verify that an error is returned
+	g.Expect(warnings).To(BeNil())
+	g.Expect(err).To(HaveOccurred())
+	g.Expect(err.Error()).To(ContainSubstring("expected a TinkerbellDatacenterConfig"))
+}
+
+func TestTinkerbellDatacenterConfigValidateDeleteCastFail(t *testing.T) {
+	g := NewWithT(t)
+
+	// Create a different type that will cause the cast to fail
+	wrongType := &v1alpha1.Cluster{}
+
+	// Create the config object that implements CustomValidator
+	config := &v1alpha1.TinkerbellDatacenterConfig{}
+
+	// Call ValidateDelete with the wrong type
+	warnings, err := config.ValidateDelete(context.TODO(), wrongType)
+
+	// Verify that an error is returned
+	g.Expect(warnings).To(BeNil())
+	g.Expect(err).To(HaveOccurred())
+	g.Expect(err.Error()).To(ContainSubstring("expected a TinkerbellDatacenterConfig"))
 }

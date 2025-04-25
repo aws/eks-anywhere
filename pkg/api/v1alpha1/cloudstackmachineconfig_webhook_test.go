@@ -1,6 +1,7 @@
 package v1alpha1_test
 
 import (
+	"context"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -10,6 +11,7 @@ import (
 )
 
 func TestCloudStackMachineConfigValidateCreateValidDiskOffering(t *testing.T) {
+	ctx := context.Background()
 	c := cloudstackMachineConfig()
 	c.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
@@ -21,10 +23,11 @@ func TestCloudStackMachineConfigValidateCreateValidDiskOffering(t *testing.T) {
 		Label:      "data_disk",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateCreate()).Error().To(Succeed())
+	g.Expect(c.ValidateCreate(ctx, &c)).Error().To(Succeed())
 }
 
 func TestCloudStackMachineConfigValidateCreateInvalidDiskOfferingBadMountPath(t *testing.T) {
+	ctx := context.Background()
 	c := cloudstackMachineConfig()
 	c.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
@@ -36,10 +39,11 @@ func TestCloudStackMachineConfigValidateCreateInvalidDiskOfferingBadMountPath(t 
 		Label:      "data_disk",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateCreate()).Error().NotTo(Succeed())
+	g.Expect(c.ValidateCreate(ctx, &c)).Error().NotTo(Succeed())
 }
 
 func TestCloudStackMachineConfigValidateCreateInvalidDiskOfferingEmptyDevice(t *testing.T) {
+	ctx := context.Background()
 	c := cloudstackMachineConfig()
 	c.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
@@ -51,10 +55,11 @@ func TestCloudStackMachineConfigValidateCreateInvalidDiskOfferingEmptyDevice(t *
 		Label:      "data_disk",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateCreate()).Error().NotTo(Succeed())
+	g.Expect(c.ValidateCreate(ctx, &c)).Error().NotTo(Succeed())
 }
 
 func TestCloudStackMachineConfigValidateCreateInvalidDiskOfferingEmptyFilesystem(t *testing.T) {
+	ctx := context.Background()
 	c := cloudstackMachineConfig()
 	c.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
@@ -66,10 +71,11 @@ func TestCloudStackMachineConfigValidateCreateInvalidDiskOfferingEmptyFilesystem
 		Label:      "data_disk",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateCreate()).Error().NotTo(Succeed())
+	g.Expect(c.ValidateCreate(ctx, &c)).Error().NotTo(Succeed())
 }
 
 func TestCloudStackMachineConfigValidateCreateInvalidDiskOfferingEmptyLabel(t *testing.T) {
+	ctx := context.Background()
 	c := cloudstackMachineConfig()
 	c.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
@@ -81,94 +87,105 @@ func TestCloudStackMachineConfigValidateCreateInvalidDiskOfferingEmptyLabel(t *t
 		Label:      "",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateCreate()).Error().NotTo(Succeed())
+	g.Expect(c.ValidateCreate(ctx, &c)).Error().NotTo(Succeed())
 }
 
 func TestCloudStackMachineConfigValidateCreateValidSymlinks(t *testing.T) {
+	ctx := context.Background()
 	c := cloudstackMachineConfig()
 	c.Spec.Symlinks = v1alpha1.SymlinkMaps{
 		"/var/lib.a": "/_data/var-redirect/log.d",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateCreate()).Error().To(Succeed())
+	g.Expect(c.ValidateCreate(ctx, &c)).Error().To(Succeed())
 }
 
 func TestCloudStackMachineConfigValidateCreateInvalidSymlinksColon(t *testing.T) {
+	ctx := context.Background()
 	c := cloudstackMachineConfig()
 	c.Spec.Symlinks = v1alpha1.SymlinkMaps{
 		"/var/lib:a": "/_data/var-redirect/log:d",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateCreate()).Error().NotTo(Succeed())
+	g.Expect(c.ValidateCreate(ctx, &c)).Error().NotTo(Succeed())
 }
 
 func TestCloudStackMachineConfigValidateCreateInvalidSymlinksComma(t *testing.T) {
+	ctx := context.Background()
 	c := cloudstackMachineConfig()
 	c.Spec.Symlinks = v1alpha1.SymlinkMaps{
 		"/var/lib:a": "/_data/var-redirect/log,d",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateCreate()).Error().NotTo(Succeed())
+	g.Expect(c.ValidateCreate(ctx, &c)).Error().NotTo(Succeed())
 }
 
 func TestCloudStackMachineConfigValidateCreateInvalidSymlinksKeyNotStartWithRoot(t *testing.T) {
+	ctx := context.Background()
 	c := cloudstackMachineConfig()
 	c.Spec.Symlinks = v1alpha1.SymlinkMaps{
 		"var/lib": "/data/var/log",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateCreate()).Error().NotTo(Succeed())
+	g.Expect(c.ValidateCreate(ctx, &c)).Error().NotTo(Succeed())
 }
 
 func TestCloudStackMachineConfigValidateCreateInvalidSymlinksValueNotStartWithRoot(t *testing.T) {
+	ctx := context.Background()
 	c := cloudstackMachineConfig()
 	c.Spec.Symlinks = v1alpha1.SymlinkMaps{
 		"/var/lib": "data/var/log",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateCreate()).Error().NotTo(Succeed())
+	g.Expect(c.ValidateCreate(ctx, &c)).Error().NotTo(Succeed())
 }
 
 func TestCloudStackMachineConfigValidateCreateInvalidSymlinksKeyEndWithRoot(t *testing.T) {
+	ctx := context.Background()
 	c := cloudstackMachineConfig()
 	c.Spec.Symlinks = v1alpha1.SymlinkMaps{
 		"/var/lib/": "/data/var/log",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateCreate()).Error().NotTo(Succeed())
+	g.Expect(c.ValidateCreate(ctx, &c)).Error().NotTo(Succeed())
 }
 
 func TestCloudStackMachineConfigValidateCreateInvalidSymlinksValueEndWithRoot(t *testing.T) {
+	ctx := context.Background()
 	c := cloudstackMachineConfig()
 	c.Spec.Symlinks = v1alpha1.SymlinkMaps{
 		"/var/lib": "/data/var/log/",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateCreate()).Error().NotTo(Succeed())
+	g.Expect(c.ValidateCreate(ctx, &c)).Error().NotTo(Succeed())
 }
 
 func TestCloudStackMachineConfigValidateCreateInvalidTemplateEmpty(t *testing.T) {
+	ctx := context.Background()
 	c := cloudstackMachineConfig()
 	c.Spec.Template = v1alpha1.CloudStackResourceIdentifier{}
 	g := NewWithT(t)
-	g.Expect(c.ValidateCreate()).Error().NotTo(Succeed())
+	g.Expect(c.ValidateCreate(ctx, &c)).Error().NotTo(Succeed())
 }
 
 func TestCloudStackMachineConfigValidateCreateInvalidComputeOfferingEmpty(t *testing.T) {
+	ctx := context.Background()
 	c := cloudstackMachineConfig()
 	c.Spec.ComputeOffering = v1alpha1.CloudStackResourceIdentifier{}
 	g := NewWithT(t)
-	g.Expect(c.ValidateCreate()).Error().NotTo(Succeed())
+	g.Expect(c.ValidateCreate(ctx, &c)).Error().NotTo(Succeed())
 }
 
 func TestCloudStackMachineConfigValidateCreateInvalidUsers(t *testing.T) {
+	ctx := context.Background()
 	c := cloudstackMachineConfig()
 	c.Spec.Users = []v1alpha1.UserConfiguration{{Name: "Jeff"}}
 	g := NewWithT(t)
-	g.Expect(c.ValidateCreate()).Error().NotTo(Succeed())
+	g.Expect(c.ValidateCreate(ctx, &c)).Error().NotTo(Succeed())
 }
 
 func TestCPCloudStackMachineValidateUpdateTemplateMutable(t *testing.T) {
+	ctx := context.Background()
 	vOld := cloudstackMachineConfig()
 	vOld.SetControlPlane()
 	vOld.Spec.Template = v1alpha1.CloudStackResourceIdentifier{
@@ -180,10 +197,11 @@ func TestCPCloudStackMachineValidateUpdateTemplateMutable(t *testing.T) {
 		Name: "newTemplate",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(ctx, c, &vOld)).Error().To(Succeed())
 }
 
 func TestWorkersCPCloudStackMachineValidateUpdateTemplateMutable(t *testing.T) {
+	ctx := context.Background()
 	vOld := cloudstackMachineConfig()
 	vOld.Spec.Template = v1alpha1.CloudStackResourceIdentifier{
 		Name: "oldTemplate",
@@ -194,10 +212,11 @@ func TestWorkersCPCloudStackMachineValidateUpdateTemplateMutable(t *testing.T) {
 		Name: "newTemplate",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(ctx, c, &vOld)).Error().To(Succeed())
 }
 
 func TestCPCloudStackMachineValidateUpdateComputeOfferingMutable(t *testing.T) {
+	ctx := context.Background()
 	vOld := cloudstackMachineConfig()
 	vOld.SetControlPlane()
 	vOld.Spec.ComputeOffering = v1alpha1.CloudStackResourceIdentifier{
@@ -209,10 +228,11 @@ func TestCPCloudStackMachineValidateUpdateComputeOfferingMutable(t *testing.T) {
 		Name: "newComputeOffering",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(ctx, c, &vOld)).Error().To(Succeed())
 }
 
 func TestCPCloudStackMachineValidateUpdateDiskOfferingMutable(t *testing.T) {
+	ctx := context.Background()
 	vOld := cloudstackMachineConfig()
 	vOld.SetControlPlane()
 	vOld.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
@@ -236,10 +256,11 @@ func TestCPCloudStackMachineValidateUpdateDiskOfferingMutable(t *testing.T) {
 		Label:      "data_disk",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(ctx, c, &vOld)).Error().To(Succeed())
 }
 
 func TestCPCloudStackMachineValidateUpdateDiskOfferingMutableFailInvalidMountPath(t *testing.T) {
+	ctx := context.Background()
 	vOld := cloudstackMachineConfig()
 	vOld.SetControlPlane()
 	vOld.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
@@ -263,10 +284,11 @@ func TestCPCloudStackMachineValidateUpdateDiskOfferingMutableFailInvalidMountPat
 		Label:      "data_disk",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).Error().NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(ctx, c, &vOld)).Error().NotTo(Succeed())
 }
 
 func TestCPCloudStackMachineValidateUpdateDiskOfferingMutableFailEmptyDevice(t *testing.T) {
+	ctx := context.Background()
 	vOld := cloudstackMachineConfig()
 	vOld.SetControlPlane()
 	vOld.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
@@ -290,10 +312,11 @@ func TestCPCloudStackMachineValidateUpdateDiskOfferingMutableFailEmptyDevice(t *
 		Label:      "data_disk",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).Error().NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(ctx, c, &vOld)).Error().NotTo(Succeed())
 }
 
 func TestCPCloudStackMachineValidateUpdateDiskOfferingMutableFailEmptyFilesystem(t *testing.T) {
+	ctx := context.Background()
 	vOld := cloudstackMachineConfig()
 	vOld.SetControlPlane()
 	vOld.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
@@ -317,10 +340,11 @@ func TestCPCloudStackMachineValidateUpdateDiskOfferingMutableFailEmptyFilesystem
 		Label:      "data_disk",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).Error().NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(ctx, c, &vOld)).Error().NotTo(Succeed())
 }
 
 func TestCPCloudStackMachineValidateUpdateDiskOfferingMutableFailEmptyLabel(t *testing.T) {
+	ctx := context.Background()
 	vOld := cloudstackMachineConfig()
 	vOld.SetControlPlane()
 	vOld.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
@@ -344,10 +368,11 @@ func TestCPCloudStackMachineValidateUpdateDiskOfferingMutableFailEmptyLabel(t *t
 		Label:      "",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).Error().NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(ctx, c, &vOld)).Error().NotTo(Succeed())
 }
 
 func TestCPCloudStackMachineValidateUpdateSymlinksMutable(t *testing.T) {
+	ctx := context.Background()
 	vOld := cloudstackMachineConfig()
 	vOld.SetControlPlane()
 	vOld.Spec.Symlinks = v1alpha1.SymlinkMaps{
@@ -359,10 +384,11 @@ func TestCPCloudStackMachineValidateUpdateSymlinksMutable(t *testing.T) {
 		"/var/log": "/data_2/var/log",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(ctx, c, &vOld)).Error().To(Succeed())
 }
 
 func TestCPCloudStackMachineValidateUpdateSymlinksMutableInvalidComma(t *testing.T) {
+	ctx := context.Background()
 	vOld := cloudstackMachineConfig()
 	vOld.SetControlPlane()
 	vOld.Spec.Symlinks = v1alpha1.SymlinkMaps{
@@ -374,10 +400,11 @@ func TestCPCloudStackMachineValidateUpdateSymlinksMutableInvalidComma(t *testing
 		"/var/log": "/data_2/var/log,d",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).Error().NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(ctx, c, &vOld)).Error().NotTo(Succeed())
 }
 
 func TestCPCloudStackMachineValidateUpdateSymlinksMutableColon(t *testing.T) {
+	ctx := context.Background()
 	vOld := cloudstackMachineConfig()
 	vOld.SetControlPlane()
 	vOld.Spec.Symlinks = v1alpha1.SymlinkMaps{
@@ -389,10 +416,11 @@ func TestCPCloudStackMachineValidateUpdateSymlinksMutableColon(t *testing.T) {
 		"/var/log": "/data_2/var/log:d",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).Error().NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(ctx, c, &vOld)).Error().NotTo(Succeed())
 }
 
 func TestWorkersCPCloudStackMachineValidateUpdateComputeOfferingMutable(t *testing.T) {
+	ctx := context.Background()
 	vOld := cloudstackMachineConfig()
 	vOld.Spec.ComputeOffering = v1alpha1.CloudStackResourceIdentifier{
 		Name: "oldComputeOffering",
@@ -403,10 +431,11 @@ func TestWorkersCPCloudStackMachineValidateUpdateComputeOfferingMutable(t *testi
 		Name: "newComputeOffering",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(ctx, c, &vOld)).Error().To(Succeed())
 }
 
 func TestWorkersCPCloudStackMachineValidateUpdateDiskOfferingMutable(t *testing.T) {
+	ctx := context.Background()
 	vOld := cloudstackMachineConfig()
 	vOld.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
@@ -426,10 +455,11 @@ func TestWorkersCPCloudStackMachineValidateUpdateDiskOfferingMutable(t *testing.
 		Label:      "data_disk",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(ctx, c, &vOld)).Error().To(Succeed())
 }
 
 func TestManagementCloudStackMachineValidateUpdateSshAuthorizedKeyMutable(t *testing.T) {
+	ctx := context.Background()
 	vOld := cloudstackMachineConfig()
 	vOld.SetControlPlane()
 	vOld.SetManagement("test-cluster")
@@ -439,10 +469,11 @@ func TestManagementCloudStackMachineValidateUpdateSshAuthorizedKeyMutable(t *tes
 
 	c.Spec.Users[0].SshAuthorizedKeys[0] = "rsa-laDeLala"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(ctx, c, &vOld)).Error().To(Succeed())
 }
 
 func TestWorkloadCloudStackMachineValidateUpdateSshAuthorizedKeyMutable(t *testing.T) {
+	ctx := context.Background()
 	vOld := cloudstackMachineConfig()
 	vOld.SetControlPlane()
 	vOld.Spec.Users = []v1alpha1.UserConfiguration{{Name: "Jeff"}}
@@ -451,10 +482,11 @@ func TestWorkloadCloudStackMachineValidateUpdateSshAuthorizedKeyMutable(t *testi
 
 	c.Spec.Users[0].SshAuthorizedKeys[0] = "rsa-laDeLala"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(ctx, c, &vOld)).Error().To(Succeed())
 }
 
 func TestWorkloadCloudStackMachineValidateUpdateSshUsernameMutable(t *testing.T) {
+	ctx := context.Background()
 	vOld := cloudstackMachineConfig()
 	vOld.SetControlPlane()
 	vOld.Spec.Users = []v1alpha1.UserConfiguration{{
@@ -465,10 +497,11 @@ func TestWorkloadCloudStackMachineValidateUpdateSshUsernameMutable(t *testing.T)
 
 	c.Spec.Users[0].Name = "Andy"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(ctx, c, &vOld)).Error().To(Succeed())
 }
 
 func TestWorkloadCloudStackMachineValidateUpdateInvalidUsers(t *testing.T) {
+	ctx := context.Background()
 	vOld := cloudstackMachineConfig()
 	vOld.SetControlPlane()
 	vOld.Spec.Users = []v1alpha1.UserConfiguration{{
@@ -479,15 +512,16 @@ func TestWorkloadCloudStackMachineValidateUpdateInvalidUsers(t *testing.T) {
 
 	c.Spec.Users[0].Name = ""
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).Error().ToNot(Succeed())
+	g.Expect(c.ValidateUpdate(ctx, c, &vOld)).Error().ToNot(Succeed())
 }
 
 func TestCloudStackMachineValidateUpdateInvalidType(t *testing.T) {
+	ctx := context.Background()
 	vOld := &v1alpha1.Cluster{}
 	c := &v1alpha1.CloudStackMachineConfig{}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(vOld)).Error().NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(ctx, c, vOld)).Error().NotTo(Succeed())
 }
 
 func cloudstackMachineConfig() v1alpha1.CloudStackMachineConfig {
@@ -513,6 +547,7 @@ func cloudstackMachineConfig() v1alpha1.CloudStackMachineConfig {
 }
 
 func TestCloudStackMachineValidateUpdateAffinityImmutable(t *testing.T) {
+	ctx := context.Background()
 	vOld := cloudstackMachineConfig()
 	vOld.SetControlPlane()
 	vOld.Spec.Affinity = "pro"
@@ -520,10 +555,11 @@ func TestCloudStackMachineValidateUpdateAffinityImmutable(t *testing.T) {
 
 	c.Spec.Affinity = "anti"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).Error().ToNot(Succeed())
+	g.Expect(c.ValidateUpdate(ctx, c, &vOld)).Error().ToNot(Succeed())
 }
 
 func TestCloudStackMachineValidateUpdateAffinityGroupIdsImmutable(t *testing.T) {
+	ctx := context.Background()
 	vOld := cloudstackMachineConfig()
 	vOld.SetControlPlane()
 	vOld.Spec.AffinityGroupIds = []string{"affinity-group-1"}
@@ -531,9 +567,63 @@ func TestCloudStackMachineValidateUpdateAffinityGroupIdsImmutable(t *testing.T) 
 
 	c.Spec.AffinityGroupIds = []string{}
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).Error().ToNot(Succeed())
+	g.Expect(c.ValidateUpdate(ctx, c, &vOld)).Error().ToNot(Succeed())
 
 	c.Spec.AffinityGroupIds = []string{"affinity-group-2"}
 	g = NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).Error().ToNot(Succeed())
+	g.Expect(c.ValidateUpdate(ctx, c, &vOld)).Error().ToNot(Succeed())
+}
+
+func TestCloudStackMachineConfigValidateCreateCastFail(t *testing.T) {
+	g := NewWithT(t)
+
+	// Create a different type that will cause the cast to fail
+	wrongType := &v1alpha1.Cluster{}
+
+	// Create the config object that implements CustomValidator
+	config := &v1alpha1.CloudStackMachineConfig{}
+
+	// Call ValidateCreate with the wrong type
+	warnings, err := config.ValidateCreate(context.TODO(), wrongType)
+
+	// Verify that an error is returned
+	g.Expect(warnings).To(BeNil())
+	g.Expect(err).To(HaveOccurred())
+	g.Expect(err.Error()).To(ContainSubstring("expected a CloudStackMachineConfig"))
+}
+
+func TestCloudStackMachineConfigValidateUpdateCastFail(t *testing.T) {
+	g := NewWithT(t)
+
+	// Create a different type that will cause the cast to fail
+	wrongType := &v1alpha1.Cluster{}
+
+	// Create the config object that implements CustomValidator
+	config := &v1alpha1.CloudStackMachineConfig{}
+
+	// Call ValidateUpdate with the wrong type
+	warnings, err := config.ValidateUpdate(context.TODO(), wrongType, &v1alpha1.CloudStackMachineConfig{})
+
+	// Verify that an error is returned
+	g.Expect(warnings).To(BeNil())
+	g.Expect(err).To(HaveOccurred())
+	g.Expect(err.Error()).To(ContainSubstring("expected a CloudStackMachineConfig"))
+}
+
+func TestCloudStackMachineConfigValidateDeleteCastFail(t *testing.T) {
+	g := NewWithT(t)
+
+	// Create a different type that will cause the cast to fail
+	wrongType := &v1alpha1.Cluster{}
+
+	// Create the config object that implements CustomValidator
+	config := &v1alpha1.CloudStackMachineConfig{}
+
+	// Call ValidateDelete with the wrong type
+	warnings, err := config.ValidateDelete(context.TODO(), wrongType)
+
+	// Verify that an error is returned
+	g.Expect(warnings).To(BeNil())
+	g.Expect(err).To(HaveOccurred())
+	g.Expect(err.Error()).To(ContainSubstring("expected a CloudStackMachineConfig"))
 }

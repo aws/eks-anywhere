@@ -379,3 +379,19 @@ func TestUnauthClientApplyServerSide(t *testing.T) {
 		})
 	}
 }
+
+func TestUnauthClientPatch(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	kubeconfig := "k.kubeconfig"
+	obj := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-pod",
+			Namespace: "my-ns",
+		},
+	}
+	ctrl := gomock.NewController(t)
+	kubectl := mocks.NewMockKubectl(ctrl)
+	c := kubernetes.NewUnAuthClient(kubectl)
+	g.Expect(c.Patch(ctx, kubeconfig, obj, nil)).NotTo(Succeed())
+}

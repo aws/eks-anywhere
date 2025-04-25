@@ -12,6 +12,9 @@ type Object client.Object
 // ObjectList is a Kubernetes object list.
 type ObjectList client.ObjectList
 
+// Patch is controller runtime client patch type.
+type Patch client.Patch
+
 // Client is Kubernetes API client.
 type Client interface {
 	Reader
@@ -63,6 +66,45 @@ type Writer interface {
 
 	// DeleteAllOf deletes all objects of the given type matching the given options.
 	DeleteAllOf(ctx context.Context, obj Object, opts ...DeleteAllOfOption) error
+
+	// Patch patches the given obj in the Kubernetes cluster. obj must be a
+	// struct pointer so that obj can be updated with the content returned by the Server.
+	Patch(ctx context.Context, obj Object, patch Patch, opts ...PatchOption) error
+}
+
+// PatchOption is some configuration that modifies options for a patch request.
+type PatchOption interface {
+	// ApplyToPatch applies this configuration to the given patch options.
+	ApplyToPatch(*PatchOptions)
+}
+
+// PatchOptions contains options for patch requests.
+type PatchOptions struct {
+	// FieldManager is the name of the manager used to track field ownership.
+	FieldManager string
+
+	// Force forces the patch to be applied even if it would change the resource's
+	// current spec to a state that is in conflict with other managers.
+	Force bool
+
+	// DryRun specifies that the patch request is dry run. The request is processed
+	// normally, but changes are not persisted.
+	DryRun []string
+}
+
+var _ PatchOption = &PatchOptions{}
+
+// ApplyToPatch implements PatchOption.
+func (o *PatchOptions) ApplyToPatch(po *PatchOptions) {
+	if o.FieldManager != "" {
+		po.FieldManager = o.FieldManager
+	}
+	if o.Force {
+		po.Force = true
+	}
+	if o.DryRun != nil {
+		po.DryRun = o.DryRun
+	}
 }
 
 // DeleteAllOfOption is some configuration that modifies options for a delete request.

@@ -10,7 +10,8 @@ import (
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"sigs.k8s.io/cluster-api/util/conditions"
+	apitypes "k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -32,10 +33,16 @@ type applierTest struct {
 	client        kubernetes.Client
 	log           logr.Logger
 	mgmtCluster   types.Cluster
+	isUpdate      bool
 }
 
-func newApplierTest(tb testing.TB) *applierTest {
+func newApplierTest(tb testing.TB, optionalParams ...bool) *applierTest {
 	ctrl := gomock.NewController(tb)
+	isUpdateTest := false
+	// If optional params were provided, use the first one
+	if len(optionalParams) > 0 {
+		isUpdateTest = optionalParams[0]
+	}
 	return &applierTest{
 		tb:            tb,
 		Gomega:        NewWithT(tb),
@@ -46,6 +53,7 @@ func newApplierTest(tb testing.TB) *applierTest {
 		mgmtCluster: types.Cluster{
 			KubeconfigFile: "my-config",
 		},
+		isUpdate: isUpdateTest,
 	}
 }
 
@@ -59,24 +67,56 @@ func (a *applierTest) updateFailureMessage(c *anywherev1.Cluster, err string) {
 	a.Expect(a.client.Update(a.ctx, c)).To(Succeed())
 }
 
+func (a *applierTest) markConditionWithJSONPatch(inputPatchData []byte) {
+	latest := &anywherev1.Cluster{}
+	_ = a.client.Get(a.ctx, a.spec.Cluster.Name, a.spec.Cluster.Namespace, latest)
+	err := a.client.Patch(a.ctx, latest, client.RawPatch(apitypes.JSONPatchType, inputPatchData))
+	a.Expect(err).To(Succeed())
+}
+
 func (a *applierTest) markCPReady(c *anywherev1.Cluster) {
-	conditions.MarkTrue(c, anywherev1.ControlPlaneReadyCondition)
-	a.Expect(a.client.Update(a.ctx, c)).To(Succeed())
+	cr := &anywherev1.Cluster{}
+	err := a.client.Get(a.ctx, a.spec.Cluster.Name, a.spec.Cluster.Namespace, cr)
+	a.Expect(err).ToNot(HaveOccurred())
+	patchData := []byte(`[
+	{"op":"add","path":"/status/conditions","value":[]},
+		{"op":"add","path":"/status/conditions/-","value":{"type":"ControlPlaneReady","status":"True"}}
+	]`)
+	a.markConditionWithJSONPatch(patchData)
 }
 
 func (a *applierTest) markCNIConfigured(c *anywherev1.Cluster) {
-	conditions.MarkTrue(c, anywherev1.DefaultCNIConfiguredCondition)
-	a.Expect(a.client.Update(a.ctx, c)).To(Succeed())
+	cr := &anywherev1.Cluster{}
+	err := a.client.Get(a.ctx, a.spec.Cluster.Name, a.spec.Cluster.Namespace, cr)
+	a.Expect(err).ToNot(HaveOccurred())
+	patchData := []byte(`[
+			{"op":"add","path":"/status/conditions/-","value":{"type":"DefaultCNIConfigured","status":"True"}}
+		]`)
+	a.markConditionWithJSONPatch(patchData)
 }
 
 func (a *applierTest) markWorkersReady(c *anywherev1.Cluster) {
-	conditions.MarkTrue(c, anywherev1.WorkersReadyCondition)
-	a.Expect(a.client.Update(a.ctx, c)).To(Succeed())
+	cr := &anywherev1.Cluster{}
+	err := a.client.Get(a.ctx, a.spec.Cluster.Name, a.spec.Cluster.Namespace, cr)
+	a.Expect(err).ToNot(HaveOccurred())
+	patchData := []byte(`[
+			{"op":"add","path":"/status/conditions/-","value":{"type":"WorkersReady","status":"True"}}
+		]`)
+	a.markConditionWithJSONPatch(patchData)
 }
 
 func (a *applierTest) markClusterReady(c *anywherev1.Cluster) {
-	conditions.MarkTrue(c, anywherev1.ReadyCondition)
-	a.Expect(a.client.Update(a.ctx, c)).To(Succeed())
+	cr := &anywherev1.Cluster{}
+	err := a.client.Get(a.ctx, a.spec.Cluster.Name, a.spec.Cluster.Namespace, cr)
+	a.Expect(err).ToNot(HaveOccurred())
+	patchData := []byte(`[
+			{"op":"add","path":"/status/conditions/-","value":{"type":"Ready","status":"True"}}
+		]`)
+	a.markConditionWithJSONPatch(patchData)
+}
+
+func (a *applierTest) isUpdateTest() bool {
+	return a.isUpdate
 }
 
 const updateMarkerAnnotation = "anywhere.aws.amazon.com/cluster-updated"
@@ -89,6 +129,13 @@ func (a *applierTest) startFakeController() {
 	// Before starting the controller, we add an annotation to the cluster so we can
 	// check from the controller when it gets updated
 	clientutil.AddAnnotation(a.spec.Cluster, updateMarkerAnnotation, "true")
+
+	if a.isUpdateTest() {
+		// For update tests, explicitly update the object in the fake client
+		// to ensure the annotation is stored
+		err := a.client.Update(a.ctx, a.spec.Cluster)
+		a.Expect(err).NotTo(HaveOccurred())
+	}
 
 	go func() {
 		c := &anywherev1.Cluster{}
@@ -131,7 +178,8 @@ func TestApplierRunClusterCreateSuccess(t *testing.T) {
 }
 
 func TestApplierRunClusterUpdateSuccess(t *testing.T) {
-	tt := newApplierTest(t)
+	tt := newApplierTest(t, true)
+	tt.spec.Cluster.ResourceVersion = "999"
 	tt.buildClient(tt.spec.ClusterAndChildren()...)
 	tt.startFakeController()
 	a := clustermanager.NewApplier(tt.log, tt.clientFactory,
