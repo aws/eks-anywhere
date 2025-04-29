@@ -84,7 +84,7 @@ func (gsbo *generateSupportBundleOptions) generateBundleConfig(ctx context.Conte
 	}
 	defer close(ctx, deps)
 
-	return deps.DignosticCollectorFactory.DiagnosticBundleWorkloadCluster(clusterSpec, deps.Provider, kubeconfig.FromClusterName(clusterSpec.Cluster.Name))
+	return deps.DignosticCollectorFactory.DiagnosticBundleWorkloadCluster(clusterSpec, deps.Provider, kubeconfig.FromClusterName(clusterSpec.Cluster.Name), false)
 }
 
 func (gsbo *generateSupportBundleOptions) generateDefaultBundleConfig(ctx context.Context) (diagnostics.DiagnosticBundle, error) {
