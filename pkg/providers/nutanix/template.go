@@ -239,6 +239,10 @@ func buildTemplateMapCP(
 		values["additionalCategories"] = controlPlaneMachineSpec.AdditionalCategories
 	}
 
+	if controlPlaneMachineSpec.BootType == "legacy" || controlPlaneMachineSpec.BootType == "uefi" {
+		values["bootType"] = controlPlaneMachineSpec.BootType
+	}
+
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
 		registryMirror := registrymirror.FromCluster(clusterSpec.Cluster)
 		values["registryMirrorMap"] = containerd.ToAPIEndpoints(registryMirror.NamespacedRegistryMap)
@@ -287,6 +291,10 @@ func buildTemplateMapCP(
 
 		if len(etcdMachineSpec.AdditionalCategories) > 0 {
 			values["etcdAdditionalCategories"] = etcdMachineSpec.AdditionalCategories
+		}
+
+		if etcdMachineSpec.BootType == "legacy" || etcdMachineSpec.BootType == "uefi" {
+			values["bootType"] = etcdMachineSpec.BootType
 		}
 	}
 
@@ -466,6 +474,10 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 
 	if len(workerNodeGroupMachineSpec.GPUs) > 0 {
 		values["GPUs"] = workerNodeGroupMachineSpec.GPUs
+	}
+
+	if workerNodeGroupMachineSpec.BootType == "legacy" || workerNodeGroupMachineSpec.BootType == "uefi" {
+		values["bootType"] = workerNodeGroupMachineSpec.BootType
 	}
 
 	if workerNodeGroupConfiguration.KubeletConfiguration != nil {

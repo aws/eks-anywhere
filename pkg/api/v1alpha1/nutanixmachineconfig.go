@@ -13,11 +13,18 @@ type NutanixIdentifierType string
 // NutanixGPUIdentifierType is an enumeration of different GPU identifier types.
 type NutanixGPUIdentifierType string
 
+// NutanixBootType is an enumeration of different boot types.
+type NutanixBootType string
+
 func (c NutanixIdentifierType) String() string {
 	return string(c)
 }
 
 func (c NutanixGPUIdentifierType) String() string {
+	return string(c)
+}
+
+func (c NutanixBootType) String() string {
 	return string(c)
 }
 
@@ -34,6 +41,12 @@ const (
 	NutanixGPUIdentifierDeviceID NutanixGPUIdentifierType = "deviceID"
 	// NutanixGPUIdentifierName is a GPU identifier identifying the object by Name.
 	NutanixGPUIdentifierName NutanixGPUIdentifierType = "name"
+
+	// NutanixBootTypeLegacy is a resource identifier identifying the legacy boot type for virtual machines.
+	NutanixBootTypeLegacy NutanixBootType = "legacy"
+
+	// NutanixBootTypeUEFI is a resource identifier identifying the UEFI boot type for virtual machines.
+	NutanixBootTypeUEFI NutanixBootType = "uefi"
 
 	defaultNutanixOSFamily         = Ubuntu
 	defaultNutanixSystemDiskSizeGi = "40Gi"
@@ -123,6 +136,7 @@ func NewNutanixMachineConfigGenerate(name string, opts ...NutanixMachineConfigGe
 			Cluster:        NutanixResourceIdentifier{Type: NutanixIdentifierName, Name: func() *string { s := fmt.Sprintf(enterNameString, "Prism Element cluster"); return &s }()},
 			Subnet:         NutanixResourceIdentifier{Type: NutanixIdentifierName, Name: func() *string { s := fmt.Sprintf(enterNameString, "subnet"); return &s }()},
 			SystemDiskSize: resource.MustParse(defaultNutanixSystemDiskSizeGi),
+			BootType:       NutanixBootTypeLegacy,
 		},
 	}
 
@@ -242,6 +256,12 @@ func validateNutanixReferences(c *NutanixMachineConfig) error {
 		}
 	}
 
+	if c.Spec.BootType != "" {
+		if err := validateNutanixBootType(string(c.Spec.BootType)); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -270,5 +290,12 @@ func validateNutanixCategorySlice(i []NutanixCategoryIdentifier, mcName string) 
 		}
 	}
 
+	return nil
+}
+
+func validateNutanixBootType(bootType string) error {
+	if NutanixBootType(bootType) != NutanixBootTypeLegacy && NutanixBootType(bootType) != NutanixBootTypeUEFI {
+		return fmt.Errorf("NutanixMachineConfig: invalid boot type: %s", bootType)
+	}
 	return nil
 }
