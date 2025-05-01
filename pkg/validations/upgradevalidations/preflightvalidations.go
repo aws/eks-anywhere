@@ -9,6 +9,7 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validation"
@@ -127,6 +128,14 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) []validat
 				Name:        "validate extended kubernetes version support is supported",
 				Remediation: "ensure you have a valid license for extended Kubernetes version support",
 				Err:         validations.ValidateExtendedKubernetesSupport(ctx, *u.Opts.Spec.Cluster, u.Opts.ManifestReader, u.Opts.KubeClient, u.Opts.BundlesOverride),
+			}
+		},
+		func() *validations.ValidationResult {
+			return &validations.ValidationResult{
+				Name:        "validate kubernetes version 1.33 support",
+				Remediation: fmt.Sprintf("ensure %v env variable is set", features.K8s133SupportEnvVar),
+				Err:         validations.ValidateK8s133Support(u.Opts.Spec),
+				Silent:      true,
 			}
 		},
 	}

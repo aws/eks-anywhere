@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
@@ -57,11 +57,19 @@ func (v *CreateValidations) PreflightValidations(ctx context.Context) []validati
 				Err:         validations.ValidateExtendedKubernetesSupport(ctx, *v.Opts.Spec.Cluster, v.Opts.ManifestReader, v.Opts.KubeClient, v.Opts.BundlesOverride),
 			}
 		},
+		func() *validations.ValidationResult {
+			return &validations.ValidationResult{
+				Name:        "validate kubernetes version 1.33 support",
+				Remediation: fmt.Sprintf("ensure %v env variable is set", features.K8s133SupportEnvVar),
+				Err:         validations.ValidateK8s133Support(v.Opts.Spec),
+				Silent:      true,
+			}
+		},
 	}
 
 	if len(v.Opts.Spec.VSphereMachineConfigs) != 0 {
 		cpRef := v.Opts.Spec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-		if v.Opts.Spec.VSphereMachineConfigs[cpRef].Spec.OSFamily == v1alpha1.Bottlerocket {
+		if v.Opts.Spec.VSphereMachineConfigs[cpRef].Spec.OSFamily == anywherev1.Bottlerocket {
 			createValidations = append(createValidations,
 				func() *validations.ValidationResult {
 					return &validations.ValidationResult{
