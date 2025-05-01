@@ -9,6 +9,7 @@ const (
 	VSphereInPlaceEnvVar              = "VSPHERE_IN_PLACE_UPGRADE"
 	APIServerExtraArgsEnabledEnvVar   = "API_SERVER_EXTRA_ARGS_ENABLED"
 	VSphereFailureDomainEnabledEnvVar = "VSPHERE_FAILURE_DOMAIN_ENABLED"
+	K8s133SupportEnvVar               = "K8S_1_33_SUPPORT"
 )
 
 func FeedGates(featureGates []string) {
@@ -71,5 +72,13 @@ func VsphereFailureDomainEnabled() Feature {
 	return Feature{
 		Name:     "Vsphere Failure Domains Enabled",
 		IsActive: globalFeatures.isActiveForEnvVar(VSphereFailureDomainEnabledEnvVar),
+	}
+}
+
+// K8s133Support is the feature flag for Kubernetes 1.33 support.
+func K8s133Support() Feature {
+	return Feature{
+		Name:     "Kubernetes version 1.33 support",
+		IsActive: globalFeatures.isActiveForEnvVar(K8s133SupportEnvVar),
 	}
 }
