@@ -64,9 +64,9 @@ type NutanixMachineConfigSpec struct {
 	// +kubebuilder:validation:Optional
 	GPUs []NutanixGPUIdentifier `json:"gpus,omitempty"`
 
-	// Defines the boot type of the virtual machine. Only supports UEFI and Legacy
+	// BootType defines the boot type of the VM. Allowed values: legacy, uefi
 	// +kubebuilder:validation:Optional
-	// +kubebuilder:validation:Enum:=legacy;uefi
+	// +kubebuilder:validation:Enum=legacy;uefi
 	BootType NutanixBootType `json:"bootType,omitempty"`
 }
 

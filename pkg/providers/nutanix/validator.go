@@ -374,6 +374,10 @@ func (v *Validator) ValidateMachineConfig(ctx context.Context, client Client, cl
 		return err
 	}
 
+	if err := v.validateBootTypeMachineConfig(cluster, config); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -387,6 +391,16 @@ func (v *Validator) validateGPUInMachineConfig(cluster *anywherev1.Cluster, conf
 			if err := v.validateGPUConfig(gpu); err != nil {
 				return err
 			}
+		}
+	}
+
+	return nil
+}
+
+func (v *Validator) validateBootTypeMachineConfig(cluster *anywherev1.Cluster, config *anywherev1.NutanixMachineConfig) error {
+	if config.Spec.BootType != "" {
+		if err := v.validateBootType(config.Spec.BootType); err != nil {
+			return err
 		}
 	}
 
@@ -576,6 +590,13 @@ func (v *Validator) validateGPUConfig(gpu anywherev1.NutanixGPUIdentifier) error
 		}
 	}
 
+	return nil
+}
+
+func (v *Validator) validateBootType(bootType anywherev1.NutanixBootType) error {
+	if bootType != anywherev1.NutanixBootTypeLegacy && bootType != anywherev1.NutanixBootTypeUEFI {
+		return fmt.Errorf("invalid boot type: %s; valid types are: %q and %q", bootType, anywherev1.NutanixBootTypeLegacy, anywherev1.NutanixBootTypeUEFI)
+	}
 	return nil
 }
 

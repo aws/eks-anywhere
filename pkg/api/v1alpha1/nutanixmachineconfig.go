@@ -256,12 +256,6 @@ func validateNutanixReferences(c *NutanixMachineConfig) error {
 		}
 	}
 
-	if c.Spec.BootType != "" {
-		if err := validateNutanixBootType(string(c.Spec.BootType)); err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 
@@ -290,12 +284,5 @@ func validateNutanixCategorySlice(i []NutanixCategoryIdentifier, mcName string) 
 		}
 	}
 
-	return nil
-}
-
-func validateNutanixBootType(bootType string) error {
-	if NutanixBootType(bootType) != NutanixBootTypeLegacy && NutanixBootType(bootType) != NutanixBootTypeUEFI {
-		return fmt.Errorf("NutanixMachineConfig: invalid boot type: %s", bootType)
-	}
 	return nil
 }

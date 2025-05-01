@@ -61,8 +61,8 @@ spec:
                   type: object
                 type: array
               bootType:
-                description: Defines the boot type of the virtual machine. Only supports
-                  UEFI and Legacy
+                description: 'BootType defines the boot type of the VM. Allowed values:
+                  legacy, uefi'
                 enum:
                 - legacy
                 - uefi

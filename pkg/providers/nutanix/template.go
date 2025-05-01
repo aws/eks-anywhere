@@ -289,12 +289,12 @@ func buildTemplateMapCP(
 			values["etcdProjectUUID"] = etcdMachineSpec.Project.UUID
 		}
 
-		if len(etcdMachineSpec.AdditionalCategories) > 0 {
-			values["etcdAdditionalCategories"] = etcdMachineSpec.AdditionalCategories
-		}
-
 		if etcdMachineSpec.BootType == "legacy" || etcdMachineSpec.BootType == "uefi" {
 			values["bootType"] = etcdMachineSpec.BootType
+		}
+
+		if len(etcdMachineSpec.AdditionalCategories) > 0 {
+			values["etcdAdditionalCategories"] = etcdMachineSpec.AdditionalCategories
 		}
 	}
 
@@ -454,6 +454,10 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 		}
 	}
 
+	if workerNodeGroupMachineSpec.BootType == "legacy" || workerNodeGroupMachineSpec.BootType == "uefi" {
+		values["bootType"] = workerNodeGroupMachineSpec.BootType
+	}
+
 	if workerNodeGroupMachineSpec.Project != nil {
 		values["projectIDType"] = workerNodeGroupMachineSpec.Project.Type
 		values["projectName"] = workerNodeGroupMachineSpec.Project.Name
@@ -474,10 +478,6 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 
 	if len(workerNodeGroupMachineSpec.GPUs) > 0 {
 		values["GPUs"] = workerNodeGroupMachineSpec.GPUs
-	}
-
-	if workerNodeGroupMachineSpec.BootType == "legacy" || workerNodeGroupMachineSpec.BootType == "uefi" {
-		values["bootType"] = workerNodeGroupMachineSpec.BootType
 	}
 
 	if workerNodeGroupConfiguration.KubeletConfiguration != nil {
