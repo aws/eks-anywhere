@@ -70,7 +70,10 @@ spec:
       template: {{.controlPlaneTemplate}}
       thumbprint: '{{.thumbprint}}'
 {{- if .controlPlaneTagIDs }}
-      tagIDs: {{.controlPlaneTagIDs}}
+      tagIDs: 
+      {{- range .controlPlaneTagIDs }}
+      - {{ . }}
+      {{- end }}
 {{- end }}
 ---
 apiVersion: controlplane.cluster.x-k8s.io/v1beta1
@@ -685,7 +688,10 @@ spec:
       template: {{.etcdTemplate}}
       thumbprint: '{{.thumbprint}}'
 {{- if .etcdTagIDs }}
-      tagIDs: {{.etcdTagIDs}}
+      tagIDs:
+      {{- range .etcdTagIDs }}
+      - {{ . }}
+      {{- end }}
 {{- end }}
 ---
 {{- end }}

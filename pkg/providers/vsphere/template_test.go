@@ -193,3 +193,27 @@ func TestVsphereTemplateBuilderGenerateFailureDomainYaml(t *testing.T) {
 	g.Expect(err).ToNot(HaveOccurred())
 	test.AssertContentToFile(t, string(data), "testdata/expected_results_failuredomain.yaml")
 }
+
+func TestVsphereTemplateBuilderGenerateCAPISpecVCenterTags(t *testing.T) {
+	g := NewWithT(t)
+	spec := test.NewFullClusterSpec(t, "testdata/cluster_main.yaml")
+	testTags := []string{"urn:vmomi:InventoryServiceTag:test1-uuid:GLOBAL", "urn:vmomi:InventoryServiceTag:test2-uuid:GLOBAL"}
+	controlPlaneMachineConfigName := spec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+	cpMachineConfig := spec.VSphereMachineConfigs[controlPlaneMachineConfigName]
+	cpMachineConfig.Spec.TagIDs = testTags
+	etcdMachineConfigName := spec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
+	etcdMachineConfig := spec.VSphereMachineConfigs[etcdMachineConfigName]
+	etcdMachineConfig.Spec.TagIDs = testTags
+	firstMachineConfigName := spec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
+	workerMachineConfig := spec.VSphereMachineConfigs[firstMachineConfigName]
+	workerMachineConfig.Spec.TagIDs = testTags
+	builder := vsphere.NewVsphereTemplateBuilder(time.Now)
+	cpData, err := builder.GenerateCAPISpecControlPlane(spec, func(values map[string]interface{}) {
+		values["controlPlaneTemplateName"] = clusterapi.ControlPlaneMachineTemplateName(spec.Cluster)
+	})
+	g.Expect(err).ToNot(HaveOccurred())
+	test.AssertContentToFile(t, string(cpData), "testdata/expected_kcp_vcenter_tags.yaml")
+	wData, err := builder.GenerateCAPISpecWorkers(spec, nil, nil)
+	g.Expect(err).ToNot(HaveOccurred())
+	test.AssertContentToFile(t, string(wData), "testdata/expected_kct_vcenter_tags.yaml")
+}
