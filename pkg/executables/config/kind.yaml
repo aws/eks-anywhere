@@ -16,6 +16,26 @@ kubeadmConfigPatches:
         imageTag: {{.EtcdVersion}}
     imageRepository: {{.KubernetesRepository}}
     kubernetesVersion: {{.KubernetesVersion}}
+    apiServer:
+        # enable auditing flags on the API server
+        extraArgs:
+          audit-log-maxage: "30"
+          audit-log-maxbackup: "10"
+          audit-log-maxsize: "512"
+          audit-log-path: /var/log/kubernetes/api-audit.log
+          audit-policy-file: /etc/kubernetes/policies/audit-policy.yaml
+        # mount new files / directories on the control plane
+        extraVolumes:
+          - name: audit-policies
+            hostPath: /etc/kubernetes/policies
+            mountPath: /etc/kubernetes/policies
+            readOnly: true
+            pathType: DirectoryOrCreate
+          - name: audit-logs
+            hostPath: /var/log/kubernetes
+            mountPath: /var/log/kubernetes
+            readOnly: false
+            pathType: DirectoryOrCreate
 {{- if .RegistryMirrorMap }}
 containerdConfigPatches:
   - |
@@ -36,26 +56,25 @@ containerdConfigPatches:
         password = "{{.RegistryPassword}}"
 {{- end }}
 {{- end }}
-{{- if or (ne .RegistryCACertPath "") (.DockerExtraMounts) (ne (len .ExtraPortMappings) 0)}}
 nodes:
 - role: control-plane
-{{- if or (ne .RegistryCACertPath "") (.DockerExtraMounts) }}
   extraMounts:
+  - hostPath: {{ .AuditPolicyPath }}
+    containerPath: /etc/kubernetes/policies/audit-policy.yaml
+    readOnly: true
 {{- if (ne .RegistryCACertPath "") }}
-    - containerPath: /etc/containerd/certs.d
-      hostPath: {{.RegistryCACertPath}}
-      readOnly: true
+  - containerPath: /etc/containerd/certs.d
+    hostPath: {{.RegistryCACertPath}}
+    readOnly: true
 {{- end }}
 {{- if .DockerExtraMounts }}
-    - hostPath: /var/run/docker.sock
-      containerPath: /var/run/docker.sock
-{{- end }}
+  - hostPath: /var/run/docker.sock
+    containerPath: /var/run/docker.sock
 {{- end }}
 {{- if ne (len .ExtraPortMappings) 0 }}
   extraPortMappings:
 {{- range .ExtraPortMappings }}
   - containerPort: {{ . }}
     hostPort: {{ . }}
-{{- end }}
 {{- end }}
 {{- end }}

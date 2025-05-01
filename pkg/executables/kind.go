@@ -14,6 +14,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/providers/common"
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	"github.com/aws/eks-anywhere/pkg/registrymirror/containerd"
 	"github.com/aws/eks-anywhere/pkg/templater"
@@ -57,6 +58,7 @@ type kindExecConfig struct {
 	DisableDefaultCNI    bool
 	PodSubnet            string
 	ServiceSubnet        string
+	AuditPolicyPath      string
 }
 
 func NewKind(executable Executable, writer filewriter.FileWriter) *Kind {
@@ -64,6 +66,24 @@ func NewKind(executable Executable, writer filewriter.FileWriter) *Kind {
 		writer:     writer,
 		Executable: executable,
 	}
+}
+
+// CreateAuditPolicy creates an audit policy file to be used by the bootstrap cluster's api server.
+func (k *Kind) CreateAuditPolicy(clusterSpec *cluster.Spec) error {
+	auditPolicy, err := common.GetAuditPolicy(clusterSpec.Cluster.Spec.KubernetesVersion)
+	if err != nil {
+		return err
+	}
+	auditPath := filepath.Join(clusterSpec.Cluster.Name, "generated", "kubernetes")
+	if err := os.MkdirAll(auditPath, os.ModePerm); err != nil {
+		return err
+	}
+	if err := os.WriteFile(filepath.Join(auditPath, "audit-policy.yaml"), []byte(auditPolicy), 0o644); err != nil {
+		return fmt.Errorf("error writing the audit policy file: %w", err)
+	}
+	auditPath = filepath.Join(auditPath, "audit-policy.yaml")
+	k.execConfig.AuditPolicyPath = auditPath
+	return nil
 }
 
 func (k *Kind) CreateBootstrapCluster(ctx context.Context, clusterSpec *cluster.Spec, opts ...bootstrapper.BootstrapClusterClientOption) (kubeconfig string, err error) {
@@ -227,6 +247,9 @@ func (k *Kind) setupExecConfig(clusterSpec *cluster.Spec) error {
 			k.execConfig.RegistryUsername = username
 			k.execConfig.RegistryPassword = password
 		}
+	}
+	if err := k.CreateAuditPolicy(clusterSpec); err != nil {
+		return err
 	}
 	return nil
 }
