@@ -236,5 +236,8 @@ spec:
       template: {{.workerTemplate}}
       thumbprint: '{{.thumbprint}}'
 {{- if .workerTagIDs }}
-      tagIDs: {{.workerTagIDs}}
+      tagIDs:
+      {{- range .workerTagIDs }}
+      - {{ . }}
+      {{- end }}
 {{- end }}
