@@ -24,10 +24,6 @@ func (c NutanixGPUIdentifierType) String() string {
 	return string(c)
 }
 
-func (c NutanixBootType) String() string {
-	return string(c)
-}
-
 const (
 	// NutanixMachineConfigKind is the kind for a NutanixMachineConfig.
 	NutanixMachineConfigKind = "NutanixMachineConfig"

@@ -290,7 +290,7 @@ func buildTemplateMapCP(
 		}
 
 		if etcdMachineSpec.BootType == "legacy" || etcdMachineSpec.BootType == "uefi" {
-			values["bootType"] = etcdMachineSpec.BootType
+			values["etcdBootType"] = etcdMachineSpec.BootType
 		}
 
 		if len(etcdMachineSpec.AdditionalCategories) > 0 {
