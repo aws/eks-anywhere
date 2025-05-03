@@ -332,7 +332,7 @@ ${IMAGE_ID} tmp-certs-check \
 {{< /tab >}}
 {{< /tabpane >}}
 
-EKS Anywhere typically renews certificates when upgrading a cluster. However, if a cluster has not been upgraded for over a year, then it is necessary to manually renew these certificates. Please see [Certificate rotation]({{< relref "../clustermgmt/security/manually-renew-certs.md" >}}) to manually rotate expired certificates.
+EKS Anywhere typically renews certificates when upgrading a cluster. However, if a cluster has not been upgraded for over a year, then it is necessary to manually renew these certificates. Please see [Certificate rotation]({{< relref "../clustermgmt/security/certificate-management/manually-renew-certs.md" >}}) to manually rotate expired certificates.
 
 ### Bootstrap cluster fails to come up
 
@@ -630,7 +630,7 @@ kubectl get nodes --no-headers -l '!node-role.kubernetes.io/control-plane' -o js
 ```
 
 ### No static pods is running in container runtime on control plane nodes
-When the kubelet systemd service is running on a control plane node and you notice that no [static pods](https://kubernetes.io/docs/concepts/workloads/pods/#static-pods) are running, this could be due to a certificate issue. Check the kubelet service logs. If you see error messages like the ones below, renew the kubelet-client-current.pem certificate by following [these steps]({{< relref "../clustermgmt/security/manually-renew-certs/#kubelet" >}}):
+When the kubelet systemd service is running on a control plane node and you notice that no [static pods](https://kubernetes.io/docs/concepts/workloads/pods/#static-pods) are running, this could be due to a certificate issue. Check the kubelet service logs. If you see error messages like the ones below, renew the kubelet-client-current.pem certificate by following [these steps]({{< relref "../clustermgmt/security/certificate-management/manually-renew-certs.md/#kubelet" >}}):
 ```
 part of the existing bootstrap client certificate in /etc/kubernetes/kubelet/kubeconfig
 Loading cert/key pair from "/var/lib/kubelet/pki/kubelet-client-current.pem
