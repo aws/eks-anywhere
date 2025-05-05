@@ -134,6 +134,7 @@ func (f *Factory) WithClusterReconciler(capiProviders []clusterctlv1.Provider, o
 			clusters.NewClusterValidator(f.manager.GetClient()),
 			f.packageControllerClient,
 			f.machineHealthCheckReconciler,
+			NewFailureDomainMover(f.manager.GetClient()),
 			opts...,
 		)
 

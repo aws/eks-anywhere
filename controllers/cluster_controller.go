@@ -27,7 +27,10 @@ import (
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/controller/handlers"
+	"github.com/aws/eks-anywhere/pkg/controller/serverside"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
+	"github.com/aws/eks-anywhere/pkg/features"
+	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 	"github.com/aws/eks-anywhere/pkg/validations"
@@ -49,6 +52,7 @@ type ClusterReconciler struct {
 	clusterValidator           ClusterValidator
 	packagesClient             PackagesClient
 	machineHealthCheck         MachineHealthCheckReconciler
+	vSpherefailureDomainMover  FailureDomainApplier
 }
 
 // PackagesClient handles curated packages operations from within the cluster
@@ -83,8 +87,85 @@ type ClusterValidator interface {
 // ClusterReconcilerOption allows to configure the ClusterReconciler.
 type ClusterReconcilerOption func(*ClusterReconciler)
 
+// SpecBuilder builds a cluster specification from an EKS Anywhere Cluster object.
+type SpecBuilder interface {
+	BuildSpec(ctx context.Context, eksaCluster *anywherev1.Cluster) (*c.Spec, error)
+}
+
+// FailureDomainSpecBuilder transforms a cluster specification into VSphere-specific failure domains.
+type FailureDomainSpecBuilder interface {
+	BuildFailureDomainSpec(log logr.Logger, clusterSpec *c.Spec) (*vsphere.FailureDomains, error)
+}
+
+// ObjectReconciler applies failure domain objects to a Kubernetes cluster.
+type ObjectReconciler interface {
+	ReconcileObjects(ctx context.Context, fd *vsphere.FailureDomains) error
+}
+
+// FailureDomainApplier orchestrates the end-to-end process of applying failure domains to a cluster.
+type FailureDomainApplier interface {
+	ApplyFailureDomains(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) error
+}
+
+// DefaultSpecBuilder is the standard implementation of SpecBuilder that uses a Kubernetes client.
+type DefaultSpecBuilder struct {
+	client client.Client
+}
+
+// BuildSpec is a wrapper method for building and obtaining all neccessary objects from a cluster.
+func (b *DefaultSpecBuilder) BuildSpec(ctx context.Context, cluster *anywherev1.Cluster) (*c.Spec, error) {
+	return c.BuildSpec(ctx, clientutil.NewKubeClient(b.client), cluster)
+}
+
+// DefaultFailureDomainSpecBuilder is the standard implementation of FailureDomainSpecBuilder.
+type DefaultFailureDomainSpecBuilder struct{}
+
+// BuildFailureDomainSpec wrapper to the vsphere package's FailureDomainsSpec function.
+func (b *DefaultFailureDomainSpecBuilder) BuildFailureDomainSpec(log logr.Logger, clusterSpec *c.Spec) (*vsphere.FailureDomains, error) {
+	return vsphere.FailureDomainsSpec(log, clusterSpec)
+}
+
+// DefaultObjectReconciler is the standard implementation of ObjectReconciler that applies objects using a client.
+type DefaultObjectReconciler struct {
+	client client.Client
+}
+
+// ReconcileObjects applies failure domain objects to the cluster using serverside reconciliation.
+func (r *DefaultObjectReconciler) ReconcileObjects(ctx context.Context, fd *vsphere.FailureDomains) error {
+	return serverside.ReconcileObjects(ctx, r.client, fd.Objects())
+}
+
+// FailureDomainMover defines config for applying failure domain objects.
+type FailureDomainMover struct {
+	specBuilder      SpecBuilder
+	fdSpecBuilder    FailureDomainSpecBuilder
+	objectReconciler ObjectReconciler
+}
+
+// NewFailureDomainMover builds FailureDomainMover with default dependencies.
+func NewFailureDomainMover(client client.Client) *FailureDomainMover {
+	return &FailureDomainMover{
+		specBuilder:      &DefaultSpecBuilder{client: client},
+		fdSpecBuilder:    &DefaultFailureDomainSpecBuilder{},
+		objectReconciler: &DefaultObjectReconciler{client: client},
+	}
+}
+
+// NewFailureDomainMoverWithDependencies builds FailureDomainMover with specified dependencies.
+func NewFailureDomainMoverWithDependencies(
+	specBuilder SpecBuilder,
+	fdSpecBuilder FailureDomainSpecBuilder,
+	objectReconciler ObjectReconciler,
+) *FailureDomainMover {
+	return &FailureDomainMover{
+		specBuilder:      specBuilder,
+		fdSpecBuilder:    fdSpecBuilder,
+		objectReconciler: objectReconciler,
+	}
+}
+
 // NewClusterReconciler constructs a new ClusterReconciler.
-func NewClusterReconciler(client client.Client, registry ProviderClusterReconcilerRegistry, awsIamAuth AWSIamConfigReconciler, clusterValidator ClusterValidator, pkgs PackagesClient, machineHealthCheck MachineHealthCheckReconciler, opts ...ClusterReconcilerOption) *ClusterReconciler {
+func NewClusterReconciler(client client.Client, registry ProviderClusterReconcilerRegistry, awsIamAuth AWSIamConfigReconciler, clusterValidator ClusterValidator, pkgs PackagesClient, machineHealthCheck MachineHealthCheckReconciler, failuredomainmover FailureDomainApplier, opts ...ClusterReconcilerOption) *ClusterReconciler {
 	c := &ClusterReconciler{
 		client:                     client,
 		providerReconcilerRegistry: registry,
@@ -92,6 +173,7 @@ func NewClusterReconciler(client client.Client, registry ProviderClusterReconcil
 		clusterValidator:           clusterValidator,
 		packagesClient:             pkgs,
 		machineHealthCheck:         machineHealthCheck,
+		vSpherefailureDomainMover:  failuredomainmover,
 	}
 
 	for _, opt := range opts {
@@ -488,6 +570,18 @@ func (r *ClusterReconciler) reconcileDelete(ctx context.Context, log logr.Logger
 		return ctrl.Result{}, nil
 	}
 
+	// Creates vspheredeploymentzone and vspherefailuredomain CR on bootstrap cluster prior to delete
+	// These CRs are not migrated over during pivot and must be present to cleanly delete vspheremachines
+	// This solution isn't ideal, but would require redesign
+	if cluster.Spec.DatacenterRef.Kind == "VSphereDatacenterConfig" && cluster.IsSelfManaged() {
+		if features.IsActive(features.VsphereFailureDomainEnabled()) {
+			log.Info("Creating vspheredeploymentzones and vspherefailuredomains on bootstrap")
+			if err := r.applyFailureDomains(ctx, log, cluster); err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+	}
+
 	capiCluster := &clusterv1.Cluster{}
 	capiClusterName := types.NamespacedName{Namespace: constants.EksaSystemNamespace, Name: cluster.Name}
 	log.Info("Deleting", "name", cluster.Name)
@@ -539,6 +633,25 @@ func (r *ClusterReconciler) buildClusterConfig(ctx context.Context, clus *anywhe
 	}
 
 	return config, nil
+}
+
+func (r *ClusterReconciler) applyFailureDomains(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) error {
+	return r.vSpherefailureDomainMover.ApplyFailureDomains(ctx, log, cluster)
+}
+
+// ApplyFailureDomains orchestrates the end-to-end process of applying failure domain objects to a cluster.
+func (m *FailureDomainMover) ApplyFailureDomains(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) error {
+	clusterSpec, err := m.specBuilder.BuildSpec(ctx, cluster)
+	if err != nil {
+		return err
+	}
+
+	fd, err := m.fdSpecBuilder.BuildFailureDomainSpec(log, clusterSpec)
+	if err != nil {
+		return err
+	}
+
+	return m.objectReconciler.ReconcileObjects(ctx, fd)
 }
 
 func (r *ClusterReconciler) ensureClusterOwnerReferences(ctx context.Context, clus *anywherev1.Cluster, config *c.Config) error {
