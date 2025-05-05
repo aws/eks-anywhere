@@ -9,9 +9,11 @@ import (
 	reflect "reflect"
 
 	v1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	cluster "github.com/aws/eks-anywhere/pkg/cluster"
 	controller "github.com/aws/eks-anywhere/pkg/controller"
 	clusters "github.com/aws/eks-anywhere/pkg/controller/clusters"
 	curatedpackages "github.com/aws/eks-anywhere/pkg/curatedpackages"
+	vsphere "github.com/aws/eks-anywhere/pkg/providers/vsphere"
 	registrymirror "github.com/aws/eks-anywhere/pkg/registrymirror"
 	v1alpha10 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	logr "github.com/go-logr/logr"
@@ -265,4 +267,154 @@ func (m *MockClusterValidator) ValidateManagementClusterName(ctx context.Context
 func (mr *MockClusterValidatorMockRecorder) ValidateManagementClusterName(ctx, log, cluster interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateManagementClusterName", reflect.TypeOf((*MockClusterValidator)(nil).ValidateManagementClusterName), ctx, log, cluster)
+}
+
+// MockSpecBuilder is a mock of SpecBuilder interface.
+type MockSpecBuilder struct {
+	ctrl     *gomock.Controller
+	recorder *MockSpecBuilderMockRecorder
+}
+
+// MockSpecBuilderMockRecorder is the mock recorder for MockSpecBuilder.
+type MockSpecBuilderMockRecorder struct {
+	mock *MockSpecBuilder
+}
+
+// NewMockSpecBuilder creates a new mock instance.
+func NewMockSpecBuilder(ctrl *gomock.Controller) *MockSpecBuilder {
+	mock := &MockSpecBuilder{ctrl: ctrl}
+	mock.recorder = &MockSpecBuilderMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockSpecBuilder) EXPECT() *MockSpecBuilderMockRecorder {
+	return m.recorder
+}
+
+// BuildSpec mocks base method.
+func (m *MockSpecBuilder) BuildSpec(ctx context.Context, eksaCluster *v1alpha1.Cluster) (*cluster.Spec, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BuildSpec", ctx, eksaCluster)
+	ret0, _ := ret[0].(*cluster.Spec)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// BuildSpec indicates an expected call of BuildSpec.
+func (mr *MockSpecBuilderMockRecorder) BuildSpec(ctx, eksaCluster interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BuildSpec", reflect.TypeOf((*MockSpecBuilder)(nil).BuildSpec), ctx, eksaCluster)
+}
+
+// MockFailureDomainSpecBuilder is a mock of FailureDomainSpecBuilder interface.
+type MockFailureDomainSpecBuilder struct {
+	ctrl     *gomock.Controller
+	recorder *MockFailureDomainSpecBuilderMockRecorder
+}
+
+// MockFailureDomainSpecBuilderMockRecorder is the mock recorder for MockFailureDomainSpecBuilder.
+type MockFailureDomainSpecBuilderMockRecorder struct {
+	mock *MockFailureDomainSpecBuilder
+}
+
+// NewMockFailureDomainSpecBuilder creates a new mock instance.
+func NewMockFailureDomainSpecBuilder(ctrl *gomock.Controller) *MockFailureDomainSpecBuilder {
+	mock := &MockFailureDomainSpecBuilder{ctrl: ctrl}
+	mock.recorder = &MockFailureDomainSpecBuilderMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockFailureDomainSpecBuilder) EXPECT() *MockFailureDomainSpecBuilderMockRecorder {
+	return m.recorder
+}
+
+// BuildFailureDomainSpec mocks base method.
+func (m *MockFailureDomainSpecBuilder) BuildFailureDomainSpec(log logr.Logger, clusterSpec *cluster.Spec) (*vsphere.FailureDomains, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BuildFailureDomainSpec", log, clusterSpec)
+	ret0, _ := ret[0].(*vsphere.FailureDomains)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// BuildFailureDomainSpec indicates an expected call of BuildFailureDomainSpec.
+func (mr *MockFailureDomainSpecBuilderMockRecorder) BuildFailureDomainSpec(log, clusterSpec interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BuildFailureDomainSpec", reflect.TypeOf((*MockFailureDomainSpecBuilder)(nil).BuildFailureDomainSpec), log, clusterSpec)
+}
+
+// MockObjectReconciler is a mock of ObjectReconciler interface.
+type MockObjectReconciler struct {
+	ctrl     *gomock.Controller
+	recorder *MockObjectReconcilerMockRecorder
+}
+
+// MockObjectReconcilerMockRecorder is the mock recorder for MockObjectReconciler.
+type MockObjectReconcilerMockRecorder struct {
+	mock *MockObjectReconciler
+}
+
+// NewMockObjectReconciler creates a new mock instance.
+func NewMockObjectReconciler(ctrl *gomock.Controller) *MockObjectReconciler {
+	mock := &MockObjectReconciler{ctrl: ctrl}
+	mock.recorder = &MockObjectReconcilerMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockObjectReconciler) EXPECT() *MockObjectReconcilerMockRecorder {
+	return m.recorder
+}
+
+// ReconcileObjects mocks base method.
+func (m *MockObjectReconciler) ReconcileObjects(ctx context.Context, fd *vsphere.FailureDomains) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReconcileObjects", ctx, fd)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ReconcileObjects indicates an expected call of ReconcileObjects.
+func (mr *MockObjectReconcilerMockRecorder) ReconcileObjects(ctx, fd interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReconcileObjects", reflect.TypeOf((*MockObjectReconciler)(nil).ReconcileObjects), ctx, fd)
+}
+
+// MockFailureDomainApplier is a mock of FailureDomainApplier interface.
+type MockFailureDomainApplier struct {
+	ctrl     *gomock.Controller
+	recorder *MockFailureDomainApplierMockRecorder
+}
+
+// MockFailureDomainApplierMockRecorder is the mock recorder for MockFailureDomainApplier.
+type MockFailureDomainApplierMockRecorder struct {
+	mock *MockFailureDomainApplier
+}
+
+// NewMockFailureDomainApplier creates a new mock instance.
+func NewMockFailureDomainApplier(ctrl *gomock.Controller) *MockFailureDomainApplier {
+	mock := &MockFailureDomainApplier{ctrl: ctrl}
+	mock.recorder = &MockFailureDomainApplierMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockFailureDomainApplier) EXPECT() *MockFailureDomainApplierMockRecorder {
+	return m.recorder
+}
+
+// ApplyFailureDomains mocks base method.
+func (m *MockFailureDomainApplier) ApplyFailureDomains(ctx context.Context, log logr.Logger, cluster *v1alpha1.Cluster) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ApplyFailureDomains", ctx, log, cluster)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ApplyFailureDomains indicates an expected call of ApplyFailureDomains.
+func (mr *MockFailureDomainApplierMockRecorder) ApplyFailureDomains(ctx, log, cluster interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyFailureDomains", reflect.TypeOf((*MockFailureDomainApplier)(nil).ApplyFailureDomains), ctx, log, cluster)
 }
