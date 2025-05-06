@@ -5927,7 +5927,7 @@ spec:
               bootType:
                 description: |-
                   bootType is the type of the VM boot device. The default value is
-                  "disk". The other option is "cdrom".
+                  "legacy". The other option is "uefi".
                 enum:
                 - legacy
                 - uefi

@@ -123,7 +123,14 @@ func WithNutanixMachineVCPUsPerSocket(value int32) NutanixFiller {
 // WithNutanixMachineBootType returns a NutanixFiller that sets the boot type for the Nutanix machine.
 func WithNutanixMachineBootType(value anywherev1.NutanixBootType) NutanixFiller {
 	return func(config *NutanixConfig) {
+		if config.machineConfigs == nil {
+			return
+		}
 		for _, m := range config.machineConfigs {
+			if value != anywherev1.NutanixBootTypeLegacy && value != anywherev1.NutanixBootTypeUEFI {
+				logger.Info("Warning: Invalid BootType value. BootType must be either 'legacy' or 'uefi'. Skipping update.")
+				continue
+			}
 			m.Spec.BootType = value
 		}
 	}
