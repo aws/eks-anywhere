@@ -120,6 +120,14 @@ func WithNutanixMachineVCPUsPerSocket(value int32) NutanixFiller {
 	}
 }
 
+func WithNutanixMachineBootType(value anywherev1.NutanixBootType) NutanixFiller {
+	return func(config *NutanixConfig) {
+		for _, m := range config.machineConfigs {
+			m.Spec.BootType = value
+		}
+	}
+}
+
 // WithNutanixMachineVCPUSocket returns a NutanixFiller that sets the vCPU sockets for the Nutanix machine.
 func WithNutanixMachineVCPUSocket(value int32) NutanixFiller {
 	return func(config *NutanixConfig) {

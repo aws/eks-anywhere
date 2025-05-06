@@ -33,6 +33,7 @@ func TestNutanixMachineConfigFillers(t *testing.T) {
 	WithNutanixMachineMemorySize("4Gi")(conf)
 	WithNutanixMachineVCPUSocket(2)(conf)
 	WithNutanixMachineVCPUsPerSocket(2)(conf)
+	WithNutanixMachineBootType(anywherev1.NutanixBootTypeLegacy)(conf)
 	WithNutanixMachineSystemDiskSize("20Gi")(conf)
 	WithNutanixSubnetName("testSubnet")(conf)
 	WithNutanixPrismElementClusterName("testCluster")(conf)
@@ -53,6 +54,7 @@ func TestNutanixMachineConfigFillers(t *testing.T) {
 		g.Expect(*machineConfig.Spec.Image.Name).To(Equal("testImage"))
 		g.Expect(machineConfig.Spec.Users[0].SshAuthorizedKeys[0]).To(Equal("testKey"))
 		g.Expect(machineConfig.Spec.OSFamily).To(Equal(anywherev1.Ubuntu))
+		g.Expect(machineConfig.Spec.BootType).To(Equal(anywherev1.NutanixBootTypeLegacy))
 	}
 
 	WithNutanixSubnetUUID("90ad37a4-6dc0-4ae7-bcb3-a121dfb3fffa")(conf)

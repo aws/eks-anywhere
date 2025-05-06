@@ -91,6 +91,10 @@ func (in *NutanixMachineConfig) ValidateDelete() (admission.Warnings, error) {
 func validateImmutableFieldsNutantixMachineConfig(new, old *NutanixMachineConfig) field.ErrorList {
 	var allErrs field.ErrorList
 	specPath := field.NewPath("spec")
+	if !reflect.DeepEqual(new.Spec.BootType, old.Spec.BootType) {
+		allErrs = append(allErrs, field.Forbidden(specPath.Child("bootType"), "field is immutable"))
+	}
+
 	if new.Spec.OSFamily != old.Spec.OSFamily {
 		allErrs = append(allErrs, field.Forbidden(specPath.Child("OSFamily"), "field is immutable"))
 	}
@@ -125,6 +129,10 @@ func validateImmutableFieldsNutantixMachineConfig(new, old *NutanixMachineConfig
 func validateImmutableFieldsControlPlane(new, old *NutanixMachineConfig) field.ErrorList {
 	var allErrs field.ErrorList
 	specPath := field.NewPath("spec")
+	if !reflect.DeepEqual(new.Spec.BootType, old.Spec.BootType) {
+		allErrs = append(allErrs, field.Forbidden(specPath.Child("bootType"), "field is immutable"))
+	}
+
 	if !reflect.DeepEqual(new.Spec.VCPUSockets, old.Spec.VCPUSockets) {
 		allErrs = append(allErrs, field.Forbidden(specPath.Child("vCPUSockets"), "field is immutable"))
 	}
