@@ -120,6 +120,7 @@ func WithNutanixMachineVCPUsPerSocket(value int32) NutanixFiller {
 	}
 }
 
+// WithNutanixMachineBootType returns a NutanixFiller that sets the boot type for the Nutanix machine.
 func WithNutanixMachineBootType(value anywherev1.NutanixBootType) NutanixFiller {
 	return func(config *NutanixConfig) {
 		for _, m := range config.machineConfigs {
