@@ -239,7 +239,7 @@ func buildTemplateMapCP(
 		values["additionalCategories"] = controlPlaneMachineSpec.AdditionalCategories
 	}
 
-	if controlPlaneMachineSpec.BootType == "legacy" || controlPlaneMachineSpec.BootType == "uefi" {
+	if controlPlaneMachineSpec.BootType == v1alpha1.NutanixBootTypeLegacy || controlPlaneMachineSpec.BootType == v1alpha1.NutanixBootTypeUEFI {
 		values["bootType"] = controlPlaneMachineSpec.BootType
 	}
 
@@ -289,7 +289,7 @@ func buildTemplateMapCP(
 			values["etcdProjectUUID"] = etcdMachineSpec.Project.UUID
 		}
 
-		if etcdMachineSpec.BootType == "legacy" || etcdMachineSpec.BootType == "uefi" {
+		if etcdMachineSpec.BootType == v1alpha1.NutanixBootTypeLegacy || etcdMachineSpec.BootType == v1alpha1.NutanixBootTypeUEFI {
 			values["etcdBootType"] = etcdMachineSpec.BootType
 		}
 
@@ -454,7 +454,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 		}
 	}
 
-	if workerNodeGroupMachineSpec.BootType == "legacy" || workerNodeGroupMachineSpec.BootType == "uefi" {
+	if workerNodeGroupMachineSpec.BootType == v1alpha1.NutanixBootTypeLegacy || workerNodeGroupMachineSpec.BootType == v1alpha1.NutanixBootTypeUEFI {
 		values["bootType"] = workerNodeGroupMachineSpec.BootType
 	}
 
