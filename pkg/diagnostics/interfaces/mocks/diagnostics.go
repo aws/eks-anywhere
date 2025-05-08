@@ -94,18 +94,18 @@ func (m *MockDiagnosticBundleFactory) EXPECT() *MockDiagnosticBundleFactoryMockR
 }
 
 // DiagnosticBundle mocks base method.
-func (m *MockDiagnosticBundleFactory) DiagnosticBundle(spec *cluster.Spec, provider providers.Provider, kubeconfig, bundlePath string) (diagnostics.DiagnosticBundle, error) {
+func (m *MockDiagnosticBundleFactory) DiagnosticBundle(spec *cluster.Spec, provider providers.Provider, kubeconfig, bundlePath string, auditLogs bool) (diagnostics.DiagnosticBundle, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DiagnosticBundle", spec, provider, kubeconfig, bundlePath)
+	ret := m.ctrl.Call(m, "DiagnosticBundle", spec, provider, kubeconfig, bundlePath, auditLogs)
 	ret0, _ := ret[0].(diagnostics.DiagnosticBundle)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // DiagnosticBundle indicates an expected call of DiagnosticBundle.
-func (mr *MockDiagnosticBundleFactoryMockRecorder) DiagnosticBundle(spec, provider, kubeconfig, bundlePath interface{}) *gomock.Call {
+func (mr *MockDiagnosticBundleFactoryMockRecorder) DiagnosticBundle(spec, provider, kubeconfig, bundlePath, auditLogs interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DiagnosticBundle", reflect.TypeOf((*MockDiagnosticBundleFactory)(nil).DiagnosticBundle), spec, provider, kubeconfig, bundlePath)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DiagnosticBundle", reflect.TypeOf((*MockDiagnosticBundleFactory)(nil).DiagnosticBundle), spec, provider, kubeconfig, bundlePath, auditLogs)
 }
 
 // DiagnosticBundleCustom mocks base method.
@@ -152,18 +152,18 @@ func (mr *MockDiagnosticBundleFactoryMockRecorder) DiagnosticBundleManagementClu
 }
 
 // DiagnosticBundleWorkloadCluster mocks base method.
-func (m *MockDiagnosticBundleFactory) DiagnosticBundleWorkloadCluster(spec *cluster.Spec, provider providers.Provider, kubeconfig string) (diagnostics.DiagnosticBundle, error) {
+func (m *MockDiagnosticBundleFactory) DiagnosticBundleWorkloadCluster(spec *cluster.Spec, provider providers.Provider, kubeconfig string, auditLogs bool) (diagnostics.DiagnosticBundle, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DiagnosticBundleWorkloadCluster", spec, provider, kubeconfig)
+	ret := m.ctrl.Call(m, "DiagnosticBundleWorkloadCluster", spec, provider, kubeconfig, auditLogs)
 	ret0, _ := ret[0].(diagnostics.DiagnosticBundle)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // DiagnosticBundleWorkloadCluster indicates an expected call of DiagnosticBundleWorkloadCluster.
-func (mr *MockDiagnosticBundleFactoryMockRecorder) DiagnosticBundleWorkloadCluster(spec, provider, kubeconfig interface{}) *gomock.Call {
+func (mr *MockDiagnosticBundleFactoryMockRecorder) DiagnosticBundleWorkloadCluster(spec, provider, kubeconfig, auditLogs interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DiagnosticBundleWorkloadCluster", reflect.TypeOf((*MockDiagnosticBundleFactory)(nil).DiagnosticBundleWorkloadCluster), spec, provider, kubeconfig)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DiagnosticBundleWorkloadCluster", reflect.TypeOf((*MockDiagnosticBundleFactory)(nil).DiagnosticBundleWorkloadCluster), spec, provider, kubeconfig, auditLogs)
 }
 
 // MockDiagnosticBundle is a mock of DiagnosticBundle interface.
@@ -542,6 +542,20 @@ func NewMockCollectorFactory(ctrl *gomock.Controller) *MockCollectorFactory {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockCollectorFactory) EXPECT() *MockCollectorFactoryMockRecorder {
 	return m.recorder
+}
+
+// AuditLogCollectors mocks base method.
+func (m *MockCollectorFactory) AuditLogCollectors() []*diagnostics.Collect {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AuditLogCollectors")
+	ret0, _ := ret[0].([]*diagnostics.Collect)
+	return ret0
+}
+
+// AuditLogCollectors indicates an expected call of AuditLogCollectors.
+func (mr *MockCollectorFactoryMockRecorder) AuditLogCollectors() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AuditLogCollectors", reflect.TypeOf((*MockCollectorFactory)(nil).AuditLogCollectors))
 }
 
 // DataCenterConfigCollectors mocks base method.

@@ -15,6 +15,7 @@ type Collect struct {
 	Exec             *exec             `json:"exec,omitempty"`
 	RunPod           *runPod           `json:"runPod,omitempty"`
 	Run              *Run              `json:"run,omitempty"`
+	RunDaemonSet     *RunDaemonSet     `json:"runDaemonSet,omitempty"`
 }
 
 type clusterResources struct {
@@ -107,4 +108,14 @@ type Run struct {
 	OutputDir        string            `json:"outputDir,omitempty"`
 	Input            map[string]string `json:"input,omitempty"`
 	Timeout          string            `json:"timeout,omitempty"`
+}
+
+// RunDaemonSet is used to define config for daemonset ran on hosts via troubleshoot.
+type RunDaemonSet struct {
+	collectorMeta    `json:",inline"`
+	Name             string      `json:"name,omitempty"`
+	Namespace        string      `json:"namespace,omitempty"`
+	PodSpec          *v1.PodSpec `json:"podSpec"`
+	Timeout          string      `json:"timeout,omitempty"`
+	imagePullSecrets `json:",inline"`
 }

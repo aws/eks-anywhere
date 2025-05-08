@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/internal/test"
@@ -142,7 +143,7 @@ func TestGenerateBundleConfigWithExternalEtcd(t *testing.T) {
 		}
 
 		f := diagnostics.NewFactory(opts)
-		_, _ = f.DiagnosticBundleWorkloadCluster(spec, p, "")
+		_, _ = f.DiagnosticBundleWorkloadCluster(spec, p, "", false)
 	})
 }
 
@@ -203,7 +204,7 @@ func TestGenerateBundleConfigWithOidc(t *testing.T) {
 		}
 
 		f := diagnostics.NewFactory(opts)
-		_, _ = f.DiagnosticBundleWorkloadCluster(spec, p, "")
+		_, _ = f.DiagnosticBundleWorkloadCluster(spec, p, "", false)
 	})
 }
 
@@ -264,7 +265,7 @@ func TestGenerateBundleConfigWithGitOps(t *testing.T) {
 		}
 
 		f := diagnostics.NewFactory(opts)
-		_, _ = f.DiagnosticBundleWorkloadCluster(spec, p, "")
+		_, _ = f.DiagnosticBundleWorkloadCluster(spec, p, "", false)
 	})
 }
 
@@ -390,7 +391,7 @@ func TestBundleFromSpecComplete(t *testing.T) {
 		}
 
 		f := diagnostics.NewFactory(opts)
-		b, _ := f.DiagnosticBundleWorkloadCluster(spec, p, kubeconfig)
+		b, _ := f.DiagnosticBundleWorkloadCluster(spec, p, kubeconfig, false)
 		err = b.CollectAndAnalyze(ctx, sinceTimeValue)
 		if err != nil {
 			t.Errorf("CollectAndAnalyze() error = %v, wantErr nil", err)
@@ -634,4 +635,114 @@ func TestTinkerbellHostCollectors(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestDiagnosticBundleWithAuditLogsEnabled(t *testing.T) {
+	// Create a cluster spec for testing
+	spec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Cluster = &eksav1alpha1.Cluster{
+			TypeMeta: metav1.TypeMeta{},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "test-cluster-with-audit-logs",
+			},
+			Spec: eksav1alpha1.ClusterSpec{
+				ControlPlaneConfiguration: eksav1alpha1.ControlPlaneConfiguration{
+					Endpoint: &eksav1alpha1.Endpoint{
+						Host: "1.1.1.1",
+					},
+				},
+				DatacenterRef: eksav1alpha1.Ref{
+					Kind: eksav1alpha1.VSphereDatacenterKind,
+					Name: "test-datacenter",
+				},
+			},
+			Status: eksav1alpha1.ClusterStatus{},
+		}
+	})
+
+	t.Run("Generate diagnostic bundle with audit logs enabled", func(t *testing.T) {
+		kubeconfig := "test-cluster-with-audit.kubeconfig"
+
+		provider := givenProvider(t)
+		provider.EXPECT().MachineConfigs(spec).Return(machineConfigs())
+
+		a := givenMockAnalyzerFactory(t)
+		a.EXPECT().DataCenterConfigAnalyzers(spec.Cluster.Spec.DatacenterRef).Return(nil)
+		a.EXPECT().DefaultAnalyzers().Return(nil)
+		a.EXPECT().EksaLogTextAnalyzers(gomock.Any()).Return(nil)
+		a.EXPECT().ManagementClusterAnalyzers().Return(nil)
+		a.EXPECT().PackageAnalyzers().Return(nil)
+
+		c := givenMockCollectorsFactory(t)
+		c.EXPECT().DefaultCollectors().Return(nil)
+		c.EXPECT().EksaHostCollectors(gomock.Any()).Return(nil)
+		c.EXPECT().HostCollectors(spec.Cluster.Spec.DatacenterRef).Return(nil)
+		c.EXPECT().ManagementClusterCollectors().Return(nil)
+		c.EXPECT().DataCenterConfigCollectors(spec.Cluster.Spec.DatacenterRef, spec).Return(nil)
+		c.EXPECT().PackagesCollectors().Return(nil)
+		c.EXPECT().FileCollectors(gomock.Any()).Return(nil)
+
+		auditLogCollectors := []*diagnostics.Collect{
+			{
+				RunDaemonSet: &diagnostics.RunDaemonSet{
+					Name:      "audit-logs",
+					Namespace: constants.EksaDiagnosticsNamespace,
+					PodSpec: &v1.PodSpec{
+						Containers: []v1.Container{{
+							Name:    "audit-logs-collector",
+							Image:   "test-image",
+							Command: []string{"/bin/sh", "-c"},
+							Args: []string{
+								"cat /hostlogs/kubernetes/api-audit.log",
+							},
+							VolumeMounts: []v1.VolumeMount{{
+								Name:      "host-var-log",
+								MountPath: "/hostlogs",
+								ReadOnly:  true,
+							}},
+						}},
+						Volumes: []v1.Volume{{
+							Name: "host-var-log",
+							VolumeSource: v1.VolumeSource{
+								HostPath: &v1.HostPathVolumeSource{
+									Path: "/var/log",
+								},
+							},
+						}},
+						NodeSelector: map[string]string{
+							"node-role.kubernetes.io/control-plane": "",
+						},
+						Tolerations: []v1.Toleration{{
+							Key:      "node-role.kubernetes.io/control-plane",
+							Operator: "Exists",
+							Effect:   "NoSchedule",
+						}},
+					},
+					Timeout: "60s",
+				},
+			},
+		}
+		c.EXPECT().AuditLogCollectors().Return(auditLogCollectors)
+
+		w := givenWriter(t)
+		w.EXPECT().Write(gomock.Any(), gomock.Any()).AnyTimes()
+
+		opts := diagnostics.EksaDiagnosticBundleFactoryOpts{
+			AnalyzerFactory:  a,
+			CollectorFactory: c,
+			Writer:           w,
+		}
+
+		factory := diagnostics.NewFactory(opts)
+		bundle, err := factory.DiagnosticBundleWorkloadCluster(spec, provider, kubeconfig, true)
+		if err != nil {
+			t.Errorf("DiagnosticBundleWorkloadCluster() error = %v, wantErr nil", err)
+			return
+		}
+
+		if bundle == nil {
+			t.Errorf("DiagnosticBundleWorkloadCluster() returned nil bundle")
+			return
+		}
+	})
 }

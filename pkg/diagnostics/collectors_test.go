@@ -198,3 +198,37 @@ func TestHostCollectors(t *testing.T) {
 		})
 	}
 }
+
+func TestAuditLogCollectors(t *testing.T) {
+	tests := []struct {
+		name                     string
+		diagnosticCollectorImage string
+	}{
+		{
+			name:                     "audit logs happy case",
+			diagnosticCollectorImage: "test-image",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewGomegaWithT(t)
+			factory := diagnostics.NewCollectorFactory(tt.diagnosticCollectorImage, test.NewFileReader())
+			collectors := factory.AuditLogCollectors()
+
+			g.Expect(collectors).To(HaveLen(1), "AuditLogCollectors() should return exactly one collector")
+
+			collector := collectors[0]
+			g.Expect(collector.RunDaemonSet).NotTo(BeNil(), "AuditLogCollectors() should return a RunDaemonSet collector")
+
+			podSpec := collector.RunDaemonSet.PodSpec
+			g.Expect(podSpec).NotTo(BeNil(), "PodSpec should not be nil")
+			g.Expect(podSpec.Containers).To(HaveLen(1), "PodSpec should have exactly one container")
+			g.Expect(podSpec.Containers[0].VolumeMounts).To(HaveLen(1), "Container should have exactly one volume mount")
+			g.Expect(podSpec.Volumes).To(HaveLen(1), "PodSpec should have exactly one volume")
+			g.Expect(podSpec.NodeSelector).To(HaveKeyWithValue("node-role.kubernetes.io/control-plane", ""), "NodeSelector should target control-plane nodes")
+			g.Expect(podSpec.Tolerations).To(HaveLen(1), "PodSpec should have exactly one toleration")
+			g.Expect(podSpec.Tolerations[0].Key).To(Equal("node-role.kubernetes.io/control-plane"), "Toleration key should be 'node-role.kubernetes.io/control-plane'")
+		})
+	}
+}

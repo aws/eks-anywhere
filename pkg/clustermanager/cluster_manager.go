@@ -445,7 +445,7 @@ func (c *ClusterManager) SaveLogsWorkloadCluster(ctx context.Context, provider p
 		return nil
 	}
 
-	bundle, err := c.diagnosticsFactory.DiagnosticBundleWorkloadCluster(spec, provider, cluster.KubeconfigFile)
+	bundle, err := c.diagnosticsFactory.DiagnosticBundleWorkloadCluster(spec, provider, cluster.KubeconfigFile, false)
 	if err != nil {
 		logger.V(5).Info("Error generating support bundle for workload cluster", "error", err)
 		return nil

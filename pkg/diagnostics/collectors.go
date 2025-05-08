@@ -87,6 +87,50 @@ func (c *EKSACollectorFactory) HostCollectors(datacenter v1alpha1.Ref) []*Collec
 	}
 }
 
+// AuditLogCollectors returns the audit log collectors that run on all control plane nodes.
+func (c *EKSACollectorFactory) AuditLogCollectors() []*Collect {
+	return []*Collect{
+		{
+			RunDaemonSet: &RunDaemonSet{
+				Name:      "audit-logs",
+				Namespace: constants.EksaDiagnosticsNamespace,
+				PodSpec: &v1.PodSpec{
+					Containers: []v1.Container{{
+						Name:    "audit-logs-collector",
+						Image:   c.DiagnosticCollectorImage,
+						Command: []string{"/bin/sh", "-c"},
+						Args: []string{
+							"cat /hostlogs/kubernetes/api-audit.log",
+						},
+						VolumeMounts: []v1.VolumeMount{{
+							Name:      "host-var-log",
+							MountPath: "/hostlogs",
+							ReadOnly:  true,
+						}},
+					}},
+					Volumes: []v1.Volume{{
+						Name: "host-var-log",
+						VolumeSource: v1.VolumeSource{
+							HostPath: &v1.HostPathVolumeSource{
+								Path: "/var/log",
+							},
+						},
+					}},
+					NodeSelector: map[string]string{
+						"node-role.kubernetes.io/control-plane": "",
+					},
+					Tolerations: []v1.Toleration{{
+						Key:      "node-role.kubernetes.io/control-plane",
+						Operator: "Exists",
+						Effect:   "NoSchedule",
+					}},
+				},
+				Timeout: "60s",
+			},
+		},
+	}
+}
+
 // DataCenterConfigCollectors returns the collectors for the provider datacenter config in the cluster spec.
 func (c *EKSACollectorFactory) DataCenterConfigCollectors(datacenter v1alpha1.Ref, spec *cluster.Spec) []*Collect {
 	switch datacenter.Kind {
