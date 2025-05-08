@@ -18,6 +18,7 @@ anywhere generate support-bundle -f my-cluster.yaml [flags]
 ### Options
 
 ```
+      --audit-logs             Include the latest api server audit log file in the support bundle
       --bundle-config string   Bundle Config file to use when generating support bundle
   -f, --filename string        Filename that contains EKS-A cluster configuration
   -h, --help                   help for support-bundle
