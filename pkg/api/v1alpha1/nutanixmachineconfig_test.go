@@ -26,6 +26,7 @@ func TestGetNutanixMachineConfigsValidConfig(t *testing.T) {
 			Namespace: "default",
 		},
 		Spec: v1alpha1.NutanixMachineConfigSpec{
+			BootType:       v1alpha1.NutanixBootTypeLegacy,
 			SystemDiskSize: resource.MustParse("40Gi"),
 			MemorySize:     resource.MustParse("8Gi"),
 			VCPUSockets:    4,

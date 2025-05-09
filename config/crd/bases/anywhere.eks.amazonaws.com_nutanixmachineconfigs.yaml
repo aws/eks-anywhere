@@ -60,6 +60,12 @@ spec:
                   - value
                   type: object
                 type: array
+              bootType:
+                description: BootType defines the boot type of the VM. Allowed values legacy, uefi
+                enum:
+                - legacy
+                - uefi
+                type: string
               cluster:
                 description: |-
                   cluster is to identify the cluster (the Prism Element under management
