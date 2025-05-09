@@ -241,7 +241,15 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 			if stackTest.installOnDocker {
 				docker.EXPECT().Run(ctx, "public.ecr.aws/eks-anywhere/boots:latest",
 					boots,
-					[]string{"-backend-kube-config", "/kubeconfig", "-dhcp-addr", "0.0.0.0:67", "-osie-url", "https://anywhere-assests.eks.amazonaws.com/tinkerbell/hook", "-tink-server", "1.2.3.4:42113"},
+					[]string{
+						"-backend-kube-config", "/kubeconfig",
+						"-dhcp-addr", "0.0.0.0:67",
+						"-osie-url", "https://anywhere-assests.eks.amazonaws.com/tinkerbell/hook",
+						"-tink-server", "1.2.3.4:42113",
+						"-syslog-addr", testIP,
+						"-tftp-addr", testIP,
+						"-http-addr", testIP,
+					},
 					"-v", gomock.Any(),
 					"--network", "host",
 					"-e", gomock.Any(),
