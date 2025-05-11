@@ -1894,7 +1894,7 @@ func (e *ClusterE2ETest) VerifyPrometheusNodeExporterStates(packageName, targetN
 
 	svcAddress := packageName + "-node-exporter." + targetNamespace + ".svc.cluster.local" + ":9100/metrics"
 	e.T.Log("Validate content at endpoint", svcAddress)
-	expectedLogs := "HELP go_gc_duration_seconds A summary of the pause duration of garbage collection cycles"
+	expectedLogs := "HELP go_gc_duration_seconds A summary of the wall-time pause (stop-the-world) duration in garbage collection cycles"
 	e.ValidateEndpointContent(svcAddress, targetNamespace, expectedLogs)
 }
 
