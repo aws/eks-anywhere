@@ -5476,6 +5476,7 @@ func TestVSphereKubernetes131BottlerocketTo132StackedEtcdUpgrade(t *testing.T) {
 }
 
 func TestVSphereKubernetes132Redhat9UpgradeFromLatestMinorRelease(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
 	release := latestMinorRelease(t)
 	useBundlesOverride := false
 	provider := framework.NewVSphere(t,
@@ -5499,6 +5500,9 @@ func TestVSphereKubernetes132Redhat9UpgradeFromLatestMinorRelease(t *testing.T) 
 		provider.WithProviderUpgrade(
 			provider.Redhat9132Template(), // Set the template so it doesn't get autoimported
 		),
+		framework.WithClusterUpgrade(
+			api.WithLicenseToken(licenseToken),
+		),
 	)
 }
 
@@ -5508,6 +5512,7 @@ func TestVSphereKubernetes132WithOIDCManagementClusterUpgradeFromLatestSideEffec
 }
 
 func TestVSphereKubernetes128To129UbuntuUpgradeFromLatestMinorRelease(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
 	release := latestMinorRelease(t)
 	useBundlesOverride := false
 	provider := framework.NewVSphere(t,
@@ -5531,11 +5536,15 @@ func TestVSphereKubernetes128To129UbuntuUpgradeFromLatestMinorRelease(t *testing
 		provider.WithProviderUpgrade(
 			provider.Ubuntu129Template(), // Set the template so it doesn't get autoimported
 		),
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube129)),
+		framework.WithClusterUpgrade(
+			api.WithKubernetesVersion(v1alpha1.Kube129),
+			api.WithLicenseToken(licenseToken),
+		),
 	)
 }
 
 func TestVSphereKubernetes129To130UbuntuUpgradeFromLatestMinorRelease(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
 	release := latestMinorRelease(t)
 	useBundlesOverride := false
 	provider := framework.NewVSphere(t,
@@ -5559,11 +5568,15 @@ func TestVSphereKubernetes129To130UbuntuUpgradeFromLatestMinorRelease(t *testing
 		provider.WithProviderUpgrade(
 			provider.Ubuntu130Template(), // Set the template so it doesn't get autoimported
 		),
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube130)),
+		framework.WithClusterUpgrade(
+			api.WithKubernetesVersion(v1alpha1.Kube130),
+			api.WithLicenseToken(licenseToken),
+		),
 	)
 }
 
 func TestVSphereKubernetes130To131UbuntuUpgradeFromLatestMinorRelease(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
 	release := latestMinorRelease(t)
 	useBundlesOverride := false
 	provider := framework.NewVSphere(t,
@@ -5587,11 +5600,15 @@ func TestVSphereKubernetes130To131UbuntuUpgradeFromLatestMinorRelease(t *testing
 		provider.WithProviderUpgrade(
 			provider.Ubuntu131Template(), // Set the template so it doesn't get autoimported
 		),
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube131)),
+		framework.WithClusterUpgrade(
+			api.WithKubernetesVersion(v1alpha1.Kube131),
+			api.WithLicenseToken(licenseToken),
+		),
 	)
 }
 
 func TestVSphereKubernetes131To132UbuntuUpgradeFromLatestMinorRelease(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
 	release := latestMinorRelease(t)
 	useBundlesOverride := false
 	provider := framework.NewVSphere(t,
@@ -5615,11 +5632,15 @@ func TestVSphereKubernetes131To132UbuntuUpgradeFromLatestMinorRelease(t *testing
 		provider.WithProviderUpgrade(
 			provider.Ubuntu132Template(), // Set the template so it doesn't get autoimported
 		),
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube132)),
+		framework.WithClusterUpgrade(
+			api.WithKubernetesVersion(v1alpha1.Kube132),
+			api.WithLicenseToken(licenseToken),
+		),
 	)
 }
 
 func TestVSphereKubernetes131To132UbuntuInPlaceUpgradeFromLatestMinorRelease(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
 	release := latestMinorRelease(t)
 	useBundlesOverride := false
 	provider := framework.NewVSphere(
@@ -5650,6 +5671,7 @@ func TestVSphereKubernetes131To132UbuntuInPlaceUpgradeFromLatestMinorRelease(t *
 		framework.WithClusterUpgrade(
 			api.WithKubernetesVersion(v1alpha1.Kube132),
 			api.WithInPlaceUpgradeStrategy(),
+			api.WithLicenseToken(licenseToken),
 		),
 		provider.WithProviderUpgrade(provider.Ubuntu132Template()),
 	)
@@ -5696,6 +5718,7 @@ func TestVSphereKubernetes128BottlerocketAndRemoveWorkerNodeGroups(t *testing.T)
 }
 
 func TestVSphereKubernetes128To129RedhatUpgradeFromLatestMinorRelease(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
 	release := latestMinorRelease(t)
 	useBundlesOverride := false
 	provider := framework.NewVSphere(t,
@@ -5719,11 +5742,15 @@ func TestVSphereKubernetes128To129RedhatUpgradeFromLatestMinorRelease(t *testing
 		provider.WithProviderUpgrade(
 			provider.Redhat129Template(), // Set the template so it doesn't get auto-imported
 		),
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube129)),
+		framework.WithClusterUpgrade(
+			api.WithKubernetesVersion(v1alpha1.Kube129),
+			api.WithLicenseToken(licenseToken),
+		),
 	)
 }
 
 func TestVSphereKubernetes129To130RedhatUpgradeFromLatestMinorRelease(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
 	release := latestMinorRelease(t)
 	useBundlesOverride := false
 	provider := framework.NewVSphere(t,
@@ -5747,11 +5774,15 @@ func TestVSphereKubernetes129To130RedhatUpgradeFromLatestMinorRelease(t *testing
 		provider.WithProviderUpgrade(
 			provider.Redhat130Template(), // Set the template so it doesn't get auto-imported
 		),
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube130)),
+		framework.WithClusterUpgrade(
+			api.WithKubernetesVersion(v1alpha1.Kube130),
+			api.WithLicenseToken(licenseToken),
+		),
 	)
 }
 
 func TestVSphereKubernetes130To131RedhatUpgradeFromLatestMinorRelease(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
 	release := latestMinorRelease(t)
 	useBundlesOverride := false
 	provider := framework.NewVSphere(t,
@@ -5775,11 +5806,15 @@ func TestVSphereKubernetes130To131RedhatUpgradeFromLatestMinorRelease(t *testing
 		provider.WithProviderUpgrade(
 			provider.Redhat131Template(), // Set the template so it doesn't get auto-imported
 		),
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube131)),
+		framework.WithClusterUpgrade(
+			api.WithKubernetesVersion(v1alpha1.Kube131),
+			api.WithLicenseToken(licenseToken),
+		),
 	)
 }
 
 func TestVSphereKubernetes128To129Redhat9UpgradeFromLatestMinorRelease(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
 	release := latestMinorRelease(t)
 	useBundlesOverride := false
 	provider := framework.NewVSphere(t,
@@ -5803,11 +5838,15 @@ func TestVSphereKubernetes128To129Redhat9UpgradeFromLatestMinorRelease(t *testin
 		provider.WithProviderUpgrade(
 			provider.Redhat9129Template(), // Set the template so it doesn't get auto-imported
 		),
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube129)),
+		framework.WithClusterUpgrade(
+			api.WithKubernetesVersion(v1alpha1.Kube129),
+			api.WithLicenseToken(licenseToken),
+		),
 	)
 }
 
 func TestVSphereKubernetes129To130Redhat9UpgradeFromLatestMinorRelease(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
 	release := latestMinorRelease(t)
 	useBundlesOverride := false
 	provider := framework.NewVSphere(t,
@@ -5831,11 +5870,15 @@ func TestVSphereKubernetes129To130Redhat9UpgradeFromLatestMinorRelease(t *testin
 		provider.WithProviderUpgrade(
 			provider.Redhat9130Template(), // Set the template so it doesn't get auto-imported
 		),
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube130)),
+		framework.WithClusterUpgrade(
+			api.WithKubernetesVersion(v1alpha1.Kube130),
+			api.WithLicenseToken(licenseToken),
+		),
 	)
 }
 
 func TestVSphereKubernetes130To131Redhat9UpgradeFromLatestMinorRelease(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
 	release := latestMinorRelease(t)
 	useBundlesOverride := false
 	provider := framework.NewVSphere(t,
@@ -5859,11 +5902,15 @@ func TestVSphereKubernetes130To131Redhat9UpgradeFromLatestMinorRelease(t *testin
 		provider.WithProviderUpgrade(
 			provider.Redhat9131Template(), // Set the template so it doesn't get auto-imported
 		),
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube131)),
+		framework.WithClusterUpgrade(
+			api.WithKubernetesVersion(v1alpha1.Kube131),
+			api.WithLicenseToken(licenseToken),
+		),
 	)
 }
 
 func TestVSphereKubernetes131To132Redhat9UpgradeFromLatestMinorRelease(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
 	release := latestMinorRelease(t)
 	useBundlesOverride := false
 	provider := framework.NewVSphere(t,
@@ -5887,7 +5934,10 @@ func TestVSphereKubernetes131To132Redhat9UpgradeFromLatestMinorRelease(t *testin
 		provider.WithProviderUpgrade(
 			provider.Redhat9132Template(), // Set the template so it doesn't get auto-imported
 		),
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube132)),
+		framework.WithClusterUpgrade(
+			api.WithKubernetesVersion(v1alpha1.Kube132),
+			api.WithLicenseToken(licenseToken),
+		),
 	)
 }
 
