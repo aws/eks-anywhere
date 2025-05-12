@@ -9,6 +9,7 @@ var SkippableValidations = []string{
 	validations.PDB,
 	validations.VSphereUserPriv,
 	validations.EksaVersionSkew,
+	validations.CustomWebhook,
 }
 
 func New(opts *validations.Opts) *UpgradeValidations {
