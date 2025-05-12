@@ -17,12 +17,20 @@ import (
 )
 
 func TestValidateCustomWebhooks(t *testing.T) {
+	failurePolicy := admissionregistrationv1.Fail
+	ignorePolicy := admissionregistrationv1.Ignore
+	shortTimeout := int32(5)
+	normalTimeout := int32(15)
+	port := int32(443)
+
 	tests := []struct {
 		name                   string
 		validatingWebhooks     []admissionregistrationv1.ValidatingWebhookConfiguration
 		mutatingWebhooks       []admissionregistrationv1.MutatingWebhookConfiguration
 		expectError            bool
 		expectedErrorSubstring string
+		expectHighSeverity     bool
+		expectMediumSeverity   bool
 	}{
 		{
 			name:               "No webhooks",
@@ -65,73 +73,253 @@ func TestValidateCustomWebhooks(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name: "Custom validating webhook",
+			name: "Custom validating webhook with no issues",
 			validatingWebhooks: []admissionregistrationv1.ValidatingWebhookConfiguration{
 				{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "custom-validating-webhook",
+					},
+					Webhooks: []admissionregistrationv1.ValidatingWebhook{
+						{
+							Name:           "webhook1.example.com",
+							FailurePolicy:  &ignorePolicy,
+							TimeoutSeconds: &normalTimeout,
+							Rules: []admissionregistrationv1.RuleWithOperations{
+								{
+									Rule: admissionregistrationv1.Rule{
+										APIGroups:   []string{"apps"},
+										APIVersions: []string{"v1"},
+										Resources:   []string{"replicasets"},
+									},
+									Operations: []admissionregistrationv1.OperationType{"CREATE"},
+								},
+							},
+						},
 					},
 				},
 			},
 			mutatingWebhooks:       []admissionregistrationv1.MutatingWebhookConfiguration{},
 			expectError:            true,
 			expectedErrorSubstring: "one or more custom webhooks were detected",
+			expectHighSeverity:     false,
+			expectMediumSeverity:   false,
 		},
 		{
-			name:               "Custom mutating webhook",
+			name: "Custom validating webhook with failure policy issue",
+			validatingWebhooks: []admissionregistrationv1.ValidatingWebhookConfiguration{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "custom-validating-webhook",
+					},
+					Webhooks: []admissionregistrationv1.ValidatingWebhook{
+						{
+							Name:           "webhook1.example.com",
+							FailurePolicy:  &failurePolicy,
+							TimeoutSeconds: &normalTimeout,
+							Rules: []admissionregistrationv1.RuleWithOperations{
+								{
+									Rule: admissionregistrationv1.Rule{
+										APIGroups:   []string{"apps"},
+										APIVersions: []string{"v1"},
+										Resources:   []string{"replicasets"},
+									},
+									Operations: []admissionregistrationv1.OperationType{"CREATE"},
+								},
+							},
+						},
+					},
+				},
+			},
+			mutatingWebhooks:       []admissionregistrationv1.MutatingWebhookConfiguration{},
+			expectError:            true,
+			expectedErrorSubstring: "HIGH SEVERITY ISSUES",
+			expectHighSeverity:     true,
+			expectMediumSeverity:   false,
+		},
+		{
+			name: "Custom validating webhook with timeout issue",
+			validatingWebhooks: []admissionregistrationv1.ValidatingWebhookConfiguration{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "custom-validating-webhook",
+					},
+					Webhooks: []admissionregistrationv1.ValidatingWebhook{
+						{
+							Name:           "webhook1.example.com",
+							FailurePolicy:  &ignorePolicy,
+							TimeoutSeconds: &shortTimeout,
+							Rules: []admissionregistrationv1.RuleWithOperations{
+								{
+									Rule: admissionregistrationv1.Rule{
+										APIGroups:   []string{"apps"},
+										APIVersions: []string{"v1"},
+										Resources:   []string{"replicasets"},
+									},
+									Operations: []admissionregistrationv1.OperationType{"CREATE"},
+								},
+							},
+						},
+					},
+				},
+			},
+			mutatingWebhooks:       []admissionregistrationv1.MutatingWebhookConfiguration{},
+			expectError:            true,
+			expectedErrorSubstring: "MEDIUM SEVERITY ISSUES",
+			expectHighSeverity:     false,
+			expectMediumSeverity:   true,
+		},
+		{
+			name: "Custom validating webhook with critical resources issue",
+			validatingWebhooks: []admissionregistrationv1.ValidatingWebhookConfiguration{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "custom-validating-webhook",
+					},
+					Webhooks: []admissionregistrationv1.ValidatingWebhook{
+						{
+							Name:           "webhook1.example.com",
+							FailurePolicy:  &ignorePolicy,
+							TimeoutSeconds: &normalTimeout,
+							Rules: []admissionregistrationv1.RuleWithOperations{
+								{
+									Rule: admissionregistrationv1.Rule{
+										APIGroups:   []string{"apps"},
+										APIVersions: []string{"v1"},
+										Resources:   []string{"deployments"},
+									},
+									Operations: []admissionregistrationv1.OperationType{"CREATE", "UPDATE"},
+								},
+							},
+						},
+					},
+				},
+			},
+			mutatingWebhooks:       []admissionregistrationv1.MutatingWebhookConfiguration{},
+			expectError:            true,
+			expectedErrorSubstring: "HIGH SEVERITY ISSUES",
+			expectHighSeverity:     true,
+			expectMediumSeverity:   false,
+		},
+		{
+			name: "Custom validating webhook with multiple issues",
+			validatingWebhooks: []admissionregistrationv1.ValidatingWebhookConfiguration{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "custom-validating-webhook",
+					},
+					Webhooks: []admissionregistrationv1.ValidatingWebhook{
+						{
+							Name:           "webhook1.example.com",
+							FailurePolicy:  &failurePolicy,
+							TimeoutSeconds: &shortTimeout,
+							Rules: []admissionregistrationv1.RuleWithOperations{
+								{
+									Rule: admissionregistrationv1.Rule{
+										APIGroups:   []string{"apps"},
+										APIVersions: []string{"v1"},
+										Resources:   []string{"deployments"},
+									},
+									Operations: []admissionregistrationv1.OperationType{"CREATE", "UPDATE"},
+								},
+							},
+						},
+					},
+				},
+			},
+			mutatingWebhooks:       []admissionregistrationv1.MutatingWebhookConfiguration{},
+			expectError:            true,
+			expectedErrorSubstring: "HIGH SEVERITY ISSUES",
+			expectHighSeverity:     true,
+			expectMediumSeverity:   true,
+		},
+		{
+			name:               "Custom mutating webhook with issues",
 			validatingWebhooks: []admissionregistrationv1.ValidatingWebhookConfiguration{},
 			mutatingWebhooks: []admissionregistrationv1.MutatingWebhookConfiguration{
 				{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "custom-mutating-webhook",
 					},
+					Webhooks: []admissionregistrationv1.MutatingWebhook{
+						{
+							Name:           "webhook1.example.com",
+							FailurePolicy:  &failurePolicy,
+							TimeoutSeconds: &shortTimeout,
+							Rules: []admissionregistrationv1.RuleWithOperations{
+								{
+									Rule: admissionregistrationv1.Rule{
+										APIGroups:   []string{""},
+										APIVersions: []string{"v1"},
+										Resources:   []string{"pods"},
+									},
+									Operations: []admissionregistrationv1.OperationType{"CREATE"},
+								},
+							},
+						},
+					},
 				},
 			},
 			expectError:            true,
-			expectedErrorSubstring: "one or more custom webhooks were detected",
+			expectedErrorSubstring: "HIGH SEVERITY ISSUES",
+			expectHighSeverity:     true,
+			expectMediumSeverity:   true,
 		},
 		{
-			name: "Both custom validating and mutating webhooks",
+			name: "Custom validating webhook with service port issue",
 			validatingWebhooks: []admissionregistrationv1.ValidatingWebhookConfiguration{
 				{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "custom-validating-webhook",
 					},
-				},
-			},
-			mutatingWebhooks: []admissionregistrationv1.MutatingWebhookConfiguration{
-				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "custom-mutating-webhook",
+					Webhooks: []admissionregistrationv1.ValidatingWebhook{
+						{
+							Name:           "webhook1.example.com",
+							FailurePolicy:  &ignorePolicy,
+							TimeoutSeconds: &normalTimeout,
+							ClientConfig: admissionregistrationv1.WebhookClientConfig{
+								Service: &admissionregistrationv1.ServiceReference{
+									Name:      "webhook-service",
+									Namespace: "default",
+								},
+							},
+						},
 					},
 				},
 			},
+			mutatingWebhooks:       []admissionregistrationv1.MutatingWebhookConfiguration{},
 			expectError:            true,
-			expectedErrorSubstring: "one or more custom webhooks were detected",
+			expectedErrorSubstring: "MEDIUM SEVERITY ISSUES",
+			expectHighSeverity:     false,
+			expectMediumSeverity:   true,
 		},
 		{
-			name: "Mix of system and custom webhooks",
+			name: "Custom validating webhook with service port specified",
 			validatingWebhooks: []admissionregistrationv1.ValidatingWebhookConfiguration{
-				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "validating-webhook-configuration",
-					},
-				},
 				{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "custom-validating-webhook",
 					},
-				},
-			},
-			mutatingWebhooks: []admissionregistrationv1.MutatingWebhookConfiguration{
-				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "mutating-webhook-configuration",
+					Webhooks: []admissionregistrationv1.ValidatingWebhook{
+						{
+							Name:           "webhook1.example.com",
+							FailurePolicy:  &ignorePolicy,
+							TimeoutSeconds: &normalTimeout,
+							ClientConfig: admissionregistrationv1.WebhookClientConfig{
+								Service: &admissionregistrationv1.ServiceReference{
+									Name:      "webhook-service",
+									Namespace: "default",
+									Port:      &port,
+								},
+							},
+						},
 					},
 				},
 			},
+			mutatingWebhooks:       []admissionregistrationv1.MutatingWebhookConfiguration{},
 			expectError:            true,
 			expectedErrorSubstring: "one or more custom webhooks were detected",
+			expectHighSeverity:     false,
+			expectMediumSeverity:   false,
 		},
 	}
 
@@ -169,6 +357,14 @@ func TestValidateCustomWebhooks(t *testing.T) {
 				assert.Error(t, err)
 				assert.Contains(t, err.Error(), tt.expectedErrorSubstring)
 				assert.Contains(t, err.Error(), validations.CustomWebhook)
+
+				if tt.expectHighSeverity {
+					assert.Contains(t, err.Error(), "HIGH SEVERITY ISSUES")
+				}
+
+				if tt.expectMediumSeverity {
+					assert.Contains(t, err.Error(), "MEDIUM SEVERITY ISSUES")
+				}
 			} else {
 				assert.NoError(t, err)
 			}
