@@ -850,6 +850,7 @@ func TestDockerKubernetes131To132ExternalEtcdUpgrade(t *testing.T) {
 
 // Upgrade From Latest Minor Release
 func TestDockerKubernetes128to129UpgradeFromLatestMinorRelease(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
 	release := latestMinorRelease(t)
 	provider := framework.NewDocker(t)
 	test := framework.NewClusterE2ETest(
@@ -864,11 +865,15 @@ func TestDockerKubernetes128to129UpgradeFromLatestMinorRelease(t *testing.T) {
 		test,
 		release,
 		v1alpha1.Kube129,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube129)),
+		framework.WithClusterUpgrade(
+			api.WithKubernetesVersion(v1alpha1.Kube129),
+			api.WithLicenseToken(licenseToken),
+		),
 	)
 }
 
 func TestDockerKubernetes129to130UpgradeFromLatestMinorRelease(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
 	release := latestMinorRelease(t)
 	provider := framework.NewDocker(t)
 	test := framework.NewClusterE2ETest(
@@ -883,11 +888,15 @@ func TestDockerKubernetes129to130UpgradeFromLatestMinorRelease(t *testing.T) {
 		test,
 		release,
 		v1alpha1.Kube130,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube130)),
+		framework.WithClusterUpgrade(
+			api.WithKubernetesVersion(v1alpha1.Kube130),
+			api.WithLicenseToken(licenseToken),
+		),
 	)
 }
 
 func TestDockerKubernetes130to131UpgradeFromLatestMinorRelease(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
 	release := latestMinorRelease(t)
 	provider := framework.NewDocker(t)
 	test := framework.NewClusterE2ETest(
@@ -902,11 +911,15 @@ func TestDockerKubernetes130to131UpgradeFromLatestMinorRelease(t *testing.T) {
 		test,
 		release,
 		v1alpha1.Kube131,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube131)),
+		framework.WithClusterUpgrade(
+			api.WithKubernetesVersion(v1alpha1.Kube131),
+			api.WithLicenseToken(licenseToken),
+		),
 	)
 }
 
 func TestDockerKubernetes131to132UpgradeFromLatestMinorRelease(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
 	release := latestMinorRelease(t)
 	provider := framework.NewDocker(t)
 	test := framework.NewClusterE2ETest(
@@ -921,7 +934,10 @@ func TestDockerKubernetes131to132UpgradeFromLatestMinorRelease(t *testing.T) {
 		test,
 		release,
 		v1alpha1.Kube132,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube132)),
+		framework.WithClusterUpgrade(
+			api.WithKubernetesVersion(v1alpha1.Kube132),
+			api.WithLicenseToken(licenseToken),
+		),
 	)
 }
 

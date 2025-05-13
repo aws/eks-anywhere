@@ -32,17 +32,19 @@ skipped_tests:
 - TestTinkerbellKubernetes132UbuntuAddWorkerNodeGroupWithAPI
 # Skipping skip power action tests - Not going to work because e2e test powers on CP and worker node at the same time and worker node times out early waiting for ipxe
 # Skipping a few redundant tests
-# For RHEL 9 Tinkerbell tests, only enable test case for latest kubernetes version 1.31 due to limited testing resources.
+# For Ubuntu 22.04, RHEL 8 and RHEL 9 Tinkerbell tests, only enable test case for latest kubernetes version 1.32 due to limited testing resources.
 - TestTinkerbellKubernetes128RedHatSimpleFlow
 - TestTinkerbellKubernetes129RedHatSimpleFlow
 - TestTinkerbellKubernetes130RedHatSimpleFlow
-- TestTinkerbellKubernetes132RedHatSimpleFlow
+- TestTinkerbellKubernetes131RedHatSimpleFlow
 - TestTinkerbellKubernetes128RedHat9SimpleFlow
 - TestTinkerbellKubernetes129RedHat9SimpleFlow
 - TestTinkerbellKubernetes130RedHat9SimpleFlow
+- TestTinkerbellKubernetes131RedHat9SimpleFlow
 - TestTinkerbellKubernetes128Ubuntu2204SimpleFlow
 - TestTinkerbellKubernetes129Ubuntu2204SimpleFlow
 - TestTinkerbellKubernetes130Ubuntu2204SimpleFlow
+- TestTinkerbellKubernetes131Ubuntu2204SimpleFlow
 - TestTinkerbellKubernetes128To129Ubuntu2204Upgrade
 - TestTinkerbellKubernetes129To130Ubuntu2204Upgrade
 - TestTinkerbellKubernetes128Ubuntu2004To2204Upgrade
@@ -61,9 +63,11 @@ skipped_tests:
 - TestTinkerbellKubernetes128UbuntuSingleNodeCuratedPackagesHarborFlow
 - TestTinkerbellKubernetes128UbuntuCuratedPackagesAdotSimpleFlow
 - TestTinkerbellKubernetes128UbuntuCuratedPackagesPrometheusSimpleFlow
+- TestTinkerbellKubernetes128UbuntuCuratedPackagesClusterAutoscalerSimpleFlow
 
 # Tinkerbell conformance
 - TestTinkerbellKubernetes128ThreeReplicasTwoWorkersConformanceFlow
 - TestTinkerbellKubernetes129ThreeReplicasTwoWorkersConformanceFlow
 - TestTinkerbellKubernetes130ThreeReplicasTwoWorkersConformanceFlow
 - TestTinkerbellKubernetes131ThreeReplicasTwoWorkersConformanceFlow
+- TestTinkerbellKubernetes132ThreeReplicasTwoWorkersConformanceFlow
