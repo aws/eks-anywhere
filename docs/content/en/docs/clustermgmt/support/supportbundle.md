@@ -43,6 +43,7 @@ If you want to generate support bundle in an airgapped environment, the `--bundl
 of your eks-a bundles manifest yaml file.
 ```
 Flags:
+      --audit-logs             Include the latest api server audit log file in the support bundle
       --bundle-config string   Bundle Config file to use when generating support bundle
   -f, --filename string        Filename that contains EKS-A cluster configuration
   -h, --help                   Help for support-bundle
