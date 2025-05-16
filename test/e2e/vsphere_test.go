@@ -5475,7 +5475,7 @@ func TestVSphereKubernetes131BottlerocketTo132StackedEtcdUpgrade(t *testing.T) {
 	)
 }
 
-func TestVSphereKubernetes132Redhat9UpgradeFromLatestMinorRelease(t *testing.T) {
+func TestVSphereKubernetes131Redhat9UpgradeFromLatestMinorRelease(t *testing.T) {
 	licenseToken := framework.GetLicenseToken()
 	release := latestMinorRelease(t)
 	useBundlesOverride := false
@@ -5483,12 +5483,12 @@ func TestVSphereKubernetes132Redhat9UpgradeFromLatestMinorRelease(t *testing.T) 
 		framework.WithVSphereFillers(
 			api.WithOsFamilyForAllMachines(v1alpha1.RedHat),
 		),
-		framework.WithKubeVersionAndOSForRelease(v1alpha1.Kube132, framework.RedHat9, release, useBundlesOverride),
+		framework.WithKubeVersionAndOSForRelease(v1alpha1.Kube131, framework.RedHat9, release, useBundlesOverride),
 	)
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube132)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube131)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
@@ -5506,9 +5506,9 @@ func TestVSphereKubernetes132Redhat9UpgradeFromLatestMinorRelease(t *testing.T) 
 	)
 }
 
-func TestVSphereKubernetes132WithOIDCManagementClusterUpgradeFromLatestSideEffects(t *testing.T) {
+func TestVSphereKubernetes131WithOIDCManagementClusterUpgradeFromLatestSideEffects(t *testing.T) {
 	provider := framework.NewVSphere(t)
-	runTestManagementClusterUpgradeSideEffects(t, provider, framework.Ubuntu2004, v1alpha1.Kube132)
+	runTestManagementClusterUpgradeSideEffects(t, provider, framework.Ubuntu2004, v1alpha1.Kube131)
 }
 
 func TestVSphereKubernetes128To129UbuntuUpgradeFromLatestMinorRelease(t *testing.T) {
