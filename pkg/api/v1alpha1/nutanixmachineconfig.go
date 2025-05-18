@@ -24,10 +24,6 @@ func (c NutanixGPUIdentifierType) String() string {
 	return string(c)
 }
 
-func (c NutanixBootType) String() string {
-	return string(c)
-}
-
 const (
 	// NutanixMachineConfigKind is the kind for a NutanixMachineConfig.
 	NutanixMachineConfigKind = "NutanixMachineConfig"
@@ -202,6 +198,10 @@ func validateNutanixMachineConfig(c *NutanixMachineConfig) error {
 			Ubuntu,
 			RedHat,
 		)
+	}
+
+	if c.Spec.BootType != "" && c.Spec.BootType != NutanixBootTypeLegacy && c.Spec.BootType != NutanixBootTypeUEFI {
+		return fmt.Errorf("NutanixMachineConfig: unsupported boot type (%v); Please use one of the following: %s, %s", c.Spec.BootType, NutanixBootTypeLegacy, NutanixBootTypeUEFI)
 	}
 
 	if err := validateMachineConfigUsers(c.Name, NutanixMachineConfigKind, c.Spec.Users); err != nil {

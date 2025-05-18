@@ -20,6 +20,7 @@ func nutanixMachineConfig() *v1alpha1.NutanixMachineConfig {
 			OSFamily:       v1alpha1.Ubuntu,
 			VCPUsPerSocket: 2,
 			VCPUSockets:    4,
+			BootType:       v1alpha1.NutanixBootTypeLegacy,
 			MemorySize:     resource.MustParse("8Gi"),
 			Image: v1alpha1.NutanixResourceIdentifier{
 				Type: v1alpha1.NutanixIdentifierName,
@@ -70,6 +71,12 @@ func TestValidateCreate_Invalid(t *testing.T) {
 		name string
 		fn   func(*v1alpha1.NutanixMachineConfig)
 	}{
+		{
+			name: "invalid bootType",
+			fn: func(config *v1alpha1.NutanixMachineConfig) {
+				config.Spec.BootType = "invalid"
+			},
+		},
 		{
 			name: "invalid name",
 			fn: func(config *v1alpha1.NutanixMachineConfig) {
@@ -231,6 +238,13 @@ func TestValidateUpdate_Invalid(t *testing.T) {
 			},
 		},
 		{
+			name: "different bootType",
+			fn: func(newConfig *v1alpha1.NutanixMachineConfig, oldConfig *v1alpha1.NutanixMachineConfig) {
+				oldConfig.SetControlPlane()
+				newConfig.Spec.BootType = v1alpha1.NutanixBootTypeUEFI
+			},
+		},
+		{
 			name: "different cluster",
 			fn: func(new *v1alpha1.NutanixMachineConfig, old *v1alpha1.NutanixMachineConfig) {
 				new.Spec.Cluster = v1alpha1.NutanixResourceIdentifier{
@@ -290,6 +304,13 @@ func TestValidateUpdate_Invalid(t *testing.T) {
 				new.Spec.Users = append(new.Spec.Users, v1alpha1.UserConfiguration{
 					Name: "another-user",
 				})
+			},
+		},
+		{
+			name: "invalid bootType for control plane cluster",
+			fn: func(newConfig *v1alpha1.NutanixMachineConfig, oldConfig *v1alpha1.NutanixMachineConfig) {
+				oldConfig.SetControlPlane()
+				newConfig.Spec.BootType = "invalid"
 			},
 		},
 		{
