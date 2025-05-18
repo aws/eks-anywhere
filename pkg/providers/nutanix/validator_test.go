@@ -269,7 +269,7 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 		expectedError string
 	}{
 		{
-			name: "invald bootType",
+			name: "invalid bootType",
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
 				machineConf.Spec.BootType = "abc"
 				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
