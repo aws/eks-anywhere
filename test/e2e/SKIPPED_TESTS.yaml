@@ -9,6 +9,8 @@ skipped_tests:
 - TestVSphereKubernetes129To130Redhat9UpgradeFromLatestMinorRelease
 - TestVSphereKubernetes130To131Redhat9UpgradeFromLatestMinorRelease
 - TestVSphereKubernetes131To132Redhat9UpgradeFromLatestMinorRelease
+- TestVSphereKubernetes132WithOIDCManagementClusterUpgradeFromLatestSideEffects
+- TestVSphereKubernetes132Redhat9UpgradeFromLatestMinorRelease
 
 # CloudStack
 # Airgapped tests due to an airgapped network not being setup properly on the cloudstack CI env.
