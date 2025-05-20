@@ -63,6 +63,11 @@ type NutanixMachineConfigSpec struct {
 	// List of GPU devices that should be added to the VMs.
 	// +kubebuilder:validation:Optional
 	GPUs []NutanixGPUIdentifier `json:"gpus,omitempty"`
+
+	// BootType defines the boot type of the VM. Allowed values: legacy, uefi
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:Enum=legacy;uefi
+	BootType NutanixBootType `json:"bootType,omitempty"`
 }
 
 // SetDefaults sets defaults to NutanixMachineConfig if user has not provided.

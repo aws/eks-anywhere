@@ -239,6 +239,10 @@ func buildTemplateMapCP(
 		values["additionalCategories"] = controlPlaneMachineSpec.AdditionalCategories
 	}
 
+	if controlPlaneMachineSpec.BootType != "" {
+		values["bootType"] = controlPlaneMachineSpec.BootType
+	}
+
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
 		registryMirror := registrymirror.FromCluster(clusterSpec.Cluster)
 		values["registryMirrorMap"] = containerd.ToAPIEndpoints(registryMirror.NamespacedRegistryMap)
@@ -283,6 +287,10 @@ func buildTemplateMapCP(
 			values["etcdProjectIDType"] = etcdMachineSpec.Project.Type
 			values["etcdProjectName"] = etcdMachineSpec.Project.Name
 			values["etcdProjectUUID"] = etcdMachineSpec.Project.UUID
+		}
+
+		if etcdMachineSpec.BootType != "" {
+			values["etcdBootType"] = etcdMachineSpec.BootType
 		}
 
 		if len(etcdMachineSpec.AdditionalCategories) > 0 {
@@ -444,6 +452,10 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 			values["registryUsername"] = username
 			values["registryPassword"] = password
 		}
+	}
+
+	if workerNodeGroupMachineSpec.BootType != "" {
+		values["bootType"] = workerNodeGroupMachineSpec.BootType
 	}
 
 	if workerNodeGroupMachineSpec.Project != nil {

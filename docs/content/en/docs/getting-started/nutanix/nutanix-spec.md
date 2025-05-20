@@ -113,6 +113,7 @@ metadata:
  name: mgmt-cp-machine
  namespace: default
 spec:
+ bootType: legacy
  cluster:
    name: nx-cluster-01
    type: name
@@ -144,6 +145,7 @@ metadata:
  name: mgmt-etcd
  namespace: default
 spec:
+ bootType: legacy
  cluster:
    name: nx-cluster-01
    type: name
@@ -172,6 +174,7 @@ metadata:
  name: mgmt-machine
  namespace: default
 spec:
+ bootType: legacy
  cluster:
    name: nx-cluster-01
    type: name
@@ -334,6 +337,9 @@ Optional list of valid and properly formatted IP addresses and IP address ranges
 > **_NOTE:_** Do not include [`Cluster.Spec.controlPlaneConfiguration.endpoint.host`]({{< relref "#controlplaneconfigurationendpointhost-required" >}}) IP address, it will be ignored by default.
 
 ## NutanixMachineConfig Fields
+
+### bootType (optional)
+BootType defines the boot type of the VM. Allowed values legacy, uefi
 
 ### cluster (required)
 Reference to the Prism Element cluster.
