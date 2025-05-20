@@ -55,6 +55,7 @@ metadata:
   name: eksa-unit-test
   namespace: default
 spec:
+  bootType: "legacy"
   vcpusPerSocket: 1
   vcpuSockets: 4
   memorySize: 8Gi

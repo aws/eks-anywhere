@@ -337,6 +337,10 @@ func (v *Validator) validateMachineSpecs(machineSpec anywherev1.NutanixMachineCo
 		return fmt.Errorf("SystemDiskSize must be greater than or equal to %dGi", minNutanixDiskGiB)
 	}
 
+	if machineSpec.BootType != "" && machineSpec.BootType != anywherev1.NutanixBootTypeLegacy && machineSpec.BootType != anywherev1.NutanixBootTypeUEFI {
+		return fmt.Errorf("boot type %s is not supported, only legacy and uefi are supported", machineSpec.BootType)
+	}
+
 	return nil
 }
 

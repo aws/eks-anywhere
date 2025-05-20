@@ -269,6 +269,15 @@ func TestNutanixValidatorValidateMachineConfig(t *testing.T) {
 		expectedError string
 	}{
 		{
+			name: "invalid bootType",
+			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
+				machineConf.Spec.BootType = "abc"
+				clientCache := &ClientCache{clients: map[string]Client{"test": mockClient}}
+				return NewValidator(clientCache, validator, &http.Client{Transport: transport})
+			},
+			expectedError: "boot type abc is not supported, only legacy and uefi are supported",
+		},
+		{
 			name: "invalid vcpu sockets",
 			setup: func(machineConf *anywherev1.NutanixMachineConfig, mockClient *mocknutanix.MockClient, validator *mockCrypto.MockTlsValidator, transport *mocknutanix.MockRoundTripper) *Validator {
 				machineConf.Spec.VCPUSockets = 0

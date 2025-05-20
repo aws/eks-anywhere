@@ -426,6 +426,9 @@ spec:
       vcpuSockets: {{.vcpuSockets}}
       memorySize: {{.memorySize}}
       systemDiskSize: {{.systemDiskSize}}
+{{- if $.bootType }}
+      bootType: "{{$.bootType}}"
+{{- end }}
       image:
 {{- if (eq .imageIDType "name") }}
         type: name
@@ -540,6 +543,9 @@ spec:
       vcpuSockets: {{.etcdVcpuSockets}}
       memorySize: {{.etcdMemorySize}}
       systemDiskSize: {{.etcdSystemDiskSize}}
+{{- if $.etcdBootType }}
+      bootType: "{{$.etcdBootType}}"
+{{- end }}
       image:
 {{- if (eq .etcdImageIDType "name") }}
         type: name
