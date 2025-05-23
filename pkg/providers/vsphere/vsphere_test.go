@@ -2314,7 +2314,6 @@ func TestSetupAndValidateCreateClusterUsedIp(t *testing.T) {
 	ipValidator := mocks.NewMockIPValidator(mockCtrl)
 	provider.ipValidator = ipValidator
 	ipValidator.EXPECT().ValidateControlPlaneIPUniqueness(clusterSpec.Cluster).Return(fmt.Errorf(ipInUseError))
-
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 
 	thenErrorExpected(t, ipInUseError, err)

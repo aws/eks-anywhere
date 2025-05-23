@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	"context"
 	"fmt"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -19,82 +20,98 @@ var nutanixdatacenterconfiglog = logf.Log.WithName("nutanixdatacenterconfig-reso
 func (r *NutanixDatacenterConfig) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
+		WithValidator(r).
 		Complete()
 }
 
 //+kubebuilder:webhook:path=/validate-anywhere-eks-amazonaws-com-v1alpha1-nutanixdatacenterconfig,mutating=false,failurePolicy=fail,sideEffects=None,groups=anywhere.eks.amazonaws.com,resources=nutanixdatacenterconfigs,verbs=create;update,versions=v1alpha1,name=validation.nutanixdatacenterconfig.anywhere.amazonaws.com,admissionReviewVersions={v1,v1beta1}
 
-var _ webhook.Validator = &NutanixDatacenterConfig{}
+var _ webhook.CustomValidator = &NutanixDatacenterConfig{}
 
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (r *NutanixDatacenterConfig) ValidateCreate() (admission.Warnings, error) {
-	nutanixdatacenterconfiglog.Info("validate create", "name", r.Name)
-	if r.IsReconcilePaused() {
-		nutanixdatacenterconfiglog.Info("NutanixDatacenterConfig is paused, allowing create", "name", r.Name)
+// ValidateCreate implements webhook.CustomValidator so a webhook will be registered for the type.
+func (r *NutanixDatacenterConfig) ValidateCreate(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
+	nutanixConfig, ok := obj.(*NutanixDatacenterConfig)
+	if !ok {
+		return nil, fmt.Errorf("expected a NutanixDatacenterConfig but got %T", obj)
+	}
+
+	nutanixdatacenterconfiglog.Info("validate create", "name", nutanixConfig.Name)
+	if nutanixConfig.IsReconcilePaused() {
+		nutanixdatacenterconfiglog.Info("NutanixDatacenterConfig is paused, allowing create", "name", nutanixConfig.Name)
 		return nil, nil
 	}
 
-	if r.Spec.CredentialRef == nil {
+	if nutanixConfig.Spec.CredentialRef == nil {
 		return nil, apierrors.NewInvalid(
 			GroupVersion.WithKind(NutanixDatacenterKind).GroupKind(),
-			r.Name,
+			nutanixConfig.Name,
 			field.ErrorList{
-				field.Invalid(field.NewPath("spec"), r.Spec, "credentialRef is required to be set to create a new NutanixDatacenterConfig"),
+				field.Invalid(field.NewPath("spec"), nutanixConfig.Spec, "credentialRef is required to be set to create a new NutanixDatacenterConfig"),
 			})
 	}
 
-	if err := r.Validate(); err != nil {
+	if err := nutanixConfig.Validate(); err != nil {
 		return nil, apierrors.NewInvalid(
 			GroupVersion.WithKind(NutanixDatacenterKind).GroupKind(),
-			r.Name,
+			nutanixConfig.Name,
 			field.ErrorList{
-				field.Invalid(field.NewPath("spec"), r.Spec, err.Error()),
+				field.Invalid(field.NewPath("spec"), nutanixConfig.Spec, err.Error()),
 			})
 	}
 
 	return nil, nil
 }
 
-// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (r *NutanixDatacenterConfig) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	nutanixdatacenterconfiglog.Info("validate update", "name", r.Name)
+// ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type.
+func (r *NutanixDatacenterConfig) ValidateUpdate(_ context.Context, obj, old runtime.Object) (admission.Warnings, error) {
+	nutanixConfig, ok := obj.(*NutanixDatacenterConfig)
+	if !ok {
+		return nil, fmt.Errorf("expected a NutanixDatacenterConfig but got %T", obj)
+	}
+
+	nutanixdatacenterconfiglog.Info("validate update", "name", nutanixConfig.Name)
 	oldDatacenterConfig, ok := old.(*NutanixDatacenterConfig)
 	if !ok {
 		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a NutanixDatacenterConfig but got a %T", old))
 	}
 
 	if oldDatacenterConfig.IsReconcilePaused() {
-		nutanixdatacenterconfiglog.Info("NutanixDatacenterConfig is paused, allowing update", "name", r.Name)
+		nutanixdatacenterconfiglog.Info("NutanixDatacenterConfig is paused, allowing update", "name", nutanixConfig.Name)
 		return nil, nil
 	}
 
 	var allErrs field.ErrorList
-	allErrs = append(allErrs, validateImmutableFieldsNutanixDatacenterConfig(r, oldDatacenterConfig)...)
+	allErrs = append(allErrs, validateImmutableFieldsNutanixDatacenterConfig(nutanixConfig, oldDatacenterConfig)...)
 
-	if r.Spec.CredentialRef == nil {
+	if nutanixConfig.Spec.CredentialRef == nil {
 		// check if the old object has a credentialRef set
 		if oldDatacenterConfig.Spec.CredentialRef != nil {
 			allErrs = append(allErrs, field.Forbidden(field.NewPath("spec.credentialRef"), "credentialRef cannot be removed from an existing NutanixDatacenterConfig"))
 		}
 	}
 
-	if err := r.Validate(); err != nil {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
+	if err := nutanixConfig.Validate(); err != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), nutanixConfig.Spec, err.Error()))
 	}
 
 	if len(allErrs) > 0 {
 		return nil, apierrors.NewInvalid(
 			GroupVersion.WithKind(NutanixDatacenterKind).GroupKind(),
-			r.Name,
+			nutanixConfig.Name,
 			allErrs)
 	}
 
 	return nil, nil
 }
 
-// ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (r *NutanixDatacenterConfig) ValidateDelete() (admission.Warnings, error) {
-	nutanixdatacenterconfiglog.Info("validate delete", "name", r.Name)
+// ValidateDelete implements webhook.CustomValidator so a webhook will be registered for the type.
+func (r *NutanixDatacenterConfig) ValidateDelete(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
+	nutanixConfig, ok := obj.(*NutanixDatacenterConfig)
+	if !ok {
+		return nil, fmt.Errorf("expected a NutanixDatacenterConfig but got %T", obj)
+	}
+
+	nutanixdatacenterconfiglog.Info("validate delete", "name", nutanixConfig.Name)
 
 	return nil, nil
 }

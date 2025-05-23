@@ -340,7 +340,7 @@ func (r *ControlPlaneUpgradeReconciler) updateKubeadmConfig(ctx context.Context,
 }
 
 func (r *ControlPlaneUpgradeReconciler) updateInfraMachine(ctx context.Context, log logr.Logger, kcpSpec *controlplanev1.KubeadmControlPlaneSpec, machine *clusterv1.Machine) error {
-	infraMachineObj, err := external.Get(ctx, r.client, &machine.Spec.InfrastructureRef, machine.Namespace)
+	infraMachineObj, err := external.Get(ctx, r.client, &machine.Spec.InfrastructureRef)
 	if err != nil {
 		return fmt.Errorf("retrieving infra machine %s for machine %s: %v", machine.Spec.InfrastructureRef.Name, machine.Name, err)
 	}

@@ -49,7 +49,6 @@ func TestReconcilerGenerateSpec(t *testing.T) {
 	result, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(result).To(Equal(controller.Result{}))
-
 	tt.Expect(scope.ControlPlane).To(Equal(tinkerbellCP(workloadClusterName)))
 	tt.Expect(scope.Workers).To(Equal(tinkWorker(workloadClusterName)))
 	tt.cleanup()
@@ -573,7 +572,7 @@ func TestReconcilerValidateHardwareControlPlaneOSImageChangeSuccess(t *testing.T
 	worker := tinkWorker(tt.cluster.Name, func(w *tinkerbell.Workers) {
 		w.Groups[0].MachineDeployment.Name = "workload-cluster-md-0"
 	})
-	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tinkHardware("hw1", "cp"), worker.Groups[0].MachineDeployment)
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tinkHardware("hw1", "cp"), worker.Groups[0].MachineDeployment, tinkHardware("hw2", "worker"))
 	tt.createAllObjs()
 
 	logger := test.NewNullLogger()
@@ -600,7 +599,6 @@ func TestReconcilerValidateHardwareControlPlaneOSImageChangeSuccess(t *testing.T
 
 func TestReconcilerValidateHardwareWorkerNodeGroupOSImageChangeError(t *testing.T) {
 	tt := newReconcilerTest(t)
-	// tt.eksaSupportObjs = append(tt.eksaSupportObjs, tinkHardware("hw1", "cp"))
 
 	tt.createAllObjs()
 
@@ -631,6 +629,7 @@ func TestReconcilerValidateHardwareWorkerNodeGroupOSImageChangeError(t *testing.
 func TestReconcilerValidateHardwareWorkerNodeGroupOSImageChangeSuccess(t *testing.T) {
 	tt := newReconcilerTest(t)
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tinkHardware("hw2", "worker"))
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tinkHardware("hw1", "cp"))
 	tt.createAllObjs()
 
 	logger := test.NewNullLogger()
@@ -750,6 +749,7 @@ func TestReconcilerDetectOperationK8sVersionUpgradeWorkerOnly(t *testing.T) {
 	t.Skip("Flaky (https://github.com/aws/eks-anywhere/issues/6998)")
 
 	tt := newReconcilerTest(t)
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tt.kcp)
 	tt.createAllObjs()
 
 	logger := test.NewNullLogger()
@@ -988,6 +988,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 
 	kcp := test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
 		kcp.Name = cluster.Name
+		kcp.Namespace = constants.EksaSystemNamespace
 		kcp.Spec = controlplanev1.KubeadmControlPlaneSpec{
 			MachineTemplate: controlplanev1.KubeadmControlPlaneMachineTemplate{
 				InfrastructureRef: corev1.ObjectReference{

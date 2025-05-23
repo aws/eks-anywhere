@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	"context"
 	"fmt"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -18,6 +19,8 @@ var vspheremachineconfiglog = logf.Log.WithName("vspheremachineconfig-resource")
 func (r *VSphereMachineConfig) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
+		WithDefaulter(r).
+		WithValidator(r).
 		Complete()
 }
 
@@ -25,72 +28,89 @@ func (r *VSphereMachineConfig) SetupWebhookWithManager(mgr ctrl.Manager) error {
 
 //+kubebuilder:webhook:path=/mutate-anywhere-eks-amazonaws-com-v1alpha1-vspheremachineconfig,mutating=true,failurePolicy=fail,sideEffects=None,groups=anywhere.eks.amazonaws.com,resources=vspheremachineconfigs,verbs=create;update,versions=v1alpha1,name=mutation.vspheremachineconfig.anywhere.amazonaws.com,admissionReviewVersions={v1,v1beta1}
 
-var _ webhook.Defaulter = &VSphereMachineConfig{}
+var _ webhook.CustomDefaulter = &VSphereMachineConfig{}
 
-// Default implements webhook.Defaulter so a webhook will be registered for the type.
-func (r *VSphereMachineConfig) Default() {
-	vspheremachineconfiglog.Info("Setting up VSphere Machine Config defaults for", "name", r.Name)
-	r.SetDefaults()
+// Default implements webhook.CustomDefaulter so a webhook will be registered for the type.
+func (r *VSphereMachineConfig) Default(_ context.Context, obj runtime.Object) error {
+	vsphereConfig, ok := obj.(*VSphereMachineConfig)
+	if !ok {
+		return fmt.Errorf("expected a VSphereMachineConfig but got %T", obj)
+	}
+
+	vspheremachineconfiglog.Info("Setting up VSphere Machine Config defaults for", "name", vsphereConfig.Name)
+	vsphereConfig.SetDefaults()
+
+	return nil
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
 //+kubebuilder:webhook:path=/validate-anywhere-eks-amazonaws-com-v1alpha1-vspheremachineconfig,mutating=false,failurePolicy=fail,sideEffects=None,groups=anywhere.eks.amazonaws.com,resources=vspheremachineconfigs,verbs=create;update,versions=v1alpha1,name=validation.vspheremachineconfig.anywhere.amazonaws.com,admissionReviewVersions={v1,v1beta1}
 
-var _ webhook.Validator = &VSphereMachineConfig{}
+var _ webhook.CustomValidator = &VSphereMachineConfig{}
 
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (r *VSphereMachineConfig) ValidateCreate() (admission.Warnings, error) {
-	vspheremachineconfiglog.Info("validate create", "name", r.Name)
-
-	if err := r.ValidateHasTemplate(); err != nil {
-		return nil, apierrors.NewInvalid(GroupVersion.WithKind(VSphereMachineConfigKind).GroupKind(), r.Name, field.ErrorList{
-			field.Invalid(field.NewPath("spec", "template"), r.Spec, err.Error()),
-		})
-	}
-	if err := r.ValidateUsers(); err != nil {
-		return nil, apierrors.NewInvalid(GroupVersion.WithKind(VSphereMachineConfigKind).GroupKind(), r.Name, field.ErrorList{
-			field.Invalid(field.NewPath("spec", "users"), r.Spec.Users, err.Error()),
-		})
+// ValidateCreate implements webhook.CustomValidator so a webhook will be registered for the type.
+func (r *VSphereMachineConfig) ValidateCreate(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
+	vsphereConfig, ok := obj.(*VSphereMachineConfig)
+	if !ok {
+		return nil, fmt.Errorf("expected a VSphereMachineConfig but got %T", obj)
 	}
 
-	if err := r.Validate(); err != nil {
-		return nil, apierrors.NewInvalid(GroupVersion.WithKind(VSphereMachineConfigKind).GroupKind(), r.Name, field.ErrorList{
-			field.Invalid(field.NewPath("spec", "users"), r.Spec.Users, err.Error()),
+	vspheremachineconfiglog.Info("validate create", "name", vsphereConfig.Name)
+
+	if err := vsphereConfig.ValidateHasTemplate(); err != nil {
+		return nil, apierrors.NewInvalid(GroupVersion.WithKind(VSphereMachineConfigKind).GroupKind(), vsphereConfig.Name, field.ErrorList{
+			field.Invalid(field.NewPath("spec", "template"), vsphereConfig.Spec, err.Error()),
+		})
+	}
+	if err := vsphereConfig.ValidateUsers(); err != nil {
+		return nil, apierrors.NewInvalid(GroupVersion.WithKind(VSphereMachineConfigKind).GroupKind(), vsphereConfig.Name, field.ErrorList{
+			field.Invalid(field.NewPath("spec", "users"), vsphereConfig.Spec.Users, err.Error()),
+		})
+	}
+
+	if err := vsphereConfig.Validate(); err != nil {
+		return nil, apierrors.NewInvalid(GroupVersion.WithKind(VSphereMachineConfigKind).GroupKind(), vsphereConfig.Name, field.ErrorList{
+			field.Invalid(field.NewPath("spec", "users"), vsphereConfig.Spec.Users, err.Error()),
 		})
 	}
 
 	return nil, nil
 }
 
-// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (r *VSphereMachineConfig) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	vspheremachineconfiglog.Info("validate update", "name", r.Name)
+// ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type.
+func (r *VSphereMachineConfig) ValidateUpdate(_ context.Context, obj, old runtime.Object) (admission.Warnings, error) {
+	vsphereConfig, ok := obj.(*VSphereMachineConfig)
+	if !ok {
+		return nil, fmt.Errorf("expected a VSphereMachineConfig but got %T", obj)
+	}
+
+	vspheremachineconfiglog.Info("validate update", "name", vsphereConfig.Name)
 
 	oldVSphereMachineConfig, ok := old.(*VSphereMachineConfig)
 	if !ok {
 		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a VSphereMachineConfig but got a %T", old))
 	}
 
-	if err := r.ValidateUsers(); err != nil {
-		return nil, apierrors.NewInvalid(GroupVersion.WithKind(VSphereMachineConfigKind).GroupKind(), r.Name, field.ErrorList{
-			field.Invalid(field.NewPath("spec", "users"), r.Spec.Users, err.Error()),
+	if err := vsphereConfig.ValidateUsers(); err != nil {
+		return nil, apierrors.NewInvalid(GroupVersion.WithKind(VSphereMachineConfigKind).GroupKind(), vsphereConfig.Name, field.ErrorList{
+			field.Invalid(field.NewPath("spec", "users"), vsphereConfig.Spec.Users, err.Error()),
 		})
 	}
 
 	var allErrs field.ErrorList
 
-	allErrs = append(allErrs, validateImmutableFieldsVSphereMachineConfig(r, oldVSphereMachineConfig)...)
+	allErrs = append(allErrs, validateImmutableFieldsVSphereMachineConfig(vsphereConfig, oldVSphereMachineConfig)...)
 
 	if len(allErrs) != 0 {
-		return nil, apierrors.NewInvalid(GroupVersion.WithKind(VSphereMachineConfigKind).GroupKind(), r.Name, allErrs)
+		return nil, apierrors.NewInvalid(GroupVersion.WithKind(VSphereMachineConfigKind).GroupKind(), vsphereConfig.Name, allErrs)
 	}
 
-	if err := r.Validate(); err != nil {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
+	if err := vsphereConfig.Validate(); err != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), vsphereConfig.Spec, err.Error()))
 	}
 
 	if len(allErrs) != 0 {
-		return nil, apierrors.NewInvalid(GroupVersion.WithKind(VSphereMachineConfigKind).GroupKind(), r.Name, allErrs)
+		return nil, apierrors.NewInvalid(GroupVersion.WithKind(VSphereMachineConfigKind).GroupKind(), vsphereConfig.Name, allErrs)
 	}
 
 	return nil, nil
@@ -132,9 +152,14 @@ func validateImmutableFieldsVSphereMachineConfig(new, old *VSphereMachineConfig)
 	return allErrs
 }
 
-// ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (r *VSphereMachineConfig) ValidateDelete() (admission.Warnings, error) {
-	vspheremachineconfiglog.Info("validate delete", "name", r.Name)
+// ValidateDelete implements webhook.CustomValidator so a webhook will be registered for the type.
+func (r *VSphereMachineConfig) ValidateDelete(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
+	vsphereConfig, ok := obj.(*VSphereMachineConfig)
+	if !ok {
+		return nil, fmt.Errorf("expected a VSphereMachineConfig but got %T", obj)
+	}
+
+	vspheremachineconfiglog.Info("validate delete", "name", vsphereConfig.Name)
 
 	return nil, nil
 }

@@ -17,7 +17,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
@@ -25,7 +24,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -38,6 +36,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
+	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/govmomi"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
@@ -53,9 +52,10 @@ var clusterName = "test-cluster"
 var controlPlaneInitalizationInProgressReason = "The first control plane instance is not available yet"
 
 type vsphereClusterReconcilerTest struct {
-	govcClient *vspheremocks.MockProviderGovcClient
-	reconciler *controllers.ClusterReconciler
-	client     client.Client
+	govcClient  *vspheremocks.MockProviderGovcClient
+	reconciler  *controllers.ClusterReconciler
+	client      client.Client
+	ipValidator *vspherereconcilermocks.MockIPValidator
 }
 
 func testKubeadmControlPlaneFromCluster(cluster *anywherev1.Cluster) *controlplanev1.KubeadmControlPlane {
@@ -146,33 +146,10 @@ func newVsphereClusterReconcilerTest(t *testing.T, objs ...runtime.Object) *vsph
 	}
 }
 
-func newVsphereClusterReconcilerWithFailureDomainsTest(t *testing.T, objs ...runtime.Object) *vsphereClusterReconcilerTest {
+func newVsphereClusterReconcilerWithFailureDomainsTest(t *testing.T, cl client.Client, _ ...client.Object) *vsphereClusterReconcilerTest {
 	ctrl := gomock.NewController(t)
 	govcClient := vspheremocks.NewMockProviderGovcClient(ctrl)
 
-	cb := fake.NewClientBuilder()
-	cl := cb.WithRuntimeObjects(objs...).
-		WithStatusSubresource(&anywherev1.Cluster{}).
-		WithInterceptorFuncs(interceptor.Funcs{
-			Patch: func(ctx context.Context, clnt client.WithWatch, obj client.Object, patch client.Patch, opts ...client.PatchOption) error {
-				// Apply patches are supposed to upsert, but fake client fails if the object doesn't exist,
-				// if an apply patch occurs for an object that doesn't yet exist, create it.
-				// https://github.com/kubernetes-sigs/controller-runtime/issues/2341
-				if patch.Type() != types.ApplyPatchType {
-					return clnt.Patch(ctx, obj, patch, opts...)
-				}
-				check, ok := obj.DeepCopyObject().(client.Object)
-				if !ok {
-					return errors.New("could not check for object in fake client")
-				}
-				if err := clnt.Get(ctx, client.ObjectKeyFromObject(obj), check); apierrors.IsNotFound(err) {
-					if err := clnt.Create(ctx, check); err != nil {
-						return fmt.Errorf("could not inject object creation for fake: %w", err)
-					}
-				}
-				return clnt.Patch(ctx, obj, patch, opts...)
-			},
-		}).Build()
 	iam := mocks.NewMockAWSIamConfigReconciler(ctrl)
 	clusterValidator := mocks.NewMockClusterValidator(ctrl)
 
@@ -200,13 +177,13 @@ func newVsphereClusterReconcilerWithFailureDomainsTest(t *testing.T, objs ...run
 	mockPkgs.EXPECT().
 		ReconcileDelete(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil).AnyTimes()
-
 	r := controllers.NewClusterReconciler(cl, &registry, iam, clusterValidator, mockPkgs, mhcReconciler, controllers.NewFailureDomainMover(cl))
 
 	return &vsphereClusterReconcilerTest{
-		govcClient: govcClient,
-		reconciler: r,
-		client:     cl,
+		govcClient:  govcClient,
+		reconciler:  r,
+		client:      cl,
+		ipValidator: ipValidator,
 	}
 }
 
@@ -342,11 +319,11 @@ func TestClusterReconcilerReconcileConditions(t *testing.T) {
 			},
 			machineDeploymentStatus: clusterv1.MachineDeploymentStatus{},
 			wantConditions: []anywherev1.Condition{
-				*conditions.FalseCondition(anywherev1.ControlPlaneInitializedCondition, anywherev1.ControlPlaneInitializationInProgressReason, clusterv1.ConditionSeverityInfo, controlPlaneInitalizationInProgressReason),
-				*conditions.FalseCondition(anywherev1.ControlPlaneReadyCondition, anywherev1.ControlPlaneInitializationInProgressReason, clusterv1.ConditionSeverityInfo, controlPlaneInitalizationInProgressReason),
+				*conditions.FalseCondition(anywherev1.ControlPlaneInitializedCondition, anywherev1.ControlPlaneInitializationInProgressReason, clusterv1.ConditionSeverityInfo, "%s", controlPlaneInitalizationInProgressReason),
+				*conditions.FalseCondition(anywherev1.ControlPlaneReadyCondition, anywherev1.ControlPlaneInitializationInProgressReason, clusterv1.ConditionSeverityInfo, "%s", controlPlaneInitalizationInProgressReason),
 				*conditions.FalseCondition(anywherev1.DefaultCNIConfiguredCondition, anywherev1.ControlPlaneNotReadyReason, clusterv1.ConditionSeverityInfo, ""),
 				*conditions.FalseCondition(anywherev1.WorkersReadyCondition, anywherev1.ControlPlaneNotInitializedReason, clusterv1.ConditionSeverityInfo, ""),
-				*conditions.FalseCondition(anywherev1.ReadyCondition, anywherev1.ControlPlaneInitializationInProgressReason, clusterv1.ConditionSeverityInfo, controlPlaneInitalizationInProgressReason),
+				*conditions.FalseCondition(anywherev1.ReadyCondition, anywherev1.ControlPlaneInitializationInProgressReason, clusterv1.ConditionSeverityInfo, "%s", controlPlaneInitalizationInProgressReason),
 			},
 			result: ctrl.Result{Requeue: false, RequeueAfter: 10 * time.Second},
 		},
@@ -1332,9 +1309,7 @@ func TestClusterReconcilerFailureDomainCreation(t *testing.T) {
 	bundle := createBundle()
 	machineConfigCP := vsphereCPMachineConfig()
 	machineConfigWN := vsphereWorkerMachineConfig()
-
-	objs := []runtime.Object{
-		cluster,
+	objs := []client.Object{
 		datacenterConfig,
 		secret,
 		bundle,
@@ -1343,12 +1318,25 @@ func TestClusterReconcilerFailureDomainCreation(t *testing.T) {
 		eksaRelease,
 		eksdRelease,
 	}
-
-	tt := newVsphereClusterReconcilerWithFailureDomainsTest(t, objs...)
-
-	req := clusterRequest(cluster)
-
+	cl := env.Client()
 	ctx := context.Background()
+	envtest.CreateObjs(ctx, t, cl, cluster)
+	getCluster := &anywherev1.Cluster{}
+	_ = cl.Get(context.Background(), client.ObjectKeyFromObject(cluster), getCluster)
+	datacenterConfig.OwnerReferences[0].UID = getCluster.UID
+	machineConfigCP.OwnerReferences[0].UID = getCluster.UID
+	machineConfigWN.OwnerReferences[0].UID = getCluster.UID
+	envtest.CreateObjs(ctx, t, cl, objs...)
+
+	tt := newVsphereClusterReconcilerWithFailureDomainsTest(t, cl, objs...)
+	tt.ipValidator.EXPECT().ValidateControlPlaneIP(gomock.Any(), gomock.Any(), gomock.Any()).Return(controller.Result{}, nil).AnyTimes()
+	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+	tt.govcClient.EXPECT().SearchTemplate(gomock.Any(), gomock.Any(), gomock.Any()).Return("test", nil)
+	tt.govcClient.EXPECT().GetTags(gomock.Any(), gomock.Any()).Return([]string{"os:ubuntu", fmt.Sprintf("eksdRelease:%s", bundle.Spec.VersionsBundles[0].EksD.Name)}, nil)
+	tt.govcClient.EXPECT().ListTags(ctx).Return([]executables.Tag{}, nil)
+	tt.govcClient.EXPECT().NetworkExists(gomock.Any(), gomock.Any()).Return(true, nil)
+	tt.govcClient.EXPECT().ValidateFailureDomainConfig(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+	req := clusterRequest(cluster)
 
 	fdz := &vspherev1.VSphereDeploymentZone{}
 	fd := &vspherev1.VSphereFailureDomain{}
@@ -1390,7 +1378,7 @@ func TestClusterReconcilerFailureDomainsFailure(t *testing.T) {
 	machineConfigCP := vsphereCPMachineConfig()
 	machineConfigWN := vsphereWorkerMachineConfig()
 
-	objs := []runtime.Object{
+	objs := []client.Object{
 		cluster,
 		datacenterConfig,
 		secret,
@@ -1400,11 +1388,17 @@ func TestClusterReconcilerFailureDomainsFailure(t *testing.T) {
 		eksaRelease,
 		eksdRelease,
 	}
-
-	tt := newVsphereClusterReconcilerWithFailureDomainsTest(t, objs...)
-	req := clusterRequest(cluster)
-
 	ctx := context.Background()
+	cl := env.Client()
+	tt := newVsphereClusterReconcilerWithFailureDomainsTest(t, cl, objs...)
+	tt.ipValidator.EXPECT().ValidateControlPlaneIP(gomock.Any(), gomock.Any(), gomock.Any()).Return(controller.Result{}, nil).AnyTimes()
+	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+	tt.govcClient.EXPECT().SearchTemplate(gomock.Any(), gomock.Any(), gomock.Any()).Return("test", nil)
+	tt.govcClient.EXPECT().GetTags(gomock.Any(), gomock.Any()).Return([]string{"os:ubuntu", fmt.Sprintf("eksdRelease:%s", bundle.Spec.VersionsBundles[0].EksD.Name)}, nil)
+	tt.govcClient.EXPECT().ListTags(ctx).Return([]executables.Tag{}, nil)
+	tt.govcClient.EXPECT().NetworkExists(gomock.Any(), gomock.Any()).Return(true, nil)
+	tt.govcClient.EXPECT().ValidateFailureDomainConfig(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+	req := clusterRequest(cluster)
 
 	fdz := &vspherev1.VSphereDeploymentZone{}
 	fd := &vspherev1.VSphereFailureDomain{}
@@ -1524,6 +1518,10 @@ func TestFailureDomainMover_ApplyFailureDomains(t *testing.T) {
 
 func createEKSDRelease() *eksdv1alpha1.Release {
 	return &eksdv1alpha1.Release{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Release",
+			APIVersion: "distro.eks.amazonaws.com/v1alpha1",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test",
 			Namespace: "eksa-system",
@@ -2040,7 +2038,7 @@ func vsphereCPMachineConfig() *anywherev1.VSphereMachineConfig {
 			Users: []anywherev1.UserConfiguration{
 				{
 					Name:              "user",
-					SshAuthorizedKeys: []string{"ABC"},
+					SshAuthorizedKeys: []string{"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC8ZEibIrz1AUBKDvmDiWLs9f5DnOerC4qPITiDtSOuPAsxgZbRMavBfVTxodMdAkYRYlXxK6PqNo0ve0qcOV2yvpxH1OogasMMetck6BlM/dIoo3vEY4ZoG9DuVRIf9Iry5gJKbpMDYWpx1IGZrDMOFcIM20ii2qLQQk5hfq9OqdqhToEJFixdgJt/y/zt6Koy3kix+XsnrVdAHgWAq4CZuwt1G6JUAqrpob3H8vPmL7aS+35ktf0pHBm6nYoxRhslnWMUb/7vpzWiq+fUBIm2LYqvrnm7t3fRqFx7p2sZqAm2jDNivyYXwRXkoQPR96zvGeMtuQ5BVGPpsDfVudSW21+pEXHI0GINtTbua7Ogz7wtpVywSvHraRgdFOeY9mkXPzvm2IhoqNrteck2GErwqSqb19mPz6LnHueK0u7i6WuQWJn0CUoCtyMGIrowXSviK8qgHXKrmfTWATmCkbtosnLskNdYuOw8bKxq5S4WgdQVhPps2TiMSZndjX5NTr8= ubuntu@ip-10-2-0-19"},
 				},
 			},
 		},
@@ -2050,6 +2048,10 @@ func vsphereCPMachineConfig() *anywherev1.VSphereMachineConfig {
 
 func createBundle() *releasev1.Bundles {
 	return &releasev1.Bundles{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "anywhere.eks.amazonaws.com/v1alpha1",
+			Kind:       "Bundles",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "bundles-1",
 			Namespace: "default",
@@ -2130,6 +2132,7 @@ func vsphereDataCenterWithFailureDomains(cluster *anywherev1.Cluster) *anywherev
 					APIVersion: anywherev1.GroupVersion.String(),
 					Kind:       anywherev1.ClusterKind,
 					Name:       cluster.Name,
+					UID:        cluster.UID,
 				},
 			},
 		},
@@ -2213,6 +2216,10 @@ func vsphereCluster() *anywherev1.Cluster {
 func vsphereClusterWithFailureDomains() *anywherev1.Cluster {
 	version := test.DevEksaVersion()
 	return &anywherev1.Cluster{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Cluster",
+			APIVersion: "anywhere.eks.amazonaws.com/v1alpha1",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      clusterName,
 			Namespace: namespace,
@@ -2277,6 +2284,10 @@ func createSecret() *apiv1.Secret {
 		Data: map[string][]byte{
 			"username": []byte("test"),
 			"password": []byte("test"),
+		},
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Secret",
 		},
 	}
 }

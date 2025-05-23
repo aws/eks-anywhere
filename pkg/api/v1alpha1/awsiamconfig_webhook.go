@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	"context"
 	"fmt"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -18,34 +19,53 @@ var awsiamconfiglog = logf.Log.WithName("awsiamconfig-resource")
 func (r *AWSIamConfig) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
+		WithDefaulter(r).
+		WithValidator(r).
 		Complete()
 }
 
 //+kubebuilder:webhook:path=/mutate-anywhere-eks-amazonaws-com-v1alpha1-awsiamconfig,mutating=true,failurePolicy=fail,sideEffects=None,groups=anywhere.eks.amazonaws.com,resources=awsiamconfigs,verbs=create;update,versions=v1alpha1,name=mutation.awsiamconfig.anywhere.amazonaws.com,admissionReviewVersions={v1,v1beta1}
 
-var _ webhook.Defaulter = &AWSIamConfig{}
+var _ webhook.CustomDefaulter = &AWSIamConfig{}
 
-// Default implements webhook.Defaulter so a webhook will be registered for the type.
-func (r *AWSIamConfig) Default() {
-	awsiamconfiglog.Info("Setting up AWSIamConfig defaults for", "name", r.Name)
-	r.SetDefaults()
+// Default implements webhook.CustomDefaulter so a webhook will be registered for the type.
+func (r *AWSIamConfig) Default(_ context.Context, obj runtime.Object) error {
+	awsIamConfig, ok := obj.(*AWSIamConfig)
+	if !ok {
+		return fmt.Errorf("expected an AWSIamConfig but got %T", obj)
+	}
+
+	awsiamconfiglog.Info("Setting up AWSIamConfig defaults for", "name", awsIamConfig.Name)
+	awsIamConfig.SetDefaults()
+
+	return nil
 }
 
 // change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
 //+kubebuilder:webhook:path=/validate-anywhere-eks-amazonaws-com-v1alpha1-awsiamconfig,mutating=false,failurePolicy=fail,sideEffects=None,groups=anywhere.eks.amazonaws.com,resources=awsiamconfigs,verbs=create;update,versions=v1alpha1,name=validation.awsiamconfig.anywhere.amazonaws.com,admissionReviewVersions={v1,v1beta1}
 
-var _ webhook.Validator = &AWSIamConfig{}
+var _ webhook.CustomValidator = &AWSIamConfig{}
 
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (r *AWSIamConfig) ValidateCreate() (admission.Warnings, error) {
-	awsiamconfiglog.Info("validate create", "name", r.Name)
+// ValidateCreate implements webhook.CustomValidator so a webhook will be registered for the type.
+func (r *AWSIamConfig) ValidateCreate(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
+	awsIamConfig, ok := obj.(*AWSIamConfig)
+	if !ok {
+		return nil, fmt.Errorf("expected an AWSIamConfig but got %T", obj)
+	}
 
-	return nil, r.Validate()
+	awsiamconfiglog.Info("validate create", "name", awsIamConfig.Name)
+
+	return nil, awsIamConfig.Validate()
 }
 
-// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (r *AWSIamConfig) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	awsiamconfiglog.Info("validate update", "name", r.Name)
+// ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type.
+func (r *AWSIamConfig) ValidateUpdate(_ context.Context, obj, old runtime.Object) (admission.Warnings, error) {
+	awsIamConfig, ok := obj.(*AWSIamConfig)
+	if !ok {
+		return nil, fmt.Errorf("expected an AWSIamConfig but got %T", obj)
+	}
+
+	awsiamconfiglog.Info("validate update", "name", awsIamConfig.Name)
 
 	oldAWSIamConfig, ok := old.(*AWSIamConfig)
 	if !ok {
@@ -63,12 +83,17 @@ func (r *AWSIamConfig) ValidateUpdate(old runtime.Object) (admission.Warnings, e
 		return nil, nil
 	}
 
-	return nil, apierrors.NewInvalid(GroupVersion.WithKind(AWSIamConfigKind).GroupKind(), r.Name, allErrs)
+	return nil, apierrors.NewInvalid(GroupVersion.WithKind(AWSIamConfigKind).GroupKind(), awsIamConfig.Name, allErrs)
 }
 
-// ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (r *AWSIamConfig) ValidateDelete() (admission.Warnings, error) {
-	awsiamconfiglog.Info("validate delete", "name", r.Name)
+// ValidateDelete implements webhook.CustomValidator so a webhook will be registered for the type.
+func (r *AWSIamConfig) ValidateDelete(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
+	awsIamConfig, ok := obj.(*AWSIamConfig)
+	if !ok {
+		return nil, fmt.Errorf("expected an AWSIamConfig but got %T", obj)
+	}
+
+	awsiamconfiglog.Info("validate delete", "name", awsIamConfig.Name)
 
 	return nil, nil
 }

@@ -15,6 +15,7 @@
 package v1alpha1
 
 import (
+	"context"
 	"fmt"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -34,6 +35,7 @@ var tinkerbelldatacenterconfiglog = logf.Log.WithName("tinkerbelldatacenterconfi
 func (r *TinkerbellDatacenterConfig) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
+		WithValidator(r).
 		Complete()
 }
 
@@ -42,33 +44,43 @@ func (r *TinkerbellDatacenterConfig) SetupWebhookWithManager(mgr ctrl.Manager) e
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
 //+kubebuilder:webhook:path=/validate-anywhere-eks-amazonaws-com-v1alpha1-tinkerbelldatacenterconfig,mutating=false,failurePolicy=fail,sideEffects=None,groups=anywhere.eks.amazonaws.com,resources=tinkerbelldatacenterconfigs,verbs=create;update,versions=v1alpha1,name=validation.tinkerbelldatacenterconfig.anywhere.amazonaws.com,admissionReviewVersions={v1,v1beta1}
 
-var _ webhook.Validator = &TinkerbellDatacenterConfig{}
+var _ webhook.CustomValidator = &TinkerbellDatacenterConfig{}
 
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (r *TinkerbellDatacenterConfig) ValidateCreate() (admission.Warnings, error) {
-	tinkerbelldatacenterconfiglog.Info("validate create", "name", r.Name)
+// ValidateCreate implements webhook.CustomValidator so a webhook will be registered for the type.
+func (r *TinkerbellDatacenterConfig) ValidateCreate(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
+	tinkerbellConfig, ok := obj.(*TinkerbellDatacenterConfig)
+	if !ok {
+		return nil, fmt.Errorf("expected a TinkerbellDatacenterConfig but got %T", obj)
+	}
 
-	if err := r.Validate(); err != nil {
+	tinkerbelldatacenterconfiglog.Info("validate create", "name", tinkerbellConfig.Name)
+
+	if err := tinkerbellConfig.Validate(); err != nil {
 		return nil, apierrors.NewInvalid(
 			GroupVersion.WithKind(TinkerbellDatacenterKind).GroupKind(),
-			r.Name,
+			tinkerbellConfig.Name,
 			field.ErrorList{
-				field.Invalid(field.NewPath("spec"), r.Spec, err.Error()),
+				field.Invalid(field.NewPath("spec"), tinkerbellConfig.Spec, err.Error()),
 			},
 		)
 	}
 
-	if r.IsReconcilePaused() {
-		tinkerbelldatacenterconfiglog.Info("TinkerbellDatacenterConfig is paused, so allowing create", "name", r.Name)
+	if tinkerbellConfig.IsReconcilePaused() {
+		tinkerbelldatacenterconfiglog.Info("TinkerbellDatacenterConfig is paused, so allowing create", "name", tinkerbellConfig.Name)
 		return nil, nil
 	}
 
 	return nil, nil
 }
 
-// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (r *TinkerbellDatacenterConfig) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	tinkerbelldatacenterconfiglog.Info("validate update", "name", r.Name)
+// ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type.
+func (r *TinkerbellDatacenterConfig) ValidateUpdate(_ context.Context, obj, old runtime.Object) (admission.Warnings, error) {
+	tinkerbellConfig, ok := obj.(*TinkerbellDatacenterConfig)
+	if !ok {
+		return nil, fmt.Errorf("expected a TinkerbellDatacenterConfig but got %T", obj)
+	}
+
+	tinkerbelldatacenterconfiglog.Info("validate update", "name", tinkerbellConfig.Name)
 
 	oldTinkerbellDatacenterConfig, ok := old.(*TinkerbellDatacenterConfig)
 	if !ok {
@@ -77,26 +89,31 @@ func (r *TinkerbellDatacenterConfig) ValidateUpdate(old runtime.Object) (admissi
 
 	var allErrs field.ErrorList
 
-	allErrs = append(allErrs, validateImmutableFieldsTinkerbellDatacenterConfig(r, oldTinkerbellDatacenterConfig)...)
+	allErrs = append(allErrs, validateImmutableFieldsTinkerbellDatacenterConfig(tinkerbellConfig, oldTinkerbellDatacenterConfig)...)
 
 	if len(allErrs) != 0 {
-		return nil, apierrors.NewInvalid(GroupVersion.WithKind(TinkerbellDatacenterKind).GroupKind(), r.Name, allErrs)
+		return nil, apierrors.NewInvalid(GroupVersion.WithKind(TinkerbellDatacenterKind).GroupKind(), tinkerbellConfig.Name, allErrs)
 	}
 
-	if err := r.Validate(); err != nil {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
+	if err := tinkerbellConfig.Validate(); err != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), tinkerbellConfig.Spec, err.Error()))
 	}
 
 	if len(allErrs) != 0 {
-		return nil, apierrors.NewInvalid(GroupVersion.WithKind(TinkerbellDatacenterKind).GroupKind(), r.Name, allErrs)
+		return nil, apierrors.NewInvalid(GroupVersion.WithKind(TinkerbellDatacenterKind).GroupKind(), tinkerbellConfig.Name, allErrs)
 	}
 
 	return nil, nil
 }
 
-// ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (r *TinkerbellDatacenterConfig) ValidateDelete() (admission.Warnings, error) {
-	tinkerbelldatacenterconfiglog.Info("validate delete", "name", r.Name)
+// ValidateDelete implements webhook.CustomValidator so a webhook will be registered for the type.
+func (r *TinkerbellDatacenterConfig) ValidateDelete(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
+	tinkerbellConfig, ok := obj.(*TinkerbellDatacenterConfig)
+	if !ok {
+		return nil, fmt.Errorf("expected a TinkerbellDatacenterConfig but got %T", obj)
+	}
+
+	tinkerbelldatacenterconfiglog.Info("validate delete", "name", tinkerbellConfig.Name)
 
 	// TODO(user): fill in your validation logic upon object deletion.
 	return nil, nil

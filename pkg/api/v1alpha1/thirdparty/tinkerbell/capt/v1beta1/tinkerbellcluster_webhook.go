@@ -17,10 +17,13 @@ limitations under the License.
 package v1beta1
 
 import (
+	"context"
+	"fmt"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
@@ -29,25 +32,29 @@ const (
 	defaultUbuntuVersion = "20.04"
 )
 
-var _ admission.Validator = &TinkerbellCluster{}
+var (
+	_ webhook.CustomValidator = &TinkerbellCluster{}
+	_ webhook.CustomDefaulter = &TinkerbellCluster{}
+)
 
 // SetupWebhookWithManager sets up and registers the webhook with the manager.
 func (c *TinkerbellCluster) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).For(c).Complete() //nolint:wrapcheck
+	return ctrl.NewWebhookManagedBy(mgr).For(c).WithDefaulter(c).
+		WithValidator(c).Complete() //nolint:wrapcheck
 }
 
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (c *TinkerbellCluster) ValidateCreate() (admission.Warnings, error) {
+// ValidateCreate implements webhook.CustomValidator so a webhook will be registered for the type.
+func (c *TinkerbellCluster) ValidateCreate(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
 	return nil, nil
 }
 
-// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (c *TinkerbellCluster) ValidateUpdate(_ runtime.Object) (admission.Warnings, error) {
+// ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type.
+func (c *TinkerbellCluster) ValidateUpdate(_ context.Context, _, _ runtime.Object) (admission.Warnings, error) {
 	return nil, nil
 }
 
-// ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (c *TinkerbellCluster) ValidateDelete() (admission.Warnings, error) {
+// ValidateDelete implements webhook.CustomValidator so a webhook will be registered for the type.
+func (c *TinkerbellCluster) ValidateDelete(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
 	return nil, nil
 }
 
@@ -59,13 +66,20 @@ func defaultVersionForOSDistro(distro string) string {
 	return ""
 }
 
-// Default implements webhookutil.defaulter so a webhook will be registered for the type.
-func (c *TinkerbellCluster) Default() {
-	if c.Spec.ImageLookupFormat == "" {
-		c.Spec.ImageLookupFormat = "{{.BaseRegistry}}/{{.OSDistro}}-{{.OSVersion}}:{{.KubernetesVersion}}.gz"
+// Default implements webhook.CustomDefaulter so a webhook will be registered for the type.
+func (c *TinkerbellCluster) Default(_ context.Context, obj runtime.Object) error {
+	cluster, ok := obj.(*TinkerbellCluster)
+	if !ok {
+		return fmt.Errorf("expected a TinkerbellCluster but got %T", obj)
 	}
 
-	if c.Spec.ImageLookupOSVersion == "" {
-		c.Spec.ImageLookupOSVersion = defaultVersionForOSDistro(c.Spec.ImageLookupOSDistro)
+	if cluster.Spec.ImageLookupFormat == "" {
+		cluster.Spec.ImageLookupFormat = "{{.BaseRegistry}}/{{.OSDistro}}-{{.OSVersion}}:{{.KubernetesVersion}}.gz"
 	}
+
+	if cluster.Spec.ImageLookupOSVersion == "" {
+		cluster.Spec.ImageLookupOSVersion = defaultVersionForOSDistro(cluster.Spec.ImageLookupOSDistro)
+	}
+
+	return nil
 }

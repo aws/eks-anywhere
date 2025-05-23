@@ -15,6 +15,7 @@
 package v1alpha1
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"strings"
@@ -34,6 +35,8 @@ var cloudstackdatacenterconfiglog = logf.Log.WithName("cloudstackdatacenterconfi
 func (r *CloudStackDatacenterConfig) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
+		WithDefaulter(r).
+		WithValidator(r).
 		Complete()
 }
 
@@ -41,32 +44,49 @@ func (r *CloudStackDatacenterConfig) SetupWebhookWithManager(mgr ctrl.Manager) e
 
 //+kubebuilder:webhook:path=/mutate-anywhere-eks-amazonaws-com-v1alpha1-cloudstackdatacenterconfig,mutating=true,failurePolicy=fail,sideEffects=None,groups=anywhere.eks.amazonaws.com,resources=cloudstackdatacenterconfigs,verbs=create;update,versions=v1alpha1,name=mutation.cloudstackdatacenterconfig.anywhere.amazonaws.com,admissionReviewVersions={v1,v1beta1}
 
-var _ webhook.Defaulter = &CloudStackDatacenterConfig{}
+var _ webhook.CustomDefaulter = &CloudStackDatacenterConfig{}
 
-// Default implements webhook.Defaulter so a webhook will be registered for the type.
-func (r *CloudStackDatacenterConfig) Default() {
-	cloudstackdatacenterconfiglog.Info("Setting up CloudStackDatacenterConfig defaults for", "name", r.Name)
-	r.SetDefaults()
+// Default implements webhook.CustomDefaulter so a webhook will be registered for the type.
+func (r *CloudStackDatacenterConfig) Default(_ context.Context, obj runtime.Object) error {
+	cloudstackConfig, ok := obj.(*CloudStackDatacenterConfig)
+	if !ok {
+		return fmt.Errorf("expected a CloudStackDatacenterConfig but got %T", obj)
+	}
+
+	cloudstackdatacenterconfiglog.Info("Setting up CloudStackDatacenterConfig defaults for", "name", cloudstackConfig.Name)
+	cloudstackConfig.SetDefaults()
+
+	return nil
 }
 
 // change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
 //+kubebuilder:webhook:path=/validate-anywhere-eks-amazonaws-com-v1alpha1-cloudstackdatacenterconfig,mutating=false,failurePolicy=fail,sideEffects=None,groups=anywhere.eks.amazonaws.com,resources=cloudstackdatacenterconfigs,verbs=create;update,versions=v1alpha1,name=validation.cloudstackdatacenterconfig.anywhere.amazonaws.com,admissionReviewVersions={v1,v1beta1}
 
-var _ webhook.Validator = &CloudStackDatacenterConfig{}
+var _ webhook.CustomValidator = &CloudStackDatacenterConfig{}
 
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (r *CloudStackDatacenterConfig) ValidateCreate() (admission.Warnings, error) {
-	cloudstackdatacenterconfiglog.Info("validate create", "name", r.Name)
-	if r.IsReconcilePaused() {
-		cloudstackdatacenterconfiglog.Info("CloudStackDatacenterConfig is paused, so allowing create", "name", r.Name)
+// ValidateCreate implements webhook.CustomValidator so a webhook will be registered for the type.
+func (r *CloudStackDatacenterConfig) ValidateCreate(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
+	cloudstackConfig, ok := obj.(*CloudStackDatacenterConfig)
+	if !ok {
+		return nil, fmt.Errorf("expected a CloudStackDatacenterConfig but got %T", obj)
+	}
+
+	cloudstackdatacenterconfiglog.Info("validate create", "name", cloudstackConfig.Name)
+	if cloudstackConfig.IsReconcilePaused() {
+		cloudstackdatacenterconfiglog.Info("CloudStackDatacenterConfig is paused, so allowing create", "name", cloudstackConfig.Name)
 		return nil, nil
 	}
 	return nil, nil
 }
 
-// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (r *CloudStackDatacenterConfig) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	cloudstackdatacenterconfiglog.Info("validate update", "name", r.Name)
+// ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type.
+func (r *CloudStackDatacenterConfig) ValidateUpdate(_ context.Context, obj, old runtime.Object) (admission.Warnings, error) {
+	cloudstackConfig, ok := obj.(*CloudStackDatacenterConfig)
+	if !ok {
+		return nil, fmt.Errorf("expected a CloudStackDatacenterConfig but got %T", obj)
+	}
+
+	cloudstackdatacenterconfiglog.Info("validate update", "name", cloudstackConfig.Name)
 
 	oldDatacenterConfig, ok := old.(*CloudStackDatacenterConfig)
 	if !ok {
@@ -146,9 +166,14 @@ func validateImmutableFieldsCloudStackCluster(new, old *CloudStackDatacenterConf
 	return allErrs
 }
 
-// ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (r *CloudStackDatacenterConfig) ValidateDelete() (admission.Warnings, error) {
-	cloudstackdatacenterconfiglog.Info("validate delete", "name", r.Name)
+// ValidateDelete implements webhook.CustomValidator so a webhook will be registered for the type.
+func (r *CloudStackDatacenterConfig) ValidateDelete(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
+	cloudstackConfig, ok := obj.(*CloudStackDatacenterConfig)
+	if !ok {
+		return nil, fmt.Errorf("expected a CloudStackDatacenterConfig but got %T", obj)
+	}
+
+	cloudstackdatacenterconfiglog.Info("validate delete", "name", cloudstackConfig.Name)
 
 	// TODO(user): fill in your validation logic upon object deletion.
 	return nil, nil

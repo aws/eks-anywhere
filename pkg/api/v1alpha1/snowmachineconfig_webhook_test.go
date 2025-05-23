@@ -1,6 +1,7 @@
 package v1alpha1_test
 
 import (
+	"context"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -11,16 +12,19 @@ import (
 )
 
 func TestSnowMachineConfigSetDefaults(t *testing.T) {
+	ctx := context.Background()
 	g := NewWithT(t)
 
 	sOld := snowMachineConfig()
-	sOld.Default()
+	err := sOld.Default(ctx, &sOld)
+	g.Expect(err).To(BeNil())
 
 	g.Expect(sOld.Spec.InstanceType).To(Equal(v1alpha1.DefaultSnowInstanceType))
 	g.Expect(sOld.Spec.PhysicalNetworkConnector).To(Equal(v1alpha1.DefaultSnowPhysicalNetworkConnectorType))
 }
 
 func TestSnowMachineConfigValidateCreateNoAMI(t *testing.T) {
+	ctx := context.Background()
 	g := NewWithT(t)
 
 	sOld := snowMachineConfig()
@@ -42,20 +46,22 @@ func TestSnowMachineConfigValidateCreateNoAMI(t *testing.T) {
 		},
 	}
 
-	g.Expect(sOld.ValidateCreate()).Error().To(Succeed())
+	g.Expect(sOld.ValidateCreate(ctx, &sOld)).Error().To(Succeed())
 }
 
 func TestSnowMachineConfigValidateCreateInvalidInstanceType(t *testing.T) {
+	ctx := context.Background()
 	g := NewWithT(t)
 
 	sOld := snowMachineConfig()
 	sOld.Spec.SshKeyName = "testKey"
 	sOld.Spec.InstanceType = "invalid-instance-type"
 
-	g.Expect(sOld.ValidateCreate()).Error().To(MatchError(ContainSubstring("SnowMachineConfig InstanceType invalid-instance-type is not supported")))
+	g.Expect(sOld.ValidateCreate(ctx, &sOld)).Error().To(MatchError(ContainSubstring("SnowMachineConfig InstanceType invalid-instance-type is not supported")))
 }
 
 func TestSnowMachineConfigValidateCreateEmptySSHKeyName(t *testing.T) {
+	ctx := context.Background()
 	g := NewWithT(t)
 	s := snowMachineConfig()
 	s.Spec.InstanceType = v1alpha1.DefaultSnowInstanceType
@@ -71,10 +77,11 @@ func TestSnowMachineConfigValidateCreateEmptySSHKeyName(t *testing.T) {
 			},
 		},
 	}
-	g.Expect(s.ValidateCreate()).Error().To(MatchError(ContainSubstring("SnowMachineConfig SshKeyName must not be empty")))
+	g.Expect(s.ValidateCreate(ctx, &s)).Error().To(MatchError(ContainSubstring("SnowMachineConfig SshKeyName must not be empty")))
 }
 
 func TestSnowMachineConfigValidateCreate(t *testing.T) {
+	ctx := context.Background()
 	g := NewWithT(t)
 
 	sOld := snowMachineConfig()
@@ -97,10 +104,11 @@ func TestSnowMachineConfigValidateCreate(t *testing.T) {
 		},
 	}
 
-	g.Expect(sOld.ValidateCreate()).Error().To(Succeed())
+	g.Expect(sOld.ValidateCreate(ctx, &sOld)).Error().To(Succeed())
 }
 
 func TestSnowMachineConfigValidateUpdate(t *testing.T) {
+	ctx := context.Background()
 	g := NewWithT(t)
 
 	sOld := snowMachineConfig()
@@ -124,10 +132,11 @@ func TestSnowMachineConfigValidateUpdate(t *testing.T) {
 		},
 	}
 
-	g.Expect(sNew.ValidateUpdate(&sOld)).Error().To(Succeed())
+	g.Expect(sNew.ValidateUpdate(ctx, sNew, &sOld)).Error().To(Succeed())
 }
 
 func TestSnowMachineConfigValidateUpdateNoDevices(t *testing.T) {
+	ctx := context.Background()
 	g := NewWithT(t)
 
 	sOld := snowMachineConfig()
@@ -138,10 +147,11 @@ func TestSnowMachineConfigValidateUpdateNoDevices(t *testing.T) {
 	sNew.Spec.PhysicalNetworkConnector = v1alpha1.SFPPlus
 	sNew.Spec.OSFamily = v1alpha1.Bottlerocket
 
-	g.Expect(sNew.ValidateUpdate(&sOld)).Error().To(MatchError(ContainSubstring("Devices must contain at least one device IP")))
+	g.Expect(sNew.ValidateUpdate(ctx, sNew, &sOld)).Error().To(MatchError(ContainSubstring("Devices must contain at least one device IP")))
 }
 
 func TestSnowMachineConfigValidateUpdateEmptySSHKeyName(t *testing.T) {
+	ctx := context.Background()
 	g := NewWithT(t)
 
 	sOld := snowMachineConfig()
@@ -151,14 +161,15 @@ func TestSnowMachineConfigValidateUpdateEmptySSHKeyName(t *testing.T) {
 	sNew.Spec.PhysicalNetworkConnector = v1alpha1.SFPPlus
 	sNew.Spec.OSFamily = v1alpha1.Bottlerocket
 
-	g.Expect(sNew.ValidateUpdate(&sOld)).Error().To(MatchError(ContainSubstring("SnowMachineConfig SshKeyName must not be empty")))
+	g.Expect(sNew.ValidateUpdate(ctx, sNew, &sOld)).Error().To(MatchError(ContainSubstring("SnowMachineConfig SshKeyName must not be empty")))
 }
 
 // Unit test to pass the code coverage job.
 func TestSnowMachineConfigValidateDelete(t *testing.T) {
+	ctx := context.Background()
 	g := NewWithT(t)
 	sOld := snowMachineConfig()
-	g.Expect(sOld.ValidateDelete()).Error().To(Succeed())
+	g.Expect(sOld.ValidateDelete(ctx, &sOld)).Error().To(Succeed())
 }
 
 func snowMachineConfig() v1alpha1.SnowMachineConfig {
@@ -168,4 +179,75 @@ func snowMachineConfig() v1alpha1.SnowMachineConfig {
 		Spec:       v1alpha1.SnowMachineConfigSpec{},
 		Status:     v1alpha1.SnowMachineConfigStatus{},
 	}
+}
+
+func TestSnowMachineConfigDefaultCastFail(t *testing.T) {
+	g := NewWithT(t)
+
+	// Create a different type that will cause the cast to fail
+	wrongType := &v1alpha1.Cluster{}
+
+	// Create the config object that implements CustomDefaulter
+	config := &v1alpha1.SnowMachineConfig{}
+
+	// Call Default with the wrong type
+	err := config.Default(context.TODO(), wrongType)
+
+	// Verify that an error is returned
+	g.Expect(err).To(HaveOccurred())
+	g.Expect(err.Error()).To(ContainSubstring("expected a SnowMachineConfig"))
+}
+
+func TestSnowMachineConfigValidateCreateCastFail(t *testing.T) {
+	g := NewWithT(t)
+
+	// Create a different type that will cause the cast to fail
+	wrongType := &v1alpha1.Cluster{}
+
+	// Create the config object that implements CustomValidator
+	config := &v1alpha1.SnowMachineConfig{}
+
+	// Call ValidateCreate with the wrong type
+	warnings, err := config.ValidateCreate(context.TODO(), wrongType)
+
+	// Verify that an error is returned
+	g.Expect(warnings).To(BeNil())
+	g.Expect(err).To(HaveOccurred())
+	g.Expect(err.Error()).To(ContainSubstring("expected a SnowMachineConfig"))
+}
+
+func TestSnowMachineConfigValidateUpdateCastFail(t *testing.T) {
+	g := NewWithT(t)
+
+	// Create a different type that will cause the cast to fail
+	wrongType := &v1alpha1.Cluster{}
+
+	// Create the config object that implements CustomValidator
+	config := &v1alpha1.SnowMachineConfig{}
+
+	// Call ValidateUpdate with the wrong type
+	warnings, err := config.ValidateUpdate(context.TODO(), wrongType, &v1alpha1.SnowMachineConfig{})
+
+	// Verify that an error is returned
+	g.Expect(warnings).To(BeNil())
+	g.Expect(err).To(HaveOccurred())
+	g.Expect(err.Error()).To(ContainSubstring("expected a SnowMachineConfig"))
+}
+
+func TestSnowMachineConfigValidateDeleteCastFail(t *testing.T) {
+	g := NewWithT(t)
+
+	// Create a different type that will cause the cast to fail
+	wrongType := &v1alpha1.Cluster{}
+
+	// Create the config object that implements CustomValidator
+	config := &v1alpha1.SnowMachineConfig{}
+
+	// Call ValidateDelete with the wrong type
+	warnings, err := config.ValidateDelete(context.TODO(), wrongType)
+
+	// Verify that an error is returned
+	g.Expect(warnings).To(BeNil())
+	g.Expect(err).To(HaveOccurred())
+	g.Expect(err.Error()).To(ContainSubstring("expected a SnowMachineConfig"))
 }

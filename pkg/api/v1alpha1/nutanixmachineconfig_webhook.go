@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 
@@ -19,22 +20,28 @@ var nutanixmachineconfiglog = logf.Log.WithName("nutanixmachineconfig-resource")
 func (in *NutanixMachineConfig) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(in).
+		WithValidator(in).
 		Complete()
 }
 
-var _ webhook.Validator = &NutanixMachineConfig{}
+var _ webhook.CustomValidator = &NutanixMachineConfig{}
 
 //+kubebuilder:webhook:path=/validate-anywhere-eks-amazonaws-com-v1alpha1-nutanixmachineconfig,mutating=false,failurePolicy=fail,sideEffects=None,groups=anywhere.eks.amazonaws.com,resources=nutanixmachineconfigs,verbs=create;update,versions=v1alpha1,name=validation.nutanixmachineconfig.anywhere.amazonaws.com,admissionReviewVersions={v1,v1beta1}
 
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (in *NutanixMachineConfig) ValidateCreate() (admission.Warnings, error) {
-	nutanixmachineconfiglog.Info("validate create", "name", in.Name)
-	if err := in.Validate(); err != nil {
+// ValidateCreate implements webhook.CustomValidator so a webhook will be registered for the type.
+func (in *NutanixMachineConfig) ValidateCreate(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
+	nutanixConfig, ok := obj.(*NutanixMachineConfig)
+	if !ok {
+		return nil, fmt.Errorf("expected a NutanixMachineConfig but got %T", obj)
+	}
+
+	nutanixmachineconfiglog.Info("validate create", "name", nutanixConfig.Name)
+	if err := nutanixConfig.Validate(); err != nil {
 		return nil, apierrors.NewInvalid(
 			GroupVersion.WithKind(NutanixMachineConfigKind).GroupKind(),
-			in.Name,
+			nutanixConfig.Name,
 			field.ErrorList{
-				field.Invalid(field.NewPath("spec"), in.Spec, err.Error()),
+				field.Invalid(field.NewPath("spec"), nutanixConfig.Spec, err.Error()),
 			},
 		)
 	}
@@ -42,9 +49,14 @@ func (in *NutanixMachineConfig) ValidateCreate() (admission.Warnings, error) {
 	return nil, nil
 }
 
-// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (in *NutanixMachineConfig) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	nutanixmachineconfiglog.Info("validate update", "name", in.Name)
+// ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type.
+func (in *NutanixMachineConfig) ValidateUpdate(_ context.Context, obj, old runtime.Object) (admission.Warnings, error) {
+	nutanixConfig, ok := obj.(*NutanixMachineConfig)
+	if !ok {
+		return nil, fmt.Errorf("expected a NutanixMachineConfig but got %T", obj)
+	}
+
+	nutanixmachineconfiglog.Info("validate update", "name", nutanixConfig.Name)
 
 	oldNutanixMachineConfig, ok := old.(*NutanixMachineConfig)
 	if !ok {
@@ -52,27 +64,27 @@ func (in *NutanixMachineConfig) ValidateUpdate(old runtime.Object) (admission.Wa
 	}
 
 	var allErrs field.ErrorList
-	if err := in.Validate(); err != nil {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), in.Spec, err.Error()))
+	if err := nutanixConfig.Validate(); err != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), nutanixConfig.Spec, err.Error()))
 	}
 
 	if oldNutanixMachineConfig.IsReconcilePaused() {
-		nutanixmachineconfiglog.Info("NutanixMachineConfig is paused, so allowing update", "name", in.Name)
+		nutanixmachineconfiglog.Info("NutanixMachineConfig is paused, so allowing update", "name", nutanixConfig.Name)
 		if len(allErrs) > 0 {
 			return nil, apierrors.NewInvalid(
 				GroupVersion.WithKind(NutanixMachineConfigKind).GroupKind(),
-				in.Name,
+				nutanixConfig.Name,
 				allErrs,
 			)
 		}
 		return nil, nil
 	}
 
-	allErrs = append(allErrs, validateImmutableFieldsNutantixMachineConfig(in, oldNutanixMachineConfig)...)
+	allErrs = append(allErrs, validateImmutableFieldsNutantixMachineConfig(nutanixConfig, oldNutanixMachineConfig)...)
 	if len(allErrs) > 0 {
 		return nil, apierrors.NewInvalid(
 			GroupVersion.WithKind(NutanixMachineConfigKind).GroupKind(),
-			in.Name,
+			nutanixConfig.Name,
 			allErrs,
 		)
 	}
@@ -80,9 +92,14 @@ func (in *NutanixMachineConfig) ValidateUpdate(old runtime.Object) (admission.Wa
 	return nil, nil
 }
 
-// ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (in *NutanixMachineConfig) ValidateDelete() (admission.Warnings, error) {
-	nutanixmachineconfiglog.Info("validate delete", "name", in.Name)
+// ValidateDelete implements webhook.CustomValidator so a webhook will be registered for the type.
+func (in *NutanixMachineConfig) ValidateDelete(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
+	nutanixConfig, ok := obj.(*NutanixMachineConfig)
+	if !ok {
+		return nil, fmt.Errorf("expected a NutanixMachineConfig but got %T", obj)
+	}
+
+	nutanixmachineconfiglog.Info("validate delete", "name", nutanixConfig.Name)
 
 	// TODO(user): fill in your validation logic upon object deletion.
 	return nil, nil

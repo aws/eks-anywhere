@@ -109,6 +109,13 @@ func (c *UnAuthClient) Update(ctx context.Context, kubeconfig string, obj Object
 	return c.kubectl.Replace(ctx, kubeconfig, obj)
 }
 
+// Patch patches the given object using the given patch and returns the updated object.
+// NOTE: This method is not implemented for UnAuthClient and exists only to satisfy the interface.
+// Calling this method will return an error indicating it's not supported.
+func (c *UnAuthClient) Patch(_ context.Context, _ string, _ Object, _ Patch, _ ...PatchOption) error {
+	return fmt.Errorf("Patch operation not implemented for UnAuthClient")
+}
+
 // Delete deletes the given obj from Kubernetes cluster.
 func (c *UnAuthClient) Delete(ctx context.Context, kubeconfig string, obj Object) error {
 	resourceType, err := c.resourceTypeForObj(obj)

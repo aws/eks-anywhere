@@ -37,7 +37,7 @@ func (t *testKubeClient) ApplyServerSide(ctx context.Context, fieldManager strin
 	if o.ForceOwnership {
 		patchOpts.Force = ptr.Bool(true)
 	}
-	err := t.fakeClient.Patch(ctx, obj, client.Apply, patchOpts)
+	err := t.fakeClient.Patch(ctx, obj, client.MergeFrom(obj.DeepCopyObject().(client.Object)), patchOpts)
 	if apierrors.IsNotFound(err) {
 		return t.fakeClient.Create(ctx, obj)
 	}

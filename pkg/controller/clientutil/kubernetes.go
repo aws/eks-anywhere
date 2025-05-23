@@ -51,6 +51,20 @@ func (c *KubeClient) Update(ctx context.Context, obj kubernetes.Object) error {
 	return c.client.Update(ctx, obj)
 }
 
+// Patch updates the given obj in the Kubernetes cluster.
+// This method is used only in unit tests currently.
+func (c *KubeClient) Patch(ctx context.Context, obj kubernetes.Object, patch kubernetes.Patch, opts ...kubernetes.PatchOption) error {
+	o := &kubernetes.PatchOptions{}
+	for _, opt := range opts {
+		opt.ApplyToPatch(o)
+	}
+	patchOpts := &client.PatchOptions{}
+	if o.Force {
+		patchOpts.Force = ptr.Bool(true)
+	}
+	return c.client.Patch(ctx, obj, patch, patchOpts)
+}
+
 // ApplyServerSide creates or patches and object using server side logic.
 func (c *KubeClient) ApplyServerSide(ctx context.Context, fieldManager string, obj kubernetes.Object, opts ...kubernetes.ApplyServerSideOption) error {
 	o := &kubernetes.ApplyServerSideOptions{}

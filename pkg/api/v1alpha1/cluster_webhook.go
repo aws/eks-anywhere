@@ -15,6 +15,7 @@
 package v1alpha1
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 
@@ -38,52 +39,71 @@ var clusterlog = logf.Log.WithName("cluster-resource")
 func (r *Cluster) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
+		WithDefaulter(r).
+		WithValidator(r).
 		Complete()
 }
 
 //+kubebuilder:webhook:path=/mutate-anywhere-eks-amazonaws-com-v1alpha1-cluster,mutating=true,failurePolicy=fail,sideEffects=None,groups=anywhere.eks.amazonaws.com,resources=clusters,verbs=create;update,versions=v1alpha1,name=mutation.cluster.anywhere.amazonaws.com,admissionReviewVersions={v1,v1beta1}
 
-var _ webhook.Defaulter = &Cluster{}
+var _ webhook.CustomDefaulter = &Cluster{}
 
-// Default implements webhook.Defaulter so a webhook will be registered for the type.
-func (r *Cluster) Default() {
-	clusterlog.Info("Setting up Cluster defaults", "name", r.Name, "namespace", r.Namespace)
-	r.SetDefaults()
+// Default implements webhook.CustomDefaulter so a webhook will be registered for the type.
+func (r *Cluster) Default(_ context.Context, obj runtime.Object) error {
+	cluster, ok := obj.(*Cluster)
+	if !ok {
+		return fmt.Errorf("expected a Cluster but got %T", obj)
+	}
+
+	clusterlog.Info("Setting up Cluster defaults", "name", cluster.Name, "namespace", cluster.Namespace)
+	cluster.SetDefaults()
+
+	return nil
 }
 
 // Change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
 //+kubebuilder:webhook:path=/validate-anywhere-eks-amazonaws-com-v1alpha1-cluster,mutating=false,failurePolicy=fail,sideEffects=None,groups=anywhere.eks.amazonaws.com,resources=clusters,verbs=create;update,versions=v1alpha1,name=validation.cluster.anywhere.amazonaws.com,admissionReviewVersions={v1,v1beta1}
 
-var _ webhook.Validator = &Cluster{}
+var _ webhook.CustomValidator = &Cluster{}
 
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (r *Cluster) ValidateCreate() (admission.Warnings, error) {
-	clusterlog.Info("validate create", "name", r.Name)
+// ValidateCreate implements webhook.CustomValidator so a webhook will be registered for the type.
+func (r *Cluster) ValidateCreate(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
+	cluster, ok := obj.(*Cluster)
+	if !ok {
+		return nil, fmt.Errorf("expected a Cluster but got %T", obj)
+	}
+
+	clusterlog.Info("validate create", "name", cluster.Name)
 
 	var allErrs field.ErrorList
 
-	if !r.IsReconcilePaused() && r.IsSelfManaged() && !r.IsManagedByCLI() {
+	if !cluster.IsReconcilePaused() && cluster.IsSelfManaged() && !cluster.IsManagedByCLI() {
 		return nil, apierrors.NewBadRequest("creating new cluster on existing cluster is not supported for self managed clusters")
 	}
 
-	if !r.IsReconcilePaused() && r.Spec.EtcdEncryption != nil {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("spec.etcdEncryption"), r.Spec.EtcdEncryption, "etcdEncryption is not supported during cluster creation"))
+	if !cluster.IsReconcilePaused() && cluster.Spec.EtcdEncryption != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec.etcdEncryption"), cluster.Spec.EtcdEncryption, "etcdEncryption is not supported during cluster creation"))
 	}
 
-	if err := r.Validate(); err != nil {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
+	if err := cluster.Validate(); err != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), cluster.Spec, err.Error()))
 	}
 
 	if len(allErrs) != 0 {
-		return nil, apierrors.NewInvalid(GroupVersion.WithKind(ClusterKind).GroupKind(), r.Name, allErrs)
+		return nil, apierrors.NewInvalid(GroupVersion.WithKind(ClusterKind).GroupKind(), cluster.Name, allErrs)
 	}
 
 	return nil, nil
 }
 
-// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (r *Cluster) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	clusterlog.Info("validate update", "name", r.Name)
+// ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type.
+func (r *Cluster) ValidateUpdate(_ context.Context, obj, old runtime.Object) (admission.Warnings, error) {
+	newCluster, ok := obj.(*Cluster)
+	if !ok {
+		return nil, fmt.Errorf("expected a Cluster but got %T", obj)
+	}
+
+	clusterlog.Info("validate update", "name", newCluster.Name)
 	oldCluster, ok := old.(*Cluster)
 	if !ok {
 		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a Cluster but got a %T", old))
@@ -91,43 +111,49 @@ func (r *Cluster) ValidateUpdate(old runtime.Object) (admission.Warnings, error)
 
 	var allErrs field.ErrorList
 
-	if r.Spec.DatacenterRef.Kind == TinkerbellDatacenterKind {
-		allErrs = append(allErrs, validateUpgradeRequestTinkerbell(r, oldCluster)...)
+	if newCluster.Spec.DatacenterRef.Kind == TinkerbellDatacenterKind {
+		allErrs = append(allErrs, validateUpgradeRequestTinkerbell(newCluster, oldCluster)...)
 	}
 
-	allErrs = append(allErrs, validateImmutableFieldsCluster(r, oldCluster)...)
+	allErrs = append(allErrs, validateImmutableFieldsCluster(newCluster, oldCluster)...)
 
-	allErrs = append(allErrs, validateBundlesRefCluster(r, oldCluster)...)
+	allErrs = append(allErrs, validateBundlesRefCluster(newCluster, oldCluster)...)
 
-	allErrs = append(allErrs, ValidateKubernetesVersionSkew(r, oldCluster)...)
+	allErrs = append(allErrs, ValidateKubernetesVersionSkew(newCluster, oldCluster)...)
 
-	allErrs = append(allErrs, validateEksaVersionCluster(r, oldCluster)...)
+	allErrs = append(allErrs, validateEksaVersionCluster(newCluster, oldCluster)...)
 
-	if !r.EksaVersionSkewCheckDisabled() {
-		allErrs = append(allErrs, ValidateEksaVersionSkew(r, oldCluster)...)
+	if !newCluster.EksaVersionSkewCheckDisabled() {
+		allErrs = append(allErrs, ValidateEksaVersionSkew(newCluster, oldCluster)...)
 	}
 
-	allErrs = append(allErrs, ValidateWorkerKubernetesVersionSkew(r, oldCluster)...)
+	allErrs = append(allErrs, ValidateWorkerKubernetesVersionSkew(newCluster, oldCluster)...)
 
-	if r.Spec.EtcdEncryption != nil && !supportsEtcdEncryption(r) {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("spec.etcdEncryption"), r.Spec.EtcdEncryption, fmt.Sprintf("etcdEncryption is currently not supported for the provider: %s", r.Spec.DatacenterRef.Kind)))
+	allErrs = append(allErrs, validateEtcdEncryptionSupport(newCluster)...)
+
+	if len(allErrs) != 0 {
+		return nil, apierrors.NewInvalid(GroupVersion.WithKind(ClusterKind).GroupKind(), newCluster.Name, allErrs)
 	}
 
-	if err := ValidateEtcdEncryptionConfig(r.Spec.EtcdEncryption); err != nil {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("spec.etcdEncryption"), r.Spec.EtcdEncryption, err.Error()))
+	if err := newCluster.Validate(); err != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), newCluster.Spec, err.Error()))
 	}
 
 	if len(allErrs) != 0 {
-		return nil, apierrors.NewInvalid(GroupVersion.WithKind(ClusterKind).GroupKind(), r.Name, allErrs)
+		return nil, apierrors.NewInvalid(GroupVersion.WithKind(ClusterKind).GroupKind(), newCluster.Name, allErrs)
 	}
 
-	if err := r.Validate(); err != nil {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
+	return nil, nil
+}
+
+// ValidateDelete implements webhook.CustomValidator so a webhook will be registered for the type.
+func (r *Cluster) ValidateDelete(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
+	cluster, ok := obj.(*Cluster)
+	if !ok {
+		return nil, fmt.Errorf("expected a Cluster but got %T", obj)
 	}
 
-	if len(allErrs) != 0 {
-		return nil, apierrors.NewInvalid(GroupVersion.WithKind(ClusterKind).GroupKind(), r.Name, allErrs)
-	}
+	clusterlog.Info("validate delete", "name", cluster.Name)
 
 	return nil, nil
 }
@@ -409,13 +435,6 @@ func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
 	return allErrs
 }
 
-// ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (r *Cluster) ValidateDelete() (admission.Warnings, error) {
-	clusterlog.Info("validate delete", "name", r.Name)
-
-	return nil, nil
-}
-
 // ValidateKubernetesVersionSkew validates Kubernetes version skew between upgrades.
 func ValidateKubernetesVersionSkew(new, old *Cluster) field.ErrorList {
 	path := field.NewPath("spec")
@@ -616,4 +635,26 @@ func validateCPWorkerKubeSkew(cpVersion, workerVersion KubernetesVersion) field.
 	}
 
 	return allErrs
+}
+
+func validateEtcdEncryptionSupport(cluster *Cluster) field.ErrorList {
+	var errs field.ErrorList
+
+	if cluster.Spec.EtcdEncryption == nil {
+		return errs
+	}
+
+	if !supportsEtcdEncryption(cluster) {
+		errs = append(errs, field.Invalid(
+			field.NewPath("spec.etcdEncryption"),
+			cluster.Spec.EtcdEncryption,
+			fmt.Sprintf("etcdEncryption is currently not supported for the provider: %s", cluster.Spec.DatacenterRef.Kind),
+		))
+	}
+
+	if err := ValidateEtcdEncryptionConfig(cluster.Spec.EtcdEncryption); err != nil {
+		errs = append(errs, field.Invalid(field.NewPath("spec.etcdEncryption"), cluster.Spec.EtcdEncryption, err.Error()))
+	}
+
+	return errs
 }

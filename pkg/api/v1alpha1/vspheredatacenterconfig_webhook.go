@@ -15,6 +15,7 @@
 package v1alpha1
 
 import (
+	"context"
 	"fmt"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -32,6 +33,8 @@ var vspheredatacenterconfiglog = logf.Log.WithName("vspheredatacenterconfig-reso
 func (r *VSphereDatacenterConfig) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
+		WithDefaulter(r).
+		WithValidator(r).
 		Complete()
 }
 
@@ -39,56 +42,73 @@ func (r *VSphereDatacenterConfig) SetupWebhookWithManager(mgr ctrl.Manager) erro
 
 //+kubebuilder:webhook:path=/mutate-anywhere-eks-amazonaws-com-v1alpha1-vspheredatacenterconfig,mutating=true,failurePolicy=fail,sideEffects=None,groups=anywhere.eks.amazonaws.com,resources=vspheredatacenterconfigs,verbs=create;update,versions=v1alpha1,name=mutation.vspheredatacenterconfig.anywhere.amazonaws.com,admissionReviewVersions={v1,v1beta1}
 
-var _ webhook.Defaulter = &VSphereDatacenterConfig{}
+var _ webhook.CustomDefaulter = &VSphereDatacenterConfig{}
 
-// Default implements webhook.Defaulter so a webhook will be registered for the type.
-func (r *VSphereDatacenterConfig) Default() {
-	vspheredatacenterconfiglog.Info("Setting up VSphere Datacenter Config defaults for", "name", r.Name)
-	r.SetDefaults()
+// Default implements webhook.CustomDefaulter so a webhook will be registered for the type.
+func (r *VSphereDatacenterConfig) Default(_ context.Context, obj runtime.Object) error {
+	vsphereConfig, ok := obj.(*VSphereDatacenterConfig)
+	if !ok {
+		return fmt.Errorf("expected a VSphereDatacenterConfig but got %T", obj)
+	}
+
+	vspheredatacenterconfiglog.Info("Setting up VSphere Datacenter Config defaults for", "name", vsphereConfig.Name)
+	vsphereConfig.SetDefaults()
+
+	return nil
 }
 
 // change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
 //+kubebuilder:webhook:path=/validate-anywhere-eks-amazonaws-com-v1alpha1-vspheredatacenterconfig,mutating=false,failurePolicy=fail,sideEffects=None,groups=anywhere.eks.amazonaws.com,resources=vspheredatacenterconfigs,verbs=create;update,versions=v1alpha1,name=validation.vspheredatacenterconfig.anywhere.amazonaws.com,admissionReviewVersions={v1,v1beta1}
 
-var _ webhook.Validator = &VSphereDatacenterConfig{}
+var _ webhook.CustomValidator = &VSphereDatacenterConfig{}
 
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (r *VSphereDatacenterConfig) ValidateCreate() (admission.Warnings, error) {
-	vspheredatacenterconfiglog.Info("validate create", "name", r.Name)
+// ValidateCreate implements webhook.CustomValidator so a webhook will be registered for the type.
+func (r *VSphereDatacenterConfig) ValidateCreate(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
+	vsphereConfig, ok := obj.(*VSphereDatacenterConfig)
+	if !ok {
+		return nil, fmt.Errorf("expected a VSphereDatacenterConfig but got %T", obj)
+	}
 
-	if err := r.Validate(); err != nil {
+	vspheredatacenterconfiglog.Info("validate create", "name", vsphereConfig.Name)
+
+	if err := vsphereConfig.Validate(); err != nil {
 		return nil, apierrors.NewInvalid(
 			GroupVersion.WithKind(VSphereDatacenterKind).GroupKind(),
-			r.Name,
+			vsphereConfig.Name,
 			field.ErrorList{
-				field.Invalid(field.NewPath("spec"), r.Spec, err.Error()),
+				field.Invalid(field.NewPath("spec"), vsphereConfig.Spec, err.Error()),
 			},
 		)
 	}
 
-	if r.IsReconcilePaused() {
-		vspheredatacenterconfiglog.Info("VSphereDatacenterConfig is paused, so allowing create", "name", r.Name)
+	if vsphereConfig.IsReconcilePaused() {
+		vspheredatacenterconfiglog.Info("VSphereDatacenterConfig is paused, so allowing create", "name", vsphereConfig.Name)
 		return nil, nil
 	}
 
 	return nil, nil
 }
 
-// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (r *VSphereDatacenterConfig) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	vspheredatacenterconfiglog.Info("validate update", "name", r.Name)
+// ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type.
+func (r *VSphereDatacenterConfig) ValidateUpdate(_ context.Context, obj, old runtime.Object) (admission.Warnings, error) {
+	vsphereConfig, ok := obj.(*VSphereDatacenterConfig)
+	if !ok {
+		return nil, fmt.Errorf("expected a VSphereDatacenterConfig but got %T", obj)
+	}
+
+	vspheredatacenterconfiglog.Info("validate update", "name", vsphereConfig.Name)
 
 	oldDatacenterConfig, ok := old.(*VSphereDatacenterConfig)
 	if !ok {
 		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a VSphereDataCenterConfig but got a %T", old))
 	}
 
-	if err := r.Validate(); err != nil {
+	if err := vsphereConfig.Validate(); err != nil {
 		return nil, apierrors.NewInvalid(
 			GroupVersion.WithKind(VSphereDatacenterKind).GroupKind(),
-			r.Name,
+			vsphereConfig.Name,
 			field.ErrorList{
-				field.Invalid(field.NewPath("spec"), r.Spec, err.Error()),
+				field.Invalid(field.NewPath("spec"), vsphereConfig.Spec, err.Error()),
 			},
 		)
 	}
@@ -98,10 +118,10 @@ func (r *VSphereDatacenterConfig) ValidateUpdate(old runtime.Object) (admission.
 		return nil, nil
 	}
 
-	r.SetDefaults()
+	vsphereConfig.SetDefaults()
 
-	if allErrs := validateImmutableFieldsVSphereCluster(r, oldDatacenterConfig); len(allErrs) != 0 {
-		return nil, apierrors.NewInvalid(GroupVersion.WithKind(VSphereDatacenterKind).GroupKind(), r.Name, allErrs)
+	if allErrs := validateImmutableFieldsVSphereCluster(vsphereConfig, oldDatacenterConfig); len(allErrs) != 0 {
+		return nil, apierrors.NewInvalid(GroupVersion.WithKind(VSphereDatacenterKind).GroupKind(), vsphereConfig.Name, allErrs)
 	}
 
 	return nil, nil
@@ -135,9 +155,14 @@ func validateImmutableFieldsVSphereCluster(new, old *VSphereDatacenterConfig) fi
 	return allErrs
 }
 
-// ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (r *VSphereDatacenterConfig) ValidateDelete() (admission.Warnings, error) {
-	vspheredatacenterconfiglog.Info("validate delete", "name", r.Name)
+// ValidateDelete implements webhook.CustomValidator so a webhook will be registered for the type.
+func (r *VSphereDatacenterConfig) ValidateDelete(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
+	vsphereConfig, ok := obj.(*VSphereDatacenterConfig)
+	if !ok {
+		return nil, fmt.Errorf("expected a VSphereDatacenterConfig but got %T", obj)
+	}
+
+	vspheredatacenterconfiglog.Info("validate delete", "name", vsphereConfig.Name)
 
 	// TODO(user): fill in your validation logic upon object deletion.
 	return nil, nil
