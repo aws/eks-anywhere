@@ -15,6 +15,9 @@
 package v1alpha1
 
 import (
+	"context"
+	"fmt"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -28,31 +31,47 @@ var snowdatacenterconfiglog = logf.Log.WithName("snowdatacenterconfig-resource")
 func (r *SnowDatacenterConfig) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
+		WithValidator(r).
 		Complete()
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
 //+kubebuilder:webhook:path=/validate-anywhere-eks-amazonaws-com-v1alpha1-snowdatacenterconfig,mutating=false,failurePolicy=fail,sideEffects=None,groups=anywhere.eks.amazonaws.com,resources=snowdatacenterconfigs,verbs=create;update,versions=v1alpha1,name=snowdatacenterconfig.kb.io,admissionReviewVersions={v1,v1beta1}
 
-var _ webhook.Validator = &SnowDatacenterConfig{}
+var _ webhook.CustomValidator = &SnowDatacenterConfig{}
 
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (r *SnowDatacenterConfig) ValidateCreate() (admission.Warnings, error) {
-	snowdatacenterconfiglog.Info("validate create", "name", r.Name)
+// ValidateCreate implements webhook.CustomValidator so a webhook will be registered for the type.
+func (r *SnowDatacenterConfig) ValidateCreate(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
+	snowConfig, ok := obj.(*SnowDatacenterConfig)
+	if !ok {
+		return nil, fmt.Errorf("expected a SnowDatacenterConfig but got %T", obj)
+	}
 
-	return nil, r.Validate()
+	snowdatacenterconfiglog.Info("validate create", "name", snowConfig.Name)
+
+	return nil, snowConfig.Validate()
 }
 
-// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (r *SnowDatacenterConfig) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	snowdatacenterconfiglog.Info("validate update", "name", r.Name)
+// ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type.
+func (r *SnowDatacenterConfig) ValidateUpdate(_ context.Context, obj, _ runtime.Object) (admission.Warnings, error) {
+	snowConfig, ok := obj.(*SnowDatacenterConfig)
+	if !ok {
+		return nil, fmt.Errorf("expected a SnowDatacenterConfig but got %T", obj)
+	}
 
-	return nil, r.Validate()
+	snowdatacenterconfiglog.Info("validate update", "name", snowConfig.Name)
+
+	return nil, snowConfig.Validate()
 }
 
-// ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (r *SnowDatacenterConfig) ValidateDelete() (admission.Warnings, error) {
-	snowdatacenterconfiglog.Info("validate delete", "name", r.Name)
+// ValidateDelete implements webhook.CustomValidator so a webhook will be registered for the type.
+func (r *SnowDatacenterConfig) ValidateDelete(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
+	snowConfig, ok := obj.(*SnowDatacenterConfig)
+	if !ok {
+		return nil, fmt.Errorf("expected a SnowDatacenterConfig but got %T", obj)
+	}
+
+	snowdatacenterconfiglog.Info("validate delete", "name", snowConfig.Name)
 
 	return nil, nil
 }

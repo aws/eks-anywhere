@@ -1,6 +1,7 @@
 package v1alpha1_test
 
 import (
+	"context"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -10,15 +11,17 @@ import (
 )
 
 func TestValidateCreateOIDCConfigSuccess(t *testing.T) {
+	ctx := context.Background()
 	c := oidcConfig()
 	c.Spec.ClientId = "test"
 	c.Spec.IssuerUrl = "https://test.com"
 	o := NewWithT(t)
 
-	o.Expect(c.ValidateCreate()).Error().To(Succeed())
+	o.Expect(c.ValidateCreate(ctx, &c)).Error().To(Succeed())
 }
 
 func TestClusterValidateCreateInvalidOIDCConfig(t *testing.T) {
+	ctx := context.Background()
 	tests := []struct {
 		name   string
 		config v1alpha1.OIDCConfig
@@ -87,82 +90,90 @@ func TestClusterValidateCreateInvalidOIDCConfig(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			g := NewWithT(t)
-			g.Expect(tt.config.ValidateCreate()).Error().To(MatchError(ContainSubstring(tt.err)))
+			g.Expect(tt.config.ValidateCreate(ctx, &tt.config)).Error().To(MatchError(ContainSubstring(tt.err)))
 		})
 	}
 }
 
 func TestValidateUpdateOIDCClientIdMgmtCluster(t *testing.T) {
+	ctx := context.Background()
 	ocOld := oidcConfig()
 	ocOld.Spec.ClientId = "test"
 	c := ocOld.DeepCopy()
 
 	c.Spec.ClientId = "test2"
 	o := NewWithT(t)
-	o.Expect(c.ValidateUpdate(&ocOld)).Error().To(MatchError(ContainSubstring("OIDCConfig: Forbidden: config is immutable")))
+	o.Expect(c.ValidateUpdate(ctx, c, &ocOld)).Error().To(MatchError(ContainSubstring("OIDCConfig: Forbidden: config is immutable")))
 }
 
 func TestValidateUpdateOIDCGroupsClaimMgmtCluster(t *testing.T) {
+	ctx := context.Background()
 	ocOld := oidcConfig()
 	ocOld.Spec.GroupsClaim = "test"
 	c := ocOld.DeepCopy()
 
 	c.Spec.GroupsClaim = "test2"
 	o := NewWithT(t)
-	o.Expect(c.ValidateUpdate(&ocOld)).Error().To(MatchError(ContainSubstring("OIDCConfig: Forbidden: config is immutable")))
+	o.Expect(c.ValidateUpdate(ctx, c, &ocOld)).Error().To(MatchError(ContainSubstring("OIDCConfig: Forbidden: config is immutable")))
 }
 
 func TestValidateUpdateOIDCGroupsPrefixMgmtCluster(t *testing.T) {
+	ctx := context.Background()
 	ocOld := oidcConfig()
 	ocOld.Spec.GroupsPrefix = "test"
 	c := ocOld.DeepCopy()
 
 	c.Spec.GroupsPrefix = "test2"
 	o := NewWithT(t)
-	o.Expect(c.ValidateUpdate(&ocOld)).Error().To(MatchError(ContainSubstring("OIDCConfig: Forbidden: config is immutable")))
+	o.Expect(c.ValidateUpdate(ctx, c, &ocOld)).Error().To(MatchError(ContainSubstring("OIDCConfig: Forbidden: config is immutable")))
 }
 
 func TestValidateUpdateOIDCIssuerUrlMgmtCluster(t *testing.T) {
+	ctx := context.Background()
 	ocOld := oidcConfig()
 	ocOld.Spec.IssuerUrl = "test"
 	c := ocOld.DeepCopy()
 
 	c.Spec.IssuerUrl = "test2"
 	o := NewWithT(t)
-	o.Expect(c.ValidateUpdate(&ocOld)).Error().To(MatchError(ContainSubstring("OIDCConfig: Forbidden: config is immutable")))
+	o.Expect(c.ValidateUpdate(ctx, c, &ocOld)).Error().To(MatchError(ContainSubstring("OIDCConfig: Forbidden: config is immutable")))
 }
 
 func TestValidateUpdateOIDCUsernameClaimMgmtCluster(t *testing.T) {
+	ctx := context.Background()
 	ocOld := oidcConfig()
 	ocOld.Spec.UsernameClaim = "test"
 	c := ocOld.DeepCopy()
 
 	c.Spec.UsernameClaim = "test2"
 	o := NewWithT(t)
-	o.Expect(c.ValidateUpdate(&ocOld)).Error().To(MatchError(ContainSubstring("OIDCConfig: Forbidden: config is immutable")))
+	o.Expect(c.ValidateUpdate(ctx, c, &ocOld)).Error().To(MatchError(ContainSubstring("OIDCConfig: Forbidden: config is immutable")))
 }
 
 func TestValidateUpdateOIDCUsernamePrefixMgmtCluster(t *testing.T) {
+	ctx := context.Background()
 	ocOld := oidcConfig()
 	ocOld.Spec.UsernamePrefix = "test"
 	c := ocOld.DeepCopy()
 
 	c.Spec.UsernamePrefix = "test2"
 	o := NewWithT(t)
-	o.Expect(c.ValidateUpdate(&ocOld)).Error().To(MatchError(ContainSubstring("OIDCConfig: Forbidden: config is immutable")))
+	o.Expect(c.ValidateUpdate(ctx, c, &ocOld)).Error().To(MatchError(ContainSubstring("OIDCConfig: Forbidden: config is immutable")))
 }
 
 func TestValidateUpdateOIDCRequiredClaimsMgmtCluster(t *testing.T) {
+	ctx := context.Background()
 	ocOld := oidcConfig()
 	ocOld.Spec.RequiredClaims = []v1alpha1.OIDCConfigRequiredClaim{{Claim: "test", Value: "value"}}
 	c := ocOld.DeepCopy()
 
 	c.Spec.RequiredClaims = []v1alpha1.OIDCConfigRequiredClaim{{Claim: "test", Value: "value2"}}
 	o := NewWithT(t)
-	o.Expect(c.ValidateUpdate(&ocOld)).Error().To(MatchError(ContainSubstring("OIDCConfig: Forbidden: config is immutable")))
+	o.Expect(c.ValidateUpdate(ctx, c, &ocOld)).Error().To(MatchError(ContainSubstring("OIDCConfig: Forbidden: config is immutable")))
 }
 
 func TestValidateUpdateOIDCRequiredClaimsMultipleMgmtCluster(t *testing.T) {
+	ctx := context.Background()
 	ocOld := oidcConfig()
 	ocOld.Spec.RequiredClaims = []v1alpha1.OIDCConfigRequiredClaim{{Claim: "test", Value: "value"}}
 	c := ocOld.DeepCopy()
@@ -172,10 +183,11 @@ func TestValidateUpdateOIDCRequiredClaimsMultipleMgmtCluster(t *testing.T) {
 		Value: "value2",
 	})
 	o := NewWithT(t)
-	o.Expect(c.ValidateUpdate(&ocOld)).Error().To(MatchError(ContainSubstring("OIDCConfig: Forbidden: config is immutable")))
+	o.Expect(c.ValidateUpdate(ctx, c, &ocOld)).Error().To(MatchError(ContainSubstring("OIDCConfig: Forbidden: config is immutable")))
 }
 
 func TestClusterValidateUpdateOIDCclientIdMutableUpdateNameWorkloadCluster(t *testing.T) {
+	ctx := context.Background()
 	ocOld := oidcConfig()
 	ocOld.Spec.ClientId = "test"
 	ocOld.SetManagedBy("test")
@@ -183,10 +195,11 @@ func TestClusterValidateUpdateOIDCclientIdMutableUpdateNameWorkloadCluster(t *te
 
 	c.Spec.ClientId = "test2"
 	o := NewWithT(t)
-	o.Expect(c.ValidateUpdate(&ocOld)).Error().To(Succeed())
+	o.Expect(c.ValidateUpdate(ctx, c, &ocOld)).Error().To(Succeed())
 }
 
 func TestValidateUpdateOIDCClientIdWorkloadCluster(t *testing.T) {
+	ctx := context.Background()
 	ocOld := oidcConfig()
 	ocOld.Spec.ClientId = "test"
 	ocOld.SetManagedBy("test")
@@ -195,10 +208,11 @@ func TestValidateUpdateOIDCClientIdWorkloadCluster(t *testing.T) {
 
 	c.Spec.ClientId = "test2"
 	o := NewWithT(t)
-	o.Expect(c.ValidateUpdate(&ocOld)).Error().To(Succeed())
+	o.Expect(c.ValidateUpdate(ctx, c, &ocOld)).Error().To(Succeed())
 }
 
 func TestValidateUpdateOIDCGroupsClaimWorkloadCluster(t *testing.T) {
+	ctx := context.Background()
 	ocOld := oidcConfig()
 	ocOld.Spec.GroupsClaim = "test"
 	ocOld.SetManagedBy("test")
@@ -207,10 +221,11 @@ func TestValidateUpdateOIDCGroupsClaimWorkloadCluster(t *testing.T) {
 
 	c.Spec.GroupsClaim = "test2"
 	o := NewWithT(t)
-	o.Expect(c.ValidateUpdate(&ocOld)).Error().To(Succeed())
+	o.Expect(c.ValidateUpdate(ctx, c, &ocOld)).Error().To(Succeed())
 }
 
 func TestValidateUpdateOIDCGroupsPrefixWorkloadCluster(t *testing.T) {
+	ctx := context.Background()
 	ocOld := oidcConfig()
 	ocOld.Spec.GroupsPrefix = "test"
 	ocOld.SetManagedBy("test")
@@ -219,10 +234,11 @@ func TestValidateUpdateOIDCGroupsPrefixWorkloadCluster(t *testing.T) {
 
 	c.Spec.GroupsPrefix = "test2"
 	o := NewWithT(t)
-	o.Expect(c.ValidateUpdate(&ocOld)).Error().To(Succeed())
+	o.Expect(c.ValidateUpdate(ctx, c, &ocOld)).Error().To(Succeed())
 }
 
 func TestValidateUpdateOIDCIssuerUrlWorkloadCluster(t *testing.T) {
+	ctx := context.Background()
 	ocOld := oidcConfig()
 	ocOld.Spec.IssuerUrl = "test"
 	ocOld.SetManagedBy("test")
@@ -231,10 +247,11 @@ func TestValidateUpdateOIDCIssuerUrlWorkloadCluster(t *testing.T) {
 
 	c.Spec.IssuerUrl = "test2"
 	o := NewWithT(t)
-	o.Expect(c.ValidateUpdate(&ocOld)).Error().To(Succeed())
+	o.Expect(c.ValidateUpdate(ctx, c, &ocOld)).Error().To(Succeed())
 }
 
 func TestValidateUpdateOIDCUsernameClaimWorkloadCluster(t *testing.T) {
+	ctx := context.Background()
 	ocOld := oidcConfig()
 	ocOld.Spec.UsernameClaim = "test"
 	ocOld.SetManagedBy("test")
@@ -243,10 +260,11 @@ func TestValidateUpdateOIDCUsernameClaimWorkloadCluster(t *testing.T) {
 
 	c.Spec.UsernameClaim = "test2"
 	o := NewWithT(t)
-	o.Expect(c.ValidateUpdate(&ocOld)).Error().To(Succeed())
+	o.Expect(c.ValidateUpdate(ctx, c, &ocOld)).Error().To(Succeed())
 }
 
 func TestValidateUpdateOIDCUsernamePrefixWorkloadCluster(t *testing.T) {
+	ctx := context.Background()
 	ocOld := oidcConfig()
 	ocOld.Spec.UsernamePrefix = "test"
 	ocOld.SetManagedBy("test")
@@ -255,10 +273,11 @@ func TestValidateUpdateOIDCUsernamePrefixWorkloadCluster(t *testing.T) {
 
 	c.Spec.UsernamePrefix = "test2"
 	o := NewWithT(t)
-	o.Expect(c.ValidateUpdate(&ocOld)).Error().To(Succeed())
+	o.Expect(c.ValidateUpdate(ctx, c, &ocOld)).Error().To(Succeed())
 }
 
 func TestValidateUpdateOIDCRequiredClaimsWorkloadCluster(t *testing.T) {
+	ctx := context.Background()
 	ocOld := oidcConfig()
 	ocOld.Spec.RequiredClaims = []v1alpha1.OIDCConfigRequiredClaim{{Claim: "test", Value: "value"}}
 	ocOld.SetManagedBy("test")
@@ -267,10 +286,11 @@ func TestValidateUpdateOIDCRequiredClaimsWorkloadCluster(t *testing.T) {
 
 	c.Spec.RequiredClaims = []v1alpha1.OIDCConfigRequiredClaim{{Claim: "test", Value: "value2"}}
 	o := NewWithT(t)
-	o.Expect(c.ValidateUpdate(&ocOld)).Error().To(Succeed())
+	o.Expect(c.ValidateUpdate(ctx, c, &ocOld)).Error().To(Succeed())
 }
 
 func TestValidateUpdateOIDCRequiredClaimsMultipleWorkloadCluster(t *testing.T) {
+	ctx := context.Background()
 	ocOld := oidcConfig()
 	ocOld.Spec.RequiredClaims = []v1alpha1.OIDCConfigRequiredClaim{{Claim: "test", Value: "value"}}
 	ocOld.SetManagedBy("test")
@@ -282,7 +302,7 @@ func TestValidateUpdateOIDCRequiredClaimsMultipleWorkloadCluster(t *testing.T) {
 		Value: "value2",
 	})
 	o := NewWithT(t)
-	o.Expect(c.ValidateUpdate(&ocOld)).Error().To(Succeed())
+	o.Expect(c.ValidateUpdate(ctx, c, &ocOld)).Error().To(Succeed())
 }
 
 func oidcConfig() v1alpha1.OIDCConfig {
@@ -292,4 +312,58 @@ func oidcConfig() v1alpha1.OIDCConfig {
 		Spec:       v1alpha1.OIDCConfigSpec{},
 		Status:     v1alpha1.OIDCConfigStatus{},
 	}
+}
+
+func TestOIDCConfigValidateCreateCastFail(t *testing.T) {
+	g := NewWithT(t)
+
+	// Create a different type that will cause the cast to fail
+	wrongType := &v1alpha1.Cluster{}
+
+	// Create the config object that implements CustomValidator
+	config := &v1alpha1.OIDCConfig{}
+
+	// Call ValidateCreate with the wrong type
+	warnings, err := config.ValidateCreate(context.TODO(), wrongType)
+
+	// Verify that an error is returned
+	g.Expect(warnings).To(BeNil())
+	g.Expect(err).To(HaveOccurred())
+	g.Expect(err.Error()).To(ContainSubstring("expected an OIDCConfig"))
+}
+
+func TestOIDCConfigValidateUpdateCastFail(t *testing.T) {
+	g := NewWithT(t)
+
+	// Create a different type that will cause the cast to fail
+	wrongType := &v1alpha1.Cluster{}
+
+	// Create the config object that implements CustomValidator
+	config := &v1alpha1.OIDCConfig{}
+
+	// Call ValidateUpdate with the wrong type
+	warnings, err := config.ValidateUpdate(context.TODO(), wrongType, &v1alpha1.OIDCConfig{})
+
+	// Verify that an error is returned
+	g.Expect(warnings).To(BeNil())
+	g.Expect(err).To(HaveOccurred())
+	g.Expect(err.Error()).To(ContainSubstring("expected an OIDCConfig"))
+}
+
+func TestOIDCConfigValidateDeleteCastFail(t *testing.T) {
+	g := NewWithT(t)
+
+	// Create a different type that will cause the cast to fail
+	wrongType := &v1alpha1.Cluster{}
+
+	// Create the config object that implements CustomValidator
+	config := &v1alpha1.OIDCConfig{}
+
+	// Call ValidateDelete with the wrong type
+	warnings, err := config.ValidateDelete(context.TODO(), wrongType)
+
+	// Verify that an error is returned
+	g.Expect(warnings).To(BeNil())
+	g.Expect(err).To(HaveOccurred())
+	g.Expect(err.Error()).To(ContainSubstring("expected an OIDCConfig"))
 }

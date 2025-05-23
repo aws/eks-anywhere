@@ -134,6 +134,25 @@ func (mr *MockClientMockRecorder) List(ctx, list interface{}, opts ...interface{
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockClient)(nil).List), varargs...)
 }
 
+// Patch mocks base method.
+func (m *MockClient) Patch(ctx context.Context, obj kubernetes.Object, patch kubernetes.Patch, opts ...kubernetes.PatchOption) error {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, obj, patch}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "Patch", varargs...)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Patch indicates an expected call of Patch.
+func (mr *MockClientMockRecorder) Patch(ctx, obj, patch interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, obj, patch}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Patch", reflect.TypeOf((*MockClient)(nil).Patch), varargs...)
+}
+
 // Update mocks base method.
 func (m *MockClient) Update(ctx context.Context, obj kubernetes.Object) error {
 	m.ctrl.T.Helper()
@@ -328,6 +347,25 @@ func (mr *MockWriterMockRecorder) DeleteAllOf(ctx, obj interface{}, opts ...inte
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAllOf", reflect.TypeOf((*MockWriter)(nil).DeleteAllOf), varargs...)
 }
 
+// Patch mocks base method.
+func (m *MockWriter) Patch(ctx context.Context, obj kubernetes.Object, patch kubernetes.Patch, opts ...kubernetes.PatchOption) error {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, obj, patch}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "Patch", varargs...)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Patch indicates an expected call of Patch.
+func (mr *MockWriterMockRecorder) Patch(ctx, obj, patch interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, obj, patch}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Patch", reflect.TypeOf((*MockWriter)(nil).Patch), varargs...)
+}
+
 // Update mocks base method.
 func (m *MockWriter) Update(ctx context.Context, obj kubernetes.Object) error {
 	m.ctrl.T.Helper()
@@ -340,6 +378,41 @@ func (m *MockWriter) Update(ctx context.Context, obj kubernetes.Object) error {
 func (mr *MockWriterMockRecorder) Update(ctx, obj interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockWriter)(nil).Update), ctx, obj)
+}
+
+// MockPatchOption is a mock of PatchOption interface.
+type MockPatchOption struct {
+	ctrl     *gomock.Controller
+	recorder *MockPatchOptionMockRecorder
+}
+
+// MockPatchOptionMockRecorder is the mock recorder for MockPatchOption.
+type MockPatchOptionMockRecorder struct {
+	mock *MockPatchOption
+}
+
+// NewMockPatchOption creates a new mock instance.
+func NewMockPatchOption(ctrl *gomock.Controller) *MockPatchOption {
+	mock := &MockPatchOption{ctrl: ctrl}
+	mock.recorder = &MockPatchOptionMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockPatchOption) EXPECT() *MockPatchOptionMockRecorder {
+	return m.recorder
+}
+
+// ApplyToPatch mocks base method.
+func (m *MockPatchOption) ApplyToPatch(arg0 *kubernetes.PatchOptions) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "ApplyToPatch", arg0)
+}
+
+// ApplyToPatch indicates an expected call of ApplyToPatch.
+func (mr *MockPatchOptionMockRecorder) ApplyToPatch(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyToPatch", reflect.TypeOf((*MockPatchOption)(nil).ApplyToPatch), arg0)
 }
 
 // MockDeleteAllOfOption is a mock of DeleteAllOfOption interface.

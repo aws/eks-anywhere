@@ -618,7 +618,7 @@ func TestCPUpgradeReconcileUpdateInfraMachineAnnotationErrror(t *testing.T) {
 	req := cpUpgradeRequest(testObjs.cpUpgrade)
 	_, err := r.Reconcile(ctx, req)
 	g.Expect(err).To(HaveOccurred())
-	g.Expect(err).To(MatchError("updating infra machine: retrieving infra machine machine01 for machine machine01: failed to retrieve TinkerbellMachine external object \"eksa-system\"/\"machine01\": tinkerbellmachines.infrastructure.cluster.x-k8s.io \"machine01\" not found"))
+	g.Expect(err).To(MatchError("updating infra machine: retrieving infra machine machine01 for machine machine01: failed to retrieve TinkerbellMachine eksa-system/machine01: tinkerbellmachines.infrastructure.cluster.x-k8s.io \"machine01\" not found"))
 }
 
 func getObjectsForCPUpgradeTest() cpUpgradeObjects {

@@ -38,6 +38,10 @@ func NewClusterSpec(opts ...ClusterSpecOpt) *cluster.Spec {
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "fluxTestCluster",
 			},
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "Cluster",
+				APIVersion: "anywhere.eks.amazonaws.com/v1alpha1",
+			},
 			Spec: v1alpha1.ClusterSpec{
 				KubernetesVersion:             "1.19",
 				WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{}},

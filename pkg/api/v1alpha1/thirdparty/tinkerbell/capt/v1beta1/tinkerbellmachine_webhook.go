@@ -17,45 +17,68 @@ limitations under the License.
 package v1beta1
 
 import (
+	"context"
+	"fmt"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
-var _ admission.Validator = &TinkerbellMachine{}
+var _ webhook.CustomValidator = &TinkerbellMachine{}
 
 // SetupWebhookWithManager sets up and registers the webhook with the manager.
 func (m *TinkerbellMachine) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).For(m).Complete() //nolint:wrapcheck
+	return ctrl.NewWebhookManagedBy(mgr).For(m).
+		WithValidator(m).Complete() //nolint:wrapcheck
 }
 
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (m *TinkerbellMachine) ValidateCreate() (admission.Warnings, error) {
-	allErrs := m.validateSpec()
+// ValidateCreate implements webhook.CustomValidator so a webhook will be registered for the type.
+func (m *TinkerbellMachine) ValidateCreate(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
+	machine, ok := obj.(*TinkerbellMachine)
+	if !ok {
+		return nil, fmt.Errorf("expected a TinkerbellMachine but got %T", obj)
+	}
 
-	return nil, aggregateObjErrors(m.GroupVersionKind().GroupKind(), m.Name, allErrs)
+	allErrs := machine.validateSpec()
+
+	return nil, aggregateObjErrors(machine.GroupVersionKind().GroupKind(), machine.Name, allErrs)
 }
 
-// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (m *TinkerbellMachine) ValidateUpdate(oldRaw runtime.Object) (admission.Warnings, error) {
-	allErrs := m.validateSpec()
+// ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type.
+func (m *TinkerbellMachine) ValidateUpdate(_ context.Context, obj, oldRaw runtime.Object) (admission.Warnings, error) {
+	machine, ok := obj.(*TinkerbellMachine)
+	if !ok {
+		return nil, fmt.Errorf("expected a TinkerbellMachine but got %T", obj)
+	}
 
-	old, _ := oldRaw.(*TinkerbellMachine)
+	allErrs := machine.validateSpec()
 
-	if old.Spec.HardwareName != "" && m.Spec.HardwareName != old.Spec.HardwareName {
+	old, ok := oldRaw.(*TinkerbellMachine)
+	if !ok {
+		return nil, fmt.Errorf("expected a TinkerbellMachine but got %T", oldRaw)
+	}
+
+	if old.Spec.HardwareName != "" && machine.Spec.HardwareName != old.Spec.HardwareName {
 		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec", "hardwareName"), "is immutable once set"))
 	}
 
-	if old.Spec.ProviderID != "" && m.Spec.ProviderID != old.Spec.ProviderID {
+	if old.Spec.ProviderID != "" && machine.Spec.ProviderID != old.Spec.ProviderID {
 		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec", "providerID"), "is immutable once set"))
 	}
 
-	return nil, aggregateObjErrors(m.GroupVersionKind().GroupKind(), m.Name, allErrs)
+	return nil, aggregateObjErrors(machine.GroupVersionKind().GroupKind(), machine.Name, allErrs)
 }
 
-// ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (m *TinkerbellMachine) ValidateDelete() (admission.Warnings, error) {
+// ValidateDelete implements webhook.CustomValidator so a webhook will be registered for the type.
+func (m *TinkerbellMachine) ValidateDelete(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
+	_, ok := obj.(*TinkerbellMachine)
+	if !ok {
+		return nil, fmt.Errorf("expected a TinkerbellMachine but got %T", obj)
+	}
+
 	return nil, nil
 }
 

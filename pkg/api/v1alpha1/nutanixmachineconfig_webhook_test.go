@@ -1,6 +1,7 @@
 package v1alpha1_test
 
 import (
+	"context"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -60,12 +61,14 @@ func nutanixMachineConfig() *v1alpha1.NutanixMachineConfig {
 }
 
 func TestValidateCreate_Valid(t *testing.T) {
+	ctx := context.Background()
 	g := NewWithT(t)
 	config := nutanixMachineConfig()
-	g.Expect(config.ValidateCreate()).Error().To(Succeed())
+	g.Expect(config.ValidateCreate(ctx, config)).Error().To(Succeed())
 }
 
 func TestValidateCreate_Invalid(t *testing.T) {
+	ctx := context.Background()
 	g := NewWithT(t)
 	tests := []struct {
 		name string
@@ -192,13 +195,14 @@ func TestValidateCreate_Invalid(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			config := nutanixMachineConfig()
 			tt.fn(config)
-			_, err := config.ValidateCreate()
+			_, err := config.ValidateCreate(ctx, config)
 			g.Expect(err).To(HaveOccurred(), "expected error for %s", tt.name)
 		})
 	}
 }
 
 func TestNutanixMachineConfigWebhooksValidateUpdateReconcilePaused(t *testing.T) {
+	ctx := context.Background()
 	g := NewWithT(t)
 	oldConfig := nutanixMachineConfig()
 	newConfig := nutanixMachineConfig()
@@ -206,26 +210,28 @@ func TestNutanixMachineConfigWebhooksValidateUpdateReconcilePaused(t *testing.T)
 	oldConfig.Annotations = map[string]string{
 		"anywhere.eks.amazonaws.com/paused": "true",
 	}
-	g.Expect(newConfig.ValidateUpdate(oldConfig)).Error().To(Succeed())
+	g.Expect(newConfig.ValidateUpdate(ctx, newConfig, oldConfig)).Error().To(Succeed())
 }
 
 func TestValidateUpdate(t *testing.T) {
+	ctx := context.Background()
 	g := NewWithT(t)
 	oldConfig := nutanixMachineConfig()
 	newConfig := nutanixMachineConfig()
 	newConfig.Spec.VCPUSockets = 8
-	g.Expect(newConfig.ValidateUpdate(oldConfig)).Error().To(Succeed())
+	g.Expect(newConfig.ValidateUpdate(ctx, newConfig, oldConfig)).Error().To(Succeed())
 
 	oldConfig = nutanixMachineConfig()
 	oldConfig.SetManagedBy("mgmt-cluster")
-	g.Expect(newConfig.ValidateUpdate(oldConfig)).Error().To(Succeed())
+	g.Expect(newConfig.ValidateUpdate(ctx, newConfig, oldConfig)).Error().To(Succeed())
 
 	oldConfig = nutanixMachineConfig()
 	oldConfig.SetControlPlane()
-	g.Expect(newConfig.ValidateUpdate(oldConfig)).Error().To(HaveOccurred())
+	g.Expect(newConfig.ValidateUpdate(ctx, newConfig, oldConfig)).Error().To(HaveOccurred())
 }
 
 func TestValidateUpdate_Invalid(t *testing.T) {
+	ctx := context.Background()
 	g := NewWithT(t)
 	tests := []struct {
 		name string
@@ -326,22 +332,78 @@ func TestValidateUpdate_Invalid(t *testing.T) {
 			oldConfig := nutanixMachineConfig()
 			newConfig := nutanixMachineConfig()
 			tt.fn(newConfig, oldConfig)
-			_, err := newConfig.ValidateUpdate(oldConfig)
+			_, err := newConfig.ValidateUpdate(ctx, newConfig, oldConfig)
 			g.Expect(err).To(HaveOccurred(), "expected error for %s", tt.name)
 		})
 	}
 }
 
 func TestValidateUpdate_OldObjectNotMachineConfig(t *testing.T) {
+	ctx := context.Background()
 	g := NewWithT(t)
 	oldConfig := nutanixDatacenterConfig()
 	newConfig := nutanixMachineConfig()
-	_, err := newConfig.ValidateUpdate(oldConfig)
+	_, err := newConfig.ValidateUpdate(ctx, newConfig, oldConfig)
 	g.Expect(err).To(HaveOccurred())
 }
 
 func TestNutanixMachineConfigWebhooksValidateDelete(t *testing.T) {
+	ctx := context.Background()
 	g := NewWithT(t)
 	config := nutanixMachineConfig()
-	g.Expect(config.ValidateDelete()).Error().To(Succeed())
+	g.Expect(config.ValidateDelete(ctx, config)).Error().To(Succeed())
+}
+
+func TestNutanixMachineConfigValidateCreateCastFail(t *testing.T) {
+	g := NewWithT(t)
+
+	// Create a different type that will cause the cast to fail
+	wrongType := &v1alpha1.Cluster{}
+
+	// Create the config object that implements CustomValidator
+	config := &v1alpha1.NutanixMachineConfig{}
+
+	// Call ValidateCreate with the wrong type
+	warnings, err := config.ValidateCreate(context.TODO(), wrongType)
+
+	// Verify that an error is returned
+	g.Expect(warnings).To(BeNil())
+	g.Expect(err).To(HaveOccurred())
+	g.Expect(err.Error()).To(ContainSubstring("expected a NutanixMachineConfig"))
+}
+
+func TestNutanixMachineConfigValidateUpdateCastFail(t *testing.T) {
+	g := NewWithT(t)
+
+	// Create a different type that will cause the cast to fail
+	wrongType := &v1alpha1.Cluster{}
+
+	// Create the config object that implements CustomValidator
+	config := &v1alpha1.NutanixMachineConfig{}
+
+	// Call ValidateUpdate with the wrong type
+	warnings, err := config.ValidateUpdate(context.TODO(), wrongType, &v1alpha1.NutanixMachineConfig{})
+
+	// Verify that an error is returned
+	g.Expect(warnings).To(BeNil())
+	g.Expect(err).To(HaveOccurred())
+	g.Expect(err.Error()).To(ContainSubstring("expected a NutanixMachineConfig"))
+}
+
+func TestNutanixMachineConfigValidateDeleteCastFail(t *testing.T) {
+	g := NewWithT(t)
+
+	// Create a different type that will cause the cast to fail
+	wrongType := &v1alpha1.Cluster{}
+
+	// Create the config object that implements CustomValidator
+	config := &v1alpha1.NutanixMachineConfig{}
+
+	// Call ValidateDelete with the wrong type
+	warnings, err := config.ValidateDelete(context.TODO(), wrongType)
+
+	// Verify that an error is returned
+	g.Expect(warnings).To(BeNil())
+	g.Expect(err).To(HaveOccurred())
+	g.Expect(err.Error()).To(ContainSubstring("expected a NutanixMachineConfig"))
 }

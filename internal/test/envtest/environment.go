@@ -40,6 +40,7 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	tinkerbellv1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1/thirdparty/tinkerbell/capt/v1beta1"
 	rufiov1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1/thirdparty/tinkerbell/rufio"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	snowv1 "github.com/aws/eks-anywhere/pkg/providers/snow/api/v1beta1"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -125,6 +126,18 @@ func RunWithEnvironment(m *testing.M, opts ...EnvironmentOpt) int {
 		o(ctx, env)
 	}
 
+	ns := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: constants.EksaSystemNamespace,
+		},
+	}
+
+	if err := env.client.Create(context.Background(), ns); err != nil {
+		if !apierrors.IsAlreadyExists(err) {
+			panic(err)
+		}
+	}
+
 	returnCode := m.Run()
 
 	if err = env.stop(); err != nil {
@@ -170,12 +183,10 @@ func newEnvironment(ctx context.Context) (*Environment, error) {
 		scheme:  scheme,
 		cancelF: cancel,
 	}
-
 	cfg, err := testEnv.Start()
 	if err != nil {
 		return nil, err
 	}
-
 	// start webhook server using Manager
 	webhookInstallOptions := &testEnv.WebhookInstallOptions
 	mgr, err := ctrl.NewManager(cfg, ctrl.Options{

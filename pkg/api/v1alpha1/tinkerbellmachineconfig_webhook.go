@@ -15,6 +15,7 @@
 package v1alpha1
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 
@@ -35,57 +36,76 @@ var tinkerbellmachineconfiglog = logf.Log.WithName("tinkerbellmachineconfig-reso
 func (r *TinkerbellMachineConfig) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
+		WithDefaulter(r).
+		WithValidator(r).
 		Complete()
 }
 
 //+kubebuilder:webhook:path=/mutate-anywhere-eks-amazonaws-com-v1alpha1-tinkerbellmachineconfig,mutating=true,failurePolicy=fail,sideEffects=None,groups=anywhere.eks.amazonaws.com,resources=tinkerbellmachineconfigs,verbs=create;update,versions=v1alpha1,name=mutation.tinkerbellmachineconfig.anywhere.amazonaws.com,admissionReviewVersions={v1,v1beta1}
 
-var _ webhook.Defaulter = &TinkerbellMachineConfig{}
+var _ webhook.CustomDefaulter = &TinkerbellMachineConfig{}
 
-// Default implements webhook.Defaulter so a webhook will be registered for the type.
-func (r *TinkerbellMachineConfig) Default() {
-	tinkerbellmachineconfiglog.Info("Setting up Tinkerbell Machine Config defaults", klog.KObj(r))
-	r.SetDefaults()
-	tinkerbellmachineconfiglog.Info("Normalize SSHKeys by removing comments from the keys", klog.KObj(r))
-	normalizeSSHKeys(r)
+// Default implements webhook.CustomDefaulter so a webhook will be registered for the type.
+func (r *TinkerbellMachineConfig) Default(_ context.Context, obj runtime.Object) error {
+	tinkerbellConfig, ok := obj.(*TinkerbellMachineConfig)
+	if !ok {
+		return fmt.Errorf("expected a TinkerbellMachineConfig but got %T", obj)
+	}
+
+	tinkerbellmachineconfiglog.Info("Setting up Tinkerbell Machine Config defaults", klog.KObj(tinkerbellConfig))
+	tinkerbellConfig.SetDefaults()
+	tinkerbellmachineconfiglog.Info("Normalize SSHKeys by removing comments from the keys", klog.KObj(tinkerbellConfig))
+	normalizeSSHKeys(tinkerbellConfig)
+
+	return nil
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
 //+kubebuilder:webhook:path=/validate-anywhere-eks-amazonaws-com-v1alpha1-tinkerbellmachineconfig,mutating=false,failurePolicy=fail,sideEffects=None,groups=anywhere.eks.amazonaws.com,resources=tinkerbellmachineconfigs,verbs=create;update,versions=v1alpha1,name=validation.tinkerbellmachineconfig.anywhere.amazonaws.com,admissionReviewVersions={v1,v1beta1}
 
-var _ webhook.Validator = &TinkerbellMachineConfig{}
+var _ webhook.CustomValidator = &TinkerbellMachineConfig{}
 
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (r *TinkerbellMachineConfig) ValidateCreate() (admission.Warnings, error) {
-	tinkerbellmachineconfiglog.Info("validate create", "name", r.Name)
+// ValidateCreate implements webhook.CustomValidator so a webhook will be registered for the type.
+func (r *TinkerbellMachineConfig) ValidateCreate(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
+	tinkerbellConfig, ok := obj.(*TinkerbellMachineConfig)
+	if !ok {
+		return nil, fmt.Errorf("expected a TinkerbellMachineConfig but got %T", obj)
+	}
+
+	tinkerbellmachineconfiglog.Info("validate create", "name", tinkerbellConfig.Name)
 
 	var allErrs field.ErrorList
 
-	if err := r.Validate(); err != nil {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
+	if err := tinkerbellConfig.Validate(); err != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), tinkerbellConfig.Spec, err.Error()))
 	}
 
-	if len(r.Spec.Users) > 0 {
-		if len(r.Spec.Users[0].SshAuthorizedKeys) == 0 || r.Spec.Users[0].SshAuthorizedKeys[0] == "" {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), r.Spec, fmt.Sprintf("TinkerbellMachineConfig: missing spec.Users[0].SshAuthorizedKeys: %s for user %s. Please specify a ssh authorized key", r.Name, r.Spec.Users[0])))
+	if len(tinkerbellConfig.Spec.Users) > 0 {
+		if len(tinkerbellConfig.Spec.Users[0].SshAuthorizedKeys) == 0 || tinkerbellConfig.Spec.Users[0].SshAuthorizedKeys[0] == "" {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), tinkerbellConfig.Spec, fmt.Sprintf("TinkerbellMachineConfig: missing spec.Users[0].SshAuthorizedKeys: %s for user %s. Please specify a ssh authorized key", tinkerbellConfig.Name, tinkerbellConfig.Spec.Users[0])))
 		}
 	}
 
 	if len(allErrs) != 0 {
-		return nil, apierrors.NewInvalid(GroupVersion.WithKind(ClusterKind).GroupKind(), r.Name, allErrs)
+		return nil, apierrors.NewInvalid(GroupVersion.WithKind(ClusterKind).GroupKind(), tinkerbellConfig.Name, allErrs)
 	}
 
-	if r.IsReconcilePaused() {
-		tinkerbellmachineconfiglog.Info("TinkerbellMachineConfig is paused, so allowing create", "name", r.Name)
+	if tinkerbellConfig.IsReconcilePaused() {
+		tinkerbellmachineconfiglog.Info("TinkerbellMachineConfig is paused, so allowing create", "name", tinkerbellConfig.Name)
 		return nil, nil
 	}
 
 	return nil, nil
 }
 
-// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (r *TinkerbellMachineConfig) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	tinkerbellmachineconfiglog.Info("validate update", "name", r.Name)
+// ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type.
+func (r *TinkerbellMachineConfig) ValidateUpdate(_ context.Context, obj, old runtime.Object) (admission.Warnings, error) {
+	tinkerbellConfig, ok := obj.(*TinkerbellMachineConfig)
+	if !ok {
+		return nil, fmt.Errorf("expected a TinkerbellMachineConfig but got %T", obj)
+	}
+
+	tinkerbellmachineconfiglog.Info("validate update", "name", tinkerbellConfig.Name)
 
 	oldTinkerbellMachineConfig, ok := old.(*TinkerbellMachineConfig)
 	if !ok {
@@ -94,25 +114,30 @@ func (r *TinkerbellMachineConfig) ValidateUpdate(old runtime.Object) (admission.
 
 	var allErrs field.ErrorList
 
-	allErrs = append(allErrs, validateImmutableFieldsTinkerbellMachineConfig(r, oldTinkerbellMachineConfig)...)
+	allErrs = append(allErrs, validateImmutableFieldsTinkerbellMachineConfig(tinkerbellConfig, oldTinkerbellMachineConfig)...)
 	if len(allErrs) != 0 {
-		return nil, apierrors.NewInvalid(GroupVersion.WithKind(TinkerbellMachineConfigKind).GroupKind(), r.Name, allErrs)
+		return nil, apierrors.NewInvalid(GroupVersion.WithKind(TinkerbellMachineConfigKind).GroupKind(), tinkerbellConfig.Name, allErrs)
 	}
 
-	if err := r.Validate(); err != nil {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
+	if err := tinkerbellConfig.Validate(); err != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), tinkerbellConfig.Spec, err.Error()))
 	}
 
 	if len(allErrs) != 0 {
-		return nil, apierrors.NewInvalid(GroupVersion.WithKind(TinkerbellMachineConfigKind).GroupKind(), r.Name, allErrs)
+		return nil, apierrors.NewInvalid(GroupVersion.WithKind(TinkerbellMachineConfigKind).GroupKind(), tinkerbellConfig.Name, allErrs)
 	}
 
 	return nil, nil
 }
 
-// ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (r *TinkerbellMachineConfig) ValidateDelete() (admission.Warnings, error) {
-	tinkerbellmachineconfiglog.Info("validate delete", "name", r.Name)
+// ValidateDelete implements webhook.CustomValidator so a webhook will be registered for the type.
+func (r *TinkerbellMachineConfig) ValidateDelete(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
+	tinkerbellConfig, ok := obj.(*TinkerbellMachineConfig)
+	if !ok {
+		return nil, fmt.Errorf("expected a TinkerbellMachineConfig but got %T", obj)
+	}
+
+	tinkerbellmachineconfiglog.Info("validate delete", "name", tinkerbellConfig.Name)
 
 	// TODO(user): fill in your validation logic upon object deletion.
 	return nil, nil

@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	config "k8s.io/apiserver/pkg/apis/config/v1"
+	apiserverv1 "k8s.io/apiserver/pkg/apis/apiserver/v1"
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -17,29 +17,28 @@ const (
 	encryptionProviderNamePrefix = "aws-encryption-provider"
 )
 
-var identityProvider = config.ProviderConfiguration{
-	Identity: &config.IdentityConfiguration{},
+var identityProvider = apiserverv1.ProviderConfiguration{
+	Identity: &apiserverv1.IdentityConfiguration{},
 }
 
-// GenerateKMSEncryptionConfiguration takes a list of the EtcdEncryption configs and generates the corresponding Kubernetes EncryptionConfig.
+// GenerateKMSEncryptionConfiguration takes a list of the EtcdEncryption configs and generates the corresponding Kubernetes Encryptionapiserverv1.
 func GenerateKMSEncryptionConfiguration(confs *[]v1alpha1.EtcdEncryption) (string, error) {
 	if confs == nil || len(*confs) == 0 {
 		return "", nil
 	}
-
-	encryptionConf := &config.EncryptionConfiguration{
+	encryptionConf := &apiserverv1.EncryptionConfiguration{
 		TypeMeta: v1.TypeMeta{
-			APIVersion: config.SchemeGroupVersion.Identifier(),
+			APIVersion: apiserverv1.SchemeGroupVersion.Identifier(),
 			Kind:       encryptionConfigurationKind,
 		},
 	}
 
-	resourceConfigs := make([]config.ResourceConfiguration, 0, len(*confs))
+	resourceConfigs := make([]apiserverv1.ResourceConfiguration, 0, len(*confs))
 	for _, conf := range *confs {
-		providers := []config.ProviderConfiguration{}
+		providers := []apiserverv1.ProviderConfiguration{}
 		for _, provider := range conf.Providers {
-			provider := config.ProviderConfiguration{
-				KMS: &config.KMSConfiguration{
+			provider := apiserverv1.ProviderConfiguration{
+				KMS: &apiserverv1.KMSConfiguration{
 					APIVersion: encryptionProviderVersion,
 					Name:       provider.KMS.Name,
 					Endpoint:   provider.KMS.SocketListenAddress,
@@ -52,7 +51,7 @@ func GenerateKMSEncryptionConfiguration(confs *[]v1alpha1.EtcdEncryption) (strin
 			providers = append(providers, provider)
 		}
 		providers = append(providers, identityProvider)
-		resourceConfig := config.ResourceConfiguration{
+		resourceConfig := apiserverv1.ResourceConfiguration{
 			Resources: conf.Resources,
 			Providers: providers,
 		}
