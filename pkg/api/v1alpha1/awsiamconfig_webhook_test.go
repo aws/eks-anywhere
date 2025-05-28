@@ -18,7 +18,7 @@ func TestValidateUpdateAWSIamConfigFail(t *testing.T) {
 
 	aiNew.Spec.BackendMode = []string{"mode1"}
 	g := NewWithT(t)
-	g.Expect(aiNew.ValidateUpdate(ctx, aiNew, &aiOld)).Error().To(MatchError(ContainSubstring("config is immutable")))
+	g.Expect(aiNew.ValidateUpdate(ctx, &aiOld, aiNew)).Error().To(MatchError(ContainSubstring("config is immutable")))
 }
 
 func TestValidateUpdateAWSIamConfigSuccess(t *testing.T) {
@@ -35,7 +35,7 @@ func TestValidateUpdateAWSIamConfigSuccess(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	g.Expect(aiNew.ValidateUpdate(ctx, aiNew, &aiOld)).Error().To(Succeed())
+	g.Expect(aiNew.ValidateUpdate(ctx, &aiOld, aiNew)).Error().To(Succeed())
 }
 
 func TestValidateCreateAWSIamConfigSuccess(t *testing.T) {
@@ -69,7 +69,7 @@ func TestValidateUpdateAWSIamConfigFailCausedByMutableFieldChange(t *testing.T) 
 		},
 	}
 	g := NewWithT(t)
-	g.Expect(aiNew.ValidateUpdate(ctx, aiNew, &aiOld)).Error().To(MatchError(ContainSubstring("MapRoles Username is required")))
+	g.Expect(aiNew.ValidateUpdate(ctx, &aiOld, aiNew)).Error().To(MatchError(ContainSubstring("MapRoles Username is required")))
 }
 
 func TestAWSIamConfigSetDefaults(t *testing.T) {
@@ -140,7 +140,7 @@ func TestAWSIamConfigValidateUpdateCastFail(t *testing.T) {
 	config := &v1alpha1.AWSIamConfig{}
 
 	// Call ValidateUpdate with the wrong type
-	warnings, err := config.ValidateUpdate(context.TODO(), wrongType, &v1alpha1.AWSIamConfig{})
+	warnings, err := config.ValidateUpdate(context.TODO(), &v1alpha1.AWSIamConfig{}, wrongType)
 
 	// Verify that an error is returned
 	g.Expect(warnings).To(BeNil())

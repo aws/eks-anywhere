@@ -18,7 +18,7 @@ func TestManagementCPVSphereMachineValidateUpdateTemplateMutableManagement(t *te
 
 	c.Spec.Template = "newTemplate"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestWorkloadCPVSphereMachineValidateUpdateTemplateSuccess(t *testing.T) {
@@ -30,7 +30,7 @@ func TestWorkloadCPVSphereMachineValidateUpdateTemplateSuccess(t *testing.T) {
 
 	c.Spec.Template = "newTemplate"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestManagementWorkersVSphereMachineValidateUpdateTemplateSuccess(t *testing.T) {
@@ -40,7 +40,7 @@ func TestManagementWorkersVSphereMachineValidateUpdateTemplateSuccess(t *testing
 
 	c.Spec.Template = "newTemplate"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestWorkloadWorkersVSphereMachineValidateUpdateTemplateSuccess(t *testing.T) {
@@ -51,7 +51,7 @@ func TestWorkloadWorkersVSphereMachineValidateUpdateTemplateSuccess(t *testing.T
 
 	c.Spec.Template = "newTemplate"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestManagementEtcdVSphereMachineValidateEtcdUpdateTemplateMutable(t *testing.T) {
@@ -62,7 +62,7 @@ func TestManagementEtcdVSphereMachineValidateEtcdUpdateTemplateMutable(t *testin
 
 	c.Spec.Template = "newTemplate"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestWorkloadEtcdVSphereMachineValidateUpdateTemplateSuccess(t *testing.T) {
@@ -74,7 +74,7 @@ func TestWorkloadEtcdVSphereMachineValidateUpdateTemplateSuccess(t *testing.T) {
 
 	c.Spec.Template = "newTemplate"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestVSphereMachineValidateUpdateOSFamilyImmutable(t *testing.T) {
@@ -85,7 +85,7 @@ func TestVSphereMachineValidateUpdateOSFamilyImmutable(t *testing.T) {
 	c.Spec.OSFamily = v1alpha1.Bottlerocket
 	c.Spec.Users[0].Name = "ec2-user"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(MatchError(ContainSubstring("spec.osFamily: Forbidden: field is immutable")))
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(MatchError(ContainSubstring("spec.osFamily: Forbidden: field is immutable")))
 }
 
 func TestManagementCPVSphereMachineValidateUpdateMemoryMiBMutableManagement(t *testing.T) {
@@ -96,7 +96,7 @@ func TestManagementCPVSphereMachineValidateUpdateMemoryMiBMutableManagement(t *t
 
 	c.Spec.MemoryMiB = 2000000
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestWorkloadCPVSphereMachineValidateUpdateMemoryMiBSuccess(t *testing.T) {
@@ -108,7 +108,7 @@ func TestWorkloadCPVSphereMachineValidateUpdateMemoryMiBSuccess(t *testing.T) {
 
 	c.Spec.MemoryMiB = 2000000
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestManagementWorkersVSphereMachineValidateUpdateMemoryMiBSuccess(t *testing.T) {
@@ -118,7 +118,7 @@ func TestManagementWorkersVSphereMachineValidateUpdateMemoryMiBSuccess(t *testin
 
 	c.Spec.MemoryMiB = 2000000
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestWorkloadWorkersVSphereMachineValidateUpdateMemoryMiBSuccess(t *testing.T) {
@@ -129,7 +129,7 @@ func TestWorkloadWorkersVSphereMachineValidateUpdateMemoryMiBSuccess(t *testing.
 
 	c.Spec.MemoryMiB = 2000000
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestManagementEtcdVSphereMachineValidateUpdateMemoryMiBImmutable(t *testing.T) {
@@ -141,7 +141,7 @@ func TestManagementEtcdVSphereMachineValidateUpdateMemoryMiBImmutable(t *testing
 
 	c.Spec.MemoryMiB = 2000000
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestWorkloadEtcdVSphereMachineValidateUpdateMemoryMiBSuccess(t *testing.T) {
@@ -153,7 +153,7 @@ func TestWorkloadEtcdVSphereMachineValidateUpdateMemoryMiBSuccess(t *testing.T) 
 
 	c.Spec.MemoryMiB = 2000000
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestManagementCPVSphereMachineValidateUpdateNumCPUsMutableManagement(t *testing.T) {
@@ -164,7 +164,7 @@ func TestManagementCPVSphereMachineValidateUpdateNumCPUsMutableManagement(t *tes
 
 	c.Spec.NumCPUs = 16
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestWorkloadCPVSphereMachineValidateUpdateNumCPUsSuccess(t *testing.T) {
@@ -176,7 +176,7 @@ func TestWorkloadCPVSphereMachineValidateUpdateNumCPUsSuccess(t *testing.T) {
 
 	c.Spec.NumCPUs = 16
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestManagementWorkersVSphereMachineValidateUpdateNumCPUsSuccess(t *testing.T) {
@@ -186,7 +186,7 @@ func TestManagementWorkersVSphereMachineValidateUpdateNumCPUsSuccess(t *testing.
 
 	c.Spec.NumCPUs = 16
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestWorkloadWorkersVSphereMachineValidateUpdateNumCPUsSuccess(t *testing.T) {
@@ -197,7 +197,7 @@ func TestWorkloadWorkersVSphereMachineValidateUpdateNumCPUsSuccess(t *testing.T)
 
 	c.Spec.NumCPUs = 16
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestManagementEtcdVSphereMachineValidateUpdateNumCPUsMmutableManagement(t *testing.T) {
@@ -208,7 +208,7 @@ func TestManagementEtcdVSphereMachineValidateUpdateNumCPUsMmutableManagement(t *
 
 	c.Spec.NumCPUs = 16
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestWorkloadEtcdVSphereMachineValidateUpdateNumCPUsSuccess(t *testing.T) {
@@ -220,7 +220,7 @@ func TestWorkloadEtcdVSphereMachineValidateUpdateNumCPUsSuccess(t *testing.T) {
 
 	c.Spec.NumCPUs = 16
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestManagementCPVSphereMachineValidateUpdateDiskGiBMutableManagement(t *testing.T) {
@@ -231,7 +231,7 @@ func TestManagementCPVSphereMachineValidateUpdateDiskGiBMutableManagement(t *tes
 
 	c.Spec.DiskGiB = 160
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestWorkloadCPVSphereMachineValidateUpdateDiskGiBSuccess(t *testing.T) {
@@ -243,7 +243,7 @@ func TestWorkloadCPVSphereMachineValidateUpdateDiskGiBSuccess(t *testing.T) {
 
 	c.Spec.DiskGiB = 160
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestManagementWorkersVSphereMachineValidateUpdateDiskGiBSuccess(t *testing.T) {
@@ -253,7 +253,7 @@ func TestManagementWorkersVSphereMachineValidateUpdateDiskGiBSuccess(t *testing.
 
 	c.Spec.DiskGiB = 160
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestWorkloadWorkersVSphereMachineValidateUpdateDiskGiBSuccess(t *testing.T) {
@@ -264,7 +264,7 @@ func TestWorkloadWorkersVSphereMachineValidateUpdateDiskGiBSuccess(t *testing.T)
 
 	c.Spec.DiskGiB = 160
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestManagementEtcdVSphereMachineValidateUpdateDiskGiBMmutableManagement(t *testing.T) {
@@ -276,7 +276,7 @@ func TestManagementEtcdVSphereMachineValidateUpdateDiskGiBMmutableManagement(t *
 
 	c.Spec.DiskGiB = 160
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestWorkloadEtcdVSphereMachineValidateUpdateDiskGiBSuccess(t *testing.T) {
@@ -288,7 +288,7 @@ func TestWorkloadEtcdVSphereMachineValidateUpdateDiskGiBSuccess(t *testing.T) {
 
 	c.Spec.DiskGiB = 160
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestManagementControlPlaneSphereMachineValidateUpdateSshAuthorizedKeyMutableManagement(t *testing.T) {
@@ -300,7 +300,7 @@ func TestManagementControlPlaneSphereMachineValidateUpdateSshAuthorizedKeyMutabl
 
 	c.Spec.Users[0].SshAuthorizedKeys[0] = "rsa-laDeLala"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestWorkloadControlPlaneVSphereMachineValidateUpdateSshAuthorizedKeyMutable(t *testing.T) {
@@ -313,7 +313,7 @@ func TestWorkloadControlPlaneVSphereMachineValidateUpdateSshAuthorizedKeyMutable
 
 	c.Spec.Users[0].SshAuthorizedKeys[0] = "rsa-laDeLala"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestManagementControlPlaneVSphereMachineValidateUpdateSshUsernameImmutable(t *testing.T) {
@@ -324,7 +324,7 @@ func TestManagementControlPlaneVSphereMachineValidateUpdateSshUsernameImmutable(
 
 	c.Spec.Users[0].Name = "Andy"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestWorkloadControlPlaneVSphereMachineValidateUpdateSshUsernameMutable(t *testing.T) {
@@ -336,7 +336,7 @@ func TestWorkloadControlPlaneVSphereMachineValidateUpdateSshUsernameMutable(t *t
 
 	c.Spec.Users[0].Name = "Andy"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestVSphereMachineValidateUpdateWithPausedAnnotation(t *testing.T) {
@@ -352,7 +352,7 @@ func TestVSphereMachineValidateUpdateWithPausedAnnotation(t *testing.T) {
 	vOld.PauseReconcile()
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestManagementEtcdSphereMachineValidateUpdateSshAuthorizedKeyMutableManagement(t *testing.T) {
@@ -364,7 +364,7 @@ func TestManagementEtcdSphereMachineValidateUpdateSshAuthorizedKeyMutableManagem
 
 	c.Spec.Users[0].SshAuthorizedKeys[0] = "rsa-laDeLala"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestWorkloadEtcdVSphereMachineValidateUpdateSshAuthorizedKeyImmutable(t *testing.T) {
@@ -377,7 +377,7 @@ func TestWorkloadEtcdVSphereMachineValidateUpdateSshAuthorizedKeyImmutable(t *te
 
 	c.Spec.Users[0].SshAuthorizedKeys[0] = "rsa-laDeLala"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestManagementEtcdVSphereMachineValidateUpdateSshUsernameMutable(t *testing.T) {
@@ -388,7 +388,7 @@ func TestManagementEtcdVSphereMachineValidateUpdateSshUsernameMutable(t *testing
 
 	c.Spec.Users[0].Name = "Andy"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestWorkloadEtcdVSphereMachineValidateUpdateSshUsernameMutable(t *testing.T) {
@@ -400,7 +400,7 @@ func TestWorkloadEtcdVSphereMachineValidateUpdateSshUsernameMutable(t *testing.T
 
 	c.Spec.Users[0].Name = "Andy"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestManagementWorkerNodeSphereMachineValidateUpdateSshAuthorizedKeyMutable(t *testing.T) {
@@ -411,7 +411,7 @@ func TestManagementWorkerNodeSphereMachineValidateUpdateSshAuthorizedKeyMutable(
 
 	c.Spec.Users[0].SshAuthorizedKeys[0] = "rsa-laDeLala"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestWorkloadWorkerNodeVSphereMachineValidateUpdateSshAuthorizedKeyMutable(t *testing.T) {
@@ -423,7 +423,7 @@ func TestWorkloadWorkerNodeVSphereMachineValidateUpdateSshAuthorizedKeyMutable(t
 
 	c.Spec.Users[0].SshAuthorizedKeys[0] = "rsa-laDeLala"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestManagementWorkerNodeVSphereMachineValidateUpdateSshUsernameMutable(t *testing.T) {
@@ -433,7 +433,7 @@ func TestManagementWorkerNodeVSphereMachineValidateUpdateSshUsernameMutable(t *t
 
 	c.Spec.Users[0].Name = "Andy"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestWorkloadWorkerNodeVSphereMachineValidateUpdateSshUsernameMutable(t *testing.T) {
@@ -444,7 +444,7 @@ func TestWorkloadWorkerNodeVSphereMachineValidateUpdateSshUsernameMutable(t *tes
 
 	c.Spec.Users[0].Name = "Andy"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestVSphereMachineValidateUpdateInvalidType(t *testing.T) {
@@ -452,7 +452,7 @@ func TestVSphereMachineValidateUpdateInvalidType(t *testing.T) {
 	c := &v1alpha1.VSphereMachineConfig{}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, vOld)).Error().To(MatchError(ContainSubstring("expected a VSphereMachineConfig but got a *v1alpha1.Cluster")))
+	g.Expect(c.ValidateUpdate(context.TODO(), vOld, c)).Error().To(MatchError(ContainSubstring("expected a VSphereMachineConfig but got a *v1alpha1.Cluster")))
 }
 
 func TestVSphereMachineValidateUpdateSuccess(t *testing.T) {
@@ -463,7 +463,7 @@ func TestVSphereMachineValidateUpdateSuccess(t *testing.T) {
 	c.Spec.NumCPUs = 16
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestVSphereMachineValidateUpdateBottleRocketInvalidUserName(t *testing.T) {
@@ -478,7 +478,7 @@ func TestVSphereMachineValidateUpdateBottleRocketInvalidUserName(t *testing.T) {
 	}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().ToNot(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().ToNot(Succeed())
 }
 
 func TestManagementCPVSphereMachineValidateUpdateDatastoreMutableSuccess(t *testing.T) {
@@ -489,7 +489,7 @@ func TestManagementCPVSphereMachineValidateUpdateDatastoreMutableSuccess(t *test
 
 	c.Spec.Datastore = "NewDataStore"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestWorkloadCPVSphereMachineValidateUpdateDatastoreSuccess(t *testing.T) {
@@ -501,7 +501,7 @@ func TestWorkloadCPVSphereMachineValidateUpdateDatastoreSuccess(t *testing.T) {
 
 	c.Spec.Datastore = "NewDataStore"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestManagementEtcdVSphereMachineValidateUpdateDatastoreMutableManagement(t *testing.T) {
@@ -512,7 +512,7 @@ func TestManagementEtcdVSphereMachineValidateUpdateDatastoreMutableManagement(t 
 
 	c.Spec.Datastore = "NewDataStore"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestWorkloadEtcdVSphereMachineValidateUpdateDatastoreSuccess(t *testing.T) {
@@ -524,7 +524,7 @@ func TestWorkloadEtcdVSphereMachineValidateUpdateDatastoreSuccess(t *testing.T) 
 
 	c.Spec.Datastore = "NewDataStore"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestManagementWorkersVSphereMachineValidateUpdateDatastoreSuccess(t *testing.T) {
@@ -534,7 +534,7 @@ func TestManagementWorkersVSphereMachineValidateUpdateDatastoreSuccess(t *testin
 
 	c.Spec.Datastore = "NewDataStore"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestWorkloadWorkersVSphereMachineValidateUpdateDatastoreSuccess(t *testing.T) {
@@ -545,7 +545,7 @@ func TestWorkloadWorkersVSphereMachineValidateUpdateDatastoreSuccess(t *testing.
 
 	c.Spec.Datastore = "NewDataStore"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestManagementCPVSphereMachineValidateUpdateFolderMutableManagement(t *testing.T) {
@@ -556,7 +556,7 @@ func TestManagementCPVSphereMachineValidateUpdateFolderMutableManagement(t *test
 
 	c.Spec.Folder = "/tmp"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestWorkloadCPVSphereMachineValidateUpdateFolderSuccess(t *testing.T) {
@@ -568,7 +568,7 @@ func TestWorkloadCPVSphereMachineValidateUpdateFolderSuccess(t *testing.T) {
 
 	c.Spec.Folder = "/tmp"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestManagementEtcdVSphereMachineValidateUpdateFolderMutableManagement(t *testing.T) {
@@ -579,7 +579,7 @@ func TestManagementEtcdVSphereMachineValidateUpdateFolderMutableManagement(t *te
 
 	c.Spec.Folder = "/tmp"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestWorkloadEtcdVSphereMachineValidateUpdateFolderSuccess(t *testing.T) {
@@ -591,7 +591,7 @@ func TestWorkloadEtcdVSphereMachineValidateUpdateFolderSuccess(t *testing.T) {
 
 	c.Spec.Folder = "/tmp"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestManagementWorkersVSphereMachineValidateUpdateFolderSuccess(t *testing.T) {
@@ -601,7 +601,7 @@ func TestManagementWorkersVSphereMachineValidateUpdateFolderSuccess(t *testing.T
 
 	c.Spec.Folder = "/tmp"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestWorkloadWorkersVSphereMachineValidateUpdateFolderSuccess(t *testing.T) {
@@ -612,7 +612,7 @@ func TestWorkloadWorkersVSphereMachineValidateUpdateFolderSuccess(t *testing.T) 
 
 	c.Spec.Folder = "/tmp"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestManagementCPVSphereMachineValidateUpdateResourcePoolMutableManagemenmt(t *testing.T) {
@@ -623,7 +623,7 @@ func TestManagementCPVSphereMachineValidateUpdateResourcePoolMutableManagemenmt(
 
 	c.Spec.ResourcePool = "IngroundPool"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestWorkloadCPVSphereMachineValidateUpdateResourcePoolSuccess(t *testing.T) {
@@ -635,7 +635,7 @@ func TestWorkloadCPVSphereMachineValidateUpdateResourcePoolSuccess(t *testing.T)
 
 	c.Spec.ResourcePool = "IngroundPool"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestManagementEtcdVSphereMachineValidateUpdateResourcePoolMutableManagement(t *testing.T) {
@@ -646,7 +646,7 @@ func TestManagementEtcdVSphereMachineValidateUpdateResourcePoolMutableManagement
 
 	c.Spec.ResourcePool = "IngroundPool"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestWorkloadEtcdVSphereMachineValidateUpdateResourcePoolSuccess(t *testing.T) {
@@ -658,7 +658,7 @@ func TestWorkloadEtcdVSphereMachineValidateUpdateResourcePoolSuccess(t *testing.
 
 	c.Spec.ResourcePool = "IngroundPool"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestManagementWorkersVSphereMachineValidateUpdateResourcePoolSuccess(t *testing.T) {
@@ -668,7 +668,7 @@ func TestManagementWorkersVSphereMachineValidateUpdateResourcePoolSuccess(t *tes
 
 	c.Spec.ResourcePool = "IngroundPool"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestWorkloadWorkersVSphereMachineValidateUpdateResourcePoolSuccess(t *testing.T) {
@@ -679,7 +679,7 @@ func TestWorkloadWorkersVSphereMachineValidateUpdateResourcePoolSuccess(t *testi
 
 	c.Spec.ResourcePool = "IngroundPool"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(Succeed())
 }
 
 func TestVSphereMachineValidateUpdateStoragePolicyImmutable(t *testing.T) {
@@ -689,7 +689,7 @@ func TestVSphereMachineValidateUpdateStoragePolicyImmutable(t *testing.T) {
 
 	c.Spec.StoragePolicyName = "Space-Efficient"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), c, &vOld)).Error().To(MatchError(ContainSubstring("spec.storagePolicyName: Forbidden: field is immutable")))
+	g.Expect(c.ValidateUpdate(context.TODO(), &vOld, c)).Error().To(MatchError(ContainSubstring("spec.storagePolicyName: Forbidden: field is immutable")))
 }
 
 func TestVSphereMachineConfigValidateCreateSuccess(t *testing.T) {

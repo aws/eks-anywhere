@@ -97,7 +97,7 @@ func (r *Cluster) ValidateCreate(_ context.Context, obj runtime.Object) (admissi
 }
 
 // ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type.
-func (r *Cluster) ValidateUpdate(_ context.Context, obj, old runtime.Object) (admission.Warnings, error) {
+func (r *Cluster) ValidateUpdate(_ context.Context, old, obj runtime.Object) (admission.Warnings, error) {
 	newCluster, ok := obj.(*Cluster)
 	if !ok {
 		return nil, fmt.Errorf("expected a Cluster but got %T", obj)

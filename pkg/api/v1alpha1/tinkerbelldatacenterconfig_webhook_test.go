@@ -55,7 +55,7 @@ func TestTinkerbellDatacenterValidateUpdateFailBadReq(t *testing.T) {
 	c := &v1alpha1.TinkerbellDatacenterConfig{}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(ctx, c, cOld)).Error().To(MatchError(ContainSubstring("expected a TinkerbellDatacenterConfig but got a *v1alpha1.Cluster")))
+	g.Expect(c.ValidateUpdate(ctx, cOld, c)).Error().To(MatchError(ContainSubstring("expected a TinkerbellDatacenterConfig but got a *v1alpha1.Cluster")))
 }
 
 func TestTinkerbellDatacenterValidateUpdateImmutable(t *testing.T) {
@@ -124,7 +124,7 @@ func TestTinkerbellDatacenterValidateUpdateImmutable(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			g := NewWithT(t)
 
-			_, err := tt.new.ValidateUpdate(ctx, &tt.new, &tt.old)
+			_, err := tt.new.ValidateUpdate(ctx, &tt.old, &tt.new)
 			if tt.wantErr == "" {
 				g.Expect(err).To(BeNil())
 			} else {

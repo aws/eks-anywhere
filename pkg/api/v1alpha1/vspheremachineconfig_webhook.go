@@ -78,7 +78,7 @@ func (r *VSphereMachineConfig) ValidateCreate(_ context.Context, obj runtime.Obj
 }
 
 // ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type.
-func (r *VSphereMachineConfig) ValidateUpdate(_ context.Context, obj, old runtime.Object) (admission.Warnings, error) {
+func (r *VSphereMachineConfig) ValidateUpdate(_ context.Context, old, obj runtime.Object) (admission.Warnings, error) {
 	vsphereConfig, ok := obj.(*VSphereMachineConfig)
 	if !ok {
 		return nil, fmt.Errorf("expected a VSphereMachineConfig but got %T", obj)
