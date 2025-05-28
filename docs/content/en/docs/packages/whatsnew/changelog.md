@@ -8,21 +8,18 @@ description: >
 ## Package Bundle Release (05-22-2025)
 
 #### Changed
-
+```Fix Critical CVEs in all curated packages!```
 - Harbor `2.12.1` to `2.12.2`
-  - Fix CVEs
 - ADOT `0.42.0` to `0.43.1`
-- Cert-Manager `1.16.1` to `1.16.4`
-  - Fix CVEs
+  - Update [schema.json](https://github.com/aws/eks-anywhere-build-tooling/blob/main/projects/aws-observability/aws-otel-collector/helm/schema.json) to sync with Upstream, support extraManifests in new version
+- Cert-Manager `1.16.1` to `1.17.2`
+  - Compliance change to RSA signatures on certificates
+  - Provide easier way to specify passwords for PKCS#12 and JKS keystores
 - Metrics-Server `0.7.2` to `0.7.3`
-  - Fix CVEs
 - Credential-Provider-Package `0.4.5` to `0.4.6`
   - Use session token for ecr aws authentication [#1190](https://github.com/aws/eks-anywhere-packages/pull/1190)
-- Prometheus `2.55.1`
-  - Fix CVEs
 - Cluster-Autoscaler `9.43.2` to `9.46.6`
-- Emissary `3.9.1`
-  - Fix CVEs
+  - Update [schema.json](https://github.com/aws/eks-anywhere-build-tooling/blob/main/projects/kubernetes/autoscaler/1-32/helm/schema.json) to allow additionalProperties in extra args [example args](https://github.com/kubernetes/autoscaler/blob/cluster-autoscaler-chart-9.46.6/cluster-autoscaler/FAQ.md#what-are-the-parameters-to-ca)
 
 
 ## Package Bundle Release (02-28-2025)
