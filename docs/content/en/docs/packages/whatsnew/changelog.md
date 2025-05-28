@@ -12,9 +12,7 @@ description: >
 - Harbor `2.12.1` to `2.12.2`
 - ADOT `0.42.0` to `0.43.1`
   - Update [schema.json](https://github.com/aws/eks-anywhere-build-tooling/blob/main/projects/aws-observability/aws-otel-collector/helm/schema.json) to sync with upstream and support `extraManifests` field
-- Cert-Manager `1.16.1` to `1.17.2`
-  - Enhance security by using SHA-384 and SHA-512 instead of SHA-256 in RSA certificate signing
-  - Provide easier way to specify passwords for PKCS#12 and JKS keystores
+- Cert-Manager `1.16.1` to `1.16.4`
 - Metrics-Server `0.7.2` to `0.7.3`
 - Credential-Provider-Package `0.4.5` to `0.4.6`
   - Use session token for ecr aws authentication [#1190](https://github.com/aws/eks-anywhere-packages/pull/1190)
