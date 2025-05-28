@@ -41,6 +41,33 @@ description: >
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
 
+## [v0.22.5](https://github.com/aws/eks-anywhere/releases/tag/v0.22.5)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.26.2 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+
+### Changed
+- EKS Distro:
+  - [`v1-32-eks-13`](https://distro.eks.amazonaws.com/releases/1-32/13/)
+  - [`v1-31-eks-20`](https://distro.eks.amazonaws.com/releases/1-31/20/)
+  - [`v1-30-eks-31`](https://distro.eks.amazonaws.com/releases/1-30/31/)
+  - [`v1-29-eks-38`](https://distro.eks.amazonaws.com/releases/1-29/38/)
+  - [`v1-28-eks-49`](https://distro.eks.amazonaws.com/releases/1-28/49/)
+- kube-vip: `v0.8.9` to `v0.8.10`
+- New base images with CVE fixes for Amazon Linux 2
+
+### Fixed
+- Assign multiple vcenter tags to a machine ([#9707](https://github.com/aws/eks-anywhere/pull/9707))
+- Fix an issue when creating vSphere group via EKS-A CLI ([#9458](https://github.com/aws/eks-anywhere/pull/9458))
+- Expose CLI flag on Smee to bind interface ([#9720](https://github.com/aws/eks-anywhere/pull/9720))
+- VSphere failure domain delete cluster bug fix ([#9711](https://github.com/aws/eks-anywhere/pull/9711))
+
 ## [v0.22.4](https://github.com/aws/eks-anywhere/releases/tag/v0.22.4)
 
 ### Supported OS version details
@@ -183,6 +210,32 @@ description: >
 
 ### Removed
 - Support for Kubernetes v1.27
+
+## [v0.21.8](https://github.com/aws/eks-anywhere/releases/tag/v0.21.8)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.26.2 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    —    |     ✔      |    ✔    |     ✔      |  —   |
+
+### Changed
+- EKS Distro:
+  - [`v1-31-eks-20`](https://distro.eks.amazonaws.com/releases/1-31/20/)
+  - [`v1-30-eks-31`](https://distro.eks.amazonaws.com/releases/1-30/31/)
+  - [`v1-29-eks-38`](https://distro.eks.amazonaws.com/releases/1-29/38/)
+  - [`v1-28-eks-49`](https://distro.eks.amazonaws.com/releases/1-28/49/)
+- Golang: `1.21` to `1.23` ([#9382](https://github.com/aws/eks-anywhere/pull/9382))
+- Image builder: `v0.1.40` to `v0.1.42`
+- Curated package controller: `v0.4.5` to `v0.4.6`
+- Containerd: `v1.7.25` to `v1.7.27`
+
+### Fixed
+- Assign multiple vcenter tags to a machine ([#9707](https://github.com/aws/eks-anywhere/pull/9707))
+- Fix an issue when creating vSphere group via EKS-A CLI ([#9458](https://github.com/aws/eks-anywhere/pull/9458))
 
 ## [v0.21.7](https://github.com/aws/eks-anywhere/releases/tag/v0.21.7)
 
