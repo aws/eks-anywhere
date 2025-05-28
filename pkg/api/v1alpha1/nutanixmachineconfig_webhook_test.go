@@ -210,7 +210,7 @@ func TestNutanixMachineConfigWebhooksValidateUpdateReconcilePaused(t *testing.T)
 	oldConfig.Annotations = map[string]string{
 		"anywhere.eks.amazonaws.com/paused": "true",
 	}
-	g.Expect(newConfig.ValidateUpdate(ctx, newConfig, oldConfig)).Error().To(Succeed())
+	g.Expect(newConfig.ValidateUpdate(ctx, oldConfig, newConfig)).Error().To(Succeed())
 }
 
 func TestValidateUpdate(t *testing.T) {
@@ -219,15 +219,15 @@ func TestValidateUpdate(t *testing.T) {
 	oldConfig := nutanixMachineConfig()
 	newConfig := nutanixMachineConfig()
 	newConfig.Spec.VCPUSockets = 8
-	g.Expect(newConfig.ValidateUpdate(ctx, newConfig, oldConfig)).Error().To(Succeed())
+	g.Expect(newConfig.ValidateUpdate(ctx, oldConfig, newConfig)).Error().To(Succeed())
 
 	oldConfig = nutanixMachineConfig()
 	oldConfig.SetManagedBy("mgmt-cluster")
-	g.Expect(newConfig.ValidateUpdate(ctx, newConfig, oldConfig)).Error().To(Succeed())
+	g.Expect(newConfig.ValidateUpdate(ctx, oldConfig, newConfig)).Error().To(Succeed())
 
 	oldConfig = nutanixMachineConfig()
 	oldConfig.SetControlPlane()
-	g.Expect(newConfig.ValidateUpdate(ctx, newConfig, oldConfig)).Error().To(HaveOccurred())
+	g.Expect(newConfig.ValidateUpdate(ctx, oldConfig, newConfig)).Error().To(HaveOccurred())
 }
 
 func TestValidateUpdate_Invalid(t *testing.T) {
@@ -332,7 +332,7 @@ func TestValidateUpdate_Invalid(t *testing.T) {
 			oldConfig := nutanixMachineConfig()
 			newConfig := nutanixMachineConfig()
 			tt.fn(newConfig, oldConfig)
-			_, err := newConfig.ValidateUpdate(ctx, newConfig, oldConfig)
+			_, err := newConfig.ValidateUpdate(ctx, oldConfig, newConfig)
 			g.Expect(err).To(HaveOccurred(), "expected error for %s", tt.name)
 		})
 	}
@@ -343,7 +343,7 @@ func TestValidateUpdate_OldObjectNotMachineConfig(t *testing.T) {
 	g := NewWithT(t)
 	oldConfig := nutanixDatacenterConfig()
 	newConfig := nutanixMachineConfig()
-	_, err := newConfig.ValidateUpdate(ctx, newConfig, oldConfig)
+	_, err := newConfig.ValidateUpdate(ctx, oldConfig, newConfig)
 	g.Expect(err).To(HaveOccurred())
 }
 

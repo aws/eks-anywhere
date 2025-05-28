@@ -62,7 +62,7 @@ func (r *FluxConfig) ValidateCreate(_ context.Context, obj runtime.Object) (admi
 }
 
 // ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type.
-func (r *FluxConfig) ValidateUpdate(_ context.Context, obj, old runtime.Object) (admission.Warnings, error) {
+func (r *FluxConfig) ValidateUpdate(_ context.Context, old, obj runtime.Object) (admission.Warnings, error) {
 	fluxConfig, ok := obj.(*FluxConfig)
 	if !ok {
 		return nil, fmt.Errorf("expected a FluxConfig but got %T", obj)

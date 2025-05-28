@@ -47,7 +47,7 @@ func (r *OIDCConfig) ValidateCreate(_ context.Context, obj runtime.Object) (admi
 }
 
 // ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type.
-func (r *OIDCConfig) ValidateUpdate(_ context.Context, obj, old runtime.Object) (admission.Warnings, error) {
+func (r *OIDCConfig) ValidateUpdate(_ context.Context, old, obj runtime.Object) (admission.Warnings, error) {
 	oidcConfig, ok := obj.(*OIDCConfig)
 	if !ok {
 		return nil, fmt.Errorf("expected an OIDCConfig but got %T", obj)

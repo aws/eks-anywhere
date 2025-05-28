@@ -73,7 +73,7 @@ func TestTinkerbellMachineConfigValidateUpdateSucceed(t *testing.T) {
 	machineConfigNew := machineConfigOld.DeepCopy()
 
 	g := NewWithT(t)
-	g.Expect(machineConfigNew.ValidateUpdate(ctx, machineConfigNew, machineConfigOld)).Error().To(Succeed())
+	g.Expect(machineConfigNew.ValidateUpdate(ctx, machineConfigOld, machineConfigNew)).Error().To(Succeed())
 }
 
 func TestTinkerbellMachineConfigValidateUpdateFailOldMachineConfig(t *testing.T) {
@@ -82,7 +82,7 @@ func TestTinkerbellMachineConfigValidateUpdateFailOldMachineConfig(t *testing.T)
 	machineConfigNew := v1alpha1.CreateTinkerbellMachineConfig()
 
 	g := NewWithT(t)
-	g.Expect(machineConfigNew.ValidateUpdate(ctx, machineConfigNew, machineConfigOld)).Error().To(MatchError(ContainSubstring("expected a TinkerbellMachineConfig but got a *v1alpha1.TinkerbellDatacenterConfig")))
+	g.Expect(machineConfigNew.ValidateUpdate(ctx, machineConfigOld, machineConfigNew)).Error().To(MatchError(ContainSubstring("expected a TinkerbellMachineConfig but got a *v1alpha1.TinkerbellDatacenterConfig")))
 }
 
 func TestTinkerbellMachineConfigValidateUpdateFailOSFamily(t *testing.T) {
@@ -93,7 +93,7 @@ func TestTinkerbellMachineConfigValidateUpdateFailOSFamily(t *testing.T) {
 	})
 
 	g := NewWithT(t)
-	_, err := machineConfigNew.ValidateUpdate(ctx, machineConfigNew, machineConfigOld)
+	_, err := machineConfigNew.ValidateUpdate(ctx, machineConfigOld, machineConfigNew)
 	g.Expect(err).NotTo(BeNil())
 	g.Expect(HaveField("spec.OSFamily", err))
 }
@@ -109,7 +109,7 @@ func TestTinkerbellMachineConfigValidateUpdateFailLenSshAuthorizedKeys(t *testin
 	})
 
 	g := NewWithT(t)
-	_, err := machineConfigNew.ValidateUpdate(ctx, machineConfigNew, machineConfigOld)
+	_, err := machineConfigNew.ValidateUpdate(ctx, machineConfigOld, machineConfigNew)
 	g.Expect(err).NotTo(BeNil())
 	g.Expect(HaveField("Users[0].SshAuthorizedKeys", err))
 }
@@ -125,7 +125,7 @@ func TestTinkerbellMachineConfigValidateUpdateFailSshAuthorizedKeys(t *testing.T
 	})
 
 	g := NewWithT(t)
-	_, err := machineConfigNew.ValidateUpdate(ctx, machineConfigNew, machineConfigOld)
+	_, err := machineConfigNew.ValidateUpdate(ctx, machineConfigOld, machineConfigNew)
 	g.Expect(err).NotTo(BeNil())
 	g.Expect(HaveField("Users[0].SshAuthorizedKeys[0]", err))
 }
@@ -147,7 +147,7 @@ func TestTinkerbellMachineConfigValidateUpdateFailUsersLen(t *testing.T) {
 	})
 
 	g := NewWithT(t)
-	_, err := machineConfigNew.ValidateUpdate(ctx, machineConfigNew, machineConfigOld)
+	_, err := machineConfigNew.ValidateUpdate(ctx, machineConfigOld, machineConfigNew)
 	g.Expect(err).NotTo(BeNil())
 	g.Expect(HaveField("Users", err))
 }
@@ -211,7 +211,7 @@ func TestTinkerbellMachineConfigValidateUpdateFailUsers(t *testing.T) {
 	})
 
 	g := NewWithT(t)
-	_, err := machineConfigNew.ValidateUpdate(ctx, machineConfigNew, machineConfigOld)
+	_, err := machineConfigNew.ValidateUpdate(ctx, machineConfigOld, machineConfigNew)
 	g.Expect(err).NotTo(BeNil())
 	g.Expect(HaveField("Users[0].Name", err))
 }
@@ -226,7 +226,7 @@ func TestTinkerbellMachineConfigValidateUpdateFailHardwareSelector(t *testing.T)
 	})
 
 	g := NewWithT(t)
-	_, err := machineConfigNew.ValidateUpdate(ctx, machineConfigNew, machineConfigOld)
+	_, err := machineConfigNew.ValidateUpdate(ctx, machineConfigOld, machineConfigNew)
 	g.Expect(err).NotTo(BeNil())
 	g.Expect(HaveField("HardwareSelector", err))
 }

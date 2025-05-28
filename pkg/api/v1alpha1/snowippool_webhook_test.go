@@ -30,7 +30,7 @@ func TestSnowIPPoolValidateUpdate(t *testing.T) {
 	g := NewWithT(t)
 	new := snowIPPool()
 	old := new.DeepCopy()
-	g.Expect(new.ValidateUpdate(ctx, &new, old)).Error().To(Succeed())
+	g.Expect(new.ValidateUpdate(ctx, old, &new)).Error().To(Succeed())
 }
 
 func TestSnowIPPoolValidateUpdateInvalidIPPool(t *testing.T) {
@@ -39,7 +39,7 @@ func TestSnowIPPoolValidateUpdateInvalidIPPool(t *testing.T) {
 	new := snowIPPool()
 	new.Spec.Pools[0].IPStart = "invalid"
 	old := new.DeepCopy()
-	g.Expect(new.ValidateUpdate(ctx, &new, old)).Error().To(MatchError(ContainSubstring("SnowIPPool Pools[0].IPStart is invalid")))
+	g.Expect(new.ValidateUpdate(ctx, old, &new)).Error().To(MatchError(ContainSubstring("SnowIPPool Pools[0].IPStart is invalid")))
 }
 
 func TestSnowIPPoolValidateUpdateInvalidObjectType(t *testing.T) {
@@ -47,7 +47,7 @@ func TestSnowIPPoolValidateUpdateInvalidObjectType(t *testing.T) {
 	g := NewWithT(t)
 	new := snowIPPool()
 	old := &v1alpha1.SnowDatacenterConfig{}
-	g.Expect(new.ValidateUpdate(ctx, &new, old)).Error().To(MatchError(ContainSubstring("expected a SnowIPPool but got a *v1alpha1.SnowDatacenterConfig")))
+	g.Expect(new.ValidateUpdate(ctx, old, &new)).Error().To(MatchError(ContainSubstring("expected a SnowIPPool but got a *v1alpha1.SnowDatacenterConfig")))
 }
 
 func TestSnowIPPoolValidateUpdateIPPoolsSame(t *testing.T) {

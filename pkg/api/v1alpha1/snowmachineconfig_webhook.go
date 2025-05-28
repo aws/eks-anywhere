@@ -75,7 +75,7 @@ func (r *SnowMachineConfig) ValidateCreate(_ context.Context, obj runtime.Object
 }
 
 // ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type.
-func (r *SnowMachineConfig) ValidateUpdate(_ context.Context, obj, _ runtime.Object) (admission.Warnings, error) {
+func (r *SnowMachineConfig) ValidateUpdate(_ context.Context, _, obj runtime.Object) (admission.Warnings, error) {
 	snowConfig, ok := obj.(*SnowMachineConfig)
 	if !ok {
 		return nil, fmt.Errorf("expected a SnowMachineConfig but got %T", obj)

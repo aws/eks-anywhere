@@ -83,7 +83,7 @@ func TestNutanixDatacenterConfigWebhooksValidateUpdateInvalidOldObject(t *testin
 	g := NewWithT(t)
 	newConf := nutanixDatacenterConfig()
 	newConf.Spec.CredentialRef = nil
-	_, err := newConf.ValidateUpdate(ctx, newConf, &v1alpha1.NutanixMachineConfig{})
+	_, err := newConf.ValidateUpdate(ctx, &v1alpha1.NutanixMachineConfig{}, newConf)
 	g.Expect(err).To(MatchError(ContainSubstring("expected a NutanixDatacenterConfig but got a *v1alpha1.NutanixMachineConfig")))
 }
 
@@ -94,7 +94,7 @@ func TestNutanixDatacenterConfigWebhooksValidateUpdateCredentialRefRemoved(t *te
 	g.Expect(oldConf.ValidateCreate(ctx, oldConf)).Error().To(Succeed())
 	newConf := nutanixDatacenterConfig()
 	newConf.Spec.CredentialRef = nil
-	_, err := newConf.ValidateUpdate(ctx, newConf, oldConf)
+	_, err := newConf.ValidateUpdate(ctx, oldConf, newConf)
 	g.Expect(err).To(MatchError(ContainSubstring("credentialRef cannot be removed from an existing NutanixDatacenterConfig")))
 }
 

@@ -53,7 +53,7 @@ func (r *CloudStackMachineConfig) ValidateCreate(_ context.Context, obj runtime.
 }
 
 // ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type.
-func (r *CloudStackMachineConfig) ValidateUpdate(_ context.Context, obj, old runtime.Object) (admission.Warnings, error) {
+func (r *CloudStackMachineConfig) ValidateUpdate(_ context.Context, old, obj runtime.Object) (admission.Warnings, error) {
 	cloudstackConfig, ok := obj.(*CloudStackMachineConfig)
 	if !ok {
 		return nil, fmt.Errorf("expected a CloudStackMachineConfig but got %T", obj)

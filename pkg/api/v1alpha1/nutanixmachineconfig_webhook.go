@@ -50,7 +50,7 @@ func (in *NutanixMachineConfig) ValidateCreate(_ context.Context, obj runtime.Ob
 }
 
 // ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type.
-func (in *NutanixMachineConfig) ValidateUpdate(_ context.Context, obj, old runtime.Object) (admission.Warnings, error) {
+func (in *NutanixMachineConfig) ValidateUpdate(_ context.Context, old, obj runtime.Object) (admission.Warnings, error) {
 	nutanixConfig, ok := obj.(*NutanixMachineConfig)
 	if !ok {
 		return nil, fmt.Errorf("expected a NutanixMachineConfig but got %T", obj)
