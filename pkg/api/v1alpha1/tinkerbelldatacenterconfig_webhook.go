@@ -74,7 +74,7 @@ func (r *TinkerbellDatacenterConfig) ValidateCreate(_ context.Context, obj runti
 }
 
 // ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type.
-func (r *TinkerbellDatacenterConfig) ValidateUpdate(_ context.Context, obj, old runtime.Object) (admission.Warnings, error) {
+func (r *TinkerbellDatacenterConfig) ValidateUpdate(_ context.Context, old, obj runtime.Object) (admission.Warnings, error) {
 	tinkerbellConfig, ok := obj.(*TinkerbellDatacenterConfig)
 	if !ok {
 		return nil, fmt.Errorf("expected a TinkerbellDatacenterConfig but got %T", obj)

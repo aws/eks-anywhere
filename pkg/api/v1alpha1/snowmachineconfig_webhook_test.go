@@ -132,7 +132,7 @@ func TestSnowMachineConfigValidateUpdate(t *testing.T) {
 		},
 	}
 
-	g.Expect(sNew.ValidateUpdate(ctx, sNew, &sOld)).Error().To(Succeed())
+	g.Expect(sNew.ValidateUpdate(ctx, &sOld, sNew)).Error().To(Succeed())
 }
 
 func TestSnowMachineConfigValidateUpdateNoDevices(t *testing.T) {
@@ -147,7 +147,7 @@ func TestSnowMachineConfigValidateUpdateNoDevices(t *testing.T) {
 	sNew.Spec.PhysicalNetworkConnector = v1alpha1.SFPPlus
 	sNew.Spec.OSFamily = v1alpha1.Bottlerocket
 
-	g.Expect(sNew.ValidateUpdate(ctx, sNew, &sOld)).Error().To(MatchError(ContainSubstring("Devices must contain at least one device IP")))
+	g.Expect(sNew.ValidateUpdate(ctx, &sOld, sNew)).Error().To(MatchError(ContainSubstring("Devices must contain at least one device IP")))
 }
 
 func TestSnowMachineConfigValidateUpdateEmptySSHKeyName(t *testing.T) {
@@ -226,7 +226,7 @@ func TestSnowMachineConfigValidateUpdateCastFail(t *testing.T) {
 	config := &v1alpha1.SnowMachineConfig{}
 
 	// Call ValidateUpdate with the wrong type
-	warnings, err := config.ValidateUpdate(context.TODO(), wrongType, &v1alpha1.SnowMachineConfig{})
+	warnings, err := config.ValidateUpdate(context.TODO(), &v1alpha1.SnowMachineConfig{}, wrongType)
 
 	// Verify that an error is returned
 	g.Expect(warnings).To(BeNil())

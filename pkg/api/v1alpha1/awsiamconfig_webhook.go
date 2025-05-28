@@ -59,7 +59,7 @@ func (r *AWSIamConfig) ValidateCreate(_ context.Context, obj runtime.Object) (ad
 }
 
 // ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type.
-func (r *AWSIamConfig) ValidateUpdate(_ context.Context, obj, old runtime.Object) (admission.Warnings, error) {
+func (r *AWSIamConfig) ValidateUpdate(_ context.Context, old, obj runtime.Object) (admission.Warnings, error) {
 	awsIamConfig, ok := obj.(*AWSIamConfig)
 	if !ok {
 		return nil, fmt.Errorf("expected an AWSIamConfig but got %T", obj)

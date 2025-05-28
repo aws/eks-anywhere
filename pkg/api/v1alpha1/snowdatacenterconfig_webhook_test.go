@@ -57,7 +57,7 @@ func TestSnowDatacenterConfigValidateValidateEmptyIdentityRef(t *testing.T) {
 
 	snowDCOld := snowDatacenterConfig()
 	snowDCNew := snowDCOld.DeepCopy()
-	g.Expect(snowDCNew.ValidateUpdate(ctx, snowDCNew, &snowDCOld)).Error().To(MatchError(ContainSubstring("IdentityRef name must not be empty")))
+	g.Expect(snowDCNew.ValidateUpdate(ctx, &snowDCOld, snowDCNew)).Error().To(MatchError(ContainSubstring("IdentityRef name must not be empty")))
 }
 
 func TestSnowDatacenterConfigValidateValidateEmptyIdentityKind(t *testing.T) {
@@ -68,7 +68,7 @@ func TestSnowDatacenterConfigValidateValidateEmptyIdentityKind(t *testing.T) {
 	snowDCNew := snowDCOld.DeepCopy()
 	snowDCNew.Spec.IdentityRef.Name = "refName"
 
-	g.Expect(snowDCNew.ValidateUpdate(ctx, snowDCNew, &snowDCOld)).Error().To(MatchError(ContainSubstring("IdentityRef kind must not be empty")))
+	g.Expect(snowDCNew.ValidateUpdate(ctx, &snowDCOld, snowDCNew)).Error().To(MatchError(ContainSubstring("IdentityRef kind must not be empty")))
 }
 
 func TestSnowDatacenterConfigValidateValidateIdentityKindNotSnow(t *testing.T) {
@@ -80,7 +80,7 @@ func TestSnowDatacenterConfigValidateValidateIdentityKindNotSnow(t *testing.T) {
 	snowDCNew.Spec.IdentityRef.Name = "refName"
 	snowDCNew.Spec.IdentityRef.Kind = v1alpha1.OIDCConfigKind
 
-	g.Expect(snowDCNew.ValidateUpdate(ctx, snowDCNew, &snowDCOld)).Error().To(MatchError(ContainSubstring("is invalid, the only supported kind is Secret")))
+	g.Expect(snowDCNew.ValidateUpdate(ctx, &snowDCOld, snowDCNew)).Error().To(MatchError(ContainSubstring("is invalid, the only supported kind is Secret")))
 }
 
 func snowDatacenterConfig() v1alpha1.SnowDatacenterConfig {
@@ -120,7 +120,7 @@ func TestSnowDatacenterConfigValidateUpdateCastFail(t *testing.T) {
 	config := &v1alpha1.SnowDatacenterConfig{}
 
 	// Call ValidateUpdate with the wrong type
-	warnings, err := config.ValidateUpdate(context.TODO(), wrongType, &v1alpha1.SnowDatacenterConfig{})
+	warnings, err := config.ValidateUpdate(context.TODO(), &v1alpha1.SnowDatacenterConfig{}, wrongType)
 
 	// Verify that an error is returned
 	g.Expect(warnings).To(BeNil())

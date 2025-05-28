@@ -41,7 +41,7 @@ func (r *GitOpsConfig) ValidateCreate(_ context.Context, obj runtime.Object) (ad
 }
 
 // ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type.
-func (r *GitOpsConfig) ValidateUpdate(_ context.Context, obj, old runtime.Object) (admission.Warnings, error) {
+func (r *GitOpsConfig) ValidateUpdate(_ context.Context, old, obj runtime.Object) (admission.Warnings, error) {
 	gitopsConfig, ok := obj.(*GitOpsConfig)
 	if !ok {
 		return nil, fmt.Errorf("expected a GitOpsConfig but got %T", obj)

@@ -48,7 +48,7 @@ func (m *TinkerbellMachine) ValidateCreate(_ context.Context, obj runtime.Object
 }
 
 // ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type.
-func (m *TinkerbellMachine) ValidateUpdate(_ context.Context, obj, oldRaw runtime.Object) (admission.Warnings, error) {
+func (m *TinkerbellMachine) ValidateUpdate(_ context.Context, oldRaw, obj runtime.Object) (admission.Warnings, error) {
 	machine, ok := obj.(*TinkerbellMachine)
 	if !ok {
 		return nil, fmt.Errorf("expected a TinkerbellMachine but got %T", obj)

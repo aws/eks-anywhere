@@ -18,7 +18,7 @@ func TestVSphereDatacenterValidateUpdateServerImmutable(t *testing.T) {
 
 	c.Spec.Server = "https://newFancyServer.newFancyCloud.io"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(ctx, c, &vOld)).Error().To(MatchError(ContainSubstring("spec.server: Forbidden: field is immutable")))
+	g.Expect(c.ValidateUpdate(ctx, &vOld, c)).Error().To(MatchError(ContainSubstring("spec.server: Forbidden: field is immutable")))
 }
 
 func TestVSphereDatacenterValidateUpdateDataCenterImmutable(t *testing.T) {
@@ -30,7 +30,7 @@ func TestVSphereDatacenterValidateUpdateDataCenterImmutable(t *testing.T) {
 	c.Spec.Datacenter = "/shinyNewDatacenter"
 	c.Spec.Network = "/shinyNewDatacenter/network"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(ctx, c, &vOld)).Error().To(MatchError(ContainSubstring("spec.datacenter: Forbidden: field is immutable")))
+	g.Expect(c.ValidateUpdate(ctx, &vOld, c)).Error().To(MatchError(ContainSubstring("spec.datacenter: Forbidden: field is immutable")))
 }
 
 func TestVSphereDatacenterValidateUpdateNetworkImmutable(t *testing.T) {
@@ -42,7 +42,7 @@ func TestVSphereDatacenterValidateUpdateNetworkImmutable(t *testing.T) {
 	c.Spec.Network = "/datacenter/network"
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(ctx, c, &vOld)).Error().To(MatchError(ContainSubstring("spec.network: Forbidden: field is immutable")))
+	g.Expect(c.ValidateUpdate(ctx, &vOld, c)).Error().To(MatchError(ContainSubstring("spec.network: Forbidden: field is immutable")))
 }
 
 func TestVSphereDatacenterValidateUpdateTLSInsecureMutable(t *testing.T) {
@@ -53,7 +53,7 @@ func TestVSphereDatacenterValidateUpdateTLSInsecureMutable(t *testing.T) {
 
 	c.Spec.Insecure = false
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(ctx, c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(ctx, &vOld, c)).Error().To(Succeed())
 }
 
 func TestVSphereDatacenterValidateUpdateTlsThumbprintMutable(t *testing.T) {
@@ -64,7 +64,7 @@ func TestVSphereDatacenterValidateUpdateTlsThumbprintMutable(t *testing.T) {
 
 	c.Spec.Thumbprint = "B3D1C464976E725E599D3548180CB56311818F224E701F9D56F22E8079A7B396"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(ctx, c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(ctx, &vOld, c)).Error().To(Succeed())
 }
 
 func TestVSphereDatacenterValidateUpdateWithPausedAnnotation(t *testing.T) {
@@ -78,7 +78,7 @@ func TestVSphereDatacenterValidateUpdateWithPausedAnnotation(t *testing.T) {
 	vOld.PauseReconcile()
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(ctx, c, &vOld)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(ctx, &vOld, c)).Error().To(Succeed())
 }
 
 func TestVSphereDatacenterValidateUpdateInvalidType(t *testing.T) {
@@ -87,7 +87,7 @@ func TestVSphereDatacenterValidateUpdateInvalidType(t *testing.T) {
 	c := &v1alpha1.VSphereDatacenterConfig{}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(ctx, c, vOld)).Error().To(MatchError(ContainSubstring("expected a VSphereDataCenterConfig but got a *v1alpha1.Cluster")))
+	g.Expect(c.ValidateUpdate(ctx, vOld, c)).Error().To(MatchError(ContainSubstring("expected a VSphereDataCenterConfig but got a *v1alpha1.Cluster")))
 }
 
 func TestVSphereDatacenterValidateUpdateInvalidServer(t *testing.T) {
@@ -98,7 +98,7 @@ func TestVSphereDatacenterValidateUpdateInvalidServer(t *testing.T) {
 	c.Spec.Server = ""
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(ctx, c, &vOld)).Error().To(MatchError(ContainSubstring("VSphereDatacenterConfig server is not set or is empty")))
+	g.Expect(c.ValidateUpdate(ctx, &vOld, c)).Error().To(MatchError(ContainSubstring("VSphereDatacenterConfig server is not set or is empty")))
 }
 
 func TestVSphereDatacenterValidateUpdateInvalidDatacenter(t *testing.T) {
@@ -109,7 +109,7 @@ func TestVSphereDatacenterValidateUpdateInvalidDatacenter(t *testing.T) {
 	c.Spec.Datacenter = ""
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(ctx, c, &vOld)).Error().To(MatchError(ContainSubstring("VSphereDatacenterConfig datacenter is not set or is empty")))
+	g.Expect(c.ValidateUpdate(ctx, &vOld, c)).Error().To(MatchError(ContainSubstring("VSphereDatacenterConfig datacenter is not set or is empty")))
 }
 
 func TestVSphereDatacenterValidateUpdateInvalidNetwork(t *testing.T) {
@@ -120,7 +120,7 @@ func TestVSphereDatacenterValidateUpdateInvalidNetwork(t *testing.T) {
 	c.Spec.Network = ""
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(ctx, c, &vOld)).Error().To(MatchError(ContainSubstring("VSphereDatacenterConfig VM network is not set or is empty")))
+	g.Expect(c.ValidateUpdate(ctx, &vOld, c)).Error().To(MatchError(ContainSubstring("VSphereDatacenterConfig VM network is not set or is empty")))
 }
 
 func TestVSphereDatacenterConfigSetDefaults(t *testing.T) {
@@ -220,7 +220,7 @@ func TestVSphereDatacenterConfigValidateUpdateCastFail(t *testing.T) {
 	config := &v1alpha1.VSphereDatacenterConfig{}
 
 	// Call ValidateUpdate with the wrong type
-	warnings, err := config.ValidateUpdate(context.TODO(), wrongType, &v1alpha1.VSphereDatacenterConfig{})
+	warnings, err := config.ValidateUpdate(context.TODO(), &v1alpha1.VSphereDatacenterConfig{}, wrongType)
 
 	// Verify that an error is returned
 	g.Expect(warnings).To(BeNil())
