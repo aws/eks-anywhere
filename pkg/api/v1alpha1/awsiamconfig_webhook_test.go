@@ -35,7 +35,7 @@ func TestValidateUpdateAWSIamConfigSuccess(t *testing.T) {
 		},
 	}
 	g := NewWithT(t)
-	g.Expect(aiNew.ValidateUpdate(ctx, &aiOld, aiNew)).Error().To(Succeed())
+	g.Expect((&v1alpha1.AWSIamConfig{}).ValidateUpdate(ctx, &aiOld, aiNew)).Error().To(Succeed())
 }
 
 func TestValidateCreateAWSIamConfigSuccess(t *testing.T) {

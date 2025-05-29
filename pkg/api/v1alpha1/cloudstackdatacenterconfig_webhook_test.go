@@ -46,6 +46,17 @@ func TestCloudStackDatacenterDatacenterConfigSetDefaults(t *testing.T) {
 	g.Expect(originalDatacenter).To(Equal(*expectedDatacenter))
 }
 
+func TestCloudStackDatacenterValidateUpdateSuccessful(t *testing.T) {
+	ctx := context.Background()
+	vOld := cloudstackDatacenterConfig()
+	vOld.Spec.AvailabilityZones[0].Domain = "oldCruftyDomain"
+	c := vOld.DeepCopy()
+
+	c.Spec.Account = "123"
+	g := NewWithT(t)
+	g.Expect((&v1alpha1.CloudStackDatacenterConfig{}).ValidateUpdate(ctx, &vOld, c)).Error().To(Succeed())
+}
+
 func TestCloudStackDatacenterValidateUpdateDomainImmutable(t *testing.T) {
 	ctx := context.Background()
 	vOld := cloudstackDatacenterConfig()
