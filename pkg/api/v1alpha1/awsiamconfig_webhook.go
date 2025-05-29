@@ -59,7 +59,7 @@ func (r *AWSIamConfig) ValidateCreate(_ context.Context, obj runtime.Object) (ad
 }
 
 // ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type.
-func (r *AWSIamConfig) ValidateUpdate(_ context.Context, old, obj runtime.Object) (admission.Warnings, error) {
+func (*AWSIamConfig) ValidateUpdate(_ context.Context, old, obj runtime.Object) (admission.Warnings, error) {
 	awsIamConfig, ok := obj.(*AWSIamConfig)
 	if !ok {
 		return nil, fmt.Errorf("expected an AWSIamConfig but got %T", obj)
@@ -74,9 +74,9 @@ func (r *AWSIamConfig) ValidateUpdate(_ context.Context, old, obj runtime.Object
 
 	var allErrs field.ErrorList
 
-	allErrs = append(allErrs, validateImmutableAWSIamFields(r, oldAWSIamConfig)...)
-	if err := r.Validate(); err != nil {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("AWSIamConfig"), r, err.Error()))
+	allErrs = append(allErrs, validateImmutableAWSIamFields(awsIamConfig, oldAWSIamConfig)...)
+	if err := awsIamConfig.Validate(); err != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("AWSIamConfig"), awsIamConfig, err.Error()))
 	}
 
 	if len(allErrs) == 0 {
