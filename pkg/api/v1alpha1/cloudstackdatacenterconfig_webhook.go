@@ -80,13 +80,13 @@ func (r *CloudStackDatacenterConfig) ValidateCreate(_ context.Context, obj runti
 }
 
 // ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type.
-func (r *CloudStackDatacenterConfig) ValidateUpdate(_ context.Context, old, obj runtime.Object) (admission.Warnings, error) {
-	cloudstackConfig, ok := obj.(*CloudStackDatacenterConfig)
+func (*CloudStackDatacenterConfig) ValidateUpdate(_ context.Context, old, obj runtime.Object) (admission.Warnings, error) {
+	newDatacenterConfig, ok := obj.(*CloudStackDatacenterConfig)
 	if !ok {
 		return nil, fmt.Errorf("expected a CloudStackDatacenterConfig but got %T", obj)
 	}
 
-	cloudstackdatacenterconfiglog.Info("validate update", "name", cloudstackConfig.Name)
+	cloudstackdatacenterconfiglog.Info("validate update", "name", newDatacenterConfig.Name)
 
 	oldDatacenterConfig, ok := old.(*CloudStackDatacenterConfig)
 	if !ok {
@@ -100,13 +100,13 @@ func (r *CloudStackDatacenterConfig) ValidateUpdate(_ context.Context, old, obj 
 
 	var allErrs field.ErrorList
 
-	allErrs = append(allErrs, validateImmutableFieldsCloudStackCluster(r, oldDatacenterConfig)...)
+	allErrs = append(allErrs, validateImmutableFieldsCloudStackCluster(newDatacenterConfig, oldDatacenterConfig)...)
 
 	if len(allErrs) == 0 {
 		return nil, nil
 	}
 
-	return nil, apierrors.NewInvalid(GroupVersion.WithKind(CloudStackDatacenterKind).GroupKind(), r.Name, allErrs)
+	return nil, apierrors.NewInvalid(GroupVersion.WithKind(CloudStackDatacenterKind).GroupKind(), newDatacenterConfig.Name, allErrs)
 }
 
 func isValidAzConversionName(uuid string) bool {
