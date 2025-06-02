@@ -604,10 +604,14 @@ DNS resolution is managed by coreDNS, a DNS server deployed as a pod within the 
     [ERROR] plugin/errors: 2 example-service.default.svc.cluster.local. A: read udp 10.0.0.2:59857->10.96.0.10:53: i/o timeout
     ```
 - Incorrect DNS server can cause issues in cluster lifecycle workflows like create and update.
+- When coredns pods are deployed on Kubernetes cluster, kubelet agent running on worker node will cache the upstream DNS Server IPs (Eg: DNS Server deployed in vSphere) with the coredns pod. When these upstream DNS Server IPs are changed, they are not automatically reflected in coredns pod cache. Restart coredns pods on management cluster so that new DNS Server IPs can be update in the cache. And then, Restart eksa-controller pod on Management cluster so that it can successfully resolve DNS queries and proceed with curated packages installation on workload clusters.
 
 #### DNS Debugging
 
 ##### Verify CoreDNS deployment
+
+Note: For clusters with Management and Workload clusters, below checks should be performed on both Management and Workload Clusters.
+
 1. Check if CoreDNS pods are running
     ```
     kubectl get pods --namespace=kube-system -l k8s-app=kube-dns
