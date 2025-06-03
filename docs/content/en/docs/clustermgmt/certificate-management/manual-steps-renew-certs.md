@@ -1,9 +1,9 @@
 ---
-title: "Certificate rotation"
-linkTitle: "Certificate rotation"
+title: "Manual steps to renew certificates"
+linkTitle: "Manual steps to renew certificates"
 weight: 31
 aliases:
-    /docs/tasks/cluster/manually-renew-certs/
+    /docs/tasks/cluster/manual-steps-renew-certs/
 date: 2021-11-04
 description: >
   How to rotate certificates for etcd and control plane nodes
@@ -36,7 +36,7 @@ echo | openssl s_client -connect ${CONTROL_PLANE_IP}:6443 2>/dev/null | openssl 
 echo | openssl s_client -connect ${EXTERNAL_ETCD_IP}:2379 2>/dev/null | openssl x509 -noout -dates
 ```
 
-You can rotate certificates by following the steps given below. You cannot rotate the `ca` certificate because it is the root certificate. Note that the commands used for Bottlerocket nodes are different than those for Ubuntu and RHEL nodes.
+>**_NOTE:_** You can rotate certificates by following the steps given below. You cannot rotate the `ca` certificate because it is the root certificate. Note that the commands used for Bottlerocket nodes are different than those for Ubuntu and RHEL nodes.
 
 #### External etcd nodes
 
