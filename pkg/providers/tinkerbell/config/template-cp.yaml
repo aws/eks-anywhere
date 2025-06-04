@@ -38,7 +38,7 @@ metadata:
 spec:
   kubeadmConfigSpec:
     clusterConfiguration:
-{{- if (ge (atoi $kube_minor_version) 29) }}
+{{- if (and (ge (atoi $kube_minor_version) 29) (lt (atoi $kube_minor_version) 33)) }}
       featureGates:
         EtcdLearnerMode: false
 {{- end }}

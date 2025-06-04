@@ -6,6 +6,9 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
 
+// FgEtcdLearner is a Kubeadm feature gate for etcd learner mode.
+const FgEtcdLearner = "EtcdLearnerMode"
+
 func addStackedEtcdExtraArgsInKubeadmControlPlane(kcp *controlplanev1.KubeadmControlPlane, externalEtcdConfig *v1alpha1.ExternalEtcdConfiguration) {
 	if externalEtcdConfig != nil {
 		return
@@ -21,5 +24,5 @@ func disableEtcdLearnerMode(kcp *controlplanev1.KubeadmControlPlane) {
 		kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.FeatureGates = map[string]bool{}
 	}
 
-	kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.FeatureGates["EtcdLearnerMode"] = false
+	kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.FeatureGates[FgEtcdLearner] = false
 }
