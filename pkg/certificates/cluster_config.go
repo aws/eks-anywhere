@@ -113,7 +113,22 @@ func BuildConfigFromCluster(clusterName, sshKeyPath string) (*RenewalConfig, err
 	// for control plane nodes
 	for _, node := range nodes.Items {
 		if _, isControlPlane := node.Labels["node-role.kubernetes.io/control-plane"]; isControlPlane {
-			renewalConfig.ControlPlane.Nodes = append(renewalConfig.ControlPlane.Nodes, node.Status.Addresses[0].Address)
+			// find InternalIP address
+			var nodeIP string
+			for _, addr := range node.Status.Addresses {
+				if addr.Type == "InternalIP" {
+					nodeIP = addr.Address
+					break
+				}
+			}
+			// If InternalIP not found, fall back to the first address
+			if nodeIP == "" && len(node.Status.Addresses) > 0 {
+				nodeIP = node.Status.Addresses[0].Address
+				fmt.Printf("Warning: InternalIP not found for node %s, using %s instead\n",
+					node.Name, nodeIP)
+			}
+
+			renewalConfig.ControlPlane.Nodes = append(renewalConfig.ControlPlane.Nodes, nodeIP)
 
 			osImage := strings.ToLower(node.Status.NodeInfo.OSImage)
 			if strings.Contains(osImage, "bottlerocket") {
@@ -149,9 +164,20 @@ func BuildConfigFromCluster(clusterName, sshKeyPath string) (*RenewalConfig, err
 
 	// SSH configuration
 	renewalConfig.ControlPlane.SSHKey = sshKeyPath
-	renewalConfig.ControlPlane.SSHUser = sshConfig.SSHUsername
+
+	// override SSH user based on OS type if needed
+	if renewalConfig.ControlPlane.OS == "ubuntu" && sshConfig.SSHUsername != "ubuntu" {
+		fmt.Printf("Warning: Overriding SSH user from '%s' to 'ubuntu' for Ubuntu nodes\n", sshConfig.SSHUsername)
+		renewalConfig.ControlPlane.SSHUser = "ubuntu"
+	} else if renewalConfig.ControlPlane.OS == "bottlerocket" && sshConfig.SSHUsername != "ec2-user" {
+		fmt.Printf("Warning: Overriding SSH user from '%s' to 'ec2-user' for Bottlerocket nodes\n", sshConfig.SSHUsername)
+		renewalConfig.ControlPlane.SSHUser = "ec2-user"
+	} else {
+		renewalConfig.ControlPlane.SSHUser = sshConfig.SSHUsername
+	}
+
 	renewalConfig.Etcd.SSHKey = sshKeyPath
-	renewalConfig.Etcd.SSHUser = sshConfig.SSHUsername
+	renewalConfig.Etcd.SSHUser = renewalConfig.ControlPlane.SSHUser
 
 	return renewalConfig, nil
 }
