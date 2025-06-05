@@ -6554,7 +6554,7 @@ func TestVSphereKubernetes132MulticlusterWorkloadClusterAPI(t *testing.T) {
 				api.WithControlPlaneCount(1),
 				api.WithWorkerNodeCount(1),
 				api.WithStackedEtcdTopology(),
-				api.WithLicenseToken(licenseToken)
+				api.WithLicenseToken(licenseToken),
 			),
 			vsphere.WithUbuntu128(),
 		),
@@ -6566,7 +6566,7 @@ func TestVSphereKubernetes132MulticlusterWorkloadClusterAPI(t *testing.T) {
 				api.WithControlPlaneCount(1),
 				api.WithWorkerNodeCount(1),
 				api.WithStackedEtcdTopology(),
-				api.WithLicenseToken(licenseToken2)
+				api.WithLicenseToken(licenseToken2),
 			),
 			vsphere.WithUbuntu129(),
 		),
