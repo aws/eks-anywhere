@@ -6519,6 +6519,10 @@ func TestVSphereInPlaceUpgradeMulticlusterWorkloadClusterK8sUpgrade131To132(t *t
 // Workload API
 func TestVSphereKubernetes132MulticlusterWorkloadClusterAPI(t *testing.T) {
 	vsphere := framework.NewVSphere(t)
+	// add licensetoken for k8s version 1.28 and 1.29
+	licenseToken := framework.GetLicenseToken()
+	licenseToken2 := framework.GetLicenseToken2()
+
 	managementCluster := framework.NewClusterE2ETest(
 		t, vsphere,
 	).WithClusterConfig(
@@ -6550,6 +6554,7 @@ func TestVSphereKubernetes132MulticlusterWorkloadClusterAPI(t *testing.T) {
 				api.WithControlPlaneCount(1),
 				api.WithWorkerNodeCount(1),
 				api.WithStackedEtcdTopology(),
+				api.WithLicenseToken(licenseToken)
 			),
 			vsphere.WithUbuntu128(),
 		),
@@ -6561,6 +6566,7 @@ func TestVSphereKubernetes132MulticlusterWorkloadClusterAPI(t *testing.T) {
 				api.WithControlPlaneCount(1),
 				api.WithWorkerNodeCount(1),
 				api.WithStackedEtcdTopology(),
+				api.WithLicenseToken(licenseToken2)
 			),
 			vsphere.WithUbuntu129(),
 		),
