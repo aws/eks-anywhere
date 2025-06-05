@@ -48,12 +48,9 @@ func (rc *renewCertificatesOptions) renewCertificates(cmd *cobra.Command) error 
 		return fmt.Errorf("must specify --config")
 	}
 
-	config, err := certificates.ParseConfig(rc.configFile)
+	_, err := certificates.ParseConfig(rc.configFile)
 	if err != nil {
 		return fmt.Errorf("parsing config file: %v", err)
 	}
-
-	// return nil for the scope of this PR 1, renew logics are in different PR
-	_ = config
 	return nil
 }
