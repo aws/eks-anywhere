@@ -3812,7 +3812,7 @@ func TestCloudStackKubernetes132MulticlusterWorkloadClusterAPI(t *testing.T) {
 				api.WithExternalEtcdTopology(1),
 				api.WithControlPlaneCount(1),
 			),
-			cloudstack.WithRedhat9Kubernetes131(),
+			cloudstack.WithRedhat9Kubernetes132(),
 		),
 	)
 
