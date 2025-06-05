@@ -7,7 +7,7 @@ import (
 var renewCmd = &cobra.Command{
 	Use:   "renew",
 	Short: "renew resources",
-	Long:  "Use eksctl anywhere renew to renew resources, such as clusters",
+	Long:  "Use eksctl anywhere renew to renew cluster resources",
 }
 
 func init() {

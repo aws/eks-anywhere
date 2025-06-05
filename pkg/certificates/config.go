@@ -46,42 +46,42 @@ func validateConfig(config *RenewalConfig) error {
 	}
 
 	if len(config.ControlPlane.Nodes) == 0 {
-		return fmt.Errorf("at least one control plane node is required")
+		return fmt.Errorf("at least one node is required in ControlPlane configuration")
 	}
 
-	if err := validateNodeConfig(&config.ControlPlane, "control plane"); err != nil {
-		return err
+	if err := validateNodeConfig(&config.ControlPlane); err != nil {
+		return fmt.Errorf("validating control plane: %v", err)
 	}
 
 	// Etcd nodes are optional (could be embedded in control plane)
 	if len(config.Etcd.Nodes) > 0 {
-		if err := validateNodeConfig(&config.Etcd, "etcd"); err != nil {
-			return err
+		if err := validateNodeConfig(&config.Etcd); err != nil {
+			return fmt.Errorf("validating etcd: %v", err)
 		}
 	}
 
 	return nil
 }
 
-func validateNodeConfig(config *NodeConfig, component string) error {
+func validateNodeConfig(config *NodeConfig) error {
 	if len(config.Nodes) == 0 {
-		return fmt.Errorf("%s nodes are required", component)
+		return fmt.Errorf("nodes are required")
 	}
 	if config.OS == "" {
-		return fmt.Errorf("%s OS is required", component)
+		return fmt.Errorf("OS is required")
 	}
 	if config.OS != "ubuntu" && config.OS != "rhel" && config.OS != "redhat" && config.OS != "bottlerocket" {
-		return fmt.Errorf("unsupported OS %q for %s", config.OS, component)
+		return fmt.Errorf("unsupported OS %q", config.OS)
 	}
 	if config.SSHKey == "" {
-		return fmt.Errorf("%s SSH key is required", component)
+		return fmt.Errorf("SSH key is required")
 	}
 	if config.SSHUser == "" {
-		return fmt.Errorf("%s SSH user is required", component)
+		return fmt.Errorf("SSH user is required")
 	}
 
 	if _, err := os.Stat(config.SSHKey); err != nil {
-		return fmt.Errorf("SSH key file for %s: %v", component, err)
+		return fmt.Errorf("SSH key file: %v", err)
 	}
 
 	return nil
