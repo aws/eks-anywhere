@@ -29,31 +29,107 @@ func getClusterConfig(clusterName string) (*clusterSSHConfig, error) {
 		return nil, fmt.Errorf("failed to read cluster config file: %v", err)
 	}
 
-	var config struct {
-		Spec struct {
-			ControlPlaneConfiguration struct {
-				SSHKeyPath string `yaml:"sshKeyPath"`
-				Users      []struct {
+	sshConfig := &clusterSSHConfig{}
+
+	// split the YAML file into multiple documents
+	documents := strings.Split(string(data), "---")
+
+	// first pass: look for VSphereMachineConfig with control-plane annotation
+	for _, doc := range documents {
+		if doc == "" {
+			continue
+		}
+
+		// check if this document is a VSphereMachineConfig with control-plane annotation
+		var machineConfig struct {
+			Kind     string `yaml:"kind"`
+			Metadata struct {
+				Annotations map[string]string `yaml:"annotations"`
+				Name        string            `yaml:"name"`
+			} `yaml:"metadata"`
+			Spec struct {
+				OSFamily string `yaml:"osFamily"`
+				Users    []struct {
 					Name string `yaml:"name"`
 				} `yaml:"users"`
-			} `yaml:"controlPlaneConfiguration"`
-		} `yaml:"spec"`
+			} `yaml:"spec"`
+		}
+
+		if err := yaml.Unmarshal([]byte(doc), &machineConfig); err != nil {
+			// skip documents that don't match this structure
+			continue
+		}
+
+		// check if this is a VSphereMachineConfig with control-plane annotation
+		if machineConfig.Kind == "VSphereMachineConfig" &&
+			machineConfig.Metadata.Annotations != nil &&
+			machineConfig.Metadata.Annotations["anywhere.eks.amazonaws.com/control-plane"] == "true" {
+			// found the control plane machine config
+			if len(machineConfig.Spec.Users) > 0 {
+				sshConfig.SSHUsername = machineConfig.Spec.Users[0].Name
+				fmt.Printf("Found SSH username '%s' in VSphereMachineConfig for control plane\n", sshConfig.SSHUsername)
+				break
+			}
+		}
 	}
 
-	if err := yaml.Unmarshal(data, &config); err != nil {
-		return nil, fmt.Errorf("failed to parse cluster config: %v", err)
+	// second pass: if no username found, look for any VSphereMachineConfig
+	if sshConfig.SSHUsername == "" {
+		for _, doc := range documents {
+			if doc == "" {
+				continue
+			}
+
+			var machineConfig struct {
+				Kind string `yaml:"kind"`
+				Spec struct {
+					Users []struct {
+						Name string `yaml:"name"`
+					} `yaml:"users"`
+				} `yaml:"spec"`
+			}
+
+			if err := yaml.Unmarshal([]byte(doc), &machineConfig); err != nil {
+				continue
+			}
+
+			if machineConfig.Kind == "VSphereMachineConfig" && len(machineConfig.Spec.Users) > 0 {
+				sshConfig.SSHUsername = machineConfig.Spec.Users[0].Name
+				fmt.Printf("Found SSH username '%s' in VSphereMachineConfig\n", sshConfig.SSHUsername)
+				break
+			}
+		}
 	}
 
-	sshConfig := &clusterSSHConfig{
-		SSHKeyPath: config.Spec.ControlPlaneConfiguration.SSHKeyPath,
+	// third pass: look for SSHKeyPath in Cluster resource
+	for _, doc := range documents {
+		if doc == "" {
+			continue
+		}
+
+		var clusterConfig struct {
+			Kind string `yaml:"kind"`
+			Spec struct {
+				ControlPlaneConfiguration struct {
+					SSHKeyPath string `yaml:"sshKeyPath"`
+				} `yaml:"controlPlaneConfiguration"`
+			} `yaml:"spec"`
+		}
+
+		if err := yaml.Unmarshal([]byte(doc), &clusterConfig); err != nil {
+			continue
+		}
+
+		if clusterConfig.Kind == "Cluster" {
+			sshConfig.SSHKeyPath = clusterConfig.Spec.ControlPlaneConfiguration.SSHKeyPath
+			break
+		}
 	}
 
-	// get SSH username
-	if len(config.Spec.ControlPlaneConfiguration.Users) > 0 {
-		sshConfig.SSHUsername = config.Spec.ControlPlaneConfiguration.Users[0].Name
-	} else {
-		// if no usernamr, set it to default ec2-user
+	// If no username found, use default
+	if sshConfig.SSHUsername == "" {
 		sshConfig.SSHUsername = "ec2-user"
+		fmt.Printf("No SSH username found in config, using default: %s\n", sshConfig.SSHUsername)
 	}
 
 	return sshConfig, nil
@@ -135,8 +211,10 @@ func BuildConfigFromCluster(clusterName, sshKeyPath string) (*RenewalConfig, err
 				renewalConfig.ControlPlane.OS = "bottlerocket"
 			} else if strings.Contains(osImage, "ubuntu") {
 				renewalConfig.ControlPlane.OS = "ubuntu"
-			} else if strings.Contains(osImage, "rhel") {
-				renewalConfig.ControlPlane.OS = "rhel"
+			} else if strings.Contains(osImage, "rhel") || strings.Contains(osImage, "red hat") {
+				renewalConfig.ControlPlane.OS = "redhat"
+			} else {
+				fmt.Printf("DEBUG: Could not detect OS from OSImage: %s\n", osImage)
 			}
 		}
 	}
@@ -172,6 +250,9 @@ func BuildConfigFromCluster(clusterName, sshKeyPath string) (*RenewalConfig, err
 	} else if renewalConfig.ControlPlane.OS == "bottlerocket" && sshConfig.SSHUsername != "ec2-user" {
 		fmt.Printf("Warning: Overriding SSH user from '%s' to 'ec2-user' for Bottlerocket nodes\n", sshConfig.SSHUsername)
 		renewalConfig.ControlPlane.SSHUser = "ec2-user"
+	} else if renewalConfig.ControlPlane.OS == "rhel" || renewalConfig.ControlPlane.OS == "redhat" {
+		renewalConfig.ControlPlane.SSHUser = sshConfig.SSHUsername
+		fmt.Printf("Using SSH user '%s' for RHEL/RedHat nodes as specified in cluster config\n", sshConfig.SSHUsername)
 	} else {
 		renewalConfig.ControlPlane.SSHUser = sshConfig.SSHUsername
 	}

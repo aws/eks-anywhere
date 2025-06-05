@@ -70,7 +70,7 @@ func validateNodeConfig(config *NodeConfig, component string) error {
 	if config.OS == "" {
 		return fmt.Errorf("%s OS is required", component)
 	}
-	if config.OS != "ubuntu" && config.OS != "rhel" && config.OS != "bottlerocket" {
+	if config.OS != "ubuntu" && config.OS != "rhel" && config.OS != "redhat" && config.OS != "bottlerocket" {
 		return fmt.Errorf("unsupported OS %q for %s", config.OS, component)
 	}
 	if config.SSHKey == "" {

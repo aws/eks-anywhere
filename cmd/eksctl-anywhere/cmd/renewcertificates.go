@@ -95,8 +95,16 @@ func (rc *renewCertificatesOptions) renewCertificates(cmd *cobra.Command) error 
 		return err
 	}
 
-	if (rc.configFile == "") == (rc.clusterName == "") {
-		return fmt.Errorf("must specify exactly one of --config or --cluster-name")
+	// if both options are provided
+	if rc.configFile != "" && rc.clusterName != "" {
+		fmt.Printf("Warning: Both --config and --cluster-name provided, using --config. The --cluster-name value will be ignored for this command only, but the CLUSTER_NAME environment variable remains unchanged.\n")
+		// clear clusterName to ensure it's not used
+		rc.clusterName = ""
+	}
+
+	// if neither option is provided
+	if rc.configFile == "" && rc.clusterName == "" {
+		return fmt.Errorf("must specify either --config or --cluster-name")
 	}
 
 	if rc.clusterName != "" && rc.sshKey == "" {
