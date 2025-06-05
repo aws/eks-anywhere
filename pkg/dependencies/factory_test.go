@@ -760,6 +760,19 @@ func TestFactoryBuildWithEksdInstallerNoTimeout(t *testing.T) {
 	tt.Expect(deps.EksdInstaller).NotTo(BeNil())
 }
 
+func TestFactoryBuildWithProviderTinkerbellWithNoTimeouts(t *testing.T) {
+	tt := newTest(t, tinkerbell)
+
+	deps, err := dependencies.NewFactory().
+		WithLocalExecutables().
+		WithNoTimeouts().
+		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP, map[string]bool{}, tt.providerOptions).
+		Build(context.Background())
+
+	tt.Expect(err).To(BeNil())
+	tt.Expect(deps.Provider).NotTo(BeNil())
+}
+
 type dummyDockerClient struct{}
 
 func (b dummyDockerClient) PullImage(ctx context.Context, image string) error {

@@ -140,8 +140,10 @@ func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *
 	// Check if the hardware in the catalogue have a BMCRef. Since we only allow either all hardware with bmc
 	// or no hardware with bmc, its sufficient to check the first hardware.
 	if p.catalogue.TotalHardware() > 0 && p.catalogue.AllHardware()[0].Spec.BMCRef != nil {
+		bmcTimeoutStr := p.bmcTimeout.String()
+
 		// Waiting to ensure all the new and exisiting baseboardmanagement connections are valid.
-		err = p.providerKubectlClient.WaitForRufioMachines(ctx, cluster, "5m", "Contactable", constants.EksaSystemNamespace)
+		err = p.providerKubectlClient.WaitForRufioMachines(ctx, cluster, bmcTimeoutStr, "Contactable", constants.EksaSystemNamespace)
 		if err != nil {
 			return fmt.Errorf("waiting for baseboard management to be contactable: %v", err)
 		}
@@ -278,8 +280,11 @@ func (p *Provider) PostMoveManagementToBootstrap(ctx context.Context, bootstrapC
 	// Check if the hardware in the catalogue have a BMCRef. Since we only allow either all hardware with bmc
 	// or no hardware with bmc, its sufficient to check the first hardware.
 	if p.catalogue.TotalHardware() > 0 && p.catalogue.AllHardware()[0].Spec.BMCRef != nil {
+		// Convert bmcTimeout duration to string format for WaitForRufioMachines
+		bmcTimeoutStr := p.bmcTimeout.String()
+
 		// Waiting to ensure all the new and exisiting baseboardmanagement connections are valid.
-		err := p.providerKubectlClient.WaitForRufioMachines(ctx, bootstrapCluster, "5m", "Contactable", constants.EksaSystemNamespace)
+		err := p.providerKubectlClient.WaitForRufioMachines(ctx, bootstrapCluster, bmcTimeoutStr, "Contactable", constants.EksaSystemNamespace)
 		if err != nil {
 			return fmt.Errorf("waiting for baseboard management to be contactable: %v", err)
 		}
