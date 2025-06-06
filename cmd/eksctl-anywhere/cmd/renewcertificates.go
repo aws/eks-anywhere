@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/aws/eks-anywhere/pkg/certificates"
+	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/spf13/cobra"
 )
 
@@ -48,9 +49,20 @@ func (rc *renewCertificatesOptions) renewCertificates(cmd *cobra.Command) error 
 		return err
 	}
 
-	_, err := certificates.ParseConfig(rc.configFile)
+	config, err := certificates.ParseConfig(rc.configFile)
 	if err != nil {
 		return fmt.Errorf("parsing config file: %v", err)
 	}
-	return nil
+
+	cluster := &types.Cluster{
+		Name: config.ClusterName,
+	}
+
+	renewer, err := certificates.NewRenewer()
+	if err != nil {
+		return fmt.Errorf("create renewer: %v", err)
+	}
+
+	// pass empty string for component to renew both etcd and control plane certificates
+	return renewer.RenewCertificates(cmd.Context(), cluster, config, rc.component)
 }

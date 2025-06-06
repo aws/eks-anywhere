@@ -49,14 +49,14 @@ func NewRenewer() (*Renewer, error) {
 	fmt.Printf("Creating backup directory: %s\n", backupDir)
 
 	if err := os.MkdirAll(backupDir, 0755); err != nil {
-		return nil, fmt.Errorf("failed to create backup directory: %v", err)
+		return nil, fmt.Errorf("creating backup directory: %v", err)
 	}
 
 	etcdCertsPath := filepath.Join(backupDir, tempLocalEtcdCertsDir)
 	fmt.Printf("Creating etcd certs directory: %s\n", etcdCertsPath)
 
 	if err := os.MkdirAll(etcdCertsPath, 0755); err != nil {
-		return nil, fmt.Errorf("failed to create etcd certs directory: %v", err)
+		return nil, fmt.Errorf("creating etcd certs directory: %v", err)
 	}
 
 	r := &Renewer{
@@ -75,7 +75,7 @@ func (r *Renewer) RenewCertificates(ctx context.Context, cluster *types.Cluster,
 
 	fmt.Printf("✅ Checking if Kubernetes API server is reachable...\n")
 	if err := r.initKubeClient(); err != nil {
-		return fmt.Errorf("failed to initialize kubernetes client: %v", err)
+		return fmt.Errorf("initializing kubernetes client: %v", err)
 	}
 
 	if err := r.checkAPIServerReachability(ctx); err != nil {
@@ -84,14 +84,14 @@ func (r *Renewer) RenewCertificates(ctx context.Context, cluster *types.Cluster,
 
 	fmt.Printf("✅ Backing up kubeadm-config ConfigMap...\n")
 	if err := r.backupKubeadmConfig(ctx); err != nil {
-		return fmt.Errorf("failed to backup kubeadm config: %v", err)
+		return fmt.Errorf("backing up kubeadm config: %v", err)
 	}
 
 	if component == componentEtcd || component == "" {
 		if len(config.Etcd.Nodes) > 0 {
 			fmt.Printf("Starting etcd certificate renewal process...\n")
 			if err := r.renewEtcdCerts(ctx, config); err != nil {
-				return fmt.Errorf("failed to renew etcd certificates: %v", err)
+				return fmt.Errorf("renewing etcd certificates: %v", err)
 			}
 			fmt.Printf("🎉 Etcd certificate renewal process completed successfully.\n")
 		} else {
@@ -105,7 +105,7 @@ func (r *Renewer) RenewCertificates(ctx context.Context, cluster *types.Cluster,
 		}
 		fmt.Printf("Starting control plane certificate renewal process...\n")
 		if err := r.renewControlPlaneCerts(ctx, config, component); err != nil {
-			return fmt.Errorf("failed to renew control plane certificates: %v", err)
+			return fmt.Errorf("renewing control plane certificates: %v", err)
 		}
 		fmt.Printf("🎉 Control plane certificate renewal process completed successfully.\n")
 	}
@@ -127,12 +127,12 @@ func (r *Renewer) initKubeClient() error {
 	kubeconfig := os.Getenv("KUBECONFIG")
 	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 	if err != nil {
-		return fmt.Errorf("failed to build kubeconfig: %v", err)
+		return fmt.Errorf("building kubeconfig: %v", err)
 	}
 
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		return fmt.Errorf("failed to create kubernetes client: %v", err)
+		return fmt.Errorf("creating kubernetes client: %v", err)
 	}
 
 	r.kubeClient = clientset
@@ -153,12 +153,12 @@ func (r *Renewer) checkAPIServerReachability(ctx context.Context) error {
 func (r *Renewer) backupKubeadmConfig(ctx context.Context) error {
 	cm, err := r.kubeClient.CoreV1().ConfigMaps("kube-system").Get(ctx, "kubeadm-config", metav1.GetOptions{})
 	if err != nil {
-		return fmt.Errorf("failed to get kubeadm-config: %v", err)
+		return fmt.Errorf("getting kubeadm-config: %v", err)
 	}
 
 	backupPath := filepath.Join(r.backupDir, "kubeadm-config.yaml")
 	if err := os.WriteFile(backupPath, []byte(cm.Data["ClusterConfiguration"]), 0600); err != nil {
-		return fmt.Errorf("failed to write kubeadm config backup: %v", err)
+		return fmt.Errorf("writing kubeadm config backup: %v", err)
 	}
 
 	return nil
@@ -167,17 +167,17 @@ func (r *Renewer) backupKubeadmConfig(ctx context.Context) error {
 func (r *Renewer) renewEtcdCerts(ctx context.Context, config *RenewalConfig) error {
 
 	if err := r.initSSHConfig(config.Etcd.SSHUser, config.Etcd.SSHKey, config.Etcd.SSHPasswd); err != nil {
-		return fmt.Errorf("failed to initialize SSH config: %v", err)
+		return fmt.Errorf("initializing SSH config: %v", err)
 	}
 
 	for _, node := range config.Etcd.Nodes {
 		if err := r.renewEtcdNodeCerts(ctx, node, config.Etcd); err != nil {
-			return fmt.Errorf("failed to renew certificates for etcd node %s: %v", node, err)
+			return fmt.Errorf("renewing certificates for etcd node %s: %v", node, err)
 		}
 	}
 
 	if err := r.updateAPIServerEtcdClientSecret(ctx, config.ClusterName); err != nil {
-		return fmt.Errorf("failed to update apiserver-etcd-client secret: %v", err)
+		return fmt.Errorf("updating apiserver-etcd-client secret: %v", err)
 	}
 
 	return nil
@@ -185,13 +185,13 @@ func (r *Renewer) renewEtcdCerts(ctx context.Context, config *RenewalConfig) err
 
 func (r *Renewer) renewControlPlaneCerts(ctx context.Context, config *RenewalConfig, component string) error {
 	if err := r.initSSHConfig(config.ControlPlane.SSHUser, config.ControlPlane.SSHKey, config.ControlPlane.SSHPasswd); err != nil {
-		return fmt.Errorf("failed to initialize SSH config: %v", err)
+		return fmt.Errorf("initializing SSH config: %v", err)
 	}
 
 	// Renew certificate for each control plane node
 	for _, node := range config.ControlPlane.Nodes {
 		if err := r.renewControlPlaneNodeCerts(ctx, node, config, component); err != nil {
-			return fmt.Errorf("failed to renew certificates for control plane node %s: %v", node, err)
+			return fmt.Errorf("renewing certificates for control plane node %s: %v", node, err)
 		}
 	}
 
@@ -202,7 +202,7 @@ func (r *Renewer) initSSHConfig(user, keyPath string, passwd string) error {
 	r.sshKeyPath = keyPath // Store SSH key path
 	key, err := os.ReadFile(keyPath)
 	if err != nil {
-		return fmt.Errorf("failed to read SSH key: %v", err)
+		return fmt.Errorf("reading SSH key: %v", err)
 	}
 
 	var signer ssh.Signer
@@ -214,17 +214,17 @@ func (r *Renewer) initSSHConfig(user, keyPath string, passwd string) error {
 				var passphrase []byte
 				passphrase, err = term.ReadPassword(int(os.Stdin.Fd()))
 				if err != nil {
-					return fmt.Errorf("failed to read passphrase: %v", err)
+					return fmt.Errorf("reading passphrase: %v", err)
 				}
-				fmt.Println() // Print newline after password input
+				fmt.Println()
 				passwd = string(passphrase)
 			}
 			signer, err = ssh.ParsePrivateKeyWithPassphrase(key, []byte(passwd))
 			if err != nil {
-				return fmt.Errorf("failed to parse SSH key with passphrase: %v", err)
+				return fmt.Errorf("parsing SSH key with passphrase: %v", err)
 			}
 		} else {
-			return fmt.Errorf("failed to parse SSH key: %v", err)
+			return fmt.Errorf("parsing SSH key: %v", err)
 		}
 	}
 
@@ -242,7 +242,7 @@ func (r *Renewer) initSSHConfig(user, keyPath string, passwd string) error {
 
 func (r *Renewer) renewEtcdNodeCerts(ctx context.Context, node string, config NodeConfig) error {
 	switch config.OS {
-	case "ubuntu", "rhel", "redhat":
+	case "ubuntu", "redhat":
 		return r.renewEtcdCertsLinux(ctx, node)
 	case "bottlerocket":
 		return r.renewEtcdCertsBottlerocket(ctx, node)
@@ -253,7 +253,7 @@ func (r *Renewer) renewEtcdNodeCerts(ctx context.Context, node string, config No
 
 func (r *Renewer) renewControlPlaneNodeCerts(ctx context.Context, node string, config *RenewalConfig, component string) error {
 	switch config.ControlPlane.OS {
-	case "ubuntu", "rhel", "redhat":
+	case "ubuntu", "redhat":
 		return r.renewControlPlaneCertsLinux(ctx, node, config, component)
 	case "bottlerocket":
 		return r.renewControlPlaneCertsBottlerocket(ctx, node, config, component)
@@ -267,7 +267,7 @@ func (r *Renewer) runCommand(ctx context.Context, client sshClient, cmd string) 
 	go func() {
 		session, err := client.NewSession()
 		if err != nil {
-			done <- fmt.Errorf("failed to create session: %v", err)
+			done <- fmt.Errorf("creating session: %v", err)
 			return
 		}
 		defer session.Close()
@@ -280,10 +280,10 @@ func (r *Renewer) runCommand(ctx context.Context, client sshClient, cmd string) 
 
 	select {
 	case <-ctx.Done():
-		return fmt.Errorf("command cancelled: %v", ctx.Err())
+		return fmt.Errorf("cancelling command: %v", ctx.Err())
 	case err := <-done:
 		if err != nil {
-			return fmt.Errorf("command failed: %v", err)
+			return fmt.Errorf("executing command: %v", err)
 		}
 		return nil
 	}
@@ -299,14 +299,14 @@ func (r *Renewer) runCommandWithOutput(ctx context.Context, client sshClient, cm
 	go func() {
 		session, err := client.NewSession()
 		if err != nil {
-			done <- result{"", fmt.Errorf("failed to create session: %v", err)}
+			done <- result{"", fmt.Errorf("creating session: %v", err)}
 			return
 		}
 		defer session.Close()
 
 		output, err := session.Output(cmd)
 		if err != nil {
-			done <- result{"", fmt.Errorf("command failed: %v", err)}
+			done <- result{"", fmt.Errorf("executing command: %v", err)}
 			return
 		}
 		done <- result{strings.TrimSpace(string(output)), nil}
@@ -314,7 +314,7 @@ func (r *Renewer) runCommandWithOutput(ctx context.Context, client sshClient, cm
 
 	select {
 	case <-ctx.Done():
-		return "", fmt.Errorf("command cancelled: %v", ctx.Err())
+		return "", fmt.Errorf("cancelling command: %v", ctx.Err())
 	case res := <-done:
 		return res.output, res.err
 	}
@@ -325,7 +325,7 @@ func (r *Renewer) cleanup() error {
 
 	chmodCmd := exec.Command("chmod", "-R", "u+w", r.backupDir)
 	if err := chmodCmd.Run(); err != nil {
-		return fmt.Errorf("failed to change permissions: %v", err)
+		return fmt.Errorf("changing permissions: %v", err)
 	}
 
 	return os.RemoveAll(r.backupDir)
