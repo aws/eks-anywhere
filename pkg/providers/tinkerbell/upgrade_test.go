@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	tinkv1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
@@ -704,6 +705,9 @@ func NewPreCoreComponentsUpgradeTestConfig(t *testing.T) *PreCoreComponentsUpgra
 // GetProvider retrieves a new Tinkerbell provider instance build using the mocks initialized
 // in t.
 func (t *PreCoreComponentsUpgradeTestConfig) GetProvider() (*Provider, error) {
+	// Default BMC timeout is 5 minutes
+	bmcTimeout := 5 * time.Minute
+	
 	p, err := NewProvider(
 		t.DatacenterConfig,
 		t.MachineConfigs,
@@ -717,6 +721,7 @@ func (t *PreCoreComponentsUpgradeTestConfig) GetProvider() (*Provider, error) {
 		test.FakeNow,
 		false,
 		false,
+		bmcTimeout,
 	)
 	if err != nil {
 		return nil, err
@@ -728,6 +733,8 @@ func (t *PreCoreComponentsUpgradeTestConfig) GetProvider() (*Provider, error) {
 func newTinkerbellProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, writer filewriter.FileWriter, docker stack.Docker, helm stack.Helm, kubectl ProviderKubectlClient) *Provider {
 	hardwareFile := "./testdata/hardware.csv"
 	forceCleanup := false
+	// Default BMC timeout is 5 minutes
+	bmcTimeout := 5 * time.Minute
 
 	provider, err := NewProvider(
 		datacenterConfig,
@@ -742,6 +749,7 @@ func newTinkerbellProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig
 		test.FakeNow,
 		forceCleanup,
 		false,
+		bmcTimeout,
 	)
 	if err != nil {
 		panic(err)
@@ -1327,6 +1335,91 @@ func TestProviderValidateAvailableHardwareOnlyWorkerOSImageURLUpgradeError(t *te
 	err := provider.validateAvailableHardwareForUpgrade(ctx, clusterSpec, newCluster)
 	if err == nil || !strings.Contains(err.Error(), "for node rollout, minimum hardware count not met for selector '{\"type\":\"worker\"}'") {
 		t.Fatal(err)
+	}
+}
+
+func TestProviderBMCTimeout(t *testing.T) {
+	tests := []struct {
+		name       string
+		bmcTimeout time.Duration
+		expected   string
+	}{
+		{
+			name:       "default timeout",
+			bmcTimeout: 5 * time.Minute,
+			expected:   "5m0s",
+		},
+		{
+			name:       "no timeouts",
+			bmcTimeout: 168 * time.Hour, // 1 week
+			expected:   "168h0m0s",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+			clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
+			datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+			machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+			clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+			docker := stackmocks.NewMockDocker(mockCtrl)
+			helm := stackmocks.NewMockHelm(mockCtrl)
+			kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+			writer := filewritermocks.NewMockFileWriter(mockCtrl)
+
+			// Create a provider with the specified BMC timeout
+			provider, err := NewProvider(
+				datacenterConfig,
+				machineConfigs,
+				clusterSpec.Cluster,
+				"",
+				writer,
+				docker,
+				helm,
+				kubectl,
+				testIP,
+				test.FakeNow,
+				false,
+				false,
+				tt.bmcTimeout,
+			)
+			if err != nil {
+				t.Fatalf("Failed to create provider: %v", err)
+			}
+
+			// Verify the BMC timeout is set correctly
+			if provider.bmcTimeout != tt.bmcTimeout {
+				t.Errorf("Expected BMC timeout %v, got %v", tt.bmcTimeout, provider.bmcTimeout)
+			}
+
+			// Create a mock cluster for testing
+			cluster := &types.Cluster{KubeconfigFile: "kubeconfig-file"}
+
+			// Mock the catalogue to have hardware with BMC references
+			catalogue := hardware.NewCatalogue()
+			hardware := &tinkv1.Hardware{
+				Spec: tinkv1.HardwareSpec{
+					BMCRef: &v1.TypedLocalObjectReference{
+						Kind: "Machine",
+						Name: "test-machine",
+					},
+				},
+			}
+			_ = catalogue.InsertHardware(hardware)
+			provider.catalogue = catalogue
+
+			// Mock the kubectl client to expect a call with the correct timeout string
+			kubectl.EXPECT().
+				WaitForRufioMachines(gomock.Any(), cluster, tt.expected, "Contactable", constants.EksaSystemNamespace).
+				Return(nil)
+
+			// Call the method that uses the BMC timeout
+			err = provider.applyHardware(context.Background(), cluster)
+			if err != nil {
+				t.Errorf("applyHardware failed: %v", err)
+			}
+		})
 	}
 }
 

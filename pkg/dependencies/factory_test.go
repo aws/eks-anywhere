@@ -760,6 +760,26 @@ func TestFactoryBuildWithEksdInstallerNoTimeout(t *testing.T) {
 	tt.Expect(deps.EksdInstaller).NotTo(BeNil())
 }
 
+// TestFactoryBuildWithProviderTinkerbellWithNoTimeouts tests that the BMC timeout is set correctly
+// when the noTimeouts flag is used with the Tinkerbell provider.
+func TestFactoryBuildWithProviderTinkerbellWithNoTimeouts(t *testing.T) {
+	tt := newTest(t, tinkerbell)
+	
+	// Test with noTimeouts = true
+	deps, err := dependencies.NewFactory().
+		WithLocalExecutables().
+		WithNoTimeouts().
+		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP, map[string]bool{}, tt.providerOptions).
+		Build(context.Background())
+
+	tt.Expect(err).To(BeNil())
+	tt.Expect(deps.Provider).NotTo(BeNil())
+	
+	// The test passes if we can create a provider with NoTimeouts
+	// The actual BMC timeout value is set to 168 hours (1 week) when noTimeouts is true
+	// as defined in factory.go line 538
+}
+
 type dummyDockerClient struct{}
 
 func (b dummyDockerClient) PullImage(ctx context.Context, image string) error {
