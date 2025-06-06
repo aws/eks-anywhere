@@ -4664,10 +4664,7 @@ func TestVSphereKubernetes128UbuntuTo129InPlaceUpgradeCPOnly(t *testing.T) {
 	)
 	runInPlaceUpgradeFlow(
 		test,
-		framework.WithClusterUpgrade(
-			api.WithKubernetesVersion(kube129),
-			api.WithLicenseToken(licenseToken),
-		),
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(kube129)),
 		provider.WithProviderUpgrade(provider.Ubuntu129TemplateForMachineConfig(providers.GetControlPlaneNodeName(test.ClusterName))),
 	)
 }
