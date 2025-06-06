@@ -4664,7 +4664,10 @@ func TestVSphereKubernetes128UbuntuTo129InPlaceUpgradeCPOnly(t *testing.T) {
 	)
 	runInPlaceUpgradeFlow(
 		test,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(kube129)),
+		framework.WithClusterUpgrade(
+			api.WithKubernetesVersion(kube129),
+			api.WithLicenseToken(licenseToken),
+		),
 		provider.WithProviderUpgrade(provider.Ubuntu129TemplateForMachineConfig(providers.GetControlPlaneNodeName(test.ClusterName))),
 	)
 }
@@ -5815,11 +5818,13 @@ func TestVSphereKubernetes130To131RedhatUpgradeFromLatestMinorRelease(t *testing
 
 func TestVSphereKubernetes128To129Redhat9UpgradeFromLatestMinorRelease(t *testing.T) {
 	licenseToken := framework.GetLicenseToken()
+	licenseToken1 := framework.GetLicenseToken()
 	release := latestMinorRelease(t)
 	useBundlesOverride := false
 	provider := framework.NewVSphere(t,
 		framework.WithVSphereFillers(
 			api.WithOsFamilyForAllMachines(v1alpha1.RedHat),
+			api.WithLicenseToken(licenseToken1),
 		),
 		framework.WithKubeVersionAndOSForRelease(v1alpha1.Kube128, framework.RedHat9, release, useBundlesOverride),
 	)
