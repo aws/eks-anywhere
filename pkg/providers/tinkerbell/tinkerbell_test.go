@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
@@ -117,6 +118,8 @@ func newProviderTest(t *testing.T) *providerTest {
 
 func newProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, writer filewriter.FileWriter, docker stack.Docker, helm stack.Helm, kubectl ProviderKubectlClient, forceCleanup bool) *Provider {
 	hardwareFile := "./testdata/hardware.csv"
+	// Default BMC timeout is 5 minutes
+	bmcTimeout := 5 * time.Minute
 	provider, err := NewProvider(
 		datacenterConfig,
 		machineConfigs,
@@ -130,6 +133,7 @@ func newProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineC
 		test.FakeNow,
 		forceCleanup,
 		false,
+		bmcTimeout,
 	)
 	if err != nil {
 		panic(err)
@@ -2183,6 +2187,7 @@ func TestTinkerbellProviderGetMachineConfigsWithMismatchedAndExternalEtcd(t *tes
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 
 	hardwareFile := "./testdata/hardware.csv"
+	bmcTimeout := 5 * time.Minute
 	_, err := NewProvider(
 		datacenterConfig,
 		machineConfigs,
@@ -2196,6 +2201,7 @@ func TestTinkerbellProviderGetMachineConfigsWithMismatchedAndExternalEtcd(t *tes
 		test.FakeNow,
 		forceCleanup,
 		false,
+		bmcTimeout,
 	)
 
 	expectedErrorMessage := fmt.Sprintf(referrencedMachineConfigsAvailabilityErrMsg, "test-etcd")
@@ -2247,6 +2253,7 @@ func TestTinkerbellProviderGetMachineConfigsWithMismatchedMachineConfig(t *testi
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 
 	hardwareFile := "./testdata/hardware.csv"
+	bmcTimeout := 5 * time.Minute
 	_, err := NewProvider(
 		datacenterConfig,
 		machineConfigs,
@@ -2260,6 +2267,7 @@ func TestTinkerbellProviderGetMachineConfigsWithMismatchedMachineConfig(t *testi
 		test.FakeNow,
 		forceCleanup,
 		false,
+		bmcTimeout,
 	)
 
 	expectedErrorMessage := fmt.Sprintf(referrencedMachineConfigsAvailabilityErrMsg, "single-node-cp")
