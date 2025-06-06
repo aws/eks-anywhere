@@ -1421,6 +1421,17 @@ func TestTinkerbellKubernetes132UbuntuSimpleFlow(t *testing.T) {
 	runTinkerbellSimpleFlow(test)
 }
 
+func TestTinkerbellKubernetes133UbuntuSimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithUbuntu133Tinkerbell()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133)),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(1),
+	)
+	runTinkerbellSimpleFlow(test)
+}
+
 func TestTinkerbellKubernetes128Ubuntu2204SimpleFlow(t *testing.T) {
 	licenseToken := framework.GetLicenseToken()
 	provider := framework.NewTinkerbell(t)
@@ -1499,6 +1510,23 @@ func TestTinkerbellKubernetes132Ubuntu2204SimpleFlow(t *testing.T) {
 		framework.WithWorkerHardware(1),
 	).WithClusterConfig(
 		provider.WithKubeVersionAndOS(v1alpha1.Kube132, framework.Ubuntu2204, nil),
+		api.ClusterToConfigFiller(
+			api.WithLicenseToken(licenseToken),
+		),
+	)
+	runTinkerbellSimpleFlowWithoutClusterConfigGeneration(test)
+}
+
+func TestTinkerbellKubernetes133Ubuntu2204SimpleFlow(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	provider := framework.NewTinkerbell(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(1),
+	).WithClusterConfig(
+		provider.WithKubeVersionAndOS(v1alpha1.Kube133, framework.Ubuntu2204, nil),
 		api.ClusterToConfigFiller(
 			api.WithLicenseToken(licenseToken),
 		),
@@ -1697,6 +1725,17 @@ func TestTinkerbellKubernetes132RedHatSimpleFlow(t *testing.T) {
 	runTinkerbellSimpleFlow(test)
 }
 
+func TestTinkerbellKubernetes133RedHatSimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithRedHat133Tinkerbell()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133)),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(1),
+	)
+	runTinkerbellSimpleFlow(test)
+}
+
 func TestTinkerbellKubernetes128RedHat9SimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -1752,11 +1791,33 @@ func TestTinkerbellKubernetes132RedHat9SimpleFlow(t *testing.T) {
 	runTinkerbellSimpleFlow(test)
 }
 
+func TestTinkerbellKubernetes133RedHat9SimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithRedHat9133Tinkerbell()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133)),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(1),
+	)
+	runTinkerbellSimpleFlow(test)
+}
+
 func TestTinkerbellKubernetes128BottleRocketSimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(1),
+	)
+	runTinkerbellSimpleFlow(test)
+}
+
+func TestTinkerbellKubernetes133BottleRocketSimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133)),
 		framework.WithControlPlaneHardware(1),
 		framework.WithWorkerHardware(1),
 	)

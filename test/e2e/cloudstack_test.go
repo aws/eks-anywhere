@@ -2341,6 +2341,24 @@ func TestCloudStackKubernetes132RedHat9SimpleFlow(t *testing.T) {
 	runSimpleFlow(test)
 }
 
+func TestCloudStackKubernetes133RedHat8SimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewCloudStack(t, framework.WithCloudStackRedhat133()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133)),
+	)
+	runSimpleFlow(test)
+}
+
+func TestCloudStackKubernetes133RedHat9SimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes133()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133)),
+	)
+	runSimpleFlow(test)
+}
+
 func TestCloudStackKubernetes128ThreeReplicasFiveWorkersSimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
