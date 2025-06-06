@@ -9,7 +9,7 @@ func (r *Renewer) renewControlPlaneCertsLinux(ctx context.Context, node string, 
 	fmt.Printf("Processing control plane node: %s...\n", node)
 	client, err := r.sshDialer("tcp", fmt.Sprintf("%s:22", node), r.sshConfig)
 	if err != nil {
-		return fmt.Errorf("failed to connect to node %s: %v", node, err)
+		return fmt.Errorf("connecting to node %s: %v", node, err)
 	}
 	defer client.Close()
 
@@ -29,7 +29,7 @@ done`, r.backupDir, ubuntuControlPlaneCertDir)
 			ubuntuControlPlaneCertDir, r.backupDir)
 	}
 	if err := r.runCommand(ctx, client, backupCmd); err != nil {
-		return fmt.Errorf("failed to backup certificates: %v", err)
+		return fmt.Errorf("backing up certificates: %v", err)
 	}
 
 	// Renew certificates
@@ -43,14 +43,14 @@ done`, r.backupDir, ubuntuControlPlaneCertDir)
         done`
 	}
 	if err := r.runCommand(ctx, client, renewCmd); err != nil {
-		return fmt.Errorf("failed to renew certificates: %v", err)
+		return fmt.Errorf("renewing certificates: %v", err)
 	}
 
 	// Validate certificates
 	fmt.Printf("Validating certificates on node %s...\n", node)
 	validateCmd := "sudo kubeadm certs check-expiration"
 	if err := r.runCommand(ctx, client, validateCmd); err != nil {
-		return fmt.Errorf("certificate validation failed: %v", err)
+		return fmt.Errorf("validating certificates: %v", err)
 	}
 
 	// Restart
@@ -61,7 +61,7 @@ done`, r.backupDir, ubuntuControlPlaneCertDir)
 		"sudo mv /tmp/manifests/* %s/",
 		ubuntuControlPlaneManifests, ubuntuControlPlaneManifests)
 	if err := r.runCommand(ctx, client, restartCmd); err != nil {
-		return fmt.Errorf("failed to restart control plane components: %v", err)
+		return fmt.Errorf("restarting control plane components: %v", err)
 	}
 
 	fmt.Printf("✅ Completed renewing certificate for the control node: %s.\n", node)
@@ -73,7 +73,7 @@ func (r *Renewer) renewEtcdCertsLinux(ctx context.Context, node string) error {
 	fmt.Printf("Processing etcd node: %s...\n", node)
 	client, err := r.sshDialer("tcp", fmt.Sprintf("%s:22", node), r.sshConfig)
 	if err != nil {
-		return fmt.Errorf("failed to connect to node %s: %v", node, err)
+		return fmt.Errorf("connecting to node %s: %v", node, err)
 	}
 	defer client.Close()
 
@@ -82,14 +82,14 @@ func (r *Renewer) renewEtcdCertsLinux(ctx context.Context, node string) error {
 	backupCmd := fmt.Sprintf("cd %s && sudo cp -r pki pki.bak_%s && sudo rm -rf pki/* && sudo cp pki.bak_%s/ca.* pki/",
 		ubuntuEtcdCertDir, r.backupDir, r.backupDir)
 	if err := r.runCommand(ctx, client, backupCmd); err != nil {
-		return fmt.Errorf("failed to backup certificates: %v", err)
+		return fmt.Errorf("backing up certificates: %v", err)
 	}
 
 	// Renew certificates
 	fmt.Printf("# Renew certificates\n")
 	renewCmd := "sudo etcdadm join phase certificates http://eks-a-etcd-dumb-url"
 	if err := r.runCommand(ctx, client, renewCmd); err != nil {
-		return fmt.Errorf("failed to renew certificates: %v", err)
+		return fmt.Errorf("renewing certificates: %v", err)
 	}
 
 	// Validate certificates
@@ -100,13 +100,13 @@ func (r *Renewer) renewEtcdCertsLinux(ctx context.Context, node string) error {
 		"endpoint health",
 		ubuntuEtcdCertDir, ubuntuEtcdCertDir, ubuntuEtcdCertDir)
 	if err := r.runCommand(ctx, client, validateCmd); err != nil {
-		return fmt.Errorf("certificate validation failed: %v", err)
+		return fmt.Errorf("validating certificates: %v", err)
 	}
 
 	// Copy certificates to local
 	fmt.Printf("Copying certificates from node %s...\n", node)
 	if err := r.copyEtcdCerts(ctx, client, node); err != nil {
-		return fmt.Errorf("failed to copy certificates1: %v", err)
+		return fmt.Errorf("copying certificates: %v", err)
 	}
 
 	fmt.Printf("✅ Completed renewing certificate for the ETCD node: %s.\n", node)
