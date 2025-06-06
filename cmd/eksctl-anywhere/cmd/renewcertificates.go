@@ -2,10 +2,10 @@ package cmd
 
 import (
 	"fmt"
-
-	"github.com/spf13/cobra"
+	"log"
 
 	"github.com/aws/eks-anywhere/pkg/certificates"
+	"github.com/spf13/cobra"
 )
 
 type renewCertificatesOptions struct {
@@ -30,6 +30,10 @@ func init() {
 	renewCmd.AddCommand(renewCertificatesCmd)
 	renewCertificatesCmd.Flags().StringVarP(&rc.configFile, "config", "f", "", "Config file containing node and SSH information")
 	renewCertificatesCmd.Flags().StringVarP(&rc.component, "component", "c", "", "Component to renew certificates for (etcd or control-plane). If not specified, renews both.")
+	if err := renewCertificatesCmd.MarkFlagRequired("config"); err != nil {
+		log.Fatalf("marking config as required: %s", err)
+	}
+
 }
 
 func validateComponent(component string) error {
@@ -42,10 +46,6 @@ func validateComponent(component string) error {
 func (rc *renewCertificatesOptions) renewCertificates(cmd *cobra.Command) error {
 	if err := validateComponent(rc.component); err != nil {
 		return err
-	}
-
-	if rc.configFile == "" {
-		return fmt.Errorf("must specify --config")
 	}
 
 	_, err := certificates.ParseConfig(rc.configFile)

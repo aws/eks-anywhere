@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"gopkg.in/yaml.v2"
 )
 
@@ -70,7 +71,7 @@ func validateNodeConfig(config *NodeConfig) error {
 	if config.OS == "" {
 		return fmt.Errorf("OS is required")
 	}
-	if config.OS != "ubuntu" && config.OS != "rhel" && config.OS != "redhat" && config.OS != "bottlerocket" {
+	if config.OS != string(v1alpha1.Ubuntu) && config.OS != string(v1alpha1.RedHat) && config.OS != string(v1alpha1.Bottlerocket) {
 		return fmt.Errorf("unsupported OS %q", config.OS)
 	}
 	if config.SSHKey == "" {
@@ -81,7 +82,7 @@ func validateNodeConfig(config *NodeConfig) error {
 	}
 
 	if _, err := os.Stat(config.SSHKey); err != nil {
-		return fmt.Errorf("SSH key file: %v", err)
+		return fmt.Errorf("retrieving SSH key file information: %v", err)
 	}
 
 	return nil
