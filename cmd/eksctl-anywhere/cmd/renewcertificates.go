@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/aws/eks-anywhere/pkg/certificates"
 	"github.com/spf13/cobra"
+
+	"github.com/aws/eks-anywhere/pkg/certificates"
 )
 
 type renewCertificatesOptions struct {
@@ -21,7 +22,7 @@ var renewCertificatesCmd = &cobra.Command{
 	Long:         "Renew external ETCD and control plane certificates",
 	PreRunE:      bindFlagsToViper,
 	SilenceUsage: true,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, _ []string) error {
 		return rc.renewCertificates(cmd)
 	},
 }
@@ -33,7 +34,6 @@ func init() {
 	if err := renewCertificatesCmd.MarkFlagRequired("config"); err != nil {
 		log.Fatalf("marking config as required: %s", err)
 	}
-
 }
 
 func validateComponent(component string) error {
@@ -43,7 +43,7 @@ func validateComponent(component string) error {
 	return nil
 }
 
-func (rc *renewCertificatesOptions) renewCertificates(cmd *cobra.Command) error {
+func (rc *renewCertificatesOptions) renewCertificates(_ *cobra.Command) error {
 	if err := validateComponent(rc.component); err != nil {
 		return err
 	}
