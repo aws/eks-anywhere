@@ -1,7 +1,9 @@
+// Package bottlerocket provides utilities for managing certificates on Bottlerocket OS nodes.
 package bottlerocket
 
 import "fmt"
 
+// ControlPlaneCommands contains shell commands for certificate operations on control plane nodes.
 type ControlPlaneCommands struct {
 	ShelliePrefix string
 	BackupCerts   string
@@ -11,6 +13,7 @@ type ControlPlaneCommands struct {
 	RestartPods   string
 }
 
+// ControlPlaneCommandBuilder builds shell commands for certificate operations on control plane nodes.
 type ControlPlaneCommandBuilder struct {
 	BackupDir       string
 	CertDir         string
@@ -18,6 +21,7 @@ type ControlPlaneCommandBuilder struct {
 	HasExternalEtcd bool
 }
 
+// NewControlPlaneCommandBuilder creates a new builder for control plane certificate commands.
 func NewControlPlaneCommandBuilder(backupDir, certDir, component string, hasExternalEtcd bool) *ControlPlaneCommandBuilder {
 	return &ControlPlaneCommandBuilder{
 		BackupDir:       backupDir,
@@ -27,6 +31,7 @@ func NewControlPlaneCommandBuilder(backupDir, certDir, component string, hasExte
 	}
 }
 
+// BuildCommands creates a set of commands for control plane certificate operations.
 func (b *ControlPlaneCommandBuilder) BuildCommands() *ControlPlaneCommands {
 	return &ControlPlaneCommands{
 		ShelliePrefix: b.buildShelliePrefix(),
@@ -38,6 +43,7 @@ func (b *ControlPlaneCommandBuilder) BuildCommands() *ControlPlaneCommands {
 	}
 }
 
+// EtcdCommands contains shell commands for certificate operations on etcd nodes.
 type EtcdCommands struct {
 	ShelliePrefix string
 	ImagePull     string
@@ -47,11 +53,13 @@ type EtcdCommands struct {
 	Cleanup       string
 }
 
+// EtcdCommandBuilder builds shell commands for certificate operations on etcd nodes.
 type EtcdCommandBuilder struct {
 	BackupDir string
 	TempDir   string
 }
 
+// NewEtcdCommandBuilder creates a new builder for etcd certificate commands.
 func NewEtcdCommandBuilder(backupDir, tempDir string) *EtcdCommandBuilder {
 	return &EtcdCommandBuilder{
 		BackupDir: backupDir,
@@ -59,7 +67,7 @@ func NewEtcdCommandBuilder(backupDir, tempDir string) *EtcdCommandBuilder {
 	}
 }
 
-// all etcd commands
+// BuildCommands creates a set of commands for etcd certificate operations.
 func (b *EtcdCommandBuilder) BuildCommands() *EtcdCommands {
 	return &EtcdCommands{
 		ShelliePrefix: b.buildShelliePrefix(),
@@ -71,6 +79,7 @@ func (b *EtcdCommandBuilder) BuildCommands() *EtcdCommands {
 	}
 }
 
+// CertTransferCommands contains shell commands for transferring certificates to nodes.
 type CertTransferCommands struct {
 	ShelliePrefix    string
 	CreateDir        string
@@ -79,12 +88,14 @@ type CertTransferCommands struct {
 	WriteKey         string
 }
 
+// CertTransferBuilder builds shell commands for transferring certificates to nodes.
 type CertTransferBuilder struct {
 	TempDir     string
 	Certificate string
 	Key         string
 }
 
+// NewCertTransferBuilder creates a new builder for certificate transfer commands.
 func NewCertTransferBuilder(tempDir, certificate, key string) *CertTransferBuilder {
 	return &CertTransferBuilder{
 		TempDir:     tempDir,
@@ -93,7 +104,7 @@ func NewCertTransferBuilder(tempDir, certificate, key string) *CertTransferBuild
 	}
 }
 
-// certificate transfer commands
+// BuildCommands creates a set of commands for certificate transfer operations.
 func (b *CertTransferBuilder) BuildCommands() *CertTransferCommands {
 	return &CertTransferCommands{
 		ShelliePrefix:    b.buildShelliePrefix(),
@@ -104,23 +115,26 @@ func (b *CertTransferBuilder) BuildCommands() *CertTransferCommands {
 	}
 }
 
+// CertReadCommands contains shell commands for reading certificates from nodes.
 type CertReadCommands struct {
 	ListFiles string
 	ReadCert  string
 	ReadKey   string
 }
 
+// CertReadBuilder builds shell commands for reading certificates from nodes.
 type CertReadBuilder struct {
 	TempDir string
 }
 
+// NewCertReadBuilder creates a new builder for certificate read commands.
 func NewCertReadBuilder(tempDir string) *CertReadBuilder {
 	return &CertReadBuilder{
 		TempDir: tempDir,
 	}
 }
 
-// certificate read commands
+// BuildCommands creates a set of commands for certificate read operations.
 func (b *CertReadBuilder) BuildCommands() *CertReadCommands {
 	return &CertReadCommands{
 		ListFiles: b.buildListFiles(),
@@ -143,10 +157,9 @@ for f in $(find . -type f ! -path './etcd/*'); do
     mkdir -p $(dirname '/etc/kubernetes/pki.bak_%[1]s/'$f)
     cp $f '/etc/kubernetes/pki.bak_%[1]s/'$f
 done`, b.BackupDir, b.CertDir)
-	} else {
-		return fmt.Sprintf("cp -r '%s' '/etc/kubernetes/pki.bak_%s'",
-			b.CertDir, b.BackupDir)
 	}
+	return fmt.Sprintf("cp -r '%s' '/etc/kubernetes/pki.bak_%s'",
+		b.CertDir, b.BackupDir)
 }
 
 func (b *ControlPlaneCommandBuilder) buildImagePull() string {
