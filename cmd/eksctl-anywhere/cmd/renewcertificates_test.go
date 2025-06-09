@@ -295,3 +295,87 @@ invalid: yaml: :
 		})
 	}
 }
+
+// TestRenewCertificatesRunE tests the RunE function of the renewCertificatesCmd.
+func TestRenewCertificatesRunE(t *testing.T) {
+	// Setup SSH key file
+	cleanup := setupSSHKeyFile(t)
+	defer cleanup()
+
+	// Define test cases
+	tests := []struct {
+		name        string
+		configFile  string
+		component   string
+		configYaml  string
+		expectError bool
+		errorMsg    string
+	}{
+		{
+			name:        "valid config with valid component",
+			component:   "etcd",
+			expectError: false,
+			configYaml: `
+clusterName: test-cluster
+controlPlane:
+  nodes:
+  - 192.168.1.10
+  os: ubuntu
+  sshKey: /tmp/test-key
+  sshUser: ec2-user
+etcd:
+  nodes:
+  - 192.168.1.20
+  os: ubuntu
+  sshKey: /tmp/test-key
+  sshUser: ec2-user
+`,
+		},
+		{
+			name:        "invalid component",
+			component:   "invalid",
+			expectError: true,
+			errorMsg:    "invalid component",
+			configYaml: `
+clusterName: test-cluster
+controlPlane:
+  nodes:
+  - 192.168.1.10
+  os: ubuntu
+  sshKey: /tmp/test-key
+  sshUser: ec2-user
+`,
+		},
+	}
+
+	// Run tests
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			originalRC := rc
+			defer func() { rc = originalRC }()
+
+			var configFile string
+			var fileCleanup func()
+
+			if tt.configFile != "" {
+				configFile = tt.configFile
+			} else if tt.configYaml != "" {
+				configFile, fileCleanup = createConfigFileFromYAML(t, tt.configYaml)
+				defer fileCleanup()
+			}
+
+			rc = &renewCertificatesOptions{
+				configFile: configFile,
+				component:  tt.component,
+			}
+
+			cmd := &cobra.Command{}
+
+			runE := renewCertificatesCmd.RunE
+
+			err := runE(cmd, []string{})
+
+			checkTestError(t, err, tt.expectError, tt.errorMsg)
+		})
+	}
+}
