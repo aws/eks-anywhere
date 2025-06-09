@@ -68,7 +68,7 @@ spec:
       name: {{.controlPlaneTemplateName}}
   kubeadmConfigSpec:
     clusterConfiguration:
-{{- if (ge (atoi $kube_minor_version) 29) }}
+{{- if (and (ge (atoi $kube_minor_version) 29) (lt (atoi $kube_minor_version) 33)) }}
       featureGates:
         EtcdLearnerMode: false
 {{- end }}
@@ -98,7 +98,9 @@ spec:
         {{- toYaml . | nindent 8 }}
         {{- end }}
         extraArgs:
+{{- if (lt (atoi $kube_minor_version) 33) }}
           cloud-provider: external
+{{- end }}
           audit-policy-file: /etc/kubernetes/audit-policy.yaml
           audit-log-path: /var/log/kubernetes/api-audit.log
           audit-log-maxage: "30"

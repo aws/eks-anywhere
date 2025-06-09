@@ -203,7 +203,7 @@ func wantKubeadmControlPlane(kubeVersion v1alpha1.KubernetesVersion) *controlpla
 
 	if kubeVersion == "1.29" {
 		kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.FeatureGates = map[string]bool{
-			"EtcdLearnerMode": false,
+			snow.FgEtcdLearner: false,
 		}
 	}
 
@@ -1232,4 +1232,14 @@ func TestEtcdadmClusterUnsupportedOS(t *testing.T) {
 	got := snow.EtcdadmCluster(tt.logger, tt.clusterSpec, etcdMachineTemplates)
 	want := wantEtcdCluster()
 	tt.Expect(got).To(Equal(want))
+}
+
+func TestKubeadmControlPlaneBottlerocketEtcdLearnerMode(t *testing.T) {
+	tt := newApiBuilerTest(t)
+	tt.clusterSpec.Cluster.Spec.KubernetesVersion = "1.33"
+	tt.clusterSpec.SnowMachineConfig("test-cp").Spec.OSFamily = v1alpha1.Bottlerocket
+	controlPlaneMachineTemplate := snow.MachineTemplate("snow-test-control-plane-1", tt.machineConfigs["test-cp"], nil)
+	got, err := snow.KubeadmControlPlane(tt.logger, tt.clusterSpec, controlPlaneMachineTemplate)
+	tt.Expect(err).To(Succeed())
+	tt.Expect(got.Spec.KubeadmConfigSpec.ClusterConfiguration.FeatureGates).NotTo(HaveKey(snow.FgEtcdLearner))
 }
