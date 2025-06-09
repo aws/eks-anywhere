@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
@@ -32,8 +33,9 @@ import (
 )
 
 const (
-	testDataDir = "testdata"
-	testIP      = "5.6.7.8"
+	testDataDir       = "testdata"
+	testIP            = "5.6.7.8"
+	defaultBMCTimeout = "5m0s"
 )
 
 func givenClusterSpec(t *testing.T, fileName string) *cluster.Spec {
@@ -117,6 +119,8 @@ func newProviderTest(t *testing.T) *providerTest {
 
 func newProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, writer filewriter.FileWriter, docker stack.Docker, helm stack.Helm, kubectl ProviderKubectlClient, forceCleanup bool) *Provider {
 	hardwareFile := "./testdata/hardware.csv"
+	// Default BMC timeout is 5 minutes
+	bmcTimeout := 5 * time.Minute
 	provider, err := NewProvider(
 		datacenterConfig,
 		machineConfigs,
@@ -130,6 +134,7 @@ func newProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineC
 		test.FakeNow,
 		forceCleanup,
 		false,
+		bmcTimeout,
 	)
 	if err != nil {
 		panic(err)
@@ -680,7 +685,7 @@ func TestPostBootstrapSetupSuccess(t *testing.T) {
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 
 	kubectl.EXPECT().ApplyKubeSpecFromBytesForce(ctx, cluster, gomock.Any())
-	kubectl.EXPECT().WaitForRufioMachines(ctx, cluster, "5m", "Contactable", gomock.Any()).MaxTimes(2)
+	kubectl.EXPECT().WaitForRufioMachines(ctx, cluster, defaultBMCTimeout, "Contactable", gomock.Any()).MaxTimes(2)
 
 	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
 	if err := provider.readCSVToCatalogue(); err != nil {
@@ -710,7 +715,7 @@ func TestPostBootstrapSetupWaitForRufioMachinesFail(t *testing.T) {
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 
 	kubectl.EXPECT().ApplyKubeSpecFromBytesForce(ctx, cluster, gomock.Any())
-	kubectl.EXPECT().WaitForRufioMachines(ctx, cluster, "5m", "Contactable", gomock.Any()).Return(wantError)
+	kubectl.EXPECT().WaitForRufioMachines(ctx, cluster, defaultBMCTimeout, "Contactable", gomock.Any()).Return(wantError)
 
 	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
 	if err := provider.readCSVToCatalogue(); err != nil {
@@ -736,7 +741,7 @@ func TestPostMoveManagementToBootstrapSuccess(t *testing.T) {
 	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 
-	kubectl.EXPECT().WaitForRufioMachines(ctx, cluster, "5m", "Contactable", gomock.Any()).Return(nil).MaxTimes(2)
+	kubectl.EXPECT().WaitForRufioMachines(ctx, cluster, defaultBMCTimeout, "Contactable", gomock.Any()).Return(nil).MaxTimes(2)
 
 	tt := []struct {
 		name            string
@@ -785,7 +790,7 @@ func TestPostMoveManagementToBootstrapWaitForRufioMachinesFail(t *testing.T) {
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
 
-	kubectl.EXPECT().WaitForRufioMachines(ctx, cluster, "5m", "Contactable", gomock.Any()).Return(wantError)
+	kubectl.EXPECT().WaitForRufioMachines(ctx, cluster, defaultBMCTimeout, "Contactable", gomock.Any()).Return(wantError)
 	if err := provider.readCSVToCatalogue(); err != nil {
 		t.Fatalf("failed to read hardware csv: %v", err)
 	}
@@ -1278,7 +1283,7 @@ func TestSetupAndValidateCreateWorkloadClusterSuccess(t *testing.T) {
 	kubectl.EXPECT().GetEksaCluster(ctx, clusterSpec.ManagementCluster, clusterSpec.ManagementCluster.Name).Return(clusterSpec.Cluster, nil)
 	kubectl.EXPECT().GetEksaTinkerbellDatacenterConfig(ctx, datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(datacenterConfig, nil)
 	kubectl.EXPECT().ApplyKubeSpecFromBytesForce(ctx, clusterSpec.ManagementCluster, gomock.Any())
-	kubectl.EXPECT().WaitForRufioMachines(ctx, clusterSpec.ManagementCluster, "5m", "Contactable", constants.EksaSystemNamespace)
+	kubectl.EXPECT().WaitForRufioMachines(ctx, clusterSpec.ManagementCluster, defaultBMCTimeout, "Contactable", constants.EksaSystemNamespace)
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 	if err != nil {
@@ -1326,7 +1331,7 @@ func TestSetupAndValidateCreateWorkloadClusterDifferentNamespaceSuccess(t *testi
 	kubectl.EXPECT().GetEksaCluster(ctx, clusterSpec.ManagementCluster, clusterSpec.ManagementCluster.Name).Return(managementCluster, nil)
 	kubectl.EXPECT().GetEksaTinkerbellDatacenterConfig(ctx, datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, managementCluster.Namespace).Return(datacenterConfig, nil)
 	kubectl.EXPECT().ApplyKubeSpecFromBytesForce(ctx, clusterSpec.ManagementCluster, gomock.Any())
-	kubectl.EXPECT().WaitForRufioMachines(ctx, clusterSpec.ManagementCluster, "5m", "Contactable", constants.EksaSystemNamespace)
+	kubectl.EXPECT().WaitForRufioMachines(ctx, clusterSpec.ManagementCluster, defaultBMCTimeout, "Contactable", constants.EksaSystemNamespace)
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 	if err != nil {
@@ -1636,7 +1641,7 @@ func TestSetupAndValidateUpgradeWorkloadClusterErrorBMC(t *testing.T) {
 
 	kubectl.EXPECT().ApplyKubeSpecFromBytesForce(ctx, clusterSpec.ManagementCluster, gomock.Any())
 
-	kubectl.EXPECT().WaitForRufioMachines(ctx, cluster, "5m", "Contactable", gomock.Any()).Return(fmt.Errorf("error"))
+	kubectl.EXPECT().WaitForRufioMachines(ctx, cluster, defaultBMCTimeout, "Contactable", gomock.Any()).Return(fmt.Errorf("error"))
 
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
 	assertError(t, "waiting for baseboard management to be contactable: error", err)
@@ -2151,7 +2156,7 @@ func TestTinkerbellProvider_GenerateCAPISpecForUpgrade_RegistryMirror(t *testing
 		ApplyKubeSpecFromBytesForce(ctx, cluster, gomock.Any()).
 		Return(nil)
 	kubectl.EXPECT().
-		WaitForRufioMachines(ctx, cluster, "5m", "Contactable", gomock.Any()).
+		WaitForRufioMachines(ctx, cluster, defaultBMCTimeout, "Contactable", gomock.Any()).
 		Return(nil)
 
 	provider := newProvider(datacenterConfig, machineConfigs, updatedClusterSpec.Cluster, writer, docker, helm, kubectl, false)
@@ -2183,6 +2188,7 @@ func TestTinkerbellProviderGetMachineConfigsWithMismatchedAndExternalEtcd(t *tes
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 
 	hardwareFile := "./testdata/hardware.csv"
+	bmcTimeout := 5 * time.Minute
 	_, err := NewProvider(
 		datacenterConfig,
 		machineConfigs,
@@ -2196,6 +2202,7 @@ func TestTinkerbellProviderGetMachineConfigsWithMismatchedAndExternalEtcd(t *tes
 		test.FakeNow,
 		forceCleanup,
 		false,
+		bmcTimeout,
 	)
 
 	expectedErrorMessage := fmt.Sprintf(referrencedMachineConfigsAvailabilityErrMsg, "test-etcd")
@@ -2247,6 +2254,7 @@ func TestTinkerbellProviderGetMachineConfigsWithMismatchedMachineConfig(t *testi
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 
 	hardwareFile := "./testdata/hardware.csv"
+	bmcTimeout := 5 * time.Minute
 	_, err := NewProvider(
 		datacenterConfig,
 		machineConfigs,
@@ -2260,6 +2268,7 @@ func TestTinkerbellProviderGetMachineConfigsWithMismatchedMachineConfig(t *testi
 		test.FakeNow,
 		forceCleanup,
 		false,
+		bmcTimeout,
 	)
 
 	expectedErrorMessage := fmt.Sprintf(referrencedMachineConfigsAvailabilityErrMsg, "single-node-cp")
@@ -2334,7 +2343,7 @@ func TestTinkerbellProvider_GenerateCAPISpecForUpgrade_CertBundles(t *testing.T)
 		ApplyKubeSpecFromBytesForce(ctx, cluster, gomock.Any()).
 		Return(nil)
 	kubectl.EXPECT().
-		WaitForRufioMachines(ctx, cluster, "5m", "Contactable", gomock.Any()).
+		WaitForRufioMachines(ctx, cluster, defaultBMCTimeout, "Contactable", gomock.Any()).
 		Return(nil)
 
 	provider := newProvider(datacenterConfig, machineConfigs, updatedClusterSpec.Cluster, writer, docker, helm, kubectl, false)
