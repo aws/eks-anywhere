@@ -10,6 +10,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/aws/eks-anywhere/pkg/certificates/bottlerocket"
 )
 
 const (
@@ -20,7 +22,7 @@ const (
 func (r *Renewer) renewControlPlaneCertsBottlerocket(ctx context.Context, node string, config *RenewalConfig, component string) error {
 	fmt.Printf("Processing control plane node: %s...\n", node)
 
-	// for renew control panel only
+	// for renew control panel only.
 	if component == componentControlPlane && len(config.Etcd.Nodes) > 0 {
 		if err := r.loadCertsFromPersistentStorage(); err != nil {
 			return fmt.Errorf("failed to load certificates from persistent storage: %v", err)
@@ -40,91 +42,20 @@ func (r *Renewer) renewControlPlaneCertsBottlerocket(ctx context.Context, node s
 		}
 	}
 
-	// Single sheltie session for all control plane operations
-	var backupCmd string
-	if component == componentControlPlane && len(config.Etcd.Nodes) > 0 {
-		backupCmd = fmt.Sprintf(`mkdir -p '/etc/kubernetes/pki.bak_%[1]s'
-cd %[2]s
-for f in $(find . -type f ! -path './etcd/*'); do
-    mkdir -p $(dirname '/etc/kubernetes/pki.bak_%[1]s/'$f)
-    cp $f '/etc/kubernetes/pki.bak_%[1]s/'$f
-done`, r.backupDir, bottlerocketControlPlaneCertDir)
-	} else {
-		backupCmd = fmt.Sprintf("cp -r '%s' '/etc/kubernetes/pki.bak_%s'",
-			bottlerocketControlPlaneCertDir, r.backupDir)
-	}
-
-	session := fmt.Sprintf(`set -euo pipefail
-sudo sheltie << 'EOF'
-set -x
-
-# 1. backup
-%[1]s
-
-# 2. pull image
-IMAGE_ID=$(apiclient get | apiclient exec admin jq -r '.settings["host-containers"]["kubeadm-bootstrap"].source')
-ctr image pull ${IMAGE_ID}
-
-# 3. kubeadm renew
-ctr run \
---mount type=bind,src=/var/lib/kubeadm,dst=/var/lib/kubeadm,options=rbind:rw \
---mount type=bind,src=/var/lib/kubeadm,dst=/etc/kubernetes,options=rbind:rw \
---rm ${IMAGE_ID} tmp-cert-renew \
-/opt/bin/kubeadm certs renew all
-
-# 4. kubeadm check
-ctr run \
---mount type=bind,src=/var/lib/kubeadm,dst=/var/lib/kubeadm,options=rbind:rw \
---mount type=bind,src=/var/lib/kubeadm,dst=/etc/kubernetes,options=rbind:rw \
---rm ${IMAGE_ID} tmp-cert-check \
-/opt/bin/kubeadm certs check-expiration
-
-# 5. copy etcd certs
-if [ -d "/run/host-containerd/io.containerd.runtime.v2.task/default/admin/rootfs/tmp/etcd-client-certs" ]; then
-    echo "Source certificates:"
-    ls -l /run/host-containerd/io.containerd.runtime.v2.task/default/admin/rootfs/tmp/etcd-client-certs/
-    
-    echo "Destination before copy:"
-    ls -l /var/lib/kubeadm/pki/server-etcd-client.crt || true
-    ls -l /var/lib/kubeadm/pki/apiserver-etcd-client.key || true
-    
-    cp -v /run/host-containerd/io.containerd.runtime.v2.task/default/admin/rootfs/tmp/etcd-client-certs/apiserver-etcd-client.crt /var/lib/kubeadm/pki/server-etcd-client.crt || {
-        echo "❌ Failed to copy certificate"
-        exit 1
-    }
-    cp -v /run/host-containerd/io.containerd.runtime.v2.task/default/admin/rootfs/tmp/etcd-client-certs/apiserver-etcd-client.key /var/lib/kubeadm/pki/apiserver-etcd-client.key || {
-        echo "❌ Failed to copy key"
-        exit 1
-    }
-    
-    chmod 600 /var/lib/kubeadm/pki/server-etcd-client.crt || {
-        echo "❌ Failed to set certificate permissions"
-        exit 1
-    }
-    chmod 600 /var/lib/kubeadm/pki/apiserver-etcd-client.key || {
-        echo "❌ Failed to set key permissions"
-        exit 1
-    }
-    
-    echo "Destination after copy:"
-    ls -l /var/lib/kubeadm/pki/server-etcd-client.crt
-    ls -l /var/lib/kubeadm/pki/apiserver-etcd-client.key
-    
-    echo "✅ Certificates copied successfully"
-else
-    echo "❌ Source directory does not exist"
-    ls -l /run/host-containerd/io.containerd.runtime.v2.task/default/admin/rootfs/tmp/
-    exit 1
-fi
-
-
-
-# 6. restart pods
-apiclient get | apiclient exec admin jq -r '.settings.kubernetes["static-pods"] | keys[]' \
- | xargs -n1 -I{} apiclient set settings.kubernetes.static-pods.{}.enabled=false
-apiclient get | apiclient exec admin jq -r '.settings.kubernetes["static-pods"] | keys[]' \
- | xargs -n1 -I{} apiclient set settings.kubernetes.static-pods.{}.enabled=true
-EOF`, backupCmd)
+	builder := bottlerocket.NewControlPlaneCommandBuilder(
+		r.backupDir,
+		bottlerocketControlPlaneCertDir,
+		component,
+		len(config.Etcd.Nodes) > 0,
+	)
+	commands := builder.BuildCommands()
+	session := fmt.Sprintf("%s\n%s\n%s\n%s\n%s\n%s\nEOF",
+		commands.ShelliePrefix,
+		commands.BackupCerts,
+		commands.ImagePull,
+		commands.RenewCerts,
+		commands.CopyCerts,
+		commands.RestartPods)
 
 	if err := r.runCommand(ctx, client, session); err != nil {
 		return fmt.Errorf("failed to renew control panel node certificates: %v", err)
@@ -159,59 +90,14 @@ func (r *Renewer) transferCertsToControlPlane(ctx context.Context, node string) 
 	crtBase64 := base64.StdEncoding.EncodeToString(crtContent)
 	keyBase64 := base64.StdEncoding.EncodeToString(keyContent)
 
-	session := fmt.Sprintf(`
-sudo sheltie << 'EOF'
-set -x 
-
-echo "Creating directory..."
-TARGET_DIR="/run/host-containerd/io.containerd.runtime.v2.task/default/admin/rootfs/tmp/%[1]s"
-mkdir -p "${TARGET_DIR}" || {
-    echo "❌ Failed to create directory"
-    exit 1
-}
-
-chmod 755 "${TARGET_DIR}" || {
-    echo "❌ Failed to set directory permissions"
-    exit 1
-}
-
-echo "Verifying directory:"
-ls -ld "${TARGET_DIR}"
-ls -l /run/host-containerd/io.containerd.runtime.v2.task/default/admin/rootfs/tmp/
-
-echo "Writing certificate file..."
-cat <<'CRT_END' | base64 -d > "${TARGET_DIR}/apiserver-etcd-client.crt"
-%[2]s
-CRT_END
-if [ $? -ne 0 ]; then
-    echo "❌ Failed to write certificate file"
-    exit 1
-fi
-
-echo "Writing key file..."
-cat <<'KEY_END' | base64 -d > "${TARGET_DIR}/apiserver-etcd-client.key"
-%[3]s
-KEY_END
-if [ $? -ne 0 ]; then
-    echo "❌ Failed to write key file"
-    exit 1
-fi
-
-echo "Setting permissions..."
-chmod 600 "${TARGET_DIR}/apiserver-etcd-client.crt" || {
-    echo "❌ Failed to set permissions on certificate"
-    exit 1
-}
-chmod 600 "${TARGET_DIR}/apiserver-etcd-client.key" || {
-    echo "❌ Failed to set permissions on key"
-    exit 1
-}
-
-echo "Verifying files..."
-ls -l "${TARGET_DIR}"/*
-echo "✅ Files transferred successfully"
-exit
-EOF`, tempLocalEtcdCertsDir, crtBase64, keyBase64)
+	builder := bottlerocket.NewCertTransferBuilder(tempLocalEtcdCertsDir, crtBase64, keyBase64)
+	commands := builder.BuildCommands()
+	session := fmt.Sprintf("%s\n%s\n%s\n%s\n%s\nEOF",
+		commands.ShelliePrefix,
+		commands.CreateDir,
+		commands.WriteCertificate,
+		commands.WriteKey,
+		commands.SetPermissions)
 
 	if err := r.runCommand(ctx, client, session); err != nil {
 		return fmt.Errorf("failed to transfer certificates: %v", err)
@@ -230,85 +116,39 @@ func (r *Renewer) renewEtcdCertsBottlerocket(ctx context.Context, node string) e
 	}
 	defer client.Close()
 
-	// First sheltie session for certificate renewal
-	firstSession := fmt.Sprintf(`set -euo pipefail
-sudo sheltie << 'EOF'
-set -x
-# Get image ID and pull it
-IMAGE_ID=$(apiclient get | apiclient exec admin jq -r '.settings["host-containers"]["kubeadm-bootstrap"].source')
-ctr image pull ${IMAGE_ID}
+	builder := bottlerocket.NewEtcdCommandBuilder(r.backupDir, bottlerocketTmpDir)
+	commands := builder.BuildCommands()
 
-# Backup certs
-cp -r /var/lib/etcd/pki /var/lib/etcd/pki.bak_%[1]s
-rm /var/lib/etcd/pki/*
-cp /var/lib/etcd/pki.bak_%[1]s/ca.* /var/lib/etcd/pki
-echo "✅ Certs backedup"
-
-# Recreate certificates
-ctr run \
---mount type=bind,src=/var/lib/etcd/pki,dst=/etc/etcd/pki,options=rbind:rw \
---net-host \
---rm \
-${IMAGE_ID} tmp-cert-renew \
-/opt/bin/etcdadm join phase certificates http://eks-a-etcd-dumb-url --init-system kubelet
-exit
-EOF`, r.backupDir)
+	// first session: backup and renew certificates
+	firstSession := fmt.Sprintf("%s\n%s\n%s\n%s\nEOF",
+		commands.ShelliePrefix,
+		commands.ImagePull,
+		commands.BackupCerts,
+		commands.RenewCerts)
 
 	if err := r.runCommand(ctx, client, firstSession); err != nil {
 		return fmt.Errorf("failed to renew certificates: %v", err)
 	}
 
-	// Second sheltie session for copying certs
-	secondSession := fmt.Sprintf(`set -euo pipefail
-sudo sheltie << 'EOF'
-set -x
-echo "Source files in /var/lib/etcd/pki/:"
-ls -l /var/lib/etcd/pki/apiserver-etcd-client.*
-
-echo "Copying certificates to %[1]s..."
-cp /var/lib/etcd/pki/apiserver-etcd-client.* %[1]s || { 
-    echo "❌ Failed to copy certs to tmp"
-    echo "Source files:"
-    ls -l /var/lib/etcd/pki/apiserver-etcd-client.*
-    echo "Destination directory:"
-    ls -l %[1]s
-    exit 1
-}
-
-echo "Setting permissions..."
-chmod 600 %[1]s/apiserver-etcd-client.crt || { 
-    echo "❌ Failed to chmod certificate"
-    ls -l %[1]s/apiserver-etcd-client.crt
-    exit 1
-}
-chmod 600 %[1]s/apiserver-etcd-client.key || { 
-    echo "❌ Failed to chmod key"
-    ls -l %[1]s/apiserver-etcd-client.key
-    exit 1
-}
-
-echo "Verifying copied files..."
-ls -l %[1]s/apiserver-etcd-client.*
-exit
-EOF`, bottlerocketTmpDir)
+	// second sheltie session for copying certs
+	secondSession := fmt.Sprintf("%s\n%s\nEOF",
+		commands.ShelliePrefix,
+		commands.CopyCerts)
 
 	if err := r.runCommand(ctx, client, secondSession); err != nil {
 		return fmt.Errorf("failed to copy certificates2 to tmp: %v", err)
 	}
 
-	// Copy certificates to local
+	// copy certificates to local
 	fmt.Printf("Copying certificates from node %s...\n", node)
 	if err := r.copyEtcdCerts(ctx, client, node); err != nil {
 		return fmt.Errorf("failed to copy certificates3: %v", err)
 	}
 
-	// Third sheltie session for cleanup
-	thirdSession := fmt.Sprintf(`set -euo pipefail
-sudo sheltie << 'EOF'
-set -x
-rm -f %s/apiserver-etcd-client.*
-exit
-EOF`, bottlerocketTmpDir)
+	// third sheltie session for cleanup
+	thirdSession := fmt.Sprintf("%s\n%s\nEOF",
+		commands.ShelliePrefix,
+		commands.Cleanup)
 
 	if err := r.runCommand(ctx, client, thirdSession); err != nil {
 		return fmt.Errorf("failed to cleanup temporary files: %v", err)
@@ -329,22 +169,14 @@ func (r *Renewer) copyEtcdCerts(ctx context.Context, client sshClient, node stri
 	fmt.Printf("Reading certificate from ETCD node %s...\n", node)
 	fmt.Printf("Using backup directory: %s\n", r.backupDir)
 
-	debugCmd := fmt.Sprintf(`
-sudo sheltie << 'EOF'
-echo "Checking source files:"
-ls -l %s/apiserver-etcd-client.*
-exit
-EOF`, bottlerocketTmpDir)
-	if err := r.runCommand(ctx, client, debugCmd); err != nil {
+	builder := bottlerocket.NewCertReadBuilder(bottlerocketTmpDir)
+	commands := builder.BuildCommands()
+
+	if err := r.runCommand(ctx, client, commands.ListFiles); err != nil {
 		return fmt.Errorf("failed to list certificate files: %v", err)
 	}
 
-	crtCmd := fmt.Sprintf(`
-sudo sheltie << 'EOF'
-cat %s/apiserver-etcd-client.crt
-exit
-EOF`, bottlerocketTmpDir)
-	crtContent, err := r.runCommandWithOutput(ctx, client, crtCmd)
+	crtContent, err := r.runCommandWithOutput(ctx, client, commands.ReadCert)
 	if err != nil {
 		return fmt.Errorf("failed to read certificate file: %v", err)
 	}
@@ -354,12 +186,7 @@ EOF`, bottlerocketTmpDir)
 	}
 
 	fmt.Printf("Reading key from ETCD node %s...\n", node)
-	keyCmd := fmt.Sprintf(`
-sudo sheltie << 'EOF'
-cat %s/apiserver-etcd-client.key
-exit
-EOF`, bottlerocketTmpDir)
-	keyContent, err := r.runCommandWithOutput(ctx, client, keyCmd)
+	keyContent, err := r.runCommandWithOutput(ctx, client, commands.ReadKey)
 	if err != nil {
 		return fmt.Errorf("failed to read key file: %v", err)
 	}
@@ -374,14 +201,12 @@ EOF`, bottlerocketTmpDir)
 	fmt.Printf("Writing certificates to:\n")
 	fmt.Printf("Certificate: %s\n", crtPath)
 	fmt.Printf("Key: %s\n", keyPath)
-
 	if err := os.WriteFile(crtPath, []byte(crtContent), 0o600); err != nil {
 		return fmt.Errorf("failed to write certificate file: %v", err)
 	}
 	if err := os.WriteFile(keyPath, []byte(keyContent), 0o600); err != nil {
 		return fmt.Errorf("failed to write key file: %v", err)
 	}
-
 	fmt.Printf("✅ Certificates copied successfully:\n")
 	fmt.Printf("Backup directory: %s\n", r.backupDir)
 	fmt.Printf("Certificate path: %s\n", crtPath)
