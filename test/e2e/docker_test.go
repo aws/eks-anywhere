@@ -708,6 +708,15 @@ func TestDockerKubernetes132SimpleFlow(t *testing.T) {
 	runSimpleFlow(test)
 }
 
+func TestDockerKubernetes133SimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewDocker(t),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133)),
+	)
+	runSimpleFlow(test)
+}
+
 // Stacked Etcd
 func TestDockerKubernetesStackedEtcd(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,

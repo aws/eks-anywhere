@@ -160,6 +160,16 @@ func WithRedHat131VSphere() VSphereOpt {
 	return withVSphereKubeVersionAndOS(anywherev1.Kube131, RedHat8, nil)
 }
 
+// WithRedHat132VSphere vsphere test with Redhat 8 for Kubernetes 1.32.
+func WithRedHat132VSphere() VSphereOpt {
+	return withVSphereKubeVersionAndOS(anywherev1.Kube132, RedHat8, nil)
+}
+
+// WithRedHat133VSphere vsphere test with Redhat 8 for Kubernetes 1.33.
+func WithRedHat133VSphere() VSphereOpt {
+	return withVSphereKubeVersionAndOS(anywherev1.Kube133, RedHat8, nil)
+}
+
 // WithRedHat9128VSphere vsphere test with Redhat 9 for Kubernetes 1.28.
 func WithRedHat9128VSphere() VSphereOpt {
 	return withVSphereKubeVersionAndOS(anywherev1.Kube128, RedHat9, nil)
@@ -183,6 +193,11 @@ func WithRedHat9131VSphere() VSphereOpt {
 // WithRedHat9132VSphere vsphere test with Redhat 9 for Kubernetes 1.32.
 func WithRedHat9132VSphere() VSphereOpt {
 	return withVSphereKubeVersionAndOS(anywherev1.Kube132, RedHat9, nil)
+}
+
+// WithRedHat9133VSphere vsphere test with Redhat 9 for Kubernetes 1.33.
+func WithRedHat9133VSphere() VSphereOpt {
+	return withVSphereKubeVersionAndOS(anywherev1.Kube133, RedHat9, nil)
 }
 
 // WithUbuntu128 returns a VSphereOpt that adds API fillers to use a Ubuntu vSphere template for k8s 1.28
@@ -215,6 +230,12 @@ func WithUbuntu132() VSphereOpt {
 	return withVSphereKubeVersionAndOS(anywherev1.Kube132, Ubuntu2004, nil)
 }
 
+// WithUbuntu133 returns a VSphereOpt that adds API fillers to use a Ubuntu vSphere template for k8s 1.33
+// and the "ubuntu" osFamily in all machine configs.
+func WithUbuntu133() VSphereOpt {
+	return withVSphereKubeVersionAndOS(anywherev1.Kube133, Ubuntu2004, nil)
+}
+
 // WithBottleRocket128 returns br 1.28 var.
 func WithBottleRocket128() VSphereOpt {
 	return withVSphereKubeVersionAndOS(anywherev1.Kube128, Bottlerocket1, nil)
@@ -238,6 +259,11 @@ func WithBottleRocket131() VSphereOpt {
 // WithBottleRocket132 returns br 1.32 var.
 func WithBottleRocket132() VSphereOpt {
 	return withVSphereKubeVersionAndOS(anywherev1.Kube132, Bottlerocket1, nil)
+}
+
+// WithBottleRocket133 returns br 1.33 var.
+func WithBottleRocket133() VSphereOpt {
+	return withVSphereKubeVersionAndOS(anywherev1.Kube133, Bottlerocket1, nil)
 }
 
 func WithPrivateNetwork() VSphereOpt {
@@ -443,6 +469,12 @@ func (v *VSphere) WithUbuntu131() api.ClusterConfigFiller {
 // as well as the right ubuntu template and osFamily for all VSphereMachineConfigs.
 func (v *VSphere) WithUbuntu132() api.ClusterConfigFiller {
 	return v.WithKubeVersionAndOS(anywherev1.Kube132, Ubuntu2004, nil)
+}
+
+// WithUbuntu133 returns a cluster config filler that sets the kubernetes version of the cluster to 1.33
+// as well as the right ubuntu template and osFamily for all VSphereMachineConfigs.
+func (v *VSphere) WithUbuntu133() api.ClusterConfigFiller {
+	return v.WithKubeVersionAndOS(anywherev1.Kube133, Ubuntu2004, nil)
 }
 
 // WithBottleRocket131 returns a cluster config filler that sets the kubernetes version of the cluster to 1.31

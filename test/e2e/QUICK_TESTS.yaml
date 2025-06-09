@@ -1,6 +1,6 @@
 quick_tests:
 # Docker
-- TestDocker.*132
+- TestDocker.*133
 # vSphere
 - ^TestVSphereKubernetes130To131RedHatUpgrade$
 - TestVSphereKubernetes130To131StackedEtcdRedHatUpgrade
