@@ -70,6 +70,7 @@ type Provider struct {
 
 	forceCleanup bool
 	skipIpCheck  bool
+	bmcTimeout   time.Duration
 	retrier      *retrier.Retrier
 }
 
@@ -116,6 +117,7 @@ func NewProvider(
 	now types.NowFunc,
 	forceCleanup bool,
 	skipIpCheck bool,
+	bmcTimeout time.Duration,
 ) (*Provider, error) {
 	var controlPlaneMachineSpec, workerNodeGroupMachineSpec, etcdMachineSpec *v1alpha1.TinkerbellMachineConfigSpec
 
@@ -191,6 +193,7 @@ func NewProvider(
 		// Behavioral flags.
 		forceCleanup: forceCleanup,
 		skipIpCheck:  skipIpCheck,
+		bmcTimeout:   bmcTimeout,
 	}, nil
 }
 

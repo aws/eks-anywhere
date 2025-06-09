@@ -516,6 +516,12 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 			}
 			logger.V(4).Info("Tinkerbell IP", "tinkerbell-ip", tinkerbellIP)
 
+			// Set BMC timeout based on noTimeouts flag
+			bmcTimeout := 5 * time.Minute // Default 5 minutes
+			if f.config.noTimeouts {
+				bmcTimeout = 168 * time.Hour // 1 week, effectively no timeout
+			}
+
 			provider, err := tinkerbell.NewProvider(
 				datacenterConfig,
 				machineConfigs,
@@ -529,6 +535,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				time.Now,
 				force,
 				skipIPCheck,
+				bmcTimeout,
 			)
 			if err != nil {
 				return err

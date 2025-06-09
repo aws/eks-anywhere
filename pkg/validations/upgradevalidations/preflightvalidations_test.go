@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -415,6 +416,7 @@ func givenTinkerbellMachineConfigs(t *testing.T) map[string]*anywherev1.Tinkerbe
 
 func newProvider(datacenterConfig anywherev1.TinkerbellDatacenterConfig, machineConfigs map[string]*anywherev1.TinkerbellMachineConfig, clusterConfig *anywherev1.Cluster, writer filewriter.FileWriter, docker stack.Docker, helm stack.Helm, kubectl tinkerbell.ProviderKubectlClient, forceCleanup bool) *tinkerbell.Provider {
 	hardwareFile := "./testdata/hardware.csv"
+	bmcTimeout := 5 * time.Minute
 	provider, err := tinkerbell.NewProvider(
 		&datacenterConfig,
 		machineConfigs,
@@ -428,6 +430,7 @@ func newProvider(datacenterConfig anywherev1.TinkerbellDatacenterConfig, machine
 		test.FakeNow,
 		forceCleanup,
 		false,
+		bmcTimeout,
 	)
 	if err != nil {
 		panic(err)
