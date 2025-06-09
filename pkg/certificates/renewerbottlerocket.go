@@ -7,10 +7,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/aws/eks-anywhere/pkg/certificates/bottlerocket"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/aws/eks-anywhere/pkg/certificates/bottlerocket"
 )
 
 const (
@@ -21,7 +22,7 @@ const (
 func (r *Renewer) renewControlPlaneCertsBottlerocket(ctx context.Context, node string, config *RenewalConfig, component string) error {
 	fmt.Printf("Processing control plane node: %s...\n", node)
 
-	// for renew control panel only
+	// for renew control panel only.
 	if component == componentControlPlane && len(config.Etcd.Nodes) > 0 {
 		if err := r.loadCertsFromPersistentStorage(); err != nil {
 			return fmt.Errorf("failed to load certificates from persistent storage: %v", err)
@@ -165,7 +166,6 @@ func (r *Renewer) renewEtcdCertsBottlerocket(ctx context.Context, node string) e
 }
 
 func (r *Renewer) copyEtcdCerts(ctx context.Context, client sshClient, node string) error {
-
 	fmt.Printf("Reading certificate from ETCD node %s...\n", node)
 	fmt.Printf("Using backup directory: %s\n", r.backupDir)
 
@@ -201,14 +201,12 @@ func (r *Renewer) copyEtcdCerts(ctx context.Context, client sshClient, node stri
 	fmt.Printf("Writing certificates to:\n")
 	fmt.Printf("Certificate: %s\n", crtPath)
 	fmt.Printf("Key: %s\n", keyPath)
-
-	if err := os.WriteFile(crtPath, []byte(crtContent), 0600); err != nil {
+	if err := os.WriteFile(crtPath, []byte(crtContent), 0o600); err != nil {
 		return fmt.Errorf("failed to write certificate file: %v", err)
 	}
-	if err := os.WriteFile(keyPath, []byte(keyContent), 0600); err != nil {
+	if err := os.WriteFile(keyPath, []byte(keyContent), 0o600); err != nil {
 		return fmt.Errorf("failed to write key file: %v", err)
 	}
-
 	fmt.Printf("✅ Certificates copied successfully:\n")
 	fmt.Printf("Backup directory: %s\n", r.backupDir)
 	fmt.Printf("Certificate path: %s\n", crtPath)
@@ -277,13 +275,13 @@ func (r *Renewer) updateAPIServerEtcdClientSecret(ctx context.Context, clusterNa
 	return nil
 }
 
-// for renew control panel only
+// for renew control panel only.
 func (r *Renewer) saveCertsToPersistentStorage() error {
 	srcCrt := filepath.Join(r.backupDir, tempLocalEtcdCertsDir, "apiserver-etcd-client.crt")
 	srcKey := filepath.Join(r.backupDir, tempLocalEtcdCertsDir, "apiserver-etcd-client.key")
 
 	destDir := filepath.Join(persistentCertDir, persistentEtcdCertDir)
-	if err := os.MkdirAll(destDir, 0700); err != nil {
+	if err := os.MkdirAll(destDir, 0o700); err != nil {
 		return fmt.Errorf("failed to create persistent directory: %v", err)
 	}
 
@@ -307,7 +305,7 @@ func (r *Renewer) loadCertsFromPersistentStorage() error {
 	}
 
 	destDir := filepath.Join(r.backupDir, tempLocalEtcdCertsDir)
-	if err := os.MkdirAll(destDir, 0700); err != nil {
+	if err := os.MkdirAll(destDir, 0o700); err != nil {
 		return fmt.Errorf("failed to create temporary directory: %v", err)
 	}
 
@@ -333,7 +331,7 @@ func copyFile(src, dest string) error {
 		return err
 	}
 
-	if err = os.WriteFile(dest, input, 0600); err != nil {
+	if err = os.WriteFile(dest, input, 0o600); err != nil {
 		return err
 	}
 
