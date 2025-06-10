@@ -9,6 +9,40 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
+// Test YAML configurations.
+var (
+	validConfigYaml = `
+clusterName: test-cluster
+controlPlane:
+  nodes:
+  - 192.168.1.10
+  os: ubuntu
+  sshKey: /tmp/test-key
+  sshUser: ec2-user
+etcd:
+  nodes:
+  - 192.168.1.20
+  os: ubuntu
+  sshKey: /tmp/test-key
+  sshUser: ec2-user
+`
+
+	validConfigYamlNoEtcd = `
+clusterName: test-cluster
+controlPlane:
+  nodes:
+  - 192.168.1.10
+  os: ubuntu
+  sshKey: /tmp/test-key
+  sshUser: ec2-user
+`
+
+	invalidConfigYaml = `
+invalid: yaml: :
+  - this is not valid yaml
+`
+)
+
 // checkTestError validates test errors against expectations.
 func checkTestError(t *testing.T, err error, expectError bool, errorMsg string) {
 	if expectError && err == nil {
@@ -116,11 +150,8 @@ func TestConfigFileValidation(t *testing.T) {
 			errorMsg:    "parsing config file",
 		},
 		{
-			name: "invalid config yaml",
-			configYaml: `
-invalid: yaml: :
-  - this is not valid yaml
-`,
+			name:        "invalid config yaml",
+			configYaml:  invalidConfigYaml,
 			expectError: true,
 			errorMsg:    "parsing config file",
 		},
@@ -167,76 +198,26 @@ func TestRenewCertificates(t *testing.T) {
 			name:        "valid config with etcd component",
 			component:   constants.EtcdComponent,
 			expectError: false,
-			configYaml: `
-clusterName: test-cluster
-controlPlane:
-  nodes:
-  - 192.168.1.10
-  os: ubuntu
-  sshKey: /tmp/test-key
-  sshUser: ec2-user
-etcd:
-  nodes:
-  - 192.168.1.20
-  os: ubuntu
-  sshKey: /tmp/test-key
-  sshUser: ec2-user
-`,
+			configYaml:  validConfigYaml,
 		},
 		{
 			name:        "valid config with control-plane component",
 			component:   constants.ControlPlaneComponent,
 			expectError: false,
-			configYaml: `
-clusterName: test-cluster
-controlPlane:
-  nodes:
-  - 192.168.1.10
-  os: ubuntu
-  sshKey: /tmp/test-key
-  sshUser: ec2-user
-etcd:
-  nodes:
-  - 192.168.1.20
-  os: ubuntu
-  sshKey: /tmp/test-key
-  sshUser: ec2-user
-`,
+			configYaml:  validConfigYaml,
 		},
 		{
 			name:        "valid config with empty component",
 			component:   "",
 			expectError: false,
-			configYaml: `
-clusterName: test-cluster
-controlPlane:
-  nodes:
-  - 192.168.1.10
-  os: ubuntu
-  sshKey: /tmp/test-key
-  sshUser: ec2-user
-etcd:
-  nodes:
-  - 192.168.1.20
-  os: ubuntu
-  sshKey: /tmp/test-key
-  sshUser: ec2-user
-`,
+			configYaml:  validConfigYaml,
 		},
 		{
 			name:        "invalid component",
 			component:   "invalid",
 			expectError: true,
 			errorMsg:    "invalid component",
-			configYaml: `
-clusterName: test-cluster
-controlPlane:
-  nodes:
-  - 192.168.1.10
-  os: ubuntu
-  sshKey: /tmp/test-key
-  sshUser: ec2-user
-`,
+			configYaml:  validConfigYamlNoEtcd,
 		},
 	}
 
@@ -259,75 +240,6 @@ controlPlane:
 			err := rc.renewCertificates(cmd, []string{})
 
 			// Check for expected errors
-			checkTestError(t, err, tt.expectError, tt.errorMsg)
-		})
-	}
-}
-
-// TestRenewCertificatesRunE tests the RunE function of the renewCertificatesCmd.
-func TestRenewCertificatesRunE(t *testing.T) {
-	// Setup SSH key file
-	cleanup := setupSSHKeyFile(t)
-	defer cleanup()
-
-	// Define test cases
-	tests := []struct {
-		name        string
-		component   string
-		configYaml  string
-		expectError bool
-		errorMsg    string
-	}{
-		{
-			name:        "valid config with valid component",
-			component:   constants.EtcdComponent,
-			expectError: false,
-			configYaml: `
-clusterName: test-cluster
-controlPlane:
-  nodes:
-  - 192.168.1.10
-  os: ubuntu
-  sshKey: /tmp/test-key
-  sshUser: ec2-user
-etcd:
-  nodes:
-  - 192.168.1.20
-  os: ubuntu
-  sshKey: /tmp/test-key
-  sshUser: ec2-user
-`,
-		},
-		{
-			name:        "invalid component",
-			component:   "invalid",
-			expectError: true,
-			errorMsg:    "invalid component",
-			configYaml: `
-clusterName: test-cluster
-controlPlane:
-  nodes:
-  - 192.168.1.10
-  os: ubuntu
-  sshKey: /tmp/test-key
-  sshUser: ec2-user
-`,
-		},
-	}
-
-	// Run tests
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			configFile, fileCleanup := createConfigFileFromYAML(t, tt.configYaml)
-			defer fileCleanup()
-
-			testRC := &renewCertificatesOptions{
-				configFile: configFile,
-				component:  tt.component,
-			}
-
-			cmd := &cobra.Command{}
-			err := testRC.renewCertificates(cmd, []string{})
 			checkTestError(t, err, tt.expectError, tt.errorMsg)
 		})
 	}
