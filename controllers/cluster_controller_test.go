@@ -564,7 +564,7 @@ func TestClusterReconcilerReconcileConditions(t *testing.T) {
 				func(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) {
 					kcpReadyCondition := conditions.Get(kcp, clusterv1.ReadyCondition)
 					if kcpReadyCondition == nil ||
-						(kcpReadyCondition != nil && kcpReadyCondition.Status == "False") {
+						(kcpReadyCondition.Status == "False") {
 						conditions.MarkFalse(cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.ControlPlaneNotReadyReason, clusterv1.ConditionSeverityInfo, "")
 						return
 					}
@@ -840,7 +840,7 @@ func TestClusterReconcilerReconcileSelfManagedClusterConditions(t *testing.T) {
 				func(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) {
 					kcpReadyCondition := conditions.Get(kcp, clusterv1.ReadyCondition)
 					if kcpReadyCondition == nil ||
-						(kcpReadyCondition != nil && kcpReadyCondition.Status == "False") {
+						(kcpReadyCondition.Status == "False") {
 						conditions.MarkFalse(cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.ControlPlaneNotReadyReason, clusterv1.ConditionSeverityInfo, "")
 						return
 					}
