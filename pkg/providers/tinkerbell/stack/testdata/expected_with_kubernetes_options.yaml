@@ -5,6 +5,7 @@ hegel:
 rufio:
   additionalArgs:
   - -metrics-bind-address=127.0.0.1:8080
+  - -max-concurrent-reconciles=10
   image: public.ecr.aws/eks-anywhere/rufio:latest
 smee:
   deploy: true
