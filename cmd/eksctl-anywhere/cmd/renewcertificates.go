@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/aws/eks-anywhere/pkg/certificates"
+	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
 type renewCertificatesOptions struct {
@@ -22,28 +23,26 @@ var renewCertificatesCmd = &cobra.Command{
 	Long:         "Renew external ETCD and control plane certificates",
 	PreRunE:      bindFlagsToViper,
 	SilenceUsage: true,
-	RunE: func(cmd *cobra.Command, _ []string) error {
-		return rc.renewCertificates(cmd)
-	},
+	RunE:         rc.renewCertificates,
 }
 
 func init() {
 	renewCmd.AddCommand(renewCertificatesCmd)
 	renewCertificatesCmd.Flags().StringVarP(&rc.configFile, "config", "f", "", "Config file containing node and SSH information")
-	renewCertificatesCmd.Flags().StringVarP(&rc.component, "component", "c", "", "Component to renew certificates for (etcd or control-plane). If not specified, renews both.")
+	renewCertificatesCmd.Flags().StringVarP(&rc.component, "component", "c", "", fmt.Sprintf("Component to renew certificates for (%s or %s). If not specified, renews both.", constants.EtcdComponent, constants.ControlPlaneComponent))
 	if err := renewCertificatesCmd.MarkFlagRequired("config"); err != nil {
 		log.Fatalf("marking config as required: %s", err)
 	}
 }
 
 func validateComponent(component string) error {
-	if component != "" && component != "etcd" && component != "control-plane" {
-		return fmt.Errorf("invalid component %q, must be either 'etcd' or 'control-plane'", component)
+	if component != "" && component != constants.EtcdComponent && component != constants.ControlPlaneComponent {
+		return fmt.Errorf("invalid component %q, must be either '%s' or '%s'", component, constants.EtcdComponent, constants.ControlPlaneComponent)
 	}
 	return nil
 }
 
-func (rc *renewCertificatesOptions) renewCertificates(_ *cobra.Command) error {
+func (rc *renewCertificatesOptions) renewCertificates(_ *cobra.Command, _ []string) error {
 	if err := validateComponent(rc.component); err != nil {
 		return err
 	}
