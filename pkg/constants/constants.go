@@ -36,6 +36,10 @@ const (
 	DefaultWorkerNodeGroupName              = "md-0"
 	DefaultNodeCidrMaskSize                 = 24
 
+	// Certificate renewal component types.
+	EtcdComponent         = "etcd"
+	ControlPlaneComponent = "control-plane"
+
 	VSphereProviderName    = "vsphere"
 	DockerProviderName     = "docker"
 	AWSProviderName        = "aws"
