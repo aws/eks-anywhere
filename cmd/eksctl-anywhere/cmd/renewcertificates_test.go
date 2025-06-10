@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/spf13/cobra"
@@ -51,22 +52,9 @@ func checkTestError(t *testing.T, err error, expectError bool, errorMsg string) 
 	if !expectError && err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
-	if expectError && err != nil && errorMsg != "" && !contains(err.Error(), errorMsg) {
+	if expectError && err != nil && errorMsg != "" && !strings.Contains(err.Error(), errorMsg) {
 		t.Errorf("expected error message to contain %q, got %q", errorMsg, err.Error())
 	}
-}
-
-// contains checks if a string contains another string.
-func contains(s, substr string) bool {
-	if s == "" || substr == "" {
-		return false
-	}
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }
 
 // TestValidateComponent tests the validateComponent function.
