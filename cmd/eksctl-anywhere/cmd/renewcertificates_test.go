@@ -150,12 +150,8 @@ func TestConfigFileValidation(t *testing.T) {
 			var configFile string
 			var fileCleanup func()
 
-			if tt.configFile != "" {
-				configFile = tt.configFile
-			} else if tt.configYaml != "" {
-				configFile, fileCleanup = createConfigFileFromYAML(t, tt.configYaml)
-				defer fileCleanup()
-			}
+			configFile, fileCleanup = createConfigFileFromYAML(t, tt.configYaml)
+			defer fileCleanup()
 
 			rc := &renewCertificatesOptions{
 				configFile: configFile,
