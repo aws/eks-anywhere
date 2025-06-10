@@ -33,6 +33,7 @@ env:
     T_TINKERBELL_IMAGE_UBUNTU_1_30: "tinkerbell_ci:image_ubuntu_1_30"
     T_TINKERBELL_IMAGE_UBUNTU_1_31: "tinkerbell_ci:image_ubuntu_1_31"
     T_TINKERBELL_IMAGE_UBUNTU_1_32: "tinkerbell_ci:image_ubuntu_1_32"
+    T_TINKERBELL_IMAGE_UBUNTU_1_33: "tinkerbell_ci:image_ubuntu_1_33"
     T_TINKERBELL_IMAGE_UBUNTU_2204_1_28: "tinkerbell_ci:image_ubuntu_2204_1_28"
     T_TINKERBELL_IMAGE_UBUNTU_2204_1_29: "tinkerbell_ci:image_ubuntu_2204_1_29"
     T_TINKERBELL_IMAGE_UBUNTU_2204_1_29_RTOS: "tinkerbell_ci:image_ubuntu_2204_1_29_rtos"
