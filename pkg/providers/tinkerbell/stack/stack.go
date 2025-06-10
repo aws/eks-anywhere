@@ -32,20 +32,21 @@ const (
 	enabled           = "enabled"
 	kubevipInterface  = "interface"
 
-	boots        = "boots"
-	smee         = "smee"
-	hegel        = "hegel"
-	tink         = "tink"
-	controller   = "controller"
-	server       = "server"
-	rufio        = "rufio"
-	grpcPort     = "42113"
-	kubevip      = "kubevip"
-	stack        = "stack"
-	hook         = "hook"
-	service      = "service"
-	relay        = "relay"
-	smeeHTTPPort = "7171"
+	boots                        = "boots"
+	smee                         = "smee"
+	hegel                        = "hegel"
+	tink                         = "tink"
+	controller                   = "controller"
+	server                       = "server"
+	rufio                        = "rufio"
+	rufioMaxConcurrentReconciles = 10
+	grpcPort                     = "42113"
+	kubevip                      = "kubevip"
+	stack                        = "stack"
+	hook                         = "hook"
+	service                      = "service"
+	relay                        = "relay"
+	smeeHTTPPort                 = "7171"
 )
 
 type Docker interface {
@@ -597,6 +598,7 @@ func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle
 			image: bundle.TinkerbellStack.Rufio.URI,
 			"additionalArgs": []string{
 				"-metrics-bind-address=127.0.0.1:8080",
+				fmt.Sprintf("-max-concurrent-reconciles=%v", rufioMaxConcurrentReconciles),
 			},
 		},
 		stack: map[string]interface{}{
