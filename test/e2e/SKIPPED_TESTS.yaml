@@ -51,11 +51,12 @@ skipped_tests:
 - TestTinkerbellKubernetes129Ubuntu2004To2204Upgrade
 - TestTinkerbellKubernetes130Ubuntu2004To2204Upgrade
 
-# Skip single K8s version upgrade tests as the same is covered by multiple K8s version upgrade from 1.28 to 1.32 to save on hardware resources and running time
+# Skip single K8s version upgrade tests as the same is covered by multiple K8s version upgrade from 1.28 to 1.33 to save on hardware resources and running time
 - TestTinkerbellKubernetes128UbuntuTo129Upgrade
 - TestTinkerbellKubernetes129UbuntuTo130Upgrade
 - TestTinkerbellKubernetes130UbuntuTo131Upgrade
 - TestTinkerbellKubernetes131UbuntuTo132Upgrade
+- TestTinkerbellKubernetes132UbuntuTo133Upgrade
 
 # Tinkerbell Packages
 # Skip test cases for packages other than hello-eks-anywhere and not for K8s 1.32.
