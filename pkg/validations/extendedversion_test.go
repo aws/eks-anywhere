@@ -165,7 +165,13 @@ func TestValidateExtendedK8sVersionSupport(t *testing.T) {
 				client = test.NewKubeClient(cl)
 			}
 
-			err := ValidateExtendedK8sVersionSupport(ctx, tc.cluster, tc.bundle, client)
+			// Use a default empty release manifest if not provided
+			releaseManifest := tc.eksdRelease
+			if releaseManifest == nil {
+				releaseManifest = &eksdv1alpha1.Release{}
+			}
+
+			err := ValidateExtendedK8sVersionSupport(ctx, tc.cluster, tc.bundle, releaseManifest, client)
 			if err != nil && !strings.Contains(err.Error(), tc.wantErr.Error()) {
 				t.Errorf("%v got = %v, \nwant %v", tc.name, err, tc.wantErr)
 			}

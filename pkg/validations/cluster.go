@@ -4,6 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"strings"
+
+	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
+	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
@@ -302,6 +309,9 @@ func ValidateExtendedKubernetesVersionSupport(ctx context.Context, clusterSpec v
 	var err error
 	if bundlesOverride != "" {
 		b, err = bundles.Read(reader, bundlesOverride)
+		if err != nil {
+			return fmt.Errorf("getting bundle for cluster: %w", err)
+		}
 	} else {
 		eksaVersion := clusterSpec.Spec.EksaVersion
 		skip, err := ShouldSkipBundleSignatureValidation((*string)(eksaVersion))
@@ -313,11 +323,18 @@ func ValidateExtendedKubernetesVersionSupport(ctx context.Context, clusterSpec v
 			return nil
 		}
 		b, err = reader.ReadBundlesForVersion(string(*eksaVersion))
+		if err != nil {
+			return fmt.Errorf("getting bundle for cluster: %w", err)
+		}
 	}
+
+	// Get the release manifest from the bundle
+	releaseManifest, err := getReleaseManifestFromBundle(clusterSpec, b)
 	if err != nil {
-		return fmt.Errorf("getting bundle for cluster: %w", err)
+		return fmt.Errorf("getting release manifest: %w", err)
 	}
-	return ValidateExtendedK8sVersionSupport(ctx, clusterSpec, b, k)
+
+	return ValidateExtendedK8sVersionSupport(ctx, clusterSpec, b, releaseManifest, k)
 }
 
 // ValidateK8s133Support checks if the 1.33 feature flag is set when using k8s 1.33.
@@ -328,4 +345,51 @@ func ValidateK8s133Support(clusterSpec *cluster.Spec) error {
 		}
 	}
 	return nil
+}
+
+// getReleaseManifestFromBundle retrieves the EKS Distro release manifest from the bundle.
+// For airgapped clusters, it reads from a local file path.
+// For non-airgapped clusters, it fetches from the public URL.
+func getReleaseManifestFromBundle(clusterSpec v1alpha1.Cluster, bundle *releasev1alpha1.Bundles) (*eksdv1alpha1.Release, error) {
+	versionsBundle, err := cluster.GetVersionsBundle(clusterSpec.Spec.KubernetesVersion, bundle)
+	if err != nil {
+		return nil, fmt.Errorf("getting versions bundle for %s kubernetes version: %w", clusterSpec.Spec.KubernetesVersion, err)
+	}
+
+	releaseManifest := &eksdv1alpha1.Release{}
+
+	// Check if this is an airgapped cluster (EksDReleaseUrl points to local path)
+	if strings.Contains(versionsBundle.EksD.EksDReleaseUrl, "eks-anywhere-downloads") {
+		// Airgapped case: read from local file path
+		releaseManifestFilePath := versionsBundle.EksD.EksDReleaseUrl
+		contents, err := os.ReadFile(releaseManifestFilePath)
+		if err != nil {
+			return nil, fmt.Errorf("reading eksd release manifest file: %w", err)
+		}
+		if err := yaml.Unmarshal(contents, releaseManifest); err != nil {
+			return nil, fmt.Errorf("unmarshalling eksd release manifest file: %w", err)
+		}
+	} else {
+		// Non-airgapped case: fetch from public URL
+		resp, err := http.Get(versionsBundle.EksD.EksDReleaseUrl)
+		if err != nil {
+			return nil, fmt.Errorf("fetching eksd release manifest from URL %s: %w", versionsBundle.EksD.EksDReleaseUrl, err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("fetching eksd release manifest from URL %s: received status code %d", versionsBundle.EksD.EksDReleaseUrl, resp.StatusCode)
+		}
+
+		contents, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return nil, fmt.Errorf("reading eksd release manifest response body: %w", err)
+		}
+
+		if err := yaml.Unmarshal(contents, releaseManifest); err != nil {
+			return nil, fmt.Errorf("unmarshalling eksd release manifest from URL: %w", err)
+		}
+	}
+
+	return releaseManifest, nil
 }

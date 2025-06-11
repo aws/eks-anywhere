@@ -4,13 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
-	"strings"
 	"time"
 
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	"github.com/golang-jwt/jwt/v5"
-	"sigs.k8s.io/yaml"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
@@ -26,7 +23,7 @@ import (
 var LicensePublicKey string
 
 // ValidateExtendedK8sVersionSupport validates all the validations needed for the support of extended kubernetes support.
-func ValidateExtendedK8sVersionSupport(ctx context.Context, clusterSpec anywherev1.Cluster, bundle *v1alpha1.Bundles, k kubernetes.Client) error {
+func ValidateExtendedK8sVersionSupport(ctx context.Context, clusterSpec anywherev1.Cluster, bundle *v1alpha1.Bundles, releaseManifest *eksdv1alpha1.Release, k kubernetes.Client) error {
 	// Validate EKS-A bundle has not been modified by verifying the signature in the bundle annotation
 	if err := validateBundleSignature(bundle); err != nil {
 		return fmt.Errorf("validating bundle signature: %w", err)
@@ -47,23 +44,7 @@ func ValidateExtendedK8sVersionSupport(ctx context.Context, clusterSpec anywhere
 		releaseChannel := versionsBundle.EksD.ReleaseChannel
 		signatureAnnotation := constants.EKSDistroSignatureAnnotation + "-" + releaseChannel
 		sig := bundle.Annotations[signatureAnnotation]
-		releaseManifest := &eksdv1alpha1.Release{}
-		if strings.Contains(versionsBundle.EksD.EksDReleaseUrl, "eks-anywhere-downloads") {
-			releaseManifestFilePath := versionsBundle.EksD.EksDReleaseUrl
-			// Read the EKS-D release manifest file from the given path.
-			contents, err := os.ReadFile(releaseManifestFilePath)
-			if err != nil {
-				return fmt.Errorf("reading eksd release manifest file: %w", err)
-			}
-			// Unmarshal the file contents into the releaseManifest variable.
-			if err := yaml.Unmarshal(contents, releaseManifest); err != nil {
-				return fmt.Errorf("unmarshalling eksd release manifest file: %w", err)
-			}
-		} else {
-			if err := k.Get(ctx, versionsBundle.EksD.Name, constants.EksaSystemNamespace, releaseManifest); err != nil {
-				return fmt.Errorf("getting %s eks distro release: %w", versionsBundle.EksD.Name, err)
-			}
-		}
+
 		if err := validateEKSDistroManifestSignature(releaseManifest, sig, releaseChannel); err != nil {
 			return fmt.Errorf("validating eks distro manifest signature: %w", err)
 		}

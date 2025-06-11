@@ -161,10 +161,10 @@ func TestValidateAuthenticationForRegistryMirrorAuthInvalid(t *testing.T) {
 	tt := newTest(t, withTLS())
 	tt.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Authenticate = true
 	if err := os.Unsetenv("REGISTRY_USERNAME"); err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 	if err := os.Unsetenv("REGISTRY_PASSWORD"); err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 
 	tt.Expect(validations.ValidateAuthenticationForRegistryMirror(tt.clusterSpec)).To(
@@ -875,7 +875,7 @@ func TestValidateExtendedKubernetesVersionSupportCLINoError(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	reader := internalmocks.NewMockReader(ctrl)
 
-	err := validations.ValidateExtendedKubernetesSupport(ctx, *cluster, manifests.NewReader(reader), fakeClient, "")
+	err := validations.ValidateExtendedKubernetesVersionSupport(ctx, *cluster, manifests.NewReader(reader), fakeClient, "")
 	if err != nil {
 		t.Errorf("got = %v, \nwant nil", err)
 	}
@@ -887,12 +887,14 @@ func TestValidateExtendedKubernetesVersionSupportCLIError(t *testing.T) {
 	cluster := &anywherev1.Cluster{
 		Spec: anywherev1.ClusterSpec{
 			EksaVersion:       &version,
-			KubernetesVersion: anywherev1.Kube130,
+			KubernetesVersion: anywherev1.Kube131,
 		},
 	}
 
 	objs := []client.Object{}
 	objs = append(objs, cluster)
+	// Add the EKS Distro release object that the bundle references
+	objs = append(objs, test.EksdRelease("1-31"))
 	fakeClient := test.NewFakeKubeClient(objs...)
 
 	ctrl := gomock.NewController(t)
@@ -920,11 +922,15 @@ metadata:
 spec:
   number: 1
   versionsBundles:
-  - kubeversion: "1.30"
-    endOfStandardSupport: "2026-12-31"`
+  - kubeVersion: "1.31"
+    endOfStandardSupport: "2026-12-31"
+    eksD:
+      name: "test"
+      channel: "1-31"
+      manifestUrl: "https://distro.eks.amazonaws.com/kubernetes-1-31/kubernetes-1-31-eks-1.yaml"`
 	reader.EXPECT().ReadFile("https://bundles/bundles.yaml").Return([]byte(bundlesManifest), nil)
 
-	err := validations.ValidateExtendedKubernetesSupport(ctx, *cluster, manifests.NewReader(reader), fakeClient, "")
+	err := validations.ValidateExtendedKubernetesVersionSupport(ctx, *cluster, manifests.NewReader(reader), fakeClient, "")
 	if err == nil {
 		t.Errorf("got = nil, \nwant error: validating bundle signature")
 	} else if !strings.Contains(err.Error(), "validating bundle signature") {
@@ -938,12 +944,14 @@ func TestValidateExtendedKubernetesVersionSupportCLICheckExtendedSupport(t *test
 	cluster := &anywherev1.Cluster{
 		Spec: anywherev1.ClusterSpec{
 			EksaVersion:       &version,
-			KubernetesVersion: anywherev1.Kube130,
+			KubernetesVersion: anywherev1.Kube131,
 		},
 	}
 
 	objs := []client.Object{}
 	objs = append(objs, cluster)
+	// Add the EKS Distro release object that the bundle references
+	objs = append(objs, test.EksdRelease("1-31"))
 	fakeClient := test.NewFakeKubeClient(objs...)
 
 	ctrl := gomock.NewController(t)
@@ -960,21 +968,24 @@ spec:
 	reader.EXPECT().ReadFile(releasesURL).Return([]byte(releasesManifest), nil)
 
 	bundlesManifest := `apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: Bundles
 metadata:
   annotations:
-    anywhere.eks.amazonaws.com/signature: MEYCIQDgmE8oY9xUyFO3uOHRkpRWjTxoej8Wf7Ty5HQcbs9ouQIhANV2kylPXjcpLY2xu7vD6ktXqm7yrnLUgiehSdbL8JUJ
+    anywhere.eks.amazonaws.com/signature: MEQCICjq1rZmhH0FYOlruZmh6QADCrr5ccrN6hE7Lu0vaXGrAiBhV+kfh64sqLblBt98DvIfHMerEqJVhHzpGy1YJthZQw==
   name: bundles-1
 spec:
   number: 1
   versionsBundles:
-  - kubeversion: "1.30"
-    endOfStandardSupport: "2026-12-31"`
+  - kubeVersion: "1.31"
+    endOfStandardSupport: "2026-12-31"
+    eksD:
+      name: "test"
+      channel: "1-31"
+      manifestUrl: "https://distro.eks.amazonaws.com/kubernetes-1-31/kubernetes-1-31-eks-1.yaml"`
 
 	reader.EXPECT().ReadFile("https://bundles/bundles.yaml").Return([]byte(bundlesManifest), nil)
 
-	err := validations.ValidateExtendedKubernetesSupport(ctx, *cluster, manifests.NewReader(reader), fakeClient, "")
+	err := validations.ValidateExtendedKubernetesVersionSupport(ctx, *cluster, manifests.NewReader(reader), fakeClient, "")
 	if err != nil {
 		t.Errorf("got = %v, \nwant nil", err)
 	}
@@ -987,30 +998,35 @@ func TestValidateExtendedKubernetesSupportWithBundlesOverrideSuccess(t *testing.
 	cluster := &anywherev1.Cluster{
 		Spec: anywherev1.ClusterSpec{
 			EksaVersion:       &version,
-			KubernetesVersion: anywherev1.Kube130,
+			KubernetesVersion: anywherev1.Kube131,
 		},
 	}
 
 	bundlesManifest := `apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: Bundles
 metadata:
   annotations:
-    anywhere.eks.amazonaws.com/signature: MEYCIQDgmE8oY9xUyFO3uOHRkpRWjTxoej8Wf7Ty5HQcbs9ouQIhANV2kylPXjcpLY2xu7vD6ktXqm7yrnLUgiehSdbL8JUJ
+    anywhere.eks.amazonaws.com/signature: MEQCICjq1rZmhH0FYOlruZmh6QADCrr5ccrN6hE7Lu0vaXGrAiBhV+kfh64sqLblBt98DvIfHMerEqJVhHzpGy1YJthZQw==
   name: bundles-1
 spec:
   number: 1
   versionsBundles:
-  - kubeversion: "1.30"
-    endOfStandardSupport: "2026-12-31"`
+  - kubeVersion: "1.31"
+    endOfStandardSupport: "2026-12-31"
+    eksD:
+      name: "test"
+      channel: "1-31"
+      manifestUrl: "https://distro.eks.amazonaws.com/kubernetes-1-31/kubernetes-1-31-eks-1.yaml"`
 
 	fr := &fakeFileReader{content: bundlesManifest}
 	reader := manifests.NewReader(fr)
 	bundlesOverride := "bundles-override.yaml"
 
-	fakeClient := test.NewFakeKubeClient(cluster)
+	// Add the EKS Distro release object that the bundle references
+	objs := []client.Object{cluster, test.EksdRelease("1-31")}
+	fakeClient := test.NewFakeKubeClient(objs...)
 
-	err := validations.ValidateExtendedKubernetesSupport(ctx, *cluster, reader, fakeClient, bundlesOverride)
+	err := validations.ValidateExtendedKubernetesVersionSupport(ctx, *cluster, reader, fakeClient, bundlesOverride)
 	g.Expect(err).To(BeNil())
 }
 
@@ -1028,7 +1044,7 @@ func TestValidateExtendedKubernetesSupportWithBundlesOverrideError(t *testing.T)
 	bundlesOverride := "bundles-override.yaml"
 	fakeClient := test.NewFakeKubeClient(cluster)
 
-	err := validations.ValidateExtendedKubernetesSupport(ctx, *cluster, reader, fakeClient, bundlesOverride)
+	err := validations.ValidateExtendedKubernetesVersionSupport(ctx, *cluster, reader, fakeClient, bundlesOverride)
 	g.Expect(err).To(MatchError(ContainSubstring("getting bundle for cluster:")))
 }
 
@@ -1080,7 +1096,7 @@ func TestValidateExtendedKubernetesSupport(t *testing.T) {
 			cluster: &anywherev1.Cluster{
 				Spec: anywherev1.ClusterSpec{
 					EksaVersion:       &eksaVersionV023,
-					KubernetesVersion: anywherev1.Kube130,
+					KubernetesVersion: anywherev1.Kube131,
 				},
 			},
 			readerSetup: func(reader *internalmocks.MockReader) {
@@ -1099,13 +1115,17 @@ spec:
 kind: Bundles
 metadata:
   annotations:
-    anywhere.eks.amazonaws.com/signature: MEYCIQDgmE8oY9xUyFO3uOHRkpRWjTxoej8Wf7Ty5HQcbs9ouQIhANV2kylPXjcpLY2xu7vD6ktXqm7yrnLUgiehSdbL8JUJ
+    anywhere.eks.amazonaws.com/signature: MEQCICjq1rZmhH0FYOlruZmh6QADCrr5ccrN6hE7Lu0vaXGrAiBhV+kfh64sqLblBt98DvIfHMerEqJVhHzpGy1YJthZQw==
   name: bundles-1
 spec:
   number: 1
   versionsBundles:
-  - kubeversion: "1.30"
-    endOfStandardSupport: "2026-12-31"`
+  - kubeVersion: "1.31"
+    endOfStandardSupport: "2026-12-31"
+    eksD:
+      name: "test"
+      channel: "1-31"
+      manifestUrl: "https://distro.eks.amazonaws.com/kubernetes-1-31/kubernetes-1-31-eks-1.yaml"`
 				reader.EXPECT().ReadFile("https://bundles/bundles.yaml").Return([]byte(bundlesManifest), nil)
 			},
 			wantErr: false,
@@ -1115,7 +1135,7 @@ spec:
 			cluster: &anywherev1.Cluster{
 				Spec: anywherev1.ClusterSpec{
 					EksaVersion:       &eksaVersionV023,
-					KubernetesVersion: anywherev1.Kube130,
+					KubernetesVersion: anywherev1.Kube131,
 				},
 			},
 			bundlesOverride: "bundles-override.yaml",
@@ -1124,13 +1144,17 @@ spec:
 kind: Bundles
 metadata:
   annotations:
-    anywhere.eks.amazonaws.com/signature: MEYCIQDgmE8oY9xUyFO3uOHRkpRWjTxoej8Wf7Ty5HQcbs9ouQIhANV2kylPXjcpLY2xu7vD6ktXqm7yrnLUgiehSdbL8JUJ
+    anywhere.eks.amazonaws.com/signature: MEQCICjq1rZmhH0FYOlruZmh6QADCrr5ccrN6hE7Lu0vaXGrAiBhV+kfh64sqLblBt98DvIfHMerEqJVhHzpGy1YJthZQw==
   name: bundles-1
 spec:
   number: 1
   versionsBundles:
-  - kubeversion: "1.30"
-    endOfStandardSupport: "2026-12-31"`
+  - kubeVersion: "1.31"
+    endOfStandardSupport: "2026-12-31"
+    eksD:
+      name: "test"
+      channel: "1-31"
+      manifestUrl: "https://distro.eks.amazonaws.com/kubernetes-1-31/kubernetes-1-31-eks-1.yaml"`
 				reader.EXPECT().ReadFile("bundles-override.yaml").Return([]byte(bundlesManifest), nil)
 			},
 			wantErr: false,
@@ -1145,9 +1169,14 @@ spec:
 				tt.readerSetup(reader)
 			}
 
-			fakeClient := test.NewFakeKubeClient(tt.cluster)
+			// Add EKS Distro release object for tests that need it
+			objs := []client.Object{tt.cluster}
+			if tt.readerSetup != nil {
+				objs = append(objs, test.EksdRelease("1-31"))
+			}
+			fakeClient := test.NewFakeKubeClient(objs...)
 
-			err := validations.ValidateExtendedKubernetesSupport(ctx, *tt.cluster, manifests.NewReader(reader), fakeClient, tt.bundlesOverride)
+			err := validations.ValidateExtendedKubernetesVersionSupport(ctx, *tt.cluster, manifests.NewReader(reader), fakeClient, tt.bundlesOverride)
 
 			if tt.wantErr {
 				g.Expect(err).To(HaveOccurred())

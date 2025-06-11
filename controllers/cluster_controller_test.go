@@ -229,7 +229,8 @@ func TestClusterReconcilerReconcileSelfManagedCluster(t *testing.T) {
 	registry := newRegistryMock(providerReconciler)
 	eksaRelease := test.EKSARelease()
 	bundles := createBundle()
-	c := fake.NewClientBuilder().WithRuntimeObjects(selfManagedCluster, kcp, eksaRelease, bundles).
+	eksdRelease := createEKSDRelease()
+	c := fake.NewClientBuilder().WithRuntimeObjects(selfManagedCluster, kcp, eksaRelease, bundles, eksdRelease).
 		WithStatusSubresource(selfManagedCluster).
 		Build()
 	mockPkgs := mocks.NewMockPackagesClient(controller)
@@ -2067,6 +2068,29 @@ func createBundle() *releasev1.Bundles {
 						Name:           "test",
 						EksDReleaseUrl: "testdata/release.yaml",
 						KubeVersion:    "1.32",
+					},
+					CertManager:                releasev1.CertManagerBundle{},
+					ClusterAPI:                 releasev1.CoreClusterAPI{},
+					Bootstrap:                  releasev1.KubeadmBootstrapBundle{},
+					ControlPlane:               releasev1.KubeadmControlPlaneBundle{},
+					VSphere:                    releasev1.VSphereBundle{},
+					Docker:                     releasev1.DockerBundle{},
+					Eksa:                       releasev1.EksaBundle{},
+					Cilium:                     releasev1.CiliumBundle{},
+					Kindnetd:                   releasev1.KindnetdBundle{},
+					Flux:                       releasev1.FluxBundle{},
+					BottleRocketHostContainers: releasev1.BottlerocketHostContainersBundle{},
+					ExternalEtcdBootstrap:      releasev1.EtcdadmBootstrapBundle{},
+					ExternalEtcdController:     releasev1.EtcdadmControllerBundle{},
+					Tinkerbell:                 releasev1.TinkerbellBundle{},
+					EndOfStandardSupport:       "2030-06-30",
+				},
+				{
+					KubeVersion: "",
+					EksD: releasev1.EksDRelease{
+						Name:           "test",
+						EksDReleaseUrl: "testdata/release.yaml",
+						KubeVersion:    "",
 					},
 					CertManager:                releasev1.CertManagerBundle{},
 					ClusterAPI:                 releasev1.CoreClusterAPI{},

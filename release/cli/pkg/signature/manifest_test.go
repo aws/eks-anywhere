@@ -24,6 +24,7 @@ import (
 	anywherev1constants "github.com/aws/eks-anywhere/pkg/constants"
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	"github.com/aws/eks-anywhere/release/cli/pkg/constants"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 )
@@ -109,6 +110,38 @@ func TestGetBundleSignature(t *testing.T) {
 			key:             constants.BundlesKmsKey,
 			expectErrSubstr: "",
 		},
+		{
+			testName: "get bundle signature",
+			bundle: &anywherev1alpha1.Bundles{
+				TypeMeta: v1.TypeMeta{
+					Kind:       "Bundles",
+					APIVersion: anywherev1alpha1.GroupVersion.String(),
+				},
+				ObjectMeta: v1.ObjectMeta{
+					Annotations: map[string]string{
+						anywherev1constants.SignatureAnnotation: "MEUCIBQSvgIhP+DWxZABtdXznRHd3pDoFLeNqi+LcvysJlclAiEAsFCH222IZ1u5hJ0dLdu0NJd2rsJnhKNhxpE+Qg3L7qQ=",
+						anywherev1constants.EKSDistroSignatureAnnotation: "",
+					},
+					Name: "bundles-1",
+				},
+				Spec: anywherev1alpha1.BundlesSpec{
+					Number: 1,
+					VersionsBundles: []anywherev1alpha1.VersionsBundle{
+						{
+							KubeVersion:          "1.31",
+							EndOfStandardSupport: "2026-12-31",
+							EksD: anywherev1alpha1.EksDRelease{
+								Name: "test",
+								ReleaseChannel: "1-31",
+								EksDReleaseUrl: "https://distro.eks.amazonaws.com/kubernetes-1-31/kubernetes-1-31-eks-1.yaml",
+							},
+						},
+					},
+				},
+			},
+			key:             constants.BundlesKmsKey,
+			expectErrSubstr: "",
+		},
 	}
 
 	for _, tt := range testCases {
@@ -117,6 +150,9 @@ func TestGetBundleSignature(t *testing.T) {
 
 			ctx := context.Background()
 			sig, err := GetBundleSignature(ctx, tt.bundle, tt.key)
+			if tt.testName == "get bundle signature" {
+				fmt.Println(sig)
+			}
 
 			if tt.expectErrSubstr == "" {
 				g.Expect(err).NotTo(HaveOccurred(), "Expected no error but got: %v", err)
@@ -160,9 +196,6 @@ func TestGetEKSDistroManifestSignature(t *testing.T) {
 
 			ctx := context.Background()
 			sig, err := GetEKSDistroManifestSignature(ctx, tt.bundle, tt.key, tt.releaseUrl)
-			if tt.testName == "Valid eks distro manifest signature generation" {
-				fmt.Println(sig)
-			}
 			
 			if tt.expectErrSubstr == "" {
 				g.Expect(err).NotTo(HaveOccurred(), "Expected no error but got: %v", err)
