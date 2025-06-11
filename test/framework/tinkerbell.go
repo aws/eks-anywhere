@@ -471,6 +471,11 @@ func Ubuntu132ImageForCP() api.TinkerbellFiller {
 	return imageForKubeVersionAndOS(anywherev1.Kube132, Ubuntu2004, controlPlaneIdentifier)
 }
 
+// Ubuntu133ImageForCP represents an Ubuntu raw image corresponding to Kubernetes 1.33 and is set for CP machine config.
+func Ubuntu133ImageForCP() api.TinkerbellFiller {
+	return imageForKubeVersionAndOS(anywherev1.Kube133, Ubuntu2004, controlPlaneIdentifier)
+}
+
 // Ubuntu128ImageForWorker represents an Ubuntu raw image corresponding to Kubernetes 1.28 and is set for worker machine config.
 func Ubuntu128ImageForWorker() api.TinkerbellFiller {
 	return imageForKubeVersionAndOS(anywherev1.Kube128, Ubuntu2004, workerIdentifier)
@@ -494,6 +499,11 @@ func Ubuntu131ImageForWorker() api.TinkerbellFiller {
 // Ubuntu132ImageForWorker represents an Ubuntu raw image corresponding to Kubernetes 1.32 and is set for worker machine config.
 func Ubuntu132ImageForWorker() api.TinkerbellFiller {
 	return imageForKubeVersionAndOS(anywherev1.Kube132, Ubuntu2004, workerIdentifier)
+}
+
+// Ubuntu133ImageForWorker represents an Ubuntu raw image corresponding to Kubernetes 1.33 and is set for worker machine config.
+func Ubuntu133ImageForWorker() api.TinkerbellFiller {
+	return imageForKubeVersionAndOS(anywherev1.Kube133, Ubuntu2004, workerIdentifier)
 }
 
 // Ubuntu2204Kubernetes128Image represents an Ubuntu 22.04 raw image corresponding to Kubernetes 1.28.
