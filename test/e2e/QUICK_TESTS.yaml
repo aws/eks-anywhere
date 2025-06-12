@@ -16,6 +16,8 @@ quick_tests:
 # CloudStack
 - TestCloudStackKubernetes131To132RedhatMultipleFieldsUpgrade
 - TestCloudStackKubernetes131To132StackedEtcdRedhatMultipleFieldsUpgrade
+- TestCloudStackKubernetes132To133RedhatMultipleFieldsUpgrade
+- TestCloudStackKubernetes132To133StackedEtcdRedhatMultipleFieldsUpgrade
 # Nutanix
 - TestNutanixKubernetes132to133RedHat9Upgrade
 - TestNutanixKubernetes132to133StackedEtcdRedHat9Upgrade
