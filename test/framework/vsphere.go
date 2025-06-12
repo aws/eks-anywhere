@@ -160,16 +160,6 @@ func WithRedHat131VSphere() VSphereOpt {
 	return withVSphereKubeVersionAndOS(anywherev1.Kube131, RedHat8, nil)
 }
 
-// WithRedHat132VSphere vsphere test with Redhat 8 for Kubernetes 1.32.
-func WithRedHat132VSphere() VSphereOpt {
-	return withVSphereKubeVersionAndOS(anywherev1.Kube132, RedHat8, nil)
-}
-
-// WithRedHat133VSphere vsphere test with Redhat 8 for Kubernetes 1.33.
-func WithRedHat133VSphere() VSphereOpt {
-	return withVSphereKubeVersionAndOS(anywherev1.Kube133, RedHat8, nil)
-}
-
 // WithRedHat9128VSphere vsphere test with Redhat 9 for Kubernetes 1.28.
 func WithRedHat9128VSphere() VSphereOpt {
 	return withVSphereKubeVersionAndOS(anywherev1.Kube128, RedHat9, nil)

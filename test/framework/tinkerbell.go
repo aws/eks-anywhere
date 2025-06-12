@@ -43,8 +43,6 @@ const (
 	tinkerbellImageRedHat129EnvVar                      = "T_TINKERBELL_IMAGE_REDHAT_1_29"
 	tinkerbellImageRedHat130EnvVar                      = "T_TINKERBELL_IMAGE_REDHAT_1_30"
 	tinkerbellImageRedHat131EnvVar                      = "T_TINKERBELL_IMAGE_REDHAT_1_31"
-	tinkerbellImageRedHat132EnvVar                      = "T_TINKERBELL_IMAGE_REDHAT_1_32"
-	tinkerbellImageRedHat133EnvVar                      = "T_TINKERBELL_IMAGE_REDHAT_1_33"
 	tinkerbellImageRedHat9128EnvVar                     = "T_TINKERBELL_IMAGE_REDHAT_9_1_28"
 	tinkerbellImageRedHat9129EnvVar                     = "T_TINKERBELL_IMAGE_REDHAT_9_1_29"
 	tinkerbellImageRedHat9130EnvVar                     = "T_TINKERBELL_IMAGE_REDHAT_9_1_30"
@@ -87,8 +85,6 @@ var requiredTinkerbellEnvVars = []string{
 	tinkerbellImageRedHat129EnvVar,
 	tinkerbellImageRedHat130EnvVar,
 	tinkerbellImageRedHat131EnvVar,
-	tinkerbellImageRedHat132EnvVar,
-	tinkerbellImageRedHat133EnvVar,
 	tinkerbellImageRedHat9128EnvVar,
 	tinkerbellImageRedHat9129EnvVar,
 	tinkerbellImageRedHat9130EnvVar,
@@ -299,16 +295,6 @@ func WithRedHat130Tinkerbell() TinkerbellOpt {
 // WithRedHat131Tinkerbell tink test with redhat 1.31.
 func WithRedHat131Tinkerbell() TinkerbellOpt {
 	return withKubeVersionAndOS(anywherev1.Kube131, RedHat8, "", nil)
-}
-
-// WithRedHat132Tinkerbell tink test with redhat 1.32.
-func WithRedHat132Tinkerbell() TinkerbellOpt {
-	return withKubeVersionAndOS(anywherev1.Kube132, RedHat8, "", nil)
-}
-
-// WithRedHat133Tinkerbell tink test with redhat 1.33.
-func WithRedHat133Tinkerbell() TinkerbellOpt {
-	return withKubeVersionAndOS(anywherev1.Kube133, RedHat8, "", nil)
 }
 
 // WithRedHat9128Tinkerbell tink test with redhat9 efi 1.28.
