@@ -1,8 +1,10 @@
-// Package bottlerocket provides utilities for managing certificates on Bottlerocket OS nodes.
-package bottlerocket
+// Package certificates provides utilities for managing certificates on Bottlerocket OS nodes.
+package certificates
 
 import (
 	"fmt"
+
+	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
 // ControlPlaneCommands contains shell commands for certificate operations on control plane nodes.
@@ -153,7 +155,7 @@ sudo sheltie << 'EOF'`
 }
 
 func (b *ControlPlaneCommandBuilder) buildBackupCerts() string {
-	if b.Component == "control-plane" && b.HasExternalEtcd {
+	if b.Component == constants.ControlPlaneComponent && b.HasExternalEtcd {
 		return fmt.Sprintf(`mkdir -p '/etc/kubernetes/pki.bak_%[1]s'
 cd %[2]s
 for f in $(find . -type f ! -path './etcd/*'); do
