@@ -11,6 +11,8 @@ Unlike Amazon EKS in AWS Cloud, EKS Anywhere is a user-managed product that runs
 
 EKS Anywhere supports many different types of infrastructure including VMWare vSphere, Bare Metal, Nutanix, Apache CloudStack, and AWS Snow. You can run EKS Anywhere without a connection to AWS Cloud and in air-gapped environments, or you can optionally connect to AWS Cloud to integrate with other AWS services. You can use the [EKS Connector](https://docs.aws.amazon.com/eks/latest/userguide/eks-connector.html) to view your EKS Anywhere clusters in the Amazon EKS console, AWS IAM to authenticate to your EKS Anywhere clusters, IAM Roles for Service Accounts (IRSA) to authenticate Pods with other AWS services, and AWS Distro for OpenTelemetry to send metrics to Amazon Managed Prometheus for monitoring cluster resources.
 
+If you have on-premises or edge environments with reliable connectivity to an AWS Region, consider using [EKS Hybrid Nodes](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-overview.html) or [EKS on Outposts](https://docs.aws.amazon.com/eks/latest/userguide/eks-outposts.html) to benefit from the AWS-managed EKS control plane and consistent experience with EKS in AWS Cloud.
+
 EKS Anywhere is built on the Kubernetes sub-project called [Cluster API](https://cluster-api.sigs.k8s.io/) (CAPI), which is focused on providing declarative APIs and tooling to simplify the provisioning, upgrading, and operating of multiple Kubernetes clusters. While EKS Anywhere simplifies and abstracts the CAPI primitives, it is useful to understand the basics of CAPI when using EKS Anywhere. 
 
 ### Why EKS Anywhere?
