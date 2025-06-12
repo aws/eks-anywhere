@@ -187,8 +187,6 @@ env:
     T_TINKERBELL_IMAGE_REDHAT_1_29: "tinkerbell_ci:image_redhat_1_29"
     T_TINKERBELL_IMAGE_REDHAT_1_30: "tinkerbell_ci:image_redhat_1_30"
     T_TINKERBELL_IMAGE_REDHAT_1_31: "tinkerbell_ci:image_redhat_1_31"
-    T_TINKERBELL_IMAGE_REDHAT_1_32: "tinkerbell_ci:image_redhat_1_32"
-    T_TINKERBELL_IMAGE_REDHAT_1_33: "tinkerbell_ci:image_redhat_1_33"
     T_TINKERBELL_IMAGE_REDHAT_9_1_27: "tinkerbell_ci:image_redhat_9_1_27"
     T_TINKERBELL_IMAGE_REDHAT_9_1_28: "tinkerbell_ci:image_redhat_9_1_28"
     T_TINKERBELL_IMAGE_REDHAT_9_1_29: "tinkerbell_ci:image_redhat_9_1_29"
