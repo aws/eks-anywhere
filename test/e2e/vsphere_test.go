@@ -3822,24 +3822,6 @@ func TestVSphereKubernetes131RedHatSimpleFlow(t *testing.T) {
 	runSimpleFlow(test)
 }
 
-func TestVSphereKubernetes132RedHatSimpleFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewVSphere(t, framework.WithRedHat132VSphere()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube132)),
-	)
-	runSimpleFlow(test)
-}
-
-func TestVSphereKubernetes133RedHatSimpleFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewVSphere(t, framework.WithRedHat133VSphere()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133)),
-	)
-	runSimpleFlow(test)
-}
-
 func TestVSphereKubernetes128RedHat9SimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -3888,7 +3870,7 @@ func TestVSphereKubernetes132RedHat9SimpleFlow(t *testing.T) {
 func TestVSphereKubernetes133RedHat9SimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewVSphere(t, framework.WithRedHat133VSphere()),
+		framework.NewVSphere(t, framework.WithRedHat9133VSphere()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133)),
 	)
 	runSimpleFlow(test)
