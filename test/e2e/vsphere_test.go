@@ -6869,11 +6869,13 @@ func TestVSphereKubernetes130To131RedhatUpgradeFromLatestMinorRelease(t *testing
 
 func TestVSphereKubernetes128To129Redhat9UpgradeFromLatestMinorRelease(t *testing.T) {
 	licenseToken := framework.GetLicenseToken()
+	licenseToken1 := framework.GetLicenseToken()
 	release := latestMinorRelease(t)
 	useBundlesOverride := false
 	provider := framework.NewVSphere(t,
 		framework.WithVSphereFillers(
 			api.WithOsFamilyForAllMachines(v1alpha1.RedHat),
+			api.WithLicenseToken(licenseToken1),
 		),
 		framework.WithKubeVersionAndOSForRelease(v1alpha1.Kube128, framework.RedHat9, release, useBundlesOverride),
 	)
@@ -7727,6 +7729,7 @@ func TestVSphereKubernetes133MulticlusterWorkloadClusterAPI(t *testing.T) {
 				api.WithControlPlaneCount(1),
 				api.WithWorkerNodeCount(1),
 				api.WithStackedEtcdTopology(),
+				api.WithLicenseToken(licenseToken),
 			),
 			vsphere.WithUbuntu132(),
 		),
