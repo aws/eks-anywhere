@@ -30,8 +30,6 @@ quick_tests:
 # Nutanix
 - TestNutanixKubernetes132to133RedHat9Upgrade
 - TestNutanixKubernetes132to133StackedEtcdRedHat9Upgrade
-- TestNutanixKubernetes132to133RedHat8Upgrade
-- TestNutanixKubernetes132to133StackedEtcdRedHat8Upgrade
 - TestNutanixKubernetes132To133UbuntuUpgrade
 - TestNutanixKubernetes132To133StackedEtcdUbuntuUpgrade
 # Snow
