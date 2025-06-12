@@ -108,7 +108,7 @@ require (
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/bmc-toolbox/common v0.0.0-20230717121556-5eb9915a8a5a // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
-	github.com/cloudflare/circl v1.3.7 // indirect
+	github.com/cloudflare/circl v1.6.1 // indirect
 	github.com/containerd/containerd v1.7.27 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.4 // indirect
