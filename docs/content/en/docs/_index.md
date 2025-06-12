@@ -31,6 +31,8 @@ EKS Anywhere is container management software built by AWS that makes it easier 
 
 Unlike Amazon EKS in AWS Cloud, EKS Anywhere is a user-managed product that runs on user-managed infrastructure. You are responsible for cluster lifecycle operations and maintenance of your EKS Anywhere clusters. EKS Anywhere does not have any strict dependencies on AWS regional services and is a fit for isolated or air-gapped environments.
 
+If you have on-premises or edge environments with reliable connectivity to an AWS Region, consider using [EKS Hybrid Nodes](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-overview.html) or [EKS on Outposts](https://docs.aws.amazon.com/eks/latest/userguide/eks-outposts.html) to benefit from AWS-managed EKS control planes and a consistent experience with EKS in the AWS Cloud.
+
 The tenets of the EKS Anywhere project are:
 
 - **Simple**: Make using a Kubernetes distribution simple and boring (reliable and secure).
