@@ -243,6 +243,124 @@ func TestValidateLicenseKeyIsUnique(t *testing.T) {
 	}
 }
 
+func TestValidateBundleSignature(t *testing.T) {
+	tests := []struct {
+		name    string
+		bundle  *v1alpha1.Bundles
+		wantErr string
+	}{
+		{
+			name: "invalid bundle signature",
+			bundle: &v1alpha1.Bundles{
+				TypeMeta: v1.TypeMeta{
+					Kind:       "Bundles",
+					APIVersion: v1alpha1.GroupVersion.String(),
+				},
+				ObjectMeta: v1.ObjectMeta{
+					Annotations: map[string]string{
+						constants.SignatureAnnotation: "MEYCIQCYJwrDjICgUQImFpJdOLjQlC7OSQutCsqBk+0jUheZTQIhALSj7peTLSTSy9rvNfYwyqbP0fOi3elggWwPcAz89csc",
+					},
+				},
+				Spec: v1alpha1.BundlesSpec{
+					Number: 1,
+					VersionsBundles: []v1alpha1.VersionsBundle{
+						{
+							KubeVersion: "1.28",
+						},
+					},
+				},
+			},
+			wantErr: "signature on the bundle is invalid",
+		},
+		{
+			name:    "valid bundle signature",
+			bundle:  validBundle(),
+			wantErr: "",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			err := validateBundleSignature(tc.bundle)
+			if tc.wantErr == "" {
+				if err != nil {
+					t.Errorf("validateBundleSignature() error = %v, wantErr %v", err, tc.wantErr)
+				}
+			} else {
+				if err == nil || !strings.Contains(err.Error(), tc.wantErr) {
+					t.Errorf("validateBundleSignature() error = %v, wantErr %v", err, tc.wantErr)
+				}
+			}
+		})
+	}
+}
+
+func TestValidateEKSDistroManifestSignature(t *testing.T) {
+	tests := []struct {
+		name           string
+		manifest       *eksdv1alpha1.Release
+		sig            string
+		releaseChannel string
+		wantErr        string
+	}{
+		{
+			name: "invalid eks distro manifest signature",
+			manifest: &eksdv1alpha1.Release{
+				TypeMeta: v1.TypeMeta{
+					Kind:       "Release",
+					APIVersion: eksdv1alpha1.GroupVersion.String(),
+				},
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "kubernetes-1-28-46",
+					Namespace: constants.EksaSystemNamespace,
+				},
+				Spec: eksdv1alpha1.ReleaseSpec{
+					Channel: "1-28",
+					Number:  46,
+				},
+			},
+			sig:            "MEYCIQCYJwrDjICgUQImFpJdOLjQlC7OSQutCsqBk+0jUheZTQIhALSj7peTLSTSy9rvNfYwyqbP0fOi3elggWwPcAz89csc",
+			releaseChannel: "1-28",
+			wantErr:        "signature on the 1-28 eks distro manifest is invalid",
+		},
+		{
+			name: "valid eks distro manifest signature",
+			manifest: &eksdv1alpha1.Release{
+				TypeMeta: v1.TypeMeta{
+					Kind:       "Release",
+					APIVersion: eksdv1alpha1.GroupVersion.String(),
+				},
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "kubernetes-1-28-46",
+					Namespace: constants.EksaSystemNamespace,
+				},
+				Spec: eksdv1alpha1.ReleaseSpec{
+					Channel: "1-28",
+					Number:  46,
+				},
+			},
+			sig:            "MEUCIQC3uP3Dhfb/nhCeir0Hwtf4bddKVfVIauFWBidT18XZOwIgHjzH1mOxBm1N2l2w9wBVy9W1o6CQXpdDz7UcbCszZYc=",
+			releaseChannel: "1-28",
+			wantErr:        "",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			err := validateEKSDistroManifestSignature(tc.manifest, tc.sig, tc.releaseChannel)
+			if tc.wantErr == "" {
+				if err != nil {
+					t.Errorf("validateEKSDistroManifestSignature() error = %v, wantErr %v", err, tc.wantErr)
+				}
+			} else {
+				if err == nil || !strings.Contains(err.Error(), tc.wantErr) {
+					t.Errorf("validateEKSDistroManifestSignature() error = %v, wantErr %v", err, tc.wantErr)
+				}
+			}
+		})
+	}
+}
+
 func validBundle() *v1alpha1.Bundles {
 	return &v1alpha1.Bundles{
 		TypeMeta: v1.TypeMeta{
