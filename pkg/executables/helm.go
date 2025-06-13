@@ -258,7 +258,6 @@ func (h *Helm) Uninstall(ctx context.Context, chart, kubeconfigFilePath, namespa
 		opt(h.helmConfig)
 	}
 
-	params = h.addInsecureFlagIfProvided(params)
 	params = append(params, h.helmConfig.ExtraFlags...)
 
 	logger.Info("Uninstalling helm chart on cluster", "chart", chart)
