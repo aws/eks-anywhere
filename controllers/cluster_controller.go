@@ -537,6 +537,7 @@ func (r *ClusterReconciler) updateStatus(ctx context.Context, log logr.Logger, c
 	}
 
 	clusters.UpdateClusterStatusForCNI(ctx, cluster)
+	clusters.UpdateClusterCertificateStatus(ctx, r.client, log, cluster)
 
 	summarizedConditionTypes := []anywherev1.ConditionType{
 		anywherev1.ControlPlaneInitializedCondition,

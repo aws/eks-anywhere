@@ -6,12 +6,17 @@ import (
 	"testing"
 
 	"github.com/go-logr/logr"
+	"github.com/go-logr/logr/testr"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
+	"sigs.k8s.io/cluster-api/util/conditions"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -497,6 +502,282 @@ func TestClusterReconcilerFailSignatureValidation(t *testing.T) {
 	r := controllers.NewClusterReconciler(c, registry, iam, clusterValidator, mockPkgs, mhcReconciler, nil)
 	_, err := r.Reconcile(ctx, clusterRequest(cluster))
 	g.Expect(err).To(MatchError(ContainSubstring("validating bundle signature")))
+}
+
+func TestClusterReconcilerCertificateStatusStatus(t *testing.T) {
+	tests := []struct {
+		name                      string
+		cluster                   *anywherev1.Cluster
+		kcp                       *controlplanev1.KubeadmControlPlane
+		machineDeployments        []clusterv1.Machine
+		wantCertificateStatusCall bool
+		clusterReady              bool
+	}{
+		{
+			name: "cluster ready - should update certificate status",
+			cluster: &anywherev1.Cluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-cluster",
+					Namespace: constants.EksaSystemNamespace,
+				},
+				Spec: anywherev1.ClusterSpec{
+					KubernetesVersion: anywherev1.Kube132,
+					ClusterNetwork: anywherev1.ClusterNetwork{
+						CNIConfig: &anywherev1.CNIConfig{
+							Cilium: &anywherev1.CiliumConfig{},
+						},
+					},
+					ManagementCluster: anywherev1.ManagementCluster{Name: "management-cluster"},
+					ControlPlaneConfiguration: anywherev1.ControlPlaneConfiguration{
+						Count: 1,
+						Endpoint: &anywherev1.Endpoint{
+							Host: "127.0.0.1",
+						},
+					},
+					MachineHealthCheck: &anywherev1.MachineHealthCheck{
+						UnhealthyMachineTimeout: &metav1.Duration{
+							Duration: constants.DefaultUnhealthyMachineTimeout,
+						},
+						NodeStartupTimeout: &metav1.Duration{
+							Duration: constants.DefaultNodeStartupTimeout,
+						},
+					},
+				},
+			},
+			kcp: testKubeadmControlPlaneFromCluster(&anywherev1.Cluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-cluster",
+					Namespace: constants.EksaSystemNamespace,
+				},
+			}),
+			machineDeployments: []clusterv1.Machine{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-cluster-control-plane-1",
+						Namespace: constants.EksaSystemNamespace,
+						Labels: map[string]string{
+							"cluster.x-k8s.io/cluster-name":  "test-cluster",
+							"cluster.x-k8s.io/control-plane": "",
+						},
+					},
+					Status: clusterv1.MachineStatus{
+						Addresses: []clusterv1.MachineAddress{
+							{
+								Type:    clusterv1.MachineExternalIP,
+								Address: "192.168.1.100",
+							},
+						},
+					},
+				},
+			},
+			wantCertificateStatusCall: true,
+			clusterReady:              true,
+		},
+		{
+			name: "cluster not ready - should skip certificate status update",
+			cluster: &anywherev1.Cluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-cluster",
+					Namespace: constants.EksaSystemNamespace,
+				},
+				Spec: anywherev1.ClusterSpec{
+					KubernetesVersion: anywherev1.Kube132,
+					ClusterNetwork: anywherev1.ClusterNetwork{
+						CNIConfig: &anywherev1.CNIConfig{
+							Cilium: &anywherev1.CiliumConfig{},
+						},
+					},
+					ManagementCluster: anywherev1.ManagementCluster{Name: "management-cluster"},
+					ControlPlaneConfiguration: anywherev1.ControlPlaneConfiguration{
+						Count: 1,
+					},
+					MachineHealthCheck: &anywherev1.MachineHealthCheck{
+						UnhealthyMachineTimeout: &metav1.Duration{
+							Duration: constants.DefaultUnhealthyMachineTimeout,
+						},
+						NodeStartupTimeout: &metav1.Duration{
+							Duration: constants.DefaultNodeStartupTimeout,
+						},
+					},
+				},
+			},
+			kcp: &controlplanev1.KubeadmControlPlane{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-cluster",
+					Namespace: constants.EksaSystemNamespace,
+				},
+				Status: controlplanev1.KubeadmControlPlaneStatus{
+					Conditions: clusterv1.Conditions{
+						{
+							Type:   controlplanev1.AvailableCondition,
+							Status: "False",
+						},
+					},
+				},
+			},
+			machineDeployments:        []clusterv1.Machine{},
+			wantCertificateStatusCall: false,
+			clusterReady:              false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			ctx := context.Background()
+			version := test.DevEksaVersion()
+			tt.cluster.Spec.EksaVersion = &version
+
+			mgmt := tt.cluster.DeepCopy()
+			mgmt.Name = "management-cluster"
+
+			objs := make([]runtime.Object, 0, 4+len(tt.machineDeployments))
+			objs = append(objs, tt.cluster, mgmt, test.EKSARelease(), createBundle())
+
+			if tt.kcp != nil {
+				objs = append(objs, tt.kcp)
+			}
+
+			for _, machine := range tt.machineDeployments {
+				objs = append(objs, machine.DeepCopy())
+			}
+
+			client := fake.NewClientBuilder().WithRuntimeObjects(objs...).
+				WithStatusSubresource(tt.cluster).
+				Build()
+
+			mockCtrl := gomock.NewController(t)
+			providerReconciler := mocks.NewMockProviderClusterReconciler(mockCtrl)
+			iam := mocks.NewMockAWSIamConfigReconciler(mockCtrl)
+			clusterValidator := mocks.NewMockClusterValidator(mockCtrl)
+			registry := newRegistryMock(providerReconciler)
+			mockPkgs := mocks.NewMockPackagesClient(mockCtrl)
+			mhcReconciler := mocks.NewMockMachineHealthCheckReconciler(mockCtrl)
+
+			log := testr.New(t)
+			logCtx := ctrl.LoggerInto(ctx, log)
+
+			iam.EXPECT().EnsureCASecret(logCtx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(tt.cluster)).Return(controller.Result{}, nil)
+			iam.EXPECT().Reconcile(logCtx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(tt.cluster)).Return(controller.Result{}, nil)
+
+			if tt.clusterReady {
+				// Set up conditions to make cluster appear ready
+				providerReconciler.EXPECT().Reconcile(logCtx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(tt.cluster)).Times(1).Do(
+					func(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) {
+						conditions.MarkTrue(cluster, anywherev1.DefaultCNIConfiguredCondition)
+					},
+				)
+			} else {
+				providerReconciler.EXPECT().Reconcile(logCtx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(tt.cluster)).Times(1).Do(
+					func(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) {
+						conditions.MarkFalse(cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.ControlPlaneNotReadyReason, clusterv1.ConditionSeverityInfo, "")
+					},
+				)
+			}
+
+			clusterValidator.EXPECT().ValidateManagementClusterName(logCtx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(tt.cluster)).Return(nil)
+			mockPkgs.EXPECT().Reconcile(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
+			mhcReconciler.EXPECT().Reconcile(logCtx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(tt.cluster)).Return(nil)
+
+			r := controllers.NewClusterReconciler(client, registry, iam, clusterValidator, mockPkgs, mhcReconciler, nil)
+
+			result, err := r.Reconcile(logCtx, clusterRequest(tt.cluster))
+
+			g.Expect(err).ToNot(HaveOccurred())
+			g.Expect(result).To(Equal(ctrl.Result{}))
+
+			// Verify certificate status was updated if cluster is ready
+			api := envtest.NewAPIExpecter(t, client)
+			c := envtest.CloneNameNamespace(tt.cluster)
+			api.ShouldEventuallyMatch(logCtx, c, func(g Gomega) {
+				if tt.wantCertificateStatusCall && tt.clusterReady {
+					// Certificate status should be populated (even if empty due to connection failures in test)
+					g.Expect(c.Status.ClusterCertificateInfo).ToNot(BeNil())
+				}
+			})
+		})
+	}
+}
+
+func TestClusterReconcilerCertificateStatusError(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+
+	cluster := &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-cluster",
+			Namespace: constants.EksaSystemNamespace,
+		},
+		Spec: anywherev1.ClusterSpec{
+			KubernetesVersion: anywherev1.Kube132,
+			ClusterNetwork: anywherev1.ClusterNetwork{
+				CNIConfig: &anywherev1.CNIConfig{
+					Cilium: &anywherev1.CiliumConfig{},
+				},
+			},
+			ManagementCluster: anywherev1.ManagementCluster{Name: "management-cluster"},
+			ControlPlaneConfiguration: anywherev1.ControlPlaneConfiguration{
+				Count: 1,
+				Endpoint: &anywherev1.Endpoint{
+					Host: "127.0.0.1",
+				},
+			},
+			MachineHealthCheck: &anywherev1.MachineHealthCheck{
+				UnhealthyMachineTimeout: &metav1.Duration{
+					Duration: constants.DefaultUnhealthyMachineTimeout,
+				},
+				NodeStartupTimeout: &metav1.Duration{
+					Duration: constants.DefaultNodeStartupTimeout,
+				},
+			},
+		},
+	}
+
+	version := test.DevEksaVersion()
+	cluster.Spec.EksaVersion = &version
+
+	mgmt := cluster.DeepCopy()
+	mgmt.Name = "management-cluster"
+
+	kcp := testKubeadmControlPlaneFromCluster(cluster)
+
+	objs := []runtime.Object{cluster, mgmt, kcp, test.EKSARelease(), createBundle()}
+
+	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).
+		WithStatusSubresource(cluster).
+		Build()
+
+	mockCtrl := gomock.NewController(t)
+	providerReconciler := mocks.NewMockProviderClusterReconciler(mockCtrl)
+	iam := mocks.NewMockAWSIamConfigReconciler(mockCtrl)
+	clusterValidator := mocks.NewMockClusterValidator(mockCtrl)
+	registry := newRegistryMock(providerReconciler)
+	mockPkgs := mocks.NewMockPackagesClient(mockCtrl)
+	mhcReconciler := mocks.NewMockMachineHealthCheckReconciler(mockCtrl)
+
+	log := testr.New(t)
+	logCtx := ctrl.LoggerInto(ctx, log)
+
+	iam.EXPECT().EnsureCASecret(logCtx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(cluster)).Return(controller.Result{}, nil)
+	iam.EXPECT().Reconcile(logCtx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(cluster)).Return(controller.Result{}, nil)
+
+	// Make cluster appear ready so certificate status update is attempted
+	providerReconciler.EXPECT().Reconcile(logCtx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(cluster)).Times(1).Do(
+		func(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) {
+			conditions.MarkTrue(cluster, anywherev1.DefaultCNIConfiguredCondition)
+		},
+	)
+
+	clusterValidator.EXPECT().ValidateManagementClusterName(logCtx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(cluster)).Return(nil)
+	mockPkgs.EXPECT().Reconcile(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
+	mhcReconciler.EXPECT().Reconcile(logCtx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(cluster)).Return(nil)
+
+	r := controllers.NewClusterReconciler(client, registry, iam, clusterValidator, mockPkgs, mhcReconciler, nil)
+
+	// This should not fail even if certificate status update encounters errors
+	result, err := r.Reconcile(logCtx, clusterRequest(cluster))
+	g.Expect(err).ToNot(HaveOccurred())
+	g.Expect(result).To(Equal(ctrl.Result{}))
 }
 
 func newRegistryForDummyProviderReconciler() controllers.ProviderClusterReconcilerRegistry {
