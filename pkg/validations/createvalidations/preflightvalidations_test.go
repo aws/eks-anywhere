@@ -44,7 +44,7 @@ func newPreflightValidationsTest(t *testing.T) *preflightValidationsTest {
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Cluster = &anywherev1.Cluster{
 			Spec: anywherev1.ClusterSpec{
-				KubernetesVersion: "1.30",
+				KubernetesVersion: "1.31",
 				GitOpsRef: &anywherev1.Ref{
 					Name: "gitops",
 				},
@@ -57,7 +57,9 @@ func newPreflightValidationsTest(t *testing.T) *preflightValidationsTest {
 	eksaReleaseV022.Name = "eksa-v0-22-0"
 	eksaReleaseV022.Spec.Version = "eksa-v0-22-0"
 
-	objects := []client.Object{eksaReleaseV022}
+	eksdRelease := test.EksdRelease("1-31")
+
+	objects := []client.Object{eksaReleaseV022, eksdRelease}
 	opts := &validations.Opts{
 		Kubectl:           k,
 		Spec:              clusterSpec,
@@ -90,17 +92,20 @@ spec:
 	reader.EXPECT().ReadFile(releasesURL).Return([]byte(releasesManifest), nil)
 
 	bundlesManifest := `apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: Bundles
 metadata:
   annotations:
-    anywhere.eks.amazonaws.com/signature: MEYCIQDgmE8oY9xUyFO3uOHRkpRWjTxoej8Wf7Ty5HQcbs9ouQIhANV2kylPXjcpLY2xu7vD6ktXqm7yrnLUgiehSdbL8JUJ
+    anywhere.eks.amazonaws.com/signature: MEQCICjq1rZmhH0FYOlruZmh6QADCrr5ccrN6hE7Lu0vaXGrAiBhV+kfh64sqLblBt98DvIfHMerEqJVhHzpGy1YJthZQw==
   name: bundles-1
 spec:
   number: 1
   versionsBundles:
-  - kubeversion: "1.30"
-    endOfStandardSupport: "2026-12-31"`
+  - kubeVersion: "1.31"
+    endOfStandardSupport: "2026-12-31"
+    eksD:
+      name: "test"
+      channel: "1-31"
+      manifestUrl: "https://distro.eks.amazonaws.com/kubernetes-1-31/kubernetes-1-31-eks-1.yaml"`
 
 	reader.EXPECT().ReadFile("https://bundles/bundles.yaml").Return([]byte(bundlesManifest), nil)
 

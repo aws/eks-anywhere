@@ -252,7 +252,8 @@ func TestClusterReconcilerReconcileSelfManagedCluster(t *testing.T) {
 	registry := newRegistryMock(providerReconciler)
 	eksaRelease := test.EKSARelease()
 	bundles := createBundle()
-	c := fake.NewClientBuilder().WithRuntimeObjects(selfManagedCluster, kcp, eksaRelease, bundles).
+	eksdRelease := createEKSDRelease()
+	c := fake.NewClientBuilder().WithRuntimeObjects(selfManagedCluster, kcp, eksaRelease, bundles, eksdRelease).
 		WithStatusSubresource(selfManagedCluster).
 		Build()
 	mockPkgs := mocks.NewMockPackagesClient(controller)
@@ -587,7 +588,7 @@ func TestClusterReconcilerReconcileConditions(t *testing.T) {
 				func(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) {
 					kcpReadyCondition := conditions.Get(kcp, clusterv1.ReadyCondition)
 					if kcpReadyCondition == nil ||
-						(kcpReadyCondition != nil && kcpReadyCondition.Status == "False") {
+						(kcpReadyCondition.Status == "False") {
 						conditions.MarkFalse(cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.ControlPlaneNotReadyReason, clusterv1.ConditionSeverityInfo, "")
 						return
 					}
@@ -863,7 +864,7 @@ func TestClusterReconcilerReconcileSelfManagedClusterConditions(t *testing.T) {
 				func(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) {
 					kcpReadyCondition := conditions.Get(kcp, clusterv1.ReadyCondition)
 					if kcpReadyCondition == nil ||
-						(kcpReadyCondition != nil && kcpReadyCondition.Status == "False") {
+						(kcpReadyCondition.Status == "False") {
 						conditions.MarkFalse(cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.ControlPlaneNotReadyReason, clusterv1.ConditionSeverityInfo, "")
 						return
 					}
@@ -1959,6 +1960,234 @@ func TestClusterReconcilerNotAvailableEksaVersion(t *testing.T) {
 	g.Expect(eksaCluster.Status.FailureMessage).To(HaveValue(Equal(expectedError)))
 }
 
+func TestValidateExtendedKubernetesVersionSupport_BundleNotFoundError(t *testing.T) {
+	version := anywherev1.EksaVersion("v0.22.0") // Use version >= v0.22.0 to avoid skip
+	config, _ := baseTestVsphereCluster()
+	config.Cluster.Name = "test-cluster"
+	config.Cluster.Spec.ManagementCluster = anywherev1.ManagementCluster{Name: "management-cluster"}
+	config.Cluster.Spec.BundlesRef = nil
+	config.Cluster.Spec.EksaVersion = &version
+
+	mgmt := config.DeepCopy()
+	mgmt.Cluster.Name = "management-cluster"
+	mgmt.Cluster.Spec.BundlesRef = nil
+	mgmt.Cluster.Spec.EksaVersion = &version
+
+	g := NewWithT(t)
+
+	// Create EKSARelease with matching version
+	eksaRelease := &releasev1.EKSARelease{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       releasev1.EKSAReleaseKind,
+			APIVersion: releasev1.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "eksa-v0-22-0",
+			Namespace: constants.EksaSystemNamespace,
+		},
+		Spec: releasev1.EKSAReleaseSpec{
+			Version:           string(version),
+			BundleManifestURL: "",
+			BundlesRef: releasev1.BundlesRef{
+				Name:       "bundles-1",
+				Namespace:  "default",
+				APIVersion: releasev1.GroupVersion.String(),
+			},
+		},
+	}
+
+	objs := make([]runtime.Object, 0, 4+len(config.ChildObjects()))
+	objs = append(objs, config.Cluster, mgmt.Cluster, eksaRelease)
+	// Note: We intentionally do NOT include the bundles object to cause c.BundlesForCluster to fail
+
+	for _, o := range config.ChildObjects() {
+		objs = append(objs, o)
+	}
+
+	testClient := fake.NewClientBuilder().WithRuntimeObjects(objs...).
+		WithStatusSubresource(config.Cluster).
+		Build()
+
+	mockCtrl := gomock.NewController(t)
+	providerReconciler := mocks.NewMockProviderClusterReconciler(mockCtrl)
+	iam := mocks.NewMockAWSIamConfigReconciler(mockCtrl)
+	clusterValidator := mocks.NewMockClusterValidator(mockCtrl)
+	registry := newRegistryMock(providerReconciler)
+	mockPkgs := mocks.NewMockPackagesClient(mockCtrl)
+
+	ctx := context.Background()
+	log := testr.New(t)
+	logCtx := ctrl.LoggerInto(ctx, log)
+
+	iam.EXPECT().EnsureCASecret(logCtx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(config.Cluster)).Return(controller.Result{}, nil)
+	clusterValidator.EXPECT().ValidateManagementClusterName(logCtx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(config.Cluster)).Return(nil)
+
+	r := controllers.NewClusterReconciler(testClient, registry, iam, clusterValidator, mockPkgs, nil, nil)
+
+	req := clusterRequest(config.Cluster)
+	_, err := r.Reconcile(logCtx, req)
+
+	g.Expect(err).To(HaveOccurred())
+	eksaCluster := &anywherev1.Cluster{}
+
+	g.Expect(testClient.Get(ctx, req.NamespacedName, eksaCluster)).To(Succeed())
+	g.Expect(eksaCluster.Status.FailureReason).To(HaveValue(Equal(anywherev1.BundleNotFoundReason)))
+	g.Expect(eksaCluster.Status.FailureMessage).ToNot(BeNil())
+	g.Expect(*eksaCluster.Status.FailureMessage).To(ContainSubstring("bundles-1"))
+}
+
+func TestValidateExtendedKubernetesVersionSupport_ReleaseManifestError(t *testing.T) {
+	version := anywherev1.EksaVersion("v0.22.0") // Use version >= v0.22.0 to avoid skip
+	config, bundles := baseTestVsphereCluster()
+	config.Cluster.Name = "test-cluster"
+	config.Cluster.Spec.ManagementCluster = anywherev1.ManagementCluster{Name: "management-cluster"}
+	config.Cluster.Spec.BundlesRef = nil
+	config.Cluster.Spec.EksaVersion = &version
+
+	mgmt := config.DeepCopy()
+	mgmt.Cluster.Name = "management-cluster"
+	mgmt.Cluster.Spec.BundlesRef = nil
+	mgmt.Cluster.Spec.EksaVersion = &version
+
+	g := NewWithT(t)
+
+	// Create EKSARelease with matching version
+	eksaRelease := &releasev1.EKSARelease{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       releasev1.EKSAReleaseKind,
+			APIVersion: releasev1.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "eksa-v0-22-0",
+			Namespace: constants.EksaSystemNamespace,
+		},
+		Spec: releasev1.EKSAReleaseSpec{
+			Version:           string(version),
+			BundleManifestURL: "",
+			BundlesRef: releasev1.BundlesRef{
+				Name:       "bundles-1",
+				Namespace:  "default",
+				APIVersion: releasev1.GroupVersion.String(),
+			},
+		},
+	}
+
+	objs := make([]runtime.Object, 0, 5+len(config.ChildObjects()))
+	objs = append(objs, config.Cluster, mgmt.Cluster, bundles, eksaRelease)
+	// Note: We intentionally do NOT include the EKS-D release object to cause getReleaseManifestFromCluster to fail
+
+	for _, o := range config.ChildObjects() {
+		objs = append(objs, o)
+	}
+
+	testClient := fake.NewClientBuilder().WithRuntimeObjects(objs...).
+		WithStatusSubresource(config.Cluster).
+		Build()
+
+	mockCtrl := gomock.NewController(t)
+	providerReconciler := mocks.NewMockProviderClusterReconciler(mockCtrl)
+	iam := mocks.NewMockAWSIamConfigReconciler(mockCtrl)
+	clusterValidator := mocks.NewMockClusterValidator(mockCtrl)
+	registry := newRegistryMock(providerReconciler)
+	mockPkgs := mocks.NewMockPackagesClient(mockCtrl)
+
+	ctx := context.Background()
+	log := testr.New(t)
+	logCtx := ctrl.LoggerInto(ctx, log)
+
+	iam.EXPECT().EnsureCASecret(logCtx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(config.Cluster)).Return(controller.Result{}, nil)
+	clusterValidator.EXPECT().ValidateManagementClusterName(logCtx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(config.Cluster)).Return(nil)
+
+	r := controllers.NewClusterReconciler(testClient, registry, iam, clusterValidator, mockPkgs, nil, nil)
+
+	req := clusterRequest(config.Cluster)
+	_, err := r.Reconcile(logCtx, req)
+
+	g.Expect(err).To(HaveOccurred())
+	eksaCluster := &anywherev1.Cluster{}
+
+	g.Expect(testClient.Get(ctx, req.NamespacedName, eksaCluster)).To(Succeed())
+	g.Expect(eksaCluster.Status.FailureReason).To(HaveValue(Equal(anywherev1.ExtendedK8sVersionSupportNotSupportedReason)))
+	g.Expect(eksaCluster.Status.FailureMessage).ToNot(BeNil())
+	g.Expect(*eksaCluster.Status.FailureMessage).To(ContainSubstring("getting release manifest"))
+}
+
+func TestValidateExtendedKubernetesVersionSupport_ValidationError(t *testing.T) {
+	version := anywherev1.EksaVersion("v0.22.0") // Use version >= v0.22.0 to avoid skip
+	config, bundles := baseTestVsphereCluster()
+	config.Cluster.Name = "test-cluster"
+	config.Cluster.Spec.ManagementCluster = anywherev1.ManagementCluster{Name: "management-cluster"}
+	config.Cluster.Spec.BundlesRef = nil
+	config.Cluster.Spec.EksaVersion = &version
+	// Set an unsupported Kubernetes version to trigger validation error
+	config.Cluster.Spec.KubernetesVersion = anywherev1.KubernetesVersion("1.99")
+
+	mgmt := config.DeepCopy()
+	mgmt.Cluster.Name = "management-cluster"
+	mgmt.Cluster.Spec.BundlesRef = nil
+	mgmt.Cluster.Spec.EksaVersion = &version
+
+	g := NewWithT(t)
+
+	// Create EKSARelease with matching version
+	eksaRelease := &releasev1.EKSARelease{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       releasev1.EKSAReleaseKind,
+			APIVersion: releasev1.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "eksa-v0-22-0",
+			Namespace: constants.EksaSystemNamespace,
+		},
+		Spec: releasev1.EKSAReleaseSpec{
+			Version:           string(version),
+			BundleManifestURL: "",
+			BundlesRef: releasev1.BundlesRef{
+				Name:       "bundles-1",
+				Namespace:  "default",
+				APIVersion: releasev1.GroupVersion.String(),
+			},
+		},
+	}
+
+	objs := make([]runtime.Object, 0, 6+len(config.ChildObjects()))
+	objs = append(objs, config.Cluster, mgmt.Cluster, bundles, eksaRelease, createEKSDRelease())
+
+	for _, o := range config.ChildObjects() {
+		objs = append(objs, o)
+	}
+
+	testClient := fake.NewClientBuilder().WithRuntimeObjects(objs...).
+		WithStatusSubresource(config.Cluster).
+		Build()
+
+	mockCtrl := gomock.NewController(t)
+	providerReconciler := mocks.NewMockProviderClusterReconciler(mockCtrl)
+	iam := mocks.NewMockAWSIamConfigReconciler(mockCtrl)
+	clusterValidator := mocks.NewMockClusterValidator(mockCtrl)
+	registry := newRegistryMock(providerReconciler)
+	mockPkgs := mocks.NewMockPackagesClient(mockCtrl)
+
+	ctx := context.Background()
+	log := testr.New(t)
+	logCtx := ctrl.LoggerInto(ctx, log)
+
+	iam.EXPECT().EnsureCASecret(logCtx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(config.Cluster)).Return(controller.Result{}, nil)
+	clusterValidator.EXPECT().ValidateManagementClusterName(logCtx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(config.Cluster)).Return(nil)
+
+	r := controllers.NewClusterReconciler(testClient, registry, iam, clusterValidator, mockPkgs, nil, nil)
+
+	req := clusterRequest(config.Cluster)
+	_, err := r.Reconcile(logCtx, req)
+
+	g.Expect(err).To(HaveOccurred())
+	eksaCluster := &anywherev1.Cluster{}
+
+	g.Expect(testClient.Get(ctx, req.NamespacedName, eksaCluster)).To(Succeed())
+	g.Expect(eksaCluster.Status.FailureReason).To(HaveValue(Equal(anywherev1.ExtendedK8sVersionSupportNotSupportedReason)))
+	g.Expect(eksaCluster.Status.FailureMessage).ToNot(BeNil())
+}
+
 func vsphereWorkerMachineConfig() *anywherev1.VSphereMachineConfig {
 	return &anywherev1.VSphereMachineConfig{
 		TypeMeta: metav1.TypeMeta{
@@ -2065,6 +2294,29 @@ func createBundle() *releasev1.Bundles {
 						Name:           "test",
 						EksDReleaseUrl: "testdata/release.yaml",
 						KubeVersion:    "1.32",
+					},
+					CertManager:                releasev1.CertManagerBundle{},
+					ClusterAPI:                 releasev1.CoreClusterAPI{},
+					Bootstrap:                  releasev1.KubeadmBootstrapBundle{},
+					ControlPlane:               releasev1.KubeadmControlPlaneBundle{},
+					VSphere:                    releasev1.VSphereBundle{},
+					Docker:                     releasev1.DockerBundle{},
+					Eksa:                       releasev1.EksaBundle{},
+					Cilium:                     releasev1.CiliumBundle{},
+					Kindnetd:                   releasev1.KindnetdBundle{},
+					Flux:                       releasev1.FluxBundle{},
+					BottleRocketHostContainers: releasev1.BottlerocketHostContainersBundle{},
+					ExternalEtcdBootstrap:      releasev1.EtcdadmBootstrapBundle{},
+					ExternalEtcdController:     releasev1.EtcdadmControllerBundle{},
+					Tinkerbell:                 releasev1.TinkerbellBundle{},
+					EndOfStandardSupport:       "2030-06-30",
+				},
+				{
+					KubeVersion: "",
+					EksD: releasev1.EksDRelease{
+						Name:           "test",
+						EksDReleaseUrl: "testdata/release.yaml",
+						KubeVersion:    "",
 					},
 					CertManager:                releasev1.CertManagerBundle{},
 					ClusterAPI:                 releasev1.CoreClusterAPI{},
