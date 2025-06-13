@@ -7,9 +7,8 @@ import (
 	"net"
 	"time"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-
 	"github.com/go-logr/logr"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -84,11 +83,6 @@ func (s *Scanner) CheckCertificateExpiry(ctx context.Context, cluster *anywherev
 
 	controlPlaneCertInfos := s.getMachinesCertificateInfo(controlPlaneMachines, "6443")
 	certificateInfos = append(certificateInfos, controlPlaneCertInfos...)
-
-	// // Sort by component name for consistent ordering
-	// sort.Slice(certificateInfos, func(i, j int) bool {
-	// 	return certificateInfos[i].Component < certificateInfos[j].Component
-	// })
 
 	return certificateInfos, nil
 }

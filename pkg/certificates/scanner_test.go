@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/go-logr/logr/testr"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -29,14 +29,14 @@ const (
 )
 
 func TestNewCertificateScanner(t *testing.T) {
-	g := NewWithT(t)
+	g := gomega.NewWithT(t)
 
 	client := newFakeClientBuilder().Build()
 	logger := testr.New(t)
 
 	scanner := certificates.NewCertificateScanner(client, logger)
 
-	g.Expect(scanner).ToNot(BeNil())
+	g.Expect(scanner).ToNot(gomega.BeNil())
 }
 
 func TestScanner_CheckCertificateExpiry_Success(t *testing.T) {
@@ -203,7 +203,7 @@ func TestScanner_CheckCertificateExpiry_Success(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			g := NewWithT(t)
+			g := gomega.NewWithT(t)
 			ctx := context.Background()
 
 			objs := []runtime.Object{tt.cluster}
@@ -219,7 +219,7 @@ func TestScanner_CheckCertificateExpiry_Success(t *testing.T) {
 			scanner := certificates.NewCertificateScanner(client, logger)
 
 			_, err := scanner.CheckCertificateExpiry(ctx, tt.cluster)
-			g.Expect(err).ToNot(HaveOccurred())
+			g.Expect(err).ToNot(gomega.HaveOccurred())
 		})
 	}
 }
@@ -322,7 +322,7 @@ func TestScanner_UpdateClusterCertificateStatus_Success(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			g := NewWithT(t)
+			g := gomega.NewWithT(t)
 			ctx := context.Background()
 
 			objs := []runtime.Object{tt.cluster}
@@ -335,7 +335,7 @@ func TestScanner_UpdateClusterCertificateStatus_Success(t *testing.T) {
 			scanner := certificates.NewCertificateScanner(client, logger)
 
 			err := scanner.UpdateClusterCertificateStatus(ctx, tt.cluster)
-			g.Expect(err).ToNot(HaveOccurred())
+			g.Expect(err).ToNot(gomega.HaveOccurred())
 		})
 	}
 }

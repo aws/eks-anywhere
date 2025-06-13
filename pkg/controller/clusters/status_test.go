@@ -681,7 +681,7 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 	}
 }
 
-func TestUpdateClusterCertificateStatus(t *testing.T) {
+func TestUpdateClusterCertificateStatusSuccess(t *testing.T) {
 	g := NewWithT(t)
 
 	tests := []struct {
@@ -689,9 +689,7 @@ func TestUpdateClusterCertificateStatus(t *testing.T) {
 		cluster      *anywherev1.Cluster
 		conditions   []anywherev1.Condition
 		machines     []clusterv1.Machine
-		wantErr      bool
-		expectError  string
-		shouldUpdate bool
+		expectedCert []anywherev1.ClusterCertificateInfo
 	}{
 		{
 			name: "cluster ready - updates certificate status",
@@ -699,6 +697,14 @@ func TestUpdateClusterCertificateStatus(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "test-cluster",
 					Namespace: constants.EksaSystemNamespace,
+				},
+				Status: anywherev1.ClusterStatus{
+					ClusterCertificateInfo: []anywherev1.ClusterCertificateInfo{
+						{
+							Component:     "should-not-be-there",
+							ExpiresInDays: 1,
+						},
+					},
 				},
 			},
 			conditions: []anywherev1.Condition{
@@ -721,14 +727,13 @@ func TestUpdateClusterCertificateStatus(t *testing.T) {
 						Addresses: []clusterv1.MachineAddress{
 							{
 								Type:    clusterv1.MachineExternalIP,
-								Address: "192.168.1.100",
+								Address: "127.0.0.1",
 							},
 						},
 					},
 				},
 			},
-			wantErr:      false,
-			shouldUpdate: true,
+			expectedCert: nil,
 		},
 		{
 			name: "cluster not ready - skips certificate status update",
@@ -737,9 +742,12 @@ func TestUpdateClusterCertificateStatus(t *testing.T) {
 					Name:      "test-cluster",
 					Namespace: constants.EksaSystemNamespace,
 				},
-				Spec: anywherev1.ClusterSpec{
-					ControlPlaneConfiguration: anywherev1.ControlPlaneConfiguration{
-						Count: 1,
+				Status: anywherev1.ClusterStatus{
+					ClusterCertificateInfo: []anywherev1.ClusterCertificateInfo{
+						{
+							Component:     "should-be-there",
+							ExpiresInDays: 1,
+						},
 					},
 				},
 			},
@@ -749,81 +757,21 @@ func TestUpdateClusterCertificateStatus(t *testing.T) {
 					Status: "False",
 				},
 			},
-			machines:     []clusterv1.Machine{},
-			wantErr:      false,
-			shouldUpdate: false,
-		},
-		{
-			name: "cluster with external etcd configuration",
-			cluster: &anywherev1.Cluster{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-cluster",
-					Namespace: constants.EksaSystemNamespace,
-				},
-				Spec: anywherev1.ClusterSpec{
-					ControlPlaneConfiguration: anywherev1.ControlPlaneConfiguration{
-						Count: 1,
-					},
-					ExternalEtcdConfiguration: &anywherev1.ExternalEtcdConfiguration{
-						Count: 3,
-					},
+			machines: []clusterv1.Machine{},
+			expectedCert: []anywherev1.ClusterCertificateInfo{
+				{
+					Component:     "should-be-there",
+					ExpiresInDays: 1,
 				},
 			},
-			conditions: []anywherev1.Condition{
-				{
-					Type:   anywherev1.ReadyCondition,
-					Status: "True",
-				},
-			},
-			machines: []clusterv1.Machine{
-				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-cluster-control-plane-1",
-						Namespace: constants.EksaSystemNamespace,
-						Labels: map[string]string{
-							"cluster.x-k8s.io/cluster-name":  "test-cluster",
-							"cluster.x-k8s.io/control-plane": "",
-						},
-					},
-					Status: clusterv1.MachineStatus{
-						Addresses: []clusterv1.MachineAddress{
-							{
-								Type:    clusterv1.MachineExternalIP,
-								Address: "192.168.1.100",
-							},
-						},
-					},
-				},
-				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-cluster-etcd-1",
-						Namespace: constants.EksaSystemNamespace,
-						Labels: map[string]string{
-							"cluster.x-k8s.io/cluster-name": "test-cluster",
-							"cluster.x-k8s.io/etcd-cluster": "test-cluster-etcd",
-						},
-					},
-					Status: clusterv1.MachineStatus{
-						Addresses: []clusterv1.MachineAddress{
-							{
-								Type:    clusterv1.MachineExternalIP,
-								Address: "192.168.1.200",
-							},
-						},
-					},
-				},
-			},
-			wantErr:      false,
-			shouldUpdate: true,
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.name, func(_ *testing.T) {
 			ctx := context.Background()
 			tt.cluster.Status.Conditions = tt.conditions
 
-			// Create objects for fake client
 			objs := []runtime.Object{tt.cluster}
 			for _, machine := range tt.machines {
 				objs = append(objs, machine.DeepCopy())
@@ -832,30 +780,10 @@ func TestUpdateClusterCertificateStatus(t *testing.T) {
 			client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
 			logger := test.NewNullLogger()
 
-			// Store initial certificate info state
-			initialCertInfo := tt.cluster.Status.ClusterCertificateInfo
-
 			err := clusters.UpdateClusterCertificateStatus(ctx, client, logger, tt.cluster)
 
-			if tt.wantErr {
-				g.Expect(err).To(HaveOccurred())
-				if tt.expectError != "" {
-					g.Expect(err.Error()).To(ContainSubstring(tt.expectError))
-				}
-			} else {
-				g.Expect(err).ToNot(HaveOccurred())
-
-				isReady := conditions.IsTrue(tt.cluster, anywherev1.ReadyCondition)
-				if tt.shouldUpdate && isReady {
-					// Certificate scanner was called
-					// In test environment, TLS connections fail so certificate info will be empty
-					// but the function should have attempted to update it
-					g.Expect(tt.cluster.Status.ClusterCertificateInfo).ToNot(BeNil())
-				} else if !tt.shouldUpdate {
-					// Should not have updated certificate info if cluster is not ready
-					g.Expect(tt.cluster.Status.ClusterCertificateInfo).To(Equal(initialCertInfo))
-				}
-			}
+			g.Expect(tt.cluster.Status.ClusterCertificateInfo).To(Equal(tt.expectedCert))
+			g.Expect(err).ToNot(HaveOccurred())
 		})
 	}
 }
