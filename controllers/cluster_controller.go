@@ -538,6 +538,10 @@ func (r *ClusterReconciler) updateStatus(ctx context.Context, log logr.Logger, c
 
 	clusters.UpdateClusterStatusForCNI(ctx, cluster)
 
+	if err := clusters.UpdateClusterCertificateStatus(ctx, r.client, log, cluster); err != nil {
+		return errors.Wrap(err, "updating cluster certificate status for cluster")
+	}
+
 	summarizedConditionTypes := []anywherev1.ConditionType{
 		anywherev1.ControlPlaneInitializedCondition,
 		anywherev1.ControlPlaneReadyCondition,

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
+	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -12,6 +13,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/certificates"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/controller"
 )
@@ -69,6 +71,22 @@ func UpdateClusterStatusForCNI(ctx context.Context, cluster *anywherev1.Cluster)
 		conditions.MarkFalse(cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.ControlPlaneNotReadyReason, clusterv1.ConditionSeverityInfo, "")
 		return
 	}
+}
+
+// UpdateClusterCertificateStatus updates the cluster status with the certificate information
+// about cluster machines such as control plane and external etcd machines. It will only update
+// if the cluster is ready to avoid unncessary TLS connections.
+func UpdateClusterCertificateStatus(ctx context.Context, client client.Client, log logr.Logger, cluster *anywherev1.Cluster) error {
+	if !conditions.IsTrue(cluster, anywherev1.ReadyCondition) {
+		return nil
+	}
+
+	certScanner := certificates.NewCertificateScanner(client, log)
+	if err := certScanner.UpdateClusterCertificateStatus(ctx, cluster); err != nil {
+		return errors.Wrap(err, "updating cluster certificate status")
+	}
+
+	return nil
 }
 
 // updateConditionsForEtcdAndControlPlane updates the ControlPlaneReady condition if etcdadm cluster is not ready.
