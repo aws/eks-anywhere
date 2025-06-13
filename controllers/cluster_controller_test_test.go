@@ -489,7 +489,8 @@ func TestClusterReconcilerFailSignatureValidation(t *testing.T) {
 
 	clusterValidator := mocks.NewMockClusterValidator(controller)
 	registry := newRegistryMock(providerReconciler)
-	c := fake.NewClientBuilder().WithRuntimeObjects(cluster, kcp, eksaReleaseV022, bundles).
+	eksdRelease := createEKSDRelease()
+	c := fake.NewClientBuilder().WithRuntimeObjects(cluster, kcp, eksaReleaseV022, bundles, eksdRelease).
 		WithStatusSubresource(cluster).
 		Build()
 	mockPkgs := mocks.NewMockPackagesClient(controller)
