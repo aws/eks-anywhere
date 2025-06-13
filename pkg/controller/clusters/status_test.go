@@ -681,6 +681,150 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 	}
 }
 
+func TestUpdateClusterCertificateStatusSuccess(t *testing.T) {
+	g := NewWithT(t)
+
+	tests := []struct {
+		name         string
+		cluster      *anywherev1.Cluster
+		conditions   []anywherev1.Condition
+		machines     []clusterv1.Machine
+		expectedCert []anywherev1.ClusterCertificateInfo
+	}{
+		{
+			name: "cluster ready - updates certificate status",
+			cluster: &anywherev1.Cluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-cluster",
+					Namespace: constants.EksaSystemNamespace,
+				},
+				Status: anywherev1.ClusterStatus{
+					ClusterCertificateInfo: []anywherev1.ClusterCertificateInfo{
+						{
+							Machine:       "should-not-be-there",
+							ExpiresInDays: 1,
+						},
+					},
+				},
+			},
+			conditions: []anywherev1.Condition{
+				{
+					Type:   anywherev1.ReadyCondition,
+					Status: "True",
+				},
+			},
+			machines: []clusterv1.Machine{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-cluster-control-plane-abc123",
+						Namespace: constants.EksaSystemNamespace,
+						Labels: map[string]string{
+							"cluster.x-k8s.io/cluster-name":  "test-cluster",
+							"cluster.x-k8s.io/control-plane": "",
+						},
+					},
+					Status: clusterv1.MachineStatus{
+						Addresses: []clusterv1.MachineAddress{
+							{
+								Type:    clusterv1.MachineExternalIP,
+								Address: "127.0.0.1",
+							},
+						},
+					},
+				},
+			},
+			expectedCert: nil,
+		},
+		{
+			name: "cluster not ready - skips certificate status update",
+			cluster: &anywherev1.Cluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-cluster",
+					Namespace: constants.EksaSystemNamespace,
+				},
+				Status: anywherev1.ClusterStatus{
+					ClusterCertificateInfo: []anywherev1.ClusterCertificateInfo{
+						{
+							Machine:       "should-be-there",
+							ExpiresInDays: 1,
+						},
+					},
+				},
+			},
+			conditions: []anywherev1.Condition{
+				{
+					Type:   anywherev1.ReadyCondition,
+					Status: "False",
+				},
+			},
+			machines: []clusterv1.Machine{},
+			expectedCert: []anywherev1.ClusterCertificateInfo{
+				{
+					Machine:       "should-be-there",
+					ExpiresInDays: 1,
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(_ *testing.T) {
+			ctx := context.Background()
+			tt.cluster.Status.Conditions = tt.conditions
+
+			objs := []runtime.Object{tt.cluster}
+			for _, machine := range tt.machines {
+				objs = append(objs, machine.DeepCopy())
+			}
+
+			client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+			logger := test.NewNullLogger()
+
+			err := clusters.UpdateClusterCertificateStatus(ctx, client, logger, tt.cluster)
+
+			g.Expect(tt.cluster.Status.ClusterCertificateInfo).To(Equal(tt.expectedCert))
+			g.Expect(err).ToNot(HaveOccurred())
+		})
+	}
+}
+
+// MockClient that fails on List operations.
+type MockClient struct {
+	client.Client
+}
+
+func (m *MockClient) List(_ context.Context, _ client.ObjectList, _ ...client.ListOption) error {
+	return fmt.Errorf("simulated client error during list operation")
+}
+
+func TestUpdateClusterCertificateStatusError(t *testing.T) {
+	g := NewWithT(t)
+
+	cluster := &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-cluster",
+			Namespace: constants.EksaSystemNamespace,
+		},
+		Status: anywherev1.ClusterStatus{
+			Conditions: []anywherev1.Condition{
+				{
+					Type:   anywherev1.ReadyCondition,
+					Status: "True",
+				},
+			},
+		},
+	}
+	objs := []runtime.Object{cluster}
+
+	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
+	failingClient := &MockClient{Client: client}
+
+	logger := test.NewNullLogger()
+
+	err := clusters.UpdateClusterCertificateStatus(context.Background(), failingClient, logger, cluster)
+	g.Expect(err).NotTo(BeNil())
+}
+
 func TestUpdateClusterStatusForControlPlaneError(t *testing.T) {
 	g := NewWithT(t)
 	cluster := &anywherev1.Cluster{

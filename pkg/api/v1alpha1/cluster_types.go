@@ -996,6 +996,14 @@ const (
 	MachineInvalidReason FailureReasonType = "MachineInvalid"
 )
 
+// ClusterCertificateInfo contains information about certificate expiration for cluster components.
+type ClusterCertificateInfo struct {
+	// Component defines the machine name.
+	Machine string `json:"machine"`
+	// ExpiresInDays defines the number of days until the certificate expires.
+	ExpiresInDays int `json:"expiresInDays"`
+}
+
 // ClusterStatus defines the observed state of Cluster.
 type ClusterStatus struct {
 	// Descriptive message about a fatal problem while reconciling a cluster
@@ -1011,6 +1019,10 @@ type ClusterStatus struct {
 	EksdReleaseRef *EksdReleaseRef `json:"eksdReleaseRef,omitempty"`
 	// +optional
 	Conditions []Condition `json:"conditions,omitempty"`
+
+	// ClusterCertificateInfo contains information about all the control plane and external etcd certificates
+	// +optional
+	ClusterCertificateInfo []ClusterCertificateInfo `json:"clusterCertificateInfo,omitempty"`
 
 	// ReconciledGeneration represents the .metadata.generation the last time the
 	// cluster was successfully reconciled. It is the latest generation observed
