@@ -442,10 +442,10 @@ func TestHelmUninstall(s *testing.T) {
 		tt.Expect(err).NotTo(HaveOccurred())
 	})
 
-	s.Run("passes the insecure skip flag", func(t *testing.T) {
+	s.Run("ignores the insecure skip flag", func(t *testing.T) {
 		tt := newHelmTest(t, helm.WithInsecure())
 		installName := "test-install"
-		expectCommand(tt.e, tt.ctx, "uninstall", installName, "--kubeconfig", kubeconfig, "--wait", "--insecure-skip-tls-verify").withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
+		expectCommand(tt.e, tt.ctx, "uninstall", installName, "--kubeconfig", kubeconfig, "--wait").withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
 		err := tt.h.Uninstall(tt.ctx, installName, kubeconfig, "")
 		tt.Expect(err).NotTo(HaveOccurred())
 	})
