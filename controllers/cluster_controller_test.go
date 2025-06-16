@@ -1294,7 +1294,6 @@ func TestClusterReconcilerDeleteNoCAPIClusterSuccess(t *testing.T) {
 func TestClusterReconcilerFailureDomainCreation(t *testing.T) {
 	g := NewWithT(t)
 	features.ClearCache()
-	t.Setenv("VSPHERE_FAILURE_DOMAIN_ENABLED", "true")
 	eksaRelease := test.EKSARelease()
 	eksdRelease := createEKSDRelease()
 	secret := createSecret()
@@ -1362,7 +1361,7 @@ func TestClusterReconcilerFailureDomainCreation(t *testing.T) {
 func TestClusterReconcilerFailureDomainsFailure(t *testing.T) {
 	g := NewWithT(t)
 	features.ClearCache()
-	t.Setenv("VSPHERE_FAILURE_DOMAIN_ENABLED", "true")
+
 	eksaRelease := test.EKSARelease()
 	eksdRelease := createEKSDRelease()
 	secret := createSecret()
@@ -1434,11 +1433,19 @@ func TestFailureDomainMover_ApplyFailureDomains(t *testing.T) {
 			expectedError: "build spec error",
 		},
 		{
+			name: "No FailureDomains to apply",
+			setupMocks: func(mockSpecBuilder *mocks.MockSpecBuilder, _ *mocks.MockFailureDomainSpecBuilder, _ *mocks.MockObjectReconciler) {
+				mockSpecBuilder.EXPECT().
+					BuildSpec(gomock.Any(), gomock.Any()).
+					Return(&c.Spec{Config: baseTestVsphereClusterOnly(false)}, nil)
+			},
+		},
+		{
 			name: "BuildFailureDomainSpec error",
 			setupMocks: func(mockSpecBuilder *mocks.MockSpecBuilder, mockFDSpecBuilder *mocks.MockFailureDomainSpecBuilder, _ *mocks.MockObjectReconciler) {
 				mockSpecBuilder.EXPECT().
 					BuildSpec(gomock.Any(), gomock.Any()).
-					Return(&c.Spec{}, nil)
+					Return(&c.Spec{Config: baseTestVsphereClusterOnly(true)}, nil)
 
 				mockFDSpecBuilder.EXPECT().
 					BuildFailureDomainSpec(gomock.Any(), gomock.Any()).
@@ -1451,7 +1458,7 @@ func TestFailureDomainMover_ApplyFailureDomains(t *testing.T) {
 			setupMocks: func(mockSpecBuilder *mocks.MockSpecBuilder, mockFDSpecBuilder *mocks.MockFailureDomainSpecBuilder, mockObjectReconciler *mocks.MockObjectReconciler) {
 				mockSpecBuilder.EXPECT().
 					BuildSpec(gomock.Any(), gomock.Any()).
-					Return(&c.Spec{}, nil)
+					Return(&c.Spec{Config: baseTestVsphereClusterOnly(true)}, nil)
 
 				mockFDSpecBuilder.EXPECT().
 					BuildFailureDomainSpec(gomock.Any(), gomock.Any()).
@@ -1468,7 +1475,7 @@ func TestFailureDomainMover_ApplyFailureDomains(t *testing.T) {
 			setupMocks: func(mockSpecBuilder *mocks.MockSpecBuilder, mockFDSpecBuilder *mocks.MockFailureDomainSpecBuilder, mockObjectReconciler *mocks.MockObjectReconciler) {
 				mockSpecBuilder.EXPECT().
 					BuildSpec(gomock.Any(), gomock.Any()).
-					Return(&c.Spec{}, nil)
+					Return(&c.Spec{Config: baseTestVsphereClusterOnly(true)}, nil)
 
 				mockFDSpecBuilder.EXPECT().
 					BuildFailureDomainSpec(gomock.Any(), gomock.Any()).
@@ -2312,6 +2319,17 @@ func (s *sameNameCluster) String() string {
 }
 
 func baseTestVsphereCluster() (*c.Config, *releasev1.Bundles) {
+	config := baseTestVsphereClusterOnly(false)
+	bundles := createBundle()
+	config.Cluster.Spec.BundlesRef = &anywherev1.BundlesRef{
+		Name:      bundles.Name,
+		Namespace: bundles.Namespace,
+	}
+
+	return config, bundles
+}
+
+func baseTestVsphereClusterOnly(needFailureDomain bool) *c.Config {
 	config := &c.Config{
 		VSphereMachineConfigs: map[string]*anywherev1.VSphereMachineConfig{},
 		OIDCConfigs:           map[string]*anywherev1.OIDCConfig{},
@@ -2319,7 +2337,11 @@ func baseTestVsphereCluster() (*c.Config, *releasev1.Bundles) {
 	}
 
 	config.Cluster = vsphereCluster()
-	config.VSphereDatacenter = vsphereDataCenter(config.Cluster)
+	if needFailureDomain {
+		config.VSphereDatacenter = vsphereDataCenterWithFailureDomains(config.Cluster)
+	} else {
+		config.VSphereDatacenter = vsphereDataCenter(config.Cluster)
+	}
 
 	machineConfigCP := vsphereCPMachineConfig()
 	machineConfigWorker := vsphereWorkerMachineConfig()
@@ -2360,11 +2382,5 @@ func baseTestVsphereCluster() (*c.Config, *releasev1.Bundles) {
 	config.AWSIAMConfigs[awsIAM.Name] = awsIAM
 	config.OIDCConfigs[oidc.Name] = oidc
 
-	bundles := createBundle()
-	config.Cluster.Spec.BundlesRef = &anywherev1.BundlesRef{
-		Name:      bundles.Name,
-		Namespace: bundles.Namespace,
-	}
-
-	return config, bundles
+	return config
 }

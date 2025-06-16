@@ -161,10 +161,10 @@ func TestValidateAuthenticationForRegistryMirrorAuthInvalid(t *testing.T) {
 	tt := newTest(t, withTLS())
 	tt.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Authenticate = true
 	if err := os.Unsetenv("REGISTRY_USERNAME"); err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 	if err := os.Unsetenv("REGISTRY_PASSWORD"); err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err.Error())
 	}
 
 	tt.Expect(validations.ValidateAuthenticationForRegistryMirror(tt.clusterSpec)).To(
