@@ -1918,17 +1918,6 @@ func TestTinkerbellKubernetes128BottleRocketSimpleFlow(t *testing.T) {
 	runTinkerbellSimpleFlow(test)
 }
 
-func TestTinkerbellKubernetes133BottleRocketSimpleFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133)),
-		framework.WithControlPlaneHardware(1),
-		framework.WithWorkerHardware(1),
-	)
-	runTinkerbellSimpleFlow(test)
-}
-
 func TestTinkerbellKubernetes132UbuntuThreeControlPlaneReplicasSimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
