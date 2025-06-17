@@ -9,10 +9,8 @@ import (
 type OSType string
 
 const (
-	// OSTypeUbuntu represents Ubuntu OS.
-	OSTypeUbuntu OSType = "ubuntu"
-	// OSTypeRHEL represents RHEL OS.
-	OSTypeRHEL OSType = "redhat"
+	// OSTypeLinux represents Linux-based operating systems.
+	OSTypeLinux OSType = "linux"
 	// OSTypeBottlerocket represents Bottlerocket OS.
 	OSTypeBottlerocket OSType = "bottlerocket"
 )
@@ -36,67 +34,12 @@ func BuildOSRenewer(osType string) (OSRenewer, error) {
 	return osBuilder(), nil
 }
 
-// Map of OS type to OSRenewer builder functions
-// var osRenewerBuilders = map[string]func() OSRenewer{
-// 	string(OSTypeUbuntu): func() OSRenewer {
-// 		return NewLinuxRenewer(GetCertificatePaths(string(OSTypeUbuntu)))
-// 	},
-// 	string(OSTypeRHEL): func() OSRenewer {
-// 		return NewLinuxRenewer(GetCertificatePaths(string(OSTypeRHEL)))
-// 	},
-// 	string(OSTypeBottlerocket): func() OSRenewer {
-// 		return NewBottlerocketRenewer(GetCertificatePaths(string(OSTypeBottlerocket)))
-// 	},
-// }
-
+// Map of OS type to OSRenewer builder functions.
 var osRenewerBuilders = map[string]func() OSRenewer{
-	string(OSTypeUbuntu): func() OSRenewer {
-		return NewLinuxRenewer(GetCertificatePaths(string(OSTypeUbuntu)), OSTypeUbuntu)
-	},
-	string(OSTypeRHEL): func() OSRenewer {
-		return NewLinuxRenewer(GetCertificatePaths(string(OSTypeRHEL)), OSTypeRHEL)
+	string(OSTypeLinux): func() OSRenewer {
+		return NewLinuxRenewer()
 	},
 	string(OSTypeBottlerocket): func() OSRenewer {
-		return NewBottlerocketRenewer(GetCertificatePaths(string(OSTypeBottlerocket)))
+		return NewBottlerocketRenewer()
 	},
-}
-
-// CertificatePaths contains the paths to certificate directories for different OS types.
-type CertificatePaths struct {
-	// EtcdCertDir is the directory containing etcd certificates
-	EtcdCertDir string
-	// ControlPlaneCertDir is the directory containing control plane certificates
-	ControlPlaneCertDir string
-	// ControlPlaneManifests is the directory containing control plane manifests
-	ControlPlaneManifests string
-	// TempDir is a temporary directory used for operations
-	TempDir string
-}
-
-// GetCertificatePaths returns the appropriate certificate paths for the given OS type.
-func GetCertificatePaths(osType string) CertificatePaths {
-	switch osType {
-	case string(OSTypeUbuntu), string(OSTypeRHEL):
-		return CertificatePaths{
-			EtcdCertDir:           ubuntuEtcdCertDir,
-			ControlPlaneCertDir:   ubuntuControlPlaneCertDir,
-			ControlPlaneManifests: ubuntuControlPlaneManifests,
-			TempDir:               "/tmp",
-		}
-	case string(OSTypeBottlerocket):
-		return CertificatePaths{
-			EtcdCertDir:           bottlerocketEtcdCertDir,
-			ControlPlaneCertDir:   bottlerocketControlPlaneCertDir,
-			ControlPlaneManifests: "/var/lib/kubeadm/manifests",
-			TempDir:               bottlerocketTmpDir,
-		}
-	default:
-		// Default to Linux paths
-		return CertificatePaths{
-			EtcdCertDir:           ubuntuEtcdCertDir,
-			ControlPlaneCertDir:   ubuntuControlPlaneCertDir,
-			ControlPlaneManifests: ubuntuControlPlaneManifests,
-			TempDir:               "/tmp",
-		}
-	}
 }
