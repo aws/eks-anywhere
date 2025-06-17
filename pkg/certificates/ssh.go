@@ -14,7 +14,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
-// sshClient interface defines the methods we need from ssh.Client.
+// sshClient interface and sshDialer type remain the same.
 type sshClient interface {
 	Close() error
 	NewSession() (*ssh.Session, error)
@@ -26,14 +26,11 @@ type sshDialer func(network, addr string, config *ssh.ClientConfig) (sshClient, 
 // SSHRunner provides methods for running commands over SSH.
 type SSHRunner interface {
 	// RunCommand runs a command on the remote host
-	RunCommand(ctx context.Context, node string, cmd string) error
-
+	RunCommand(ctx context.Context, node string, cmds []string) error
 	// RunCommandWithOutput runs a command on the remote host and returns the output
-	RunCommandWithOutput(ctx context.Context, node string, cmd string) (string, error)
-
+	RunCommandWithOutput(ctx context.Context, node string, cmds []string) (string, error)
 	// InitSSHConfig initializes the SSH configuration
-	InitSSHConfig(user, keyPath, passwd string) error
-
+	InitSSHConfig(sshConfig SSHConfig) error
 	DownloadFile(ctx context.Context, node, remote, local string) error
 }
 
@@ -46,33 +43,48 @@ type DefaultSSHRunner struct {
 }
 
 // NewSSHRunner creates a new DefaultSSHRunner.
-func NewSSHRunner() *DefaultSSHRunner {
-	return &DefaultSSHRunner{
+//
+//	func NewSSHRunner() *DefaultSSHRunner {
+//		return &DefaultSSHRunner{
+//			sshDialer: func(network, addr string, config *ssh.ClientConfig) (sshClient, error) {
+//				return ssh.Dial(network, addr, config)
+//			},
+//		}
+//	}
+func NewSSHRunner(cfg SSHConfig) (*DefaultSSHRunner, error) {
+	r := &DefaultSSHRunner{
 		sshDialer: func(network, addr string, config *ssh.ClientConfig) (sshClient, error) {
 			return ssh.Dial(network, addr, config)
 		},
 	}
+
+	if err := r.InitSSHConfig(cfg); err != nil {
+		return nil, err
+	}
+
+	return r, nil
 }
 
 // InitSSHConfig initializes the SSH configuration.
-func (r *DefaultSSHRunner) InitSSHConfig(user, keyPath, passwd string) error {
-	if r.sshConfig != nil && r.sshKeyPath == keyPath {
+func (r *DefaultSSHRunner) InitSSHConfig(sshConfig SSHConfig) error {
+	if r.sshConfig != nil && r.sshKeyPath == sshConfig.KeyPath {
 		return nil
 	}
 
-	r.sshKeyPath = keyPath // Store SSH key path.
-	key, err := os.ReadFile(keyPath)
+	r.sshKeyPath = sshConfig.KeyPath
+
+	key, err := os.ReadFile(sshConfig.KeyPath)
 	if err != nil {
 		return fmt.Errorf("reading SSH key: %v", err)
 	}
 
-	signer, err := r.parsePrivateKey(key, keyPath, passwd)
+	signer, err := r.parsePrivateKey(key, sshConfig.KeyPath, sshConfig.Password)
 	if err != nil {
 		return err
 	}
 
 	r.sshConfig = &ssh.ClientConfig{
-		User: user,
+		User: sshConfig.User,
 		Auth: []ssh.AuthMethod{
 			ssh.PublicKeys(signer),
 		},
@@ -114,12 +126,14 @@ func (r *DefaultSSHRunner) parsePrivateKey(key []byte, keyPath, passwd string) (
 }
 
 // RunCommand runs a command on the remote host.
-func (r *DefaultSSHRunner) RunCommand(ctx context.Context, node string, cmd string) error {
+func (r *DefaultSSHRunner) RunCommand(ctx context.Context, node string, cmds []string) error {
 	client, err := r.sshDialer("tcp", fmt.Sprintf("%s:22", node), r.sshConfig)
 	if err != nil {
-		return fmt.Errorf("failed to connect to node %s: %v", node, err)
+		return fmt.Errorf("connect to node %s: %v", node, err)
 	}
 	defer client.Close()
+
+	cmdStr := strings.Join(cmds, " && ")
 
 	done := make(chan error, 1)
 	go func() {
@@ -130,7 +144,7 @@ func (r *DefaultSSHRunner) RunCommand(ctx context.Context, node string, cmd stri
 		}
 		defer session.Close()
 
-		done <- r.executeCommand(session, cmd, node)
+		done <- r.executeCommand(session, cmdStr, node)
 	}()
 
 	select {
@@ -173,12 +187,14 @@ func (r *DefaultSSHRunner) executeCommand(session *ssh.Session, cmd string, node
 }
 
 // RunCommandWithOutput runs a command on the remote host and returns the output.
-func (r *DefaultSSHRunner) RunCommandWithOutput(ctx context.Context, node string, cmd string) (string, error) {
+func (r *DefaultSSHRunner) RunCommandWithOutput(ctx context.Context, node string, cmds []string) (string, error) {
 	client, err := r.sshDialer("tcp", fmt.Sprintf("%s:22", node), r.sshConfig)
 	if err != nil {
-		return "", fmt.Errorf("failed to connect to node %s: %v", node, err)
+		return "", fmt.Errorf("connect to node %s: %v", node, err)
 	}
 	defer client.Close()
+
+	cmdStr := strings.Join(cmds, " && ")
 
 	type result struct {
 		output string
@@ -194,7 +210,7 @@ func (r *DefaultSSHRunner) RunCommandWithOutput(ctx context.Context, node string
 		}
 		defer session.Close()
 
-		outputBytes, err := session.CombinedOutput(cmd)
+		outputBytes, err := session.CombinedOutput(cmdStr)
 		output := strings.TrimSpace(string(outputBytes))
 
 		if err != nil {
@@ -219,7 +235,7 @@ func (r *DefaultSSHRunner) RunCommandWithOutput(ctx context.Context, node string
 
 // DownloadFile copies a remote file to the local host via an SSH cat pipe.
 func (r *DefaultSSHRunner) DownloadFile(ctx context.Context, node, remote, local string) error {
-	output, err := r.RunCommandWithOutput(ctx, node, fmt.Sprintf("sudo cat %s", remote))
+	output, err := r.RunCommandWithOutput(ctx, node, []string{fmt.Sprintf("sudo cat %s", remote)})
 	if err != nil {
 		return err
 	}

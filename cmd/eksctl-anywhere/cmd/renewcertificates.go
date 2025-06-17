@@ -6,10 +6,11 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/certificates"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/logger"
-	"github.com/aws/eks-anywhere/pkg/types"
 )
 
 type renewCertificatesOptions struct {
@@ -39,34 +40,61 @@ func init() {
 	}
 }
 
-func (rc *renewCertificatesOptions) renewCertificates(cmd *cobra.Command, _ []string) error {
-	if err := certificates.ValidateComponent(rc.component); err != nil {
-		return err
-	}
+// newRenewerForCmd builds dependencies & returns a ready to-use Renewer.
+func newRenewerForCmd(ctx context.Context, cfg *certificates.RenewalConfig) (*certificates.Renewer, error) {
+	mountDirs := certificates.GetSSHKeyDirs(cfg)
 
-	config, err := certificates.ParseConfig(rc.configFile)
+	deps, err := dependencies.NewFactory().
+		WithExecutableBuilder().
+		WithExecutableMountDirs(mountDirs...). // ssh key in container
+		WithKubectl().
+		WithUnAuthKubeClient().
+		Build(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to parse config file: %v", err)
+		return nil, err
 	}
 
-	if err := certificates.ValidateComponentWithConfig(rc.component, config); err != nil {
-		return err
-	}
-
-	osType := certificates.DetermineOSType(rc.component, config)
-
-	renewer, err := certificates.NewRenewerWithClusterName(osType, config.ClusterName)
+	sshRunner, err := certificates.NewSSHRunner(cfg.ControlPlane.SSH)
 	if err != nil {
-		return fmt.Errorf("failed to create renewer: %v", err)
+		return nil, err
 	}
 
-	return rc.executeRenewal(cmd.Context(), config, osType, renewer)
+	// kubeCfgPath := kubeconfig.FromClusterName(cfg.ClusterName)
+
+	kubeCfgPath, err := certificates.ResolveKubeconfigPath(cfg.ClusterName)
+	if err != nil {
+		return nil, err
+	}
+
+	kubeClient := deps.UnAuthKubeClient.KubeconfigClient(kubeCfgPath)
+
+	osKey := cfg.OS
+	if osKey == string(v1alpha1.Ubuntu) || osKey == string(v1alpha1.RedHat) {
+		osKey = string(certificates.OSTypeLinux)
+	}
+	osRenewer, err := certificates.BuildOSRenewer(osKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return certificates.NewRenewer(kubeClient, sshRunner, osRenewer)
 }
 
-func (rc *renewCertificatesOptions) executeRenewal(ctx context.Context, config *certificates.RenewalConfig, _ string, renewer *certificates.Renewer) error {
-	cluster := &types.Cluster{
-		Name: config.ClusterName,
+func (rc *renewCertificatesOptions) renewCertificates(cmd *cobra.Command, _ []string) error {
+	ctx := cmd.Context()
+
+	cfg, err := certificates.ParseConfig(rc.configFile)
+	if err != nil {
+		return err
+	}
+	if err = certificates.ValidateComponentWithConfig(rc.component, cfg); err != nil {
+		return err
 	}
 
-	return renewer.RenewCertificates(ctx, cluster, config, rc.component)
+	renewer, err := newRenewerForCmd(ctx, cfg)
+	if err != nil {
+		return err
+	}
+
+	return renewer.RenewCertificates(ctx, cfg, rc.component)
 }
