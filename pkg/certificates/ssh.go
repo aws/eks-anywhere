@@ -31,7 +31,6 @@ type SSHRunner interface {
 	RunCommandWithOutput(ctx context.Context, node string, cmds []string) (string, error)
 	// InitSSHConfig initializes the SSH configuration
 	InitSSHConfig(sshConfig SSHConfig) error
-	DownloadFile(ctx context.Context, node, remote, local string) error
 }
 
 // DefaultSSHRunner is the default implementation of SSHRunner.
@@ -42,15 +41,7 @@ type DefaultSSHRunner struct {
 	sshPasswd  string
 }
 
-// NewSSHRunner creates a new DefaultSSHRunner.
-//
-//	func NewSSHRunner() *DefaultSSHRunner {
-//		return &DefaultSSHRunner{
-//			sshDialer: func(network, addr string, config *ssh.ClientConfig) (sshClient, error) {
-//				return ssh.Dial(network, addr, config)
-//			},
-//		}
-//	}
+// NewSSHRunner creates a new SSH runner with the given configuration.
 func NewSSHRunner(cfg SSHConfig) (*DefaultSSHRunner, error) {
 	r := &DefaultSSHRunner{
 		sshDialer: func(network, addr string, config *ssh.ClientConfig) (sshClient, error) {
@@ -133,7 +124,7 @@ func (r *DefaultSSHRunner) RunCommand(ctx context.Context, node string, cmds []s
 	}
 	defer client.Close()
 
-	cmdStr := strings.Join(cmds, " && ")
+	cmdStr := r.buildCommandString(cmds)
 
 	done := make(chan error, 1)
 	go func() {
@@ -194,7 +185,7 @@ func (r *DefaultSSHRunner) RunCommandWithOutput(ctx context.Context, node string
 	}
 	defer client.Close()
 
-	cmdStr := strings.Join(cmds, " && ")
+	cmdStr := r.buildCommandString(cmds)
 
 	type result struct {
 		output string
@@ -233,11 +224,11 @@ func (r *DefaultSSHRunner) RunCommandWithOutput(ctx context.Context, node string
 	}
 }
 
-// DownloadFile copies a remote file to the local host via an SSH cat pipe.
-func (r *DefaultSSHRunner) DownloadFile(ctx context.Context, node, remote, local string) error {
-	output, err := r.RunCommandWithOutput(ctx, node, []string{fmt.Sprintf("sudo cat %s", remote)})
-	if err != nil {
-		return err
+func (r *DefaultSSHRunner) buildCommandString(cmds []string) string {
+	if len(cmds) >= 3 && cmds[0] == "sudo" && cmds[1] == "sh" && cmds[2] == "-c" {
+		if len(cmds) == 4 {
+			return fmt.Sprintf("%s %s %s '%s'", cmds[0], cmds[1], cmds[2], cmds[3])
+		}
 	}
-	return os.WriteFile(local, []byte(output), 0o600)
+	return strings.Join(cmds, " ")
 }

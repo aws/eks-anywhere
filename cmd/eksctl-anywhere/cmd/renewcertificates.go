@@ -10,6 +10,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/certificates"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
+	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
@@ -42,11 +43,8 @@ func init() {
 
 // newRenewerForCmd builds dependencies & returns a ready to-use Renewer.
 func newRenewerForCmd(ctx context.Context, cfg *certificates.RenewalConfig) (*certificates.Renewer, error) {
-	mountDirs := certificates.GetSSHKeyDirs(cfg)
-
 	deps, err := dependencies.NewFactory().
 		WithExecutableBuilder().
-		WithExecutableMountDirs(mountDirs...). // ssh key in container
 		WithKubectl().
 		WithUnAuthKubeClient().
 		Build(ctx)
@@ -54,17 +52,7 @@ func newRenewerForCmd(ctx context.Context, cfg *certificates.RenewalConfig) (*ce
 		return nil, err
 	}
 
-	sshRunner, err := certificates.NewSSHRunner(cfg.ControlPlane.SSH)
-	if err != nil {
-		return nil, err
-	}
-
-	// kubeCfgPath := kubeconfig.FromClusterName(cfg.ClusterName)
-
-	kubeCfgPath, err := certificates.ResolveKubeconfigPath(cfg.ClusterName)
-	if err != nil {
-		return nil, err
-	}
+	kubeCfgPath := kubeconfig.FromClusterName(cfg.ClusterName)
 
 	kubeClient := deps.UnAuthKubeClient.KubeconfigClient(kubeCfgPath)
 
@@ -77,7 +65,7 @@ func newRenewerForCmd(ctx context.Context, cfg *certificates.RenewalConfig) (*ce
 		return nil, err
 	}
 
-	return certificates.NewRenewer(kubeClient, sshRunner, osRenewer)
+	return certificates.NewRenewer(kubeClient, osRenewer)
 }
 
 func (rc *renewCertificatesOptions) renewCertificates(cmd *cobra.Command, _ []string) error {

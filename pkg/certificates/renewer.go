@@ -2,12 +2,10 @@ package certificates
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -22,14 +20,15 @@ const tempLocalEtcdCertsDir = "etcd-client-certs"
 
 // Renewer handles the certificate renewal process for EKS Anywhere clusters.
 type Renewer struct {
-	backupDir string
-	kube      kubernetes.Client
-	ssh       SSHRunner
-	os        OSRenewer
+	backupDir       string
+	kube            kubernetes.Client
+	sshEtcd         SSHRunner
+	sshControlPlane SSHRunner
+	os              OSRenewer
 }
 
 // NewRenewer creates a new certificate renewer instance with a timestamped backup directory.
-func NewRenewer(kube kubernetes.Client, sshRunner SSHRunner, osRenewer OSRenewer) (*Renewer, error) {
+func NewRenewer(kube kubernetes.Client, osRenewer OSRenewer) (*Renewer, error) {
 	ts := time.Now().Format("20060102_150405")
 	backupDir := "certificate_backup_" + ts
 
@@ -39,7 +38,6 @@ func NewRenewer(kube kubernetes.Client, sshRunner SSHRunner, osRenewer OSRenewer
 	return &Renewer{
 		backupDir: backupDir,
 		kube:      kube,
-		ssh:       sshRunner,
 		os:        osRenewer,
 	}, nil
 }
@@ -69,17 +67,20 @@ func (r *Renewer) RenewCertificates(ctx context.Context, cfg *RenewalConfig, com
 func (r *Renewer) renewEtcdCerts(ctx context.Context, cfg *RenewalConfig) error {
 	logger.MarkPass("Starting etcd certificate renewal process")
 
+	runner, err := r.ensureRunner("ETCD", cfg.Etcd.SSH, r.sshEtcd)
+	if err != nil {
+		return fmt.Errorf("init etcd SSH: %v", err)
+	}
+	r.sshEtcd = runner
+
 	for _, node := range cfg.Etcd.Nodes {
-		if err := r.os.RenewEtcdCerts(ctx, node, r.ssh, r.backupDir); err != nil {
+		if err := r.os.RenewEtcdCerts(ctx, node, r.sshEtcd, r.backupDir); err != nil {
 			return fmt.Errorf("renewing certificates for etcd node %s: %v", node, err)
 		}
 	}
 
 	if err := r.updateAPIServerEtcdClientSecret(ctx, cfg.ClusterName); err != nil {
-		logger.MarkWarning("Failed to update apiserver-etcd-client secret", "error", err)
-		logger.Info("You may need to manually update the secret after the API server is reachable")
-		logger.Info("Use kubectl edit secret to update the secret", "command", fmt.Sprintf("kubectl edit secret %s-apiserver-etcd-client -n eksa-system", cfg.ClusterName))
-
+		return err
 	}
 
 	logger.MarkSuccess("Etcd certificate renewal process completed successfully.")
@@ -89,8 +90,14 @@ func (r *Renewer) renewEtcdCerts(ctx context.Context, cfg *RenewalConfig) error 
 func (r *Renewer) renewControlPlaneCerts(ctx context.Context, cfg *RenewalConfig, component string) error {
 	logger.MarkPass("Starting control plane certificate renewal process")
 
+	runner, err := r.ensureRunner("CP", cfg.ControlPlane.SSH, r.sshControlPlane)
+	if err != nil {
+		return fmt.Errorf("init control-plane SSH: %v", err)
+	}
+	r.sshControlPlane = runner
+
 	for _, node := range cfg.ControlPlane.Nodes {
-		if err := r.os.RenewControlPlaneCerts(ctx, node, cfg, component, r.ssh, r.backupDir); err != nil {
+		if err := r.os.RenewControlPlaneCerts(ctx, node, cfg, component, r.sshControlPlane, r.backupDir); err != nil {
 			return fmt.Errorf("renewing certificates for control-plane node %s: %v", node, err)
 		}
 	}
@@ -104,62 +111,36 @@ func (r *Renewer) updateAPIServerEtcdClientSecret(ctx context.Context, clusterNa
 
 	crtPath := filepath.Join(r.backupDir, tempLocalEtcdCertsDir, "apiserver-etcd-client.crt")
 	keyPath := filepath.Join(r.backupDir, tempLocalEtcdCertsDir, "apiserver-etcd-client.key")
-
 	crtData, err := os.ReadFile(crtPath)
 	if err != nil {
-		return fmt.Errorf("failed to read certificate file: %v", err)
+		return fmt.Errorf("read certificate file: %v", err)
 	}
 	keyData, err := os.ReadFile(keyPath)
 	if err != nil {
-		return fmt.Errorf("failed to read key file: %v", err)
+		return fmt.Errorf("read key file: %v", err)
 	}
 
-	crtBase64 := base64.StdEncoding.EncodeToString(crtData)
-	keyBase64 := base64.StdEncoding.EncodeToString(keyData)
-
 	secretName := fmt.Sprintf("%s-apiserver-etcd-client", clusterName)
-
-	patchData := fmt.Sprintf(`{"data":{"tls.crt":"%s","tls.key":"%s"}}`, crtBase64, keyBase64)
-
-	cmd := exec.Command("kubectl", "patch", "secret", secretName,
-		"-n", constants.EksaSystemNamespace,
-		"--type=merge",
-		"-p", patchData)
-
-	output, err := cmd.CombinedOutput()
+	secret := &corev1.Secret{}
+	err = r.kube.Get(ctx, secretName, constants.EksaSystemNamespace, secret)
 	if err != nil {
-		if strings.Contains(string(output), "NotFound") {
-			createCmd := exec.Command("kubectl", "create", "secret", "tls",
-				secretName,
-				"-n", constants.EksaSystemNamespace,
-				"--cert", crtPath,
-				"--key", keyPath)
-
-			if output, err := createCmd.CombinedOutput(); err != nil {
-				return fmt.Errorf("failed to create secret %s: %v, output: %s", secretName, err, string(output))
-			}
-		} else {
-			return fmt.Errorf("failed to update secret %s: %v, output: %s", secretName, err, string(output))
+		if apierrors.IsNotFound(err) {
+			logger.V(2).Info("Secret not found—skipping creation", "name", secretName)
+			return nil
 		}
+		return fmt.Errorf("get secret %s: %v", secretName, err)
+	}
+	if secret.Data == nil {
+		secret.Data = make(map[string][]byte)
+	}
+	secret.Type = corev1.SecretTypeTLS
+	secret.Data["tls.crt"] = crtData
+	secret.Data["tls.key"] = keyData
+	if err = r.kube.Update(ctx, secret); err != nil {
+		return fmt.Errorf("update secret %s: %v", secretName, err)
 	}
 
 	logger.V(2).Info("Successfully updated secret", "name", secretName)
-	return nil
-}
-
-func (r *Renewer) ensureNamespaceExists(ctx context.Context, namespace string) error {
-	ns := &corev1.Namespace{}
-	err := r.kube.Get(ctx, namespace, "", ns)
-	if err != nil {
-		if !apierrors.IsNotFound(err) {
-			return fmt.Errorf("checking namespace %s: %v", namespace, err)
-		}
-		ns.Name = namespace
-		if err = r.kube.Create(ctx, ns); err != nil {
-			return fmt.Errorf("create namespace %s: %v", namespace, err)
-		}
-		logger.Info("Created namespace", "name", namespace)
-	}
 	return nil
 }
 
@@ -177,21 +158,39 @@ func (r *Renewer) cleanup() error {
 	return os.RemoveAll(r.backupDir)
 }
 
-func (r *Renewer) validateRenewalConfig(cfg *RenewalConfig, component string) (processEtcd, processControlPlane bool, err error) {
-	processEtcd = ShouldProcessComponent(component, constants.EtcdComponent) && len(cfg.Etcd.Nodes) > 0
+func (r *Renewer) validateRenewalConfig(
+	cfg *RenewalConfig,
+	component string,
+) (processEtcd, processControlPlane bool, err error) {
+	processEtcd = ShouldProcessComponent(component, constants.EtcdComponent) &&
+		len(cfg.Etcd.Nodes) > 0
 	processControlPlane = ShouldProcessComponent(component, constants.ControlPlaneComponent)
 
-	if processEtcd {
-		if err := r.ssh.InitSSHConfig(cfg.Etcd.SSH); err != nil {
-			return false, false, fmt.Errorf("initializing SSH config for etcd: %v", err)
-		}
-	}
-
-	if processControlPlane {
-		if err := r.ssh.InitSSHConfig(cfg.ControlPlane.SSH); err != nil {
-			return false, false, fmt.Errorf("initializing SSH config for control-plane: %v", err)
-		}
-	}
-
 	return processEtcd, processControlPlane, nil
+}
+
+func (r *Renewer) ensureRunner(role string, sshCfg SSHConfig, current SSHRunner) (SSHRunner, error) {
+	if current != nil {
+		return current, nil
+	}
+
+	var envName string
+	switch role {
+	case "ETCD":
+		envName = "EKSA_SSH_KEY_PASSPHRASE_ETCD"
+	case "CP":
+		envName = "EKSA_SSH_KEY_PASSPHRASE_CP"
+	default:
+		return nil, fmt.Errorf("unknown runner role %q", role)
+	}
+
+	if pass := os.Getenv(envName); pass != "" {
+		sshCfg.Password = pass
+	}
+
+	runner, err := NewSSHRunner(sshCfg)
+	if err != nil {
+		return nil, err
+	}
+	return runner, nil
 }
