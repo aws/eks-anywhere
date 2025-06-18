@@ -93,11 +93,3 @@ func TestWithVsphereFailureDomainsFeatureFlag(t *testing.T) {
 	g.Expect(os.Setenv(VSphereFailureDomainEnabledEnvVar, "true")).To(Succeed())
 	g.Expect(IsActive(VsphereFailureDomainEnabled())).To(BeTrue())
 }
-
-func TestWithK8s133FeatureFlag(t *testing.T) {
-	g := NewWithT(t)
-	setupContext(t)
-
-	g.Expect(os.Setenv(K8s133SupportEnvVar, "true")).To(Succeed())
-	g.Expect(IsActive(K8s133Support())).To(BeTrue())
-}
