@@ -17,7 +17,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/manifests"
 	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
@@ -335,16 +334,6 @@ func ValidateExtendedKubernetesVersionSupport(ctx context.Context, clusterSpec v
 	}
 
 	return ValidateExtendedK8sVersionSupport(ctx, clusterSpec, b, releaseManifest, k)
-}
-
-// ValidateK8s133Support checks if the 1.33 feature flag is set when using k8s 1.33.
-func ValidateK8s133Support(clusterSpec *cluster.Spec) error {
-	if !features.IsActive(features.K8s133Support()) {
-		if clusterSpec.Cluster.Spec.KubernetesVersion == v1alpha1.Kube133 {
-			return fmt.Errorf("kubernetes version %s is not enabled. Please set the env variable %v", v1alpha1.Kube133, features.K8s133SupportEnvVar)
-		}
-	}
-	return nil
 }
 
 // getReleaseManifestFromBundle retrieves the EKS Distro release manifest from the bundle.

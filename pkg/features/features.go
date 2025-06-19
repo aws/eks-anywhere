@@ -8,7 +8,6 @@ const (
 	UseControllerForCli               = "USE_CONTROLLER_FOR_CLI"
 	VSphereInPlaceEnvVar              = "VSPHERE_IN_PLACE_UPGRADE"
 	APIServerExtraArgsEnabledEnvVar   = "API_SERVER_EXTRA_ARGS_ENABLED"
-	K8s133SupportEnvVar               = "K8S_1_33_SUPPORT"
 )
 
 func FeedGates(featureGates []string) {
@@ -63,13 +62,5 @@ func APIServerExtraArgsEnabled() Feature {
 	return Feature{
 		Name:     "Configure api server extra args",
 		IsActive: globalFeatures.isActiveForEnvVar(APIServerExtraArgsEnabledEnvVar),
-	}
-}
-
-// K8s133Support is the feature flag for Kubernetes 1.33 support.
-func K8s133Support() Feature {
-	return Feature{
-		Name:     "Kubernetes version 1.33 support",
-		IsActive: globalFeatures.isActiveForEnvVar(K8s133SupportEnvVar),
 	}
 }
