@@ -85,11 +85,3 @@ func TestAPIServerExtraArgsEnabledFeatureFlag(t *testing.T) {
 	g.Expect(os.Setenv(APIServerExtraArgsEnabledEnvVar, "true")).To(Succeed())
 	g.Expect(IsActive(APIServerExtraArgsEnabled())).To(BeTrue())
 }
-
-func TestWithVsphereFailureDomainsFeatureFlag(t *testing.T) {
-	g := NewWithT(t)
-	setupContext(t)
-
-	g.Expect(os.Setenv(VSphereFailureDomainEnabledEnvVar, "true")).To(Succeed())
-	g.Expect(IsActive(VsphereFailureDomainEnabled())).To(BeTrue())
-}

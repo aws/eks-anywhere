@@ -35,9 +35,9 @@ spec:
   prismCentral:
 {{- if .nutanixAdditionalTrustBundle }}
     additionalTrustBundle:
-      kind: String
-      data: |
-{{ .nutanixAdditionalTrustBundle | indent 8 }}
+      kind: ConfigMap
+      name: "{{.clusterName}}-trust-bundle"
+      namespace: {{.eksaSystemNamespace}}
 {{- end }}
     address: "{{.nutanixEndpoint}}"
     port: {{.nutanixPort}}
@@ -616,8 +616,8 @@ data:
     apiVersion: v1
     kind: ConfigMap
     metadata:
-      name: user-ca-bundle
-      namespace: kube-system
+      name: {{.clusterName}}-trust-bundle
+      namespace: {{.eksaSystemNamespace}}
     data:
       ca.crt: |
 {{ .nutanixAdditionalTrustBundle | indent 8 }}
@@ -648,8 +648,8 @@ data:
             }{{- if .nutanixAdditionalTrustBundle }},
             "additionalTrustBundle": {
               "kind": "ConfigMap",
-              "name": "user-ca-bundle",
-              "namespace": "kube-system"
+              "name": {{.clusterName}}-trust-bundle,
+              "namespace": {{.eksaSystemNamespace}}
             }{{- end }}
           },
           "enableCustomLabeling": false,
@@ -838,7 +838,8 @@ spec:
     name: {{.clusterName}}-nutanix-ccm-secret
 {{- if .nutanixAdditionalTrustBundle }}
   - kind: ConfigMap
-    name: user-ca-bundle
+    name: {{.clusterName}}-trust-bundle
+    namespace: {{.eksaSystemNamespace}}
 {{- end }}
   strategy: Reconcile
 ---

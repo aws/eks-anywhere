@@ -252,10 +252,6 @@ func setManagerEnvVars(d *appsv1.Deployment, spec *cluster.Spec) {
 		envVars = append(envVars, v1.EnvVar{Name: features.APIServerExtraArgsEnabledEnvVar, Value: "true"})
 	}
 
-	if features.IsActive(features.VsphereFailureDomainEnabled()) {
-		envVars = append(envVars, v1.EnvVar{Name: features.VSphereFailureDomainEnabledEnvVar, Value: "true"})
-	}
-
 	d.Spec.Template.Spec.Containers[0].Env = envVars
 }
 

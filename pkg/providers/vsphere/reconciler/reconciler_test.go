@@ -165,7 +165,6 @@ func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
 
 func TestReconcilerFailureDomainsSuccess(t *testing.T) {
 	features.ClearCache()
-	t.Setenv(features.VSphereFailureDomainEnabledEnvVar, "true")
 	tt := newReconcilerTest(t)
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, test.CAPICluster(func(c *clusterv1.Cluster) {
 		c.Name = tt.cluster.Name
@@ -190,7 +189,6 @@ func TestReconcilerFailureDomainsSuccess(t *testing.T) {
 
 func TestValidateFailureDomainsSuccess(t *testing.T) {
 	features.ClearCache()
-	t.Setenv(features.VSphereFailureDomainEnabledEnvVar, "true")
 	tt := newReconcilerTest(t)
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, test.CAPICluster(func(c *clusterv1.Cluster) {
 		c.Name = tt.cluster.Name
@@ -223,7 +221,6 @@ func TestValidateFailureDomainsSuccess(t *testing.T) {
 
 func TestValidateFailureDomainsFailure(t *testing.T) {
 	features.ClearCache()
-	t.Setenv(features.VSphereFailureDomainEnabledEnvVar, "true")
 	tt := newReconcilerTest(t)
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, test.CAPICluster(func(c *clusterv1.Cluster) {
 		c.Name = tt.cluster.Name
