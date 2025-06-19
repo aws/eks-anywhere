@@ -22,7 +22,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/controller/serverside"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 )
 
@@ -176,7 +175,7 @@ func (r *Reconciler) ValidateMachineConfigs(ctx context.Context, log logr.Logger
 
 // ValidateFailureDomains performs validations for the provided failure domains and the assigned failure domains in worker node group.
 func (r *Reconciler) ValidateFailureDomains(ctx context.Context, log logr.Logger, clusterSpec *c.Spec) (controller.Result, error) {
-	if features.IsActive(features.VsphereFailureDomainEnabled()) {
+	if len(clusterSpec.VSphereDatacenter.Spec.FailureDomains) > 0 {
 		log = log.WithValues("phase", "validateFailureDomains")
 
 		vsphereClusterSpec := vsphere.NewSpec(clusterSpec)
@@ -194,7 +193,7 @@ func (r *Reconciler) ValidateFailureDomains(ctx context.Context, log logr.Logger
 // ReconcileFailureDomains applies the Vsphere FailureDomain objects to the cluster.
 // It also takes care of  deleting the old Vsphere FailureDomains that are not in in the cluster spec anymore.
 func (r *Reconciler) ReconcileFailureDomains(ctx context.Context, log logr.Logger, spec *c.Spec) (controller.Result, error) {
-	if features.IsActive(features.VsphereFailureDomainEnabled()) && len(spec.VSphereDatacenter.Spec.FailureDomains) > 0 {
+	if len(spec.VSphereDatacenter.Spec.FailureDomains) > 0 {
 		log = log.WithValues("phase", "reconcileFailureDomains")
 		log.Info("Applying Vsphere FailureDomain objects")
 

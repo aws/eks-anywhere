@@ -6,7 +6,6 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
@@ -142,9 +141,6 @@ func (v *VSphereDatacenterConfig) Validate() error {
 		return err
 	}
 
-	if !features.IsActive(features.VsphereFailureDomainEnabled()) && len(v.Spec.FailureDomains) > 0 {
-		return fmt.Errorf("Failure Domains feature is not enabled. Please set the env variable %v", features.VSphereFailureDomainEnabledEnvVar)
-	}
 	if len(v.Spec.FailureDomains) > 0 {
 		failureDomains := v.Spec.FailureDomains
 		for _, fd := range failureDomains {
