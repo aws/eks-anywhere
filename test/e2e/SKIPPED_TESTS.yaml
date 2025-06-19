@@ -74,3 +74,13 @@ skipped_tests:
 - TestTinkerbellKubernetes130ThreeReplicasTwoWorkersConformanceFlow
 - TestTinkerbellKubernetes131ThreeReplicasTwoWorkersConformanceFlow
 - TestTinkerbellKubernetes132ThreeReplicasTwoWorkersConformanceFlow
+
+# Vsphere 
+# Auto import tests fail from time to time if the underlying template doesn't go well with the content library.
+# Currently there's no fix for this and issue has been brought up with the BR team multiple times.
+- TestVSphereKubernetes128BottlerocketAutoimport
+- TestVSphereKubernetes129BottlerocketAutoimport
+- TestVSphereKubernetes130BottlerocketAutoimport
+- TestVSphereKubernetes131BottlerocketAutoimport
+- TestVSphereKubernetes132BottlerocketAutoimport
+- TestVSphereKubernetes133BottlerocketAutoimport
