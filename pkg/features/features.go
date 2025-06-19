@@ -8,7 +8,6 @@ const (
 	UseControllerForCli               = "USE_CONTROLLER_FOR_CLI"
 	VSphereInPlaceEnvVar              = "VSPHERE_IN_PLACE_UPGRADE"
 	APIServerExtraArgsEnabledEnvVar   = "API_SERVER_EXTRA_ARGS_ENABLED"
-	VSphereFailureDomainEnabledEnvVar = "VSPHERE_FAILURE_DOMAIN_ENABLED"
 	K8s133SupportEnvVar               = "K8S_1_33_SUPPORT"
 )
 
@@ -64,14 +63,6 @@ func APIServerExtraArgsEnabled() Feature {
 	return Feature{
 		Name:     "Configure api server extra args",
 		IsActive: globalFeatures.isActiveForEnvVar(APIServerExtraArgsEnabledEnvVar),
-	}
-}
-
-// VsphereFailureDomainEnabled is the feature flag for Vsphere failure domains.
-func VsphereFailureDomainEnabled() Feature {
-	return Feature{
-		Name:     "Vsphere Failure Domains Enabled",
-		IsActive: globalFeatures.isActiveForEnvVar(VSphereFailureDomainEnabledEnvVar),
 	}
 }
 

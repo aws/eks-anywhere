@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strconv"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -472,29 +471,7 @@ func TestValidatorValidateUserPrivsWithComputeCluster(t *testing.T) {
 func TestValidateFailureDomains(t *testing.T) {
 	tests := []testConfig{
 		{
-			name:                       "TestValidateFailureDomains with feature flag disabled and with failure domains",
-			enableVsphereFailureDomain: false,
-			spec: &Spec{
-				Spec: &cluster.Spec{
-					Config: &cluster.Config{
-						VSphereDatacenter: &v1alpha1.VSphereDatacenterConfig{
-							Spec: v1alpha1.VSphereDatacenterConfigSpec{
-								Datacenter: "SDDC-Datacenter",
-								FailureDomains: []v1alpha1.FailureDomain{
-									{
-										Name: "fd-1",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-			expectedErr: "failure domains feature is not enabled",
-		},
-		{
-			name:                       "TestValidateFailureDomains with feature flag disabled and without failure domains",
-			enableVsphereFailureDomain: false,
+			name: "TestValidateFailureDomains without failure domains",
 			spec: &Spec{
 				Spec: &cluster.Spec{
 					Config: &cluster.Config{
@@ -508,8 +485,7 @@ func TestValidateFailureDomains(t *testing.T) {
 			},
 		},
 		{
-			name:                       "TestValidateFailureDomains worker node group without assigned failure domain case",
-			enableVsphereFailureDomain: true,
+			name: "TestValidateFailureDomains worker node group without assigned failure domain case",
 			spec: &Spec{
 				Spec: &cluster.Spec{
 					Config: &cluster.Config{
@@ -544,9 +520,8 @@ func TestValidateFailureDomains(t *testing.T) {
 			},
 		},
 		{
-			name:                       "TestValidateFailureDomains worker node group with more than assigned failure domain case",
-			enableVsphereFailureDomain: true,
-			expectedErr:                "multiple failure domains provided in the worker node group",
+			name:        "TestValidateFailureDomains worker node group with more than assigned failure domain case",
+			expectedErr: "multiple failure domains provided in the worker node group",
 			spec: &Spec{
 				Spec: &cluster.Spec{
 					Config: &cluster.Config{
@@ -590,9 +565,8 @@ func TestValidateFailureDomains(t *testing.T) {
 			},
 		},
 		{
-			name:                       "TestValidateFailureDomains worker node group with invalid assigned failure domain",
-			enableVsphereFailureDomain: true,
-			expectedErr:                "provided invalid failure domain",
+			name:        "TestValidateFailureDomains worker node group with invalid assigned failure domain",
+			expectedErr: "provided invalid failure domain",
 			spec: &Spec{
 				Spec: &cluster.Spec{
 					Config: &cluster.Config{
@@ -641,7 +615,6 @@ func TestValidateFailureDomains(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 
-			t.Setenv(features.VSphereFailureDomainEnabledEnvVar, strconv.FormatBool(tt.enableVsphereFailureDomain))
 			ctrl := gomock.NewController(t)
 			govc := govcmocks.NewMockProviderGovcClient(ctrl)
 
@@ -696,7 +669,6 @@ func TestValidateFailureDomainsSuccess(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	t.Setenv(features.VSphereFailureDomainEnabledEnvVar, strconv.FormatBool(true))
 	ctrl := gomock.NewController(t)
 	govc := govcmocks.NewMockProviderGovcClient(ctrl)
 
@@ -757,7 +729,6 @@ func TestValidateFailureDomainsNetworkNotFound(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	t.Setenv(features.VSphereFailureDomainEnabledEnvVar, "true")
 
 	ctrl := gomock.NewController(t)
 	govc := govcmocks.NewMockProviderGovcClient(ctrl)
@@ -812,7 +783,6 @@ func TestValidateFailureDomainsDatastoreNotFound(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	t.Setenv(features.VSphereFailureDomainEnabledEnvVar, strconv.FormatBool(true))
 
 	ctrl := gomock.NewController(t)
 	govc := govcmocks.NewMockProviderGovcClient(ctrl)

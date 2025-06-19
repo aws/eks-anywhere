@@ -30,7 +30,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/controller/handlers"
 	"github.com/aws/eks-anywhere/pkg/controller/serverside"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
@@ -574,11 +573,8 @@ func (r *ClusterReconciler) reconcileDelete(ctx context.Context, log logr.Logger
 	// These CRs are not migrated over during pivot and must be present to cleanly delete vspheremachines
 	// This solution isn't ideal, but would require redesign
 	if cluster.Spec.DatacenterRef.Kind == "VSphereDatacenterConfig" && cluster.IsSelfManaged() {
-		if features.IsActive(features.VsphereFailureDomainEnabled()) {
-			log.Info("Creating vspheredeploymentzones and vspherefailuredomains on bootstrap")
-			if err := r.applyFailureDomains(ctx, log, cluster); err != nil {
-				return ctrl.Result{}, err
-			}
+		if err := r.applyFailureDomains(ctx, log, cluster); err != nil {
+			return ctrl.Result{}, err
 		}
 	}
 
@@ -646,6 +642,12 @@ func (m *FailureDomainMover) ApplyFailureDomains(ctx context.Context, log logr.L
 		return err
 	}
 
+	// Check if VSphereDatacenter has no failure domains
+	if len(clusterSpec.VSphereDatacenter.Spec.FailureDomains) == 0 {
+		return nil
+	}
+
+	log.Info("Creating vspheredeploymentzones and vspherefailuredomains on bootstrap")
 	fd, err := m.fdSpecBuilder.BuildFailureDomainSpec(log, clusterSpec)
 	if err != nil {
 		return err

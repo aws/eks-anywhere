@@ -12,7 +12,6 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/collection"
 	"github.com/aws/eks-anywhere/pkg/config"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/govmomi"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -95,10 +94,7 @@ func (v *Validator) ValidateVCenterConfig(ctx context.Context, datacenterConfig 
 func (v *Validator) ValidateFailureDomains(ctx context.Context, vsphereClusterSpec *Spec) error {
 	failureDomains := vsphereClusterSpec.VSphereDatacenter.Spec.FailureDomains
 
-	if !features.IsActive(features.VsphereFailureDomainEnabled()) {
-		if len(failureDomains) > 0 {
-			return fmt.Errorf("failure domains feature is not enabled. Please set the env variable %v", features.VSphereFailureDomainEnabledEnvVar)
-		}
+	if len(failureDomains) == 0 {
 		return nil
 	}
 

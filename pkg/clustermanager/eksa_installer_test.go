@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"os"
-	"strconv"
 	"strings"
 	"testing"
 
@@ -348,7 +347,6 @@ func TestSetManagerEnvVars(t *testing.T) {
 		deployment *appsv1.Deployment
 		spec       *cluster.Spec
 		want       *appsv1.Deployment
-		vsphereFailurDomainsEnabled bool
 	}{
 		{
 			name:       "no env vars",
@@ -392,24 +390,9 @@ func TestSetManagerEnvVars(t *testing.T) {
 				}
 			}),
 		},
-		{
-			name:                        "vsphere feature flag env vars",
-			deployment:                  deployment(),
-			spec:                        test.NewClusterSpec(),
-			vsphereFailurDomainsEnabled: true,
-			want: deployment(func(d *appsv1.Deployment) {
-				d.Spec.Template.Spec.Containers[0].Env = []corev1.EnvVar{
-					{
-						Name:  "VSPHERE_FAILURE_DOMAIN_ENABLED",
-						Value: "true",
-					},
-				}
-			}),
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Setenv(features.VSphereFailureDomainEnabledEnvVar, strconv.FormatBool(tt.vsphereFailurDomainsEnabled))
 			g := NewWithT(t)
 			clustermanager.SetManagerEnvVars(tt.deployment, tt.spec)
 			g.Expect(tt.deployment).To(Equal(tt.want))

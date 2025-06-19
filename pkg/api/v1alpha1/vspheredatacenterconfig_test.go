@@ -2,7 +2,6 @@ package v1alpha1
 
 import (
 	"reflect"
-	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -169,35 +168,10 @@ func TestValidateVSphereDatacenterConfig(t *testing.T) {
 	tests := []struct {
 		testName              string
 		expectedError         string
-		failureDomainsEnabled bool
 		modifyFunc            func(*VSphereDatacenterConfig)
 	}{
 		{
-			testName: "valid VSphereDatacenterConfig without FailureDomain",
-			modifyFunc: func(v *VSphereDatacenterConfig) {
-				v.Spec.FailureDomains = nil
-			},
-		},
-		{
 			testName:              "valid VSphereDatacenterConfig with FailureDomain",
-			failureDomainsEnabled: true,
-			modifyFunc: func(v *VSphereDatacenterConfig) {
-				v.Spec.FailureDomains = []FailureDomain{
-					{
-						Name:           "fd-1",
-						ComputeCluster: "myComputeCluster",
-						ResourcePool:   "myResourcePool",
-						Datastore:      "myDatastore",
-						Folder:         "myFolder",
-						Network:        "/myDatacenter/network/myNetwork",
-					},
-				}
-			},
-		},
-		{
-			testName:              "Valid VSphereDatacenterConfig without FailureDomain",
-			failureDomainsEnabled: false,
-			expectedError:         "Failure Domains feature is not enabled",
 			modifyFunc: func(v *VSphereDatacenterConfig) {
 				v.Spec.FailureDomains = []FailureDomain{
 					{
@@ -213,7 +187,6 @@ func TestValidateVSphereDatacenterConfig(t *testing.T) {
 		},
 		{
 			testName:              "Invalid VSphereDatacenterConfig with missing name in FailureDomain",
-			failureDomainsEnabled: true,
 			modifyFunc: func(v *VSphereDatacenterConfig) {
 				v.Spec.FailureDomains = []FailureDomain{
 					{
@@ -229,7 +202,6 @@ func TestValidateVSphereDatacenterConfig(t *testing.T) {
 		},
 		{
 			testName:              "Invalid VSphereDatacenterConfig with missing computeCluster in FailureDomain",
-			failureDomainsEnabled: true,
 			modifyFunc: func(v *VSphereDatacenterConfig) {
 				v.Spec.FailureDomains = []FailureDomain{
 					{
@@ -245,7 +217,6 @@ func TestValidateVSphereDatacenterConfig(t *testing.T) {
 		},
 		{
 			testName:              "Invalid VSphereDatacenterConfig with missing resourcePool in FailureDomain",
-			failureDomainsEnabled: true,
 			modifyFunc: func(v *VSphereDatacenterConfig) {
 				v.Spec.FailureDomains = []FailureDomain{
 					{
@@ -261,7 +232,6 @@ func TestValidateVSphereDatacenterConfig(t *testing.T) {
 		},
 		{
 			testName:              "Invalid VSphereDatacenterConfig with missing datastore in FailureDomain",
-			failureDomainsEnabled: true,
 			modifyFunc: func(v *VSphereDatacenterConfig) {
 				v.Spec.FailureDomains = []FailureDomain{
 					{
@@ -277,7 +247,6 @@ func TestValidateVSphereDatacenterConfig(t *testing.T) {
 		},
 		{
 			testName:              "Invalid VSphereDatacenterConfig with missing folder in FailureDomain",
-			failureDomainsEnabled: true,
 			modifyFunc: func(v *VSphereDatacenterConfig) {
 				v.Spec.FailureDomains = []FailureDomain{
 					{
@@ -293,7 +262,6 @@ func TestValidateVSphereDatacenterConfig(t *testing.T) {
 		},
 		{
 			testName:              "Invalid VSphereDatacenterConfig with missing network in FailureDomain",
-			failureDomainsEnabled: true,
 			modifyFunc: func(v *VSphereDatacenterConfig) {
 				v.Spec.FailureDomains = []FailureDomain{
 					{
@@ -309,7 +277,6 @@ func TestValidateVSphereDatacenterConfig(t *testing.T) {
 		},
 		{
 			testName:              "Invalid VSphereDatacenterConfig with invalid network in FailureDomain",
-			failureDomainsEnabled: true,
 			modifyFunc: func(v *VSphereDatacenterConfig) {
 				v.Spec.FailureDomains = []FailureDomain{
 					{
@@ -326,7 +293,6 @@ func TestValidateVSphereDatacenterConfig(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Setenv(features.VSphereFailureDomainEnabledEnvVar, strconv.FormatBool(tt.failureDomainsEnabled))
 		t.Run(tt.testName, func(t *testing.T) {
 			vSphereDatacenter := generateVSphereDataCenterConfig()
 			tt.modifyFunc(vSphereDatacenter)
