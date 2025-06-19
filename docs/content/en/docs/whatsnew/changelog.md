@@ -41,6 +41,39 @@ description: >
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
 
+## [v0.22.6](https://github.com/aws/eks-anywhere/releases/tag/v0.22.6)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.26.2 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+
+### Changed
+- EKS Distro:
+  - [`v1-32-eks-15`](https://distro.eks.amazonaws.com/releases/1-32/15/)
+  - [`v1-31-eks-22`](https://distro.eks.amazonaws.com/releases/1-31/22/)
+  - [`v1-30-eks-33`](https://distro.eks.amazonaws.com/releases/1-30/33/)
+  - [`v1-29-eks-40`](https://distro.eks.amazonaws.com/releases/1-29/40/)
+  - [`v1-28-eks-51`](https://distro.eks.amazonaws.com/releases/1-28/51/)
+- Cert-manager: `v1.16.4` to `v1.16.5`
+- Cluster API Provider Nutanix: `v1.5.3` to `v1.5.4`
+- Cluster API Provider Tinkerbell: `v0.6.4` to `v0.6.5`
+- Cilium: `v1.15.14-eksa.1` to `v1.15.16-eksa.1`
+- Kube-rbac-proxy: `v0.19.0` to `v0.19.1`
+
+
+### Fixed
+- Tinkerbell workflow updates running into Rate limit issues during concurrent provisioning ([#4616](https://github.com/aws/eks-anywhere-build-tooling/pull/4616))
+- Some Tinkerbell workflows getting stuck at STATE_PENDING ([#4616](https://github.com/aws/eks-anywhere-build-tooling/pull/4616))
+- Honor the --no-timeouts flag during BMC checks ([#9786](https://github.com/aws/eks-anywhere/pull/9786))
+- Improve latency for BMC interactions ([#9791](https://github.com/aws/eks-anywhere/pull/9791))
+- Add retries around mount action to address race conditions in device becoming available ([#4639](https://github.com/aws/eks-anywhere-build-tooling/pull/4639))
+- Validate Eks-distro manifest signature for extended kubernetes version support ([#9801](https://github.com/aws/eks-anywhere/pull/9801))
+
 ## [v0.22.5](https://github.com/aws/eks-anywhere/releases/tag/v0.22.5)
 
 ### Supported OS version details
