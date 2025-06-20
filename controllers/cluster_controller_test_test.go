@@ -3,6 +3,7 @@ package controllers_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/go-logr/logr"
@@ -498,6 +499,114 @@ func TestClusterReconcilerFailSignatureValidation(t *testing.T) {
 	r := controllers.NewClusterReconciler(c, registry, iam, clusterValidator, mockPkgs, mhcReconciler, nil)
 	_, err := r.Reconcile(ctx, clusterRequest(cluster))
 	g.Expect(err).To(MatchError(ContainSubstring("validating bundle signature")))
+}
+
+func TestClusterReconcilerUpdatesCertificateStatusSuccess(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	version := test.DevEksaVersion()
+
+	cluster := &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-cluster",
+			Namespace: constants.EksaSystemNamespace,
+		},
+		Spec: anywherev1.ClusterSpec{
+			KubernetesVersion: anywherev1.Kube132,
+			EksaVersion:       &version,
+		},
+		Status: anywherev1.ClusterStatus{
+			ReconciledGeneration: 1,
+			Conditions: []anywherev1.Condition{
+				{
+					Type:   anywherev1.ReadyCondition,
+					Status: corev1.ConditionTrue,
+				},
+			},
+		},
+	}
+
+	kcp := testKubeadmControlPlaneFromCluster(cluster)
+	eksaRelease := test.EKSARelease()
+	bundles := createBundle()
+
+	ctrl := gomock.NewController(t)
+	providerReconciler := mocks.NewMockProviderClusterReconciler(ctrl)
+	iam := mocks.NewMockAWSIamConfigReconciler(ctrl)
+	clusterValidator := mocks.NewMockClusterValidator(ctrl)
+	mhcReconciler := mocks.NewMockMachineHealthCheckReconciler(ctrl)
+	mockPkgs := mocks.NewMockPackagesClient(ctrl)
+
+	providerReconciler.EXPECT().Reconcile(ctx, gomock.AssignableToTypeOf(logr.Logger{}), gomock.AssignableToTypeOf(cluster)).Return(controller.Result{}, nil)
+	mhcReconciler.EXPECT().Reconcile(ctx, gomock.AssignableToTypeOf(logr.Logger{}), gomock.AssignableToTypeOf(cluster)).Return(nil)
+
+	registry := newRegistryMock(providerReconciler)
+	c := fake.NewClientBuilder().WithRuntimeObjects(cluster, kcp, eksaRelease, bundles).
+		WithStatusSubresource(cluster).
+		Build()
+
+	r := controllers.NewClusterReconciler(c, registry, iam, clusterValidator, mockPkgs, mhcReconciler, nil)
+	_, err := r.Reconcile(ctx, clusterRequest(cluster))
+	g.Expect(err).ToNot(HaveOccurred())
+}
+
+// MockClient that fails on List operations.
+type MockClient struct {
+	client.Client
+}
+
+func (m *MockClient) List(_ context.Context, _ client.ObjectList, _ ...client.ListOption) error {
+	return fmt.Errorf("simulated client error during list operation")
+}
+
+func TestClusterReconcilerUpdatesCertificateStatusError(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	version := test.DevEksaVersion()
+
+	cluster := &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-cluster",
+			Namespace: constants.EksaSystemNamespace,
+		},
+		Spec: anywherev1.ClusterSpec{
+			KubernetesVersion: anywherev1.Kube132,
+			EksaVersion:       &version,
+		},
+		Status: anywherev1.ClusterStatus{
+			ReconciledGeneration: 1,
+			Conditions: []anywherev1.Condition{
+				{
+					Type:   anywherev1.ReadyCondition,
+					Status: corev1.ConditionTrue,
+				},
+			},
+		},
+	}
+
+	kcp := testKubeadmControlPlaneFromCluster(cluster)
+	eksaRelease := test.EKSARelease()
+	bundles := createBundle()
+
+	ctrl := gomock.NewController(t)
+	providerReconciler := mocks.NewMockProviderClusterReconciler(ctrl)
+	iam := mocks.NewMockAWSIamConfigReconciler(ctrl)
+	clusterValidator := mocks.NewMockClusterValidator(ctrl)
+	mhcReconciler := mocks.NewMockMachineHealthCheckReconciler(ctrl)
+	mockPkgs := mocks.NewMockPackagesClient(ctrl)
+
+	providerReconciler.EXPECT().Reconcile(ctx, gomock.AssignableToTypeOf(logr.Logger{}), gomock.AssignableToTypeOf(cluster)).Return(controller.Result{}, nil)
+	mhcReconciler.EXPECT().Reconcile(ctx, gomock.AssignableToTypeOf(logr.Logger{}), gomock.AssignableToTypeOf(cluster)).Return(nil)
+
+	registry := newRegistryMock(providerReconciler)
+	c := fake.NewClientBuilder().WithRuntimeObjects(cluster, kcp, eksaRelease, bundles).
+		WithStatusSubresource(cluster).
+		Build()
+	failingClient := &MockClient{Client: c}
+
+	r := controllers.NewClusterReconciler(failingClient, registry, iam, clusterValidator, mockPkgs, mhcReconciler, nil)
+	_, err := r.Reconcile(ctx, clusterRequest(cluster))
+	g.Expect(err).To(HaveOccurred())
 }
 
 func newRegistryForDummyProviderReconciler() controllers.ProviderClusterReconcilerRegistry {
