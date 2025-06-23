@@ -71,7 +71,7 @@ func validateConfig(config *RenewalConfig) error {
 		return fmt.Errorf("validating control plane config: %w", err)
 	}
 
-	// Etcd nodes are optional (for stacked etcd).
+	// Etcd nodes are only required if using external etcd.
 	if len(config.Etcd.Nodes) > 0 {
 		if err := validateNodeConfig(&config.Etcd); err != nil {
 			return fmt.Errorf("validating etcd config: %w", err)
