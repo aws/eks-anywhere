@@ -660,6 +660,24 @@ func TestTinkerbellKubernetes132UbuntuWorkerNodeUpgrade(t *testing.T) {
 	)
 }
 
+func TestTinkerbellKubernetes133UbuntuWorkerNodeUpgrade(t *testing.T) {
+	provider := framework.NewTinkerbell(t, framework.WithUbuntu133Tinkerbell())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(2),
+	)
+	runSimpleUpgradeFlowForBareMetal(
+		test,
+		v1alpha1.Kube133,
+		framework.WithClusterUpgrade(api.WithWorkerNodeCount(2)),
+	)
+}
+
 func TestTinkerbellKubernetes132UbuntuWorkerNodeScaleUpWithAPI(t *testing.T) {
 	provider := framework.NewTinkerbell(t, framework.WithUbuntu132Tinkerbell())
 	test := framework.NewClusterE2ETest(
@@ -678,12 +696,58 @@ func TestTinkerbellKubernetes132UbuntuWorkerNodeScaleUpWithAPI(t *testing.T) {
 	)
 }
 
+func TestTinkerbellKubernetes133UbuntuWorkerNodeScaleUpWithAPI(t *testing.T) {
+	provider := framework.NewTinkerbell(t, framework.WithUbuntu133Tinkerbell())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(2),
+	)
+	runUpgradeFlowForBareMetalWithAPI(test,
+		api.ClusterToConfigFiller(
+			api.WithWorkerNodeCount(2),
+		),
+	)
+}
+
 func TestTinkerbellKubernetes132UbuntuAddWorkerNodeGroupWithAPI(t *testing.T) {
 	provider := framework.NewTinkerbell(t, framework.WithUbuntu132Tinkerbell())
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube132)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(1),
+		framework.WithCustomLabelHardware(1, "worker-0"),
+	)
+	runUpgradeFlowForBareMetalWithAPI(test,
+		api.ClusterToConfigFiller(
+			api.WithWorkerNodeGroup("worker-0",
+				api.WithCount(1),
+				api.WithMachineGroupRef("worker-0", "TinkerbellMachineConfig"),
+			),
+		),
+		api.TinkerbellToConfigFiller(
+			api.WithCustomTinkerbellMachineConfig("worker-0",
+				framework.UpdateTinkerbellMachineSSHAuthorizedKey(),
+				api.WithOsFamilyForTinkerbellMachineConfig(v1alpha1.Ubuntu),
+			),
+		),
+	)
+}
+
+func TestTinkerbellKubernetes133UbuntuAddWorkerNodeGroupWithAPI(t *testing.T) {
+	provider := framework.NewTinkerbell(t, framework.WithUbuntu133Tinkerbell())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithControlPlaneHardware(1),
@@ -803,6 +867,31 @@ func TestTinkerbellKubernetes131UbuntuTo132InPlaceUpgrade_1CP_1Worker(t *testing
 		test,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube132), api.WithInPlaceUpgradeStrategy()),
 		provider.WithProviderUpgrade(framework.Ubuntu132Image()),
+	)
+}
+
+func TestTinkerbellKubernetes132UbuntuTo133InPlaceUpgrade_1CP_1Worker(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	provider := framework.NewTinkerbell(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube132)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+		framework.WithClusterFiller(api.WithInPlaceUpgradeStrategy()),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(1),
+	).WithClusterConfig(
+		provider.WithKubeVersionAndOS(v1alpha1.Kube132, framework.Ubuntu2004, nil),
+		api.ClusterToConfigFiller(
+			api.WithLicenseToken(licenseToken),
+		),
+	)
+	runInPlaceUpgradeFlowForBareMetal(
+		test,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube133), api.WithInPlaceUpgradeStrategy()),
+		provider.WithProviderUpgrade(framework.Ubuntu133Image()),
 	)
 }
 
@@ -938,6 +1027,39 @@ func TestTinkerbellKubernetes131UbuntuTo132SingleNodeInPlaceUpgrade(t *testing.T
 	)
 }
 
+func TestTinkerbellKubernetes132UbuntuTo133SingleNodeInPlaceUpgrade(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	provider := framework.NewTinkerbell(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterSingleNode(v1alpha1.Kube132),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithEtcdCountIfExternal(0)),
+		framework.WithClusterFiller(api.RemoveAllWorkerNodeGroups()),
+		framework.WithClusterFiller(api.WithInPlaceUpgradeStrategy()),
+		framework.WithControlPlaneHardware(1),
+	).WithClusterConfig(
+		provider.WithKubeVersionAndOS(v1alpha1.Kube132, framework.Ubuntu2004, nil),
+		api.ClusterToConfigFiller(
+			api.WithLicenseToken(licenseToken),
+		),
+	)
+	runInPlaceUpgradeFlowForBareMetal(
+		test,
+		framework.WithUpgradeClusterConfig(
+			api.ClusterToConfigFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube133),
+				api.WithInPlaceUpgradeStrategy(),
+			),
+			api.TinkerbellToConfigFiller(
+				api.RemoveTinkerbellWorkerMachineConfig(),
+			),
+		),
+		provider.WithProviderUpgrade(framework.Ubuntu133Image()),
+	)
+}
+
 // Curated Packages
 func TestTinkerbellKubernetes128UbuntuSingleNodeCuratedPackagesFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
@@ -1029,6 +1151,18 @@ func TestTinkerbellKubernetes132UbuntuSingleNodeCuratedPackagesFlow(t *testing.T
 	runCuratedPackageInstallTinkerbellSingleNodeFlow(test)
 }
 
+func TestTinkerbellKubernetes133UbuntuSingleNodeCuratedPackagesFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(t,
+		framework.NewTinkerbell(t, framework.WithUbuntu133Tinkerbell()),
+		framework.WithClusterSingleNode(v1alpha1.Kube133),
+		framework.WithControlPlaneHardware(1),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube133),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+	)
+	runCuratedPackageInstallTinkerbellSingleNodeFlow(test)
+}
+
 func TestTinkerbellKubernetes132UbuntuSingleNodeCuratedPackagesEmissaryFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithUbuntu132Tinkerbell()),
@@ -1041,12 +1175,36 @@ func TestTinkerbellKubernetes132UbuntuSingleNodeCuratedPackagesEmissaryFlow(t *t
 	runCuratedPackageEmissaryInstallTinkerbellSingleNodeFlow(test)
 }
 
+func TestTinkerbellKubernetes133UbuntuSingleNodeCuratedPackagesEmissaryFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(t,
+		framework.NewTinkerbell(t, framework.WithUbuntu133Tinkerbell()),
+		framework.WithClusterSingleNode(v1alpha1.Kube133),
+		framework.WithControlPlaneHardware(1),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube133),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+	)
+	runCuratedPackageEmissaryInstallTinkerbellSingleNodeFlow(test)
+}
+
 func TestTinkerbellKubernetes132UbuntuSingleNodeCuratedPackagesHarborFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithUbuntu132Tinkerbell()),
 		framework.WithClusterSingleNode(v1alpha1.Kube132),
 		framework.WithControlPlaneHardware(1),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube132),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+	)
+	runCuratedPackageHarborInstallTinkerbellSimpleFlow(test)
+}
+
+func TestTinkerbellKubernetes133UbuntuSingleNodeCuratedPackagesHarborFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(t,
+		framework.NewTinkerbell(t, framework.WithUbuntu133Tinkerbell()),
+		framework.WithClusterSingleNode(v1alpha1.Kube133),
+		framework.WithControlPlaneHardware(1),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube133),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
@@ -1066,6 +1224,19 @@ func TestTinkerbellKubernetes132UbuntuCuratedPackagesAdotSimpleFlow(t *testing.T
 	runCuratedPackagesAdotInstallTinkerbellSimpleFlow(test)
 }
 
+func TestTinkerbellKubernetes133UbuntuCuratedPackagesAdotSimpleFlow(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
+	test := framework.NewClusterE2ETest(t,
+		framework.NewTinkerbell(t, framework.WithUbuntu133Tinkerbell()),
+		framework.WithClusterSingleNode(v1alpha1.Kube133),
+		framework.WithControlPlaneHardware(1),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube133),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+	)
+	runCuratedPackagesAdotInstallTinkerbellSimpleFlow(test)
+}
+
 func TestTinkerbellKubernetes132UbuntuCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
@@ -1073,6 +1244,19 @@ func TestTinkerbellKubernetes132UbuntuCuratedPackagesPrometheusSimpleFlow(t *tes
 		framework.WithClusterSingleNode(v1alpha1.Kube132),
 		framework.WithControlPlaneHardware(1),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube132),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+	)
+	runCuratedPackagesPrometheusInstallTinkerbellSimpleFlow(test)
+}
+
+func TestTinkerbellKubernetes133UbuntuCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
+	test := framework.NewClusterE2ETest(t,
+		framework.NewTinkerbell(t, framework.WithUbuntu133Tinkerbell()),
+		framework.WithClusterSingleNode(v1alpha1.Kube133),
+		framework.WithControlPlaneHardware(1),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube133),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
@@ -1095,12 +1279,44 @@ func TestTinkerbellKubernetes132UbuntuCuratedPackagesClusterAutoscalerSimpleFlow
 	runAutoscalerWithMetricsServerTinkerbellSimpleFlow(test)
 }
 
+func TestTinkerbellKubernetes133UbuntuCuratedPackagesClusterAutoscalerSimpleFlow(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
+	minNodes := 1
+	maxNodes := 2
+	test := framework.NewClusterE2ETest(t,
+		framework.NewTinkerbell(t, framework.WithUbuntu133Tinkerbell()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(2),
+		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube133),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
+	)
+	runAutoscalerWithMetricsServerTinkerbellSimpleFlow(test)
+}
+
 func TestTinkerbellKubernetes132UbuntuSingleNodeSimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewTinkerbell(t, framework.WithUbuntu132Tinkerbell()),
 		framework.WithClusterFiller(
 			api.WithKubernetesVersion(v1alpha1.Kube132),
+			api.WithControlPlaneCount(1),
+			api.WithEtcdCountIfExternal(0),
+			api.RemoveAllWorkerNodeGroups(),
+		),
+		framework.WithControlPlaneHardware(1),
+	)
+
+	runTinkerbellSingleNodeFlow(test)
+}
+
+func TestTinkerbellKubernetes133UbuntuSingleNodeSimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithUbuntu133Tinkerbell()),
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube133),
 			api.WithControlPlaneCount(1),
 			api.WithEtcdCountIfExternal(0),
 			api.RemoveAllWorkerNodeGroups(),
@@ -1168,6 +1384,26 @@ func TestTinkerbellKubernetes132UbuntuWorkloadCluster(t *testing.T) {
 	runTinkerbellWorkloadClusterFlow(test)
 }
 
+func TestTinkerbellKubernetes133UbuntuWorkloadCluster(t *testing.T) {
+	provider := framework.NewTinkerbell(t, framework.WithUbuntu133Tinkerbell())
+	test := framework.NewMulticlusterE2ETest(
+		t,
+		framework.NewClusterE2ETest(
+			t,
+			provider,
+			framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133)),
+			framework.WithControlPlaneHardware(2),
+			framework.WithWorkerHardware(2),
+		),
+		framework.NewClusterE2ETest(
+			t,
+			provider,
+			framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133)),
+		),
+	)
+	runTinkerbellWorkloadClusterFlow(test)
+}
+
 func TestTinkerbellKubernetes132UbuntuWorkloadClusterWithAPI(t *testing.T) {
 	provider := framework.NewTinkerbell(t, framework.WithUbuntu132Tinkerbell())
 	managementCluster := framework.NewClusterE2ETest(
@@ -1192,6 +1428,37 @@ func TestTinkerbellKubernetes132UbuntuWorkloadClusterWithAPI(t *testing.T) {
 		).WithClusterConfig(
 			api.ClusterToConfigFiller(
 				api.WithKubernetesVersion(v1alpha1.Kube132),
+				api.WithManagementCluster(managementCluster.ClusterName),
+			),
+		),
+	)
+	runWorkloadClusterWithAPIFlowForBareMetal(test)
+}
+
+func TestTinkerbellKubernetes133UbuntuWorkloadClusterWithAPI(t *testing.T) {
+	provider := framework.NewTinkerbell(t, framework.WithUbuntu133Tinkerbell())
+	managementCluster := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithControlPlaneHardware(2),
+		framework.WithWorkerHardware(2),
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube133),
+		),
+	)
+	test := framework.NewMulticlusterE2ETest(
+		t,
+		managementCluster,
+	)
+	test.WithWorkloadClusters(
+		framework.NewClusterE2ETest(
+			t,
+			provider,
+			framework.WithClusterName(test.NewWorkloadClusterName()),
+		).WithClusterConfig(
+			api.ClusterToConfigFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube133),
 				api.WithManagementCluster(managementCluster.ClusterName),
 			),
 		),
@@ -1226,6 +1493,40 @@ func TestTinkerbellKubernetes132UbuntuWorkloadClusterGitFluxWithAPI(t *testing.T
 		).WithClusterConfig(
 			api.ClusterToConfigFiller(
 				api.WithKubernetesVersion(v1alpha1.Kube132),
+				api.WithManagementCluster(managementCluster.ClusterName),
+			),
+		),
+	)
+	runWorkloadClusterGitOpsAPIFlowForBareMetal(test)
+}
+
+func TestTinkerbellKubernetes133UbuntuWorkloadClusterGitFluxWithAPI(t *testing.T) {
+	provider := framework.NewTinkerbell(t, framework.WithUbuntu133Tinkerbell())
+	managementCluster := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithControlPlaneHardware(2),
+		framework.WithWorkerHardware(2),
+		framework.WithFluxGithubEnvVarCheck(),
+		framework.WithFluxGithubCleanup(),
+	).WithClusterConfig(
+		framework.WithFluxGithubConfig(),
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube133),
+		),
+	)
+	test := framework.NewMulticlusterE2ETest(
+		t,
+		managementCluster,
+	)
+	test.WithWorkloadClusters(
+		framework.NewClusterE2ETest(
+			t,
+			provider,
+			framework.WithClusterName(test.NewWorkloadClusterName()),
+		).WithClusterConfig(
+			api.ClusterToConfigFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube133),
 				api.WithManagementCluster(managementCluster.ClusterName),
 			),
 		),
@@ -1316,6 +1617,34 @@ func TestTinkerbellKubernetes132UbuntuSingleNodeWorkloadCluster(t *testing.T) {
 	runTinkerbellWorkloadClusterFlow(test)
 }
 
+func TestTinkerbellKubernetes133UbuntuSingleNodeWorkloadCluster(t *testing.T) {
+	provider := framework.NewTinkerbell(t, framework.WithUbuntu133Tinkerbell())
+	test := framework.NewMulticlusterE2ETest(
+		t,
+		framework.NewClusterE2ETest(
+			t,
+			provider,
+			framework.WithClusterFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube133),
+				api.WithEtcdCountIfExternal(0),
+				api.RemoveAllWorkerNodeGroups(),
+			),
+			framework.WithControlPlaneHardware(2),
+			framework.WithWorkerHardware(0),
+		),
+		framework.NewClusterE2ETest(
+			t,
+			provider,
+			framework.WithClusterFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube133),
+				api.WithEtcdCountIfExternal(0),
+				api.RemoveAllWorkerNodeGroups(),
+			),
+		),
+	)
+	runTinkerbellWorkloadClusterFlow(test)
+}
+
 func TestTinkerbellKubernetes132UbuntuSingleNodeWorkloadClusterWithAPI(t *testing.T) {
 	provider := framework.NewTinkerbell(t, framework.WithUbuntu132Tinkerbell())
 	managementCluster := framework.NewClusterE2ETest(
@@ -1342,6 +1671,41 @@ func TestTinkerbellKubernetes132UbuntuSingleNodeWorkloadClusterWithAPI(t *testin
 		).WithClusterConfig(
 			api.ClusterToConfigFiller(
 				api.WithKubernetesVersion(v1alpha1.Kube132),
+				api.WithManagementCluster(managementCluster.ClusterName),
+				api.WithEtcdCountIfExternal(0),
+				api.RemoveAllWorkerNodeGroups(),
+			),
+		),
+	)
+	runWorkloadClusterWithAPIFlowForBareMetal(test)
+}
+
+func TestTinkerbellKubernetes133UbuntuSingleNodeWorkloadClusterWithAPI(t *testing.T) {
+	provider := framework.NewTinkerbell(t, framework.WithUbuntu133Tinkerbell())
+	managementCluster := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithControlPlaneHardware(2),
+		framework.WithWorkerHardware(0),
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube133),
+			api.WithEtcdCountIfExternal(0),
+			api.RemoveAllWorkerNodeGroups(),
+		),
+	)
+	test := framework.NewMulticlusterE2ETest(
+		t,
+		managementCluster,
+	)
+	test.WithWorkloadClusters(
+		framework.NewClusterE2ETest(
+			t,
+			provider,
+			framework.WithClusterName(test.NewWorkloadClusterName()),
+		).WithClusterConfig(
+			api.ClusterToConfigFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube133),
 				api.WithManagementCluster(managementCluster.ClusterName),
 				api.WithEtcdCountIfExternal(0),
 				api.RemoveAllWorkerNodeGroups(),
@@ -1390,6 +1754,45 @@ func TestTinkerbellUpgrade132MulticlusterWorkloadClusterWorkerScaleupGitFluxWith
 	)
 }
 
+func TestTinkerbellUpgrade133MulticlusterWorkloadClusterWorkerScaleupGitFluxWithAPI(t *testing.T) {
+	provider := framework.NewTinkerbell(t, framework.WithUbuntu133Tinkerbell())
+	managementCluster := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithControlPlaneHardware(2),
+		framework.WithWorkerHardware(2),
+		framework.WithFluxGithubEnvVarCheck(),
+		framework.WithFluxGithubCleanup(),
+	).WithClusterConfig(
+		framework.WithFluxGithubConfig(),
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube133),
+			api.RemoveAllWorkerNodeGroups(),
+		),
+	)
+	test := framework.NewMulticlusterE2ETest(
+		t,
+		managementCluster,
+	)
+	test.WithWorkloadClusters(
+		framework.NewClusterE2ETest(
+			t,
+			provider,
+			framework.WithClusterName(test.NewWorkloadClusterName()),
+		).WithClusterConfig(
+			api.ClusterToConfigFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube133),
+				api.WithManagementCluster(managementCluster.ClusterName),
+			),
+		),
+	)
+	runWorkloadClusterGitOpsAPIUpgradeFlowForBareMetal(test,
+		api.ClusterToConfigFiller(
+			api.WithWorkerNodeCount(2),
+		),
+	)
+}
+
 func TestTinkerbellUpgrade132MulticlusterWorkloadClusterCPScaleup(t *testing.T) {
 	provider := framework.NewTinkerbell(t, framework.WithUbuntu132Tinkerbell())
 	test := framework.NewMulticlusterE2ETest(
@@ -1412,6 +1815,33 @@ func TestTinkerbellUpgrade132MulticlusterWorkloadClusterCPScaleup(t *testing.T) 
 		v1alpha1.Kube132,
 		framework.WithClusterUpgrade(
 			api.WithKubernetesVersion(v1alpha1.Kube132),
+			api.WithControlPlaneCount(3),
+		),
+	)
+}
+
+func TestTinkerbellUpgrade133MulticlusterWorkloadClusterCPScaleup(t *testing.T) {
+	provider := framework.NewTinkerbell(t, framework.WithUbuntu133Tinkerbell())
+	test := framework.NewMulticlusterE2ETest(
+		t,
+		framework.NewClusterE2ETest(
+			t,
+			provider,
+			framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133)),
+			framework.WithControlPlaneHardware(4),
+			framework.WithWorkerHardware(2),
+		),
+		framework.NewClusterE2ETest(
+			t,
+			provider,
+			framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133)),
+		),
+	)
+	runSimpleWorkloadUpgradeFlowForBareMetal(
+		test,
+		v1alpha1.Kube133,
+		framework.WithClusterUpgrade(
+			api.WithKubernetesVersion(v1alpha1.Kube133),
 			api.WithControlPlaneCount(3),
 		),
 	)
@@ -1442,6 +1872,31 @@ func TestTinkerbellUpgradeMulticlusterWorkloadClusterK8sUpgrade131To132(t *testi
 	)
 }
 
+func TestTinkerbellUpgradeMulticlusterWorkloadClusterK8sUpgrade132To133(t *testing.T) {
+	provider := framework.NewTinkerbell(t, framework.WithUbuntu132Tinkerbell())
+	test := framework.NewMulticlusterE2ETest(
+		t,
+		framework.NewClusterE2ETest(
+			t,
+			provider,
+			framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube132)),
+			framework.WithControlPlaneHardware(3),
+			framework.WithWorkerHardware(3),
+		),
+		framework.NewClusterE2ETest(
+			t,
+			provider,
+			framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube132)),
+		),
+	)
+	runSimpleWorkloadUpgradeFlowForBareMetal(
+		test,
+		v1alpha1.Kube133,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube133)),
+		provider.WithProviderUpgrade(framework.Ubuntu133Image()),
+	)
+}
+
 // OIDC
 func TestTinkerbellKubernetes132OIDC(t *testing.T) {
 	test := framework.NewClusterE2ETest(
@@ -1449,6 +1904,18 @@ func TestTinkerbellKubernetes132OIDC(t *testing.T) {
 		framework.NewTinkerbell(t, framework.WithUbuntu132Tinkerbell()),
 		framework.WithOIDC(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube132)),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(1),
+	)
+	runTinkerbellOIDCFlow(test)
+}
+
+func TestTinkerbellKubernetes133OIDC(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithUbuntu133Tinkerbell()),
+		framework.WithOIDC(),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133)),
 		framework.WithControlPlaneHardware(1),
 		framework.WithWorkerHardware(1),
 	)
@@ -1468,11 +1935,35 @@ func TestTinkerbellKubernetes132UbuntuRegistryMirror(t *testing.T) {
 	runTinkerbellRegistryMirrorFlow(test)
 }
 
+func TestTinkerbellKubernetes133UbuntuRegistryMirror(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithUbuntu133Tinkerbell()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133)),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(1),
+		framework.WithRegistryMirrorEndpointAndCert(constants.TinkerbellProviderName),
+	)
+	runTinkerbellRegistryMirrorFlow(test)
+}
+
 func TestTinkerbellKubernetes132UbuntuInsecureSkipVerifyRegistryMirror(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewTinkerbell(t, framework.WithUbuntu132Tinkerbell()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube132)),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(1),
+		framework.WithRegistryMirrorInsecureSkipVerify(constants.TinkerbellProviderName),
+	)
+	runTinkerbellRegistryMirrorFlow(test)
+}
+
+func TestTinkerbellKubernetes133UbuntuInsecureSkipVerifyRegistryMirror(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithUbuntu133Tinkerbell()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133)),
 		framework.WithControlPlaneHardware(1),
 		framework.WithWorkerHardware(1),
 		framework.WithRegistryMirrorInsecureSkipVerify(constants.TinkerbellProviderName),
@@ -1918,6 +2409,19 @@ func TestTinkerbellKubernetes128BottleRocketSimpleFlow(t *testing.T) {
 	runTinkerbellSimpleFlow(test)
 }
 
+func TestTinkerbellKubernetes133UbuntuThreeControlPlaneReplicasSimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithUbuntu133Tinkerbell()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
+		framework.WithControlPlaneHardware(3),
+		framework.WithWorkerHardware(1),
+	)
+	runTinkerbellSimpleFlow(test)
+}
+
 func TestTinkerbellKubernetes132UbuntuThreeControlPlaneReplicasSimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -1944,6 +2448,19 @@ func TestTinkerbellKubernetes132UbuntuThreeWorkersSimpleFlow(t *testing.T) {
 	runTinkerbellSimpleFlow(test)
 }
 
+func TestTinkerbellKubernetes133UbuntuThreeWorkersSimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithUbuntu133Tinkerbell()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(3),
+	)
+	runTinkerbellSimpleFlow(test)
+}
+
 func TestTinkerbellKubernetes132UbuntuControlPlaneScaleUp(t *testing.T) {
 	provider := framework.NewTinkerbell(t, framework.WithUbuntu132Tinkerbell())
 	test := framework.NewClusterE2ETest(
@@ -1958,6 +2475,24 @@ func TestTinkerbellKubernetes132UbuntuControlPlaneScaleUp(t *testing.T) {
 	runSimpleUpgradeFlowForBareMetal(
 		test,
 		v1alpha1.Kube132,
+		framework.WithClusterUpgrade(api.WithControlPlaneCount(3)),
+	)
+}
+
+func TestTinkerbellKubernetes133UbuntuControlPlaneScaleUp(t *testing.T) {
+	provider := framework.NewTinkerbell(t, framework.WithUbuntu133Tinkerbell())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+		framework.WithControlPlaneHardware(3),
+		framework.WithWorkerHardware(1),
+	)
+	runSimpleUpgradeFlowForBareMetal(
+		test,
+		v1alpha1.Kube133,
 		framework.WithClusterUpgrade(api.WithControlPlaneCount(3)),
 	)
 }
@@ -1980,6 +2515,24 @@ func TestTinkerbellKubernetes132UbuntuWorkerNodeScaleUp(t *testing.T) {
 	)
 }
 
+func TestTinkerbellKubernetes133UbuntuWorkerNodeScaleUp(t *testing.T) {
+	provider := framework.NewTinkerbell(t, framework.WithUbuntu133Tinkerbell())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(2),
+	)
+	runSimpleUpgradeFlowForBareMetal(
+		test,
+		v1alpha1.Kube133,
+		framework.WithClusterUpgrade(api.WithWorkerNodeCount(2)),
+	)
+}
+
 func TestTinkerbellKubernetes132UbuntuWorkerNodeScaleDown(t *testing.T) {
 	provider := framework.NewTinkerbell(t, framework.WithUbuntu132Tinkerbell())
 	test := framework.NewClusterE2ETest(
@@ -1995,6 +2548,42 @@ func TestTinkerbellKubernetes132UbuntuWorkerNodeScaleDown(t *testing.T) {
 		test,
 		v1alpha1.Kube132,
 		framework.WithClusterUpgrade(api.WithWorkerNodeCount(1)),
+	)
+}
+
+func TestTinkerbellKubernetes133UbuntuWorkerNodeScaleDown(t *testing.T) {
+	provider := framework.NewTinkerbell(t, framework.WithUbuntu133Tinkerbell())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(2)),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(2),
+	)
+	runSimpleUpgradeFlowForBareMetal(
+		test,
+		v1alpha1.Kube133,
+		framework.WithClusterUpgrade(api.WithWorkerNodeCount(1)),
+	)
+}
+
+func TestTinkerbellKubernetes133UbuntuControlPlaneScaleDown(t *testing.T) {
+	provider := framework.NewTinkerbell(t, framework.WithUbuntu133Tinkerbell())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+		framework.WithControlPlaneHardware(3),
+		framework.WithWorkerHardware(1),
+	)
+	runSimpleUpgradeFlowForBareMetal(
+		test,
+		v1alpha1.Kube133,
+		framework.WithClusterUpgrade(api.WithControlPlaneCount(1)),
 	)
 }
 
@@ -2048,6 +2637,37 @@ func TestTinkerbellKubernetes132UbuntuWorkerNodeGroupsTaintsAndLabels(t *testing
 	test.ValidateHardwareDecommissioned()
 }
 
+func TestTinkerbellKubernetes133UbuntuWorkerNodeGroupsTaintsAndLabels(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(
+			t,
+			framework.WithUbuntu133Tinkerbell(),
+			framework.WithCustomTinkerbellMachineConfig(nodeGroupLabel1),
+			framework.WithCustomTinkerbellMachineConfig(nodeGroupLabel2),
+		),
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube133),
+			api.WithControlPlaneLabel(cpKey1, cpVal1),
+			api.WithControlPlaneTaints([]corev1.Taint{framework.NoScheduleTaint()}),
+			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
+			api.WithWorkerNodeGroup(worker0, api.WithMachineGroupRef(nodeGroupLabel1, "TinkerbellMachineConfig"), api.WithTaint(framework.PreferNoScheduleTaint()), api.WithLabel(key1, val1), api.WithCount(1)),
+			api.WithWorkerNodeGroup(worker1, api.WithMachineGroupRef(nodeGroupLabel2, "TinkerbellMachineConfig"), api.WithLabel(key2, val2), api.WithCount(1)),
+		),
+		framework.WithControlPlaneHardware(1),
+		framework.WithCustomLabelHardware(1, nodeGroupLabel1),
+		framework.WithCustomLabelHardware(1, nodeGroupLabel2),
+	)
+
+	test.GenerateClusterConfig()
+	test.GenerateHardwareConfig()
+	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
+	test.ValidateWorkerNodes(framework.ValidateWorkerNodeTaints, framework.ValidateWorkerNodeLabels)
+	test.ValidateControlPlaneNodes(framework.ValidateControlPlaneTaints, framework.ValidateControlPlaneLabels)
+	test.DeleteCluster()
+	test.ValidateHardwareDecommissioned()
+}
+
 // Proxy tests
 func TestTinkerbellAirgappedKubernetes132UbuntuProxyConfigFlow(t *testing.T) {
 	localIp, err := networkutils.GetLocalIP()
@@ -2075,12 +2695,50 @@ func TestTinkerbellAirgappedKubernetes132UbuntuProxyConfigFlow(t *testing.T) {
 	runTinkerbellAirgapConfigProxyFlow(test, "10.80.0.0/16", kubeVersion)
 }
 
+func TestTinkerbellAirgappedKubernetes133UbuntuProxyConfigFlow(t *testing.T) {
+	localIp, err := networkutils.GetLocalIP()
+	if err != nil {
+		t.Fatalf("Cannot get admin machine local IP: %v", err)
+	}
+	t.Logf("Admin machine's IP is: %s", localIp)
+
+	kubeVersion := strings.Replace(string(v1alpha1.Kube133), ".", "-", 1)
+
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t,
+			framework.WithUbuntu133Tinkerbell(),
+			framework.WithHookImagesURLPath("http://"+localIp.String()+":8080"),
+		),
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube133),
+		),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(1),
+		framework.WithProxy(framework.TinkerbellProxyRequiredEnvVars),
+	)
+
+	runTinkerbellAirgapConfigProxyFlow(test, "10.80.0.0/16", kubeVersion)
+}
+
 // OOB tests
 func TestTinkerbellKubernetes132UbuntuOOB(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewTinkerbell(t, framework.WithUbuntu132Tinkerbell()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube132)),
+		framework.WithOOBConfiguration(),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(1),
+	)
+	runTinkerbellSimpleFlow(test)
+}
+
+func TestTinkerbellKubernetes133UbuntuOOB(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithUbuntu133Tinkerbell()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133)),
 		framework.WithOOBConfiguration(),
 		framework.WithControlPlaneHardware(1),
 		framework.WithWorkerHardware(1),
@@ -2103,6 +2761,24 @@ func TestTinkerbellK8sUpgrade131to132WithUbuntuOOB(t *testing.T) {
 		v1alpha1.Kube132,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube132)),
 		provider.WithProviderUpgrade(framework.Ubuntu132Image()),
+	)
+}
+
+func TestTinkerbellK8sUpgrade132to133WithUbuntuOOB(t *testing.T) {
+	provider := framework.NewTinkerbell(t, framework.WithUbuntu132Tinkerbell())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube132)),
+		framework.WithOOBConfiguration(),
+		framework.WithControlPlaneHardware(2),
+		framework.WithWorkerHardware(2),
+	)
+	runSimpleUpgradeFlowForBareMetal(
+		test,
+		v1alpha1.Kube133,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube133)),
+		provider.WithProviderUpgrade(framework.Ubuntu133Image()),
 	)
 }
 
@@ -2132,6 +2808,35 @@ func TestTinkerbellSingleNode131To132UbuntuManagementCPUpgradeAPI(t *testing.T) 
 			api.WithControlPlaneCount(3),
 		),
 		provider.WithKubeVersionAndOS(v1alpha1.Kube132, framework.Ubuntu2004, nil),
+	)
+}
+
+func TestTinkerbellSingleNode132To133UbuntuManagementCPUpgradeAPI(t *testing.T) {
+	provider := framework.NewTinkerbell(t, framework.WithUbuntu132Tinkerbell())
+	managementCluster := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithControlPlaneHardware(2),
+		framework.WithWorkerHardware(2),
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube132),
+			api.WithControlPlaneCount(1),
+			api.WithEtcdCountIfExternal(0),
+			api.RemoveAllWorkerNodeGroups(),
+		),
+	)
+	test := framework.NewMulticlusterE2ETest(
+		t,
+		managementCluster,
+	)
+	runWorkloadClusterUpgradeFlowWithAPIForBareMetal(
+		test,
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube133),
+			api.WithControlPlaneCount(3),
+		),
+		provider.WithKubeVersionAndOS(v1alpha1.Kube133, framework.Ubuntu2004, nil),
 	)
 }
 
@@ -2253,6 +2958,18 @@ func TestTinkerbellKubernetes132KubeletConfigurationSimpleFlow(t *testing.T) {
 		t,
 		framework.NewTinkerbell(t, framework.WithUbuntu132Tinkerbell()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube132)),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(1),
+		framework.WithKubeletConfig(),
+	)
+	runKubeletConfigurationTinkerbellFlow(test)
+}
+
+func TestTinkerbellKubernetes133KubeletConfigurationSimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithUbuntu133Tinkerbell()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133)),
 		framework.WithControlPlaneHardware(1),
 		framework.WithWorkerHardware(1),
 		framework.WithKubeletConfig(),
