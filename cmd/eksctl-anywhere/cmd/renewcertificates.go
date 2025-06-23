@@ -56,11 +56,11 @@ func newRenewerForCmd(ctx context.Context, cfg *certificates.RenewalConfig) (*ce
 
 	kubeClient := deps.UnAuthKubeClient.KubeconfigClient(kubeCfgPath)
 
-	osKey := cfg.OS
-	if osKey == string(v1alpha1.Ubuntu) || osKey == string(v1alpha1.RedHat) {
-		osKey = string(certificates.OSTypeLinux)
+	os := cfg.OS
+	if os == string(v1alpha1.Ubuntu) || os == string(v1alpha1.RedHat) {
+		os = string(certificates.OSTypeLinux)
 	}
-	osRenewer, err := certificates.BuildOSRenewer(osKey)
+	osRenewer, err := certificates.BuildOSRenewer(os)
 	if err != nil {
 		return nil, err
 	}

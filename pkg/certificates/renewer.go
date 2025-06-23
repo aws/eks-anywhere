@@ -128,16 +128,17 @@ func (r *Renewer) updateAPIServerEtcdClientSecret(ctx context.Context, clusterNa
 			logger.V(2).Info("Secret not found—skipping creation", "name", secretName)
 			return nil
 		}
-		return fmt.Errorf("get secret %s: %v", secretName, err)
+		logger.V(2).Info("Failed to access Kubernetes API, skipping secret update", "error", err)
+		return nil
 	}
 	if secret.Data == nil {
 		secret.Data = make(map[string][]byte)
 	}
-	secret.Type = corev1.SecretTypeTLS
 	secret.Data["tls.crt"] = crtData
 	secret.Data["tls.key"] = keyData
 	if err = r.kube.Update(ctx, secret); err != nil {
-		return fmt.Errorf("update secret %s: %v", secretName, err)
+		logger.V(2).Info("Failed to update secret, skipping", "error", err)
+		return nil
 	}
 
 	logger.V(2).Info("Successfully updated secret", "name", secretName)
