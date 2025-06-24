@@ -120,13 +120,14 @@ If the image downloads successfully, it worked!
 
 If you are running in an airgapped environment and you set up a local registry mirror, you can copy curated packages from Amazon ECR to your local registry mirror with the following command. 
 
-The `$BUNDLE_RELEASE_YAML_PATH` should be set to the `eks-anywhere-downloads/bundle-release.yaml` location where you unpacked the tarball from the`eksctl anywhere download artifacts` command. The `$REGISTRY_MIRROR_CERT_PATH` and `$REGISTRY_MIRROR_URL` values must be the same as the `registryMirrorConfiguration` in your EKS Anywhere cluster specification.
+The `$KUBEVERSION` should be set to the same as the Kubernetes version in `spec.kubernetesVersion` of your EKS Anywhere cluster specification. When using self-signed certificates for your registry, you should run with the `--dst-insecure` command line argument to indicate skipping TLS verification while copying curated packages. 
 
 ```bash
 eksctl anywhere copy packages \
-  --bundle ${BUNDLE_RELEASE_YAML_PATH} \
-  --dst-cert ${REGISTRY_MIRROR_CERT_PATH} \
-  ${REGISTRY_MIRROR_URL}
+  ${REGISTRY_MIRROR_URL}/curated-packages \
+  --kube-version $KUBEVERSION \
+  --src-chart-registry public.ecr.aws/eks-anywhere \
+  --src-image-registry ${ECR_PACKAGES_ACCOUNT}.dkr.ecr.${EKSA_AWS_REGION}.amazonaws.com
 ```
 
 Once the curated packages images are in your local registry mirror, you must configure the curated packages controller to use your local registry mirror post-cluster creation. Configure the `defaultImageRegistry` and `defaultRegistry` settings for the `PackageBundleController` to point to your local registry mirror by applying a similar `yaml` definition as the one below to your standalone or management cluster. Existing `PackageBundleController` can be changed, and you do not need to deploy a new `PackageBundleController`. See the [Packages configuration documentation]({{< relref "./packages/#packagebundlecontrollerspec" >}}) for more information.
