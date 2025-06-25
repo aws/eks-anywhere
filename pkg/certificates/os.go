@@ -2,7 +2,6 @@ package certificates
 
 import (
 	"context"
-	"fmt"
 )
 
 // OSType represents the type of operating system.
@@ -26,12 +25,7 @@ type OSRenewer interface {
 
 // BuildOSRenewer creates a new OSRenewer based on the OS type.
 func BuildOSRenewer(osType string) (OSRenewer, error) {
-	osBuilder, ok := osRenewerBuilders[osType]
-	if !ok {
-		return nil, fmt.Errorf("unsupported OS type: %s", osType)
-	}
-
-	return osBuilder(), nil
+	return osRenewerBuilders[osType](), nil
 }
 
 // Map of OS type to OSRenewer builder functions.
