@@ -119,7 +119,7 @@ func TestGetBundleSignature(t *testing.T) {
 				},
 				ObjectMeta: v1.ObjectMeta{
 					Annotations: map[string]string{
-						anywherev1constants.SignatureAnnotation: "MEUCIBQSvgIhP+DWxZABtdXznRHd3pDoFLeNqi+LcvysJlclAiEAsFCH222IZ1u5hJ0dLdu0NJd2rsJnhKNhxpE+Qg3L7qQ=",
+						anywherev1constants.SignatureAnnotation:          "MEUCIBQSvgIhP+DWxZABtdXznRHd3pDoFLeNqi+LcvysJlclAiEAsFCH222IZ1u5hJ0dLdu0NJd2rsJnhKNhxpE+Qg3L7qQ=",
 						anywherev1constants.EKSDistroSignatureAnnotation: "",
 					},
 					Name: "bundles-1",
@@ -131,7 +131,7 @@ func TestGetBundleSignature(t *testing.T) {
 							KubeVersion:          "1.31",
 							EndOfStandardSupport: "2026-12-31",
 							EksD: anywherev1alpha1.EksDRelease{
-								Name: "test",
+								Name:           "test",
 								ReleaseChannel: "1-31",
 								EksDReleaseUrl: "https://distro.eks.amazonaws.com/kubernetes-1-31/kubernetes-1-31-eks-1.yaml",
 							},
@@ -196,7 +196,7 @@ func TestGetEKSDistroManifestSignature(t *testing.T) {
 
 			ctx := context.Background()
 			sig, err := GetEKSDistroManifestSignature(ctx, tt.bundle, tt.key, tt.releaseUrl)
-			
+
 			if tt.expectErrSubstr == "" {
 				g.Expect(err).NotTo(HaveOccurred(), "Expected no error but got: %v", err)
 				g.Expect(sig).NotTo(BeEmpty(), "Expected non-empty signature on success")
@@ -284,7 +284,7 @@ func TestGetEKSDistroReleaseDigest(t *testing.T) {
 			release: &eksdv1alpha1.Release{
 				Spec: eksdv1alpha1.ReleaseSpec{
 					Channel: "1-28",
-					Number: 46,
+					Number:  46,
 				},
 				Status: eksdv1alpha1.ReleaseStatus{
 					Components: []eksdv1alpha1.Component{
