@@ -8,7 +8,6 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
 // VerbosityLevel controls the detail level of logging output.
@@ -49,6 +48,17 @@ func ParseConfig(path string) (*RenewalConfig, error) {
 
 	if err := validateConfig(config); err != nil {
 		return nil, fmt.Errorf("validating config: %v", err)
+	}
+
+	// get password from env varibales
+	if len(config.Etcd.Nodes) > 0 {
+		if pass := os.Getenv("EKSA_SSH_KEY_PASSPHRASE_ETCD"); pass != "" {
+			config.Etcd.SSH.Password = pass
+		}
+	}
+
+	if pass := os.Getenv("EKSA_SSH_KEY_PASSPHRASE_CP"); pass != "" {
+		config.ControlPlane.SSH.Password = pass
 	}
 
 	return config, nil
@@ -95,23 +105,6 @@ func validateNodeConfig(config *NodeConfig) error {
 
 	if _, err := os.Stat(config.SSH.KeyPath); err != nil {
 		return fmt.Errorf("validating sshKey path: %v", err)
-	}
-
-	return nil
-}
-
-// ValidateComponentWithConfig validates that the specified component is compatible with the configuration.
-func ValidateComponentWithConfig(component string, config *RenewalConfig) error {
-	if component == "" {
-		return nil
-	}
-
-	if component != constants.EtcdComponent && component != constants.ControlPlaneComponent {
-		return fmt.Errorf("invalid component %q, must be either %q or %q", component, constants.EtcdComponent, constants.ControlPlaneComponent)
-	}
-
-	if component == constants.EtcdComponent && len(config.Etcd.Nodes) == 0 {
-		return fmt.Errorf("no external etcd nodes defined; cannot use --component %s", constants.EtcdComponent)
 	}
 
 	return nil

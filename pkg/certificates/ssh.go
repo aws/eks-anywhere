@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"golang.org/x/crypto/ssh"
-	"golang.org/x/term"
 
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
@@ -29,8 +28,6 @@ type SSHRunner interface {
 	RunCommand(ctx context.Context, node string, cmds []string) error
 	// RunCommandWithOutput runs a command on the remote host and returns the output
 	RunCommandWithOutput(ctx context.Context, node string, cmds []string) (string, error)
-	// InitSSHConfig initializes the SSH configuration
-	InitSSHConfig(sshConfig SSHConfig) error
 }
 
 // DefaultSSHRunner is the default implementation of SSHRunner.
@@ -49,33 +46,20 @@ func NewSSHRunner(cfg SSHConfig) (*DefaultSSHRunner, error) {
 		},
 	}
 
-	if err := r.InitSSHConfig(cfg); err != nil {
+	r.sshKeyPath = cfg.KeyPath
+
+	key, err := os.ReadFile(cfg.KeyPath)
+	if err != nil {
+		return nil, fmt.Errorf("reading SSH key: %v", err)
+	}
+
+	signer, err := r.parsePrivateKey(key, cfg.KeyPath, cfg.Password)
+	if err != nil {
 		return nil, err
 	}
 
-	return r, nil
-}
-
-// InitSSHConfig initializes the SSH configuration.
-func (r *DefaultSSHRunner) InitSSHConfig(sshConfig SSHConfig) error {
-	if r.sshConfig != nil && r.sshKeyPath == sshConfig.KeyPath {
-		return nil
-	}
-
-	r.sshKeyPath = sshConfig.KeyPath
-
-	key, err := os.ReadFile(sshConfig.KeyPath)
-	if err != nil {
-		return fmt.Errorf("reading SSH key: %v", err)
-	}
-
-	signer, err := r.parsePrivateKey(key, sshConfig.KeyPath, sshConfig.Password)
-	if err != nil {
-		return err
-	}
-
 	r.sshConfig = &ssh.ClientConfig{
-		User: sshConfig.User,
+		User: cfg.User,
 		Auth: []ssh.AuthMethod{
 			ssh.PublicKeys(signer),
 		},
@@ -83,29 +67,22 @@ func (r *DefaultSSHRunner) InitSSHConfig(sshConfig SSHConfig) error {
 		Timeout:         30 * time.Second,
 	}
 
-	return nil
+	return r, nil
 }
 
-// parsePrivateKey parses an SSH private key, handling passphrase protection if needed.
-func (r *DefaultSSHRunner) parsePrivateKey(key []byte, keyPath, passwd string) (ssh.Signer, error) {
+// parsePrivateKey only get password from enviroment variables.
+func (r *DefaultSSHRunner) parsePrivateKey(key []byte, _, passwd string) (ssh.Signer, error) {
 	signer, err := ssh.ParsePrivateKey(key)
 	if err == nil {
 		return signer, nil
 	}
 
 	if err.Error() == "ssh: this private key is passphrase protected" {
-		if passwd == "" && r.sshPasswd == "" {
-			logger.Info("Enter passphrase for SSH key", "path", keyPath)
-			passphrase, err := term.ReadPassword(int(os.Stdin.Fd()))
-			if err != nil {
-				return nil, fmt.Errorf("reading passphrase: %v", err)
-			}
-			logger.Info("")
-			r.sshPasswd = string(passphrase)
-		} else if passwd != "" {
-			r.sshPasswd = passwd
+		if passwd == "" {
+			return nil, fmt.Errorf("SSH key is passphrase protected but no passphrase provided via environment variable")
 		}
 
+		r.sshPasswd = passwd
 		signer, err = ssh.ParsePrivateKeyWithPassphrase(key, []byte(r.sshPasswd))
 		if err != nil {
 			return nil, fmt.Errorf("parsing SSH key with passphrase: %v", err)
@@ -229,6 +206,10 @@ func (r *DefaultSSHRunner) buildCommandString(cmds []string) string {
 		if len(cmds) == 4 {
 			return fmt.Sprintf("%s %s %s '%s'", cmds[0], cmds[1], cmds[2], cmds[3])
 		}
+	}
+
+	if len(cmds) == 1 && strings.Contains(cmds[0], "sudo sheltie") {
+		return cmds[0]
 	}
 	return strings.Join(cmds, " ")
 }
