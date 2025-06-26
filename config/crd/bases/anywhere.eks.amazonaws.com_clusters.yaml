@@ -725,6 +725,26 @@ spec:
                   subject to change in the future.
                 format: int64
                 type: integer
+              clusterCertificateInfo:
+                description: ClusterCertificateInfo contains information about all
+                  the control plane and external etcd certificates
+                items:
+                  description: ClusterCertificateInfo contains information about certificate
+                    expiration for cluster components.
+                  properties:
+                    component:
+                      description: Component defines the component name (e.g., control-plane-1,
+                        etcd-1)
+                      type: string
+                    expiresInDays:
+                      description: ExpiresInDays defines the number of days until
+                        the certificate expires
+                      type: integer
+                  required:
+                  - component
+                  - expiresInDays
+                  type: object
+                type: array
               conditions:
                 items:
                   description: Condition defines an observation of a Cluster API resource
