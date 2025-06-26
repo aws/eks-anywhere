@@ -43,13 +43,13 @@ func NewRenewer(kube kubernetes.Client, osRenewer OSRenewer, cfg *RenewalConfig)
 	var sshEtcd SSHRunner
 	if len(cfg.Etcd.Nodes) > 0 {
 		var err error
-		sshEtcd, err = createSSHRunner(cfg.Etcd.SSH)
+		sshEtcd, err = NewSSHRunner(cfg.Etcd.SSH)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	sshControlPlane, err := createSSHRunner(cfg.ControlPlane.SSH)
+	sshControlPlane, err := NewSSHRunner(cfg.ControlPlane.SSH)
 	if err != nil {
 		return nil, err
 	}
@@ -177,13 +177,4 @@ func (r *Renewer) validateRenewalConfig(
 	processControlPlane = ShouldProcessComponent(component, constants.ControlPlaneComponent)
 
 	return processEtcd, processControlPlane, nil
-}
-
-// createSSHRunner creates a new SSH runner with environment variable handling.
-func createSSHRunner(sshCfg SSHConfig) (SSHRunner, error) {
-	runner, err := NewSSHRunner(sshCfg)
-	if err != nil {
-		return nil, err
-	}
-	return runner, nil
 }

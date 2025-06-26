@@ -60,10 +60,7 @@ func newRenewerForCmd(ctx context.Context, cfg *certificates.RenewalConfig) (*ce
 	if os == string(v1alpha1.Ubuntu) || os == string(v1alpha1.RedHat) {
 		os = string(certificates.OSTypeLinux)
 	}
-	osRenewer, err := certificates.BuildOSRenewer(os)
-	if err != nil {
-		return nil, err
-	}
+	osRenewer := certificates.BuildOSRenewer(os)
 
 	return certificates.NewRenewer(kubeClient, osRenewer, cfg)
 }
@@ -71,7 +68,7 @@ func newRenewerForCmd(ctx context.Context, cfg *certificates.RenewalConfig) (*ce
 func (rc *renewCertificatesOptions) renewCertificates(cmd *cobra.Command, _ []string) error {
 	ctx := cmd.Context()
 
-	cfg, err := certificates.ParseConfig(rc.configFile)
+	cfg, err := certificates.ParseConfig(rc.configFile, rc.component)
 	if err != nil {
 		return err
 	}
