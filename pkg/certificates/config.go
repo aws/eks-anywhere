@@ -8,6 +8,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
 // VerbosityLevel controls the detail level of logging output.
@@ -35,7 +36,7 @@ type RenewalConfig struct {
 }
 
 // ParseConfig reads and parses a certificate renewal configuration file.
-func ParseConfig(path string) (*RenewalConfig, error) {
+func ParseConfig(path string, component string) (*RenewalConfig, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("reading config file: %v", err)
@@ -48,6 +49,10 @@ func ParseConfig(path string) (*RenewalConfig, error) {
 
 	if err := validateConfig(config); err != nil {
 		return nil, fmt.Errorf("validating config: %v", err)
+	}
+
+	if err := ValidateComponentWithConfig(component, config); err != nil {
+		return nil, err
 	}
 
 	// get password from env varibales
@@ -105,6 +110,23 @@ func validateNodeConfig(config *NodeConfig) error {
 
 	if _, err := os.Stat(config.SSH.KeyPath); err != nil {
 		return fmt.Errorf("validating sshKey path: %v", err)
+	}
+
+	return nil
+}
+
+// ValidateComponentWithConfig validates that the specified component is compatible with the configuration.
+func ValidateComponentWithConfig(component string, config *RenewalConfig) error {
+	if component == "" {
+		return nil
+	}
+
+	if component != constants.EtcdComponent && component != constants.ControlPlaneComponent {
+		return fmt.Errorf("invalid component %q, must be either %q or %q", component, constants.EtcdComponent, constants.ControlPlaneComponent)
+	}
+
+	if component == constants.EtcdComponent && len(config.Etcd.Nodes) == 0 {
+		return fmt.Errorf("no external etcd nodes defined; cannot use --component %s", constants.EtcdComponent)
 	}
 
 	return nil
