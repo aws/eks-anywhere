@@ -244,11 +244,10 @@ type CloudStackBundle struct {
 
 // CiliumBundle defines the Cilium version and images used for CNI in this bundle.
 type CiliumBundle struct {
-	Version   string   `json:"version,omitempty"`
-	Cilium    Image    `json:"cilium"`
-	Operator  Image    `json:"operator"`
-	Manifest  Manifest `json:"manifest"`
-	HelmChart Image    `json:"helmChart,omitempty"`
+	Version   string `json:"version,omitempty"`
+	Cilium    Image  `json:"cilium"`
+	Operator  Image  `json:"operator"`
+	HelmChart Image  `json:"helmChart,omitempty"`
 }
 
 // KindnetdBundle defines the Kindnetd version and manifest for this bundle.
