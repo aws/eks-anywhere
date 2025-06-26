@@ -24,8 +24,8 @@ type OSRenewer interface {
 }
 
 // BuildOSRenewer creates a new OSRenewer based on the OS type.
-func BuildOSRenewer(osType string) (OSRenewer, error) {
-	return osRenewerBuilders[osType](), nil
+func BuildOSRenewer(osType string) OSRenewer {
+	return osRenewerBuilders[osType]()
 }
 
 // Map of OS type to OSRenewer builder functions.

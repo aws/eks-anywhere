@@ -19,7 +19,7 @@ func setupSSHKeyForTest(t *testing.T, path string) func() {
 
 // TestParseConfigFileNotFound tests the ParseConfig function with a non-existent file.
 func TestParseConfigFileNotFound(t *testing.T) {
-	_, err := ParseConfig("non-existent-file.yaml")
+	_, err := ParseConfig("non-existent-file.yaml", "")
 	if err == nil {
 		t.Error("expected error for non-existent file but got none")
 	}
@@ -135,6 +135,7 @@ func TestParseConfig(t *testing.T) {
 	tests := []struct {
 		name        string
 		configYaml  string
+		component   string
 		expectError bool
 	}{
 		{
@@ -155,6 +156,7 @@ etcd:
     sshUser: ec2-user
     sshKey: /tmp/test-key
 `,
+			component:   "",
 			expectError: false,
 		},
 		{
@@ -169,6 +171,7 @@ controlPlane:
     sshUser: ec2-user
     sshKey: /tmp/test-key
 `,
+			component:   "",
 			expectError: false,
 		},
 		{
@@ -182,6 +185,7 @@ controlPlane:
     sshUser: ec2-user
     sshKey: /tmp/test-key
 `,
+			component:   "",
 			expectError: true,
 		},
 		{
@@ -196,6 +200,37 @@ controlPlane:
     sshUser: ec2-user
     sshKey: /tmp/test-key
 `,
+			component:   "",
+			expectError: true,
+		},
+		{
+			name: "invalid component - etcd with no etcd nodes",
+			configYaml: `
+clusterName: test-cluster
+os: ubuntu
+controlPlane:
+  nodes:
+  - 192.168.1.10
+  ssh:
+    sshUser: ec2-user
+    sshKey: /tmp/test-key
+`,
+			component:   "etcd",
+			expectError: true,
+		},
+		{
+			name: "invalid component - unknown component",
+			configYaml: `
+clusterName: test-cluster
+os: ubuntu
+controlPlane:
+  nodes:
+  - 192.168.1.10
+  ssh:
+    sshUser: ec2-user
+    sshKey: /tmp/test-key
+`,
+			component:   "unknown",
 			expectError: true,
 		},
 	}
@@ -216,8 +251,7 @@ controlPlane:
 				t.Fatal(err)
 			}
 
-			// Test config parsing
-			_, err = ParseConfig(tmpfile.Name())
+			_, err = ParseConfig(tmpfile.Name(), tt.component)
 			if tt.expectError && err == nil {
 				t.Error("expected error but got none")
 			}

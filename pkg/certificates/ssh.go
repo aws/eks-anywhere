@@ -47,13 +47,14 @@ func NewSSHRunner(cfg SSHConfig) (*DefaultSSHRunner, error) {
 	}
 
 	r.sshKeyPath = cfg.KeyPath
+	r.sshPasswd = cfg.Password
 
 	key, err := os.ReadFile(cfg.KeyPath)
 	if err != nil {
 		return nil, fmt.Errorf("reading SSH key: %v", err)
 	}
 
-	signer, err := r.parsePrivateKey(key, cfg.KeyPath, cfg.Password)
+	signer, err := r.parsePrivateKey(key)
 	if err != nil {
 		return nil, err
 	}
@@ -71,26 +72,21 @@ func NewSSHRunner(cfg SSHConfig) (*DefaultSSHRunner, error) {
 }
 
 // parsePrivateKey only get password from enviroment variables.
-func (r *DefaultSSHRunner) parsePrivateKey(key []byte, _, passwd string) (ssh.Signer, error) {
+func (r *DefaultSSHRunner) parsePrivateKey(key []byte) (ssh.Signer, error) {
 	signer, err := ssh.ParsePrivateKey(key)
 	if err == nil {
 		return signer, nil
 	}
 
-	if err.Error() == "ssh: this private key is passphrase protected" {
-		if passwd == "" {
-			return nil, fmt.Errorf("SSH key is passphrase protected but no passphrase provided via environment variable")
-		}
-
-		r.sshPasswd = passwd
-		signer, err = ssh.ParsePrivateKeyWithPassphrase(key, []byte(r.sshPasswd))
-		if err != nil {
-			return nil, fmt.Errorf("parsing SSH key with passphrase: %v", err)
-		}
-		return signer, nil
+	if r.sshPasswd == "" {
+		return nil, fmt.Errorf("SSH key is passphrase protected but no passphrase provided via environment variable")
 	}
 
-	return nil, fmt.Errorf("parsing SSH key: %v", err)
+	signer, err = ssh.ParsePrivateKeyWithPassphrase(key, []byte(r.sshPasswd))
+	if err != nil {
+		return nil, fmt.Errorf("parsing SSH key with passphrase: %v", err)
+	}
+	return signer, nil
 }
 
 // RunCommand runs a command on the remote host.
