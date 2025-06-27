@@ -78,6 +78,11 @@ func (t *templaterTest) expectHelmClientFactoryGet(username, password string) {
 }
 
 func eqMap(m map[string]interface{}) gomock.Matcher {
+	mJSON, err := json.Marshal(m)
+	if err != nil {
+		return nil
+	}
+	_ = json.Unmarshal(mJSON, &m)
 	return &mapMatcher{m: m}
 }
 
@@ -105,9 +110,9 @@ func (e *mapMatcher) String() string {
 	return fmt.Sprintf("matches map %v", e.m)
 }
 
-func TestTemplaterGenerateUpgradePreflightManifestSuccess(t *testing.T) {
-	t.Skip("Temporarily skipping, need to modify mapMatcher")
-	wantValues := map[string]interface{}{
+// baseTemplateValues returns the common configuration shared by all test cases.
+func baseTemplateValues() map[string]interface{} {
+	return map[string]interface{}{
 		"cni": map[string]interface{}{
 			"chainingMode": "portmap",
 		},
@@ -133,22 +138,86 @@ func TestTemplaterGenerateUpgradePreflightManifestSuccess(t *testing.T) {
 			"prometheus": map[string]interface{}{
 				"enabled": true,
 			},
-			"enabled": false,
-		},
-		"preflight": map[string]interface{}{
-			"enabled": true,
-			"image": map[string]interface{}{
-				"repository": "public.ecr.aws/isovalent/cilium",
-				"tag":        "v1.9.11-eksa.1",
-			},
-			"tolerations": []map[string]string{
+			"tolerations": []map[string]interface{}{
 				{
+					"key":      "node-role.kubernetes.io/control-plane",
+					"operator": "Exists",
+				},
+				{
+					"key":      "node.kubernetes.io/not-ready",
+					"operator": "Exists",
+				},
+				{
+					"key":      "node.cilium.io/agent-not-ready",
 					"operator": "Exists",
 				},
 			},
 		},
-		"agent": false,
 	}
+}
+
+// withPreflightConfig modifies the values for preflight configuration.
+func withPreflightConfig(values map[string]interface{}) {
+	// Remove tunnelProtocol for preflight
+	delete(values, "tunnelProtocol")
+
+	// Modify operator config for preflight
+	operator := values["operator"].(map[string]interface{})
+	operator["enabled"] = false
+	delete(operator, "tolerations")
+
+	// Add preflight specific config
+	values["preflight"] = map[string]interface{}{
+		"enabled": true,
+		"image": map[string]interface{}{
+			"repository": "public.ecr.aws/isovalent/cilium",
+			"tag":        "v1.9.11-eksa.1",
+		},
+		"tolerations": []map[string]string{
+			{
+				"operator": "Exists",
+			},
+		},
+	}
+	values["agent"] = false
+}
+
+// withPolicyEnforcementMode adds policy enforcement mode configuration.
+func withPolicyEnforcementMode(values map[string]interface{}, mode string) {
+	values["policyEnforcementMode"] = mode
+}
+
+// withEgressMasqueradeInterfaces adds egress masquerade interfaces configuration.
+func withEgressMasqueradeInterfaces(values map[string]interface{}, interfaces string) {
+	values["egressMasqueradeInterfaces"] = interfaces
+}
+
+// withDirectRouting modifies the values for direct routing mode.
+func withDirectRouting(values map[string]interface{}) {
+	values["routingMode"] = "native"
+	values["autoDirectNodeRoutes"] = "true"
+	delete(values, "tunnelProtocol")
+}
+
+// withNativeRoutingCIDRs adds native routing CIDR configuration.
+func withNativeRoutingCIDRs(values map[string]interface{}, ipv4CIDR, ipv6CIDR string) {
+	if ipv4CIDR != "" {
+		values["ipv4NativeRoutingCIDR"] = ipv4CIDR
+	}
+	if ipv6CIDR != "" {
+		values["ipv6NativeRoutingCIDR"] = ipv6CIDR
+	}
+}
+
+// withUpgradeCompatibility adds upgrade compatibility configuration.
+func withUpgradeCompatibility(values map[string]interface{}, version string) {
+	values["upgradeCompatibility"] = version
+}
+
+func TestTemplaterGenerateUpgradePreflightManifestSuccess(t *testing.T) {
+	t.Skip("Temporarily skipping, need to modify mapMatcher")
+	wantValues := baseTemplateValues()
+	withPreflightConfig(wantValues)
 
 	tt := newtemplaterTest(t)
 
@@ -178,34 +247,7 @@ func TestTemplaterGenerateUpgradePreflightManifestInvalidKubeVersion(t *testing.
 }
 
 func TestTemplaterGenerateManifestSuccess(t *testing.T) {
-	wantValues := map[string]interface{}{
-		"cni": map[string]interface{}{
-			"chainingMode": "portmap",
-		},
-		"ipam": map[string]interface{}{
-			"mode": "kubernetes",
-		},
-		"identityAllocationMode": "crd",
-		"prometheus": map[string]interface{}{
-			"enabled": true,
-		},
-		"rollOutCiliumPods": true,
-		"routingMode":       "tunnel",
-		"tunnelProtocol":    "geneve",
-		"image": map[string]interface{}{
-			"repository": "public.ecr.aws/isovalent/cilium",
-			"tag":        "v1.9.11-eksa.1",
-		},
-		"operator": map[string]interface{}{
-			"image": map[string]interface{}{
-				"repository": "public.ecr.aws/isovalent/operator",
-				"tag":        "v1.9.11-eksa.1",
-			},
-			"prometheus": map[string]interface{}{
-				"enabled": true,
-			},
-		},
-	}
+	wantValues := baseTemplateValues()
 
 	tt := newtemplaterTest(t)
 
@@ -216,35 +258,8 @@ func TestTemplaterGenerateManifestSuccess(t *testing.T) {
 }
 
 func TestTemplaterGenerateManifestPolicyEnforcementModeSuccess(t *testing.T) {
-	wantValues := map[string]interface{}{
-		"cni": map[string]interface{}{
-			"chainingMode": "portmap",
-		},
-		"ipam": map[string]interface{}{
-			"mode": "kubernetes",
-		},
-		"identityAllocationMode": "crd",
-		"prometheus": map[string]interface{}{
-			"enabled": true,
-		},
-		"rollOutCiliumPods": true,
-		"routingMode":       "tunnel",
-		"tunnelProtocol":    "geneve",
-		"image": map[string]interface{}{
-			"repository": "public.ecr.aws/isovalent/cilium",
-			"tag":        "v1.9.11-eksa.1",
-		},
-		"operator": map[string]interface{}{
-			"image": map[string]interface{}{
-				"repository": "public.ecr.aws/isovalent/operator",
-				"tag":        "v1.9.11-eksa.1",
-			},
-			"prometheus": map[string]interface{}{
-				"enabled": true,
-			},
-		},
-		"policyEnforcementMode": "always",
-	}
+	wantValues := baseTemplateValues()
+	withPolicyEnforcementMode(wantValues, "always")
 
 	tt := newtemplaterTest(t)
 	tt.spec.Cluster.Spec.ManagementCluster.Name = "managed"
@@ -259,35 +274,8 @@ func TestTemplaterGenerateManifestPolicyEnforcementModeSuccess(t *testing.T) {
 }
 
 func TestTemplaterGenerateManifestEgressMasqueradeInterfacesSuccess(t *testing.T) {
-	wantValues := map[string]interface{}{
-		"cni": map[string]interface{}{
-			"chainingMode": "portmap",
-		},
-		"ipam": map[string]interface{}{
-			"mode": "kubernetes",
-		},
-		"identityAllocationMode": "crd",
-		"prometheus": map[string]interface{}{
-			"enabled": true,
-		},
-		"rollOutCiliumPods": true,
-		"routingMode":       "tunnel",
-		"tunnelProtocol":    "geneve",
-		"image": map[string]interface{}{
-			"repository": "public.ecr.aws/isovalent/cilium",
-			"tag":        "v1.9.11-eksa.1",
-		},
-		"operator": map[string]interface{}{
-			"image": map[string]interface{}{
-				"repository": "public.ecr.aws/isovalent/operator",
-				"tag":        "v1.9.11-eksa.1",
-			},
-			"prometheus": map[string]interface{}{
-				"enabled": true,
-			},
-		},
-		"egressMasqueradeInterfaces": "eth0",
-	}
+	wantValues := baseTemplateValues()
+	withEgressMasqueradeInterfaces(wantValues, "eth0")
 
 	tt := newtemplaterTest(t)
 	tt.spec.Cluster.Spec.ManagementCluster.Name = "managed"
@@ -300,34 +288,8 @@ func TestTemplaterGenerateManifestEgressMasqueradeInterfacesSuccess(t *testing.T
 }
 
 func TestTemplaterGenerateManifestDirectRouteModeSuccess(t *testing.T) {
-	wantValues := map[string]interface{}{
-		"cni": map[string]interface{}{
-			"chainingMode": "portmap",
-		},
-		"ipam": map[string]interface{}{
-			"mode": "kubernetes",
-		},
-		"identityAllocationMode": "crd",
-		"prometheus": map[string]interface{}{
-			"enabled": true,
-		},
-		"rollOutCiliumPods":    true,
-		"routingMode":          "native",
-		"autoDirectNodeRoutes": "true",
-		"image": map[string]interface{}{
-			"repository": "public.ecr.aws/isovalent/cilium",
-			"tag":        "v1.9.11-eksa.1",
-		},
-		"operator": map[string]interface{}{
-			"image": map[string]interface{}{
-				"repository": "public.ecr.aws/isovalent/operator",
-				"tag":        "v1.9.11-eksa.1",
-			},
-			"prometheus": map[string]interface{}{
-				"enabled": true,
-			},
-		},
-	}
+	wantValues := baseTemplateValues()
+	withDirectRouting(wantValues)
 
 	tt := newtemplaterTest(t)
 	tt.spec.Cluster.Spec.ManagementCluster.Name = "managed"
@@ -339,36 +301,9 @@ func TestTemplaterGenerateManifestDirectRouteModeSuccess(t *testing.T) {
 }
 
 func TestTemplaterGenerateManifestDirectModeManualIPCIDRSuccess(t *testing.T) {
-	wantValues := map[string]interface{}{
-		"cni": map[string]interface{}{
-			"chainingMode": "portmap",
-		},
-		"ipam": map[string]interface{}{
-			"mode": "kubernetes",
-		},
-		"identityAllocationMode": "crd",
-		"prometheus": map[string]interface{}{
-			"enabled": true,
-		},
-		"rollOutCiliumPods":     true,
-		"autoDirectNodeRoutes":  "true",
-		"routingMode":           "native",
-		"ipv4NativeRoutingCIDR": "192.168.0.0/24",
-		"ipv6NativeRoutingCIDR": "2001:db8::/32",
-		"image": map[string]interface{}{
-			"repository": "public.ecr.aws/isovalent/cilium",
-			"tag":        "v1.9.11-eksa.1",
-		},
-		"operator": map[string]interface{}{
-			"image": map[string]interface{}{
-				"repository": "public.ecr.aws/isovalent/operator",
-				"tag":        "v1.9.11-eksa.1",
-			},
-			"prometheus": map[string]interface{}{
-				"enabled": true,
-			},
-		},
-	}
+	wantValues := baseTemplateValues()
+	withDirectRouting(wantValues)
+	withNativeRoutingCIDRs(wantValues, "192.168.0.0/24", "2001:db8::/32")
 
 	tt := newtemplaterTest(t)
 	tt.spec.Cluster.Spec.ManagementCluster.Name = "managed"
@@ -412,10 +347,13 @@ func TestTemplaterGenerateManifestInvalidKubeVersion(t *testing.T) {
 }
 
 func TestTemplaterGenerateManifestUpgradeSameKubernetesVersionSuccess(t *testing.T) {
+	wantValues := baseTemplateValues()
+	withUpgradeCompatibility(wantValues, "1.9")
+
 	tt := newtemplaterTest(t)
 
 	tt.expectHelmClientFactoryGet("", "")
-	tt.expectHelmTemplateWith(eqMap(wantUpgradeValues()), "1.22").Return(tt.manifest, nil)
+	tt.expectHelmTemplateWith(eqMap(wantValues), "1.22").Return(tt.manifest, nil)
 
 	vb := tt.currentSpec.RootVersionsBundle()
 
@@ -430,10 +368,13 @@ func TestTemplaterGenerateManifestUpgradeSameKubernetesVersionSuccess(t *testing
 }
 
 func TestTemplaterGenerateManifestUpgradeNewKubernetesVersionSuccess(t *testing.T) {
+	wantValues := baseTemplateValues()
+	withUpgradeCompatibility(wantValues, "1.9")
+
 	tt := newtemplaterTest(t)
 
 	tt.expectHelmClientFactoryGet("", "")
-	tt.expectHelmTemplateWith(eqMap(wantUpgradeValues()), "1.21").Return(tt.manifest, nil)
+	tt.expectHelmTemplateWith(eqMap(wantValues), "1.21").Return(tt.manifest, nil)
 
 	vb := tt.currentSpec.RootVersionsBundle()
 	oldCiliumVersion, err := semver.New(vb.Cilium.Version)
@@ -445,38 +386,6 @@ func TestTemplaterGenerateManifestUpgradeNewKubernetesVersionSuccess(t *testing.
 			cilium.WithUpgradeFromVersion(*oldCiliumVersion),
 		),
 	).To(Equal(tt.manifest), "templater.GenerateUpgradeManifest() should return right manifest")
-}
-
-func wantUpgradeValues() map[string]interface{} {
-	return map[string]interface{}{
-		"cni": map[string]interface{}{
-			"chainingMode": "portmap",
-		},
-		"ipam": map[string]interface{}{
-			"mode": "kubernetes",
-		},
-		"identityAllocationMode": "crd",
-		"prometheus": map[string]interface{}{
-			"enabled": true,
-		},
-		"rollOutCiliumPods": true,
-		"routingMode":       "tunnel",
-		"tunnelProtocol":    "geneve",
-		"image": map[string]interface{}{
-			"repository": "public.ecr.aws/isovalent/cilium",
-			"tag":        "v1.9.11-eksa.1",
-		},
-		"operator": map[string]interface{}{
-			"image": map[string]interface{}{
-				"repository": "public.ecr.aws/isovalent/operator",
-				"tag":        "v1.9.11-eksa.1",
-			},
-			"prometheus": map[string]interface{}{
-				"enabled": true,
-			},
-		},
-		"upgradeCompatibility": "1.9",
-	}
 }
 
 func TestTemplaterGenerateNetworkPolicy(t *testing.T) {

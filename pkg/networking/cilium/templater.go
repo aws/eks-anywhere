@@ -221,6 +221,20 @@ func templateValues(spec *cluster.Spec, versionsBundle *cluster.VersionsBundle) 
 			"prometheus": values{
 				"enabled": true,
 			},
+			"tolerations": []values{
+				{
+					"key":      "node-role.kubernetes.io/control-plane",
+					"operator": "Exists",
+				},
+				{
+					"key":      "node.kubernetes.io/not-ready",
+					"operator": "Exists",
+				},
+				{
+					"key":      "node.cilium.io/agent-not-ready",
+					"operator": "Exists",
+				},
+			},
 		},
 	}
 
