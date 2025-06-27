@@ -728,12 +728,6 @@ spec:
                               description: The image repository, name, and tag
                               type: string
                           type: object
-                        manifest:
-                          properties:
-                            uri:
-                              description: URI points to the manifest yaml file
-                              type: string
-                          type: object
                         operator:
                           properties:
                             arch:
@@ -767,7 +761,6 @@ spec:
                           type: string
                       required:
                       - cilium
-                      - manifest
                       - operator
                       type: object
                     cloudStack:
