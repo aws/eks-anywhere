@@ -72,7 +72,7 @@ To the format output in json, add `-o json` to the end of the command line.
 
 To perform a cluster upgrade you can modify your cluster specification `kubernetesVersion` field to the desired version.
 
-As an example, to upgrade a cluster with version 1.31 to 1.32 you would change your spec
+As an example, to upgrade a cluster with version 1.32 to 1.33 you would change your spec
 
 ```
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
@@ -88,7 +88,7 @@ spec:
       kind: VSphereMachineConfig
       name: dev
       ...
-  kubernetesVersion: "1.32"
+  kubernetesVersion: "1.33"
       ...
 ```
 
