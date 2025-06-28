@@ -19,7 +19,7 @@ func setupSSHKeyForTest(t *testing.T, path string) func() {
 
 // TestParseConfigFileNotFound tests the ParseConfig function with a non-existent file.
 func TestParseConfigFileNotFound(t *testing.T) {
-	_, err := ParseConfig("non-existent-file.yaml")
+	_, err := ParseConfig("non-existent-file.yaml", "")
 	if err == nil {
 		t.Error("expected error for non-existent file but got none")
 	}
@@ -41,11 +41,13 @@ func TestValidateConfig(t *testing.T) {
 			name: "valid config",
 			config: &RenewalConfig{
 				ClusterName: "test-cluster",
+				OS:          "ubuntu",
 				ControlPlane: NodeConfig{
-					Nodes:   []string{"192.168.1.10"},
-					OS:      "ubuntu",
-					SSHKey:  keyFile,
-					SSHUser: "ec2-user",
+					Nodes: []string{"192.168.1.10"},
+					SSH: SSHConfig{
+						User:    "ec2-user",
+						KeyPath: keyFile,
+					},
 				},
 			},
 			expectError: false,
@@ -53,11 +55,13 @@ func TestValidateConfig(t *testing.T) {
 		{
 			name: "missing cluster name",
 			config: &RenewalConfig{
+				OS: "ubuntu",
 				ControlPlane: NodeConfig{
-					Nodes:   []string{"192.168.1.10"},
-					OS:      "ubuntu",
-					SSHKey:  keyFile,
-					SSHUser: "ec2-user",
+					Nodes: []string{"192.168.1.10"},
+					SSH: SSHConfig{
+						User:    "ec2-user",
+						KeyPath: keyFile,
+					},
 				},
 			},
 			expectError: true,
@@ -66,10 +70,12 @@ func TestValidateConfig(t *testing.T) {
 			name: "missing control plane nodes",
 			config: &RenewalConfig{
 				ClusterName: "test-cluster",
+				OS:          "ubuntu",
 				ControlPlane: NodeConfig{
-					OS:      "ubuntu",
-					SSHKey:  keyFile,
-					SSHUser: "ec2-user",
+					SSH: SSHConfig{
+						User:    "ec2-user",
+						KeyPath: keyFile,
+					},
 				},
 			},
 			expectError: true,
@@ -78,11 +84,13 @@ func TestValidateConfig(t *testing.T) {
 			name: "non-existent SSH key file",
 			config: &RenewalConfig{
 				ClusterName: "test-cluster",
+				OS:          "ubuntu",
 				ControlPlane: NodeConfig{
-					Nodes:   []string{"192.168.1.10"},
-					OS:      "ubuntu",
-					SSHKey:  "/tmp/non-existent-key",
-					SSHUser: "ec2-user",
+					Nodes: []string{"192.168.1.10"},
+					SSH: SSHConfig{
+						User:    "ec2-user",
+						KeyPath: "/tmp/non-existent-key",
+					},
 				},
 			},
 			expectError: true,
@@ -91,11 +99,13 @@ func TestValidateConfig(t *testing.T) {
 			name: "unsupported OS",
 			config: &RenewalConfig{
 				ClusterName: "test-cluster",
+				OS:          "windows",
 				ControlPlane: NodeConfig{
-					Nodes:   []string{"192.168.1.10"},
-					OS:      "windows",
-					SSHKey:  keyFile,
-					SSHUser: "ec2-user",
+					Nodes: []string{"192.168.1.10"},
+					SSH: SSHConfig{
+						User:    "ec2-user",
+						KeyPath: keyFile,
+					},
 				},
 			},
 			expectError: true,
@@ -125,63 +135,102 @@ func TestParseConfig(t *testing.T) {
 	tests := []struct {
 		name        string
 		configYaml  string
+		component   string
 		expectError bool
 	}{
 		{
 			name: "valid config with both etcd and control plane",
 			configYaml: `
 clusterName: test-cluster
+os: ubuntu
 controlPlane:
   nodes:
   - 192.168.1.10
-  os: ubuntu
-  sshKey: /tmp/test-key
-  sshUser: ec2-user
+  ssh:
+    sshUser: ec2-user
+    sshKey: /tmp/test-key
 etcd:
   nodes:
   - 192.168.1.20
-  os: ubuntu
-  sshKey: /tmp/test-key
-  sshUser: ec2-user
+  ssh:
+    sshUser: ec2-user
+    sshKey: /tmp/test-key
 `,
+			component:   "",
 			expectError: false,
 		},
 		{
 			name: "valid config without etcd (embedded)",
 			configYaml: `
 clusterName: test-cluster
+os: ubuntu
 controlPlane:
   nodes:
   - 192.168.1.10
-  os: ubuntu
-  sshKey: /tmp/test-key
-  sshUser: ec2-user
+  ssh:
+    sshUser: ec2-user
+    sshKey: /tmp/test-key
 `,
+			component:   "",
 			expectError: false,
 		},
 		{
 			name: "invalid config - missing cluster name",
 			configYaml: `
+os: ubuntu
 controlPlane:
   nodes:
   - 192.168.1.10
-  os: ubuntu
-  sshKey: /tmp/test-key
-  sshUser: ec2-user
+  ssh:
+    sshUser: ec2-user
+    sshKey: /tmp/test-key
 `,
+			component:   "",
 			expectError: true,
 		},
 		{
 			name: "invalid config - unsupported OS",
 			configYaml: `
 clusterName: test-cluster
+os: windows
 controlPlane:
   nodes:
   - 192.168.1.10
-  os: windows
-  sshKey: /tmp/test-key
-  sshUser: ec2-user
+  ssh:
+    sshUser: ec2-user
+    sshKey: /tmp/test-key
 `,
+			component:   "",
+			expectError: true,
+		},
+		{
+			name: "invalid component - etcd with no etcd nodes",
+			configYaml: `
+clusterName: test-cluster
+os: ubuntu
+controlPlane:
+  nodes:
+  - 192.168.1.10
+  ssh:
+    sshUser: ec2-user
+    sshKey: /tmp/test-key
+`,
+			component:   "etcd",
+			expectError: true,
+		},
+		{
+			name: "invalid component - unknown component",
+			configYaml: `
+clusterName: test-cluster
+os: ubuntu
+controlPlane:
+  nodes:
+  - 192.168.1.10
+  ssh:
+    sshUser: ec2-user
+    sshKey: /tmp/test-key
+`,
+			component:   "unknown",
 			expectError: true,
 		},
 	}
@@ -202,8 +251,7 @@ controlPlane:
 				t.Fatal(err)
 			}
 
-			// Test config parsing
-			_, err = ParseConfig(tmpfile.Name())
+			_, err = ParseConfig(tmpfile.Name(), tt.component)
 			if tt.expectError && err == nil {
 				t.Error("expected error but got none")
 			}
