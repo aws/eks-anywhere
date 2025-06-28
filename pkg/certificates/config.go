@@ -8,20 +8,29 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
-// NodeConfig holds SSH configuration for a node group.
+// VerbosityLevel controls the detail level of logging output.
+var VerbosityLevel int
+
+// SSHConfig holds the SSH credential information.
+type SSHConfig struct {
+	User     string `yaml:"sshUser"`
+	KeyPath  string `yaml:"sshKey"`
+	Password string `yaml:"-"` // enviroment vairables
+}
+
+// NodeConfig holds configuration for a group of nodes.
 type NodeConfig struct {
-	Nodes     []string `yaml:"nodes"`
-	OS        string   `yaml:"os"`
-	SSHKey    string   `yaml:"sshKey"`
-	SSHUser   string   `yaml:"sshUser"`
-	SSHPasswd string   `yaml:"sshPasswd,omitempty"` // Optional SSH key passphrase.
+	Nodes []string  `yaml:"nodes"`
+	SSH   SSHConfig `yaml:"ssh"`
 }
 
 // RenewalConfig defines the configuration for certificate renewal operations.
 type RenewalConfig struct {
 	ClusterName  string     `yaml:"clusterName"`
+	OS           string     `yaml:"os"`
 	ControlPlane NodeConfig `yaml:"controlPlane"`
 	Etcd         NodeConfig `yaml:"etcd"`
 }
@@ -38,30 +47,45 @@ func ParseConfig(path string) (*RenewalConfig, error) {
 		return nil, fmt.Errorf("parsing config file: %v", err)
 	}
 
-	if err := validateConfig(config); err != nil {
-		return nil, fmt.Errorf("validating config: %v", err)
+	// get password from env varibales
+	if len(config.Etcd.Nodes) > 0 {
+		if pass := os.Getenv("EKSA_SSH_KEY_PASSPHRASE_ETCD"); pass != "" {
+			config.Etcd.SSH.Password = pass
+		}
+	}
+
+	if pass := os.Getenv("EKSA_SSH_KEY_PASSPHRASE_CP"); pass != "" {
+		config.ControlPlane.SSH.Password = pass
 	}
 
 	return config, nil
 }
 
-func validateConfig(config *RenewalConfig) error {
+func ValidateConfig(config *RenewalConfig, component string) error {
 	if config.ClusterName == "" {
-		return fmt.Errorf("cluster name is required")
+		return fmt.Errorf("clusterName is required")
 	}
 
-	if len(config.ControlPlane.Nodes) == 0 {
-		return fmt.Errorf("at least one node is required in ControlPlane configuration")
+	if config.OS == "" {
+		return fmt.Errorf("os is required")
+	}
+
+	if config.OS != string(v1alpha1.Ubuntu) && config.OS != string(v1alpha1.RedHat) && config.OS != string(v1alpha1.Bottlerocket) {
+		return fmt.Errorf("unsupported os %q", config.OS)
+	}
+
+	if err := ValidateComponentWithConfig(component, config); err != nil {
+		return err
 	}
 
 	if err := validateNodeConfig(&config.ControlPlane); err != nil {
-		return fmt.Errorf("validating control plane: %v", err)
+		return fmt.Errorf("validating control plane config: %w", err)
 	}
 
-	// Etcd nodes are optional (could be embedded in control plane).
+	// Etcd nodes are only required if using external etcd.
 	if len(config.Etcd.Nodes) > 0 {
 		if err := validateNodeConfig(&config.Etcd); err != nil {
-			return fmt.Errorf("validating etcd: %v", err)
+			return fmt.Errorf("validating etcd config: %w", err)
 		}
 	}
 
@@ -70,24 +94,49 @@ func validateConfig(config *RenewalConfig) error {
 
 func validateNodeConfig(config *NodeConfig) error {
 	if len(config.Nodes) == 0 {
-		return fmt.Errorf("nodes are required")
-	}
-	if config.OS == "" {
-		return fmt.Errorf("OS is required")
-	}
-	if config.OS != string(v1alpha1.Ubuntu) && config.OS != string(v1alpha1.RedHat) && config.OS != string(v1alpha1.Bottlerocket) {
-		return fmt.Errorf("unsupported OS %q", config.OS)
-	}
-	if config.SSHKey == "" {
-		return fmt.Errorf("SSH key is required")
-	}
-	if config.SSHUser == "" {
-		return fmt.Errorf("SSH user is required")
+		return fmt.Errorf("nodes list cannot be empty")
 	}
 
-	if _, err := os.Stat(config.SSHKey); err != nil {
-		return fmt.Errorf("retrieving SSH key file information: %v", err)
+	if config.SSH.User == "" {
+		return fmt.Errorf("sshUser is required")
+	}
+	if config.SSH.KeyPath == "" {
+		return fmt.Errorf("sshKey is required")
 	}
 
+	if _, err := os.Stat(config.SSH.KeyPath); err != nil {
+		return fmt.Errorf("validating sshKey path: %v", err)
+	}
+
+	return nil
+}
+
+// ValidateComponentWithConfig validates that the specified component is compatible with the configuration.
+func ValidateComponentWithConfig(component string, config *RenewalConfig) error {
+	if component == "" {
+		return nil
+	}
+
+	if component != constants.EtcdComponent && component != constants.ControlPlaneComponent {
+		return fmt.Errorf("invalid component %q, must be either %q or %q", component, constants.EtcdComponent, constants.ControlPlaneComponent)
+	}
+
+	if component == constants.EtcdComponent && len(config.Etcd.Nodes) == 0 {
+		return fmt.Errorf("no external etcd nodes defined; cannot use --component %s", constants.EtcdComponent)
+	}
+
+	return nil
+}
+
+// ShouldProcessComponent checks if the specified component should be processed.
+func ShouldProcessComponent(requestedComponent, targetComponent string) bool {
+	return requestedComponent == "" || requestedComponent == targetComponent
+}
+
+// ValidateNodesPresence ensures that the slice of node ip is not empty.
+func ValidateNodesPresence(nodes []string, componentName string) error {
+	if len(nodes) == 0 {
+		return fmt.Errorf("%s: nodes list cannot be empty", componentName)
+	}
 	return nil
 }
