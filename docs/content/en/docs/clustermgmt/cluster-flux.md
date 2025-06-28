@@ -353,7 +353,7 @@ Follow these steps if you want to use your initial cluster to create and manage 
 ### Upgrade cluster using Gitops
       
    1. To upgrade the cluster using Gitops, modify the workload cluster yaml file with the desired changes.
-      As an example, to upgrade a cluster with version 1.31 to 1.32 you would change your spec:
+      As an example, to upgrade a cluster with version 1.32 to 1.33 you would change your spec:
        ```bash
         apiVersion: anywhere.eks.amazonaws.com/v1alpha1
         kind: Cluster
@@ -369,7 +369,7 @@ Follow these steps if you want to use your initial cluster to create and manage 
               kind: VSphereMachineConfig
               name: dev
               ...
-          kubernetesVersion: "1.32"
+          kubernetesVersion: "1.33"
           ...
       ```
 

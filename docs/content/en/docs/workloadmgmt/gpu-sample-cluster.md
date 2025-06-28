@@ -26,7 +26,7 @@ toc_hide: true
     datacenterRef:
       kind: TinkerbellDatacenterConfig
       name: gpu-test
-    kubernetesVersion: "1.32"
+    kubernetesVersion: "1.33"
   ---
   apiVersion: anywhere.eks.amazonaws.com/v1alpha1
   kind: TinkerbellDatacenterConfig
