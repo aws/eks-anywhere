@@ -41,6 +41,49 @@ description: >
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
 
+## [v0.23.0](https://github.com/aws/eks-anywhere/releases/tag/v0.23.0)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.33.0 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+
+### Added
+- Support for monitoring certificate expiration for external etcd and control plane (https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-certs/#certificate-expiration) machines through the EKS Anywhere cluster status field. This helps track certificates that have a default validity period of one year.([#9854](https://github.com/aws/eks-anywhere/pull/9854))
+- Support for CAPI diagnostics feature in CAPI, CAPX, CAPV, CAPC, CAPX controller pod 
+
+### Changed
+- Added EKS-D for 1-33::
+  - [`v1-33-eks-5`](https://distro.eks.amazonaws.com/releases/1-33/5/)
+- Cert-manager: `v1.16.5` to `v1.17.2`
+- Cluster API: `v1.9.6` to `v1.10.2`
+- Cluster API Provider Cloudstack: `v0.5.0` to `v0.6.0`
+- Cluster API Provider Nutanix: `v1.5.4` to `v1.6.1`
+- Cluster API Provider Tinkerbell: `v0.6.4` to `v0.6.5`
+- Cluster API Provider vSphere: `v1.12.0` to `v1.13.0`
+- Controller-runtime:  `v0.16.5` to `v0.20.4`
+- Kube-rbac-proxy: `v0.19.0` to `v0.19.1`
+- Cri-tools: `v1.32.0` to `v1.33.0`
+- Flux:
+  - Cli: `v2.5.1` to `v2.6.0`
+  - Helm Controller: `v1.2.0` to `v1.3.0`
+  - Kustomize Controller: `v1.5.1` to `v1.6.0`
+  - Notification Controller: `v1.5.0` to `v1.6.0`
+  - Source Controller: `v1.5.0` to `v1.6.0`
+- Govmomi: `v0.48.1` to `v0.50.0`
+- Image builder: `v0.1.42` to `v0.1.44`
+- Kind: `v0.26.0` to `v0.29.0`
+- Kube-vip: `v0.8.10` to `v0.9.1`
+- Troubleshoot: `v0.117.0` to `v0.119.0`
+
+### Removed
+- With CAPI diagnostics enabled, removed the redundant kube-rbac-proxy metrics server from the CloudStack provider controller.
+- Removed vSphere failure domain feature gate `VSPHERE_FAILURE_DOMAIN_ENABLED` which gradated to GA in this version([#9827](https://github.com/aws/eks-anywhere/pull/9827))
+
 ## [v0.22.6](https://github.com/aws/eks-anywhere/releases/tag/v0.22.6)
 
 ### Supported OS version details
