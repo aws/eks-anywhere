@@ -732,17 +732,16 @@ spec:
                   description: ClusterCertificateInfo contains information about certificate
                     expiration for cluster components.
                   properties:
-                    component:
-                      description: Component defines the component name (e.g., control-plane-1,
-                        etcd-1)
-                      type: string
                     expiresInDays:
                       description: ExpiresInDays defines the number of days until
-                        the certificate expires
+                        the certificate expires.
                       type: integer
+                    machine:
+                      description: Machine defines the machine name.
+                      type: string
                   required:
-                  - component
                   - expiresInDays
+                  - machine
                   type: object
                 type: array
               conditions:
