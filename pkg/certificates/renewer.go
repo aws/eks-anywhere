@@ -82,11 +82,11 @@ func (r *Renewer) RenewCertificates(ctx context.Context, cfg *RenewalConfig, com
 		}
 	}
 
+	logger.MarkSuccess("Successfully renewed certificates")
+
 	if err := r.finishRenewal(); err != nil {
 		return err
 	}
-
-	logger.MarkPass("Successfully renewed certificates")
 
 	return nil
 }

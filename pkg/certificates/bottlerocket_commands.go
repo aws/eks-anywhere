@@ -53,20 +53,16 @@ func buildBRControlPlaneCopyCertsFromTmpCmd() []string {
     ls -l /var/lib/kubeadm/pki/apiserver-etcd-client.key || true
     
     cp -v /run/host-containerd/io.containerd.runtime.v2.task/default/admin/rootfs/tmp/etcd-client-certs/apiserver-etcd-client.crt /var/lib/kubeadm/pki/server-etcd-client.crt || {
-        echo "❌ Failed to copy certificate"
         exit 1
     }
     cp -v /run/host-containerd/io.containerd.runtime.v2.task/default/admin/rootfs/tmp/etcd-client-certs/apiserver-etcd-client.key /var/lib/kubeadm/pki/apiserver-etcd-client.key || {
-        echo "❌ Failed to copy key"
         exit 1
     }
     
     chmod 600 /var/lib/kubeadm/pki/server-etcd-client.crt || {
-        echo "❌ Failed to set certificate permissions"
         exit 1
     }
     chmod 600 /var/lib/kubeadm/pki/apiserver-etcd-client.key || {
-        echo "❌ Failed to set key permissions"
         exit 1
     }
     
@@ -76,7 +72,6 @@ func buildBRControlPlaneCopyCertsFromTmpCmd() []string {
     
     echo "✅ Certificates copied successfully"
 else
-    echo "❌ Source directory does not exist"
     ls -l /run/host-containerd/io.containerd.runtime.v2.task/default/admin/rootfs/tmp/
     exit 1
 fi`
@@ -116,7 +111,6 @@ ls -l /var/lib/etcd/pki/apiserver-etcd-client.*
 
 echo "Copying certificates to %[1]s..."
 cp /var/lib/etcd/pki/apiserver-etcd-client.* %[1]s || { 
-    echo "❌ Failed to copy certs to tmp"
     echo "Source files:"
     ls -l /var/lib/etcd/pki/apiserver-etcd-client.*
     echo "Destination directory:"
@@ -126,12 +120,10 @@ cp /var/lib/etcd/pki/apiserver-etcd-client.* %[1]s || {
 
 echo "Setting permissions..."
 chmod 600 %[1]s/apiserver-etcd-client.crt || { 
-    echo "❌ Failed to chmod certificate"
     ls -l %[1]s/apiserver-etcd-client.crt
     exit 1
 }
 chmod 600 %[1]s/apiserver-etcd-client.key || { 
-    echo "❌ Failed to chmod key"
     ls -l %[1]s/apiserver-etcd-client.key
     exit 1
 }
@@ -152,12 +144,10 @@ func buildBRCreateTmpDirCmd(dirName string) []string {
 	script := fmt.Sprintf(`echo "Creating directory..."
 TARGET_DIR="/run/host-containerd/io.containerd.runtime.v2.task/default/admin/rootfs/tmp/%[1]s"
 mkdir -p "${TARGET_DIR}" || {
-    echo "❌ Failed to create directory"
     exit 1
 }
 
 chmod 755 "${TARGET_DIR}" || {
-    echo "❌ Failed to set directory permissions"
     exit 1
 }
 
@@ -173,7 +163,6 @@ cat <<'CRT_END' | base64 -d > "${TARGET_DIR}/apiserver-etcd-client.crt"
 %s
 CRT_END
 if [ $? -ne 0 ]; then
-    echo "❌ Failed to write certificate file"
     exit 1
 fi`, certBase64)
 	return []string{script}
@@ -185,7 +174,6 @@ cat <<'KEY_END' | base64 -d > "${TARGET_DIR}/apiserver-etcd-client.key"
 %s
 KEY_END
 if [ $? -ne 0 ]; then
-    echo "❌ Failed to write key file"
     exit 1
 fi`, keyBase64)
 	return []string{script}
@@ -194,11 +182,9 @@ fi`, keyBase64)
 func buildBRSetTmpCertPermissionsCmd() []string {
 	script := `echo "Setting permissions..."
 chmod 600 "${TARGET_DIR}/apiserver-etcd-client.crt" || {
-    echo "❌ Failed to set permissions on certificate"
     exit 1
 }
 chmod 600 "${TARGET_DIR}/apiserver-etcd-client.key" || {
-    echo "❌ Failed to set permissions on key"
     exit 1
 }`
 	return []string{script}
