@@ -4679,6 +4679,25 @@ spec:
                   subject to change in the future.
                 format: int64
                 type: integer
+              clusterCertificateInfo:
+                description: ClusterCertificateInfo contains information about all
+                  the control plane and external etcd certificates
+                items:
+                  description: ClusterCertificateInfo contains information about certificate
+                    expiration for cluster components.
+                  properties:
+                    expiresInDays:
+                      description: ExpiresInDays defines the number of days until
+                        the certificate expires.
+                      type: integer
+                    machine:
+                      description: Machine defines the machine name.
+                      type: string
+                  required:
+                  - expiresInDays
+                  - machine
+                  type: object
+                type: array
               conditions:
                 items:
                   description: Condition defines an observation of a Cluster API resource

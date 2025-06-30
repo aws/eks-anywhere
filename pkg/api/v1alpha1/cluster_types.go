@@ -998,7 +998,7 @@ const (
 
 // ClusterCertificateInfo contains information about certificate expiration for cluster components.
 type ClusterCertificateInfo struct {
-	// Component defines the machine name.
+	// Machine defines the machine name.
 	Machine string `json:"machine"`
 	// ExpiresInDays defines the number of days until the certificate expires.
 	ExpiresInDays int `json:"expiresInDays"`
