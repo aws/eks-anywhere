@@ -128,15 +128,7 @@ func ValidateComponentWithConfig(component string, config *RenewalConfig) error 
 	return nil
 }
 
-// ShouldProcessComponent checks if the specified component should be processed.
-func ShouldProcessComponent(requestedComponent, targetComponent string) bool {
+// shouldProcessComponent checks if the specified component should be processed.
+func shouldProcessComponent(requestedComponent, targetComponent string) bool {
 	return requestedComponent == "" || requestedComponent == targetComponent
-}
-
-// ValidateNodesPresence ensures that the slice of node ip is not empty.
-func ValidateNodesPresence(nodes []string, componentName string) error {
-	if len(nodes) == 0 {
-		return fmt.Errorf("%s: nodes list cannot be empty", componentName)
-	}
-	return nil
 }

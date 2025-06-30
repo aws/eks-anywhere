@@ -178,9 +178,9 @@ func (r *Renewer) validateRenewalConfig(
 	cfg *RenewalConfig,
 	component string,
 ) (processEtcd, processControlPlane bool, err error) {
-	processEtcd = ShouldProcessComponent(component, constants.EtcdComponent) &&
+	processEtcd = shouldProcessComponent(component, constants.EtcdComponent) &&
 		len(cfg.Etcd.Nodes) > 0
-	processControlPlane = ShouldProcessComponent(component, constants.ControlPlaneComponent)
+	processControlPlane = shouldProcessComponent(component, constants.ControlPlaneComponent)
 
 	return processEtcd, processControlPlane, nil
 }
