@@ -133,7 +133,6 @@ func buildCPBackupCmd(component string, hasExternalEtcd bool, backup string) []s
 			linuxControlPlaneCertDir,
 			backupPath,
 		)
-		// return []string{"sudo", "sh", "-c", script}
 		return buildShellCmd(script)
 	}
 	return []string{
@@ -148,7 +147,6 @@ func buildCPRenewCmd(component string, hasExternalEtcd bool) []string {
 for cert in admin.conf apiserver apiserver-kubelet-client controller-manager.conf front-proxy-client scheduler.conf; do
     kubeadm certs renew "$cert"
 done`
-		// return []string{"sudo", "sh", "-c", script}
 		return buildShellCmd(script)
 	}
 	return []string{"sudo", "kubeadm", "certs", "renew", "all"}
@@ -159,7 +157,6 @@ func buildCPRestartCmd() []string {
 		"mkdir -p /tmp/manifests && mv %s/* /tmp/manifests/ && sleep 20 && mv /tmp/manifests/* %s/",
 		linuxControlPlaneManifests, linuxControlPlaneManifests,
 	)
-	// return []string{"sudo", "sh", "-c", script}
 	return buildShellCmd(script)
 }
 
@@ -168,7 +165,6 @@ func buildEtcdBackupCmd(backup string) []string {
 		"cd %[1]s && cp -r pki pki.bak_%[2]s && rm -rf pki/* && cp pki.bak_%[2]s/ca.* pki/",
 		linuxEtcdCertDir, backup,
 	)
-	// return []string{"sudo", "sh", "-c", script}
 	return buildShellCmd(script)
 }
 
