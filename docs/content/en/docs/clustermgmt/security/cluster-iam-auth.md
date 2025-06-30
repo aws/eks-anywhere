@@ -82,10 +82,10 @@ ${PWD}/${CLUSTER_NAME}/${CLUSTER_NAME}-aws.kubeconfig
 1. Ensure the IAM role/user ARN mapped in the cluster is configured on the local machine from which you are trying to access the cluster.
 2. Install the `aws-iam-authenticator client` binary on the local machine. 
     * We recommend installing the binary referenced in the latest `release manifest` of the kubernetes version used when creating the cluster.
-    * The below commands can be used to fetch the installation uri for clusters created with `1.32` kubernetes version and OS `linux`.
+    * The below commands can be used to fetch the installation uri for clusters created with `1.33` kubernetes version and OS `linux`.
     ```bash
     CLUSTER_NAME=my-cluster-name
-    KUBERNETES_VERSION=1.32
+    KUBERNETES_VERSION=1.33
 
     export KUBECONFIG=${PWD}/${CLUSTER_NAME}/${CLUSTER_NAME}-eks-a-cluster.kubeconfig
 
