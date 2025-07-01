@@ -79,6 +79,7 @@ func (l *LinuxRenewer) RenewEtcdCerts(
 	return nil
 }
 
+// CopyEtcdCerts copies the etcd certificates from the specified node to the local machine.
 func (l *LinuxRenewer) CopyEtcdCerts(
 	ctx context.Context,
 	node string,
@@ -91,7 +92,6 @@ func (l *LinuxRenewer) CopyEtcdCerts(
 
 	crt, err := cat("pki/apiserver-etcd-client.crt")
 	if err != nil {
-
 		return fmt.Errorf("read crt: %v", err)
 	}
 	key, err := cat("pki/apiserver-etcd-client.key")
@@ -120,7 +120,6 @@ func (l *LinuxRenewer) CopyEtcdCerts(
 func buildCPBackupCmd(component string, hasExternalEtcd bool, backup string) string {
 	backupPath := fmt.Sprintf("/etc/kubernetes/pki.bak_%s", backup)
 	if component == constants.ControlPlaneComponent && hasExternalEtcd {
-
 		return fmt.Sprintf("sudo sh -c 'cp -r %s \"%s\" && rm -rf \"%s/etcd\"'",
 			linuxControlPlaneCertDir, backupPath, backupPath)
 	}
