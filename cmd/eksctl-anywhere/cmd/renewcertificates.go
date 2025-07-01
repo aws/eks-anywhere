@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -40,29 +39,6 @@ func init() {
 	}
 }
 
-// newRenewerForCmd builds dependencies & returns a ready to-use Renewer.
-func newRenewerForCmd(ctx context.Context, cfg *certificates.RenewalConfig) (*certificates.Renewer, error) {
-	deps, err := dependencies.NewFactory().
-		WithExecutableBuilder().
-		WithKubectl().
-		WithUnAuthKubeClient().
-		Build(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	kubeCfgPath := kubeconfig.FromClusterName(cfg.ClusterName)
-
-	kubeClient := deps.UnAuthKubeClient.KubeconfigClient(kubeCfgPath)
-
-	os := cfg.OS
-	if os == string(v1alpha1.Ubuntu) || os == string(v1alpha1.RedHat) {
-		os = string(certificates.OSTypeLinux)
-	}
-
-	return certificates.NewRenewer(kubeClient, os, cfg)
-}
-
 func (rc *renewCertificatesOptions) renewCertificates(cmd *cobra.Command, _ []string) error {
 	ctx := cmd.Context()
 
@@ -75,7 +51,25 @@ func (rc *renewCertificatesOptions) renewCertificates(cmd *cobra.Command, _ []st
 		return err
 	}
 
-	renewer, err := newRenewerForCmd(ctx, cfg)
+	deps, err := dependencies.NewFactory().
+		WithExecutableBuilder().
+		WithKubectl().
+		WithUnAuthKubeClient().
+		Build(ctx)
+	if err != nil {
+		return err
+	}
+
+	kubeCfgPath := kubeconfig.FromClusterName(cfg.ClusterName)
+
+	kubeClient := deps.UnAuthKubeClient.KubeconfigClient(kubeCfgPath)
+
+	os := cfg.OS
+	if os == string(v1alpha1.Ubuntu) || os == string(v1alpha1.RedHat) {
+		os = string(certificates.OSTypeLinux)
+	}
+
+	renewer, err := certificates.NewRenewer(kubeClient, os, cfg)
 	if err != nil {
 		return err
 	}

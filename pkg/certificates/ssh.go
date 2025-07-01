@@ -7,8 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aws/eks-anywhere/pkg/logger"
 	"golang.org/x/crypto/ssh"
+
+	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
 // sshClient interface and sshDialer type remain the same.
@@ -85,6 +86,7 @@ func (r *DefaultSSHRunner) parsePrivateKey(key []byte) (ssh.Signer, error) {
 	return signer, nil
 }
 
+// RunCommand executes a command on the remote node via SSH and returns the output.
 func (r *DefaultSSHRunner) RunCommand(ctx context.Context, node string, cmd string) (string, error) {
 	client, err := r.sshDialer("tcp", fmt.Sprintf("%s:22", node), r.sshConfig)
 	if err != nil {
