@@ -36,7 +36,7 @@ type RenewalConfig struct {
 }
 
 // ParseConfig reads and parses a certificate renewal configuration file.
-func ParseConfig(path string, component string) (*RenewalConfig, error) {
+func ParseConfig(path string) (*RenewalConfig, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("reading config file: %v", err)
@@ -45,14 +45,6 @@ func ParseConfig(path string, component string) (*RenewalConfig, error) {
 	config := &RenewalConfig{}
 	if err := yaml.Unmarshal(data, config); err != nil {
 		return nil, fmt.Errorf("parsing config file: %v", err)
-	}
-
-	if err := validateConfig(config); err != nil {
-		return nil, fmt.Errorf("validating config: %v", err)
-	}
-
-	if err := ValidateComponentWithConfig(component, config); err != nil {
-		return nil, err
 	}
 
 	// get password from env varibales
@@ -69,7 +61,7 @@ func ParseConfig(path string, component string) (*RenewalConfig, error) {
 	return config, nil
 }
 
-func validateConfig(config *RenewalConfig) error {
+func ValidateConfig(config *RenewalConfig, component string) error {
 	if config.ClusterName == "" {
 		return fmt.Errorf("clusterName is required")
 	}
@@ -91,6 +83,10 @@ func validateConfig(config *RenewalConfig) error {
 		if err := validateNodeConfig(&config.Etcd); err != nil {
 			return fmt.Errorf("validating etcd config: %w", err)
 		}
+	}
+
+	if err := ValidateComponentWithConfig(component, config); err != nil {
+		return err
 	}
 
 	return nil
@@ -132,15 +128,7 @@ func ValidateComponentWithConfig(component string, config *RenewalConfig) error 
 	return nil
 }
 
-// ShouldProcessComponent checks if the specified component should be processed.
-func ShouldProcessComponent(requestedComponent, targetComponent string) bool {
+// shouldProcessComponent checks if the specified component should be processed.
+func shouldProcessComponent(requestedComponent, targetComponent string) bool {
 	return requestedComponent == "" || requestedComponent == targetComponent
-}
-
-// ValidateNodesPresence ensures that the slice of node ip is not empty.
-func ValidateNodesPresence(nodes []string, componentName string) error {
-	if len(nodes) == 0 {
-		return fmt.Errorf("%s: nodes list cannot be empty", componentName)
-	}
-	return nil
 }
