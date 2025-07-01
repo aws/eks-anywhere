@@ -107,16 +107,6 @@ func (p *Provider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alph
 	return nil
 }
 
-// PostBootstrapDeleteForUpgrade is a no-op. It implements providers.Provider.
-func (p *Provider) PostBootstrapDeleteForUpgrade(ctx context.Context, cluster *types.Cluster) error {
-	return nil
-}
-
-// PostBootstrapSetupUpgrade is a no-op. It implements providers.Provider.
-func (p *Provider) PostBootstrapSetupUpgrade(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
-	return nil
-}
-
 // PostWorkloadInit is a no-op. It implements providers.Provider.
 func (p *Provider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	return nil

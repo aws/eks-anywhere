@@ -1570,43 +1570,6 @@ func TestSetupAndValidateUpgradeClusterErrorValidateClusterSpec(t *testing.T) {
 	assertError(t, "TinkerbellDatacenterConfig: missing spec.tinkerbellIP field", err)
 }
 
-func TestSetupAndValidateUpgradeWorkloadClusterErrorApplyHardware(t *testing.T) {
-	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
-	mockCtrl := gomock.NewController(t)
-	docker := stackmocks.NewMockDocker(mockCtrl)
-	helm := stackmocks.NewMockHelm(mockCtrl)
-	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
-	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
-	writer := filewritermocks.NewMockFileWriter(mockCtrl)
-	cluster := &types.Cluster{Name: "management-cluster"}
-	forceCleanup := false
-
-	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
-	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
-	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
-	ctx := context.Background()
-
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
-	provider.stackInstaller = stackInstaller
-	provider.providerKubectlClient = kubectl
-
-	clusterSpec.Cluster.SetManagedBy("management-cluster")
-	clusterSpec.ManagementCluster = &types.Cluster{
-		Name:           "management-cluster",
-		KubeconfigFile: "kc.kubeconfig",
-	}
-	cluster.KubeconfigFile = "kc.kubeconfig"
-
-	kubectl.EXPECT().GetUnprovisionedTinkerbellHardware(ctx, clusterSpec.ManagementCluster.KubeconfigFile, constants.EksaSystemNamespace).Return([]tinkv1alpha1.Hardware{}, nil)
-
-	kubectl.EXPECT().GetProvisionedTinkerbellHardware(ctx, clusterSpec.ManagementCluster.KubeconfigFile, constants.EksaSystemNamespace).Return([]tinkv1alpha1.Hardware{}, nil)
-
-	kubectl.EXPECT().ApplyKubeSpecFromBytesForce(ctx, clusterSpec.ManagementCluster, gomock.Any()).Return(fmt.Errorf("error"))
-
-	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
-	assertError(t, "applying hardware yaml: error", err)
-}
-
 func TestSetupAndValidateUpgradeWorkloadClusterErrorBMC(t *testing.T) {
 	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
 	mockCtrl := gomock.NewController(t)
@@ -1638,8 +1601,6 @@ func TestSetupAndValidateUpgradeWorkloadClusterErrorBMC(t *testing.T) {
 	kubectl.EXPECT().GetUnprovisionedTinkerbellHardware(ctx, clusterSpec.ManagementCluster.KubeconfigFile, constants.EksaSystemNamespace).Return([]tinkv1alpha1.Hardware{}, nil)
 
 	kubectl.EXPECT().GetProvisionedTinkerbellHardware(ctx, clusterSpec.ManagementCluster.KubeconfigFile, constants.EksaSystemNamespace).Return([]tinkv1alpha1.Hardware{}, nil)
-
-	kubectl.EXPECT().ApplyKubeSpecFromBytesForce(ctx, clusterSpec.ManagementCluster, gomock.Any())
 
 	kubectl.EXPECT().WaitForRufioMachines(ctx, cluster, defaultBMCTimeout, "Contactable", gomock.Any()).Return(fmt.Errorf("error"))
 
@@ -2153,9 +2114,6 @@ func TestTinkerbellProvider_GenerateCAPISpecForUpgrade_RegistryMirror(t *testing
 		GetMachineDeployment(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(machineDeployment, nil)
 	kubectl.EXPECT().
-		ApplyKubeSpecFromBytesForce(ctx, cluster, gomock.Any()).
-		Return(nil)
-	kubectl.EXPECT().
 		WaitForRufioMachines(ctx, cluster, defaultBMCTimeout, "Contactable", gomock.Any()).
 		Return(nil)
 
@@ -2339,9 +2297,6 @@ func TestTinkerbellProvider_GenerateCAPISpecForUpgrade_CertBundles(t *testing.T)
 	kubectl.EXPECT().
 		GetMachineDeployment(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(machineDeployment, nil)
-	kubectl.EXPECT().
-		ApplyKubeSpecFromBytesForce(ctx, cluster, gomock.Any()).
-		Return(nil)
 	kubectl.EXPECT().
 		WaitForRufioMachines(ctx, cluster, defaultBMCTimeout, "Contactable", gomock.Any()).
 		Return(nil)

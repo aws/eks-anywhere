@@ -208,18 +208,6 @@ func TestNutanixProviderPostBootstrapSetup(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestNutanixProviderPostBootstrapDeleteForUpgrade(t *testing.T) {
-	provider := testDefaultNutanixProvider(t)
-	err := provider.PostBootstrapDeleteForUpgrade(context.Background(), &types.Cluster{Name: "eksa-unit-test"})
-	assert.NoError(t, err)
-}
-
-func TestNutanixProviderPostBootstrapSetupUpgrade(t *testing.T) {
-	provider := testDefaultNutanixProvider(t)
-	err := provider.PostBootstrapSetupUpgrade(context.Background(), provider.clusterConfig, &types.Cluster{Name: "eksa-unit-test"})
-	assert.NoError(t, err)
-}
-
 func TestNutanixProviderPostWorkloadInit(t *testing.T) {
 	provider := testDefaultNutanixProvider(t)
 	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
