@@ -61,6 +61,7 @@ func ParseConfig(path string) (*RenewalConfig, error) {
 	return config, nil
 }
 
+// ValidateConfig validates the certificate renewal configuration and ensures all required fields are present.
 func ValidateConfig(config *RenewalConfig, component string) error {
 	if config.ClusterName == "" {
 		return fmt.Errorf("clusterName is required")

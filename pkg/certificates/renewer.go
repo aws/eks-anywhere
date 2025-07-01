@@ -122,7 +122,6 @@ func (r *Renewer) renewControlPlaneCerts(ctx context.Context, cfg *RenewalConfig
 }
 
 func (r *Renewer) updateAPIServerEtcdClientSecret(ctx context.Context, clusterName string) error {
-
 	crtPath := filepath.Join(r.backupDir, tempLocalEtcdCertsDir, "apiserver-etcd-client.crt")
 	keyPath := filepath.Join(r.backupDir, tempLocalEtcdCertsDir, "apiserver-etcd-client.key")
 	crtData, err := os.ReadFile(crtPath)
@@ -148,7 +147,7 @@ func (r *Renewer) updateAPIServerEtcdClientSecret(ctx context.Context, clusterNa
 	secret.Data["tls.crt"] = crtData
 	secret.Data["tls.key"] = keyData
 	if err = r.kubectl.Update(ctx, secret); err != nil {
-		return fmt.Errorf("failed to update secret %s: %v", secretName, err)
+		return fmt.Errorf("updating secret %s: %v", secretName, err)
 	}
 
 	logger.V(4).Info("Successfully updated secret", "name", secretName)
