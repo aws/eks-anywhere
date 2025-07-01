@@ -206,7 +206,7 @@ func TestConfigFileValidation(t *testing.T) {
 
 // testRenewCertificates is a test-only version that skips dependency initialization.
 func testRenewCertificates(configFile, component string) error {
-	cfg, err := certificates.ParseConfig(configFile, component)
+	cfg, err := certificates.ParseConfig(configFile)
 	if err != nil {
 		return err
 	}

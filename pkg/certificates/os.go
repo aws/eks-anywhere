@@ -16,21 +16,19 @@ const (
 
 // OSRenewer defines the interface for OS-specific certificate renewal operations.
 type OSRenewer interface {
-	// RenewControlPlaneCerts renews control plane certificates on a node
-	RenewControlPlaneCerts(ctx context.Context, node string, config *RenewalConfig, component string, sshRunner SSHRunner, backupDir string) error
-
-	// RenewEtcdCerts renews etcd certificates on a node
-	RenewEtcdCerts(ctx context.Context, node string, sshRunner SSHRunner, backupDir string) error
+	RenewControlPlaneCerts(ctx context.Context, node string, config *RenewalConfig, component string, sshRunner SSHRunner) error
+	RenewEtcdCerts(ctx context.Context, node string, sshRunner SSHRunner) error
+	CopyEtcdCerts(ctx context.Context, node string, sshRunner SSHRunner) error
 }
 
 // BuildOSRenewer creates a new OSRenewer based on the OS type.
-func BuildOSRenewer(osType string) OSRenewer {
-	return osRenewerBuilders[osType]()
+func BuildOSRenewer(osType string, backupDir string) OSRenewer {
+	return osRenewerBuilders[osType](backupDir)
 }
 
 // Map of OS type to OSRenewer builder functions.
-var osRenewerBuilders = map[string]func() OSRenewer{
-	string(OSTypeLinux): func() OSRenewer {
-		return NewLinuxRenewer()
+var osRenewerBuilders = map[string]func(backupDir string) OSRenewer{
+	string(OSTypeLinux): func(backupDir string) OSRenewer {
+		return NewLinuxRenewer(backupDir)
 	},
 }
