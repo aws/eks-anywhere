@@ -111,8 +111,8 @@ func (r *DefaultSSHRunner) RunCommand(ctx context.Context, node string, cmd stri
 		outputBytes, err := session.CombinedOutput(cmdStr)
 		output := strings.TrimSpace(string(outputBytes))
 
-		logger.V(6).Info(fmt.Sprintf("Command executed on node %s:\n%s", node, cmdStr))
-		logger.V(6).Info(fmt.Sprintf("Command output for node %s:\n%s", node, output))
+		logger.V(6).Info(cmdStr)
+		logger.V(6).Info(output)
 
 		if err != nil {
 			if output != "" {

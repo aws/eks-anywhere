@@ -95,13 +95,11 @@ func (r *Renewer) renewEtcdCerts(ctx context.Context, cfg *RenewalConfig) error 
 		}
 	}
 
-	if len(cfg.Etcd.Nodes) > 0 {
-		firstNode := cfg.Etcd.Nodes[0]
-		logger.V(4).Info("Copying certificates from node", "node", firstNode)
+	firstNode := cfg.Etcd.Nodes[0]
+	logger.V(4).Info("Copying certificates from node", "node", firstNode)
 
-		if err := r.os.CopyEtcdCerts(ctx, firstNode, r.sshEtcd); err != nil {
-			return fmt.Errorf("copying certificates from etcd node %s: %v", firstNode, err)
-		}
+	if err := r.os.CopyEtcdCerts(ctx, firstNode, r.sshEtcd); err != nil {
+		return fmt.Errorf("copying certificates from etcd node %s: %v", firstNode, err)
 	}
 
 	if err := r.updateAPIServerEtcdClientSecret(ctx, cfg.ClusterName); err != nil {
@@ -141,17 +139,16 @@ func (r *Renewer) updateAPIServerEtcdClientSecret(ctx context.Context, clusterNa
 	err = r.kubectl.Get(ctx, secretName, constants.EksaSystemNamespace, secret)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			logger.V(5).Info("Secret not found—skipping creation", "name", secretName)
+			logger.V(5).Info("secret not found, please manually update the secret", "name", secretName)
 			return nil
 		}
-		logger.V(5).Info("Failed to access Kubernetes API, skipping secret update", "error", err)
+		logger.V(5).Info("cannot access Kubernetes API, please manually update the secret", "error", err)
 		return nil
 	}
 	secret.Data["tls.crt"] = crtData
 	secret.Data["tls.key"] = keyData
 	if err = r.kubectl.Update(ctx, secret); err != nil {
-		logger.V(5).Info("Failed to update secret, skipping", "error", err)
-		return nil
+		return fmt.Errorf("failed to update secret %s: %v", secretName, err)
 	}
 
 	logger.V(4).Info("Successfully updated secret", "name", secretName)
@@ -162,8 +159,7 @@ func (r *Renewer) cleanup() {
 	logger.V(4).Info("Cleaning up backup directory", "path", r.backupDir)
 
 	if err := os.RemoveAll(r.backupDir); err != nil {
-		logger.Error(err, "Failed to clean up backup directory", "path", r.backupDir)
-		logger.V(0).Info("You need to manually clean up the backup directory", "path", r.backupDir)
+		logger.Error(err, "cleaning up certificate backup directory, please cleanup manually", "path", r.backupDir)
 	} else {
 		logger.V(4).Info("Successfully cleaned up backup directory", "path", r.backupDir)
 	}

@@ -36,21 +36,21 @@ func (l *LinuxRenewer) RenewControlPlaneCerts(
 	component string,
 	ssh SSHRunner,
 ) error {
-	logger.V(4).Info("Processing control-plane node", "node", node)
+	logger.V(0).Info("Processing control-plane node", "node", node)
 
 	hasExternalEtcd := cfg != nil && len(cfg.Etcd.Nodes) > 0
 
-	if _, err := ssh.RunCommand(ctx, node, l.buildCPBackupCmd(component, hasExternalEtcd)); err != nil {
-		return fmt.Errorf("backup certs: %v", err)
+	if _, err := ssh.RunCommand(ctx, node, buildCPBackupCmd(component, hasExternalEtcd, l.backup)); err != nil {
+		return fmt.Errorf("backing up control plane certs: %v", err)
 	}
 	if _, err := ssh.RunCommand(ctx, node, buildCPRenewCmd(component, hasExternalEtcd)); err != nil {
-		return fmt.Errorf("renew certs: %v", err)
+		return fmt.Errorf("renewing control plane certs: %v", err)
 	}
 	if _, err := ssh.RunCommand(ctx, node, "sudo kubeadm certs check-expiration"); err != nil {
-		return fmt.Errorf("validate certs: %v", err)
+		return fmt.Errorf("validating control plane certs: %v", err)
 	}
 	if _, err := ssh.RunCommand(ctx, node, buildCPRestartCmd()); err != nil {
-		return fmt.Errorf("restart pods: %v", err)
+		return fmt.Errorf("restarting control plane pods: %v", err)
 	}
 
 	logger.V(0).Info("Renewed control-plane certificates", "node", node)
@@ -63,17 +63,17 @@ func (l *LinuxRenewer) RenewEtcdCerts(
 	node string,
 	ssh SSHRunner,
 ) error {
-	logger.V(4).Info("Processing etcd node", "os", l.osType, "node", node)
+	logger.V(0).Info("Processing etcd node", "os", l.osType, "node", node)
 
 	if _, err := ssh.RunCommand(ctx, node, l.buildEtcdBackupCmd()); err != nil {
-		return fmt.Errorf("backup certs: %v", err)
+		return fmt.Errorf("backing up etcd certs: %v", err)
 	}
 	if _, err := ssh.RunCommand(ctx, node,
 		"sudo etcdadm join phase certificates http://eks-a-etcd-dumb-url"); err != nil {
-		return fmt.Errorf("renew certs: %v", err)
+		return fmt.Errorf("renewing etcd certs: %v", err)
 	}
 	if _, err := ssh.RunCommand(ctx, node, buildEtcdValidateCmd()); err != nil {
-		return fmt.Errorf("validate certs: %v", err)
+		return fmt.Errorf("validating etcd certs: %v", err)
 	}
 	logger.V(0).Info("Renewed etcd certificates", "node", node)
 	return nil
@@ -117,14 +117,14 @@ func (l *LinuxRenewer) CopyEtcdCerts(
 	return nil
 }
 
-func (l *LinuxRenewer) buildCPBackupCmd(component string, hasExternalEtcd bool) string {
+func buildCPBackupCmd(component string, hasExternalEtcd bool, backup string) string {
+	backupPath := fmt.Sprintf("/etc/kubernetes/pki.bak_%s", backup)
 	if component == constants.ControlPlaneComponent && hasExternalEtcd {
-		backupPath := fmt.Sprintf("/etc/kubernetes/pki.bak_%s", l.backup)
+
 		return fmt.Sprintf("sudo sh -c 'cp -r %s \"%s\" && rm -rf \"%s/etcd\"'",
 			linuxControlPlaneCertDir, backupPath, backupPath)
 	}
-	return fmt.Sprintf("sudo cp -r %s /etc/kubernetes/pki.bak_%s",
-		linuxControlPlaneCertDir, l.backup)
+	return fmt.Sprintf("sudo cp -r %s %s", linuxControlPlaneCertDir, backupPath)
 }
 
 func buildCPRenewCmd(component string, hasExternalEtcd bool) string {
