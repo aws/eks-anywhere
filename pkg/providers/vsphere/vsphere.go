@@ -1003,10 +1003,6 @@ func (p *vsphereProvider) PostBootstrapSetup(ctx context.Context, clusterConfig 
 	return nil
 }
 
-func (p *vsphereProvider) PostBootstrapSetupUpgrade(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
-	return nil
-}
-
 func (p *vsphereProvider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	return nil
 }
@@ -1282,11 +1278,6 @@ func machineDeploymentName(clusterName, nodeGroupName string) string {
 }
 
 func (p *vsphereProvider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
-	return nil
-}
-
-// PostBootstrapDeleteForUpgrade runs any provider-specific operations after bootstrap cluster has been deleted.
-func (p *vsphereProvider) PostBootstrapDeleteForUpgrade(ctx context.Context, cluster *types.Cluster) error {
 	return nil
 }
 

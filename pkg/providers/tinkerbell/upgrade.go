@@ -133,10 +133,6 @@ func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *
 		}
 	}
 
-	if err := p.applyHardwareUpgrade(ctx, cluster); err != nil {
-		return err
-	}
-
 	// Check if the hardware in the catalogue have a BMCRef. Since we only allow either all hardware with bmc
 	// or no hardware with bmc, its sufficient to check the first hardware.
 	if p.catalogue.TotalHardware() > 0 && p.catalogue.AllHardware()[0].Spec.BMCRef != nil {
@@ -244,18 +240,6 @@ func (p *Provider) validateHardwareReqForWorkerNodeGroupsRollOut(currentSpec, ne
 	}
 
 	return requirements, nil
-}
-
-// PostBootstrapDeleteForUpgrade runs any provider-specific operations after bootstrap cluster has been deleted.
-func (p *Provider) PostBootstrapDeleteForUpgrade(ctx context.Context, cluster *types.Cluster) error {
-	if err := p.stackInstaller.UninstallLocal(ctx); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (p *Provider) PostBootstrapSetupUpgrade(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
-	return p.applyHardwareUpgrade(ctx, cluster)
 }
 
 // ApplyHardwareToCluster adds all the hardwares to the cluster.
@@ -600,6 +584,10 @@ func (p *Provider) PreCoreComponentsUpgrade(
 	)
 	if err != nil {
 		return fmt.Errorf("upgrading stack: %v", err)
+	}
+
+	if err := p.applyHardwareUpgrade(ctx, cluster); err != nil {
+		return fmt.Errorf("applying hardware: %v", err)
 	}
 
 	hasBaseboardManagement, err := p.providerKubectlClient.HasCRD(
