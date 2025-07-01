@@ -34,7 +34,6 @@ func init() {
 	renewCmd.AddCommand(renewCertificatesCmd)
 	renewCertificatesCmd.Flags().StringVarP(&rc.configFile, "config", "f", "", "Config file containing node and SSH information")
 	renewCertificatesCmd.Flags().StringVarP(&rc.component, "component", "c", "", fmt.Sprintf("Component to renew certificates for (%s or %s). If not specified, renews both.", constants.EtcdComponent, constants.ControlPlaneComponent))
-	renewCertificatesCmd.Flags().IntVarP(&certificates.VerbosityLevel, "verbosity", "v", 0, "Set the verbosity level")
 
 	if err := renewCertificatesCmd.MarkFlagRequired("config"); err != nil {
 		logger.Fatal(err, "marking config as required")
@@ -60,16 +59,19 @@ func newRenewerForCmd(ctx context.Context, cfg *certificates.RenewalConfig) (*ce
 	if os == string(v1alpha1.Ubuntu) || os == string(v1alpha1.RedHat) {
 		os = string(certificates.OSTypeLinux)
 	}
-	osRenewer := certificates.BuildOSRenewer(os)
 
-	return certificates.NewRenewer(kubeClient, osRenewer, cfg)
+	return certificates.NewRenewer(kubeClient, os, cfg)
 }
 
 func (rc *renewCertificatesOptions) renewCertificates(cmd *cobra.Command, _ []string) error {
 	ctx := cmd.Context()
 
-	cfg, err := certificates.ParseConfig(rc.configFile, rc.component)
+	cfg, err := certificates.ParseConfig(rc.configFile)
 	if err != nil {
+		return err
+	}
+
+	if err := certificates.ValidateConfig(cfg, rc.component); err != nil {
 		return err
 	}
 

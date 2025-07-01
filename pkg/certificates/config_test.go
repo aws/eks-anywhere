@@ -19,7 +19,7 @@ func setupSSHKeyForTest(t *testing.T, path string) func() {
 
 // TestParseConfigFileNotFound tests the ParseConfig function with a non-existent file.
 func TestParseConfigFileNotFound(t *testing.T) {
-	_, err := ParseConfig("non-existent-file.yaml", "")
+	_, err := ParseConfig("non-existent-file.yaml")
 	if err == nil {
 		t.Error("expected error for non-existent file but got none")
 	}
@@ -114,7 +114,7 @@ func TestValidateConfig(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := validateConfig(tt.config)
+			err := ValidateConfig(tt.config, "")
 			if tt.expectError && err == nil {
 				t.Error("expected error but got none")
 			}
@@ -251,12 +251,20 @@ controlPlane:
 				t.Fatal(err)
 			}
 
-			_, err = ParseConfig(tmpfile.Name(), tt.component)
-			if tt.expectError && err == nil {
-				t.Error("expected error but got none")
+			config, err := ParseConfig(tmpfile.Name())
+			if err != nil && !tt.expectError {
+				t.Errorf("unexpected error parsing config: %v", err)
+				return
 			}
-			if !tt.expectError && err != nil {
-				t.Errorf("unexpected error: %v", err)
+
+			if err == nil {
+				err = ValidateConfig(config, tt.component)
+				if tt.expectError && err == nil {
+					t.Error("expected validation error but got none")
+				}
+				if !tt.expectError && err != nil {
+					t.Errorf("unexpected validation error: %v", err)
+				}
 			}
 		})
 	}
