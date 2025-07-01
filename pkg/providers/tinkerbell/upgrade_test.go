@@ -655,6 +655,156 @@ func PopulateRufioV1MachineMeta(m rufiov1.Machine) rufiov1.Machine {
 	return m
 }
 
+func TestProviderPreCoreComponentsUpgrade_ApplyHardware(t *testing.T) {
+	tconfig := NewPreCoreComponentsUpgradeTestConfig(t)
+
+	catalogue := hardware.NewCatalogue()
+	hw := &tinkv1.Hardware{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-hardware",
+			Labels: map[string]string{
+				"type": "cp",
+			},
+		},
+		Spec: tinkv1.HardwareSpec{
+			BMCRef: &v1.TypedLocalObjectReference{
+				Kind: "Machine",
+				Name: "test-machine",
+			},
+		},
+	}
+	_ = catalogue.InsertHardware(hw)
+
+	tconfig.Installer.EXPECT().HasLegacyChart(
+		gomock.Any(),
+		tconfig.managementComponents.Tinkerbell,
+		tconfig.Management.KubeconfigFile,
+	).Return(false, nil)
+	tconfig.Installer.EXPECT().
+		UpgradeInstallCRDs(
+			gomock.Any(),
+			tconfig.managementComponents.Tinkerbell,
+			tconfig.Management.KubeconfigFile,
+			gomock.Any(),
+		)
+	tconfig.Installer.EXPECT().
+		Upgrade(
+			gomock.Any(),
+			tconfig.managementComponents.Tinkerbell,
+			tconfig.TinkerbellIP,
+			tconfig.Management.KubeconfigFile,
+			tconfig.DatacenterConfig.Spec.HookImagesURLPath,
+			gomock.Any(),
+		).
+		Return(nil)
+
+	hardwareSpec, err := hardware.MarshalCatalogue(catalogue)
+	if err != nil {
+		t.Fatalf("Failed to marshal hardware catalogue: %v", err)
+	}
+
+	tconfig.KubeClient.EXPECT().
+		ApplyKubeSpecFromBytesForce(
+			gomock.Any(),
+			tconfig.Management,
+			hardwareSpec,
+		).
+		Return(nil)
+
+	tconfig.KubeClient.EXPECT().
+		HasCRD(gomock.Any(), rufiounreleased.BaseboardManagementResourceName, tconfig.Management.KubeconfigFile).
+		Return(false, nil)
+
+	provider, err := tconfig.GetProvider()
+	if err != nil {
+		t.Fatalf("Couldn't create the provider: %v", err)
+	}
+
+	provider.catalogue = catalogue
+	err = provider.PreCoreComponentsUpgrade(
+		context.Background(),
+		tconfig.Management,
+		tconfig.managementComponents,
+		tconfig.ClusterSpec,
+	)
+	if err != nil {
+		t.Fatalf("Received unexpected error: %v", err)
+	}
+}
+
+func TestProviderPreCoreComponentsUpgrade_ApplyHardwareError(t *testing.T) {
+	tconfig := NewPreCoreComponentsUpgradeTestConfig(t)
+
+	catalogue := hardware.NewCatalogue()
+	hw := &tinkv1.Hardware{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-hardware",
+			Labels: map[string]string{
+				"type": "cp",
+			},
+		},
+		Spec: tinkv1.HardwareSpec{
+			BMCRef: &v1.TypedLocalObjectReference{
+				Kind: "Machine",
+				Name: "test-machine",
+			},
+		},
+	}
+	_ = catalogue.InsertHardware(hw)
+
+	tconfig.Installer.EXPECT().HasLegacyChart(
+		gomock.Any(),
+		tconfig.managementComponents.Tinkerbell,
+		tconfig.Management.KubeconfigFile,
+	).Return(false, nil)
+	tconfig.Installer.EXPECT().
+		UpgradeInstallCRDs(
+			gomock.Any(),
+			tconfig.managementComponents.Tinkerbell,
+			tconfig.Management.KubeconfigFile,
+			gomock.Any(),
+		)
+	tconfig.Installer.EXPECT().
+		Upgrade(
+			gomock.Any(),
+			tconfig.managementComponents.Tinkerbell,
+			tconfig.TinkerbellIP,
+			tconfig.Management.KubeconfigFile,
+			tconfig.DatacenterConfig.Spec.HookImagesURLPath,
+			gomock.Any(),
+		).
+		Return(nil)
+
+	tconfig.KubeClient.EXPECT().
+		ApplyKubeSpecFromBytesForce(
+			gomock.Any(),
+			tconfig.Management,
+			gomock.Any(),
+		).
+		Return(errors.New("applying hardware"))
+
+	provider, err := tconfig.GetProvider()
+	if err != nil {
+		t.Fatalf("Couldn't create the provider: %v", err)
+	}
+
+	provider.catalogue = catalogue
+
+	err = provider.PreCoreComponentsUpgrade(
+		context.Background(),
+		tconfig.Management,
+		tconfig.managementComponents,
+		tconfig.ClusterSpec,
+	)
+
+	if err == nil {
+		t.Fatalf("Expected error; Received '%v'", err)
+	}
+	if !strings.Contains(err.Error(), "applying hardware") {
+		t.Fatalf("Expected error message to include 'applying hardware'; Received '%v'", err)
+	}
+}
+
 // PreCoreComponentsUpgradeTestConfig is a test helper that contains the necessary pieces for
 // testing the PreCoreComponentsUpgrade functionality.
 type PreCoreComponentsUpgradeTestConfig struct {
@@ -785,7 +935,6 @@ func TestProviderSetupAndValidateManagementProxySuccess(t *testing.T) {
 	kubectl.EXPECT().GetProvisionedTinkerbellHardware(ctx, clusterSpec.ManagementCluster.KubeconfigFile, constants.EksaSystemNamespace).Return([]tinkv1alpha1.Hardware{}, nil)
 	kubectl.EXPECT().GetEksaCluster(ctx, clusterSpec.ManagementCluster, clusterSpec.Cluster.Spec.ManagementCluster.Name).Return(clusterSpec.Cluster, nil)
 	stackInstaller.EXPECT().AddNoProxyIP(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host).Return()
-	kubectl.EXPECT().ApplyKubeSpecFromBytesForce(ctx, clusterSpec.ManagementCluster, gomock.Any()).Return(nil)
 	kubectl.EXPECT().WaitForRufioMachines(ctx, clusterSpec.ManagementCluster, defaultBMCTimeout, "Contactable", gomock.Any()).Return(nil)
 
 	err := provider.SetupAndValidateUpgradeCluster(ctx, clusterSpec.ManagementCluster, clusterSpec, clusterSpec)
@@ -1420,11 +1569,6 @@ func TestProviderBMCTimeout(t *testing.T) {
 			kubectl.EXPECT().
 				GetProvisionedTinkerbellHardware(ctx, cluster.KubeconfigFile, constants.EksaSystemNamespace).
 				Return([]tinkv1alpha1.Hardware{}, nil)
-
-			// Mock ApplyKubeSpecFromBytesForce for applyHardwareUpgrade
-			kubectl.EXPECT().
-				ApplyKubeSpecFromBytesForce(gomock.Any(), cluster, gomock.Any()).
-				Return(nil)
 
 			// Mock WaitForRufioMachines with the correct timeout string
 			kubectl.EXPECT().

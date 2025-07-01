@@ -241,20 +241,6 @@ func (mr *MockProviderMockRecorder) Name() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Name", reflect.TypeOf((*MockProvider)(nil).Name))
 }
 
-// PostBootstrapDeleteForUpgrade mocks base method.
-func (m *MockProvider) PostBootstrapDeleteForUpgrade(arg0 context.Context, arg1 *types.Cluster) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PostBootstrapDeleteForUpgrade", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// PostBootstrapDeleteForUpgrade indicates an expected call of PostBootstrapDeleteForUpgrade.
-func (mr *MockProviderMockRecorder) PostBootstrapDeleteForUpgrade(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostBootstrapDeleteForUpgrade", reflect.TypeOf((*MockProvider)(nil).PostBootstrapDeleteForUpgrade), arg0, arg1)
-}
-
 // PostBootstrapSetup mocks base method.
 func (m *MockProvider) PostBootstrapSetup(arg0 context.Context, arg1 *v1alpha1.Cluster, arg2 *types.Cluster) error {
 	m.ctrl.T.Helper()
@@ -267,20 +253,6 @@ func (m *MockProvider) PostBootstrapSetup(arg0 context.Context, arg1 *v1alpha1.C
 func (mr *MockProviderMockRecorder) PostBootstrapSetup(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostBootstrapSetup", reflect.TypeOf((*MockProvider)(nil).PostBootstrapSetup), arg0, arg1, arg2)
-}
-
-// PostBootstrapSetupUpgrade mocks base method.
-func (m *MockProvider) PostBootstrapSetupUpgrade(arg0 context.Context, arg1 *v1alpha1.Cluster, arg2 *types.Cluster) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PostBootstrapSetupUpgrade", arg0, arg1, arg2)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// PostBootstrapSetupUpgrade indicates an expected call of PostBootstrapSetupUpgrade.
-func (mr *MockProviderMockRecorder) PostBootstrapSetupUpgrade(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostBootstrapSetupUpgrade", reflect.TypeOf((*MockProvider)(nil).PostBootstrapSetupUpgrade), arg0, arg1, arg2)
 }
 
 // PostClusterDeleteValidate mocks base method.
