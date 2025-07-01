@@ -74,10 +74,6 @@ func ValidateConfig(config *RenewalConfig, component string) error {
 		return fmt.Errorf("unsupported os %q", config.OS)
 	}
 
-	if err := ValidateComponentWithConfig(component, config); err != nil {
-		return err
-	}
-
 	if err := validateNodeConfig(&config.ControlPlane); err != nil {
 		return fmt.Errorf("validating control plane config: %w", err)
 	}
@@ -87,6 +83,10 @@ func ValidateConfig(config *RenewalConfig, component string) error {
 		if err := validateNodeConfig(&config.Etcd); err != nil {
 			return fmt.Errorf("validating etcd config: %w", err)
 		}
+	}
+
+	if err := ValidateComponentWithConfig(component, config); err != nil {
+		return err
 	}
 
 	return nil

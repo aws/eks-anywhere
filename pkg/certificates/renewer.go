@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"time"
 
@@ -19,44 +18,46 @@ import (
 const (
 	tempLocalEtcdCertsDir = "etcd-client-certs"
 	backupDirTimeFormat   = "2006-01-02T15_04_05"
+	backupDirStr          = "certificate_backup_"
 )
 
 // Renewer handles the certificate renewal process for EKS Anywhere clusters.
 type Renewer struct {
 	backupDir       string
-	kube            kubernetes.Client
+	kubectl         kubernetes.Client
 	sshEtcd         SSHRunner
 	sshControlPlane SSHRunner
 	os              OSRenewer
 }
 
 // NewRenewer creates a new certificate renewer instance with a timestamped backup directory.
-func NewRenewer(kube kubernetes.Client, osRenewer OSRenewer, cfg *RenewalConfig) (*Renewer, error) {
+func NewRenewer(kubectl kubernetes.Client, osType string, cfg *RenewalConfig) (*Renewer, error) {
 	ts := time.Now().Format(backupDirTimeFormat)
-	backupDir := "certificate_backup_" + ts
+	backupDir := backupDirStr + ts
 
 	if err := os.MkdirAll(filepath.Join(backupDir, tempLocalEtcdCertsDir), 0o755); err != nil {
 		return nil, fmt.Errorf("creating backup directory: %v", err)
 	}
 
-	// build sshRunner inside NewRenewer
+	osRenewer := BuildOSRenewer(osType, backupDir)
+
 	var sshEtcd SSHRunner
 	if len(cfg.Etcd.Nodes) > 0 {
 		var err error
 		sshEtcd, err = NewSSHRunner(cfg.Etcd.SSH)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("building etcd ssh client: %v", err)
 		}
 	}
 
 	sshControlPlane, err := NewSSHRunner(cfg.ControlPlane.SSH)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("building control plane ssh client: %v", err)
 	}
 
 	return &Renewer{
 		backupDir:       backupDir,
-		kube:            kube,
+		kubectl:         kubectl,
 		os:              osRenewer,
 		sshEtcd:         sshEtcd,
 		sshControlPlane: sshControlPlane,
@@ -82,21 +83,24 @@ func (r *Renewer) RenewCertificates(ctx context.Context, cfg *RenewalConfig, com
 		}
 	}
 
-	logger.MarkSuccess("Successfully renewed certificates")
-
-	if err := r.finishRenewal(); err != nil {
-		return err
-	}
-
+	logger.MarkSuccess("Successfully renewed cluster certificates")
+	r.cleanup()
 	return nil
 }
 
 func (r *Renewer) renewEtcdCerts(ctx context.Context, cfg *RenewalConfig) error {
-	logger.Info("Starting etcd certificate renewal process")
-
 	for _, node := range cfg.Etcd.Nodes {
-		if err := r.os.RenewEtcdCerts(ctx, node, r.sshEtcd, r.backupDir); err != nil {
+		if err := r.os.RenewEtcdCerts(ctx, node, r.sshEtcd); err != nil {
 			return fmt.Errorf("renewing certificates for etcd node %s: %v", node, err)
+		}
+	}
+
+	if len(cfg.Etcd.Nodes) > 0 {
+		firstNode := cfg.Etcd.Nodes[0]
+		logger.V(4).Info("Copying certificates from node", "node", firstNode)
+
+		if err := r.os.CopyEtcdCerts(ctx, firstNode, r.sshEtcd); err != nil {
+			return fmt.Errorf("copying certificates from etcd node %s: %v", firstNode, err)
 		}
 	}
 
@@ -109,10 +113,8 @@ func (r *Renewer) renewEtcdCerts(ctx context.Context, cfg *RenewalConfig) error 
 }
 
 func (r *Renewer) renewControlPlaneCerts(ctx context.Context, cfg *RenewalConfig, component string) error {
-	logger.Info("Starting control plane certificate renewal process")
-
 	for _, node := range cfg.ControlPlane.Nodes {
-		if err := r.os.RenewControlPlaneCerts(ctx, node, cfg, component, r.sshControlPlane, r.backupDir); err != nil {
+		if err := r.os.RenewControlPlaneCerts(ctx, node, cfg, component, r.sshControlPlane); err != nil {
 			return fmt.Errorf("renewing certificates for control-plane node %s: %v", node, err)
 		}
 	}
@@ -122,7 +124,6 @@ func (r *Renewer) renewControlPlaneCerts(ctx context.Context, cfg *RenewalConfig
 }
 
 func (r *Renewer) updateAPIServerEtcdClientSecret(ctx context.Context, clusterName string) error {
-	logger.MarkPass("Updating apiserver-etcd-client secret", "cluster", clusterName)
 
 	crtPath := filepath.Join(r.backupDir, tempLocalEtcdCertsDir, "apiserver-etcd-client.crt")
 	keyPath := filepath.Join(r.backupDir, tempLocalEtcdCertsDir, "apiserver-etcd-client.key")
@@ -137,41 +138,35 @@ func (r *Renewer) updateAPIServerEtcdClientSecret(ctx context.Context, clusterNa
 
 	secretName := fmt.Sprintf("%s-apiserver-etcd-client", clusterName)
 	secret := &corev1.Secret{}
-	err = r.kube.Get(ctx, secretName, constants.EksaSystemNamespace, secret)
+	err = r.kubectl.Get(ctx, secretName, constants.EksaSystemNamespace, secret)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			logger.V(2).Info("Secret not found—skipping creation", "name", secretName)
+			logger.V(5).Info("Secret not found—skipping creation", "name", secretName)
 			return nil
 		}
-		logger.V(2).Info("Failed to access Kubernetes API, skipping secret update", "error", err)
+		logger.V(5).Info("Failed to access Kubernetes API, skipping secret update", "error", err)
 		return nil
-	}
-	if secret.Data == nil {
-		secret.Data = make(map[string][]byte)
 	}
 	secret.Data["tls.crt"] = crtData
 	secret.Data["tls.key"] = keyData
-	if err = r.kube.Update(ctx, secret); err != nil {
-		logger.V(2).Info("Failed to update secret, skipping", "error", err)
+	if err = r.kubectl.Update(ctx, secret); err != nil {
+		logger.V(5).Info("Failed to update secret, skipping", "error", err)
 		return nil
 	}
 
-	logger.V(2).Info("Successfully updated secret", "name", secretName)
+	logger.V(4).Info("Successfully updated secret", "name", secretName)
 	return nil
 }
 
-func (r *Renewer) finishRenewal() error {
-	logger.MarkPass("Cleaning up temporary files")
-	return r.cleanup()
-}
+func (r *Renewer) cleanup() {
+	logger.V(4).Info("Cleaning up backup directory", "path", r.backupDir)
 
-func (r *Renewer) cleanup() error {
-	logger.V(2).Info("Cleaning up directory", "path", r.backupDir)
-	chmodCmd := exec.Command("chmod", "-R", "u+w", r.backupDir)
-	if err := chmodCmd.Run(); err != nil {
-		return fmt.Errorf("changing permissions: %v", err)
+	if err := os.RemoveAll(r.backupDir); err != nil {
+		logger.Error(err, "Failed to clean up backup directory", "path", r.backupDir)
+		logger.V(0).Info("You need to manually clean up the backup directory", "path", r.backupDir)
+	} else {
+		logger.V(4).Info("Successfully cleaned up backup directory", "path", r.backupDir)
 	}
-	return os.RemoveAll(r.backupDir)
 }
 
 func (r *Renewer) validateRenewalConfig(
