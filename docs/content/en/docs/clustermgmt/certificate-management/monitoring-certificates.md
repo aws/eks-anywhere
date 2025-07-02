@@ -6,10 +6,6 @@ description: >
   How to monitor certificate expiration in EKS Anywhere clusters
 ---
 
-EKS Anywhere monitors certificate expiration for control plane (kubeadm) and external etcd (etcdadm) machines. This information is available in the cluster status under the `ClusterCertificateInfo` field, which shows the number of days until certificate expiration for each machine.
-
-### Ways to check Certificate Expiration
-
 There are a few ways to check certificate expiration dates depending on your cluster's accessibility.
 
 #### Using ClusterCertificateInfo (When cluster is accessible)
@@ -47,9 +43,9 @@ The `ClusterCertificateInfo` field contains a list of machine objects with the f
 This information is updated periodically as part of the cluster status reconciliation process. The certificate expiration check is performed by connecting to each machine's API server (port 6443 for control plane) or etcd server (port 2379 for external etcd) and retrieving the certificate expiration date.
 
 
-#### Using OpenSSL for Direct Certificate Inspection (When Cluster API is Unavailable)
+#### Using OpenSSL for Direct Certificate Inspection (When cluster is not accessible)
 
-When the cluster is not accessbile, you can directly check certificates using OpenSSL:
+When the cluster is not accessbile, you can directly check certificates using opessl:
 
 ```bash
 # The expiry time of api-server certificate on control plane node
