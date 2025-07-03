@@ -27,24 +27,4 @@ toc_hide: true
       --bundles ./eks-anywhere-downloads/bundle-release.yaml
    ```
 
-1. Optionally import curated packages to your registry mirror. The curated packages images are copied from Amazon ECR to your local registry mirror in a single step, as opposed to separate download and import steps. For post-cluster creation steps, reference the [Curated Packages documentation.]({{< relref "../../packages/prereq/#prepare-for-using-curated-packages-for-airgapped-environments" >}})
-   
-   <details>
-      <summary>Expand for curated packages instructions</summary>
-
-      If your EKS Anywhere cluster is running in an airgapped environment, and you set up a local registry mirror, you can copy curated packages from Amazon ECR to your local registry mirror with the following command.
-      
-      Set `$KUBEVERSION` to be equal to the `spec.kubernetesVersion` of your EKS Anywhere cluster specification.
-      
-      The `copy packages` command uses the credentials in your docker config file. So you must `docker login` to the source registries and the destination registry before running the command.
-      
-      When using self-signed certificates for your registry, you should run with the `--dst-insecure` command line argument to indicate skipping TLS verification while copying curated packages.
-
-      ```bash
-      eksctl anywhere copy packages \
-        ${REGISTRY_MIRROR_URL}/curated-packages \
-        --kube-version $KUBEVERSION \
-        --src-chart-registry public.ecr.aws/eks-anywhere \
-        --src-image-registry 783794618700.dkr.ecr.us-west-2.amazonaws.com
-      ```
-   </details>
+1. Optionally import curated packages to your registry mirror. The curated packages images are copied from Amazon ECR to your local registry mirror in a single step, as opposed to separate download and import steps. Follow the [Curated Packages documentation.]({{< relref "../../packages/prereq/#identify-aws-account-id-for-ecr-packages-registry" >}})
