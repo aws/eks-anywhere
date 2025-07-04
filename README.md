@@ -27,6 +27,7 @@ Source: https://github.com/cncf/artwork/tree/master/projects/kubernetes/certifie
 [<img src="docs/static/images/certified-kubernetes-1.29-cmyk.svg" height=150>](https://github.com/cncf/k8s-conformance/pull/3049)
 [<img src="docs/static/images/certified-kubernetes-1.30-cmyk.svg" height=150>](https://github.com/cncf/k8s-conformance/pull/3537)
 [<img src="docs/static/images/certified-kubernetes-1.31-cmyk.svg" height=150>](https://github.com/cncf/k8s-conformance/pull/3544)
+[<img src="docs/static/images/certified-kubernetes-1.32-cmyk.svg" height=150>](https://github.com/cncf/k8s-conformance/pull/3647)
 
 ## Development
 
