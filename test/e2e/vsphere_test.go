@@ -2537,7 +2537,7 @@ func TestVSphereKubernetes132To133OIDCUpgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube133,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube133)),
-		provider.WithProviderUpgrade(provider.Ubuntu132Template()),
+		provider.WithProviderUpgrade(provider.Ubuntu133Template()),
 	)
 }
 
@@ -9203,7 +9203,7 @@ func TestVSphereKubernetes133BottlerocketEtcdScaleDown(t *testing.T) {
 		t,
 		framework.NewVSphere(t, framework.WithBottleRocket133()),
 		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube132),
+			api.WithKubernetesVersion(v1alpha1.Kube133),
 			api.WithExternalEtcdTopology(3),
 			api.WithControlPlaneCount(1),
 			api.WithWorkerNodeCount(1),
