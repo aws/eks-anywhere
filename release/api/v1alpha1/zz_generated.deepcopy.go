@@ -277,7 +277,11 @@ func (in *CiliumBundle) DeepCopyInto(out *CiliumBundle) {
 	*out = *in
 	in.Cilium.DeepCopyInto(&out.Cilium)
 	in.Operator.DeepCopyInto(&out.Operator)
-	out.Manifest = in.Manifest
+	if in.Manifest != nil {
+		in, out := &in.Manifest, &out.Manifest
+		*out = new(Manifest)
+		**out = **in
+	}
 	in.HelmChart.DeepCopyInto(&out.HelmChart)
 }
 

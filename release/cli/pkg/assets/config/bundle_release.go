@@ -98,17 +98,6 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 			},
 		},
 	},
-	// Cilium artifacts
-	{
-		ProjectName: "cilium",
-		ProjectPath: "projects/cilium/cilium",
-		Manifests: []*assettypes.ManifestComponent{
-			{
-				Name:          "cilium",
-				ManifestFiles: []string{"cilium.yaml"},
-			},
-		},
-	},
 	// Cloud-provider-nutanix artifacts
 	{
 		ProjectName: "cloud-provider-nutanix",
