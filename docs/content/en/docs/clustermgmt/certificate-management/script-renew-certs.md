@@ -6,7 +6,7 @@ description: >
 weight: 20
 ---
 
-Get more information on EKS Anywhere cluster certificates from [here]({{< relref "manual-steps-renew-certs.md" >}})
+Get more information on EKS Anywhere cluster certificates from [here]({{< relref "monitoring-certificates.md" >}})
 
 This script automates:
 
