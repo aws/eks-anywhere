@@ -136,8 +136,6 @@ func buildBREtcdCleanupTmpCmd(tempDir string) string {
 	return script
 }
 
-// Cert Transfer and Read
-
 func buildBRCreateTmpDirCmd(dirName string) string {
 	script := fmt.Sprintf(`echo "Creating directory..."
 TARGET_DIR="/run/host-containerd/io.containerd.runtime.v2.task/default/admin/rootfs/tmp/%[1]s"

@@ -38,7 +38,7 @@ func NewBottlerocketRenewer(backupDir string) *BottlerocketRenewer {
 
 // RenewControlPlaneCerts renews control plane certificates on a Bottlerocket node.
 func (b *BottlerocketRenewer) RenewControlPlaneCerts(ctx context.Context, node string, config *RenewalConfig, component string, sshRunner SSHRunner) error {
-	logger.V(4).Info("Processing control plane node", "node", node)
+	logger.V(0).Info("Processing control-plane node", "node", node)
 
 	// for renew control panel only.
 	if component == constants.ControlPlaneComponent && len(config.Etcd.Nodes) > 0 {
@@ -50,7 +50,7 @@ func (b *BottlerocketRenewer) RenewControlPlaneCerts(ctx context.Context, node s
 	// If we have external etcd nodes, first transfer certificates to the node
 	if len(config.Etcd.Nodes) > 0 {
 		if err := b.transferCertsToControlPlane(ctx, node, sshRunner); err != nil {
-			return fmt.Errorf("transfer certificates to control plane node: %v", err)
+			return fmt.Errorf("transfering certificates to control plane node: %v", err)
 		}
 	}
 
@@ -58,15 +58,16 @@ func (b *BottlerocketRenewer) RenewControlPlaneCerts(ctx context.Context, node s
 		buildBRImagePullCmd(),
 		buildBRControlPlaneBackupCertsCmd(component, len(config.Etcd.Nodes) > 0, b.backup, brControlPlaneCertDir),
 		buildBRControlPlaneRenewCertsCmd(),
+		buildBRControlPlaneCheckCertsCmd(),
 		buildBRControlPlaneCopyCertsFromTmpCmd(),
 		buildBRControlPlaneRestartPodsCmd(),
 	)
 
 	if _, err := sshRunner.RunCommand(ctx, node, sessionCmds); err != nil {
-		return fmt.Errorf("renew control panel node certificates: %v", err)
+		return fmt.Errorf("renewing control panel node certificates: %v", err)
 	}
 
-	logger.Info("Renewed certificates for control plane node", "node", node)
+	logger.V(0).Info("Renewed control-plane certificates", "node", node)
 	return nil
 }
 
@@ -78,12 +79,12 @@ func (b *BottlerocketRenewer) transferCertsToControlPlane(
 	crtB, err := os.ReadFile(filepath.Join(
 		b.backup, tempLocalEtcdCertsDir, "apiserver-etcd-client.crt"))
 	if err != nil {
-		return fmt.Errorf("read certificate file: %v", err)
+		return fmt.Errorf("reading certificate file: %v", err)
 	}
 	keyB, err := os.ReadFile(filepath.Join(
 		b.backup, tempLocalEtcdCertsDir, "apiserver-etcd-client.key"))
 	if err != nil {
-		return fmt.Errorf("read key file: %v", err)
+		return fmt.Errorf("reading key file: %v", err)
 	}
 
 	sessionCmds := buildBRSheltieCmd(
@@ -94,7 +95,7 @@ func (b *BottlerocketRenewer) transferCertsToControlPlane(
 	)
 
 	if _, err := sshRunner.RunCommand(ctx, node, sessionCmds); err != nil {
-		return fmt.Errorf("transfer certificates: %v", err)
+		return fmt.Errorf("transfering certificates: %v", err)
 	}
 
 	logger.V(4).Info("Certificates transferred", "node", node)
@@ -112,13 +113,13 @@ func (b *BottlerocketRenewer) RenewEtcdCerts(ctx context.Context, node string, s
 		buildBREtcdBackupCertsCmd(b.backup),
 		buildBREtcdRenewCertsCmd(),
 	)); err != nil {
-		return fmt.Errorf("renew certificates: %v", err)
+		return fmt.Errorf("renewing certificates: %v", err)
 	}
 
 	if _, err := sshRunner.RunCommand(ctx, node, buildBRSheltieCmd(
 		buildBREtcdCopyCertsToTmpCmd(remoteTempDir),
 	)); err != nil {
-		return fmt.Errorf("copy certificates to tmp: %v", err)
+		return fmt.Errorf("copying certificates to tmp: %v", err)
 	}
 
 	if _, err := sshRunner.RunCommand(ctx, node, buildBRSheltieCmd(
@@ -203,7 +204,6 @@ func (b *BottlerocketRenewer) CopyEtcdCerts(ctx context.Context, node string, ss
 	return nil
 }
 
-// for renew control panel only.
 func (b *BottlerocketRenewer) saveCertsToPersistentStorage() error {
 	srcCrt := filepath.Join(b.backup, tempLocalEtcdCertsDir, "apiserver-etcd-client.crt")
 	srcKey := filepath.Join(b.backup, tempLocalEtcdCertsDir, "apiserver-etcd-client.key")
