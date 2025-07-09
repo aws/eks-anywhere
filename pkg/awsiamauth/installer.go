@@ -111,3 +111,16 @@ func (i *Installer) GenerateManagementKubeconfig(
 	logger.V(3).Info("Generated aws-iam-authenticator kubeconfig", "kubeconfig", path)
 	return nil
 }
+
+// CleanupKubeconfig removes an existing AWS IAM kubeconfig file when AWS IAM is removed from cluster.
+func (i *Installer) CleanupKubeconfig(clusterName string) error {
+	fileName := fmt.Sprintf("%s-aws.kubeconfig", clusterName)
+
+	err := i.writer.Delete(fileName)
+	if err != nil {
+		return fmt.Errorf("removing aws-iam-authenticator kubeconfig %s: %v", fileName, err)
+	}
+
+	logger.V(3).Info("Cleaned up aws-iam-authenticator kubeconfig", "file", fileName)
+	return nil
+}

@@ -79,23 +79,24 @@ func ValidateImmutableFields(ctx context.Context, k validations.KubectlClient, c
 	oldAWSIamConfigRef := &v1alpha1.Ref{}
 
 	for _, oIdentityProvider := range oSpec.IdentityProviderRefs {
-		switch oIdentityProvider.Kind {
-		case v1alpha1.AWSIamConfigKind:
-			oIdentityProvider := oIdentityProvider // new variable scoped to the for loop Ref: https://github.com/golang/go/wiki/CommonMistakes#using-reference-to-loop-iterator-variable
+		if oIdentityProvider.Kind == v1alpha1.AWSIamConfigKind {
 			oldAWSIamConfigRef = &oIdentityProvider
+			break
 		}
 	}
 	for _, nIdentityProvider := range nSpec.IdentityProviderRefs {
-		switch nIdentityProvider.Kind {
-		case v1alpha1.AWSIamConfigKind:
+		if nIdentityProvider.Kind == v1alpha1.AWSIamConfigKind {
 			newAWSIamConfigRef := &nIdentityProvider
-			prevAwsIam, err := k.GetEksaAWSIamConfig(ctx, nIdentityProvider.Name, cluster.KubeconfigFile, spec.Cluster.Namespace)
-			if err != nil {
-				return err
+			if !oldAWSIamConfigRef.IsEmpty() {
+				prevAwsIam, err := k.GetEksaAWSIamConfig(ctx, nIdentityProvider.Name, cluster.KubeconfigFile, spec.Cluster.Namespace)
+				if err != nil {
+					return err
+				}
+				if !prevAwsIam.Spec.Equal(&spec.AWSIamConfig.Spec) || !oldAWSIamConfigRef.Equal(newAWSIamConfigRef) {
+					return fmt.Errorf("aws iam identity provider is immutable")
+				}
 			}
-			if !prevAwsIam.Spec.Equal(&spec.AWSIamConfig.Spec) || !oldAWSIamConfigRef.Equal(newAWSIamConfigRef) {
-				return fmt.Errorf("aws iam identity provider is immutable")
-			}
+			break
 		}
 	}
 

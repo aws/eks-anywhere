@@ -13,6 +13,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -550,13 +551,18 @@ func TestClusterReconcilerUpdatesCertificateStatusSuccess(t *testing.T) {
 	g.Expect(err).ToNot(HaveOccurred())
 }
 
-// MockClient that fails on List operations.
+// MockClient that fails on MachineList operations.
 type MockClient struct {
 	client.Client
 }
 
-func (m *MockClient) List(_ context.Context, _ client.ObjectList, _ ...client.ListOption) error {
-	return fmt.Errorf("simulated client error during list operation")
+func (m *MockClient) List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
+	// Check if we're trying to list MachineList objects
+	if _, ok := list.(*clusterv1.MachineList); ok {
+		return fmt.Errorf("simulated client error during machine list operation")
+	}
+	// For all other list operations, delegate to the real client
+	return m.Client.List(ctx, list, opts...)
 }
 
 func TestClusterReconcilerUpdatesCertificateStatusError(t *testing.T) {
@@ -668,4 +674,492 @@ func newMockPackagesClient(t *testing.T) *mocks.MockPackagesClient {
 func newMockMachineHealthCheckReconciler(t *testing.T) *mocks.MockMachineHealthCheckReconciler {
 	ctrl := gomock.NewController(t)
 	return mocks.NewMockMachineHealthCheckReconciler(ctrl)
+}
+
+func TestClusterReconcilerCleanupOrphanedAWSIamConfigSuccess(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	version := test.DevEksaVersion()
+
+	managementCluster := &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-management-cluster",
+			Namespace: "default",
+		},
+		Spec: anywherev1.ClusterSpec{
+			EksaVersion: &version,
+		},
+		Status: anywherev1.ClusterStatus{
+			ReconciledGeneration: 1,
+		},
+	}
+
+	cluster := &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-cluster",
+			Namespace: "default",
+			UID:       "cluster-uid-123",
+		},
+		Spec: anywherev1.ClusterSpec{
+			KubernetesVersion: anywherev1.Kube132,
+			EksaVersion:       &version,
+		},
+		Status: anywherev1.ClusterStatus{
+			ReconciledGeneration: 1,
+		},
+	}
+	cluster.SetManagedBy("my-management-cluster")
+
+	// Create an orphaned AWS IAM config owned by this cluster
+	orphanedAWSIam := &anywherev1.AWSIamConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "orphaned-aws-iam",
+			Namespace: "default",
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					APIVersion: anywherev1.GroupVersion.String(),
+					Kind:       anywherev1.ClusterKind,
+					Name:       cluster.Name,
+					UID:        cluster.UID,
+				},
+			},
+		},
+	}
+
+	bundles := createBundle()
+	eksaRelease := test.EKSARelease()
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-cluster-kubeconfig",
+			Namespace: constants.EksaSystemNamespace,
+		},
+	}
+
+	objs := []runtime.Object{cluster, managementCluster, orphanedAWSIam, bundles, eksaRelease, secret}
+	cb := fake.NewClientBuilder()
+	cl := cb.WithRuntimeObjects(objs...).
+		WithStatusSubresource(cluster).
+		Build()
+
+	ctrl := gomock.NewController(t)
+	iam := mocks.NewMockAWSIamConfigReconciler(ctrl)
+	validator := mocks.NewMockClusterValidator(ctrl)
+	pcc := mocks.NewMockPackagesClient(ctrl)
+	mhc := mocks.NewMockMachineHealthCheckReconciler(ctrl)
+
+	// Expect cleanup calls for orphaned AWS IAM config
+	iam.EXPECT().ReconcileWorkloadClusterDelete(ctx, gomock.AssignableToTypeOf(logr.Logger{}), gomock.Any(), orphanedAWSIam).Return(nil)
+	iam.EXPECT().ReconcileDelete(ctx, gomock.AssignableToTypeOf(logr.Logger{}), gomock.Any()).Return(nil)
+
+	// Since cleanup happens in postClusterProviderReconcile, the reconciliation continues
+	validator.EXPECT().ValidateManagementClusterName(ctx, gomock.AssignableToTypeOf(logr.Logger{}), gomock.Any()).Return(nil)
+	mhc.EXPECT().Reconcile(ctx, gomock.AssignableToTypeOf(logr.Logger{}), gomock.Any()).Return(nil)
+	pcc.EXPECT().Reconcile(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+
+	r := controllers.NewClusterReconciler(cl, newRegistryForDummyProviderReconciler(), iam, validator, pcc, mhc, nil)
+	_, err := r.Reconcile(ctx, clusterRequest(cluster))
+	g.Expect(err).ToNot(HaveOccurred())
+
+	// Verify the orphaned AWS IAM config was deleted
+	deletedConfig := &anywherev1.AWSIamConfig{}
+	err = cl.Get(ctx, client.ObjectKey{Namespace: orphanedAWSIam.Namespace, Name: orphanedAWSIam.Name}, deletedConfig)
+	g.Expect(err).To(HaveOccurred())
+	g.Expect(err.Error()).To(ContainSubstring("not found"))
+}
+
+func TestClusterReconcilerCleanupOrphanedAWSIamConfigListError(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	version := test.DevEksaVersion()
+
+	managementCluster := &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-management-cluster",
+			Namespace: "default",
+		},
+		Spec: anywherev1.ClusterSpec{
+			EksaVersion: &version,
+		},
+		Status: anywherev1.ClusterStatus{
+			ReconciledGeneration: 1,
+		},
+	}
+
+	cluster := &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-cluster",
+			Namespace: "default",
+			UID:       "cluster-uid-123",
+		},
+		Spec: anywherev1.ClusterSpec{
+			KubernetesVersion: anywherev1.Kube132,
+			EksaVersion:       &version,
+		},
+		Status: anywherev1.ClusterStatus{
+			ReconciledGeneration: 1,
+		},
+	}
+	cluster.SetManagedBy("my-management-cluster")
+
+	bundles := createBundle()
+	eksaRelease := test.EKSARelease()
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-cluster-kubeconfig",
+			Namespace: constants.EksaSystemNamespace,
+		},
+	}
+
+	objs := []runtime.Object{cluster, managementCluster, bundles, eksaRelease, secret}
+	cb := fake.NewClientBuilder()
+	cl := cb.WithRuntimeObjects(objs...).
+		WithStatusSubresource(cluster).
+		Build()
+
+	// Create a mock client that fails on AWSIamConfigList operations
+	mockClient := &MockAWSIamConfigListClient{Client: cl}
+
+	ctrl := gomock.NewController(t)
+	iam := mocks.NewMockAWSIamConfigReconciler(ctrl)
+	validator := mocks.NewMockClusterValidator(ctrl)
+	pcc := mocks.NewMockPackagesClient(ctrl)
+	mhc := mocks.NewMockMachineHealthCheckReconciler(ctrl)
+
+	validator.EXPECT().ValidateManagementClusterName(ctx, gomock.AssignableToTypeOf(logr.Logger{}), gomock.Any()).Return(nil)
+
+	r := controllers.NewClusterReconciler(mockClient, newRegistryForDummyProviderReconciler(), iam, validator, pcc, mhc, nil)
+	_, err := r.Reconcile(ctx, clusterRequest(cluster))
+	g.Expect(err).To(HaveOccurred())
+	g.Expect(err.Error()).To(ContainSubstring("listing AWSIamConfig objects"))
+}
+
+func TestClusterReconcilerCleanupOrphanedAWSIamConfigWorkloadCleanupError(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	version := test.DevEksaVersion()
+
+	managementCluster := &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-management-cluster",
+			Namespace: "default",
+		},
+		Spec: anywherev1.ClusterSpec{
+			EksaVersion: &version,
+		},
+		Status: anywherev1.ClusterStatus{
+			ReconciledGeneration: 1,
+		},
+	}
+
+	cluster := &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-cluster",
+			Namespace: "default",
+			UID:       "cluster-uid-123",
+		},
+		Spec: anywherev1.ClusterSpec{
+			KubernetesVersion: anywherev1.Kube132,
+			EksaVersion:       &version,
+		},
+		Status: anywherev1.ClusterStatus{
+			ReconciledGeneration: 1,
+		},
+	}
+	cluster.SetManagedBy("my-management-cluster")
+
+	// Create an orphaned AWS IAM config owned by this cluster
+	orphanedAWSIam := &anywherev1.AWSIamConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "orphaned-aws-iam",
+			Namespace: "default",
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					APIVersion: anywherev1.GroupVersion.String(),
+					Kind:       anywherev1.ClusterKind,
+					Name:       cluster.Name,
+					UID:        cluster.UID,
+				},
+			},
+		},
+	}
+
+	bundles := createBundle()
+	eksaRelease := test.EKSARelease()
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-cluster-kubeconfig",
+			Namespace: constants.EksaSystemNamespace,
+		},
+	}
+
+	objs := []runtime.Object{cluster, managementCluster, orphanedAWSIam, bundles, eksaRelease, secret}
+	cb := fake.NewClientBuilder()
+	cl := cb.WithRuntimeObjects(objs...).
+		WithStatusSubresource(cluster).
+		Build()
+
+	ctrl := gomock.NewController(t)
+	iam := mocks.NewMockAWSIamConfigReconciler(ctrl)
+	validator := mocks.NewMockClusterValidator(ctrl)
+	pcc := mocks.NewMockPackagesClient(ctrl)
+	mhc := mocks.NewMockMachineHealthCheckReconciler(ctrl)
+
+	// Expect workload cleanup to fail
+	workloadCleanupError := errors.New("workload cleanup failed")
+	iam.EXPECT().ReconcileWorkloadClusterDelete(ctx, gomock.AssignableToTypeOf(logr.Logger{}), gomock.Any(), orphanedAWSIam).Return(workloadCleanupError)
+
+	validator.EXPECT().ValidateManagementClusterName(ctx, gomock.AssignableToTypeOf(logr.Logger{}), gomock.Any()).Return(nil)
+
+	r := controllers.NewClusterReconciler(cl, newRegistryForDummyProviderReconciler(), iam, validator, pcc, mhc, nil)
+	_, err := r.Reconcile(ctx, clusterRequest(cluster))
+	g.Expect(err).To(HaveOccurred())
+	g.Expect(err.Error()).To(ContainSubstring("cleaning up workload cluster AWS IAM resources"))
+}
+
+func TestClusterReconcilerCleanupOrphanedAWSIamConfigManagementCleanupError(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	version := test.DevEksaVersion()
+
+	managementCluster := &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-management-cluster",
+			Namespace: "default",
+		},
+		Spec: anywherev1.ClusterSpec{
+			EksaVersion: &version,
+		},
+		Status: anywherev1.ClusterStatus{
+			ReconciledGeneration: 1,
+		},
+	}
+
+	cluster := &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-cluster",
+			Namespace: "default",
+			UID:       "cluster-uid-123",
+		},
+		Spec: anywherev1.ClusterSpec{
+			KubernetesVersion: anywherev1.Kube132,
+			EksaVersion:       &version,
+		},
+		Status: anywherev1.ClusterStatus{
+			ReconciledGeneration: 1,
+		},
+	}
+	cluster.SetManagedBy("my-management-cluster")
+
+	// Create an orphaned AWS IAM config owned by this cluster
+	orphanedAWSIam := &anywherev1.AWSIamConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "orphaned-aws-iam",
+			Namespace: "default",
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					APIVersion: anywherev1.GroupVersion.String(),
+					Kind:       anywherev1.ClusterKind,
+					Name:       cluster.Name,
+					UID:        cluster.UID,
+				},
+			},
+		},
+	}
+
+	bundles := createBundle()
+	eksaRelease := test.EKSARelease()
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-cluster-kubeconfig",
+			Namespace: constants.EksaSystemNamespace,
+		},
+	}
+
+	objs := []runtime.Object{cluster, managementCluster, orphanedAWSIam, bundles, eksaRelease, secret}
+	cb := fake.NewClientBuilder()
+	cl := cb.WithRuntimeObjects(objs...).
+		WithStatusSubresource(cluster).
+		Build()
+
+	ctrl := gomock.NewController(t)
+	iam := mocks.NewMockAWSIamConfigReconciler(ctrl)
+	validator := mocks.NewMockClusterValidator(ctrl)
+	pcc := mocks.NewMockPackagesClient(ctrl)
+	mhc := mocks.NewMockMachineHealthCheckReconciler(ctrl)
+
+	// Expect workload cleanup to succeed but management cleanup to fail
+	managementCleanupError := errors.New("management cleanup failed")
+	iam.EXPECT().ReconcileWorkloadClusterDelete(ctx, gomock.AssignableToTypeOf(logr.Logger{}), gomock.Any(), orphanedAWSIam).Return(nil)
+	iam.EXPECT().ReconcileDelete(ctx, gomock.AssignableToTypeOf(logr.Logger{}), gomock.Any()).Return(managementCleanupError)
+
+	validator.EXPECT().ValidateManagementClusterName(ctx, gomock.AssignableToTypeOf(logr.Logger{}), gomock.Any()).Return(nil)
+
+	r := controllers.NewClusterReconciler(cl, newRegistryForDummyProviderReconciler(), iam, validator, pcc, mhc, nil)
+	_, err := r.Reconcile(ctx, clusterRequest(cluster))
+	g.Expect(err).To(HaveOccurred())
+	g.Expect(err.Error()).To(ContainSubstring("cleaning up management cluster AWS IAM resources"))
+}
+
+func TestClusterReconcilerCleanupOrphanedAWSIamConfigDeleteError(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	version := test.DevEksaVersion()
+
+	managementCluster := &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-management-cluster",
+			Namespace: "default",
+		},
+		Spec: anywherev1.ClusterSpec{
+			EksaVersion: &version,
+		},
+		Status: anywherev1.ClusterStatus{
+			ReconciledGeneration: 1,
+		},
+	}
+
+	cluster := &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-cluster",
+			Namespace: "default",
+			UID:       "cluster-uid-123",
+		},
+		Spec: anywherev1.ClusterSpec{
+			KubernetesVersion: anywherev1.Kube132,
+			EksaVersion:       &version,
+		},
+		Status: anywherev1.ClusterStatus{
+			ReconciledGeneration: 1,
+		},
+	}
+	cluster.SetManagedBy("my-management-cluster")
+
+	// Create an orphaned AWS IAM config owned by this cluster
+	orphanedAWSIam := &anywherev1.AWSIamConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "orphaned-aws-iam",
+			Namespace: "default",
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					APIVersion: anywherev1.GroupVersion.String(),
+					Kind:       anywherev1.ClusterKind,
+					Name:       cluster.Name,
+					UID:        cluster.UID,
+				},
+			},
+		},
+	}
+
+	bundles := createBundle()
+	eksaRelease := test.EKSARelease()
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-cluster-kubeconfig",
+			Namespace: constants.EksaSystemNamespace,
+		},
+	}
+
+	objs := []runtime.Object{cluster, managementCluster, orphanedAWSIam, bundles, eksaRelease, secret}
+	cb := fake.NewClientBuilder()
+	cl := cb.WithRuntimeObjects(objs...).
+		WithStatusSubresource(cluster).
+		Build()
+
+	// Create a mock client that fails on Delete operations for AWSIamConfig
+	mockClient := &MockAWSIamConfigDeleteClient{Client: cl}
+
+	ctrl := gomock.NewController(t)
+	iam := mocks.NewMockAWSIamConfigReconciler(ctrl)
+	validator := mocks.NewMockClusterValidator(ctrl)
+	pcc := mocks.NewMockPackagesClient(ctrl)
+	mhc := mocks.NewMockMachineHealthCheckReconciler(ctrl)
+
+	// Expect cleanup calls to succeed
+	iam.EXPECT().ReconcileWorkloadClusterDelete(ctx, gomock.AssignableToTypeOf(logr.Logger{}), gomock.Any(), orphanedAWSIam).Return(nil)
+	iam.EXPECT().ReconcileDelete(ctx, gomock.AssignableToTypeOf(logr.Logger{}), gomock.Any()).Return(nil)
+
+	validator.EXPECT().ValidateManagementClusterName(ctx, gomock.AssignableToTypeOf(logr.Logger{}), gomock.Any()).Return(nil)
+
+	r := controllers.NewClusterReconciler(mockClient, newRegistryForDummyProviderReconciler(), iam, validator, pcc, mhc, nil)
+	_, err := r.Reconcile(ctx, clusterRequest(cluster))
+	g.Expect(err).To(HaveOccurred())
+	g.Expect(err.Error()).To(ContainSubstring("deleting orphaned AWSIamConfig"))
+}
+
+func TestClusterReconcilerNoOrphanedAWSIamConfig(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	version := test.DevEksaVersion()
+
+	cluster := &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-cluster",
+			Namespace: "default",
+			UID:       "cluster-uid-123",
+		},
+		Spec: anywherev1.ClusterSpec{
+			KubernetesVersion: anywherev1.Kube132,
+			EksaVersion:       &version,
+		},
+		Status: anywherev1.ClusterStatus{
+			ReconciledGeneration: 1,
+		},
+	}
+
+	bundles := createBundle()
+	eksaRelease := test.EKSARelease()
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-cluster-kubeconfig",
+			Namespace: constants.EksaSystemNamespace,
+		},
+	}
+
+	objs := []runtime.Object{cluster, bundles, eksaRelease, secret}
+	cb := fake.NewClientBuilder()
+	cl := cb.WithRuntimeObjects(objs...).
+		WithStatusSubresource(cluster).
+		Build()
+
+	ctrl := gomock.NewController(t)
+	iam := mocks.NewMockAWSIamConfigReconciler(ctrl)
+	validator := mocks.NewMockClusterValidator(ctrl)
+	pcc := mocks.NewMockPackagesClient(ctrl)
+	mhc := mocks.NewMockMachineHealthCheckReconciler(ctrl)
+
+	// No AWS IAM cleanup calls should be made since there are no orphaned configs
+	// This is a self-managed cluster, so no validation or packages reconciliation
+	mhc.EXPECT().Reconcile(ctx, gomock.AssignableToTypeOf(logr.Logger{}), gomock.Any()).Return(nil)
+
+	r := controllers.NewClusterReconciler(cl, newRegistryForDummyProviderReconciler(), iam, validator, pcc, mhc, nil)
+	_, err := r.Reconcile(ctx, clusterRequest(cluster))
+	g.Expect(err).ToNot(HaveOccurred())
+}
+
+// MockAWSIamConfigListClient that fails on AWSIamConfigList operations.
+type MockAWSIamConfigListClient struct {
+	client.Client
+}
+
+func (m *MockAWSIamConfigListClient) List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
+	// Check if we're trying to list AWSIamConfigList objects
+	if _, ok := list.(*anywherev1.AWSIamConfigList); ok {
+		return fmt.Errorf("simulated client error during AWSIamConfig list operation")
+	}
+	// For all other list operations, delegate to the real client
+	return m.Client.List(ctx, list, opts...)
+}
+
+// MockAWSIamConfigDeleteClient that fails on Delete operations for AWSIamConfig.
+type MockAWSIamConfigDeleteClient struct {
+	client.Client
+}
+
+func (m *MockAWSIamConfigDeleteClient) Delete(ctx context.Context, obj client.Object, opts ...client.DeleteOption) error {
+	// Check if we're trying to delete an AWSIamConfig object
+	if _, ok := obj.(*anywherev1.AWSIamConfig); ok {
+		return fmt.Errorf("simulated client error during AWSIamConfig delete operation")
+	}
+	// For all other delete operations, delegate to the real client
+	return m.Client.Delete(ctx, obj, opts...)
 }
