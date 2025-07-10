@@ -98,6 +98,16 @@ func WithHookIsoURLPath(url string) TinkerbellFiller {
 	}
 }
 
+// WithTinkerbellTemplateConfig adds or updates a TinkerbellTemplateConfig.
+func WithTinkerbellTemplateConfig(name string, templateConfig *anywherev1.TinkerbellTemplateConfig) TinkerbellFiller {
+	return func(config TinkerbellConfig) {
+		if config.templateConfigs == nil {
+			config.templateConfigs = make(map[string]*anywherev1.TinkerbellTemplateConfig)
+		}
+		config.templateConfigs[name] = templateConfig
+	}
+}
+
 func WithStringFromEnvVarTinkerbell(envVar string, opt func(string) TinkerbellFiller) TinkerbellFiller {
 	return opt(os.Getenv(envVar))
 }
