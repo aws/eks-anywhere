@@ -12,8 +12,10 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
+	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -2975,4 +2977,52 @@ func TestTinkerbellKubernetes133KubeletConfigurationSimpleFlow(t *testing.T) {
 		framework.WithKubeletConfig(),
 	)
 	runKubeletConfigurationTinkerbellFlow(test)
+}
+
+func TestTinkerbellCustomTemplateRefSimpleFlow(t *testing.T) {
+	// Get the custom template config
+	customTemplateConfig, err := framework.GetCustomTinkerbellConfig()
+	if err != nil {
+		t.Fatalf("Failed to get custom template config: %v", err)
+	}
+
+	// Create a new test with 1 control plane and 1 worker node
+	provider := framework.NewTinkerbell(t, framework.WithUbuntu133Tinkerbell())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(1),
+	)
+
+	// Add the custom template config to the cluster
+	templateName := "custom-template"
+	test.UpdateClusterConfig(
+		provider.WithTinkerbellTemplateConfig(templateName, customTemplateConfig),
+	)
+
+	// Get the control plane and worker node names
+	clusterName := test.ClusterName
+	cpName := providers.GetControlPlaneNodeName(clusterName)
+	workerName := clusterName
+
+	// Override the machine config for both control plane and worker nodes
+	test.UpdateClusterConfig(
+		api.TinkerbellToConfigFiller(
+			api.WithCustomTinkerbellMachineConfig(cpName,
+				framework.WithTemplateRef(templateName, anywherev1.TinkerbellTemplateConfigKind),
+				framework.UpdateTinkerbellMachineSSHAuthorizedKey(),
+				api.WithOsFamilyForTinkerbellMachineConfig(anywherev1.Ubuntu),
+			),
+			api.WithCustomTinkerbellMachineConfig(workerName,
+				framework.WithTemplateRef(templateName, anywherev1.TinkerbellTemplateConfigKind),
+				framework.UpdateTinkerbellMachineSSHAuthorizedKey(),
+				api.WithOsFamilyForTinkerbellMachineConfig(anywherev1.Ubuntu),
+			),
+		),
+	)
+	runTinkerbellSimpleFlow(test)
 }
