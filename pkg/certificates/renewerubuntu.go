@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
@@ -46,9 +45,24 @@ func (l *LinuxRenewer) RenewControlPlaneCerts(
 	if _, err := ssh.RunCommand(ctx, node, buildCPRenewCmd(component, hasExternalEtcd)); err != nil {
 		return fmt.Errorf("renewing control plane certs: %v", err)
 	}
-	if _, err := ssh.RunCommand(ctx, node, "sudo kubeadm certs check-expiration"); err != nil {
-		return fmt.Errorf("validating control plane certs: %v", err)
+
+	if !hasExternalEtcd {
+		if _, err := ssh.RunCommand(ctx, node, "sudo kubeadm certs check-expiration"); err != nil {
+			return fmt.Errorf("validating control plane certs: %v", err)
+		}
+	} else {
+		logger.V(4).Info("Skipping kubeadm cert validation for external etcd setup", "node", node)
 	}
+
+	if hasExternalEtcd {
+		if err := l.transferCertsToControlPlane(ctx, node, ssh); err != nil {
+			return fmt.Errorf("transferring certificates to control plane node: %v", err)
+		}
+		if _, err := ssh.RunCommand(ctx, node, buildCPCopyCertsCmd(hasExternalEtcd)); err != nil {
+			return fmt.Errorf("copying etcd client certs: %v", err)
+		}
+	}
+
 	if _, err := ssh.RunCommand(ctx, node, buildCPRestartCmd()); err != nil {
 		return fmt.Errorf("restarting control plane pods: %v", err)
 	}
@@ -117,17 +131,17 @@ func (l *LinuxRenewer) CopyEtcdCerts(
 	return nil
 }
 
-func buildCPBackupCmd(component string, hasExternalEtcd bool, backup string) string {
+func buildCPBackupCmd(_ string, hasExternalEtcd bool, backup string) string {
 	backupPath := fmt.Sprintf("/etc/kubernetes/pki.bak_%s", backup)
-	if component == constants.ControlPlaneComponent && hasExternalEtcd {
+	if hasExternalEtcd {
 		return fmt.Sprintf("sudo sh -c 'cp -r %s \"%s\" && rm -rf \"%s/etcd\"'",
 			linuxControlPlaneCertDir, backupPath, backupPath)
 	}
 	return fmt.Sprintf("sudo cp -r %s %s", linuxControlPlaneCertDir, backupPath)
 }
 
-func buildCPRenewCmd(component string, hasExternalEtcd bool) string {
-	if component == constants.ControlPlaneComponent && hasExternalEtcd {
+func buildCPRenewCmd(_ string, hasExternalEtcd bool) string {
+	if hasExternalEtcd {
 		return "sudo sh -c 'for cert in admin.conf apiserver apiserver-kubelet-client controller-manager.conf front-proxy-client scheduler.conf; do kubeadm certs renew \"$cert\"; done'"
 	}
 	return "sudo kubeadm certs renew all"
@@ -146,4 +160,43 @@ func (l *LinuxRenewer) buildEtcdBackupCmd() string {
 func buildEtcdValidateCmd() string {
 	return fmt.Sprintf("sudo etcdctl --cacert=%[1]s/pki/ca.crt --cert=%[1]s/pki/etcdctl-etcd-client.crt --key=%[1]s/pki/etcdctl-etcd-client.key member list",
 		linuxEtcdCertDir)
+}
+
+func (l *LinuxRenewer) transferCertsToControlPlane(
+	ctx context.Context, node string, ssh SSHRunner,
+) error {
+	logger.V(4).Info("Transferring certificates to control-plane node", "node", node)
+
+	crtPath := filepath.Join(l.backup, tempLocalEtcdCertsDir, "apiserver-etcd-client.crt")
+	keyPath := filepath.Join(l.backup, tempLocalEtcdCertsDir, "apiserver-etcd-client.key")
+
+	crtData, err := os.ReadFile(crtPath)
+	if err != nil {
+		return fmt.Errorf("reading certificate file: %v", err)
+	}
+	keyData, err := os.ReadFile(keyPath)
+	if err != nil {
+		return fmt.Errorf("reading key file: %v", err)
+	}
+
+	crtCmd := fmt.Sprintf("sudo tee %s/apiserver-etcd-client.crt > /dev/null << 'EOF'\n%s\nEOF", linuxTempDir, string(crtData))
+	if _, err := ssh.RunCommand(ctx, node, crtCmd); err != nil {
+		return fmt.Errorf("copying certificate: %v", err)
+	}
+
+	keyCmd := fmt.Sprintf("sudo tee %s/apiserver-etcd-client.key > /dev/null << 'EOF'\n%s\nEOF", linuxTempDir, string(keyData))
+	if _, err := ssh.RunCommand(ctx, node, keyCmd); err != nil {
+		return fmt.Errorf("copying key: %v", err)
+	}
+
+	logger.V(4).Info("Certificates transferred", "node", node)
+	return nil
+}
+
+func buildCPCopyCertsCmd(hasExternalEtcd bool) string {
+	if hasExternalEtcd {
+		return fmt.Sprintf("sudo sh -c 'if [ -f %[1]s/apiserver-etcd-client.crt ]; then cp %[1]s/apiserver-etcd-client.* %[2]s/ && rm -f %[1]s/apiserver-etcd-client.*; fi'",
+			linuxTempDir, linuxControlPlaneCertDir)
+	}
+	return "true"
 }
