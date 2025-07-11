@@ -45,7 +45,7 @@ func (b *BottlerocketRenewer) RenewControlPlaneCerts(
 	hasExternalEtcd := cfg != nil && len(cfg.Etcd.Nodes) > 0
 
 	if hasExternalEtcd {
-		if err := b.transferCertsToControlPlane(ctx, node, ssh); err != nil {
+		if err := b.TransferCertsToControlPlane(ctx, node, ssh); err != nil {
 			return fmt.Errorf("transferring certificates to control plane node: %v", err)
 		}
 	}
@@ -67,7 +67,8 @@ func (b *BottlerocketRenewer) RenewControlPlaneCerts(
 	return nil
 }
 
-func (b *BottlerocketRenewer) transferCertsToControlPlane(
+// TransferCertsToControlPlane transfers etcd client certificates to a control plane node.
+func (b *BottlerocketRenewer) TransferCertsToControlPlane(
 	ctx context.Context, node string, ssh SSHRunner,
 ) error {
 	logger.V(4).Info("Transferring certificates to control-plane node", "node", node)
@@ -103,8 +104,6 @@ func (b *BottlerocketRenewer) transferCertsToControlPlane(
 func (b *BottlerocketRenewer) RenewEtcdCerts(ctx context.Context, node string, ssh SSHRunner) error {
 	logger.V(0).Info("Processing etcd node", "os", b.osType, "node", node)
 
-	remoteTempDir := brTempDir
-
 	if _, err := ssh.RunCommand(ctx, node, b.sheltie(
 		b.pullContainerImage(),
 		b.backupEtcdCerts(b.backup),
@@ -120,13 +119,13 @@ func (b *BottlerocketRenewer) RenewEtcdCerts(ctx context.Context, node string, s
 	}
 
 	if _, err := ssh.RunCommand(ctx, node, b.sheltie(
-		b.copyEtcdCertsToTemp(remoteTempDir),
+		b.copyEtcdCertsToTemp(brTempDir),
 	)); err != nil {
 		return fmt.Errorf("copying certificates to tmp: %v", err)
 	}
 
 	if _, err := ssh.RunCommand(ctx, node, b.sheltie(
-		b.cleanupEtcdTempFiles(remoteTempDir),
+		b.cleanupEtcdTempFiles(brTempDir),
 	)); err != nil {
 		return fmt.Errorf("cleanup temporary files: %v", err)
 	}
@@ -138,15 +137,13 @@ func (b *BottlerocketRenewer) RenewEtcdCerts(ctx context.Context, node string, s
 
 func (b *BottlerocketRenewer) CopyEtcdCerts(ctx context.Context, node string, ssh SSHRunner) error {
 
-	remoteTempDir := brTempDir
-
 	if _, err := ssh.RunCommand(ctx, node, b.sheltie(
-		b.copyEtcdCertsToTemp(remoteTempDir),
+		b.copyEtcdCertsToTemp(brTempDir),
 	)); err != nil {
 		return fmt.Errorf("copying certificates to tmp: %v", err)
 	}
 
-	crtPath := filepath.Join(remoteTempDir, "apiserver-etcd-client.crt")
+	crtPath := filepath.Join(brTempDir, "apiserver-etcd-client.crt")
 	crtContent, err := ssh.RunCommand(ctx, node, b.readTempFile(crtPath))
 	if err != nil {
 		return fmt.Errorf("reading certificate file: %v", err)
@@ -158,7 +155,7 @@ func (b *BottlerocketRenewer) CopyEtcdCerts(ctx context.Context, node string, ss
 
 	logger.V(4).Info("Reading key from ETCD node", "node", node)
 
-	keyPath := filepath.Join(remoteTempDir, "apiserver-etcd-client.key")
+	keyPath := filepath.Join(brTempDir, "apiserver-etcd-client.key")
 	keyContent, err := ssh.RunCommand(ctx, node, b.readTempFile(keyPath))
 	if err != nil {
 		return fmt.Errorf("read key file: %v", err)
@@ -183,7 +180,7 @@ func (b *BottlerocketRenewer) CopyEtcdCerts(ctx context.Context, node string, ss
 	}
 
 	if _, err := ssh.RunCommand(ctx, node, b.sheltie(
-		b.cleanupEtcdTempFiles(remoteTempDir),
+		b.cleanupEtcdTempFiles(brTempDir),
 	)); err != nil {
 		return fmt.Errorf("cleanup temporary files: %v", err)
 	}
@@ -280,7 +277,6 @@ ctr -n k8s.io t exec --exec-id etcd ${ETCD_CONTAINER_ID} etcdctl \
 
 func (b *BottlerocketRenewer) copyEtcdCertsToTemp(tempDir string) string {
 	script := fmt.Sprintf(`cp /var/lib/etcd/pki/apiserver-etcd-client.* %[1]s/ 
-chmod 600 %[1]s/apiserver-etcd-client.crt
 chmod 600 %[1]s/apiserver-etcd-client.key`, tempDir)
 	return script
 }
@@ -293,20 +289,16 @@ func (b *BottlerocketRenewer) cleanupEtcdTempFiles(tempDir string) string {
 func (b *BottlerocketRenewer) createTempDirectoryAndWriteCerts(dirName, certBase64, keyBase64 string) string {
 	script := fmt.Sprintf(`TARGET_DIR="/tmp/%[1]s"
 mkdir -p "${TARGET_DIR}"
-chmod 755 "${TARGET_DIR}"
 
 cat <<'CRT_END' | base64 -d > "${TARGET_DIR}/apiserver-etcd-client.crt"
 %[2]s
 CRT_END
-[ $? -eq 0 ]
 
 cat <<'KEY_END' | base64 -d > "${TARGET_DIR}/apiserver-etcd-client.key"
 %[3]s
 KEY_END
-[ $? -eq 0 ]
 
-chmod 600 "${TARGET_DIR}/apiserver-etcd-client.crt"
-chmod 600 "${TARGET_DIR}/apiserver-etcd-client.key"`, dirName, certBase64, keyBase64)
+`, dirName, certBase64, keyBase64)
 	return script
 }
 
