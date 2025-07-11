@@ -979,6 +979,20 @@ func (m *MockAwsIamAuth) EXPECT() *MockAwsIamAuthMockRecorder {
 	return m.recorder
 }
 
+// CleanupAWSIamKubeconfigFile mocks base method.
+func (m *MockAwsIamAuth) CleanupAWSIamKubeconfigFile(arg0 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CleanupAWSIamKubeconfigFile", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CleanupAWSIamKubeconfigFile indicates an expected call of CleanupAWSIamKubeconfigFile.
+func (mr *MockAwsIamAuthMockRecorder) CleanupAWSIamKubeconfigFile(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CleanupAWSIamKubeconfigFile", reflect.TypeOf((*MockAwsIamAuth)(nil).CleanupAWSIamKubeconfigFile), arg0)
+}
+
 // GenerateManagementKubeconfig mocks base method.
 func (m *MockAwsIamAuth) GenerateManagementKubeconfig(arg0 context.Context, arg1 *types.Cluster) error {
 	m.ctrl.T.Helper()

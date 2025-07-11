@@ -3,6 +3,7 @@ package awsiamauth
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/google/uuid"
 
@@ -193,5 +194,25 @@ func (i *Installer) GenerateManagementKubeconfig(
 	}
 
 	logger.V(3).Info("Generated aws-iam-authenticator kubeconfig", "kubeconfig", path)
+	return nil
+}
+
+// CleanupAWSIamKubeconfigFile removes an existing AWS IAM kubeconfig file when AWS IAM is removed from cluster.
+func (i *Installer) CleanupAWSIamKubeconfigFile(clusterName string) error {
+	fileName := fmt.Sprintf("%s-aws.kubeconfig", clusterName)
+
+	// Check if the file exists first
+	if _, err := os.Stat(fileName); os.IsNotExist(err) {
+		// File doesn't exist, nothing to cleanup
+		logger.V(3).Info("AWS IAM kubeconfig file does not exist, skipping cleanup", "file", fileName)
+		return nil
+	}
+
+	err := os.Remove(fileName)
+	if err != nil {
+		return fmt.Errorf("removing aws-iam-authenticator kubeconfig %s: %v", fileName, err)
+	}
+
+	logger.V(3).Info("Cleaned up aws-iam-authenticator kubeconfig", "file", fileName)
 	return nil
 }
