@@ -39,10 +39,10 @@ func (l *LinuxRenewer) RenewControlPlaneCerts(
 
 	hasExternalEtcd := cfg != nil && len(cfg.Etcd.Nodes) > 0
 
-	if _, err := ssh.RunCommand(ctx, node, buildCPBackupCmd(component, hasExternalEtcd, l.backup)); err != nil {
+	if _, err := ssh.RunCommand(ctx, node, l.backupControlPlaneCerts(component, hasExternalEtcd, l.backup)); err != nil {
 		return fmt.Errorf("backing up control plane certs: %v", err)
 	}
-	if _, err := ssh.RunCommand(ctx, node, buildCPRenewCmd(component, hasExternalEtcd)); err != nil {
+	if _, err := ssh.RunCommand(ctx, node, l.renewControlPlaneCerts(component, hasExternalEtcd)); err != nil {
 		return fmt.Errorf("renewing control plane certs: %v", err)
 	}
 
@@ -58,12 +58,12 @@ func (l *LinuxRenewer) RenewControlPlaneCerts(
 		if err := l.transferCertsToControlPlane(ctx, node, ssh); err != nil {
 			return fmt.Errorf("transferring certificates to control plane node: %v", err)
 		}
-		if _, err := ssh.RunCommand(ctx, node, buildCPCopyCertsCmd(hasExternalEtcd)); err != nil {
+		if _, err := ssh.RunCommand(ctx, node, l.copyExternalEtcdCerts(hasExternalEtcd)); err != nil {
 			return fmt.Errorf("copying etcd client certs: %v", err)
 		}
 	}
 
-	if _, err := ssh.RunCommand(ctx, node, buildCPRestartCmd()); err != nil {
+	if _, err := ssh.RunCommand(ctx, node, l.restartControlPlaneStaticPods()); err != nil {
 		return fmt.Errorf("restarting control plane pods: %v", err)
 	}
 
@@ -79,14 +79,14 @@ func (l *LinuxRenewer) RenewEtcdCerts(
 ) error {
 	logger.V(0).Info("Processing etcd node", "os", l.osType, "node", node)
 
-	if _, err := ssh.RunCommand(ctx, node, l.buildEtcdBackupCmd()); err != nil {
+	if _, err := ssh.RunCommand(ctx, node, l.backupEtcdCerts()); err != nil {
 		return fmt.Errorf("backing up etcd certs: %v", err)
 	}
 	if _, err := ssh.RunCommand(ctx, node,
 		"sudo etcdadm join phase certificates http://eks-a-etcd-dumb-url"); err != nil {
 		return fmt.Errorf("renewing etcd certs: %v", err)
 	}
-	if _, err := ssh.RunCommand(ctx, node, buildEtcdValidateCmd()); err != nil {
+	if _, err := ssh.RunCommand(ctx, node, l.validateEtcdCerts()); err != nil {
 		return fmt.Errorf("validating etcd certs: %v", err)
 	}
 	logger.V(0).Info("Renewed etcd certificates", "node", node)
@@ -131,7 +131,7 @@ func (l *LinuxRenewer) CopyEtcdCerts(
 	return nil
 }
 
-func buildCPBackupCmd(_ string, hasExternalEtcd bool, backup string) string {
+func (l *LinuxRenewer) backupControlPlaneCerts(_ string, hasExternalEtcd bool, backup string) string {
 	backupPath := fmt.Sprintf("/etc/kubernetes/pki.bak_%s", backup)
 	if hasExternalEtcd {
 		return fmt.Sprintf("sudo sh -c 'cp -r %s \"%s\" && rm -rf \"%s/etcd\"'",
@@ -140,24 +140,24 @@ func buildCPBackupCmd(_ string, hasExternalEtcd bool, backup string) string {
 	return fmt.Sprintf("sudo cp -r %s %s", linuxControlPlaneCertDir, backupPath)
 }
 
-func buildCPRenewCmd(_ string, hasExternalEtcd bool) string {
+func (l *LinuxRenewer) renewControlPlaneCerts(_ string, hasExternalEtcd bool) string {
 	if hasExternalEtcd {
 		return "sudo sh -c 'for cert in admin.conf apiserver apiserver-kubelet-client controller-manager.conf front-proxy-client scheduler.conf; do kubeadm certs renew \"$cert\"; done'"
 	}
 	return "sudo kubeadm certs renew all"
 }
 
-func buildCPRestartCmd() string {
+func (l *LinuxRenewer) restartControlPlaneStaticPods() string {
 	return fmt.Sprintf("sudo sh -c 'mkdir -p /tmp/manifests && mv %s/* /tmp/manifests/ && sleep 20 && mv /tmp/manifests/* %s/'",
 		linuxControlPlaneManifests, linuxControlPlaneManifests)
 }
 
-func (l *LinuxRenewer) buildEtcdBackupCmd() string {
+func (l *LinuxRenewer) backupEtcdCerts() string {
 	return fmt.Sprintf("sudo sh -c 'cd %[1]s && cp -r pki pki.bak_%[2]s && rm -rf pki/* && cp pki.bak_%[2]s/ca.* pki/'",
 		linuxEtcdCertDir, l.backup)
 }
 
-func buildEtcdValidateCmd() string {
+func (l *LinuxRenewer) validateEtcdCerts() string {
 	return fmt.Sprintf("sudo etcdctl --cacert=%[1]s/pki/ca.crt --cert=%[1]s/pki/etcdctl-etcd-client.crt --key=%[1]s/pki/etcdctl-etcd-client.key member list",
 		linuxEtcdCertDir)
 }
@@ -193,7 +193,7 @@ func (l *LinuxRenewer) transferCertsToControlPlane(
 	return nil
 }
 
-func buildCPCopyCertsCmd(hasExternalEtcd bool) string {
+func (l *LinuxRenewer) copyExternalEtcdCerts(hasExternalEtcd bool) string {
 	if hasExternalEtcd {
 		return fmt.Sprintf("sudo sh -c 'if [ -f %[1]s/apiserver-etcd-client.crt ]; then cp %[1]s/apiserver-etcd-client.* %[2]s/ && rm -f %[1]s/apiserver-etcd-client.*; fi'",
 			linuxTempDir, linuxControlPlaneCertDir)
