@@ -32,7 +32,6 @@ var osRenewerBuilders = map[string]func(backupDir string) OSRenewer{
 	string(OSTypeLinux): func(backupDir string) OSRenewer {
 		return NewLinuxRenewer(backupDir)
 	},
-	// comment for focus ubuntu pr
 	string(OSTypeBottlerocket): func(backupDir string) OSRenewer {
 		return NewBottlerocketRenewer(backupDir)
 	},
