@@ -50,7 +50,7 @@ func (b *BottlerocketRenewer) RenewControlPlaneCerts(
 		}
 	}
 
-	sessionCmds := b.sheltie(
+	shellCommands := b.sheltie(
 		b.pullContainerImage(),
 		b.backupControlPlaneCerts(component, hasExternalEtcd, b.backup, brControlPlaneCertDir),
 		b.renewControlPlaneCerts(),
@@ -59,7 +59,7 @@ func (b *BottlerocketRenewer) RenewControlPlaneCerts(
 		b.restartControlPlaneStaticPods(),
 	)
 
-	if _, err := ssh.RunCommand(ctx, node, sessionCmds); err != nil {
+	if _, err := ssh.RunCommand(ctx, node, shellCommands); err != nil {
 		return fmt.Errorf("renewing control plane certificates: %v", err)
 	}
 
@@ -71,28 +71,28 @@ func (b *BottlerocketRenewer) RenewControlPlaneCerts(
 func (b *BottlerocketRenewer) TransferCertsToControlPlane(
 	ctx context.Context, node string, ssh SSHRunner,
 ) error {
-	logger.V(4).Info("Transferring certificates to control-plane node", "node", node)
+	logger.V(4).Info("Certificates transferred", "node", node)
 
-	crtB, err := os.ReadFile(filepath.Join(
+	certificateBytes, err := os.ReadFile(filepath.Join(
 		b.backup, tempLocalEtcdCertsDir, "apiserver-etcd-client.crt"))
 	if err != nil {
 		return fmt.Errorf("reading certificate file: %v", err)
 	}
-	keyB, err := os.ReadFile(filepath.Join(
+	keyBytes, err := os.ReadFile(filepath.Join(
 		b.backup, tempLocalEtcdCertsDir, "apiserver-etcd-client.key"))
 	if err != nil {
 		return fmt.Errorf("reading key file: %v", err)
 	}
 
-	sessionCmds := b.sheltie(
+	shellCommands := b.sheltie(
 		b.createTempDirectoryAndWriteCerts(
 			tempLocalEtcdCertsDir,
-			base64.StdEncoding.EncodeToString(crtB),
-			base64.StdEncoding.EncodeToString(keyB),
+			base64.StdEncoding.EncodeToString(certificateBytes),
+			base64.StdEncoding.EncodeToString(keyBytes),
 		),
 	)
 
-	if _, err := ssh.RunCommand(ctx, node, sessionCmds); err != nil {
+	if _, err := ssh.RunCommand(ctx, node, shellCommands); err != nil {
 		return fmt.Errorf("transfering certificates: %v", err)
 	}
 
@@ -130,7 +130,7 @@ func (b *BottlerocketRenewer) RenewEtcdCerts(ctx context.Context, node string, s
 		return fmt.Errorf("cleanup temporary files: %v", err)
 	}
 
-	logger.Info("Renewed certificates for etcd node", "node", node)
+	logger.V(0).Info("Renewed certificates for etcd node", "node", node)
 
 	return nil
 }
@@ -143,20 +143,20 @@ func (b *BottlerocketRenewer) CopyEtcdCerts(ctx context.Context, node string, ss
 		return fmt.Errorf("copying certificates to tmp: %v", err)
 	}
 
-	crtPath := filepath.Join(brTempDir, "apiserver-etcd-client.crt")
-	crtContent, err := ssh.RunCommand(ctx, node, b.readTempFile(crtPath))
+	certificatePath := filepath.Join(brTempDir, "apiserver-etcd-client.crt")
+	certificateContent, err := ssh.RunCommand(ctx, node, b.readTempFile(certificatePath))
 	if err != nil {
 		return fmt.Errorf("reading certificate file: %v", err)
 	}
 
-	if len(crtContent) == 0 {
+	if len(certificateContent) == 0 {
 		return fmt.Errorf("certificate file is empty")
 	}
 
 	logger.V(4).Info("Reading key from ETCD node", "node", node)
 
-	keyPath := filepath.Join(brTempDir, "apiserver-etcd-client.key")
-	keyContent, err := ssh.RunCommand(ctx, node, b.readTempFile(keyPath))
+	keyFilePath := filepath.Join(brTempDir, "apiserver-etcd-client.key")
+	keyContent, err := ssh.RunCommand(ctx, node, b.readTempFile(keyFilePath))
 	if err != nil {
 		return fmt.Errorf("read key file: %v", err)
 	}
@@ -164,18 +164,18 @@ func (b *BottlerocketRenewer) CopyEtcdCerts(ctx context.Context, node string, ss
 		return fmt.Errorf("key file is empty")
 	}
 
-	destDir := filepath.Join(b.backup, tempLocalEtcdCertsDir)
-	if err := os.MkdirAll(destDir, 0o700); err != nil {
+	localCertificateDir := filepath.Join(b.backup, tempLocalEtcdCertsDir)
+	if err := os.MkdirAll(localCertificateDir, 0o700); err != nil {
 		return fmt.Errorf("create local cert dir: %v", err)
 	}
 
-	localCrtPath := filepath.Join(destDir, "apiserver-etcd-client.crt")
-	localKeyPath := filepath.Join(destDir, "apiserver-etcd-client.key")
+	localCertificatePath := filepath.Join(localCertificateDir, "apiserver-etcd-client.crt")
+	localKeyFilePath := filepath.Join(localCertificateDir, "apiserver-etcd-client.key")
 
-	if err := os.WriteFile(localCrtPath, []byte(crtContent), 0o600); err != nil {
+	if err := os.WriteFile(localCertificatePath, []byte(certificateContent), 0o600); err != nil {
 		return fmt.Errorf("write certificate file: %v", err)
 	}
-	if err := os.WriteFile(localKeyPath, []byte(keyContent), 0o600); err != nil {
+	if err := os.WriteFile(localKeyFilePath, []byte(keyContent), 0o600); err != nil {
 		return fmt.Errorf("write key file: %v", err)
 	}
 
@@ -286,7 +286,7 @@ func (b *BottlerocketRenewer) cleanupEtcdTempFiles(tempDir string) string {
 	return script
 }
 
-func (b *BottlerocketRenewer) createTempDirectoryAndWriteCerts(dirName, certBase64, keyBase64 string) string {
+func (b *BottlerocketRenewer) createTempDirectoryAndWriteCerts(tempLocalEtcdCertsDir, certificateBytes64, keyBytes64 string) string {
 	script := fmt.Sprintf(`TARGET_DIR="/tmp/%[1]s"
 mkdir -p "${TARGET_DIR}"
 
@@ -298,7 +298,7 @@ cat <<'KEY_END' | base64 -d > "${TARGET_DIR}/apiserver-etcd-client.key"
 %[3]s
 KEY_END
 
-`, dirName, certBase64, keyBase64)
+`, tempLocalEtcdCertsDir, certificateBytes64, keyBytes64)
 	return script
 }
 
