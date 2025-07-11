@@ -55,7 +55,7 @@ func (l *LinuxRenewer) RenewControlPlaneCerts(
 	}
 
 	if hasExternalEtcd {
-		if err := l.transferCertsToControlPlane(ctx, node, ssh); err != nil {
+		if err := l.TransferCertsToControlPlane(ctx, node, ssh); err != nil {
 			return fmt.Errorf("transferring certificates to control plane node: %v", err)
 		}
 		if _, err := ssh.RunCommand(ctx, node, l.copyExternalEtcdCerts(hasExternalEtcd)); err != nil {
@@ -162,7 +162,8 @@ func (l *LinuxRenewer) validateEtcdCerts() string {
 		linuxEtcdCertDir)
 }
 
-func (l *LinuxRenewer) transferCertsToControlPlane(
+// TransferCertsToControlPlane transfers etcd client certificates to a control plane node.
+func (l *LinuxRenewer) TransferCertsToControlPlane(
 	ctx context.Context, node string, ssh SSHRunner,
 ) error {
 	logger.V(4).Info("Transferring certificates to control-plane node", "node", node)
