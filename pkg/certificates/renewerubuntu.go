@@ -166,7 +166,7 @@ func (l *LinuxRenewer) validateEtcdCerts() string {
 func (l *LinuxRenewer) TransferCertsToControlPlane(
 	ctx context.Context, node string, ssh SSHRunner,
 ) error {
-	logger.V(4).Info("Transferring certificates to control-plane node", "node", node)
+	logger.V(4).Info("Certificates transferred", "node", node)
 
 	crtPath := filepath.Join(l.backup, tempLocalEtcdCertsDir, "apiserver-etcd-client.crt")
 	keyPath := filepath.Join(l.backup, tempLocalEtcdCertsDir, "apiserver-etcd-client.key")
