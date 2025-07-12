@@ -426,7 +426,7 @@ func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
 		}
 	}
 
-	if !oldAWSIamConfig.Equal(newAWSIamConfig) {
+	if !oldAWSIamConfig.IsEmpty() && !newAWSIamConfig.IsEmpty() && !oldAWSIamConfig.Equal(newAWSIamConfig) {
 		allErrs = append(
 			allErrs,
 			field.Forbidden(specPath.Child("identityProviderRefs", AWSIamConfigKind), fmt.Sprintf("field is immutable %v", newAWSIamConfig.Kind)))

@@ -13,6 +13,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -550,13 +551,18 @@ func TestClusterReconcilerUpdatesCertificateStatusSuccess(t *testing.T) {
 	g.Expect(err).ToNot(HaveOccurred())
 }
 
-// MockClient that fails on List operations.
+// MockClient that fails on MachineList operations.
 type MockClient struct {
 	client.Client
 }
 
-func (m *MockClient) List(_ context.Context, _ client.ObjectList, _ ...client.ListOption) error {
-	return fmt.Errorf("simulated client error during list operation")
+func (m *MockClient) List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
+	// Check if we're trying to list MachineList objects
+	if _, ok := list.(*clusterv1.MachineList); ok {
+		return fmt.Errorf("simulated client error during machine list operation")
+	}
+	// For all other list operations, delegate to the real client
+	return m.Client.List(ctx, list, opts...)
 }
 
 func TestClusterReconcilerUpdatesCertificateStatusError(t *testing.T) {
