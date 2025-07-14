@@ -71,45 +71,40 @@ func (b *BottlerocketRenewer) RenewControlPlaneCerts(
 func (b *BottlerocketRenewer) TransferCertsToControlPlane(
 	ctx context.Context, node string, ssh SSHRunner,
 ) error {
-	logger.V(4).Info("Certificates transferred", "node", node)
-
 	certificateBytes, err := os.ReadFile(filepath.Join(
 		b.backup, tempLocalEtcdCertsDir, "apiserver-etcd-client.crt"))
 	if err != nil {
-		return fmt.Errorf("reading certificate file: %v", err)
+		return fmt.Errorf("reading certificate file from the admin machine: %v", err)
 	}
 	keyBytes, err := os.ReadFile(filepath.Join(
 		b.backup, tempLocalEtcdCertsDir, "apiserver-etcd-client.key"))
 	if err != nil {
-		return fmt.Errorf("reading key file: %v", err)
+		return fmt.Errorf("reading key file from the admin machine: %v", err)
 	}
 
 	shellCommands := b.sheltie(
-		b.createTempDirectoryAndWriteCerts(
-			tempLocalEtcdCertsDir,
-			base64.StdEncoding.EncodeToString(certificateBytes),
-			base64.StdEncoding.EncodeToString(keyBytes),
-		),
+		b.createTempDirectory(tempLocalEtcdCertsDir),
+		b.writeCertToTemp(base64.StdEncoding.EncodeToString(certificateBytes)),
+		b.writeKeyToTemp(base64.StdEncoding.EncodeToString(keyBytes)),
 	)
 
 	if _, err := ssh.RunCommand(ctx, node, shellCommands); err != nil {
-		return fmt.Errorf("transfering certificates: %v", err)
+		return fmt.Errorf("transfering certificates to control plane: %v", err)
 	}
 
-	logger.V(4).Info("Certificates transferred", "node", node)
 	return nil
 }
 
 // RenewEtcdCerts renews etcd certificates on a Bottlerocket node.
 func (b *BottlerocketRenewer) RenewEtcdCerts(ctx context.Context, node string, ssh SSHRunner) error {
-	logger.V(0).Info("Processing etcd node", "os", b.osType, "node", node)
+	logger.V(0).Info("Renewing etcd certificates", "node", node)
 
 	if _, err := ssh.RunCommand(ctx, node, b.sheltie(
 		b.pullContainerImage(),
 		b.backupEtcdCerts(b.backup),
 		b.renewEtcdCerts(),
 	)); err != nil {
-		return fmt.Errorf("renewing certificates: %v", err)
+		return fmt.Errorf("renewing etcd certificates: %v", err)
 	}
 
 	if _, err := ssh.RunCommand(ctx, node, b.sheltie(
@@ -118,19 +113,7 @@ func (b *BottlerocketRenewer) RenewEtcdCerts(ctx context.Context, node string, s
 		return fmt.Errorf("validating etcd certificates: %v", err)
 	}
 
-	if _, err := ssh.RunCommand(ctx, node, b.sheltie(
-		b.copyEtcdCertsToTemp(brTempDir),
-	)); err != nil {
-		return fmt.Errorf("copying certificates to tmp: %v", err)
-	}
-
-	if _, err := ssh.RunCommand(ctx, node, b.sheltie(
-		b.cleanupEtcdTempFiles(brTempDir),
-	)); err != nil {
-		return fmt.Errorf("cleanup temporary files: %v", err)
-	}
-
-	logger.V(0).Info("Renewed certificates for etcd node", "node", node)
+	logger.V(0).Info("Renewed etcd certificates", "node", node)
 
 	return nil
 }
@@ -213,99 +196,106 @@ func (b *BottlerocketRenewer) backupControlPlaneCerts(_ string, hasExternalEtcd 
 }
 
 func (b *BottlerocketRenewer) renewControlPlaneCerts() string {
-	script := `ctr run \
+	renewCerts := `ctr run \
 --mount type=bind,src=/var/lib/kubeadm,dst=/var/lib/kubeadm,options=rbind:rw \
 --mount type=bind,src=/var/lib/kubeadm,dst=/etc/kubernetes,options=rbind:rw \
 --rm ${IMAGE_ID} tmp-cert-renew \
 /opt/bin/kubeadm certs renew all`
-	return script
+	return renewCerts
 }
 
 func (b *BottlerocketRenewer) checkControlPlaneCerts() string {
-	script := `ctr run \
+	checkCerts := `ctr run \
 --mount type=bind,src=/var/lib/kubeadm,dst=/var/lib/kubeadm,options=rbind:rw \
 --mount type=bind,src=/var/lib/kubeadm,dst=/etc/kubernetes,options=rbind:rw \
 --rm ${IMAGE_ID} tmp-cert-renew \
 /opt/bin/kubeadm certs check-expiration`
-	return script
+	return checkCerts
 }
 
 func (b *BottlerocketRenewer) copyExternalEtcdCerts() string {
-	script := fmt.Sprintf(`if [ -d "/tmp/%[1]s" ]; then
+	copyCerts := fmt.Sprintf(`if [ -d "/tmp/%[1]s" ]; then
     cp /tmp/%[1]s/apiserver-etcd-client.crt %[2]s/server-etcd-client.crt
     cp /tmp/%[1]s/apiserver-etcd-client.key %[2]s/apiserver-etcd-client.key
     rm -rf /tmp/%[1]s
 fi`, tempLocalEtcdCertsDir, brControlPlaneCertDir)
-	return script
+	return copyCerts
 }
 
 func (b *BottlerocketRenewer) restartControlPlaneStaticPods() string {
-	script := `
+	restartPods := `
 apiclient get | apiclient exec admin jq -r '.settings.kubernetes["static-pods"] | keys[]' | xargs -n 1 -I {} apiclient set settings.kubernetes.static-pods.{}.enabled=false
 sleep 10
 apiclient get | apiclient exec admin jq -r '.settings.kubernetes["static-pods"] | keys[]' | xargs -n 1 -I {} apiclient set settings.kubernetes.static-pods.{}.enabled=true
 `
-	return script
+	return restartPods
 }
 
 func (b *BottlerocketRenewer) backupEtcdCerts(backupDir string) string {
-	script := fmt.Sprintf(`cp -r /var/lib/etcd/pki /var/lib/etcd/pki.bak_%[1]s
+	backupCerts := fmt.Sprintf(`cp -r /var/lib/etcd/pki /var/lib/etcd/pki.bak_%[1]s
 rm /var/lib/etcd/pki/*
 cp /var/lib/etcd/pki.bak_%[1]s/ca.* /var/lib/etcd/pki`, backupDir)
-	return script
+	return backupCerts
 }
 
 func (b *BottlerocketRenewer) renewEtcdCerts() string {
-	script := `ctr run \
+	renewCerts := `ctr run \
 --mount type=bind,src=/var/lib/etcd/pki,dst=/etc/etcd/pki,options=rbind:rw \
 --net-host \
 --rm \
 ${IMAGE_ID} tmp-cert-renew \
 /opt/bin/etcdadm join phase certificates http://eks-a-etcd-dumb-url --init-system kubelet`
-	return script
+	return renewCerts
 }
 
 func (b *BottlerocketRenewer) validateEtcdCerts() string {
-	script := `ETCD_CONTAINER_ID=$(ctr -n k8s.io c ls | grep -w "etcd-io" | cut -d " " -f1 | tail -1)
+	validateCerts := `ETCD_CONTAINER_ID=$(ctr -n k8s.io c ls | grep -w "etcd-io" | cut -d " " -f1 | tail -1)
 ctr -n k8s.io t exec --exec-id etcd ${ETCD_CONTAINER_ID} etcdctl \
      --cacert=/var/lib/etcd/pki/ca.crt \
      --cert=/var/lib/etcd/pki/server.crt \
      --key=/var/lib/etcd/pki/server.key \
      member list`
-	return script
+	return validateCerts
 }
 
 func (b *BottlerocketRenewer) copyEtcdCertsToTemp(tempDir string) string {
-	script := fmt.Sprintf(`cp /var/lib/etcd/pki/apiserver-etcd-client.* %[1]s/ 
+	copyCerts := fmt.Sprintf(`cp /var/lib/etcd/pki/apiserver-etcd-client.* %[1]s/ 
 chmod 600 %[1]s/apiserver-etcd-client.key`, tempDir)
-	return script
+	return copyCerts
 }
 
 func (b *BottlerocketRenewer) cleanupEtcdTempFiles(tempDir string) string {
-	script := fmt.Sprintf(`rm -f %s/apiserver-etcd-client.*`, tempDir)
-	return script
+	cleanup := fmt.Sprintf(`rm -f %s/apiserver-etcd-client.*`, tempDir)
+	return cleanup
 }
 
-func (b *BottlerocketRenewer) createTempDirectoryAndWriteCerts(tempLocalEtcdCertsDir, certificateBytes64, keyBytes64 string) string {
-	script := fmt.Sprintf(`TARGET_DIR="/tmp/%[1]s"
+func (b *BottlerocketRenewer) createTempDirectory(tempLocalEtcdCertsDir string) string {
+	tempDirectory := fmt.Sprintf(`TARGET_DIR="/tmp/%s"
 mkdir -p "${TARGET_DIR}"
+`, tempLocalEtcdCertsDir)
+	return tempDirectory
+}
 
-cat <<'CRT_END' | base64 -d > "${TARGET_DIR}/apiserver-etcd-client.crt"
-%[2]s
+func (b *BottlerocketRenewer) writeCertToTemp(certificateBytes64 string) string {
+	certToTemp := fmt.Sprintf(`cat <<'CRT_END' | base64 -d > "${TARGET_DIR}/apiserver-etcd-client.crt"
+%s
 CRT_END
+`, certificateBytes64)
+	return certToTemp
+}
 
-cat <<'KEY_END' | base64 -d > "${TARGET_DIR}/apiserver-etcd-client.key"
-%[3]s
+func (b *BottlerocketRenewer) writeKeyToTemp(keyBytes64 string) string {
+	keyToTemp := fmt.Sprintf(`cat <<'KEY_END' | base64 -d > "${TARGET_DIR}/apiserver-etcd-client.key"
+%s
 KEY_END
-
-`, tempLocalEtcdCertsDir, certificateBytes64, keyBytes64)
-	return script
+`, keyBytes64)
+	return keyToTemp
 }
 
 func (b *BottlerocketRenewer) readTempFile(filePath string) string {
-	script := fmt.Sprintf(`sudo sheltie << 'EOF'
+	readFile := fmt.Sprintf(`sudo sheltie << 'EOF'
 cat %s
 exit
 EOF`, filePath)
-	return script
+	return readFile
 }
