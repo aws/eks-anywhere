@@ -13,6 +13,7 @@ import (
 
 const (
 	brEtcdCertDir           = "/var/lib/etcd"
+	brEtcdPkiDir            = "/var/lib/etcd/pki"
 	brControlPlaneCertDir   = "/var/lib/kubeadm/pki"
 	brControlPlaneManifests = "/var/lib/kubeadm/manifests"
 	brTempDir               = "/run/host-containerd/io.containerd.runtime.v2.task/default/admin/rootfs/tmp"
@@ -52,7 +53,7 @@ func (b *BottlerocketRenewer) RenewControlPlaneCerts(
 
 	shellCommands := b.sheltie(
 		b.pullContainerImage(),
-		b.backupControlPlaneCerts(component, hasExternalEtcd, b.backup, brControlPlaneCertDir),
+		b.backupControlPlaneCerts(component, hasExternalEtcd, brControlPlaneCertDir),
 		b.renewControlPlaneCerts(),
 		b.checkControlPlaneCerts(),
 		b.copyExternalEtcdCerts(),
@@ -101,7 +102,7 @@ func (b *BottlerocketRenewer) RenewEtcdCerts(ctx context.Context, node string, s
 
 	if _, err := ssh.RunCommand(ctx, node, b.sheltie(
 		b.pullContainerImage(),
-		b.backupEtcdCerts(b.backup),
+		b.backupEtcdCerts(),
 		b.renewEtcdCerts(),
 	)); err != nil {
 		return fmt.Errorf("renewing etcd certificates: %v", err)
@@ -123,49 +124,47 @@ func (b *BottlerocketRenewer) CopyEtcdCerts(ctx context.Context, node string, ss
 	if _, err := ssh.RunCommand(ctx, node, b.sheltie(
 		b.copyEtcdCertsToTemp(brTempDir),
 	)); err != nil {
-		return fmt.Errorf("copying certificates to tmp: %v", err)
+		return fmt.Errorf("copying etcd certificates to tmp: %v", err)
 	}
 
 	certificatePath := filepath.Join(brTempDir, "apiserver-etcd-client.crt")
 	certificateContent, err := ssh.RunCommand(ctx, node, b.readTempFile(certificatePath))
 	if err != nil {
-		return fmt.Errorf("reading certificate file: %v", err)
+		return fmt.Errorf("reading etcd certificate file: %v", err)
 	}
 
 	if len(certificateContent) == 0 {
-		return fmt.Errorf("certificate file is empty")
+		return fmt.Errorf("etcd certificate file is empty")
 	}
-
-	logger.V(4).Info("Reading key from ETCD node", "node", node)
 
 	keyFilePath := filepath.Join(brTempDir, "apiserver-etcd-client.key")
 	keyContent, err := ssh.RunCommand(ctx, node, b.readTempFile(keyFilePath))
 	if err != nil {
-		return fmt.Errorf("read key file: %v", err)
+		return fmt.Errorf("reading etcd key file: %v", err)
 	}
 	if len(keyContent) == 0 {
-		return fmt.Errorf("key file is empty")
+		return fmt.Errorf("etcd key file is empty")
 	}
 
 	localCertificateDir := filepath.Join(b.backup, tempLocalEtcdCertsDir)
 	if err := os.MkdirAll(localCertificateDir, 0o700); err != nil {
-		return fmt.Errorf("create local cert dir: %v", err)
+		return fmt.Errorf("creating local etcd cert dir: %v", err)
 	}
 
 	localCertificatePath := filepath.Join(localCertificateDir, "apiserver-etcd-client.crt")
 	localKeyFilePath := filepath.Join(localCertificateDir, "apiserver-etcd-client.key")
 
 	if err := os.WriteFile(localCertificatePath, []byte(certificateContent), 0o600); err != nil {
-		return fmt.Errorf("write certificate file: %v", err)
+		return fmt.Errorf("writing etcd certificate file: %v", err)
 	}
 	if err := os.WriteFile(localKeyFilePath, []byte(keyContent), 0o600); err != nil {
-		return fmt.Errorf("write key file: %v", err)
+		return fmt.Errorf("writing etcd key file: %v", err)
 	}
 
 	if _, err := ssh.RunCommand(ctx, node, b.sheltie(
 		b.cleanupEtcdTempFiles(brTempDir),
 	)); err != nil {
-		return fmt.Errorf("cleanup temporary files: %v", err)
+		return fmt.Errorf("cleaning up temporary etcd files: %v", err)
 	}
 
 	return nil
@@ -183,9 +182,9 @@ func (b *BottlerocketRenewer) pullContainerImage() string {
 ctr image pull ${IMAGE_ID}`
 }
 
-func (b *BottlerocketRenewer) backupControlPlaneCerts(_ string, hasExternalEtcd bool, backupDir, certDir string) string {
+func (b *BottlerocketRenewer) backupControlPlaneCerts(_ string, hasExternalEtcd bool, certDir string) string {
 
-	backupPath := fmt.Sprintf("/var/lib/kubeadm/pki.bak_%s", backupDir)
+	backupPath := fmt.Sprintf("/var/lib/kubeadm/pki.bak_%s", b.backup)
 
 	if hasExternalEtcd {
 		return fmt.Sprintf("mkdir -p '%s' && cp -r %s/* '%s/' && rm -rf '%s/etcd'",
@@ -231,36 +230,36 @@ apiclient get | apiclient exec admin jq -r '.settings.kubernetes["static-pods"] 
 	return restartPods
 }
 
-func (b *BottlerocketRenewer) backupEtcdCerts(backupDir string) string {
-	backupCerts := fmt.Sprintf(`cp -r /var/lib/etcd/pki /var/lib/etcd/pki.bak_%[1]s
-rm /var/lib/etcd/pki/*
-cp /var/lib/etcd/pki.bak_%[1]s/ca.* /var/lib/etcd/pki`, backupDir)
+func (b *BottlerocketRenewer) backupEtcdCerts() string {
+	backupCerts := fmt.Sprintf(`cp -r %[1]s %[1]s.bak_%[2]s
+rm %[1]s/*
+cp %[1]s.bak_%[2]s/ca.* %[1]s`, brEtcdPkiDir, b.backup)
 	return backupCerts
 }
 
 func (b *BottlerocketRenewer) renewEtcdCerts() string {
-	renewCerts := `ctr run \
---mount type=bind,src=/var/lib/etcd/pki,dst=/etc/etcd/pki,options=rbind:rw \
+	renewCerts := fmt.Sprintf(`ctr run \
+--mount type=bind,src=%s,dst=/etc/etcd/pki,options=rbind:rw \
 --net-host \
 --rm \
 ${IMAGE_ID} tmp-cert-renew \
-/opt/bin/etcdadm join phase certificates http://eks-a-etcd-dumb-url --init-system kubelet`
+/opt/bin/etcdadm join phase certificates http://eks-a-etcd-dumb-url --init-system kubelet`, brEtcdPkiDir)
 	return renewCerts
 }
 
 func (b *BottlerocketRenewer) validateEtcdCerts() string {
-	validateCerts := `ETCD_CONTAINER_ID=$(ctr -n k8s.io c ls | grep -w "etcd-io" | cut -d " " -f1 | tail -1)
+	validateCerts := fmt.Sprintf(`ETCD_CONTAINER_ID=$(ctr -n k8s.io c ls | grep -w "etcd-io" | cut -d " " -f1 | tail -1)
 ctr -n k8s.io t exec --exec-id etcd ${ETCD_CONTAINER_ID} etcdctl \
-     --cacert=/var/lib/etcd/pki/ca.crt \
-     --cert=/var/lib/etcd/pki/server.crt \
-     --key=/var/lib/etcd/pki/server.key \
-     member list`
+     --cacert=%[1]s/ca.crt \
+     --cert=%[1]s/server.crt \
+     --key=%[1]s/server.key \
+     member list`, brEtcdPkiDir)
 	return validateCerts
 }
 
 func (b *BottlerocketRenewer) copyEtcdCertsToTemp(tempDir string) string {
-	copyCerts := fmt.Sprintf(`cp /var/lib/etcd/pki/apiserver-etcd-client.* %[1]s/ 
-chmod 600 %[1]s/apiserver-etcd-client.key`, tempDir)
+	copyCerts := fmt.Sprintf(`cp %[1]s/apiserver-etcd-client.* %[2]s/ 
+chmod 600 %[2]s/apiserver-etcd-client.key`, brEtcdPkiDir, tempDir)
 	return copyCerts
 }
 
