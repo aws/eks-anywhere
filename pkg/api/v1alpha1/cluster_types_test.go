@@ -2905,6 +2905,104 @@ func TestCiliumConfigEquality(t *testing.T) {
 			},
 			Equal: false,
 		},
+		{
+			Name: "CNIExclusive both nil",
+			A: &v1alpha1.CiliumConfig{
+				CNIExclusive: nil,
+			},
+			B: &v1alpha1.CiliumConfig{
+				CNIExclusive: nil,
+			},
+			Equal: true,
+		},
+		{
+			Name: "CNIExclusive one nil, one true",
+			A: &v1alpha1.CiliumConfig{
+				CNIExclusive: nil,
+			},
+			B: &v1alpha1.CiliumConfig{
+				CNIExclusive: ptr.Bool(true),
+			},
+			Equal: false,
+		},
+		{
+			Name: "CNIExclusive one nil, one false",
+			A: &v1alpha1.CiliumConfig{
+				CNIExclusive: nil,
+			},
+			B: &v1alpha1.CiliumConfig{
+				CNIExclusive: ptr.Bool(false),
+			},
+			Equal: false,
+		},
+		{
+			Name: "CNIExclusive both true",
+			A: &v1alpha1.CiliumConfig{
+				CNIExclusive: ptr.Bool(true),
+			},
+			B: &v1alpha1.CiliumConfig{
+				CNIExclusive: ptr.Bool(true),
+			},
+			Equal: true,
+		},
+		{
+			Name: "CNIExclusive both false",
+			A: &v1alpha1.CiliumConfig{
+				CNIExclusive: ptr.Bool(false),
+			},
+			B: &v1alpha1.CiliumConfig{
+				CNIExclusive: ptr.Bool(false),
+			},
+			Equal: true,
+		},
+		{
+			Name: "CNIExclusive true vs false",
+			A: &v1alpha1.CiliumConfig{
+				CNIExclusive: ptr.Bool(true),
+			},
+			B: &v1alpha1.CiliumConfig{
+				CNIExclusive: ptr.Bool(false),
+			},
+			Equal: false,
+		},
+		{
+			Name: "CNIExclusive false vs true",
+			A: &v1alpha1.CiliumConfig{
+				CNIExclusive: ptr.Bool(false),
+			},
+			B: &v1alpha1.CiliumConfig{
+				CNIExclusive: ptr.Bool(true),
+			},
+			Equal: false,
+		},
+		{
+			Name: "CNIExclusive with other fields equal",
+			A: &v1alpha1.CiliumConfig{
+				PolicyEnforcementMode:      "always",
+				EgressMasqueradeInterfaces: "eth0",
+				CNIExclusive:               ptr.Bool(true),
+			},
+			B: &v1alpha1.CiliumConfig{
+				PolicyEnforcementMode:      "always",
+				EgressMasqueradeInterfaces: "eth0",
+				CNIExclusive:               ptr.Bool(true),
+			},
+			Equal: true,
+		},
+		{
+			Name: "CNIExclusive with other fields equal but CNIExclusive different",
+			A: &v1alpha1.CiliumConfig{
+				PolicyEnforcementMode:      "always",
+				EgressMasqueradeInterfaces: "eth0",
+				CNIExclusive:               ptr.Bool(true),
+			},
+			B: &v1alpha1.CiliumConfig{
+				PolicyEnforcementMode:      "always",
+				EgressMasqueradeInterfaces: "eth0",
+				CNIExclusive:               ptr.Bool(false),
+			},
+			Equal: false,
+		},
 	}
 
 	for _, tc := range tests {

@@ -27,6 +27,14 @@ const (
 	// EgressMasqueradeInterfacesComponentName is the ConfigComponentUpdatePlan name for the
 	// egressMasqueradeInterfaces configuration component.
 	EgressMasqueradeInterfacesComponentName = "EgressMasqueradeInterfaces"
+
+	// CniExclusiveConfigMapKey is the key used in the "cilium-config" ConfigMap to
+	// store the value for the CniExclusive.
+	CniExclusiveConfigMapKey = "cni-exclusive"
+
+	// CniExclusiveComponentName is the ConfigComponentUpdatePlan name for the
+	// CniExclusive configuration component.
+	CniExclusiveComponentName = "CniExclusive"
 )
 
 // UpgradePlan contains information about a Cilium installation upgrade.
@@ -246,6 +254,38 @@ func configMapUpgradePlan(configMap *corev1.ConfigMap, clusterSpec *cluster.Spec
 	}
 
 	updatePlan.Components = append(updatePlan.Components, egressMasqueradeUpdate)
+
+	// Check for cniExclusive parameter changes
+	var newCniExclusive string
+	if clusterSpec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.CNIExclusive == nil {
+		newCniExclusive = "true" // Default value when not specified
+	} else if *clusterSpec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.CNIExclusive {
+		newCniExclusive = "true"
+	} else {
+		newCniExclusive = "false"
+	}
+
+	cniExclusiveUpdate := ConfigComponentUpdatePlan{
+		Name:     CniExclusiveComponentName,
+		NewValue: newCniExclusive,
+	}
+
+	if configMap == nil {
+		updatePlan.UpdateReason = "Cilium config doesn't exist"
+	} else if val, ok := configMap.Data[CniExclusiveConfigMapKey]; ok && val != "" {
+		cniExclusiveUpdate.OldValue = val
+		if cniExclusiveUpdate.OldValue != cniExclusiveUpdate.NewValue {
+			cniExclusiveUpdate.UpdateReason = fmt.Sprintf("Cilium cni-exclusive changed: [%s] -> [%s]", cniExclusiveUpdate.OldValue, cniExclusiveUpdate.NewValue)
+		}
+	} else {
+		// If the field is not present in the config, assume the default value of "true"
+		cniExclusiveUpdate.OldValue = "true"
+		if cniExclusiveUpdate.OldValue != cniExclusiveUpdate.NewValue {
+			cniExclusiveUpdate.UpdateReason = fmt.Sprintf("Cilium cni-exclusive changed: [%s] -> [%s]", cniExclusiveUpdate.OldValue, cniExclusiveUpdate.NewValue)
+		}
+	}
+
+	updatePlan.Components = append(updatePlan.Components, cniExclusiveUpdate)
 
 	updatePlan.generateUpdateReasonFromComponents()
 
