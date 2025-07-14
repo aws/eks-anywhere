@@ -97,21 +97,23 @@ func (l *LinuxRenewer) CopyEtcdCerts(
 	node string,
 	ssh SSHRunner,
 ) error {
-	readFile := func(file string) (string, error) {
-		return ssh.RunCommand(ctx, node,
-			fmt.Sprintf("sudo cat %s", filepath.Join(linuxEtcdCertDir, file)))
-	}
-
-	certificateContent, err := readFile("pki/apiserver-etcd-client.crt")
+	certificatePath := filepath.Join(linuxEtcdCertDir, "pki", "apiserver-etcd-client.crt")
+	certificateContent, err := ssh.RunCommand(ctx, node, fmt.Sprintf("sudo cat %s", certificatePath))
 	if err != nil {
 		return fmt.Errorf("reading etcd certificate file: %v", err)
 	}
-	keyContent, err := readFile("pki/apiserver-etcd-client.key")
+
+	if len(certificateContent) == 0 {
+		return fmt.Errorf("etcd certificate file is empty")
+	}
+
+	keyFilePath := filepath.Join(linuxEtcdCertDir, "pki", "apiserver-etcd-client.key")
+	keyContent, err := ssh.RunCommand(ctx, node, fmt.Sprintf("sudo cat %s", keyFilePath))
 	if err != nil {
 		return fmt.Errorf("reading etcd key file: %v", err)
 	}
-	if certificateContent == "" || keyContent == "" {
-		return fmt.Errorf("etcd client cert or key is empty")
+	if len(keyContent) == 0 {
+		return fmt.Errorf("etcd key file is empty")
 	}
 
 	localCertificateDir := filepath.Join(l.backup, tempLocalEtcdCertsDir)
