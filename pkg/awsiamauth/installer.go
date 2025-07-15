@@ -114,10 +114,6 @@ func (i *Installer) generateCertKeyPairSecret(managementClusterName string) ([]b
 	return i.templateBuilder.GenerateCertKeyPairSecret(i.certgen, managementClusterName)
 }
 
-func (i *Installer) generateInstallerKubeconfig(clusterSpec *cluster.Spec, serverURL, tlsCert string) ([]byte, error) {
-	return i.templateBuilder.GenerateKubeconfig(clusterSpec, i.clusterID, serverURL, tlsCert)
-}
-
 // GenerateWorkloadKubeconfig generates the AWS IAM auth kubeconfig.
 func (i *Installer) GenerateWorkloadKubeconfig(
 	ctx context.Context,
@@ -126,12 +122,18 @@ func (i *Installer) GenerateWorkloadKubeconfig(
 ) error {
 	fileName := fmt.Sprintf("%s-aws.kubeconfig", workload.Name)
 
-	serverURL, err := i.k8s.GetAPIServerURL(ctx, workload)
+	fsOptions := []filewriter.FileOptionsFunc{filewriter.PersistentFile, filewriter.Permission0600}
+	fh, path, err := i.writer.Create(
+		fileName,
+		fsOptions...,
+	)
 	if err != nil {
-		return fmt.Errorf("generating aws-iam-authenticator kubeconfig: %v", err)
+		return err
 	}
 
-	tlsCert, err := i.k8s.GetClusterCACert(
+	defer fh.Close()
+
+	decodedKubeconfigSecretValue, err := i.k8s.GetAWSIAMKubeconfigSecretValue(
 		ctx,
 		management,
 		workload.Name,
@@ -140,23 +142,12 @@ func (i *Installer) GenerateWorkloadKubeconfig(
 		return fmt.Errorf("generating aws-iam-authenticator kubeconfig: %v", err)
 	}
 
-	awsIamAuthKubeconfigContent, err := i.generateInstallerKubeconfig(spec, serverURL, string(tlsCert))
+	err = i.kubeconfigWriter.WriteKubeconfigContent(ctx, workload.Name, decodedKubeconfigSecretValue, fh)
 	if err != nil {
-		return fmt.Errorf("generating aws-iam-authenticator kubeconfig: %v", err)
+		return fmt.Errorf("writing aws-iam-authenticator kubeconfig to %s: %v", path, err)
 	}
 
-	writtenFile, err := i.writer.Write(
-		fileName,
-		awsIamAuthKubeconfigContent,
-		filewriter.PersistentFile,
-		filewriter.Permission0600,
-	)
-	if err != nil {
-		return fmt.Errorf("writing aws-iam-authenticator kubeconfig to %s: %v", writtenFile, err)
-	}
-
-	logger.V(3).Info("Generated aws-iam-authenticator kubeconfig", "kubeconfig", writtenFile)
-
+	logger.V(3).Info("Generated aws-iam-authenticator kubeconfig", "kubeconfig", path)
 	return nil
 }
 
