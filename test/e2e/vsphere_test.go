@@ -79,51 +79,6 @@ func TestVSphereKubernetes128BottlerocketAutoimport(t *testing.T) {
 	runAutoImportFlow(test, provider)
 }
 
-func TestVSphereKubernetes129BottlerocketAutoimport(t *testing.T) {
-	provider := framework.NewVSphere(t,
-		framework.WithVSphereFillers(
-			api.WithTemplateForAllMachines(""),
-			api.WithOsFamilyForAllMachines(v1alpha1.Bottlerocket),
-		),
-	)
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
-	)
-	runAutoImportFlow(test, provider)
-}
-
-func TestVSphereKubernetes130BottlerocketAutoimport(t *testing.T) {
-	provider := framework.NewVSphere(t,
-		framework.WithVSphereFillers(
-			api.WithTemplateForAllMachines(""),
-			api.WithOsFamilyForAllMachines(v1alpha1.Bottlerocket),
-		),
-	)
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130)),
-	)
-	runAutoImportFlow(test, provider)
-}
-
-func TestVSphereKubernetes131BottlerocketAutoimport(t *testing.T) {
-	provider := framework.NewVSphere(t,
-		framework.WithVSphereFillers(
-			api.WithTemplateForAllMachines(""),
-			api.WithOsFamilyForAllMachines(v1alpha1.Bottlerocket),
-		),
-	)
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube131)),
-	)
-	runAutoImportFlow(test, provider)
-}
-
 func TestVSphereKubernetes132BottlerocketAutoimport(t *testing.T) {
 	provider := framework.NewVSphere(t,
 		framework.WithVSphereFillers(
@@ -2720,63 +2675,6 @@ func TestVSphereKubernetes128FullClone(t *testing.T) {
 	runVSphereCloneModeFlow(test, vsphere, diskSize)
 }
 
-func TestVSphereKubernetes129FullClone(t *testing.T) {
-	diskSize := 30
-	vsphere := framework.NewVSphere(t,
-		framework.WithUbuntu129(),
-		framework.WithFullCloneMode(),
-		framework.WithDiskGiBForAllMachines(diskSize),
-	)
-
-	test := framework.NewClusterE2ETest(
-		t,
-		vsphere,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-	)
-	runVSphereCloneModeFlow(test, vsphere, diskSize)
-}
-
-func TestVSphereKubernetes130FullClone(t *testing.T) {
-	diskSize := 30
-	vsphere := framework.NewVSphere(t,
-		framework.WithUbuntu130(),
-		framework.WithFullCloneMode(),
-		framework.WithDiskGiBForAllMachines(diskSize),
-	)
-
-	test := framework.NewClusterE2ETest(
-		t,
-		vsphere,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-	)
-	runVSphereCloneModeFlow(test, vsphere, diskSize)
-}
-
-func TestVSphereKubernetes131FullClone(t *testing.T) {
-	diskSize := 30
-	vsphere := framework.NewVSphere(t,
-		framework.WithUbuntu131(),
-		framework.WithFullCloneMode(),
-		framework.WithDiskGiBForAllMachines(diskSize),
-	)
-
-	test := framework.NewClusterE2ETest(
-		t,
-		vsphere,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube131)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-	)
-	runVSphereCloneModeFlow(test, vsphere, diskSize)
-}
-
 func TestVSphereKubernetes132FullClone(t *testing.T) {
 	diskSize := 30
 	vsphere := framework.NewVSphere(t,
@@ -2808,63 +2706,6 @@ func TestVSphereKubernetes128LinkedClone(t *testing.T) {
 		t,
 		vsphere,
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-	)
-	runVSphereCloneModeFlow(test, vsphere, diskSize)
-}
-
-func TestVSphereKubernetes129LinkedClone(t *testing.T) {
-	diskSize := 20
-	vsphere := framework.NewVSphere(t,
-		framework.WithUbuntu129(),
-		framework.WithLinkedCloneMode(),
-		framework.WithDiskGiBForAllMachines(diskSize),
-	)
-
-	test := framework.NewClusterE2ETest(
-		t,
-		vsphere,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-	)
-	runVSphereCloneModeFlow(test, vsphere, diskSize)
-}
-
-func TestVSphereKubernetes130LinkedClone(t *testing.T) {
-	diskSize := 20
-	vsphere := framework.NewVSphere(t,
-		framework.WithUbuntu130(),
-		framework.WithLinkedCloneMode(),
-		framework.WithDiskGiBForAllMachines(diskSize),
-	)
-
-	test := framework.NewClusterE2ETest(
-		t,
-		vsphere,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-	)
-	runVSphereCloneModeFlow(test, vsphere, diskSize)
-}
-
-func TestVSphereKubernetes131LinkedClone(t *testing.T) {
-	diskSize := 20
-	vsphere := framework.NewVSphere(t,
-		framework.WithUbuntu131(),
-		framework.WithLinkedCloneMode(),
-		framework.WithDiskGiBForAllMachines(diskSize),
-	)
-
-	test := framework.NewClusterE2ETest(
-		t,
-		vsphere,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube131)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
@@ -2910,63 +2751,6 @@ func TestVSphereKubernetes128BottlerocketFullClone(t *testing.T) {
 	runVSphereCloneModeFlow(test, vsphere, diskSize)
 }
 
-func TestVSphereKubernetes129BottlerocketFullClone(t *testing.T) {
-	diskSize := 30
-	vsphere := framework.NewVSphere(t,
-		framework.WithBottleRocket129(),
-		framework.WithFullCloneMode(),
-		framework.WithDiskGiBForAllMachines(diskSize),
-	)
-
-	test := framework.NewClusterE2ETest(
-		t,
-		vsphere,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-	)
-	runVSphereCloneModeFlow(test, vsphere, diskSize)
-}
-
-func TestVSphereKubernetes130BottlerocketFullClone(t *testing.T) {
-	diskSize := 30
-	vsphere := framework.NewVSphere(t,
-		framework.WithBottleRocket130(),
-		framework.WithFullCloneMode(),
-		framework.WithDiskGiBForAllMachines(diskSize),
-	)
-
-	test := framework.NewClusterE2ETest(
-		t,
-		vsphere,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-	)
-	runVSphereCloneModeFlow(test, vsphere, diskSize)
-}
-
-func TestVSphereKubernetes131BottlerocketFullClone(t *testing.T) {
-	diskSize := 30
-	vsphere := framework.NewVSphere(t,
-		framework.WithBottleRocket131(),
-		framework.WithFullCloneMode(),
-		framework.WithDiskGiBForAllMachines(diskSize),
-	)
-
-	test := framework.NewClusterE2ETest(
-		t,
-		vsphere,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube131)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-	)
-	runVSphereCloneModeFlow(test, vsphere, diskSize)
-}
-
 func TestVSphereKubernetes132BottlerocketFullClone(t *testing.T) {
 	diskSize := 30
 	vsphere := framework.NewVSphere(t,
@@ -2998,63 +2782,6 @@ func TestVSphereKubernetes128BottlerocketLinkedClone(t *testing.T) {
 		t,
 		vsphere,
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-	)
-	runVSphereCloneModeFlow(test, vsphere, diskSize)
-}
-
-func TestVSphereKubernetes129BottlerocketLinkedClone(t *testing.T) {
-	diskSize := 22
-	vsphere := framework.NewVSphere(t,
-		framework.WithBottleRocket129(),
-		framework.WithLinkedCloneMode(),
-		framework.WithDiskGiBForAllMachines(diskSize),
-	)
-
-	test := framework.NewClusterE2ETest(
-		t,
-		vsphere,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-	)
-	runVSphereCloneModeFlow(test, vsphere, diskSize)
-}
-
-func TestVSphereKubernetes130BottlerocketLinkedClone(t *testing.T) {
-	diskSize := 22
-	vsphere := framework.NewVSphere(t,
-		framework.WithBottleRocket130(),
-		framework.WithLinkedCloneMode(),
-		framework.WithDiskGiBForAllMachines(diskSize),
-	)
-
-	test := framework.NewClusterE2ETest(
-		t,
-		vsphere,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-	)
-	runVSphereCloneModeFlow(test, vsphere, diskSize)
-}
-
-func TestVSphereKubernetes131BottlerocketLinkedClone(t *testing.T) {
-	diskSize := 22
-	vsphere := framework.NewVSphere(t,
-		framework.WithBottleRocket131(),
-		framework.WithLinkedCloneMode(),
-		framework.WithDiskGiBForAllMachines(diskSize),
-	)
-
-	test := framework.NewClusterE2ETest(
-		t,
-		vsphere,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube131)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
@@ -3567,45 +3294,6 @@ func TestVSphereKubernetes128BottleRocketWithNTP(t *testing.T) {
 	runNTPFlow(test, v1alpha1.Bottlerocket)
 }
 
-func TestVSphereKubernetes129BottleRocketWithNTP(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewVSphere(
-			t, framework.WithBottleRocket129(),
-			framework.WithNTPServersForAllMachines(),
-			framework.WithSSHAuthorizedKeyForAllMachines(""), // set SSH key to empty
-		),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
-	)
-	runNTPFlow(test, v1alpha1.Bottlerocket)
-}
-
-func TestVSphereKubernetes130BottleRocketWithNTP(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewVSphere(
-			t, framework.WithBottleRocket130(),
-			framework.WithNTPServersForAllMachines(),
-			framework.WithSSHAuthorizedKeyForAllMachines(""), // set SSH key to empty
-		),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130)),
-	)
-	runNTPFlow(test, v1alpha1.Bottlerocket)
-}
-
-func TestVSphereKubernetes131BottleRocketWithNTP(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewVSphere(
-			t, framework.WithBottleRocket131(),
-			framework.WithNTPServersForAllMachines(),
-			framework.WithSSHAuthorizedKeyForAllMachines(""), // set SSH key to empty
-		),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube131)),
-	)
-	runNTPFlow(test, v1alpha1.Bottlerocket)
-}
-
 func TestVSphereKubernetes132BottleRocketWithNTP(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -3628,45 +3316,6 @@ func TestVSphereKubernetes128UbuntuWithNTP(t *testing.T) {
 			framework.WithSSHAuthorizedKeyForAllMachines(""), // set SSH key to empty
 		),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
-	)
-	runNTPFlow(test, v1alpha1.Ubuntu)
-}
-
-func TestVSphereKubernetes129UbuntuWithNTP(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewVSphere(
-			t, framework.WithUbuntu129(),
-			framework.WithNTPServersForAllMachines(),
-			framework.WithSSHAuthorizedKeyForAllMachines(""), // set SSH key to empty
-		),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
-	)
-	runNTPFlow(test, v1alpha1.Ubuntu)
-}
-
-func TestVSphereKubernetes130UbuntuWithNTP(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewVSphere(
-			t, framework.WithUbuntu130(),
-			framework.WithNTPServersForAllMachines(),
-			framework.WithSSHAuthorizedKeyForAllMachines(""), // set SSH key to empty
-		),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130)),
-	)
-	runNTPFlow(test, v1alpha1.Ubuntu)
-}
-
-func TestVSphereKubernetes131UbuntuWithNTP(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewVSphere(
-			t, framework.WithUbuntu131(),
-			framework.WithNTPServersForAllMachines(),
-			framework.WithSSHAuthorizedKeyForAllMachines(""), // set SSH key to empty
-		),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube131)),
 	)
 	runNTPFlow(test, v1alpha1.Ubuntu)
 }
@@ -3823,84 +3472,6 @@ func TestVSphereKubernetes128UbuntuTaintsUpgradeFlow(t *testing.T) {
 	)
 }
 
-func TestVSphereKubernetes129UbuntuTaintsUpgradeFlow(t *testing.T) {
-	provider := ubuntu129ProviderWithTaints(t)
-
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube129),
-			api.WithExternalEtcdTopology(1),
-			api.WithControlPlaneCount(1),
-			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
-		),
-	)
-
-	runTaintsUpgradeFlow(
-		test,
-		v1alpha1.Kube129,
-		framework.WithClusterUpgrade(
-			api.WithWorkerNodeGroup(worker0, api.WithTaint(framework.NoExecuteTaint())),
-			api.WithWorkerNodeGroup(worker1, api.WithTaint(framework.NoExecuteTaint())),
-			api.WithWorkerNodeGroup(worker2, api.WithNoTaints()),
-			api.WithControlPlaneTaints([]corev1.Taint{framework.PreferNoScheduleTaint()}),
-		),
-	)
-}
-
-func TestVSphereKubernetes130UbuntuTaintsUpgradeFlow(t *testing.T) {
-	provider := ubuntu130ProviderWithTaints(t)
-
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube130),
-			api.WithExternalEtcdTopology(1),
-			api.WithControlPlaneCount(1),
-			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
-		),
-	)
-
-	runTaintsUpgradeFlow(
-		test,
-		v1alpha1.Kube130,
-		framework.WithClusterUpgrade(
-			api.WithWorkerNodeGroup(worker0, api.WithTaint(framework.NoExecuteTaint())),
-			api.WithWorkerNodeGroup(worker1, api.WithTaint(framework.NoExecuteTaint())),
-			api.WithWorkerNodeGroup(worker2, api.WithNoTaints()),
-			api.WithControlPlaneTaints([]corev1.Taint{framework.PreferNoScheduleTaint()}),
-		),
-	)
-}
-
-func TestVSphereKubernetes131UbuntuTaintsUpgradeFlow(t *testing.T) {
-	provider := ubuntu131ProviderWithTaints(t)
-
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube131),
-			api.WithExternalEtcdTopology(1),
-			api.WithControlPlaneCount(1),
-			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
-		),
-	)
-
-	runTaintsUpgradeFlow(
-		test,
-		v1alpha1.Kube131,
-		framework.WithClusterUpgrade(
-			api.WithWorkerNodeGroup(worker0, api.WithTaint(framework.NoExecuteTaint())),
-			api.WithWorkerNodeGroup(worker1, api.WithTaint(framework.NoExecuteTaint())),
-			api.WithWorkerNodeGroup(worker2, api.WithNoTaints()),
-			api.WithControlPlaneTaints([]corev1.Taint{framework.PreferNoScheduleTaint()}),
-		),
-	)
-}
-
 func TestVSphereKubernetes132UbuntuTaintsUpgradeFlow(t *testing.T) {
 	provider := ubuntu132ProviderWithTaints(t)
 
@@ -3944,84 +3515,6 @@ func TestVSphereKubernetes128BottlerocketTaintsUpgradeFlow(t *testing.T) {
 	runTaintsUpgradeFlow(
 		test,
 		v1alpha1.Kube128,
-		framework.WithClusterUpgrade(
-			api.WithWorkerNodeGroup(worker0, api.WithTaint(framework.NoExecuteTaint())),
-			api.WithWorkerNodeGroup(worker1, api.WithTaint(framework.NoExecuteTaint())),
-			api.WithWorkerNodeGroup(worker2, api.WithNoTaints()),
-			api.WithControlPlaneTaints([]corev1.Taint{framework.PreferNoScheduleTaint()}),
-		),
-	)
-}
-
-func TestVSphereKubernetes129BottlerocketTaintsUpgradeFlow(t *testing.T) {
-	provider := bottlerocket129ProviderWithTaints(t)
-
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube129),
-			api.WithExternalEtcdTopology(1),
-			api.WithControlPlaneCount(1),
-			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
-		),
-	)
-
-	runTaintsUpgradeFlow(
-		test,
-		v1alpha1.Kube129,
-		framework.WithClusterUpgrade(
-			api.WithWorkerNodeGroup(worker0, api.WithTaint(framework.NoExecuteTaint())),
-			api.WithWorkerNodeGroup(worker1, api.WithTaint(framework.NoExecuteTaint())),
-			api.WithWorkerNodeGroup(worker2, api.WithNoTaints()),
-			api.WithControlPlaneTaints([]corev1.Taint{framework.PreferNoScheduleTaint()}),
-		),
-	)
-}
-
-func TestVSphereKubernetes130BottlerocketTaintsUpgradeFlow(t *testing.T) {
-	provider := bottlerocket130ProviderWithTaints(t)
-
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube130),
-			api.WithExternalEtcdTopology(1),
-			api.WithControlPlaneCount(1),
-			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
-		),
-	)
-
-	runTaintsUpgradeFlow(
-		test,
-		v1alpha1.Kube130,
-		framework.WithClusterUpgrade(
-			api.WithWorkerNodeGroup(worker0, api.WithTaint(framework.NoExecuteTaint())),
-			api.WithWorkerNodeGroup(worker1, api.WithTaint(framework.NoExecuteTaint())),
-			api.WithWorkerNodeGroup(worker2, api.WithNoTaints()),
-			api.WithControlPlaneTaints([]corev1.Taint{framework.PreferNoScheduleTaint()}),
-		),
-	)
-}
-
-func TestVSphereKubernetes131BottlerocketTaintsUpgradeFlow(t *testing.T) {
-	provider := bottlerocket131ProviderWithTaints(t)
-
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube131),
-			api.WithExternalEtcdTopology(1),
-			api.WithControlPlaneCount(1),
-			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
-		),
-	)
-
-	runTaintsUpgradeFlow(
-		test,
-		v1alpha1.Kube131,
 		framework.WithClusterUpgrade(
 			api.WithWorkerNodeGroup(worker0, api.WithTaint(framework.NoExecuteTaint())),
 			api.WithWorkerNodeGroup(worker1, api.WithTaint(framework.NoExecuteTaint())),
@@ -7028,69 +6521,6 @@ func TestVSphereKubernetesUbuntu128EtcdEncryption(t *testing.T) {
 	test.DeleteCluster()
 }
 
-func TestVSphereKubernetesUbuntu129EtcdEncryption(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewVSphere(t, framework.WithUbuntu129()),
-		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube129),
-			api.WithExternalEtcdTopology(1),
-			api.WithControlPlaneCount(1),
-		),
-		framework.WithPodIamConfig(),
-	)
-	test.OSFamily = v1alpha1.Ubuntu
-	test.GenerateClusterConfig()
-	test.CreateCluster()
-	test.PostClusterCreateEtcdEncryptionSetup()
-	test.UpgradeClusterWithNewConfig([]framework.ClusterE2ETestOpt{framework.WithEtcdEncrytion()})
-	test.StopIfFailed()
-	test.ValidateEtcdEncryption()
-	test.DeleteCluster()
-}
-
-func TestVSphereKubernetesUbuntu130EtcdEncryption(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewVSphere(t, framework.WithUbuntu130()),
-		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube130),
-			api.WithExternalEtcdTopology(1),
-			api.WithControlPlaneCount(1),
-		),
-		framework.WithPodIamConfig(),
-	)
-	test.OSFamily = v1alpha1.Ubuntu
-	test.GenerateClusterConfig()
-	test.CreateCluster()
-	test.PostClusterCreateEtcdEncryptionSetup()
-	test.UpgradeClusterWithNewConfig([]framework.ClusterE2ETestOpt{framework.WithEtcdEncrytion()})
-	test.StopIfFailed()
-	test.ValidateEtcdEncryption()
-	test.DeleteCluster()
-}
-
-func TestVSphereKubernetesUbuntu131EtcdEncryption(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewVSphere(t, framework.WithUbuntu131()),
-		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube131),
-			api.WithExternalEtcdTopology(1),
-			api.WithControlPlaneCount(1),
-		),
-		framework.WithPodIamConfig(),
-	)
-	test.OSFamily = v1alpha1.Ubuntu
-	test.GenerateClusterConfig()
-	test.CreateCluster()
-	test.PostClusterCreateEtcdEncryptionSetup()
-	test.UpgradeClusterWithNewConfig([]framework.ClusterE2ETestOpt{framework.WithEtcdEncrytion()})
-	test.StopIfFailed()
-	test.ValidateEtcdEncryption()
-	test.DeleteCluster()
-}
-
 func TestVSphereKubernetesUbuntu132EtcdEncryption(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -7118,66 +6548,6 @@ func TestVSphereKubernetesBottlerocket128EtcdEncryption(t *testing.T) {
 		framework.NewVSphere(t, framework.WithBottleRocket128()),
 		framework.WithClusterFiller(
 			api.WithKubernetesVersion(v1alpha1.Kube128),
-			api.WithExternalEtcdTopology(1),
-			api.WithControlPlaneCount(1),
-		),
-		framework.WithPodIamConfig(),
-	)
-	test.OSFamily = v1alpha1.Bottlerocket
-	test.GenerateClusterConfig()
-	test.CreateCluster()
-	test.PostClusterCreateEtcdEncryptionSetup()
-	test.UpgradeClusterWithNewConfig([]framework.ClusterE2ETestOpt{framework.WithEtcdEncrytion()})
-	test.StopIfFailed()
-	test.DeleteCluster()
-}
-
-func TestVSphereKubernetesBottlerocket129EtcdEncryption(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewVSphere(t, framework.WithBottleRocket129()),
-		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube129),
-			api.WithExternalEtcdTopology(1),
-			api.WithControlPlaneCount(1),
-		),
-		framework.WithPodIamConfig(),
-	)
-	test.OSFamily = v1alpha1.Bottlerocket
-	test.GenerateClusterConfig()
-	test.CreateCluster()
-	test.PostClusterCreateEtcdEncryptionSetup()
-	test.UpgradeClusterWithNewConfig([]framework.ClusterE2ETestOpt{framework.WithEtcdEncrytion()})
-	test.StopIfFailed()
-	test.DeleteCluster()
-}
-
-func TestVSphereKubernetesBottlerocket130EtcdEncryption(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewVSphere(t, framework.WithBottleRocket130()),
-		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube130),
-			api.WithExternalEtcdTopology(1),
-			api.WithControlPlaneCount(1),
-		),
-		framework.WithPodIamConfig(),
-	)
-	test.OSFamily = v1alpha1.Bottlerocket
-	test.GenerateClusterConfig()
-	test.CreateCluster()
-	test.PostClusterCreateEtcdEncryptionSetup()
-	test.UpgradeClusterWithNewConfig([]framework.ClusterE2ETestOpt{framework.WithEtcdEncrytion()})
-	test.StopIfFailed()
-	test.DeleteCluster()
-}
-
-func TestVSphereKubernetesBottlerocket131EtcdEncryption(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewVSphere(t, framework.WithBottleRocket131()),
-		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube131),
 			api.WithExternalEtcdTopology(1),
 			api.WithControlPlaneCount(1),
 		),
