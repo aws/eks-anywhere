@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/google/uuid"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/aws"
@@ -896,8 +895,6 @@ func (f *Factory) WithAwsIamAuth(clusterConfig *v1alpha1.Cluster) *Factory {
 		if f.dependencies.AwsIamAuth != nil {
 			return nil
 		}
-		certgen := crypto.NewCertificateGenerator()
-		clusterId := uuid.New()
 
 		var opts []awsiamauth.RetrierClientOpt
 		if f.config.noTimeouts {
@@ -905,8 +902,6 @@ func (f *Factory) WithAwsIamAuth(clusterConfig *v1alpha1.Cluster) *Factory {
 		}
 
 		f.dependencies.AwsIamAuth = awsiamauth.NewInstaller(
-			certgen,
-			clusterId,
 			awsiamauth.NewRetrierClient(f.dependencies.Kubectl, opts...),
 			f.dependencies.Writer,
 			f.dependencies.KubeconfigWriter,
