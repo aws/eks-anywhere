@@ -83,6 +83,12 @@ func (r *Renewer) RenewCertificates(ctx context.Context, cfg *RenewalConfig, com
 		}
 	}
 
+	if processEtcd {
+		if err := r.updateAPIServerEtcdClientSecret(ctx, cfg.ClusterName); err != nil {
+			return err
+		}
+	}
+
 	logger.MarkSuccess("Successfully renewed cluster certificates")
 	r.cleanup()
 	return nil
@@ -100,10 +106,6 @@ func (r *Renewer) renewEtcdCerts(ctx context.Context, cfg *RenewalConfig) error 
 
 	if err := r.os.CopyEtcdCerts(ctx, firstNode, r.sshEtcd); err != nil {
 		return fmt.Errorf("copying certificates from etcd node %s: %v", firstNode, err)
-	}
-
-	if err := r.updateAPIServerEtcdClientSecret(ctx, cfg.ClusterName); err != nil {
-		return err
 	}
 
 	logger.MarkPass("Etcd certificate renewal process completed successfully.")
@@ -166,11 +168,11 @@ func (r *Renewer) cleanup() {
 
 func (r *Renewer) validateRenewalConfig(
 	cfg *RenewalConfig,
-	component string,
+	_ string,
 ) (processEtcd, processControlPlane bool, err error) {
-	processEtcd = shouldProcessComponent(component, constants.EtcdComponent) &&
-		len(cfg.Etcd.Nodes) > 0
-	processControlPlane = shouldProcessComponent(component, constants.ControlPlaneComponent)
+
+	processEtcd = len(cfg.Etcd.Nodes) > 0
+	processControlPlane = true
 
 	return processEtcd, processControlPlane, nil
 }
