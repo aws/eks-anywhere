@@ -37,18 +37,18 @@ func TestInstallAWSIAMAuth(t *testing.T) {
 			return nil
 		},
 	)
-	k8s.EXPECT().GetAPIServerURL(gomock.Any(), gomock.Any()).Return("api-server-url", nil)
-	k8s.EXPECT().GetClusterCACert(gomock.Any(), gomock.Any(), gomock.Any()).Return([]byte("ca-cert"), nil)
+	secretValue := []byte("kubeconfig-content")
+	k8s.EXPECT().GetAWSIAMKubeconfigSecretValue(gomock.Any(), gomock.Any(), gomock.Any()).Return(secretValue, nil)
 
-	var kubeconfig []byte
 	writer := filewritermock.NewMockFileWriter(ctrl)
 	kwriter := kubeconfigmocks.NewMockWriter(ctrl)
-	writer.EXPECT().Write(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
-		func(fileName string, content []byte, f ...filewriter.FileOptionsFunc) (string, error) {
-			kubeconfig = content
-			return "some file", nil
-		},
-	)
+	workloadCluster := &types.Cluster{Name: "test-cluster"}
+	fileName := "test-cluster-aws.kubeconfig"
+	path := "some file"
+	fileWriter := os.NewFile(uintptr(*pointer.Uint(0)), "test")
+
+	writer.EXPECT().Create(fileName, gomock.AssignableToTypeOf([]filewriter.FileOptionsFunc{})).Return(fileWriter, path, nil)
+	kwriter.EXPECT().WriteKubeconfigContent(gomock.Any(), gomock.Any(), secretValue, fileWriter).Return(nil)
 
 	spec := &cluster.Spec{
 		Config: &cluster.Config{
@@ -87,12 +87,11 @@ func TestInstallAWSIAMAuth(t *testing.T) {
 
 	installer := awsiamauth.NewInstaller(certs, clusterID, k8s, writer, kwriter)
 
-	err := installer.InstallAWSIAMAuth(context.Background(), &types.Cluster{}, &types.Cluster{}, spec)
+	err := installer.InstallAWSIAMAuth(context.Background(), &types.Cluster{}, workloadCluster, spec)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	test.AssertContentToFile(t, string(kubeconfig), "testdata/InstallAWSIAMAuth-kubeconfig.yaml")
 	test.AssertContentToFile(t, string(manifest), "testdata/InstallAWSIAMAuth-manifest.yaml")
 }
 
@@ -108,27 +107,29 @@ func TestInstallAWSIAMAuthErrors(t *testing.T) {
 			},
 		},
 		{
-			Name: "GetAPIServerURLFails",
+			Name: "GetAWSIAMKubeconfigSecretValueFails",
 			ConfigureMocks: func(err error, k8s *MockKubernetesClient, writer *filewritermock.MockFileWriter) {
 				k8s.EXPECT().Apply(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
-				k8s.EXPECT().GetAPIServerURL(gomock.Any(), gomock.Any()).Return("", err)
+				fileWriter := os.NewFile(uintptr(*pointer.Uint(0)), "test")
+				writer.EXPECT().Create(gomock.Any(), gomock.Any()).Return(fileWriter, "", nil)
+				k8s.EXPECT().GetAWSIAMKubeconfigSecretValue(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, err)
 			},
 		},
 		{
-			Name: "GetClusterCACertFails",
+			Name: "CreateFails",
 			ConfigureMocks: func(err error, k8s *MockKubernetesClient, writer *filewritermock.MockFileWriter) {
 				k8s.EXPECT().Apply(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
-				k8s.EXPECT().GetAPIServerURL(gomock.Any(), gomock.Any()).Return("api-server-url", nil)
-				k8s.EXPECT().GetClusterCACert(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, err)
+				writer.EXPECT().Create(gomock.Any(), gomock.Any()).Return(nil, "", err)
 			},
 		},
 		{
-			Name: "WriteFails",
+			Name: "WriteKubeconfigContentFails",
 			ConfigureMocks: func(err error, k8s *MockKubernetesClient, writer *filewritermock.MockFileWriter) {
 				k8s.EXPECT().Apply(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
-				k8s.EXPECT().GetAPIServerURL(gomock.Any(), gomock.Any()).Return("api-server-url", nil)
-				k8s.EXPECT().GetClusterCACert(gomock.Any(), gomock.Any(), gomock.Any()).Return([]byte("ca-cert"), nil)
-				writer.EXPECT().Write(gomock.Any(), gomock.Any(), gomock.Any()).Return("", err)
+				secretValue := []byte("kubeconfig-content")
+				k8s.EXPECT().GetAWSIAMKubeconfigSecretValue(gomock.Any(), gomock.Any(), gomock.Any()).Return(secretValue, nil)
+				fileWriter := os.NewFile(uintptr(*pointer.Uint(0)), "test")
+				writer.EXPECT().Create(gomock.Any(), gomock.Any()).Return(fileWriter, "path", nil)
 			},
 		},
 	}
@@ -178,9 +179,12 @@ func TestInstallAWSIAMAuthErrors(t *testing.T) {
 				},
 			}
 			kwriter := kubeconfigmocks.NewMockWriter(ctrl)
+			if tc.Name == "WriteKubeconfigContentFails" {
+				kwriter.EXPECT().WriteKubeconfigContent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(errors.New(tc.Name))
+			}
 			installer := awsiamauth.NewInstaller(certs, clusterID, k8s, writer, kwriter)
 
-			err := installer.InstallAWSIAMAuth(context.Background(), &types.Cluster{}, &types.Cluster{}, spec)
+			err := installer.InstallAWSIAMAuth(context.Background(), &types.Cluster{}, &types.Cluster{Name: "test-cluster"}, spec)
 			if err == nil {
 				t.Fatal("expected error, got nil")
 			}
