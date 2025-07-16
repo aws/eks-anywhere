@@ -11,6 +11,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/types"
 )
 
 type renewCertificatesOptions struct {
@@ -47,10 +48,6 @@ func (rc *renewCertificatesOptions) renewCertificates(cmd *cobra.Command, _ []st
 		return err
 	}
 
-	if err := certificates.ValidateConfig(cfg, rc.component); err != nil {
-		return err
-	}
-
 	deps, err := dependencies.NewFactory().
 		WithExecutableBuilder().
 		WithKubectl().
@@ -63,6 +60,19 @@ func (rc *renewCertificatesOptions) renewCertificates(cmd *cobra.Command, _ []st
 	kubeCfgPath := kubeconfig.FromClusterName(cfg.ClusterName)
 
 	kubeClient := deps.UnAuthKubeClient.KubeconfigClient(kubeCfgPath)
+
+	cluster := &types.Cluster{
+		Name:           cfg.ClusterName,
+		KubeconfigFile: kubeCfgPath,
+	}
+
+	if err := certificates.PopulateConfig(ctx, cfg, kubeClient, cluster); err != nil {
+		return err
+	}
+
+	if err := certificates.ValidateConfig(cfg, rc.component); err != nil {
+		return err
+	}
 
 	os := cfg.OS
 	if os == string(v1alpha1.Ubuntu) || os == string(v1alpha1.RedHat) {
