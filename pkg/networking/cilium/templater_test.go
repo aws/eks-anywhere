@@ -214,6 +214,12 @@ func withUpgradeCompatibility(values map[string]interface{}, version string) {
 	values["upgradeCompatibility"] = version
 }
 
+// withCNIExclusive adds CNI exclusive configuration.
+func withCNIExclusive(values map[string]interface{}, exclusive bool) {
+	cni := values["cni"].(map[string]interface{})
+	cni["exclusive"] = exclusive
+}
+
 func TestTemplaterGenerateUpgradePreflightManifestSuccess(t *testing.T) {
 	t.Skip("Temporarily skipping, need to modify mapMatcher")
 	wantValues := baseTemplateValues()
@@ -255,6 +261,68 @@ func TestTemplaterGenerateManifestSuccess(t *testing.T) {
 	tt.expectHelmTemplateWith(eqMap(wantValues), "1.22").Return(tt.manifest, nil)
 
 	tt.Expect(tt.t.GenerateManifest(tt.ctx, tt.spec)).To(Equal(tt.manifest), "templater.GenerateManifest() should return right manifest")
+}
+
+func TestTemplaterGenerateManifestCNIExclusiveTrue(t *testing.T) {
+	wantValues := baseTemplateValues()
+	withCNIExclusive(wantValues, true)
+
+	tt := newtemplaterTest(t)
+	cniExclusiveTrue := true
+	tt.spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.CNIExclusive = &cniExclusiveTrue
+
+	tt.expectHelmClientFactoryGet("", "")
+	tt.expectHelmTemplateWith(eqMap(wantValues), "1.22").Return(tt.manifest, nil)
+
+	tt.Expect(tt.t.GenerateManifest(tt.ctx, tt.spec)).To(Equal(tt.manifest), "templater.GenerateManifest() should return right manifest")
+}
+
+func TestTemplaterGenerateManifestCNIExclusiveFalse(t *testing.T) {
+	wantValues := baseTemplateValues()
+	withCNIExclusive(wantValues, false)
+
+	tt := newtemplaterTest(t)
+	cniExclusiveFalse := false
+	tt.spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.CNIExclusive = &cniExclusiveFalse
+
+	tt.expectHelmClientFactoryGet("", "")
+	tt.expectHelmTemplateWith(eqMap(wantValues), "1.22").Return(tt.manifest, nil)
+
+	tt.Expect(tt.t.GenerateManifest(tt.ctx, tt.spec)).To(Equal(tt.manifest), "templater.GenerateManifest() should return right manifest")
+}
+
+func TestTemplaterGenerateManifestCNIExclusiveNil(t *testing.T) {
+	wantValues := baseTemplateValues()
+	// When CNIExclusive is nil, no cni.exclusive should be set
+
+	tt := newtemplaterTest(t)
+	tt.spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.CNIExclusive = nil
+
+	tt.expectHelmClientFactoryGet("", "")
+	tt.expectHelmTemplateWith(eqMap(wantValues), "1.22").Return(tt.manifest, nil)
+
+	tt.Expect(tt.t.GenerateManifest(tt.ctx, tt.spec)).To(Equal(tt.manifest), "templater.GenerateManifest() should return right manifest")
+}
+
+func TestTemplaterGenerateManifestCNIExclusiveWithOtherConfigs(t *testing.T) {
+	wantValues := baseTemplateValues()
+	withCNIExclusive(wantValues, false)
+	withPolicyEnforcementMode(wantValues, "always")
+	withEgressMasqueradeInterfaces(wantValues, "eth0")
+
+	tt := newtemplaterTest(t)
+	cniExclusiveFalse := false
+	tt.spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.CNIExclusive = &cniExclusiveFalse
+	tt.spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode = v1alpha1.CiliumPolicyModeAlways
+	tt.spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.EgressMasqueradeInterfaces = "eth0"
+
+	tt.expectHelmClientFactoryGet("", "")
+	tt.expectHelmTemplateWith(eqMap(wantValues), "1.22").Return(tt.manifest, nil)
+
+	gotManifest, err := tt.t.GenerateManifest(tt.ctx, tt.spec)
+	tt.Expect(err).NotTo(HaveOccurred())
+	// Since we have policy enforcement mode "always", network policy will be appended
+	tt.Expect(len(gotManifest)).To(BeNumerically(">", len(tt.manifest)))
 }
 
 func TestTemplaterGenerateManifestPolicyEnforcementModeSuccess(t *testing.T) {
