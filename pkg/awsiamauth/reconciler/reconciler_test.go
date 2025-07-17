@@ -369,3 +369,138 @@ func TestReconcileConfigMapNotFoundApplyError(t *testing.T) {
 	g.Expect(err).To(HaveOccurred())
 	g.Expect(result).To(Equal(controller.Result{}))
 }
+
+func TestReconcileWorkloadClusterDeleteSuccess(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	certs := cryptomocks.NewMockCertificateGenerator(ctrl)
+	generateUUID := uuid.New
+	remoteClientRegistry := reconcilermocks.NewMockRemoteClientRegistry(ctrl)
+
+	bundle := test.Bundle()
+	eksaRelease := test.EKSARelease()
+	eksdRelease := test.EksdRelease("1-22")
+	version := test.DevEksaVersion()
+	cluster := &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-cluster",
+			Namespace: "eksa-system",
+		},
+		Spec: anywherev1.ClusterSpec{
+			KubernetesVersion: "1.22",
+			BundlesRef: &anywherev1.BundlesRef{
+				Name:       bundle.Name,
+				Namespace:  bundle.Namespace,
+				APIVersion: bundle.APIVersion,
+			},
+			EksaVersion: &version,
+		},
+	}
+	awsiamconfig := &anywherev1.AWSIamConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "aws-config",
+			Namespace: "eksa-system",
+		},
+	}
+	objs := []runtime.Object{bundle, eksdRelease, awsiamconfig, eksaRelease}
+	cb := fake.NewClientBuilder()
+	scheme := runtime.NewScheme()
+	_ = anywherev1.AddToScheme(scheme)
+	_ = releasev1.AddToScheme(scheme)
+	_ = eksdv1.AddToScheme(scheme)
+	cl := cb.WithScheme(scheme).WithRuntimeObjects(objs...).Build()
+
+	// Mock remote client for workload cluster
+	rCb := fake.NewClientBuilder()
+	rCl := rCb.Build()
+	remoteClientRegistry.EXPECT().GetClient(ctx, gomock.AssignableToTypeOf(client.ObjectKey{})).Return(rCl, nil)
+
+	r := reconciler.New(certs, generateUUID, cl, remoteClientRegistry)
+	err := r.ReconcileWorkloadClusterDelete(ctx, nullLog(), cluster, awsiamconfig)
+	g.Expect(err).ToNot(HaveOccurred())
+}
+
+func TestReconcileWorkloadClusterDeleteBuildSpecError(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	certs := cryptomocks.NewMockCertificateGenerator(ctrl)
+	generateUUID := uuid.New
+	remoteClientRegistry := reconcilermocks.NewMockRemoteClientRegistry(ctrl)
+
+	cluster := &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-cluster",
+			Namespace: "eksa-system",
+		},
+		Spec: anywherev1.ClusterSpec{
+			KubernetesVersion: "1.22",
+		},
+	}
+	awsiamconfig := &anywherev1.AWSIamConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "aws-config",
+			Namespace: "eksa-system",
+		},
+	}
+
+	// Empty client to cause BuildSpec to fail
+	cb := fake.NewClientBuilder()
+	cl := cb.Build()
+
+	r := reconciler.New(certs, generateUUID, cl, remoteClientRegistry)
+	err := r.ReconcileWorkloadClusterDelete(ctx, nullLog(), cluster, awsiamconfig)
+	g.Expect(err).To(HaveOccurred())
+	g.Expect(err.Error()).To(ContainSubstring("building cluster spec for AWS IAM cleanup"))
+}
+
+func TestReconcileWorkloadClusterDeleteRemoteClientError(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	certs := cryptomocks.NewMockCertificateGenerator(ctrl)
+	generateUUID := uuid.New
+	remoteClientRegistry := reconcilermocks.NewMockRemoteClientRegistry(ctrl)
+
+	bundle := test.Bundle()
+	eksaRelease := test.EKSARelease()
+	eksdRelease := test.EksdRelease("1-22")
+	version := test.DevEksaVersion()
+	cluster := &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-cluster",
+			Namespace: "eksa-system",
+		},
+		Spec: anywherev1.ClusterSpec{
+			KubernetesVersion: "1.22",
+			BundlesRef: &anywherev1.BundlesRef{
+				Name:       bundle.Name,
+				Namespace:  bundle.Namespace,
+				APIVersion: bundle.APIVersion,
+			},
+			EksaVersion: &version,
+		},
+	}
+	awsiamconfig := &anywherev1.AWSIamConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "aws-config",
+			Namespace: "eksa-system",
+		},
+	}
+	objs := []runtime.Object{bundle, eksdRelease, awsiamconfig, eksaRelease}
+	cb := fake.NewClientBuilder()
+	scheme := runtime.NewScheme()
+	_ = anywherev1.AddToScheme(scheme)
+	_ = releasev1.AddToScheme(scheme)
+	_ = eksdv1.AddToScheme(scheme)
+	cl := cb.WithScheme(scheme).WithRuntimeObjects(objs...).Build()
+
+	// Mock remote client registry to return error
+	remoteClientRegistry.EXPECT().GetClient(ctx, gomock.AssignableToTypeOf(client.ObjectKey{})).Return(nil, errors.New("remote client error"))
+
+	r := reconciler.New(certs, generateUUID, cl, remoteClientRegistry)
+	err := r.ReconcileWorkloadClusterDelete(ctx, nullLog(), cluster, awsiamconfig)
+	g.Expect(err).To(HaveOccurred())
+	g.Expect(err.Error()).To(ContainSubstring("getting workload cluster's client for AWS IAM cleanup"))
+}

@@ -765,7 +765,7 @@ func TestClusterValidateUpdateAWSIamNameImmutableEmpty(t *testing.T) {
 	c.Spec.IdentityProviderRefs = []v1alpha1.Ref{}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), cOld, c)).Error().To(MatchError(ContainSubstring("spec.identityProviderRefs.AWSIamConfig: Forbidden: field is immutable")))
+	g.Expect(c.ValidateUpdate(context.TODO(), cOld, c)).Error().To(Succeed())
 }
 
 func TestClusterValidateUpdateAWSIamNameImmutableAddConfig(t *testing.T) {
@@ -780,7 +780,7 @@ func TestClusterValidateUpdateAWSIamNameImmutableAddConfig(t *testing.T) {
 	}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), cOld, c)).Error().To(MatchError(ContainSubstring("spec.identityProviderRefs.AWSIamConfig: Forbidden: field is immutable")))
+	g.Expect(c.ValidateUpdate(context.TODO(), cOld, c)).Error().To(Succeed())
 }
 
 func TestClusterValidateUpdateUnsetBundlesRefImmutable(t *testing.T) {
