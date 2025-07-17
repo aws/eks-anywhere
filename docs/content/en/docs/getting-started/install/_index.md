@@ -43,7 +43,7 @@ Here are a few other things to keep in mind:
 #### Tools
 - [Docker](https://docs.docker.com/engine/install/) 20.x.x or above
 - [`curl`](https://everything.curl.dev/get)
-- [`yq`](https://github.com/mikefarah/yq/#install)
+- [`yq`](https://github.com/mikefarah/yq/#install) 4.x.x or above
 
 ### Install EKS Anywhere CLI tools
 
