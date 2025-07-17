@@ -195,7 +195,7 @@ status:
         COMPRESSED: "true"
         DEST_DISK: /dev/sda
         IMG_URL: https://anywhere-assets.eks.amazonaws.com/releases/bundles/11/artifacts/raw/1-22/bottlerocket-v1.22.10-eks-d-1-22-8-eks-a-11-amd64.img.gz
-      image: public.ecr.aws/eks-anywhere/tinkerbell/hub/image2disk:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-15
+      image: public.ecr.aws/eks-anywhere/tinkerbell/actions/image2disk:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-15
       name: stream-image
       seconds: 35
       startedAt: "2022-06-27T20:37:39Z"

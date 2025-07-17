@@ -1593,7 +1593,7 @@ spec:
             imageDigest: sha256:d5346a5259fd51d29be1e446f9f23887ff9f35ac6b09c58377c6a4c225d60c4d
             name: cexec
             os: linux
-            uri: public.ecr.aws/l0g8r8j6/tinkerbell/hub/cexec:404dab73a8a7f33e973c6e71782f07e82b125da9-eks-a-v0.19.0-dev-build.158
+            uri: public.ecr.aws/l0g8r8j6/tinkerbell/actions/cexec:404dab73a8a7f33e973c6e71782f07e82b125da9-eks-a-v0.19.0-dev-build.158
           imageToDisk:
             arch:
             - amd64
@@ -1602,7 +1602,7 @@ spec:
             imageDigest: sha256:acac9f14bce9206b058ce9d6a115d68c5237c3c586571dfc28b6e897d18b7297
             name: image2disk
             os: linux
-            uri: public.ecr.aws/l0g8r8j6/tinkerbell/hub/image2disk:404dab73a8a7f33e973c6e71782f07e82b125da9-eks-a-v0.19.0-dev-build.158
+            uri: public.ecr.aws/l0g8r8j6/tinkerbell/actions/image2disk:404dab73a8a7f33e973c6e71782f07e82b125da9-eks-a-v0.19.0-dev-build.158
           kexec:
             arch:
             - amd64
@@ -1611,7 +1611,7 @@ spec:
             imageDigest: sha256:14957b20ad0fce168106ca757c572533e83fd26d126131e5fd581f1d7923a7d1
             name: kexec
             os: linux
-            uri: public.ecr.aws/l0g8r8j6/tinkerbell/hub/kexec:404dab73a8a7f33e973c6e71782f07e82b125da9-eks-a-v0.19.0-dev-build.158
+            uri: public.ecr.aws/l0g8r8j6/tinkerbell/actions/kexec:404dab73a8a7f33e973c6e71782f07e82b125da9-eks-a-v0.19.0-dev-build.158
           ociToDisk:
             arch:
             - amd64
@@ -1620,7 +1620,7 @@ spec:
             imageDigest: sha256:9097353fbb9826bd4ecbe2ec69e2f3b2f6ccd7cbc11bfd41a5604f9c175a39fa
             name: oci2disk
             os: linux
-            uri: public.ecr.aws/l0g8r8j6/tinkerbell/hub/oci2disk:404dab73a8a7f33e973c6e71782f07e82b125da9-eks-a-v0.19.0-dev-build.158
+            uri: public.ecr.aws/l0g8r8j6/tinkerbell/actions/oci2disk:404dab73a8a7f33e973c6e71782f07e82b125da9-eks-a-v0.19.0-dev-build.158
           reboot:
             arch:
             - amd64
@@ -1629,7 +1629,7 @@ spec:
             imageDigest: sha256:e260ff9749f0cc03f213f712aec843f743edde0f7246d92c615bbe16e0a92e06
             name: reboot
             os: linux
-            uri: public.ecr.aws/l0g8r8j6/tinkerbell/hub/reboot:404dab73a8a7f33e973c6e71782f07e82b125da9-eks-a-v0.19.0-dev-build.158
+            uri: public.ecr.aws/l0g8r8j6/tinkerbell/actions/reboot:404dab73a8a7f33e973c6e71782f07e82b125da9-eks-a-v0.19.0-dev-build.158
           writeFile:
             arch:
             - amd64
@@ -1638,7 +1638,7 @@ spec:
             imageDigest: sha256:9d70ca5310db0761462941553c324ee182645731c91e78a2dca337954c8bf3fd
             name: writefile
             os: linux
-            uri: public.ecr.aws/l0g8r8j6/tinkerbell/hub/writefile:404dab73a8a7f33e973c6e71782f07e82b125da9-eks-a-v0.19.0-dev-build.158
+            uri: public.ecr.aws/l0g8r8j6/tinkerbell/actions/writefile:404dab73a8a7f33e973c6e71782f07e82b125da9-eks-a-v0.19.0-dev-build.158
         boots:
           arch:
           - amd64

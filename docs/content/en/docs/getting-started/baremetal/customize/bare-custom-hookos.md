@@ -59,7 +59,7 @@ The result of this step will be a populated images file: `images/hook-embedded/i
 
     ```bash
     BUNDLE_URL=$(eksctl anywhere version | grep "https://anywhere-assets.eks.amazonaws.com/releases/bundles" | tr -d ' ' | cut -d":" -f2,3)
-    IMAGES=$(curl -s $BUNDLE_URL | grep "public.ecr.aws/eks-anywhere/tinkerbell/hub/\|public.ecr.aws/eks-anywhere/tinkerbell/tink/tink-worker" | sort | uniq | tr -d ' ' | cut -d":" -f2,3)
+    IMAGES=$(curl -s $BUNDLE_URL | grep "public.ecr.aws/eks-anywhere/tinkerbell/actions/\|public.ecr.aws/eks-anywhere/tinkerbell/tink/tink-worker" | sort | uniq | tr -d ' ' | cut -d":" -f2,3)
     images_file="images/hook-embedded/images.txt"
     rm "$images_file"
     while read -r image; do
