@@ -591,7 +591,7 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 	// Hub artifacts
 	{
 		ProjectName: "hub",
-		ProjectPath: "projects/tinkerbell/hub",
+		ProjectPath: "projects/tinkerbell/actions",
 		Images: []*assettypes.Image{
 			{
 				RepoName: "cexec",
@@ -612,7 +612,7 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 				RepoName: "writefile",
 			},
 		},
-		ImageRepoPrefix: "tinkerbell/hub",
+		ImageRepoPrefix: "tinkerbell/actions",
 		ImageTagOptions: []string{
 			"gitTag",
 			"projectPath",
