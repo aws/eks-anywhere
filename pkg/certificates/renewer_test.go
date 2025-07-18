@@ -92,10 +92,9 @@ func TestRenewEtcdCerts_BackupError(t *testing.T) {
 	osRenewer := BuildOSRenewer(cfg.OS, t.TempDir())
 
 	sshEtcd := mocks.NewMockSSHRunner(ctrl)
-	expectedErr := fmt.Errorf("backing up etcd certs error")
 	sshEtcd.EXPECT().
 		RunCommand(gomock.Any(), gomock.Any(), gomock.Any()).
-		Return("", expectedErr).
+		Return("", fmt.Errorf("backing up etcd certs error")).
 		AnyTimes()
 
 	sshCP := mocks.NewMockSSHRunner(ctrl)
@@ -128,10 +127,9 @@ func TestRenewEtcdCerts_RenewError(t *testing.T) {
 	osRenewer := BuildOSRenewer(cfg.OS, t.TempDir())
 
 	sshEtcd := mocks.NewMockSSHRunner(ctrl)
-	expectedErr := fmt.Errorf("renew etcd error")
 	sshEtcd.EXPECT().
 		RunCommand(gomock.Any(), gomock.Any(), gomock.Any()).
-		Return("", expectedErr).
+		Return("", fmt.Errorf("renew etcd error")).
 		AnyTimes()
 
 	renewer := &Renewer{
@@ -224,10 +222,9 @@ func TestRenewControlPlaneCerts_RenewError(t *testing.T) {
 	osRenewer := BuildOSRenewer(cfg.OS, t.TempDir())
 
 	sshCP := mocks.NewMockSSHRunner(ctrl)
-	expectedErr := fmt.Errorf("renew control plane error")
 	sshCP.EXPECT().
 		RunCommand(gomock.Any(), gomock.Any(), gomock.Any()).
-		Return("", expectedErr).
+		Return("", fmt.Errorf("renew control plane error")).
 		AnyTimes()
 
 	renewer := &Renewer{
@@ -265,10 +262,9 @@ func TestRenewCertificates_RenewControlPlaneCertsError(t *testing.T) {
 	sshCP := mocks.NewMockSSHRunner(ctrl)
 	kubeClient := kubemocks.NewMockClient(ctrl)
 
-	expectedErr := fmt.Errorf("backing up control plane certs error")
 	sshCP.EXPECT().
 		RunCommand(gomock.Any(), gomock.Any(), gomock.Any()).
-		Return("", expectedErr).
+		Return("", fmt.Errorf("backing up control plane certs error")).
 		AnyTimes()
 
 	renewer := &Renewer{
@@ -334,10 +330,9 @@ func TestRenewCertificates_UpdateAPIServerEtcdClientSecretError(t *testing.T) {
 		}).
 		AnyTimes()
 
-	expectedErr := fmt.Errorf("updating secret error")
 	kubeClient.EXPECT().
 		Update(gomock.Any(), gomock.Any()).
-		Return(expectedErr).
+		Return(fmt.Errorf("updating secret error")).
 		AnyTimes()
 
 	renewer := &Renewer{
