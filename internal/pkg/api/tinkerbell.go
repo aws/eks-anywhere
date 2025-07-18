@@ -98,6 +98,16 @@ func WithHookIsoURLPath(url string) TinkerbellFiller {
 	}
 }
 
+// WithTinkerbellTemplateConfig adds or updates a TinkerbellTemplateConfig.
+func WithTinkerbellTemplateConfig(templateConfig *anywherev1.TinkerbellTemplateConfig) TinkerbellFiller {
+	return func(config TinkerbellConfig) {
+		if config.templateConfigs == nil {
+			config.templateConfigs = make(map[string]*anywherev1.TinkerbellTemplateConfig)
+		}
+		config.templateConfigs[templateConfig.Name] = templateConfig
+	}
+}
+
 func WithStringFromEnvVarTinkerbell(envVar string, opt func(string) TinkerbellFiller) TinkerbellFiller {
 	return opt(os.Getenv(envVar))
 }
@@ -205,8 +215,9 @@ func WithOsFamilyForTinkerbellMachineConfig(value anywherev1.OSFamily) Tinkerbel
 // WithCustomTinkerbellMachineConfig generates a TinkerbellMachineConfig from a hardware selector.
 func WithCustomTinkerbellMachineConfig(selector string, machineConfigFillers ...TinkerbellMachineFiller) TinkerbellFiller {
 	return func(config TinkerbellConfig) {
-		if _, ok := config.machineConfigs[selector]; !ok {
-			m := &anywherev1.TinkerbellMachineConfig{
+		m, ok := config.machineConfigs[selector]
+		if !ok {
+			m = &anywherev1.TinkerbellMachineConfig{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       anywherev1.TinkerbellMachineConfigKind,
 					APIVersion: anywherev1.SchemeBuilder.GroupVersion.String(),
@@ -219,11 +230,10 @@ func WithCustomTinkerbellMachineConfig(selector string, machineConfigFillers ...
 				},
 			}
 
-			for _, f := range machineConfigFillers {
-				f(m)
-			}
-
 			config.machineConfigs[selector] = m
+		}
+		for _, f := range machineConfigFillers {
+			f(m)
 		}
 	}
 }
