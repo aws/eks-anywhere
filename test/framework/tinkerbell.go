@@ -221,6 +221,11 @@ func (t *Tinkerbell) WithNewWorkerNodeGroup(name string, workerNodeGroup *Worker
 	panic("Not implemented for Tinkerbell yet")
 }
 
+// WithTinkerbellTemplateConfig returns a cluster config filler that sets a custom TinkerbellTemplateConfig.
+func (t *Tinkerbell) WithTinkerbellTemplateConfig(templateConfig *anywherev1.TinkerbellTemplateConfig) api.ClusterConfigFiller {
+	return api.TinkerbellToConfigFiller(api.WithTinkerbellTemplateConfig(templateConfig))
+}
+
 func envVarForImage(os OS, kubeVersion anywherev1.KubernetesVersion, kernelVariant ...string) string {
 	imageEnvVar := fmt.Sprintf("T_TINKERBELL_IMAGE_%s_%s", strings.ToUpper(strings.ReplaceAll(string(os), "-", "_")), strings.ReplaceAll(string(kubeVersion), ".", "_"))
 	if len(kernelVariant) > 0 && kernelVariant[0] != "" {
@@ -502,46 +507,6 @@ func Ubuntu2204Kubernetes129Image() api.TinkerbellFiller {
 	return imageForKubeVersionAndOS(anywherev1.Kube129, Ubuntu2204, "")
 }
 
-// Ubuntu2204Kubernetes129RTOSImage represents an Ubuntu 22.04 RTOS raw image corresponding to Kubernetes 1.29.
-func Ubuntu2204Kubernetes129RTOSImage() api.TinkerbellFiller {
-	return imageForKubeVersionAndOS(anywherev1.Kube129, Ubuntu2204, "", "rtos")
-}
-
-// Ubuntu2204Kubernetes130RTOSImage represents an Ubuntu 22.04 RTOS raw image corresponding to Kubernetes 1.30.
-func Ubuntu2204Kubernetes130RTOSImage() api.TinkerbellFiller {
-	return imageForKubeVersionAndOS(anywherev1.Kube130, Ubuntu2204, "", "rtos")
-}
-
-// Ubuntu2204Kubernetes131RTOSImage represents an Ubuntu 22.04 RTOS raw image corresponding to Kubernetes 1.31.
-func Ubuntu2204Kubernetes131RTOSImage() api.TinkerbellFiller {
-	return imageForKubeVersionAndOS(anywherev1.Kube131, Ubuntu2204, "", "rtos")
-}
-
-// Ubuntu2204Kubernetes132RTOSImage represents an Ubuntu 22.04 RTOS raw image corresponding to Kubernetes 1.32.
-func Ubuntu2204Kubernetes132RTOSImage() api.TinkerbellFiller {
-	return imageForKubeVersionAndOS(anywherev1.Kube132, Ubuntu2204, "", "rtos")
-}
-
-// Ubuntu2204Kubernetes129GenericImage represents an Ubuntu 22.04 Generic raw image corresponding to Kubernetes 1.29.
-func Ubuntu2204Kubernetes129GenericImage() api.TinkerbellFiller {
-	return imageForKubeVersionAndOS(anywherev1.Kube129, Ubuntu2204, "", "generic")
-}
-
-// Ubuntu2204Kubernetes130GenericImage represents an Ubuntu 22.04 Generic raw image corresponding to Kubernetes 1.30.
-func Ubuntu2204Kubernetes130GenericImage() api.TinkerbellFiller {
-	return imageForKubeVersionAndOS(anywherev1.Kube130, Ubuntu2204, "", "generic")
-}
-
-// Ubuntu2204Kubernetes131GenericImage represents an Ubuntu 22.04 Generic raw image corresponding to Kubernetes 1.31.
-func Ubuntu2204Kubernetes131GenericImage() api.TinkerbellFiller {
-	return imageForKubeVersionAndOS(anywherev1.Kube131, Ubuntu2204, "", "generic")
-}
-
-// Ubuntu2204Kubernetes132GenericImage represents an Ubuntu 22.04 Generic raw image corresponding to Kubernetes 1.32.
-func Ubuntu2204Kubernetes132GenericImage() api.TinkerbellFiller {
-	return imageForKubeVersionAndOS(anywherev1.Kube132, Ubuntu2204, "", "generic")
-}
-
 // Ubuntu2204Kubernetes130Image represents an Ubuntu 22.04 raw image corresponding to Kubernetes 1.30.
 func Ubuntu2204Kubernetes130Image() api.TinkerbellFiller {
 	return imageForKubeVersionAndOS(anywherev1.Kube130, Ubuntu2204, "")
@@ -562,7 +527,27 @@ func Ubuntu2204Kubernetes133Image() api.TinkerbellFiller {
 	return imageForKubeVersionAndOS(anywherev1.Kube133, Ubuntu2204, "")
 }
 
-// HookIsoURLOverride returns the env var value set for 'T_TINKERBELL_HOOK_ISO_URL'.
+// Ubuntu2204Kubernetes129RTOSImage represents an Ubuntu 22.04 raw image with RTOS kernel corresponding to Kubernetes 1.29.
+func Ubuntu2204Kubernetes129RTOSImage() api.TinkerbellFiller {
+	return imageForKubeVersionAndOS(anywherev1.Kube129, Ubuntu2204, "", "RTOS")
+}
+
+// Ubuntu2204Kubernetes129GenericImage represents an Ubuntu 22.04 raw image with Generic kernel corresponding to Kubernetes 1.29.
+func Ubuntu2204Kubernetes129GenericImage() api.TinkerbellFiller {
+	return imageForKubeVersionAndOS(anywherev1.Kube129, Ubuntu2204, "", "GENERIC")
+}
+
+// HookIsoURLOverride returns the Hook ISO URL from the environment variable.
 func HookIsoURLOverride() string {
 	return os.Getenv(tinkerbellHookIsoURLEnvVar)
+}
+
+// WithTemplateRef returns a TinkerbellMachineFiller that adds a TemplateRef to a TinkerbellMachineConfig.
+func WithTemplateRef(name, kind string) api.TinkerbellMachineFiller {
+	return func(machineConfig *anywherev1.TinkerbellMachineConfig) {
+		machineConfig.Spec.TemplateRef = anywherev1.Ref{
+			Name: name,
+			Kind: kind,
+		}
+	}
 }

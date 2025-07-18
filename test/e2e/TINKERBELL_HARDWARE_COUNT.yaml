@@ -167,3 +167,4 @@ TestTinkerbellKubernetes132KubeletConfigurationSimpleFlow: 2
 TestTinkerbellKubernetes133KubeletConfigurationSimpleFlow: 2
 TestTinkerbellKubernetes131UbuntuHookIsoSimpleFlow: 1
 TestTinkerbellKubernetes131UbuntuHookIsoOverrideSimpleFlow: 1
+TestTinkerbellCustomTemplateRefSimpleFlow: 2
