@@ -63,8 +63,7 @@ func TestNewRenewerSuccess(t *testing.T) {
 		sshControlPlane: sshCP,
 	}
 
-	err := renewer.RenewCertificates(context.Background(), cfg, "etcd")
-	if err != nil {
+	if err := renewer.RenewCertificates(context.Background(), cfg, "etcd"); err != nil {
 		t.Fatalf("RenewCertificates() expected no error, got: %v", err)
 	}
 }
@@ -109,10 +108,8 @@ func TestRenewEtcdCerts_BackupError(t *testing.T) {
 		sshEtcd:         sshEtcd,
 		sshControlPlane: sshCP,
 	}
-	err := renewer.renewEtcdCerts(context.Background(), cfg)
-
-	if err == nil {
-		t.Fatalf("expected error, got nil")
+	if err := renewer.renewEtcdCerts(context.Background(), cfg); err == nil {
+		t.Fatalf("renewEtcdCerts() expected error, got nil")
 	}
 }
 
@@ -143,9 +140,8 @@ func TestRenewEtcdCerts_RenewError(t *testing.T) {
 		sshEtcd:   sshEtcd,
 	}
 
-	err := renewer.renewEtcdCerts(context.Background(), cfg)
-	if err == nil {
-		t.Fatalf("expected error, got nil")
+	if err := renewer.renewEtcdCerts(context.Background(), cfg); err == nil {
+		t.Fatalf("renewEtcdCerts() expected error, got nil")
 	}
 }
 
@@ -177,9 +173,8 @@ func TestRenewEtcdCerts_SuccessfulRenewal(t *testing.T) {
 		sshEtcd:   sshEtcd,
 	}
 
-	err := renewer.renewEtcdCerts(context.Background(), cfg)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
+	if err := renewer.renewEtcdCerts(context.Background(), cfg); err != nil {
+		t.Fatalf("renewEtcdCerts() expected no error, got: %v", err)
 	}
 }
 
@@ -209,9 +204,8 @@ func TestRenewControlPlaneCerts_SuccessfulRenewal(t *testing.T) {
 		sshControlPlane: sshCP,
 	}
 
-	err := renewer.renewControlPlaneCerts(context.Background(), cfg, "control-plane")
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
+	if err := renewer.renewControlPlaneCerts(context.Background(), cfg, "control-plane"); err != nil {
+		t.Fatalf("renewControlPlaneCerts() expected no error, got: %v", err)
 	}
 }
 
@@ -242,9 +236,8 @@ func TestRenewControlPlaneCerts_RenewError(t *testing.T) {
 		sshControlPlane: sshCP,
 	}
 
-	err := renewer.renewControlPlaneCerts(context.Background(), cfg, "control-plane")
-	if err == nil {
-		t.Fatalf("expected error, got nil")
+	if err := renewer.renewControlPlaneCerts(context.Background(), cfg, "control-plane"); err == nil {
+		t.Fatalf("renewControlPlaneCerts() expected error, got nil")
 	}
 }
 
@@ -286,9 +279,7 @@ func TestRenewCertificates_RenewControlPlaneCertsError(t *testing.T) {
 		sshControlPlane: sshCP,
 	}
 
-	err := renewer.RenewCertificates(context.Background(), cfg, "control-plane")
-
-	if err == nil {
+	if err := renewer.RenewCertificates(context.Background(), cfg, "control-plane"); err == nil {
 		t.Fatalf("RenewCertificates() expected error, got nil")
 	}
 }
@@ -359,9 +350,7 @@ func TestRenewCertificates_UpdateAPIServerEtcdClientSecretError(t *testing.T) {
 
 	writeDummyEtcdCerts(t, renewer.backupDir)
 
-	err := renewer.RenewCertificates(context.Background(), cfg, "etcd")
-
-	if err == nil {
+	if err := renewer.RenewCertificates(context.Background(), cfg, "etcd"); err == nil {
 		t.Fatalf("RenewCertificates() expected error, got nil")
 	}
 }
@@ -422,9 +411,7 @@ func TestRenewCertificates_CopyEtcdCertsError(t *testing.T) {
 		sshControlPlane: sshCP,
 	}
 
-	err := renewer.RenewCertificates(context.Background(), cfg, "etcd")
-
-	if err == nil {
+	if err := renewer.RenewCertificates(context.Background(), cfg, "etcd"); err == nil {
 		t.Fatalf("RenewCertificates() expected error, got nil")
 	}
 }
@@ -440,9 +427,7 @@ func TestUpdateAPIServerEtcdClientSecret_ReadCertificateFileError(t *testing.T) 
 		kubectl:   kubeClient,
 	}
 
-	err := renewer.updateAPIServerEtcdClientSecret(context.Background(), "test-cluster")
-
-	if err == nil {
+	if err := renewer.updateAPIServerEtcdClientSecret(context.Background(), "test-cluster"); err == nil {
 		t.Fatalf("updateAPIServerEtcdClientSecret() expected error, got nil")
 	}
 }
@@ -465,9 +450,8 @@ func TestUpdateAPIServerEtcdClientSecret_SecretNotFound(t *testing.T) {
 
 	writeDummyEtcdCerts(t, renewer.backupDir)
 
-	err := renewer.updateAPIServerEtcdClientSecret(context.Background(), "test-cluster")
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
+	if err := renewer.updateAPIServerEtcdClientSecret(context.Background(), "test-cluster"); err != nil {
+		t.Fatalf("updateAPIServerEtcdClientSecret() expected no error, got: %v", err)
 	}
 }
 
@@ -489,9 +473,8 @@ func TestUpdateAPIServerEtcdClientSecret_GetError(t *testing.T) {
 
 	writeDummyEtcdCerts(t, renewer.backupDir)
 
-	err := renewer.updateAPIServerEtcdClientSecret(context.Background(), "test-cluster")
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
+	if err := renewer.updateAPIServerEtcdClientSecret(context.Background(), "test-cluster"); err != nil {
+		t.Fatalf("updateAPIServerEtcdClientSecret() expected no error, got: %v", err)
 	}
 }
 
@@ -514,9 +497,7 @@ func TestUpdateAPIServerEtcdClientSecret_ReadKeyFileError(t *testing.T) {
 		t.Fatalf("writing crt: %v", err)
 	}
 
-	err := renewer.updateAPIServerEtcdClientSecret(context.Background(), "test-cluster")
-
-	if err == nil {
+	if err := renewer.updateAPIServerEtcdClientSecret(context.Background(), "test-cluster"); err == nil {
 		t.Fatalf("updateAPIServerEtcdClientSecret() expected error, got nil")
 	}
 }
@@ -546,8 +527,7 @@ func TestUpdateAPIServerEtcdClientSecret_SuccessfulUpdate(t *testing.T) {
 
 	writeDummyEtcdCerts(t, renewer.backupDir)
 
-	err := renewer.updateAPIServerEtcdClientSecret(context.Background(), "test-cluster")
-	if err != nil {
+	if err := renewer.updateAPIServerEtcdClientSecret(context.Background(), "test-cluster"); err != nil {
 		t.Fatalf("updateAPIServerEtcdClientSecret() expected no error, got: %v", err)
 	}
 }
