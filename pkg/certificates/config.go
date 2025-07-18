@@ -130,31 +130,29 @@ func ValidateComponentWithConfig(component string, config *RenewalConfig) error 
 	return nil
 }
 
+// PopulateConfig fills in the configuration with control plane and etcd node IPs from the Kubernetes cluster.
 func PopulateConfig(ctx context.Context, cfg *RenewalConfig, kubeClient kubernetes.Client, cluster *types.Cluster) error {
-
 	if len(cfg.ControlPlane.Nodes) > 0 {
 		return nil
 	}
 
 	controlPlaneIPs, err := getControlPlaneIPs(ctx, kubeClient, cluster)
 	if err != nil {
-		return fmt.Errorf("cluster is not reachable please provide control plane and/or external etcd IP addresses: %w", err)
+		return fmt.Errorf("cluster is not reachable, please provide control plane and/or external etcd IP addresses: %w", err)
 	}
 
 	cfg.ControlPlane.Nodes = controlPlaneIPs
 
 	etcdIPs, err := getEtcdIPs(ctx, kubeClient, cluster)
 	if err != nil {
-		fmt.Printf("Warning: Failed to get etcd IPs: %v\n", err)
-	} else {
-		cfg.Etcd.Nodes = etcdIPs
+		return fmt.Errorf("retrieving external etcd IPs for the cluster: %w", err)
 	}
+	cfg.Etcd.Nodes = etcdIPs
 
 	return nil
 }
 
 func getControlPlaneIPs(ctx context.Context, kubeClient kubernetes.Client, cluster *types.Cluster) ([]string, error) {
-	fmt.Printf("getControlPlaneIPs \n")
 	var controlPlaneIPs []string
 
 	machineList := &clusterv1.MachineList{}
@@ -168,25 +166,17 @@ func getControlPlaneIPs(ctx context.Context, kubeClient kubernetes.Client, clust
 	}
 
 	for _, machine := range machineList.Items {
-		if machine.Labels["cluster.x-k8s.io/cluster-name"] == cluster.Name {
-			_, hasControlPlaneLabel := machine.Labels["cluster.x-k8s.io/control-plane"]
+		if machine.Labels[clusterNameLabel] == cluster.Name {
+			_, hasControlPlaneLabel := machine.Labels[controlPlaneLabel]
 			if hasControlPlaneLabel {
 				for _, address := range machine.Status.Addresses {
-					if address.Type == clusterv1.MachineExternalIP {
+					if address.Type == clusterv1.MachineExternalIP && address.Address != "" {
 						controlPlaneIPs = append(controlPlaneIPs, address.Address)
 						break
 					}
 				}
-
-				if len(machine.Status.Addresses) == 0 {
-					fmt.Printf("  No addresses found for this machine\n")
-				}
 			}
 		}
-	}
-
-	if len(controlPlaneIPs) == 0 {
-		return nil, fmt.Errorf("no control plane IPs found")
 	}
 
 	return controlPlaneIPs, nil
@@ -208,16 +198,12 @@ func getEtcdIPs(ctx context.Context, kubeClient kubernetes.Client, cluster *type
 	for _, machine := range machineList.Items {
 		if machine.Labels[clusterNameLabel] == cluster.Name && machine.Labels[externalEtcdLabel] == cluster.Name+"-etcd" {
 			for _, address := range machine.Status.Addresses {
-				if address.Type == clusterv1.MachineExternalIP {
+				if address.Type == clusterv1.MachineExternalIP && address.Address != "" {
 					etcdIPs = append(etcdIPs, address.Address)
 					break
 				}
 			}
 		}
-	}
-
-	if len(etcdIPs) == 0 {
-		return nil, fmt.Errorf("no etcd IPs found")
 	}
 
 	return etcdIPs, nil
