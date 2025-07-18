@@ -6,7 +6,6 @@ kubeadmConfigPatches:
     apiVersion: kubeadm.k8s.io/v1beta2
     kind: ClusterConfiguration
     dns:
-      type: CoreDNS
       imageRepository: public.ecr.aws/eks-distro/coredns
       imageTag: v1.8.0-eks-1-19-2
     etcd:
