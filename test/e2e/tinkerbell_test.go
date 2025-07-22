@@ -2108,11 +2108,6 @@ func TestTinkerbellKubernetes132KubeletConfigurationSimpleFlow(t *testing.T) {
 }
 
 func TestTinkerbellCustomTemplateRefSimpleFlow(t *testing.T) {
-	// Get the custom template config
-	customTemplateConfig, err := framework.GetCustomTinkerbellConfig()
-	if err != nil {
-		t.Fatalf("Failed to get custom template config: %v", err)
-	}
 
 	// Get license token for Ubuntu 2204
 	licenseToken := framework.GetLicenseToken()
@@ -2130,6 +2125,12 @@ func TestTinkerbellCustomTemplateRefSimpleFlow(t *testing.T) {
 			api.WithLicenseToken(licenseToken),
 		),
 	)
+
+	// Get the custom template config
+	customTemplateConfig, err := framework.GetCustomTinkerbellConfig(provider.GetTinkerbellLBIP())
+	if err != nil {
+		t.Fatalf("Failed to get custom template config: %v", err)
+	}
 
 	// Add the custom template config to the cluster
 	test.UpdateClusterConfig(
