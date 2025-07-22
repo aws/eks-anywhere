@@ -8,6 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
+	certificates "github.com/aws/eks-anywhere/pkg/certificates"
 	gomock "github.com/golang/mock/gomock"
 	ssh "golang.org/x/crypto/ssh"
 )
@@ -88,16 +89,21 @@ func (m *MockSSHRunner) EXPECT() *MockSSHRunnerMockRecorder {
 }
 
 // RunCommand mocks base method.
-func (m *MockSSHRunner) RunCommand(ctx context.Context, node, cmd string) (string, error) {
+func (m *MockSSHRunner) RunCommand(ctx context.Context, node, cmd string, opts ...certificates.SSHOption) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RunCommand", ctx, node, cmd)
+	varargs := []interface{}{ctx, node, cmd}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "RunCommand", varargs...)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // RunCommand indicates an expected call of RunCommand.
-func (mr *MockSSHRunnerMockRecorder) RunCommand(ctx, node, cmd interface{}) *gomock.Call {
+func (mr *MockSSHRunnerMockRecorder) RunCommand(ctx, node, cmd interface{}, opts ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RunCommand", reflect.TypeOf((*MockSSHRunner)(nil).RunCommand), ctx, node, cmd)
+	varargs := append([]interface{}{ctx, node, cmd}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RunCommand", reflect.TypeOf((*MockSSHRunner)(nil).RunCommand), varargs...)
 }

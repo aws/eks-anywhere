@@ -23,11 +23,11 @@ const (
 
 // Renewer handles the certificate renewal process for EKS Anywhere clusters.
 type Renewer struct {
-	backupDir       string
-	kubectl         kubernetes.Client
-	sshEtcd         SSHRunner
-	sshControlPlane SSHRunner
-	os              OSRenewer
+	BackupDir       string
+	Kubectl         kubernetes.Client
+	SshEtcd         SSHRunner
+	SshControlPlane SSHRunner
+	Os              OSRenewer
 }
 
 // NewRenewer creates a new certificate renewer instance with a timestamped backup directory.
@@ -56,11 +56,11 @@ func NewRenewer(kubectl kubernetes.Client, osType string, cfg *RenewalConfig) (*
 	}
 
 	return &Renewer{
-		backupDir:       backupDir,
-		kubectl:         kubectl,
-		os:              osRenewer,
-		sshEtcd:         sshEtcd,
-		sshControlPlane: sshControlPlane,
+		BackupDir:       backupDir,
+		Kubectl:         kubectl,
+		Os:              osRenewer,
+		SshEtcd:         sshEtcd,
+		SshControlPlane: sshControlPlane,
 	}, nil
 }
 
@@ -96,7 +96,7 @@ func (r *Renewer) RenewCertificates(ctx context.Context, cfg *RenewalConfig, com
 
 func (r *Renewer) renewEtcdCerts(ctx context.Context, cfg *RenewalConfig) error {
 	for _, node := range cfg.Etcd.Nodes {
-		if err := r.os.RenewEtcdCerts(ctx, node, r.sshEtcd); err != nil {
+		if err := r.Os.RenewEtcdCerts(ctx, node, r.SshEtcd); err != nil {
 			return fmt.Errorf("renewing certificates for etcd node %s: %v", node, err)
 		}
 	}
@@ -104,7 +104,7 @@ func (r *Renewer) renewEtcdCerts(ctx context.Context, cfg *RenewalConfig) error 
 	firstNode := cfg.Etcd.Nodes[0]
 	logger.V(4).Info("Copying certificates from node", "node", firstNode)
 
-	if err := r.os.CopyEtcdCerts(ctx, firstNode, r.sshEtcd); err != nil {
+	if err := r.Os.CopyEtcdCerts(ctx, firstNode, r.SshEtcd); err != nil {
 		return fmt.Errorf("copying certificates from etcd node %s: %v", firstNode, err)
 	}
 
@@ -114,7 +114,7 @@ func (r *Renewer) renewEtcdCerts(ctx context.Context, cfg *RenewalConfig) error 
 
 func (r *Renewer) renewControlPlaneCerts(ctx context.Context, cfg *RenewalConfig, component string) error {
 	for _, node := range cfg.ControlPlane.Nodes {
-		if err := r.os.RenewControlPlaneCerts(ctx, node, cfg, component, r.sshControlPlane); err != nil {
+		if err := r.Os.RenewControlPlaneCerts(ctx, node, cfg, component, r.SshControlPlane); err != nil {
 			return fmt.Errorf("renewing certificates for control-plane node %s: %v", node, err)
 		}
 	}
@@ -124,8 +124,8 @@ func (r *Renewer) renewControlPlaneCerts(ctx context.Context, cfg *RenewalConfig
 }
 
 func (r *Renewer) updateAPIServerEtcdClientSecret(ctx context.Context, clusterName string) error {
-	crtPath := filepath.Join(r.backupDir, tempLocalEtcdCertsDir, "apiserver-etcd-client.crt")
-	keyPath := filepath.Join(r.backupDir, tempLocalEtcdCertsDir, "apiserver-etcd-client.key")
+	crtPath := filepath.Join(r.BackupDir, tempLocalEtcdCertsDir, "apiserver-etcd-client.crt")
+	keyPath := filepath.Join(r.BackupDir, tempLocalEtcdCertsDir, "apiserver-etcd-client.key")
 	crtData, err := os.ReadFile(crtPath)
 	if err != nil {
 		return fmt.Errorf("read certificate file: %v", err)
@@ -137,7 +137,7 @@ func (r *Renewer) updateAPIServerEtcdClientSecret(ctx context.Context, clusterNa
 
 	secretName := fmt.Sprintf("%s-apiserver-etcd-client", clusterName)
 	secret := &corev1.Secret{}
-	err = r.kubectl.Get(ctx, secretName, constants.EksaSystemNamespace, secret)
+	err = r.Kubectl.Get(ctx, secretName, constants.EksaSystemNamespace, secret)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			logger.V(5).Info("secret not found, please manually update the secret", "name", secretName)
@@ -148,7 +148,7 @@ func (r *Renewer) updateAPIServerEtcdClientSecret(ctx context.Context, clusterNa
 	}
 	secret.Data["tls.crt"] = crtData
 	secret.Data["tls.key"] = keyData
-	if err = r.kubectl.Update(ctx, secret); err != nil {
+	if err = r.Kubectl.Update(ctx, secret); err != nil {
 		return fmt.Errorf("updating secret %s: %v", secretName, err)
 	}
 
@@ -157,12 +157,12 @@ func (r *Renewer) updateAPIServerEtcdClientSecret(ctx context.Context, clusterNa
 }
 
 func (r *Renewer) cleanup() {
-	logger.V(4).Info("Cleaning up backup directory", "path", r.backupDir)
+	logger.V(4).Info("Cleaning up backup directory", "path", r.BackupDir)
 
-	if err := os.RemoveAll(r.backupDir); err != nil {
-		logger.Error(err, "cleaning up certificate backup directory, please cleanup manually", "path", r.backupDir)
+	if err := os.RemoveAll(r.BackupDir); err != nil {
+		logger.Error(err, "cleaning up certificate backup directory, please cleanup manually", "path", r.BackupDir)
 	} else {
-		logger.V(4).Info("Successfully cleaned up backup directory", "path", r.backupDir)
+		logger.V(4).Info("Successfully cleaned up backup directory", "path", r.BackupDir)
 	}
 }
 
