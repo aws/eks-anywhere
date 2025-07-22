@@ -24,7 +24,7 @@ type sshDialer func(network, addr string, config *ssh.ClientConfig) (sshClient, 
 // SSHRunner provides methods for running commands over SSH.
 type SSHRunner interface {
 	// RunCommand runs a command on the remote host and returns the output
-	RunCommand(ctx context.Context, node string, cmd string) (string, error)
+	RunCommand(ctx context.Context, node string, cmd string, opts ...SSHOption) (string, error)
 }
 
 // DefaultSSHRunner is the default implementation of SSHRunner.
@@ -33,6 +33,24 @@ type DefaultSSHRunner struct {
 	sshDialer  sshDialer
 	sshKeyPath string
 	sshPasswd  string
+}
+
+type SSHOption func(*sshConfigOption)
+
+type sshConfigOption struct {
+	displayLogs bool
+}
+
+func defaultSSHConfig() *sshConfigOption {
+	return &sshConfigOption{
+		displayLogs: true,
+	}
+}
+
+func WithSSHLogging(display bool) SSHOption {
+	return func(c *sshConfigOption) {
+		c.displayLogs = display
+	}
 }
 
 // NewSSHRunner creates a new SSH runner with the given configuration.
@@ -87,7 +105,11 @@ func (r *DefaultSSHRunner) parsePrivateKey(key []byte) (ssh.Signer, error) {
 }
 
 // RunCommand executes a command on the remote node via SSH and returns the output.
-func (r *DefaultSSHRunner) RunCommand(ctx context.Context, node string, cmd string) (string, error) {
+func (r *DefaultSSHRunner) RunCommand(ctx context.Context, node string, cmd string, opts ...SSHOption) (string, error) {
+	cfg := defaultSSHConfig()
+	for _, opt := range opts {
+		opt(cfg)
+	}
 	client, err := r.sshDialer("tcp", fmt.Sprintf("%s:22", node), r.sshConfig)
 	if err != nil {
 		return "", fmt.Errorf("connect to node %s: %v", node, err)
@@ -113,8 +135,10 @@ func (r *DefaultSSHRunner) RunCommand(ctx context.Context, node string, cmd stri
 		outputBytes, err := session.CombinedOutput(cmdStr)
 		output := strings.TrimSpace(string(outputBytes))
 
-		logger.V(6).Info(cmdStr)
-		logger.V(6).Info(output)
+		if cfg.displayLogs {
+			logger.V(6).Info(cmdStr)
+			logger.V(6).Info(output)
+		}
 
 		if err != nil {
 			if output != "" {
