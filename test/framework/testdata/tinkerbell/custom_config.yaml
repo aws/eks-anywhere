@@ -54,7 +54,7 @@ spec:
           CONTENTS: |
             datasource:
               Ec2:
-                metadata_urls: [http://10.80.18.102:50061,http://<tinkerbellIP-from-cluster-config>:50061]
+                metadata_urls: [http://__TINKERBELL_LOCAL_IP__:50061,http://__TINKERBELL_LB_IP__:50061]
                 strict_id: false
             manage_etc_hosts: localhost
             warnings:
