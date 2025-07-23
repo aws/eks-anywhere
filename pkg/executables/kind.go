@@ -47,12 +47,7 @@ type kindExecConfig struct {
 	CorednsRepository    string
 	CorednsVersion       string
 	KubernetesVersion    string
-	RegistryMirrorMap    map[string]string
-	MirrorBase           string
-	RegistryCACertPath   string
-	RegistryAuth         bool
-	RegistryUsername     string
-	RegistryPassword     string
+	RegistryConfigDir    string
 	ExtraPortMappings    []int
 	DockerExtraMounts    bool
 	DisableDefaultCNI    bool
@@ -212,6 +207,62 @@ func (k *Kind) DeleteBootstrapCluster(ctx context.Context, cluster *types.Cluste
 	return err
 }
 
+// RegistryConfig contains configuration for setting up a registry with containerd.
+type RegistryConfig struct {
+	Server        string // The server URL for the registry
+	Host          string // The host URL to redirect to
+	CACertContent string // CA certificate content (if non-empty, write CA cert and use it)
+	Username      string // Registry username for authentication
+	Password      string // Registry password for authentication
+	OutputDir     string // Directory where to write hosts.toml and ca.crt
+}
+
+// setupRegistryConfig creates a complete registry configuration including hosts.toml and ca.crt files.
+func setupRegistryConfig(config RegistryConfig) error {
+	// Create the directory if it doesn't exist
+	if err := os.MkdirAll(config.OutputDir, os.ModePerm); err != nil {
+		return fmt.Errorf("error creating directory %s: %w", config.OutputDir, err)
+	}
+
+	// Generate hosts.toml content
+	content := fmt.Sprintf(`server = "https://%s"
+
+[host."https://%s"]
+  capabilities = ["pull", "resolve"]`, config.Server, config.Host)
+
+	// Handle CA certificate
+	if config.CACertContent != "" {
+		// Write CA certificate file
+		caPath := filepath.Join(config.OutputDir, "ca.crt")
+		if err := os.WriteFile(caPath, []byte(config.CACertContent), 0o644); err != nil {
+			return fmt.Errorf("error writing CA certificate: %w", err)
+		}
+
+		// Reference it in hosts.toml
+		content += fmt.Sprintf(`
+  ca = "/etc/containerd/certs.d/%s/ca.crt"`, filepath.Base(config.OutputDir))
+	} else {
+		// Skip verification if no CA certificate is provided
+		content += `
+  skip_verify = true`
+	}
+
+	// Add authentication if provided
+	if config.Username != "" {
+		content += fmt.Sprintf(`
+  username = "%s"
+  password = "%s"`, config.Username, config.Password)
+	}
+
+	// Write hosts.toml file
+	hostsPath := filepath.Join(config.OutputDir, "hosts.toml")
+	if err := os.WriteFile(hostsPath, []byte(content+"\n"), 0o644); err != nil {
+		return fmt.Errorf("error writing hosts.toml: %w", err)
+	}
+
+	return nil
+}
+
 func (k *Kind) setupExecConfig(clusterSpec *cluster.Spec) error {
 	versionsBundle := clusterSpec.RootVersionsBundle()
 	registryMirror := registrymirror.FromCluster(clusterSpec.Cluster)
@@ -225,32 +276,63 @@ func (k *Kind) setupExecConfig(clusterSpec *cluster.Spec) error {
 		CorednsVersion:       versionsBundle.KubeDistro.CoreDNS.Tag,
 		env:                  make(map[string]string),
 	}
+
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
-		k.execConfig.MirrorBase = registryMirror.BaseRegistry
-		k.execConfig.RegistryMirrorMap = containerd.ToAPIEndpoints(registryMirror.NamespacedRegistryMap)
-		if registryMirror.CACertContent != "" {
-			path := filepath.Join(clusterSpec.Cluster.Name, "generated", "certs.d", registryMirror.BaseRegistry)
-			if err := os.MkdirAll(path, os.ModePerm); err != nil {
-				return err
-			}
-			if err := os.WriteFile(filepath.Join(path, "ca.crt"), []byte(registryMirror.CACertContent), 0o644); err != nil {
-				return errors.New("error writing the registry certification file")
-			}
-			k.execConfig.RegistryCACertPath = filepath.Join(clusterSpec.Cluster.Name, "generated", "certs.d")
-		}
-		if registryMirror.Auth {
-			k.execConfig.RegistryAuth = registryMirror.Auth
-			username, password, err := config.ReadCredentials()
-			if err != nil {
-				return err
-			}
-			k.execConfig.RegistryUsername = username
-			k.execConfig.RegistryPassword = password
+		if err := k.setupRegistryMirror(clusterSpec, registryMirror); err != nil {
+			return err
 		}
 	}
+
 	if err := k.CreateAuditPolicy(clusterSpec); err != nil {
 		return err
 	}
+	return nil
+}
+
+// setupRegistryMirror handles the complete setup of registry mirror configuration.
+func (k *Kind) setupRegistryMirror(clusterSpec *cluster.Spec, registryMirror *registrymirror.RegistryMirror) error {
+	mirrorBase := registryMirror.BaseRegistry
+	registryMirrorMap := containerd.ToAPIEndpoints(registryMirror.NamespacedRegistryMap)
+
+	// Create the base certs.d directory
+	certsBasePath := filepath.Join(clusterSpec.Cluster.Name, "generated", "certs.d")
+	k.execConfig.RegistryConfigDir = certsBasePath
+
+	// Setup configuration for each original registry that should be mirrored
+	for originalRegistry, mirrorEndpoint := range registryMirrorMap {
+		err := setupRegistryConfig(RegistryConfig{
+			Server:        originalRegistry,
+			Host:          mirrorEndpoint,
+			CACertContent: registryMirror.CACertContent,
+			OutputDir:     filepath.Join(certsBasePath, originalRegistry),
+		})
+		if err != nil {
+			return fmt.Errorf("error setting up configuration for registry %s: %w", originalRegistry, err)
+		}
+	}
+
+	// Setup configuration for the mirror registry itself
+	var username, password string
+	if registryMirror.Auth {
+		var err error
+		username, password, err = config.ReadCredentials()
+		if err != nil {
+			return err
+		}
+	}
+
+	err := setupRegistryConfig(RegistryConfig{
+		Server:        mirrorBase,
+		Host:          mirrorBase,
+		CACertContent: registryMirror.CACertContent,
+		Username:      username,
+		Password:      password,
+		OutputDir:     filepath.Join(certsBasePath, mirrorBase),
+	})
+	if err != nil {
+		return fmt.Errorf("error setting up configuration for mirror registry %s: %w", mirrorBase, err)
+	}
+
 	return nil
 }
 

@@ -167,7 +167,7 @@ func TestKindCreateBootstrapClusterSuccessWithRegistryMirror(t *testing.T) {
 		env            map[string]string
 		clusterSpec    *cluster.Spec
 		options        []testKindOption
-		wantKindConfig string
+		wantFiles      map[string]string
 	}{
 		{
 			name:           "With registry mirror option, no CA cert provided",
@@ -194,8 +194,12 @@ func TestKindCreateBootstrapClusterSuccessWithRegistryMirror(t *testing.T) {
 					},
 				}
 			}),
-			env:            map[string]string{},
-			wantKindConfig: "testdata/kind_config_registry_mirror_insecure.yaml",
+			env: map[string]string{},
+			wantFiles: map[string]string{
+				"kind_tmp.yaml":                               "testdata/kind_config_registry_mirror_insecure.yaml",
+				"certs.d/public.ecr.aws/hosts.toml":           "testdata/hosts_toml_insecure_public_ecr_aws.toml",
+				"certs.d/registry-mirror.test:443/hosts.toml": "testdata/hosts_toml_insecure_registry_mirror.toml",
+			},
 		},
 		{
 			name:           "With registry mirror option, with CA cert",
@@ -217,8 +221,14 @@ func TestKindCreateBootstrapClusterSuccessWithRegistryMirror(t *testing.T) {
 					},
 				}
 			}),
-			env:            map[string]string{},
-			wantKindConfig: "testdata/kind_config_registry_mirror_with_ca.yaml",
+			env: map[string]string{},
+			wantFiles: map[string]string{
+				"kind_tmp.yaml":                               "testdata/kind_config_registry_mirror_with_ca.yaml",
+				"certs.d/public.ecr.aws/hosts.toml":           "testdata/hosts_toml_with_ca_public_ecr_aws.toml",
+				"certs.d/public.ecr.aws/ca.crt":               "testdata/ca.crt",
+				"certs.d/registry-mirror.test:443/hosts.toml": "testdata/hosts_toml_with_ca_registry_mirror.toml",
+				"certs.d/registry-mirror.test:443/ca.crt":     "testdata/ca.crt",
+			},
 		},
 		{
 			name:           "With registry mirror option, with auth",
@@ -250,8 +260,13 @@ func TestKindCreateBootstrapClusterSuccessWithRegistryMirror(t *testing.T) {
 					},
 				}
 			}),
-			env:            map[string]string{},
-			wantKindConfig: "testdata/kind_config_registry_mirror_with_auth.yaml",
+			env: map[string]string{},
+			wantFiles: map[string]string{
+				"kind_tmp.yaml":                                           "testdata/kind_config_registry_mirror_with_auth.yaml",
+				"certs.d/public.ecr.aws/hosts.toml":                       "testdata/hosts_toml_with_auth_public_ecr_aws.toml",
+				"certs.d/783794618700.dkr.ecr.*.amazonaws.com/hosts.toml": "testdata/hosts_toml_with_auth_783794618700_dkr_ecr_star_amazonaws_com.toml",
+				"certs.d/registry-mirror.test:443/hosts.toml":             "testdata/hosts_toml_with_auth_registry_mirror.toml",
+			},
 		},
 	}
 	for _, tt := range tests {
@@ -282,7 +297,17 @@ func TestKindCreateBootstrapClusterSuccessWithRegistryMirror(t *testing.T) {
 			).Return(bytes.Buffer{}, nil).Times(1).Do(
 				func(ctx context.Context, envs map[string]string, args ...string) (stdout bytes.Buffer, err error) {
 					gotKindConfig := args[9]
-					test.AssertFilesEquals(t, gotKindConfig, tt.wantKindConfig)
+
+					for relativePath, expectedFile := range tt.wantFiles {
+						var actualFile string
+						if relativePath == "kind_tmp.yaml" {
+							actualFile = gotKindConfig
+						} else {
+							// Registry config files are in cluster directory structure
+							actualFile = filepath.Join(clusterName, "generated", relativePath)
+						}
+						test.AssertFilesEquals(t, actualFile, expectedFile)
+					}
 
 					return bytes.Buffer{}, nil
 				},
