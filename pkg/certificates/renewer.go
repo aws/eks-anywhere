@@ -179,7 +179,7 @@ func (r *Renewer) validateRenewalConfig(
 
 func (r *Renewer) processEtcdCertificateTransfer(ctx context.Context, cfg *RenewalConfig) error {
 	firstNode := cfg.Etcd.Nodes[0]
-	logger.V(4).Info("Copying certificates from node", "node", firstNode)
+	logger.V(4).Info("Transferring external ETCD certificate to control plane nodes")
 
 	if err := r.OS.CopyEtcdCertsToLocal(ctx, firstNode, r.SSHEtcd); err != nil {
 		return fmt.Errorf("copying certificates from etcd node %s: %v", firstNode, err)
