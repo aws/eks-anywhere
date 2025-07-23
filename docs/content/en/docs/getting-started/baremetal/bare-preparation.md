@@ -77,3 +77,44 @@ For example, a `TinkerbellMachineConfig` with a `hardwareSelector` containing `t
 ### disk
 The device name of the disk on which the operating system will be installed.
 For example, it could be `/dev/sda` for the first SCSI disk or `/dev/nvme0n1` for the first NVME storage device.
+
+## Hardware Management 
+
+### Hardware Objects and Spare Nodes
+EKS Anywhere creates Kubernetes hardware objects for all entries in the `hardware.csv` file, regardless of the node count specified in your cluster configuration. Any machines in the CSV file that exceed the count specified in your cluster configuration are automatically treated as spare nodes.
+
+For example, if your cluster configuration specifies:
+```yaml
+controlPlaneConfiguration:
+  count: 1
+workerNodeGroupConfigurations:
+- count: 1
+```
+
+But your `hardware.csv` contains 3 control plane entries and 3 worker entries:
+```
+cplane-0,XX:XX:XX:XX:XX:01,10.162.10.131,...
+cplane-1,XX:XX:XX:XX:XX:02,10.162.10.132,...
+cplane-2,XX:XX:XX:XX:XX:03,10.162.10.133,...
+worker-0,XX:XX:XX:XX:XX:04,10.162.10.134,...
+worker-1,XX:XX:XX:XX:XX:05,10.162.10.135,...
+worker-2,XX:XX:XX:XX:XX:06,10.162.10.136,...
+```
+
+EKS Anywhere will create Hardware objects for all 6 machines, but initially only use `cplane-0` and `worker-0` for the cluster. The remaining machines (`cplane-1`, `cplane-2`, `worker-1`, and `worker-2`) will be treated as spare nodes.
+
+### Important Considerations for Hardware Lifecycle Management
+During operations like rolling upgrades, EKS Anywhere's selection of spare nodes is not deterministic. Any of the available spare nodes could be selected for use during maintenance operations.
+If you repurpose machines that were previously part of your EKS Anywhere cluster but still have hardware objects in the system:
+
+1. During subsequent cluster operations (like upgrades), these repurposed machines could be selected as spare nodes
+2. If BMC credentials are still valid, the machine may be automatically re-imaged, potentially destroying any workloads running on the repurposed machine
+
+#### Best Practices for Hardware Management
+
+To avoid unintended consequences when managing your hardware:
+
+1. **Align CSV with Intended Use**: Ensure your hardware.csv only contains entries for machines intended for immediate cluster use or as designated spares
+2. **Clean Up Hardware Objects**: Regularly audit and remove Hardware objects for machines that have been repurposed for other uses
+3. **Manage BMC Credentials**: Remove or rotate BMC credentials for hardware that has been repurposed to prevent unintended re-imaging
+4. **Hardware Inventory**: Maintain an up-to-date inventory of which physical machines are currently part of the cluster, designated as spares, or repurposed for other workloads
