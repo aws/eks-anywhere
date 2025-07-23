@@ -87,9 +87,6 @@ func (b *BottlerocketRenewer) TransferCertsToControlPlaneFromLocal(
 		return fmt.Errorf("transfering certificates to control plane: %v", err)
 	}
 
-	// if _, err := ssh.RunCommand(ctx, node, b.copyExternalEtcdCerts()); err != nil {
-	// 	return fmt.Errorf("copying etcd client certs: %v", err)
-	// }
 	return nil
 }
 
@@ -118,7 +115,6 @@ func (b *BottlerocketRenewer) RenewEtcdCerts(ctx context.Context, node string, s
 
 // CopyEtcdCertsToLocal copies the etcd certificates from the specified node to the local machine.
 func (b *BottlerocketRenewer) CopyEtcdCertsToLocal(ctx context.Context, node string, ssh SSHRunner) error {
-
 	if _, err := ssh.RunCommand(ctx, node, b.sheltie(
 		b.copyEtcdCertsToTemp(brTempDir),
 	)); err != nil {
@@ -181,7 +177,6 @@ ctr image pull ${IMAGE_ID}`
 }
 
 func (b *BottlerocketRenewer) backupControlPlaneCerts(_ string, hasExternalEtcd bool, certDir string) string {
-
 	backupPath := fmt.Sprintf("/var/lib/kubeadm/pki.bak_%s", b.backup)
 
 	if hasExternalEtcd {
