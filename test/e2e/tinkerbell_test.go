@@ -2999,7 +2999,9 @@ func TestTinkerbellCustomTemplateRefSimpleFlow(t *testing.T) {
 	)
 
 	// Get the custom template config
-	customTemplateConfig, err := framework.GetCustomTinkerbellConfig(provider.GetTinkerbellLBIP())
+	customTemplateConfig, err := framework.GetCustomTinkerbellConfig(
+		test.ClusterConfig.TinkerbellDatacenter.Spec.TinkerbellIP,
+		test.ClusterConfig.TinkerbellDatacenter.Spec.OSImageURL)
 	if err != nil {
 		t.Fatalf("Failed to get custom template config: %v", err)
 	}
