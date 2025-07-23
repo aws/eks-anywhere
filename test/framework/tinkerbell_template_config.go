@@ -15,7 +15,7 @@ import (
 var customTinkerbellConfigYAML []byte
 
 // GetCustomTinkerbellConfig returns a custom TinkerbellTemplateConfig.
-func GetCustomTinkerbellConfig(tinkerbellLBIP string) (*anywherev1.TinkerbellTemplateConfig, error) {
+func GetCustomTinkerbellConfig(tinkerbellLBIP string, osImage string) (*anywherev1.TinkerbellTemplateConfig, error) {
 	// Replace placeholders with actual values using string replacement
 	configContent := string(customTinkerbellConfigYAML)
 	localIP, err := networkutils.GetLocalIP()
@@ -24,6 +24,7 @@ func GetCustomTinkerbellConfig(tinkerbellLBIP string) (*anywherev1.TinkerbellTem
 	}
 	configContent = strings.ReplaceAll(configContent, "__TINKERBELL_LOCAL_IP__", localIP.String())
 	configContent = strings.ReplaceAll(configContent, "__TINKERBELL_LB_IP__", tinkerbellLBIP)
+	configContent = strings.ReplaceAll(configContent, "__OS_IMAGE__", osImage)
 
 	// Parse the YAML into TinkerbellTemplateConfig
 	var config anywherev1.TinkerbellTemplateConfig

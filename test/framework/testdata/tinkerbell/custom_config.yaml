@@ -12,7 +12,7 @@ spec:
       - environment:
           COMPRESSED: "true"
           DEST_DISK: '{{ index .Hardware.Disks 0 }}'
-          IMG_URL: http://10.80.18.43:8080/ubuntu/2204/ubuntu-1-30.gz
+          IMG_URL: __OS_IMAGE__
         image: 127.0.0.1/embedded/image2disk
         name: stream image to disk
         timeout: 600
