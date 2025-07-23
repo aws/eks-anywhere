@@ -52,15 +52,6 @@ func (l *LinuxRenewer) RenewControlPlaneCerts(
 		}
 	}
 
-	if hasExternalEtcd {
-		if err := l.TransferCertsToControlPlane(ctx, node, ssh); err != nil {
-			return fmt.Errorf("transferring certificates to control plane node: %v", err)
-		}
-		if _, err := ssh.RunCommand(ctx, node, l.copyExternalEtcdCerts(hasExternalEtcd)); err != nil {
-			return fmt.Errorf("copying etcd client certs: %v", err)
-		}
-	}
-
 	if _, err := ssh.RunCommand(ctx, node, l.restartControlPlaneStaticPods()); err != nil {
 		return fmt.Errorf("restarting control plane pods: %v", err)
 	}
@@ -91,14 +82,14 @@ func (l *LinuxRenewer) RenewEtcdCerts(
 	return nil
 }
 
-// CopyEtcdCerts copies the etcd certificates from the specified node to the local machine.
-func (l *LinuxRenewer) CopyEtcdCerts(
+// CopyEtcdCertsToLocal copies the etcd certificates from the specified node to the local machine.
+func (l *LinuxRenewer) CopyEtcdCertsToLocal(
 	ctx context.Context,
 	node string,
 	ssh SSHRunner,
 ) error {
 	certificatePath := filepath.Join(linuxEtcdCertDir, "pki", "apiserver-etcd-client.crt")
-	certificateContent, err := ssh.RunCommand(ctx, node, fmt.Sprintf("sudo cat %s", certificatePath))
+	certificateContent, err := ssh.RunCommand(ctx, node, fmt.Sprintf("sudo cat %s", certificatePath), WithSSHLogging(false))
 	if err != nil {
 		return fmt.Errorf("reading etcd certificate file: %v", err)
 	}
@@ -108,7 +99,7 @@ func (l *LinuxRenewer) CopyEtcdCerts(
 	}
 
 	keyFilePath := filepath.Join(linuxEtcdCertDir, "pki", "apiserver-etcd-client.key")
-	keyContent, err := ssh.RunCommand(ctx, node, fmt.Sprintf("sudo cat %s", keyFilePath))
+	keyContent, err := ssh.RunCommand(ctx, node, fmt.Sprintf("sudo cat %s", keyFilePath), WithSSHLogging(false))
 	if err != nil {
 		return fmt.Errorf("reading etcd key file: %v", err)
 	}
@@ -165,8 +156,8 @@ func (l *LinuxRenewer) validateEtcdCerts() string {
 		linuxEtcdCertDir)
 }
 
-// TransferCertsToControlPlane transfers etcd client certificates to a control plane node.
-func (l *LinuxRenewer) TransferCertsToControlPlane(
+// TransferCertsToControlPlaneFromLocal transfers etcd client certificates to a control plane node.
+func (l *LinuxRenewer) TransferCertsToControlPlaneFromLocal(
 	ctx context.Context, node string, ssh SSHRunner,
 ) error {
 
@@ -183,22 +174,22 @@ func (l *LinuxRenewer) TransferCertsToControlPlane(
 	}
 
 	certificateCommand := fmt.Sprintf("sudo tee %s/apiserver-etcd-client.crt > /dev/null << 'EOF'\n%s\nEOF", linuxTempDir, string(certificateBytes))
-	if _, err := ssh.RunCommand(ctx, node, certificateCommand); err != nil {
+	if _, err := ssh.RunCommand(ctx, node, certificateCommand, WithSSHLogging(false)); err != nil {
 		return fmt.Errorf("copying certificate to control plane: %v", err)
 	}
 
 	keyCommand := fmt.Sprintf("sudo tee %s/apiserver-etcd-client.key > /dev/null << 'EOF'\n%s\nEOF", linuxTempDir, string(keyBytes))
-	if _, err := ssh.RunCommand(ctx, node, keyCommand); err != nil {
+	if _, err := ssh.RunCommand(ctx, node, keyCommand, WithSSHLogging(false)); err != nil {
 		return fmt.Errorf("copying key to control plane: %v", err)
 	}
 
+	if _, err := ssh.RunCommand(ctx, node, l.copyExternalEtcdCerts()); err != nil {
+		return fmt.Errorf("copying etcd client certs: %v", err)
+	}
 	return nil
 }
 
-func (l *LinuxRenewer) copyExternalEtcdCerts(hasExternalEtcd bool) string {
-	if hasExternalEtcd {
-		return fmt.Sprintf("sudo sh -c 'if [ -f %[1]s/apiserver-etcd-client.crt ]; then cp %[1]s/apiserver-etcd-client.* %[2]s/ && rm -f %[1]s/apiserver-etcd-client.*; fi'",
-			linuxTempDir, linuxControlPlaneCertDir)
-	}
-	return "true"
+func (l *LinuxRenewer) copyExternalEtcdCerts() string {
+	return fmt.Sprintf("sudo sh -c 'if [ -f %[1]s/apiserver-etcd-client.crt ]; then cp %[1]s/apiserver-etcd-client.* %[2]s/ && rm -f %[1]s/apiserver-etcd-client.*; fi'",
+		linuxTempDir, linuxControlPlaneCertDir)
 }
