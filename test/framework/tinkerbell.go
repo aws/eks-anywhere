@@ -150,11 +150,6 @@ func (t *Tinkerbell) Name() string {
 	return tinkerbellProviderName
 }
 
-// GetTinkerbellLBIP returns the configured tinkerbell ip for the provider.
-func (t *Tinkerbell) GetTinkerbellLBIP() string {
-	return t.serverIP
-}
-
 func (t *Tinkerbell) Setup() {}
 
 // UpdateKubeConfig customizes generated kubeconfig for the provider.
