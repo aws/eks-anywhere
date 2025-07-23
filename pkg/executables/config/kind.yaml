@@ -7,7 +7,6 @@ kubeadmConfigPatches:
   - |
     kind: ClusterConfiguration
     dns:
-      type: CoreDNS
       imageRepository: {{.CorednsRepository}}
       imageTag: {{.CorednsVersion}}
     etcd:
