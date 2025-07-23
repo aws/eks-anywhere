@@ -35,6 +35,7 @@ type DefaultSSHRunner struct {
 	sshPasswd  string
 }
 
+// SSHOption represents a configuration option for SSH operations.
 type SSHOption func(*sshConfigOption)
 
 type sshConfigOption struct {
@@ -47,6 +48,7 @@ func defaultSSHConfig() *sshConfigOption {
 	}
 }
 
+// WithSSHLogging configures whether SSH command output should be displayed in logs.
 func WithSSHLogging(display bool) SSHOption {
 	return func(c *sshConfigOption) {
 		c.displayLogs = display
