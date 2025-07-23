@@ -563,6 +563,7 @@ spec:
                               type: string
                           type: object
                         manifest:
+                          description: This field has been deprecated
                           properties:
                             uri:
                               description: URI points to the manifest yaml file
@@ -601,7 +602,6 @@ spec:
                           type: string
                       required:
                       - cilium
-                      - manifest
                       - operator
                       type: object
                     cloudStack:

@@ -121,8 +121,6 @@ spec:
         imageDigest: sha256:f9786d17903ecb26caecd58137271cef3a7d25ecbb30a4d7396542096d158362
         name: cilium-chart
         uri: public.ecr.aws/isovalent/cilium:1.15.16-eksa.1
-      manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.15.16-eksa.1/cilium.yaml
       operator:
         arch:
         - amd64
@@ -948,8 +946,6 @@ spec:
         imageDigest: sha256:f9786d17903ecb26caecd58137271cef3a7d25ecbb30a4d7396542096d158362
         name: cilium-chart
         uri: public.ecr.aws/isovalent/cilium:1.15.16-eksa.1
-      manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.15.16-eksa.1/cilium.yaml
       operator:
         arch:
         - amd64
@@ -1775,8 +1771,6 @@ spec:
         imageDigest: sha256:f9786d17903ecb26caecd58137271cef3a7d25ecbb30a4d7396542096d158362
         name: cilium-chart
         uri: public.ecr.aws/isovalent/cilium:1.15.16-eksa.1
-      manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.15.16-eksa.1/cilium.yaml
       operator:
         arch:
         - amd64
@@ -2602,8 +2596,6 @@ spec:
         imageDigest: sha256:f9786d17903ecb26caecd58137271cef3a7d25ecbb30a4d7396542096d158362
         name: cilium-chart
         uri: public.ecr.aws/isovalent/cilium:1.15.16-eksa.1
-      manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.15.16-eksa.1/cilium.yaml
       operator:
         arch:
         - amd64
@@ -3429,8 +3421,6 @@ spec:
         imageDigest: sha256:f9786d17903ecb26caecd58137271cef3a7d25ecbb30a4d7396542096d158362
         name: cilium-chart
         uri: public.ecr.aws/isovalent/cilium:1.15.16-eksa.1
-      manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.15.16-eksa.1/cilium.yaml
       operator:
         arch:
         - amd64
@@ -4256,8 +4246,6 @@ spec:
         imageDigest: sha256:f9786d17903ecb26caecd58137271cef3a7d25ecbb30a4d7396542096d158362
         name: cilium-chart
         uri: public.ecr.aws/isovalent/cilium:1.15.16-eksa.1
-      manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.15.16-eksa.1/cilium.yaml
       operator:
         arch:
         - amd64

@@ -60,9 +60,6 @@ func (vb *VersionsBundle) Manifests() map[string][]*string {
 			&vb.Nutanix.ClusterTemplate.URI,
 			&vb.Nutanix.Metadata.URI,
 		},
-		"cilium": {
-			&vb.Cilium.Manifest.URI,
-		},
 		"kindnetd": {
 			&vb.Kindnetd.Manifest.URI,
 		},
