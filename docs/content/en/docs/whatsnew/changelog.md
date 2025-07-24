@@ -84,6 +84,33 @@ description: >
 - With CAPI diagnostics enabled, removed the redundant kube-rbac-proxy metrics server from the CloudStack provider controller.
 - Removed vSphere failure domain feature gate `VSPHERE_FAILURE_DOMAIN_ENABLED` which gradated to GA in this version([#9827](https://github.com/aws/eks-anywhere/pull/9827))
 
+## [v0.22.7](https://github.com/aws/eks-anywhere/releases/tag/v0.22.7)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.32.0 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+
+### Changed
+- EKS Distro:
+  - [`v1-32-eks-17`](https://distro.eks.amazonaws.com/releases/1-32/17/)
+  - [`v1-31-eks-24`](https://distro.eks.amazonaws.com/releases/1-31/24/)
+  - [`v1-30-eks-35`](https://distro.eks.amazonaws.com/releases/1-30/35/)
+  - [`v1-29-eks-42`](https://distro.eks.amazonaws.com/releases/1-29/42/)
+  - [`v1-28-eks-53`](https://distro.eks.amazonaws.com/releases/1-28/53/)
+- Cluster API Provider Vsphere: `v1.12.0` to `v1.12.1`
+
+
+### Fixed
+- Fix filesystem permission errors caused by cexec action in custom Tinkerbell template ([#4699](https://github.com/aws/eks-anywhere-build-tooling/pull/4699))
+- Update corefile-migration patch to support CoreDNS v1.12.1 ([#4714](https://github.com/aws/eks-anywhere-build-tooling/pull/4714))
+- More robust iPXE script with interface checks, retries, VLAN fallback ([#4733](https://github.com/aws/eks-anywhere-build-tooling/pull/4733))
+- For baremtal upgrades, apply hardware objects after updating the schema ([#9880](https://github.com/aws/eks-anywhere/pull/9880))
+
 ## [v0.22.6](https://github.com/aws/eks-anywhere/releases/tag/v0.22.6)
 
 ### Supported OS version details
