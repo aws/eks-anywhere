@@ -29,10 +29,15 @@ func TestNewRenewerSuccess(t *testing.T) {
 	cfg := &certificates.RenewalConfig{
 		ClusterName: "test-cluster",
 		OS:          string(certificates.OSTypeLinux),
-		ControlPlane: certificates.NodeConfig{
-			Nodes: []string{
-				"0.0.0.0",
+		Etcd: certificates.NodeConfig{
+			Nodes: []string{"etcd-1"},
+			SSH: certificates.SSHConfig{
+				User:    "XXXX",
+				KeyPath: "test",
 			},
+		},
+		ControlPlane: certificates.NodeConfig{
+			Nodes: []string{"0.0.0.0"},
 			SSH: certificates.SSHConfig{
 				User:    "XXXX",
 				KeyPath: "test",
@@ -47,13 +52,15 @@ func TestNewRenewerSuccess(t *testing.T) {
 	kubeClient := kubemocks.NewMockClient(ctrl)
 
 	sshCP.EXPECT().
-		RunCommand(gomock.Any(), gomock.Any(), gomock.Any()).
+		RunCommand(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return("", nil).
 		AnyTimes()
 
 	sshEtcd.EXPECT().
-		RunCommand(gomock.Any(), gomock.Any(), gomock.Any()).
-		Return("", nil).
+		RunCommand(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(_ context.Context, _, _ string, _ ...certificates.SSHOption) (string, error) {
+			return "dummy-certificate-content", nil
+		}).
 		AnyTimes()
 
 	kubeClient.EXPECT().
@@ -64,10 +71,12 @@ func TestNewRenewerSuccess(t *testing.T) {
 	renewer := &certificates.Renewer{
 		BackupDir:       t.TempDir(),
 		Kubectl:         kubeClient,
-		Os:              osRenewer,
-		SshEtcd:         sshEtcd,
-		SshControlPlane: sshCP,
+		OS:              osRenewer,
+		SSHEtcd:         sshEtcd,
+		SSHControlPlane: sshCP,
 	}
+
+	writeDummyEtcdCerts(t, renewer.BackupDir)
 
 	if err := renewer.RenewCertificates(context.Background(), cfg, "etcd"); err != nil {
 		t.Fatalf("RenewCertificates() expected no error, got: %v", err)
@@ -99,7 +108,7 @@ func TestRenewEtcdCerts_BackupError(t *testing.T) {
 
 	sshEtcd := mocks.NewMockSSHRunner(ctrl)
 	sshEtcd.EXPECT().
-		RunCommand(gomock.Any(), gomock.Any(), gomock.Any()).
+		RunCommand(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return("", fmt.Errorf("backing up etcd certs error")).
 		AnyTimes()
 
@@ -109,9 +118,9 @@ func TestRenewEtcdCerts_BackupError(t *testing.T) {
 	renewer := &certificates.Renewer{
 		BackupDir:       t.TempDir(),
 		Kubectl:         kubeClient,
-		Os:              osRenewer,
-		SshEtcd:         sshEtcd,
-		SshControlPlane: sshCP,
+		OS:              osRenewer,
+		SSHEtcd:         sshEtcd,
+		SSHControlPlane: sshCP,
 	}
 	if err := renewer.RenewCertificates(context.Background(), cfg, ""); err == nil {
 		t.Fatalf("renewEtcdCerts() expected error, got nil")
@@ -134,14 +143,14 @@ func TestRenewEtcdCerts_RenewError(t *testing.T) {
 
 	sshEtcd := mocks.NewMockSSHRunner(ctrl)
 	sshEtcd.EXPECT().
-		RunCommand(gomock.Any(), gomock.Any(), gomock.Any()).
+		RunCommand(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return("", fmt.Errorf("renew etcd error")).
 		AnyTimes()
 
 	renewer := &certificates.Renewer{
 		BackupDir: t.TempDir(),
-		Os:        osRenewer,
-		SshEtcd:   sshEtcd,
+		OS:        osRenewer,
+		SSHEtcd:   sshEtcd,
 	}
 
 	if err := renewer.RenewCertificates(context.Background(), cfg, ""); err == nil {
@@ -165,8 +174,8 @@ func TestRenewEtcdCerts_SuccessfulRenewal(t *testing.T) {
 
 	sshEtcd := mocks.NewMockSSHRunner(ctrl)
 	sshEtcd.EXPECT().
-		RunCommand(gomock.Any(), gomock.Any(), gomock.Any()).
-		DoAndReturn(func(_ context.Context, _, _ string, opts ...certificates.SSHOption) (string, error) {
+		RunCommand(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(_ context.Context, _, _ string, _ ...certificates.SSHOption) (string, error) {
 			return "dummy-cert-content", nil
 		}).
 		AnyTimes()
@@ -179,8 +188,8 @@ func TestRenewEtcdCerts_SuccessfulRenewal(t *testing.T) {
 
 	renewer := &certificates.Renewer{
 		BackupDir: t.TempDir(),
-		Os:        osRenewer,
-		SshEtcd:   sshEtcd,
+		OS:        osRenewer,
+		SSHEtcd:   sshEtcd,
 		Kubectl:   kubeClient,
 	}
 
@@ -223,9 +232,9 @@ func TestRenewCertificates_RenewControlPlaneCertsError(t *testing.T) {
 	renewer := &certificates.Renewer{
 		BackupDir:       t.TempDir(),
 		Kubectl:         kubeClient,
-		Os:              osRenewer,
-		SshEtcd:         sshEtcd,
-		SshControlPlane: sshCP,
+		OS:              osRenewer,
+		SSHEtcd:         sshEtcd,
+		SSHControlPlane: sshCP,
 	}
 
 	if err := renewer.RenewCertificates(context.Background(), cfg, "control-plane"); err == nil {
@@ -263,14 +272,14 @@ func TestRenewCertificates_UpdateAPIServerEtcdClientSecretError(t *testing.T) {
 	kubeClient := kubemocks.NewMockClient(ctrl)
 
 	sshEtcd.EXPECT().
-		RunCommand(gomock.Any(), gomock.Any(), gomock.Any()).
-		DoAndReturn(func(_ context.Context, _, _ string, opts ...certificates.SSHOption) (string, error) {
+		RunCommand(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(_ context.Context, _, _ string, _ ...certificates.SSHOption) (string, error) {
 			return "certificate or key content", nil
 		}).
 		AnyTimes()
 
 	sshCP.EXPECT().
-		RunCommand(gomock.Any(), gomock.Any(), gomock.Any()).
+		RunCommand(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return("", nil).
 		AnyTimes()
 
@@ -291,9 +300,9 @@ func TestRenewCertificates_UpdateAPIServerEtcdClientSecretError(t *testing.T) {
 	renewer := &certificates.Renewer{
 		BackupDir:       t.TempDir(),
 		Kubectl:         kubeClient,
-		Os:              osRenewer,
-		SshEtcd:         sshEtcd,
-		SshControlPlane: sshCP,
+		OS:              osRenewer,
+		SSHEtcd:         sshEtcd,
+		SSHControlPlane: sshCP,
 	}
 
 	writeDummyEtcdCerts(t, renewer.BackupDir)
@@ -333,30 +342,30 @@ func TestRenewCertificates_CopyEtcdCertsError(t *testing.T) {
 	kubeClient := kubemocks.NewMockClient(ctrl)
 
 	firstCall := sshEtcd.EXPECT().
-		RunCommand(gomock.Any(), gomock.Any(), gomock.Any()).
+		RunCommand(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return("", nil)
 
 	secondCall := sshEtcd.EXPECT().
-		RunCommand(gomock.Any(), gomock.Any(), gomock.Any()).
+		RunCommand(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return("", nil).
 		After(firstCall)
 
 	thirdCall := sshEtcd.EXPECT().
-		RunCommand(gomock.Any(), gomock.Any(), gomock.Any()).
+		RunCommand(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return("", nil).
 		After(secondCall)
 
 	sshEtcd.EXPECT().
-		RunCommand(gomock.Any(), gomock.Any(), gomock.Any()).
+		RunCommand(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return("", fmt.Errorf("copy etcd certs error")).
 		After(thirdCall)
 
 	renewer := &certificates.Renewer{
 		BackupDir:       t.TempDir(),
 		Kubectl:         kubeClient,
-		Os:              osRenewer,
-		SshEtcd:         sshEtcd,
-		SshControlPlane: sshCP,
+		OS:              osRenewer,
+		SSHEtcd:         sshEtcd,
+		SSHControlPlane: sshCP,
 	}
 
 	if err := renewer.RenewCertificates(context.Background(), cfg, "etcd"); err == nil {
@@ -395,15 +404,15 @@ func TestRenewCertificates_ReadCertificateFileError(t *testing.T) {
 	sshEtcd := mocks.NewMockSSHRunner(ctrl)
 	kubeClient := kubemocks.NewMockClient(ctrl)
 
-	sshEtcd.EXPECT().RunCommand(gomock.Any(), gomock.Any(), gomock.Any()).
-		DoAndReturn(func(_ context.Context, _, cmd string, opts ...certificates.SSHOption) (string, error) {
+	sshEtcd.EXPECT().RunCommand(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(_ context.Context, _, _ string, _ ...certificates.SSHOption) (string, error) {
 			return "certificate-content", nil
 		}).AnyTimes()
 
 	renewer := &certificates.Renewer{
 		BackupDir: t.TempDir(),
-		Os:        osRenewer,
-		SshEtcd:   sshEtcd,
+		OS:        osRenewer,
+		SSHEtcd:   sshEtcd,
 		Kubectl:   kubeClient,
 	}
 
@@ -428,22 +437,25 @@ func TestRenewCertificates_ReadKeyFileError(t *testing.T) {
 	sshEtcd := mocks.NewMockSSHRunner(ctrl)
 	kubeClient := kubemocks.NewMockClient(ctrl)
 
-	sshEtcd.EXPECT().RunCommand(gomock.Any(), gomock.Any(), gomock.Any()).
-		DoAndReturn(func(_ context.Context, _, cmd string, opts ...certificates.SSHOption) (string, error) {
+	sshEtcd.EXPECT().RunCommand(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(_ context.Context, _, _ string, _ ...certificates.SSHOption) (string, error) {
 			return "certificate-content", nil
 		}).AnyTimes()
 
 	renewer := &certificates.Renewer{
 		BackupDir: t.TempDir(),
-		Os:        osRenewer,
-		SshEtcd:   sshEtcd,
+		OS:        osRenewer,
+		SSHEtcd:   sshEtcd,
 		Kubectl:   kubeClient,
 	}
 
 	dir := filepath.Join(renewer.BackupDir, tempLocalEtcdCertsDir)
-	os.MkdirAll(dir, 0o755)
-	os.WriteFile(filepath.Join(dir, "apiserver-etcd-client.crt"), []byte("cert"), 0o644)
-
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatalf("creating directory: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "apiserver-etcd-client.crt"), []byte("cert"), 0o644); err != nil {
+		t.Fatalf("writing crt: %v", err)
+	}
 	if err := renewer.RenewCertificates(context.Background(), cfg, ""); err == nil {
 		t.Fatalf("RenewCertificates() expected read key file error, got nil")
 	}
@@ -465,8 +477,8 @@ func TestRenewCertificates_KubernetesAPIUnavailable(t *testing.T) {
 	sshEtcd := mocks.NewMockSSHRunner(ctrl)
 	kubeClient := kubemocks.NewMockClient(ctrl)
 
-	sshEtcd.EXPECT().RunCommand(gomock.Any(), gomock.Any(), gomock.Any()).
-		DoAndReturn(func(_ context.Context, _, _ string, opts ...certificates.SSHOption) (string, error) {
+	sshEtcd.EXPECT().RunCommand(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(_ context.Context, _, _ string, _ ...certificates.SSHOption) (string, error) {
 			return "certificate-content", nil
 		}).AnyTimes()
 
@@ -477,8 +489,8 @@ func TestRenewCertificates_KubernetesAPIUnavailable(t *testing.T) {
 
 	renewer := &certificates.Renewer{
 		BackupDir: t.TempDir(),
-		Os:        osRenewer,
-		SshEtcd:   sshEtcd,
+		OS:        osRenewer,
+		SSHEtcd:   sshEtcd,
 		Kubectl:   kubeClient,
 	}
 
@@ -505,8 +517,8 @@ func TestRenewCertificates_SuccessfulSecretUpdate(t *testing.T) {
 	sshEtcd := mocks.NewMockSSHRunner(ctrl)
 	kubeClient := kubemocks.NewMockClient(ctrl)
 
-	sshEtcd.EXPECT().RunCommand(gomock.Any(), gomock.Any(), gomock.Any()).
-		DoAndReturn(func(_ context.Context, _, _ string, opts ...certificates.SSHOption) (string, error) {
+	sshEtcd.EXPECT().RunCommand(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(_ context.Context, _, _ string, _ ...certificates.SSHOption) (string, error) {
 			return "certificate-content", nil
 		}).AnyTimes()
 
@@ -524,8 +536,8 @@ func TestRenewCertificates_SuccessfulSecretUpdate(t *testing.T) {
 
 	renewer := &certificates.Renewer{
 		BackupDir: t.TempDir(),
-		Os:        osRenewer,
-		SshEtcd:   sshEtcd,
+		OS:        osRenewer,
+		SSHEtcd:   sshEtcd,
 		Kubectl:   kubeClient,
 	}
 
@@ -555,8 +567,8 @@ func TestRenewCertificates_CleanupError(t *testing.T) {
 
 	renewer := &certificates.Renewer{
 		BackupDir:       "/non-existent-path/cannot-delete",
-		Os:              osRenewer,
-		SshControlPlane: sshCP,
+		OS:              osRenewer,
+		SSHControlPlane: sshCP,
 	}
 
 	if err := renewer.RenewCertificates(context.Background(), cfg, ""); err != nil {

@@ -25,9 +25,9 @@ const (
 type Renewer struct {
 	BackupDir       string
 	Kubectl         kubernetes.Client
-	SshEtcd         SSHRunner
-	SshControlPlane SSHRunner
-	Os              OSRenewer
+	SSHEtcd         SSHRunner
+	SSHControlPlane SSHRunner
+	OS              OSRenewer
 }
 
 // NewRenewer creates a new certificate renewer instance with a timestamped backup directory.
@@ -58,9 +58,9 @@ func NewRenewer(kubectl kubernetes.Client, osType string, cfg *RenewalConfig) (*
 	return &Renewer{
 		BackupDir:       backupDir,
 		Kubectl:         kubectl,
-		Os:              osRenewer,
-		SshEtcd:         sshEtcd,
-		SshControlPlane: sshControlPlane,
+		OS:              osRenewer,
+		SSHEtcd:         sshEtcd,
+		SSHControlPlane: sshControlPlane,
 	}, nil
 }
 
@@ -84,7 +84,7 @@ func (r *Renewer) RenewCertificates(ctx context.Context, cfg *RenewalConfig, com
 	}
 
 	if processEtcd {
-		if err := r.updateAPIServerEtcdClientSecret(ctx, cfg.ClusterName); err != nil {
+		if err := r.processEtcdCertificateTransfer(ctx, cfg); err != nil {
 			return err
 		}
 	}
@@ -96,16 +96,9 @@ func (r *Renewer) RenewCertificates(ctx context.Context, cfg *RenewalConfig, com
 
 func (r *Renewer) renewEtcdCerts(ctx context.Context, cfg *RenewalConfig) error {
 	for _, node := range cfg.Etcd.Nodes {
-		if err := r.Os.RenewEtcdCerts(ctx, node, r.SshEtcd); err != nil {
+		if err := r.OS.RenewEtcdCerts(ctx, node, r.SSHEtcd); err != nil {
 			return fmt.Errorf("renewing certificates for etcd node %s: %v", node, err)
 		}
-	}
-
-	firstNode := cfg.Etcd.Nodes[0]
-	logger.V(4).Info("Copying certificates from node", "node", firstNode)
-
-	if err := r.Os.CopyEtcdCerts(ctx, firstNode, r.SshEtcd); err != nil {
-		return fmt.Errorf("copying certificates from etcd node %s: %v", firstNode, err)
 	}
 
 	logger.MarkPass("Etcd certificate renewal process completed successfully.")
@@ -114,7 +107,7 @@ func (r *Renewer) renewEtcdCerts(ctx context.Context, cfg *RenewalConfig) error 
 
 func (r *Renewer) renewControlPlaneCerts(ctx context.Context, cfg *RenewalConfig, component string) error {
 	for _, node := range cfg.ControlPlane.Nodes {
-		if err := r.Os.RenewControlPlaneCerts(ctx, node, cfg, component, r.SshControlPlane); err != nil {
+		if err := r.OS.RenewControlPlaneCerts(ctx, node, cfg, component, r.SSHControlPlane); err != nil {
 			return fmt.Errorf("renewing certificates for control-plane node %s: %v", node, err)
 		}
 	}
@@ -168,11 +161,39 @@ func (r *Renewer) cleanup() {
 
 func (r *Renewer) validateRenewalConfig(
 	cfg *RenewalConfig,
-	_ string,
+	component string,
 ) (processEtcd, processControlPlane bool, err error) {
-
 	processEtcd = len(cfg.Etcd.Nodes) > 0
 	processControlPlane = true
 
+	switch component {
+	case constants.EtcdComponent:
+		processControlPlane = false
+	case constants.ControlPlaneComponent:
+		processEtcd = false
+	case "":
+	}
+
 	return processEtcd, processControlPlane, nil
+}
+
+func (r *Renewer) processEtcdCertificateTransfer(ctx context.Context, cfg *RenewalConfig) error {
+	firstNode := cfg.Etcd.Nodes[0]
+	logger.V(4).Info("Transferring external ETCD certificate to control plane nodes")
+
+	if err := r.OS.CopyEtcdCertsToLocal(ctx, firstNode, r.SSHEtcd); err != nil {
+		return fmt.Errorf("copying certificates from etcd node %s: %v", firstNode, err)
+	}
+
+	for _, node := range cfg.ControlPlane.Nodes {
+		if err := r.OS.TransferCertsToControlPlaneFromLocal(ctx, node, r.SSHControlPlane); err != nil {
+			return fmt.Errorf("transferring certificates to control plane node: %v", err)
+		}
+	}
+
+	if err := r.updateAPIServerEtcdClientSecret(ctx, cfg.ClusterName); err != nil {
+		return err
+	}
+
+	return nil
 }

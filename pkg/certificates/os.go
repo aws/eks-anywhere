@@ -18,8 +18,8 @@ const (
 type OSRenewer interface {
 	RenewControlPlaneCerts(ctx context.Context, node string, config *RenewalConfig, component string, sshRunner SSHRunner) error
 	RenewEtcdCerts(ctx context.Context, node string, sshRunner SSHRunner) error
-	CopyEtcdCerts(ctx context.Context, node string, sshRunner SSHRunner) error
-	TransferCertsToControlPlane(ctx context.Context, node string, sshRunner SSHRunner) error
+	CopyEtcdCertsToLocal(ctx context.Context, node string, sshRunner SSHRunner) error
+	TransferCertsToControlPlaneFromLocal(ctx context.Context, node string, sshRunner SSHRunner) error
 }
 
 // BuildOSRenewer creates a new OSRenewer based on the OS type.
