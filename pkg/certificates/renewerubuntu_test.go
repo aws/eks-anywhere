@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-
 	"testing"
 
 	"github.com/golang/mock/gomock"
