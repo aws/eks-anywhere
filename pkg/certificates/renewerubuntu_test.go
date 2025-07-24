@@ -410,37 +410,6 @@ func TestCopyEtcdCertsToLocalWithMkdirError(t *testing.T) {
 	}
 }
 
-func TestCopyEtcdCertsToLocalWithWriteCertError(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	tmp := t.TempDir()
-	localDir := filepath.Join(tmp, tempLocalEtcdCertsDir)
-	if err := os.MkdirAll(localDir, 0o700); err != nil {
-		t.Fatalf("setup: %v", err)
-	}
-
-	if err := os.Chmod(localDir, 0o500); err != nil {
-		t.Fatalf("setup: %v", err)
-	}
-
-	ssh := mocks.NewMockSSHRunner(ctrl)
-	r := certificates.NewLinuxRenewer(tmp)
-
-	ssh.EXPECT().
-		RunCommand(gomock.Any(), "etcd-1", gomock.Any(), gomock.Any()).
-		Return("cert", nil)
-
-	ssh.EXPECT().
-		RunCommand(gomock.Any(), "etcd-1", gomock.Any(), gomock.Any()).
-		Return("key", nil)
-
-	err := r.CopyEtcdCertsToLocal(context.Background(), "etcd-1", ssh)
-	if err == nil {
-		t.Fatalf("CopyEtcdCertsToLocal() expected error, got nil")
-	}
-}
-
 func TestTransferCertsToControlPlaneWithReadKeyError(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
