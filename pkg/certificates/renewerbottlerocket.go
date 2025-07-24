@@ -45,18 +45,11 @@ func (b *BottlerocketRenewer) RenewControlPlaneCerts(
 
 	hasExternalEtcd := cfg != nil && len(cfg.Etcd.Nodes) > 0
 
-	if hasExternalEtcd {
-		if err := b.TransferCertsToControlPlane(ctx, node, ssh); err != nil {
-			return fmt.Errorf("transferring certificates to control plane node: %v", err)
-		}
-	}
-
 	shellCommands := b.sheltie(
 		b.pullContainerImage(),
 		b.backupControlPlaneCerts(component, hasExternalEtcd, brControlPlaneCertDir),
 		b.renewControlPlaneCerts(),
 		b.checkControlPlaneCerts(),
-		b.copyExternalEtcdCerts(),
 		b.restartControlPlaneStaticPods(),
 	)
 
@@ -68,8 +61,8 @@ func (b *BottlerocketRenewer) RenewControlPlaneCerts(
 	return nil
 }
 
-// TransferCertsToControlPlane transfers etcd client certificates to a control plane node.
-func (b *BottlerocketRenewer) TransferCertsToControlPlane(
+// TransferCertsToControlPlaneFromLocal transfers etcd client certificates to a control plane node.
+func (b *BottlerocketRenewer) TransferCertsToControlPlaneFromLocal(
 	ctx context.Context, node string, ssh SSHRunner,
 ) error {
 	certificateBytes, err := os.ReadFile(filepath.Join(
@@ -87,9 +80,10 @@ func (b *BottlerocketRenewer) TransferCertsToControlPlane(
 		b.createTempDirectory(tempLocalEtcdCertsDir),
 		b.writeCertToTemp(base64.StdEncoding.EncodeToString(certificateBytes)),
 		b.writeKeyToTemp(base64.StdEncoding.EncodeToString(keyBytes)),
+		b.copyExternalEtcdCerts(),
 	)
 
-	if _, err := ssh.RunCommand(ctx, node, shellCommands); err != nil {
+	if _, err := ssh.RunCommand(ctx, node, shellCommands, WithSSHLogging(false)); err != nil {
 		return fmt.Errorf("transfering certificates to control plane: %v", err)
 	}
 
@@ -119,8 +113,8 @@ func (b *BottlerocketRenewer) RenewEtcdCerts(ctx context.Context, node string, s
 	return nil
 }
 
-func (b *BottlerocketRenewer) CopyEtcdCerts(ctx context.Context, node string, ssh SSHRunner) error {
-
+// CopyEtcdCertsToLocal copies the etcd certificates from the specified node to the local machine.
+func (b *BottlerocketRenewer) CopyEtcdCertsToLocal(ctx context.Context, node string, ssh SSHRunner) error {
 	if _, err := ssh.RunCommand(ctx, node, b.sheltie(
 		b.copyEtcdCertsToTemp(brTempDir),
 	)); err != nil {
@@ -128,7 +122,7 @@ func (b *BottlerocketRenewer) CopyEtcdCerts(ctx context.Context, node string, ss
 	}
 
 	certificatePath := filepath.Join(brTempDir, "apiserver-etcd-client.crt")
-	certificateContent, err := ssh.RunCommand(ctx, node, b.readTempFile(certificatePath))
+	certificateContent, err := ssh.RunCommand(ctx, node, b.readTempFile(certificatePath), WithSSHLogging(false))
 	if err != nil {
 		return fmt.Errorf("reading etcd certificate file: %v", err)
 	}
@@ -138,7 +132,7 @@ func (b *BottlerocketRenewer) CopyEtcdCerts(ctx context.Context, node string, ss
 	}
 
 	keyFilePath := filepath.Join(brTempDir, "apiserver-etcd-client.key")
-	keyContent, err := ssh.RunCommand(ctx, node, b.readTempFile(keyFilePath))
+	keyContent, err := ssh.RunCommand(ctx, node, b.readTempFile(keyFilePath), WithSSHLogging(false))
 	if err != nil {
 		return fmt.Errorf("reading etcd key file: %v", err)
 	}
@@ -183,7 +177,6 @@ ctr image pull ${IMAGE_ID}`
 }
 
 func (b *BottlerocketRenewer) backupControlPlaneCerts(_ string, hasExternalEtcd bool, certDir string) string {
-
 	backupPath := fmt.Sprintf("/var/lib/kubeadm/pki.bak_%s", b.backup)
 
 	if hasExternalEtcd {
@@ -213,11 +206,12 @@ func (b *BottlerocketRenewer) checkControlPlaneCerts() string {
 }
 
 func (b *BottlerocketRenewer) copyExternalEtcdCerts() string {
-	copyCerts := fmt.Sprintf(`if [ -d "/tmp/%[1]s" ]; then
-    cp /tmp/%[1]s/apiserver-etcd-client.crt %[2]s/server-etcd-client.crt
-    cp /tmp/%[1]s/apiserver-etcd-client.key %[2]s/apiserver-etcd-client.key
-    rm -rf /tmp/%[1]s
-fi`, tempLocalEtcdCertsDir, brControlPlaneCertDir)
+	copyCerts := fmt.Sprintf(`
+		mkdir -p %[2]s
+		cp /tmp/%[1]s/apiserver-etcd-client.crt %[2]s/server-etcd-client.crt
+		cp /tmp/%[1]s/apiserver-etcd-client.key %[2]s/apiserver-etcd-client.key
+		rm -rf /tmp/%[1]s
+		`, tempLocalEtcdCertsDir, brControlPlaneCertDir)
 	return copyCerts
 }
 
