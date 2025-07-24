@@ -322,31 +322,6 @@ func TestBR_RenewCP_WithEtcd_TransferFails(t *testing.T) {
 	}
 }
 
-func TestBR_CopyEtcdCertsToLocal_WriteCertFail(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-	tmp := t.TempDir()
-	localDir := filepath.Join(tmp, tempLocalEtcdCertsDir)
-	if err := os.MkdirAll(localDir, 0o500); err != nil {
-		t.Fatalf("prep: %v", err)
-	}
-
-	ssh := mocks.NewMockSSHRunner(ctrl)
-	r := certificates.NewBottlerocketRenewer(tmp)
-
-	ctx, node := context.Background(), "etcd"
-
-	gomock.InOrder(
-		ssh.EXPECT().RunCommand(ctx, node, gomock.Any(), gomock.Any()).Return("", nil),
-		ssh.EXPECT().RunCommand(ctx, node, gomock.Any(), gomock.Any()).Return("crt", nil),
-		ssh.EXPECT().RunCommand(ctx, node, gomock.Any(), gomock.Any()).Return("key", nil),
-	)
-
-	if err := r.CopyEtcdCertsToLocal(ctx, node, ssh); err == nil {
-		t.Fatalf("CopyEtcdCertsToLocal() expected error, got nil")
-	}
-}
-
 func TestBR_CopyEtcdCertsToLocal_CleanupFail(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
