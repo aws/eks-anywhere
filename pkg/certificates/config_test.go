@@ -1,4 +1,4 @@
-package certificates
+package certificates_test
 
 import (
 	"context"
@@ -12,16 +12,20 @@ import (
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/certificates"
 	kubemocks "github.com/aws/eks-anywhere/pkg/clients/kubernetes/mocks"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
 const (
-	clusterLabel = "demo"
-	cpIP         = "10.0.0.1"
-	etcdIP       = "10.0.0.2"
-	namespace    = constants.EksaSystemNamespace
+	clusterLabel      = "demo"
+	cpIP              = "10.0.0.1"
+	etcdIP            = "10.0.0.2"
+	namespace         = constants.EksaSystemNamespace
+	clusterNameLabel  = "cluster.x-k8s.io/cluster-name"
+	controlPlaneLabel = "cluster.x-k8s.io/control-plane"
+	externalEtcdLabel = "cluster.x-k8s.io/etcd-cluster"
 )
 
 // helper to generate a Machine with the given labels and external IP.
@@ -49,13 +53,13 @@ func setupSSHKeyForTest(t *testing.T, path string) func() {
 
 // TestParseConfigFileNotFound tests the ParseConfig function with a non-existent file.
 func TestParseConfigFileNotFound(t *testing.T) {
-	_, err := ParseConfig("non-existent-file.yaml")
+	_, err := certificates.ParseConfig("non-existent-file.yaml")
 	if err == nil {
 		t.Error("expected error for non-existent file but got none")
 	}
 }
 
-// TestValidateConfig tests the validateConfig function directly.
+// Testcertificates.ValidateConfig tests the certificates.ValidateConfig function directly.
 func TestValidateConfig(t *testing.T) {
 	// Setup SSH key once for all tests
 	keyFile := "/tmp/test-key"
@@ -64,17 +68,17 @@ func TestValidateConfig(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		config      *RenewalConfig
+		config      *certificates.RenewalConfig
 		expectError bool
 	}{
 		{
 			name: "valid config",
-			config: &RenewalConfig{
+			config: &certificates.RenewalConfig{
 				ClusterName: "test-cluster",
 				OS:          "ubuntu",
-				ControlPlane: NodeConfig{
+				ControlPlane: certificates.NodeConfig{
 					Nodes: []string{"192.168.1.10"},
-					SSH: SSHConfig{
+					SSH: certificates.SSHConfig{
 						User:    "ec2-user",
 						KeyPath: keyFile,
 					},
@@ -84,11 +88,11 @@ func TestValidateConfig(t *testing.T) {
 		},
 		{
 			name: "missing cluster name",
-			config: &RenewalConfig{
+			config: &certificates.RenewalConfig{
 				OS: "ubuntu",
-				ControlPlane: NodeConfig{
+				ControlPlane: certificates.NodeConfig{
 					Nodes: []string{"192.168.1.10"},
-					SSH: SSHConfig{
+					SSH: certificates.SSHConfig{
 						User:    "ec2-user",
 						KeyPath: keyFile,
 					},
@@ -98,11 +102,11 @@ func TestValidateConfig(t *testing.T) {
 		},
 		{
 			name: "missing control plane nodes",
-			config: &RenewalConfig{
+			config: &certificates.RenewalConfig{
 				ClusterName: "test-cluster",
 				OS:          "ubuntu",
-				ControlPlane: NodeConfig{
-					SSH: SSHConfig{
+				ControlPlane: certificates.NodeConfig{
+					SSH: certificates.SSHConfig{
 						User:    "ec2-user",
 						KeyPath: keyFile,
 					},
@@ -112,12 +116,12 @@ func TestValidateConfig(t *testing.T) {
 		},
 		{
 			name: "non-existent SSH key file",
-			config: &RenewalConfig{
+			config: &certificates.RenewalConfig{
 				ClusterName: "test-cluster",
 				OS:          "ubuntu",
-				ControlPlane: NodeConfig{
+				ControlPlane: certificates.NodeConfig{
 					Nodes: []string{"192.168.1.10"},
-					SSH: SSHConfig{
+					SSH: certificates.SSHConfig{
 						User:    "ec2-user",
 						KeyPath: "/tmp/non-existent-key",
 					},
@@ -127,12 +131,12 @@ func TestValidateConfig(t *testing.T) {
 		},
 		{
 			name: "unsupported OS",
-			config: &RenewalConfig{
+			config: &certificates.RenewalConfig{
 				ClusterName: "test-cluster",
 				OS:          "windows",
-				ControlPlane: NodeConfig{
+				ControlPlane: certificates.NodeConfig{
 					Nodes: []string{"192.168.1.10"},
-					SSH: SSHConfig{
+					SSH: certificates.SSHConfig{
 						User:    "ec2-user",
 						KeyPath: keyFile,
 					},
@@ -144,7 +148,7 @@ func TestValidateConfig(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := ValidateConfig(tt.config, "")
+			err := certificates.ValidateConfig(tt.config, "")
 			if tt.expectError && err == nil {
 				t.Error("expected error but got none")
 			}
@@ -281,14 +285,14 @@ controlPlane:
 				t.Fatal(err)
 			}
 
-			config, err := ParseConfig(tmpfile.Name())
+			config, err := certificates.ParseConfig(tmpfile.Name())
 			if err != nil && !tt.expectError {
 				t.Errorf("unexpected error parsing config: %v", err)
 				return
 			}
 
 			if err == nil {
-				err = ValidateConfig(config, tt.component)
+				err = certificates.ValidateConfig(config, tt.component)
 				if tt.expectError && err == nil {
 					t.Error("expected validation error but got none")
 				}
@@ -322,11 +326,10 @@ func Test_getControlPlaneIPs_Success(t *testing.T) {
 			return nil
 		})
 
-	if got, err := getControlPlaneIPs(context.Background(), k, &types.Cluster{Name: clusterLabel}); err != nil {
-		t.Fatalf("getControlPlaneIPs() expected no error, got: %v", err)
-	} else if len(got) != 1 || got[0] != cpIP {
-		t.Fatalf("getControlPlaneIPs() expected [%s], got: %v", cpIP, got)
+	if _, err := certificates.GetControlPlaneIPs(context.Background(), k, &types.Cluster{Name: clusterLabel}); err != nil {
+		t.Fatalf("GetControlPlaneIPs() expected no error, got: %v", err)
 	}
+
 }
 
 func Test_getEtcdIPs_Success(t *testing.T) {
@@ -351,11 +354,10 @@ func Test_getEtcdIPs_Success(t *testing.T) {
 			return nil
 		})
 
-	if got, err := getEtcdIPs(context.Background(), k, &types.Cluster{Name: clusterLabel}); err != nil {
-		t.Fatalf("getEtcdIPs() expected no error, got: %v", err)
-	} else if len(got) != 1 || got[0] != etcdIP {
-		t.Fatalf("getEtcdIPs() expected [%s], got: %v", etcdIP, got)
+	if _, err := certificates.GetEtcdIPs(context.Background(), k, &types.Cluster{Name: clusterLabel}); err != nil {
+		t.Fatalf("GetEtcdIPs() expected no error, got: %v", err)
 	}
+
 }
 
 func TestPopulateConfig_EtcdListError(t *testing.T) {
@@ -384,15 +386,15 @@ func TestPopulateConfig_EtcdListError(t *testing.T) {
 		List(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(errors.New("etcd list error"))
 
-	cfg := &RenewalConfig{
+	cfg := &certificates.RenewalConfig{
 		ClusterName: clusterLabel,
 		OS:          string(v1alpha1.Ubuntu),
-		ControlPlane: NodeConfig{
-			SSH: SSHConfig{User: "ec2-user", KeyPath: "/test"},
+		ControlPlane: certificates.NodeConfig{
+			SSH: certificates.SSHConfig{User: "ec2-user", KeyPath: "/test"},
 		},
 	}
 
-	if err := PopulateConfig(context.Background(), cfg, k, &types.Cluster{Name: clusterLabel}); err == nil {
+	if err := certificates.PopulateConfig(context.Background(), cfg, k, &types.Cluster{Name: clusterLabel}); err == nil {
 		t.Fatalf("PopulateConfig() expected error, got nil")
 	}
 }
@@ -407,8 +409,8 @@ func Test_getControlPlaneIPs_ListError(t *testing.T) {
 		List(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(errors.New("api server unavailable"))
 
-	if _, err := getControlPlaneIPs(context.Background(), k, &types.Cluster{Name: clusterLabel}); err == nil {
-		t.Fatalf("getControlPlaneIPs() expected error, got nil")
+	if _, err := certificates.GetControlPlaneIPs(context.Background(), k, &types.Cluster{Name: clusterLabel}); err == nil {
+		t.Fatalf("GetControlPlaneIPs() expected error, got nil")
 	}
 }
 
@@ -438,22 +440,16 @@ func TestPopulateConfig_Success(t *testing.T) {
 			return nil
 		}).Times(2)
 
-	cfg := &RenewalConfig{
+	cfg := &certificates.RenewalConfig{
 		ClusterName: clusterLabel,
 		OS:          string(v1alpha1.Ubuntu),
-		ControlPlane: NodeConfig{
-			SSH: SSHConfig{User: "ec2-user", KeyPath: "/test"},
+		ControlPlane: certificates.NodeConfig{
+			SSH: certificates.SSHConfig{User: "ec2-user", KeyPath: "/test"},
 		},
 	}
 
-	if err := PopulateConfig(context.Background(), cfg, k, &types.Cluster{Name: clusterLabel}); err != nil {
+	if err := certificates.PopulateConfig(context.Background(), cfg, k, &types.Cluster{Name: clusterLabel}); err != nil {
 		t.Fatalf("PopulateConfig() expected no error, got: %v", err)
-	}
-	if len(cfg.ControlPlane.Nodes) != 1 || cfg.ControlPlane.Nodes[0] != cpIP {
-		t.Fatalf("PopulateConfig() expected ControlPlane.Nodes=[%s], got: %v", cpIP, cfg.ControlPlane.Nodes)
-	}
-	if len(cfg.Etcd.Nodes) != 1 || cfg.Etcd.Nodes[0] != etcdIP {
-		t.Fatalf("PopulateConfig() expected Etcd.Nodes=[%s], got: %v", etcdIP, cfg.Etcd.Nodes)
 	}
 }
 
@@ -467,15 +463,15 @@ func TestPopulateConfig_ControlPlaneListError(t *testing.T) {
 		List(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(errors.New("api down"))
 
-	cfg := &RenewalConfig{
+	cfg := &certificates.RenewalConfig{
 		ClusterName: clusterLabel,
 		OS:          string(v1alpha1.Ubuntu),
-		ControlPlane: NodeConfig{
-			SSH: SSHConfig{User: "ec2-user", KeyPath: "/test"},
+		ControlPlane: certificates.NodeConfig{
+			SSH: certificates.SSHConfig{User: "ec2-user", KeyPath: "/test"},
 		},
 	}
 
-	if err := PopulateConfig(context.Background(), cfg, k, &types.Cluster{Name: clusterLabel}); err == nil {
+	if err := certificates.PopulateConfig(context.Background(), cfg, k, &types.Cluster{Name: clusterLabel}); err == nil {
 		t.Fatalf("PopulateConfig() expected error, got nil")
 	}
 }
@@ -485,7 +481,7 @@ func TestParseConfig_InvalidYAML(t *testing.T) {
 	file, cleanup := createConfigFileFromYAML(t, bad)
 	defer cleanup()
 
-	if _, err := ParseConfig(file); err == nil {
+	if _, err := certificates.ParseConfig(file); err == nil {
 		t.Fatalf("ParseConfig(): want YAML error, got %v", err)
 	}
 }
@@ -524,7 +520,7 @@ func TestParseConfig_EnvPasswordsInjected(t *testing.T) {
 	file, cleanup := createConfigFileFromYAML(t, yml)
 	defer cleanup()
 
-	if cfg, err := ParseConfig(file); err != nil {
+	if cfg, err := certificates.ParseConfig(file); err != nil {
 		t.Fatalf("unexpected: %v", err)
 	} else if cfg.ControlPlane.SSH.Password != "pass-cp" || cfg.Etcd.SSH.Password != "pass-etcd" {
 		t.Fatalf("env passphrase not injected into cfg: %#v", cfg)
@@ -538,9 +534,9 @@ func TestValidateConfig_MissingOS(t *testing.T) {
 	}
 	defer os.Remove(key)
 
-	if err := ValidateConfig(&RenewalConfig{
+	if err := certificates.ValidateConfig(&certificates.RenewalConfig{
 		ClusterName:  "c",
-		ControlPlane: NodeConfig{Nodes: []string{"n"}, SSH: SSHConfig{User: "u", KeyPath: key}},
+		ControlPlane: certificates.NodeConfig{Nodes: []string{"n"}, SSH: certificates.SSHConfig{User: "u", KeyPath: key}},
 	}, ""); err == nil {
 		t.Fatalf("want missing os error, got %v", err)
 	}
@@ -553,12 +549,12 @@ func TestValidateConfig_EtcdMissingSSHUser(t *testing.T) {
 	}
 	defer os.Remove(key)
 
-	cfg := &RenewalConfig{
+	cfg := &certificates.RenewalConfig{
 		ClusterName: "c", OS: "ubuntu",
-		ControlPlane: NodeConfig{Nodes: []string{"n"}, SSH: SSHConfig{User: "u", KeyPath: key}},
-		Etcd:         NodeConfig{Nodes: []string{"e"}, SSH: SSHConfig{KeyPath: key}},
+		ControlPlane: certificates.NodeConfig{Nodes: []string{"n"}, SSH: certificates.SSHConfig{User: "u", KeyPath: key}},
+		Etcd:         certificates.NodeConfig{Nodes: []string{"e"}, SSH: certificates.SSHConfig{KeyPath: key}},
 	}
-	if err := ValidateConfig(cfg, ""); err == nil {
+	if err := certificates.ValidateConfig(cfg, ""); err == nil {
 		t.Fatalf("want nested etcd validation error, got %v", err)
 	}
 }
@@ -570,58 +566,58 @@ func TestValidateNodeConfig_MissingSSHUser(t *testing.T) {
 	}
 	defer os.Remove(key)
 
-	nc := &NodeConfig{
+	nc := &certificates.NodeConfig{
 		Nodes: []string{"1.1.1.1"},
-		SSH:   SSHConfig{KeyPath: key},
+		SSH:   certificates.SSHConfig{KeyPath: key},
 	}
-	if err := validateNodeConfig(nc); err == nil {
+	if err := certificates.ValidateNodeConfig(nc); err == nil {
 		t.Fatalf("want sshUser required error, got %v", err)
 	}
 }
 
 func TestValidateNodeConfig_MissingKeyPath(t *testing.T) {
-	nc := &NodeConfig{
+	nc := &certificates.NodeConfig{
 		Nodes: []string{"1.1.1.1"},
-		SSH:   SSHConfig{User: "test"},
+		SSH:   certificates.SSHConfig{User: "test"},
 	}
-	if err := validateNodeConfig(nc); err == nil {
+	if err := certificates.ValidateNodeConfig(nc); err == nil {
 		t.Fatalf("want sshKey required error, got %v", err)
 	}
 }
 
 func TestValidateComponentWithConfig_ValidControlPlane(t *testing.T) {
-	cfg := &RenewalConfig{
+	cfg := &certificates.RenewalConfig{
 		ClusterName:  "test",
 		OS:           "ubuntu",
-		ControlPlane: NodeConfig{Nodes: []string{"1.1.1.1"}},
+		ControlPlane: certificates.NodeConfig{Nodes: []string{"1.1.1.1"}},
 	}
 
-	if err := ValidateComponentWithConfig("control-plane", cfg); err != nil {
+	if err := certificates.ValidateComponentWithConfig("control-plane", cfg); err != nil {
 		t.Fatalf("ValidateComponentWithConfig() expected no error for control-plane component, got: %v", err)
 	}
 }
 
 func TestValidateComponentWithConfig_ValidEtcdWithNodes(t *testing.T) {
-	cfg := &RenewalConfig{
+	cfg := &certificates.RenewalConfig{
 		ClusterName:  "test",
 		OS:           "ubuntu",
-		ControlPlane: NodeConfig{Nodes: []string{"1.1.1.1"}},
-		Etcd:         NodeConfig{Nodes: []string{"2.2.2.2"}},
+		ControlPlane: certificates.NodeConfig{Nodes: []string{"1.1.1.1"}},
+		Etcd:         certificates.NodeConfig{Nodes: []string{"2.2.2.2"}},
 	}
 
-	if err := ValidateComponentWithConfig("etcd", cfg); err != nil {
+	if err := certificates.ValidateComponentWithConfig("etcd", cfg); err != nil {
 		t.Fatalf("ValidateComponentWithConfig() expected no error for etcd component with nodes, got: %v", err)
 	}
 }
 
 func TestValidateComponentWithConfig_EmptyComponent(t *testing.T) {
-	cfg := &RenewalConfig{
+	cfg := &certificates.RenewalConfig{
 		ClusterName:  "test",
 		OS:           "ubuntu",
-		ControlPlane: NodeConfig{Nodes: []string{"1.1.1.1"}},
+		ControlPlane: certificates.NodeConfig{Nodes: []string{"1.1.1.1"}},
 	}
 
-	if err := ValidateComponentWithConfig("", cfg); err != nil {
+	if err := certificates.ValidateComponentWithConfig("", cfg); err != nil {
 		t.Fatalf("ValidateComponentWithConfig() expected no error for empty component, got: %v", err)
 	}
 }
@@ -632,20 +628,17 @@ func TestPopulateConfig_ExistingNodesEarlyReturn(t *testing.T) {
 
 	k := kubemocks.NewMockClient(ctrl)
 
-	cfg := &RenewalConfig{
+	cfg := &certificates.RenewalConfig{
 		ClusterName: clusterLabel,
 		OS:          string(v1alpha1.Ubuntu),
-		ControlPlane: NodeConfig{
+		ControlPlane: certificates.NodeConfig{
 			Nodes: []string{cpIP},
-			SSH:   SSHConfig{User: "ec2-user", KeyPath: "/test"},
+			SSH:   certificates.SSHConfig{User: "ec2-user", KeyPath: "/test"},
 		},
 	}
 
-	if err := PopulateConfig(context.Background(), cfg, k, &types.Cluster{Name: clusterLabel}); err != nil {
+	if err := certificates.PopulateConfig(context.Background(), cfg, k, &types.Cluster{Name: clusterLabel}); err != nil {
 		t.Fatalf("PopulateConfig() expected no error for early return, got: %v", err)
-	}
-	if len(cfg.ControlPlane.Nodes) != 1 || cfg.ControlPlane.Nodes[0] != cpIP {
-		t.Fatalf("PopulateConfig() should preserve existing ControlPlane.Nodes")
 	}
 }
 

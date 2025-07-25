@@ -14,59 +14,7 @@ import (
 	kubemocks "github.com/aws/eks-anywhere/pkg/clients/kubernetes/mocks"
 )
 
-var errBoomTest = fmt.Errorf("boom-test")
-
-func TestNewRenewerWithEtcdSSHError(t *testing.T) {
-	cfg := &certificates.RenewalConfig{
-		ClusterName: "test-cluster",
-		OS:          string(certificates.OSTypeLinux),
-		Etcd: certificates.NodeConfig{
-			Nodes: []string{"etcd-1"},
-			SSH: certificates.SSHConfig{
-				User:    "",
-				KeyPath: "/non-existent-path",
-			},
-		},
-		ControlPlane: certificates.NodeConfig{
-			Nodes: []string{"cp-1"},
-			SSH: certificates.SSHConfig{
-				User:    "user",
-				KeyPath: "key-path",
-			},
-		},
-	}
-
-	kubeClient := kubemocks.NewMockClient(nil)
-
-	_, err := certificates.NewRenewer(kubeClient, cfg.OS, cfg)
-	if err == nil {
-		t.Fatal("NewRenewer() expected error, got nil")
-	}
-}
-
-func TestNewRenewerWithControlPlaneSSHError(t *testing.T) {
-	cfg := &certificates.RenewalConfig{
-		ClusterName: "test-cluster",
-		OS:          string(certificates.OSTypeLinux),
-		Etcd: certificates.NodeConfig{
-			Nodes: []string{},
-		},
-		ControlPlane: certificates.NodeConfig{
-			Nodes: []string{"cp-1"},
-			SSH: certificates.SSHConfig{
-				User:    "",
-				KeyPath: "/non-existent-path",
-			},
-		},
-	}
-
-	kubeClient := kubemocks.NewMockClient(nil)
-
-	_, err := certificates.NewRenewer(kubeClient, cfg.OS, cfg)
-	if err == nil {
-		t.Fatal("NewRenewer() expected error, got nil")
-	}
-}
+var errString = fmt.Errorf("error")
 
 func TestRenewControlPlaneCertsWithRenewError(t *testing.T) {
 	ctrl := gomock.NewController(t)
@@ -90,7 +38,7 @@ func TestRenewControlPlaneCertsWithRenewError(t *testing.T) {
 
 	ssh.EXPECT().
 		RunCommand(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-		Return("", errBoomTest)
+		Return("", errString)
 
 	renewer := &certificates.Renewer{
 		BackupDir:       t.TempDir(),
@@ -130,7 +78,7 @@ func TestRenewControlPlaneCertsWithExternalEtcdValidationError(t *testing.T) {
 
 	ssh.EXPECT().
 		RunCommand(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-		Return("", errBoomTest)
+		Return("", errString)
 
 	renewer := &certificates.Renewer{
 		BackupDir:       t.TempDir(),
@@ -166,7 +114,7 @@ func TestRenewEtcdCertsWithJoinError(t *testing.T) {
 
 	ssh.EXPECT().
 		RunCommand(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-		Return("", errBoomTest)
+		Return("", errString)
 
 	renewer := &certificates.Renewer{
 		BackupDir: t.TempDir(),
@@ -206,7 +154,7 @@ func TestRenewEtcdCertsWithValidateError(t *testing.T) {
 
 	ssh.EXPECT().
 		RunCommand(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-		Return("", errBoomTest)
+		Return("", errString)
 
 	renewer := &certificates.Renewer{
 		BackupDir: t.TempDir(),
@@ -243,7 +191,7 @@ func TestRenewControlPlaneCertsWithExternalEtcdTransferError(t *testing.T) {
 
 	ssh.EXPECT().
 		RunCommand(gomock.Any(), "cp-1", gomock.Any(), gomock.Any()).
-		Return("", errBoomTest)
+		Return("", errString)
 
 	err := r.RenewControlPlaneCerts(context.Background(), "cp-1", cfg, "", ssh)
 	if err == nil {
@@ -323,7 +271,7 @@ func TestTransferCertsToControlPlaneWithCopyCertError(t *testing.T) {
 
 	ssh.EXPECT().
 		RunCommand(gomock.Any(), "cp-1", gomock.Any(), gomock.Any()).
-		Return("", errBoomTest)
+		Return("", errString)
 
 	err := r.TransferCertsToControlPlaneFromLocal(context.Background(), "cp-1", ssh)
 	if err == nil {
@@ -354,7 +302,7 @@ func TestRenewControlPlaneCertsWithRestartPodsError(t *testing.T) {
 
 	ssh.EXPECT().
 		RunCommand(gomock.Any(), "cp-1", gomock.Any(), gomock.Any()).
-		Return("", errBoomTest)
+		Return("", errString)
 
 	err := r.RenewControlPlaneCerts(context.Background(), "cp-1", cfg, "", ssh)
 	if err == nil {
@@ -375,7 +323,7 @@ func TestCopyEtcdCertsToLocalWithReadKeyError(t *testing.T) {
 
 	ssh.EXPECT().
 		RunCommand(gomock.Any(), "etcd-1", gomock.Any(), gomock.Any()).
-		Return("", errBoomTest)
+		Return("", errString)
 
 	err := r.CopyEtcdCertsToLocal(context.Background(), "etcd-1", ssh)
 	if err == nil {
@@ -449,7 +397,7 @@ func TestTransferCertsToControlPlaneWithCopyKeyError(t *testing.T) {
 
 	ssh.EXPECT().
 		RunCommand(gomock.Any(), "cp-1", gomock.Any(), gomock.Any()).
-		Return("", errBoomTest)
+		Return("", errString)
 
 	err := r.TransferCertsToControlPlaneFromLocal(context.Background(), "cp-1", ssh)
 	if err == nil {

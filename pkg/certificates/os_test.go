@@ -1,14 +1,16 @@
-package certificates
+package certificates_test
 
 import (
 	"reflect"
 	"testing"
+
+	"github.com/aws/eks-anywhere/pkg/certificates"
 )
 
 func TestBuildOSRenewer_Linux(t *testing.T) {
-	got := BuildOSRenewer(string(OSTypeLinux), t.TempDir())
+	got := certificates.BuildOSRenewer(string(certificates.OSTypeLinux), t.TempDir())
 
-	wantType := reflect.TypeOf(&LinuxRenewer{})
+	wantType := reflect.TypeOf(&certificates.LinuxRenewer{})
 	gotType := reflect.TypeOf(got)
 	if gotType != wantType {
 		t.Fatalf("BuildOSRenewer() for linux expected type %v, got: %v", wantType, gotType)
@@ -16,9 +18,9 @@ func TestBuildOSRenewer_Linux(t *testing.T) {
 }
 
 func TestBuildOSRenewer_Bottlerocket(t *testing.T) {
-	got := BuildOSRenewer(string(OSTypeBottlerocket), t.TempDir())
+	got := certificates.BuildOSRenewer(string(certificates.OSTypeBottlerocket), t.TempDir())
 
-	wantType := reflect.TypeOf(&BottlerocketRenewer{})
+	wantType := reflect.TypeOf(&certificates.BottlerocketRenewer{})
 	gotType := reflect.TypeOf(got)
 	if gotType != wantType {
 		t.Fatalf("BuildOSRenewer() for bottlerocket expected type %v, got: %v", wantType, gotType)
@@ -32,5 +34,5 @@ func TestBuildOSRenewer_UnknownOSPanics(t *testing.T) {
 		}
 	}()
 
-	BuildOSRenewer("unknown", t.TempDir())
+	certificates.BuildOSRenewer("unknown", t.TempDir())
 }
