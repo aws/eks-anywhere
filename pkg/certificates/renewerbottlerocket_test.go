@@ -98,7 +98,7 @@ func TestBR_TransferCerts_SSHError(t *testing.T) {
 
 	ssh.EXPECT().
 		RunCommand(context.Background(), "cp", gomock.Any(), gomock.Any()).
-		Return("", errBoomTest)
+		Return("", errString)
 
 	if err := r.TransferCertsToControlPlaneFromLocal(context.Background(), "cp", ssh); err == nil {
 		t.Fatalf("TransferCertsToControlPlaneFromLocalOS() expected error, got nil")
@@ -114,7 +114,7 @@ func TestBR_CopyEtcdCertsToLocal_CopyTmpFail(t *testing.T) {
 
 	ctx, node := context.Background(), "etcd"
 
-	ssh.EXPECT().RunCommand(ctx, node, gomock.Any()).Return("", errBoomTest)
+	ssh.EXPECT().RunCommand(ctx, node, gomock.Any()).Return("", errString)
 
 	if err := r.CopyEtcdCertsToLocal(ctx, node, ssh); err == nil {
 		t.Fatalf("CopyEtcdCertsToLocal() expected error, got nil")
@@ -132,7 +132,7 @@ func TestBR_CopyEtcdCertsToLocal_ReadCertFail(t *testing.T) {
 
 	gomock.InOrder(
 		ssh.EXPECT().RunCommand(ctx, node, gomock.Any()).Return("", nil),
-		ssh.EXPECT().RunCommand(ctx, node, gomock.Any(), gomock.Any()).Return("", errBoomTest),
+		ssh.EXPECT().RunCommand(ctx, node, gomock.Any(), gomock.Any()).Return("", errString),
 	)
 
 	if err := r.CopyEtcdCertsToLocal(ctx, node, ssh); err == nil {
@@ -171,7 +171,7 @@ func TestBR_CopyEtcdCertsToLocal_KeyReadFail(t *testing.T) {
 	gomock.InOrder(
 		ssh.EXPECT().RunCommand(ctx, node, gomock.Any(), gomock.Any()).Return("", nil),
 		ssh.EXPECT().RunCommand(ctx, node, gomock.Any(), gomock.Any()).Return("crt", nil),
-		ssh.EXPECT().RunCommand(ctx, node, gomock.Any(), gomock.Any()).Return("", errBoomTest),
+		ssh.EXPECT().RunCommand(ctx, node, gomock.Any(), gomock.Any()).Return("", errString),
 	)
 
 	if err := r.CopyEtcdCertsToLocal(ctx, node, ssh); err == nil {
@@ -235,7 +235,7 @@ func TestBR_RenewEtcdCerts_BackupError(t *testing.T) {
 
 	ctx, node := context.Background(), "etcd"
 
-	ssh.EXPECT().RunCommand(ctx, node, gomock.Any()).Return("", errBoomTest)
+	ssh.EXPECT().RunCommand(ctx, node, gomock.Any()).Return("", errString)
 
 	if err := r.RenewEtcdCerts(ctx, node, ssh); err == nil {
 		t.Fatalf("RenewEtcdCertsOnOS() expected error, got nil")
@@ -253,7 +253,7 @@ func TestBR_RenewEtcdCerts_RenewError(t *testing.T) {
 
 	ssh.EXPECT().
 		RunCommand(ctx, node, gomock.Any(), gomock.Any()).
-		Return("", errBoomTest)
+		Return("", errString)
 
 	if err := r.RenewEtcdCerts(ctx, node, ssh); err == nil {
 		t.Fatalf("RenewEtcdCertsOnOS() expected error, got nil")
@@ -276,7 +276,7 @@ func TestBR_RenewEtcdCerts_ValidateError(t *testing.T) {
 	ssh.EXPECT().
 		RunCommand(ctx, node, gomock.Any(), gomock.Any()).
 		After(first).
-		Return("", errBoomTest)
+		Return("", errString)
 
 	if err := r.RenewEtcdCerts(ctx, node, ssh); err == nil {
 		t.Fatalf("RenewEtcdCertsOnOS() expected error, got nil")
@@ -296,7 +296,7 @@ func TestBR_RenewCP_NoEtcd_ShellCommandError(t *testing.T) {
 
 	ssh.EXPECT().
 		RunCommand(ctx, node, gomock.Any(), gomock.Any()).
-		Return("", errBoomTest)
+		Return("", errString)
 
 	if err := r.RenewControlPlaneCerts(ctx, node, cfg, "", ssh); err == nil {
 		t.Fatalf("RenewControlPlaneCertsOnOS() expected error, got nil")
@@ -315,7 +315,7 @@ func TestBR_RenewCP_WithEtcd_TransferFails(t *testing.T) {
 
 	ssh.EXPECT().
 		RunCommand(ctx, node, gomock.Any(), gomock.Any()).
-		Return("", errBoomTest)
+		Return("", errString)
 
 	if err := r.RenewControlPlaneCerts(ctx, node, cfg, "", ssh); err == nil {
 		t.Fatalf("RenewControlPlaneCertsOnOS() expected error, got nil")
@@ -336,7 +336,7 @@ func TestBR_CopyEtcdCertsToLocal_CleanupFail(t *testing.T) {
 		ssh.EXPECT().RunCommand(ctx, node, gomock.Any(), gomock.Any()).Return("", nil),
 		ssh.EXPECT().RunCommand(ctx, node, gomock.Any(), gomock.Any()).Return("crt", nil),
 		ssh.EXPECT().RunCommand(ctx, node, gomock.Any(), gomock.Any()).Return("key", nil),
-		ssh.EXPECT().RunCommand(ctx, node, gomock.Any(), gomock.Any()).Return("", errBoomTest),
+		ssh.EXPECT().RunCommand(ctx, node, gomock.Any(), gomock.Any()).Return("", errString),
 	)
 
 	if err := r.CopyEtcdCertsToLocal(ctx, node, ssh); err == nil {
