@@ -10,18 +10,14 @@ import (
 
 	"github.com/aws/eks-anywhere/cmd/eksctl-anywhere/cmd/aflag"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/awsiamauth"
-	"github.com/aws/eks-anywhere/pkg/clustermanager"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/executables"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/validations/createvalidations"
-	newManagement "github.com/aws/eks-anywhere/pkg/workflow/management"
 	"github.com/aws/eks-anywhere/pkg/workflows/management"
 	"github.com/aws/eks-anywhere/pkg/workflows/workload"
 )
@@ -228,30 +224,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 	}
 	createValidations := createvalidations.New(validationOpts)
 
-	if features.UseNewWorkflows().IsActive() {
-		deps, err = factory.
-			Build(ctx)
-		if err != nil {
-			return err
-		}
-
-		wflw := &newManagement.CreateCluster{
-			Spec:                          clusterSpec,
-			Bootstrapper:                  deps.Bootstrapper,
-			CreateBootstrapClusterOptions: deps.Provider,
-			Cluster:                       clustermanager.NewCreateClusterShim(clusterSpec, deps.Provider),
-			FS:                            deps.Writer,
-		}
-		wflw.WithHookRegistrar(awsiamauth.NewHookRegistrar(deps.AwsIamAuth, clusterSpec))
-
-		// Not all provider implementations want to bind hooks so we explicitly check if they
-		// want to bind hooks before registering it.
-		if registrar, ok := deps.Provider.(newManagement.CreateClusterHookRegistrar); ok {
-			wflw.WithHookRegistrar(registrar)
-		}
-
-		err = wflw.Run(ctx)
-	} else if clusterConfig.IsManaged() {
+	if clusterConfig.IsManaged() {
 		createWorkloadCluster := workload.NewCreate(
 			deps.Provider,
 			deps.ClusterManager,
