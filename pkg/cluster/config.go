@@ -29,6 +29,7 @@ type Config struct {
 	FluxConfig                *anywherev1.FluxConfig
 	SnowCredentialsSecret     *v1.Secret
 	SnowIPPools               map[string]*anywherev1.SnowIPPool
+	AuditPolicy               string
 }
 
 func (c *Config) VsphereMachineConfig(name string) *anywherev1.VSphereMachineConfig {
@@ -62,15 +63,17 @@ func (c *Config) NutanixMachineConfig(name string) *anywherev1.NutanixMachineCon
 
 func (c *Config) DeepCopy() *Config {
 	c2 := &Config{
-		Cluster:              c.Cluster.DeepCopy(),
-		CloudStackDatacenter: c.CloudStackDatacenter.DeepCopy(),
-		VSphereDatacenter:    c.VSphereDatacenter.DeepCopy(),
-		NutanixDatacenter:    c.NutanixDatacenter.DeepCopy(),
-		DockerDatacenter:     c.DockerDatacenter.DeepCopy(),
-		SnowDatacenter:       c.SnowDatacenter.DeepCopy(),
-		TinkerbellDatacenter: c.TinkerbellDatacenter.DeepCopy(),
-		GitOpsConfig:         c.GitOpsConfig.DeepCopy(),
-		FluxConfig:           c.FluxConfig.DeepCopy(),
+		Cluster:               c.Cluster.DeepCopy(),
+		CloudStackDatacenter:  c.CloudStackDatacenter.DeepCopy(),
+		VSphereDatacenter:     c.VSphereDatacenter.DeepCopy(),
+		NutanixDatacenter:     c.NutanixDatacenter.DeepCopy(),
+		DockerDatacenter:      c.DockerDatacenter.DeepCopy(),
+		SnowDatacenter:        c.SnowDatacenter.DeepCopy(),
+		TinkerbellDatacenter:  c.TinkerbellDatacenter.DeepCopy(),
+		GitOpsConfig:          c.GitOpsConfig.DeepCopy(),
+		FluxConfig:            c.FluxConfig.DeepCopy(),
+		SnowCredentialsSecret: c.SnowCredentialsSecret.DeepCopy(),
+		AuditPolicy:           c.AuditPolicy,
 	}
 
 	if c.VSphereMachineConfigs != nil {

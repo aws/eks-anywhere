@@ -60,27 +60,34 @@ func WithEKSAInstallerNoTimeouts() EKSAInstallerOpt {
 }
 
 // Install configures and applies eks-a components in a cluster accordingly to a spec.
-func (i *EKSAInstaller) Install(ctx context.Context, log logr.Logger, cluster *types.Cluster, managementComponents *cluster.ManagementComponents, spec *cluster.Spec) error {
-	if err := i.createEKSAComponents(ctx, log, cluster, managementComponents, spec); err != nil {
+func (i *EKSAInstaller) Install(ctx context.Context, log logr.Logger, currentCluster *types.Cluster, managementComponents *cluster.ManagementComponents, spec *cluster.Spec) error {
+	if err := i.createEKSAComponents(ctx, log, currentCluster, managementComponents, spec); err != nil {
 		return fmt.Errorf("applying EKSA components: %v", err)
 	}
 
-	if err := i.applyBundles(ctx, log, cluster, spec); err != nil {
+	if err := i.applyBundles(ctx, log, currentCluster, spec); err != nil {
 		return fmt.Errorf("applying EKSA bundles: %v", err)
+	}
+
+	auditPolicyConfigMap := cluster.GetAuditPolicyConfigMap(spec)
+	if auditPolicyConfigMap != nil {
+		if err := i.client.Apply(ctx, currentCluster.KubeconfigFile, auditPolicyConfigMap); err != nil {
+			return fmt.Errorf("applying upgrader images config map: %v", err)
+		}
 	}
 
 	// We need to update this config map with the new upgrader images whenever we
 	// apply a new Bundles object to the cluster in order to support in-place upgrades.
-	cm, err := i.getUpgraderImagesFromBundle(ctx, cluster, spec)
+	cm, err := i.getUpgraderImagesFromBundle(ctx, currentCluster, spec)
 	if err != nil {
 		return fmt.Errorf("getting upgrader images from bundle: %v", err)
 	}
 
-	if err = i.client.Apply(ctx, cluster.KubeconfigFile, cm); err != nil {
+	if err = i.client.Apply(ctx, currentCluster.KubeconfigFile, cm); err != nil {
 		return fmt.Errorf("applying upgrader images config map: %v", err)
 	}
 
-	if err := i.applyReleases(ctx, log, cluster, spec); err != nil {
+	if err := i.applyReleases(ctx, log, currentCluster, spec); err != nil {
 		return fmt.Errorf("applying EKSA releases: %v", err)
 	}
 
@@ -111,6 +118,45 @@ func (i *EKSAInstaller) getUpgraderImagesFromBundle(ctx context.Context, cluster
 
 	return upgraderConfigMap, nil
 }
+
+// func (i *EKSAInstaller) CreateAuditPolicyConfigMap(ctx context.Context, targetCluster *types.Cluster, spec *cluster.Spec) error {
+// 	// if auditPolicyConfigMapRef is not specified we will use the default audit policy
+// 	// we do not need to create a config map for the default audit policy.
+// 	if spec.Cluster.Spec.ControlPlaneConfiguration.AuditPolicyConfigMapRef == nil {
+// 		return nil
+// 	}
+
+// 	// Get the resolved audit policy content from the cluster config
+// 	auditPolicyContent := spec.Config.AuditPolicy
+// 	if auditPolicyContent == "" {
+// 		// If no custom audit policy is provided, use the default audit policy
+// 		defaultPolicy, err := cluster.GetDefaultAuditPolicy()
+// 		if err != nil {
+// 			return fmt.Errorf("getting default audit policy for ConfigMap %s: %v", constants.AuditPolicyConfigMapName, err)
+// 		}
+// 		auditPolicyContent = defaultPolicy
+// 	}
+
+// 	auditPolicyConfigMap := &corev1.ConfigMap{
+// 		TypeMeta: metav1.TypeMeta{
+// 			APIVersion: "v1",
+// 			Kind:       "ConfigMap",
+// 		},
+// 		ObjectMeta: metav1.ObjectMeta{
+// 			Name:      constants.AuditPolicyConfigMapName,
+// 			Namespace: constants.EksaSystemNamespace,
+// 		},
+// 		Data: map[string]string{
+// 			"audit-policy.yaml": auditPolicyContent,
+// 		},
+// 	}
+
+// 	if err := i.client.Apply(ctx, targetCluster.KubeconfigFile, auditPolicyConfigMap); err != nil {
+// 		return fmt.Errorf("applying audit policy config map: %v", err)
+// 	}
+
+// 	return nil
+// }
 
 // Upgrade re-installs the eksa components in a cluster if the VersionBundle defined in the
 // new spec has a different eks-a components version. Workload clusters are ignored.
