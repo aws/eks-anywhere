@@ -4119,6 +4119,16 @@ spec:
                     description: APIServerExtraArgs defines the flags to configure
                       for the API server.
                     type: object
+                  auditPolicyConfigMapRef:
+                    description: |-
+                      AuditPolicyConfigMapRef is a reference to a ConfigMap containing the audit policy configuration.
+                      If specified, this will override the default audit policy.
+                    properties:
+                      kind:
+                        type: string
+                      name:
+                        type: string
+                    type: object
                   certSans:
                     description: |-
                       CertSANs is a slice of domain names or IPs to be added as Subject Name Alternatives of the

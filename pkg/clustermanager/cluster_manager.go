@@ -637,24 +637,30 @@ func (c *ClusterManager) CreateEKSANamespace(ctx context.Context, cluster *types
 	return c.clusterClient.CreateNamespaceIfNotPresent(ctx, cluster.KubeconfigFile, constants.EksaSystemNamespace)
 }
 
-func (c *ClusterManager) ApplyBundles(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
+// ApplyBundles applies bundle to the cluster.
+func (c *ClusterManager) ApplyBundles(ctx context.Context, clusterSpec *cluster.Spec, currentCluster *types.Cluster) error {
 	bundleObj, err := yaml.Marshal(clusterSpec.Bundles)
 	if err != nil {
 		return fmt.Errorf("outputting bundle yaml: %v", err)
 	}
 	logger.V(1).Info("Applying Bundles to cluster")
-	err = c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, bundleObj)
+	err = c.clusterClient.ApplyKubeSpecFromBytes(ctx, currentCluster, bundleObj)
 	if err != nil {
 		return fmt.Errorf("applying bundle spec: %v", err)
 	}
 
+	auditPolicyConfigMap := cluster.GetAuditPolicyConfigMap(clusterSpec)
+	if err := c.clusterClient.Apply(ctx, currentCluster.KubeconfigFile, auditPolicyConfigMap); err != nil {
+		return fmt.Errorf("applying upgrader images config map: %v", err)
+	}
+
 	// We need to update this config map with the new upgrader images whenever we
 	// apply a new Bundles object to the cluster in order to support in-place upgrades.
-	cm, err := c.getUpgraderImagesFromBundle(ctx, cluster, clusterSpec)
+	cm, err := c.getUpgraderImagesFromBundle(ctx, currentCluster, clusterSpec)
 	if err != nil {
 		return fmt.Errorf("getting upgrader images from bundle: %v", err)
 	}
-	if err = c.clusterClient.Apply(ctx, cluster.KubeconfigFile, cm); err != nil {
+	if err = c.clusterClient.Apply(ctx, currentCluster.KubeconfigFile, cm); err != nil {
 		return fmt.Errorf("applying upgrader images config map: %v", err)
 	}
 	return nil

@@ -21,9 +21,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
-//go:embed config/audit-policy.yaml
-var auditPolicy string
-
 // TODO: Split out common into separate packages to avoid becoming a dumping ground
 
 const (

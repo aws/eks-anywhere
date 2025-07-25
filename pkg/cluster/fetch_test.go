@@ -151,12 +151,14 @@ func TestBuildSpec(t *testing.T) {
 
 	_, kubeDistro := wantKubeDistroForEksdRelease()
 	kubeDistro.EKSD.Channel = "1-22"
+	defaultAuditPolicy, _ := cluster.GetDefaultAuditPolicy()
 
 	wantSpec := &cluster.Spec{
 		Config: &cluster.Config{
-			Cluster:       tt.cluster,
-			OIDCConfigs:   map[string]*anywherev1.OIDCConfig{},
-			AWSIAMConfigs: map[string]*anywherev1.AWSIamConfig{},
+			Cluster:              tt.cluster,
+			OIDCConfigs:          map[string]*anywherev1.OIDCConfig{},
+			AWSIAMConfigs:        map[string]*anywherev1.AWSIamConfig{},
+			AuditPolicyConfigMap: defaultAuditPolicy,
 		},
 		Bundles: tt.bundles,
 		VersionsBundles: map[anywherev1.KubernetesVersion]*cluster.VersionsBundle{

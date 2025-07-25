@@ -1,0 +1,95 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: eksa-audit-test
+spec:
+  clusterNetwork:
+    cni: "cilium"
+    pods:
+      cidrBlocks:
+        - 192.168.0.0/16
+    services:
+      cidrBlocks:
+        - 10.96.0.0/12
+  controlPlaneConfiguration:
+    count: 1
+    endpoint:
+      host: "myHostIp"
+    machineGroupRef:
+      kind: VSphereMachineConfig
+      name: eksa-audit-test-cp
+    auditPolicyConfigMapRef:
+      kind: ConfigMap
+      name: custom-audit-policy
+  datacenterRef:
+    kind: VSphereDatacenterConfig
+    name: eksa-audit-test
+  kubernetesVersion: "1.19"
+  workerNodeGroupConfigurations:
+    - name: workers-1
+      kubernetesVersion: "1.19"
+      count: 1
+      machineGroupRef:
+        kind: VSphereMachineConfig
+        name: eksa-audit-test
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: custom-audit-policy
+data:
+  audit-policy.yaml: |
+    apiVersion: audit.k8s.io/v1
+    kind: Policy
+    rules:
+    - level: RequestResponse
+      verbs: ["update", "patch", "delete"]
+      resources:
+      - group: ""
+        resources: ["configmaps"]
+        resourceNames: ["aws-auth"]
+      namespaces: ["kube-system"]
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: VSphereDatacenterConfig
+metadata:
+  name: eksa-audit-test
+spec:
+  datacenter: "myDatacenter"
+  network: "/myDatacenter/network-1"
+  server: "myServer"
+  insecure: false
+  thumbprint: "myTlsThumbprint"
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: VSphereMachineConfig
+metadata:
+  name: eksa-audit-test-cp
+spec:
+  datastore: "myDatastore"
+  diskGiB: 25
+  memoryMiB: 8192
+  numCPUs: 2
+  osFamily: ubuntu
+  resourcePool: "myResourcePool"
+  users:
+    - name: mySshUsername
+      sshAuthorizedKeys:
+        - "mySshAuthorizedKey"
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: VSphereMachineConfig
+metadata:
+  name: eksa-audit-test
+spec:
+  datastore: "myDatastore"
+  diskGiB: 25
+  memoryMiB: 8192
+  numCPUs: 2
+  osFamily: ubuntu
+  resourcePool: "myResourcePool"
+  users:
+    - name: mySshUsername
+      sshAuthorizedKeys:
+        - "mySshAuthorizedKey"

@@ -170,17 +170,12 @@ func buildTemplateMapCP(
 		Append(clusterapi.EtcdEncryptionExtraArgs(clusterSpec.Cluster.Spec.EtcdEncryption))
 	clusterapi.SetPodIAMAuthExtraArgs(clusterSpec.Cluster.Spec.PodIAMConfig, apiServerExtraArgs)
 
-	auditPolicy, err := common.GetAuditPolicy(clusterSpec.Cluster.Spec.KubernetesVersion)
-	if err != nil {
-		return nil, err
-	}
-
 	failureDomains := generateNutanixFailureDomains(datacenterSpec.FailureDomains)
 
 	ccmIgnoredNodeIPs := generateCcmIgnoredNodeIPsList(clusterSpec)
 
 	values := map[string]interface{}{
-		"auditPolicy":                  auditPolicy,
+		"auditPolicy":                  clusterSpec.AuditPolicy(),
 		"apiServerExtraArgs":           apiServerExtraArgs.ToPartialYaml(),
 		"ccmIgnoredNodeIPs":            ccmIgnoredNodeIPs,
 		"cloudProviderImage":           versionsBundle.Nutanix.CloudProvider.VersionedImage(),

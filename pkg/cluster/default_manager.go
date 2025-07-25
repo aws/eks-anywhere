@@ -28,6 +28,7 @@ func NewDefaultConfigManager() (*ConfigManager, error) {
 		snowEntry(),
 		tinkerbellEntry(),
 		nutanixEntry(),
+		auditPolicyEntry(),
 	)
 	if err != nil {
 		return nil, err

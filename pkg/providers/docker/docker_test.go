@@ -874,6 +874,7 @@ func TestProviderGenerateDeploymentFileForSingleNodeCluster(t *testing.T) {
 	kubectl := dockerMocks.NewMockProviderKubectlClient(mockCtrl)
 	provider := docker.NewProvider(&v1alpha1.DockerDatacenterConfig{}, client, kubectl, test.FakeNow)
 	clusterObj := &types.Cluster{Name: "single-node"}
+	auditPolicyConfigMap, _ := cluster.GetDefaultAuditPolicy()
 
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Cluster.Name = "single-node"
@@ -883,6 +884,7 @@ func TestProviderGenerateDeploymentFileForSingleNodeCluster(t *testing.T) {
 		s.Cluster.Spec.ControlPlaneConfiguration.Count = 1
 		s.VersionsBundles["1.21"] = versionsBundle
 		s.Cluster.Spec.WorkerNodeGroupConfigurations = nil
+		s.AuditPolicyConfigMap = auditPolicyConfigMap
 	})
 
 	if provider == nil {

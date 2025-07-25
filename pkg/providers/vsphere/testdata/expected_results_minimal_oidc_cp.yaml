@@ -171,161 +171,189 @@ spec:
       owner: root:root
       path: /etc/kubernetes/manifests/kube-vip.yaml
     - content: |
-        apiVersion: audit.k8s.io/v1beta1
+        apiVersion: audit.k8s.io/v1
         kind: Policy
+        metadata:
+          creationTimestamp: null
         rules:
-        # Log aws-auth configmap changes
         - level: RequestResponse
-          namespaces: ["kube-system"]
-          verbs: ["update", "patch", "delete"]
-          resources:
-          - group: "" # core
-            resources: ["configmaps"]
-            resourceNames: ["aws-auth"]
+          namespaces:
+          - kube-system
           omitStages:
-          - "RequestReceived"
-        # The following requests were manually identified as high-volume and low-risk,
-        # so drop them.
-        - level: None
-          users: ["system:kube-proxy"]
-          verbs: ["watch"]
+          - RequestReceived
           resources:
-          - group: "" # core
-            resources: ["endpoints", "services", "services/status"]
+          - resourceNames:
+            - aws-auth
+            resources:
+            - configmaps
+          verbs:
+          - update
+          - patch
+          - delete
         - level: None
-          users: ["kubelet"] # legacy kubelet identity
-          verbs: ["get"]
           resources:
-          - group: "" # core
-            resources: ["nodes", "nodes/status"]
+          - resources:
+            - endpoints
+            - services
+            - services/status
+          users:
+          - system:kube-proxy
+          verbs:
+          - watch
         - level: None
-          userGroups: ["system:nodes"]
-          verbs: ["get"]
           resources:
-          - group: "" # core
-            resources: ["nodes", "nodes/status"]
+          - resources:
+            - nodes
+            - nodes/status
+          users:
+          - kubelet
+          verbs:
+          - get
         - level: None
+          resources:
+          - resources:
+            - nodes
+            - nodes/status
+          verbs:
+          - get
+        - level: None
+          namespaces:
+          - kube-system
+          resources:
+          - resources:
+            - endpoints
           users:
           - system:kube-controller-manager
           - system:kube-scheduler
           - system:serviceaccount:kube-system:endpoint-controller
-          verbs: ["get", "update"]
-          namespaces: ["kube-system"]
-          resources:
-          - group: "" # core
-            resources: ["endpoints"]
+          verbs:
+          - get
+          - update
         - level: None
-          users: ["system:apiserver"]
-          verbs: ["get"]
           resources:
-          - group: "" # core
-            resources: ["namespaces", "namespaces/status", "namespaces/finalize"]
-        # Don't log HPA fetching metrics.
+          - resources:
+            - namespaces
+            - namespaces/status
+            - namespaces/finalize
+          users:
+          - system:apiserver
+          verbs:
+          - get
         - level: None
+          resources:
+          - group: metrics.k8s.io
           users:
           - system:kube-controller-manager
-          verbs: ["get", "list"]
-          resources:
-          - group: "metrics.k8s.io"
-        # Don't log these read-only URLs.
+          verbs:
+          - get
+          - list
         - level: None
           nonResourceURLs:
           - /healthz*
           - /version
           - /swagger*
-        # Don't log events requests.
         - level: None
           resources:
-          - group: "" # core
-            resources: ["events"]
-        # node and pod status calls from nodes are high-volume and can be large, don't log responses for expected updates from nodes
+          - resources:
+            - events
         - level: Request
-          users: ["kubelet", "system:node-problem-detector", "system:serviceaccount:kube-system:node-problem-detector"]
-          verbs: ["update","patch"]
+          omitStages:
+          - RequestReceived
           resources:
-          - group: "" # core
-            resources: ["nodes/status", "pods/status"]
-          omitStages:
-          - "RequestReceived"
+          - resources:
+            - nodes/status
+            - pods/status
+          users:
+          - kubelet
+          - system:node-problem-detector
+          - system:serviceaccount:kube-system:node-problem-detector
+          verbs:
+          - update
+          - patch
         - level: Request
-          userGroups: ["system:nodes"]
-          verbs: ["update","patch"]
+          omitStages:
+          - RequestReceived
           resources:
-          - group: "" # core
-            resources: ["nodes/status", "pods/status"]
-          omitStages:
-          - "RequestReceived"
-        # deletecollection calls can be large, don't log responses for expected namespace deletions
+          - resources:
+            - nodes/status
+            - pods/status
+          userGroups:
+          - system:nodes
+          verbs:
+          - update
+          - patch
         - level: Request
-          users: ["system:serviceaccount:kube-system:namespace-controller"]
-          verbs: ["deletecollection"]
           omitStages:
-          - "RequestReceived"
-        # Secrets, ConfigMaps, and TokenReviews can contain sensitive & binary data,
-        # so only log at the Metadata level.
+          - RequestReceived
+          users:
+          - system:serviceaccount:kube-system:namespace-controller
+          verbs:
+          - deletecollection
         - level: Metadata
+          omitStages:
+          - RequestReceived
           resources:
-          - group: "" # core
-            resources: ["secrets", "configmaps"]
+          - resources:
+            - secrets
+            - configmaps
           - group: authentication.k8s.io
-            resources: ["tokenreviews"]
-          omitStages:
-            - "RequestReceived"
+            resources:
+            - tokenreviews
         - level: Request
           resources:
-          - group: ""
-            resources: ["serviceaccounts/token"]
-        # Get repsonses can be large; skip them.
+          - resources:
+            - serviceaccounts/token
         - level: Request
-          verbs: ["get", "list", "watch"]
-          resources:
-          - group: "" # core
-          - group: "admissionregistration.k8s.io"
-          - group: "apiextensions.k8s.io"
-          - group: "apiregistration.k8s.io"
-          - group: "apps"
-          - group: "authentication.k8s.io"
-          - group: "authorization.k8s.io"
-          - group: "autoscaling"
-          - group: "batch"
-          - group: "certificates.k8s.io"
-          - group: "extensions"
-          - group: "metrics.k8s.io"
-          - group: "networking.k8s.io"
-          - group: "policy"
-          - group: "rbac.authorization.k8s.io"
-          - group: "scheduling.k8s.io"
-          - group: "settings.k8s.io"
-          - group: "storage.k8s.io"
           omitStages:
-          - "RequestReceived"
-        # Default level for known APIs
+          - RequestReceived
+          resources:
+          - {}
+          - group: admissionregistration.k8s.io
+          - group: apiextensions.k8s.io
+          - group: apiregistration.k8s.io
+          - group: apps
+          - group: authentication.k8s.io
+          - group: authorization.k8s.io
+          - group: autoscaling
+          - group: batch
+          - group: certificates.k8s.io
+          - group: extensions
+          - group: metrics.k8s.io
+          - group: networking.k8s.io
+          - group: policy
+          - group: rbac.authorization.k8s.io
+          - group: scheduling.k8s.io
+          - group: settings.k8s.io
+          - group: storage.k8s.io
+          verbs:
+          - get
+          - list
+          - watch
         - level: RequestResponse
-          resources:
-          - group: "" # core
-          - group: "admissionregistration.k8s.io"
-          - group: "apiextensions.k8s.io"
-          - group: "apiregistration.k8s.io"
-          - group: "apps"
-          - group: "authentication.k8s.io"
-          - group: "authorization.k8s.io"
-          - group: "autoscaling"
-          - group: "batch"
-          - group: "certificates.k8s.io"
-          - group: "extensions"
-          - group: "metrics.k8s.io"
-          - group: "networking.k8s.io"
-          - group: "policy"
-          - group: "rbac.authorization.k8s.io"
-          - group: "scheduling.k8s.io"
-          - group: "settings.k8s.io"
-          - group: "storage.k8s.io"
           omitStages:
-          - "RequestReceived"
-        # Default level for all other requests.
+          - RequestReceived
+          resources:
+          - {}
+          - group: admissionregistration.k8s.io
+          - group: apiextensions.k8s.io
+          - group: apiregistration.k8s.io
+          - group: apps
+          - group: authentication.k8s.io
+          - group: authorization.k8s.io
+          - group: autoscaling
+          - group: batch
+          - group: certificates.k8s.io
+          - group: extensions
+          - group: metrics.k8s.io
+          - group: networking.k8s.io
+          - group: policy
+          - group: rbac.authorization.k8s.io
+          - group: scheduling.k8s.io
+          - group: settings.k8s.io
+          - group: storage.k8s.io
         - level: Metadata
           omitStages:
-          - "RequestReceived"
+          - RequestReceived
       owner: root:root
       path: /etc/kubernetes/audit-policy.yaml
     initConfiguration:

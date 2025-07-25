@@ -386,10 +386,6 @@ func buildTemplateMapCP(
 	etcdTemplateOverride string,
 	datacenterSpec v1alpha1.TinkerbellDatacenterConfigSpec,
 ) (map[string]interface{}, error) {
-	auditPolicy, err := common.GetAuditPolicy(clusterSpec.Cluster.Spec.KubernetesVersion)
-	if err != nil {
-		return nil, err
-	}
 
 	versionsBundle := clusterSpec.RootVersionsBundle()
 	format := "cloud-config"
@@ -400,7 +396,7 @@ func buildTemplateMapCP(
 	clusterapi.SetPodIAMAuthExtraArgs(clusterSpec.Cluster.Spec.PodIAMConfig, apiServerExtraArgs)
 
 	values := map[string]interface{}{
-		"auditPolicy":                   auditPolicy,
+		"auditPolicy":                   clusterSpec.AuditPolicy(),
 		"clusterName":                   clusterSpec.Cluster.Name,
 		"controlPlaneEndpointIp":        clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
 		"controlPlaneReplicas":          clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Count,
