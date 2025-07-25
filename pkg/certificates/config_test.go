@@ -576,29 +576,39 @@ func TestValidateConfig_EtcdMissingSSHUser(t *testing.T) {
 	}
 }
 
-func TestValidateNodeConfig_MissingSSHUser(t *testing.T) {
+func TestValidateConfig_MissingSSHUser(t *testing.T) {
 	key := "/tmp/key-no-user"
 	if err := os.WriteFile(key, []byte("k"), 0o600); err != nil {
 		t.Fatalf("failed to write key file: %v", err)
 	}
 	defer os.Remove(key)
 
-	nc := &certificates.NodeConfig{
-		Nodes: []string{"1.1.1.1"},
-		SSH:   certificates.SSHConfig{KeyPath: key},
+	cfg := &certificates.RenewalConfig{
+		ClusterName: "test-cluster",
+		OS:          string(v1alpha1.Ubuntu),
+		ControlPlane: certificates.NodeConfig{
+			Nodes: []string{"1.1.1.1"},
+			SSH:   certificates.SSHConfig{KeyPath: key},
+		},
 	}
-	if err := certificates.ValidateNodeConfig(nc); err == nil {
-		t.Fatalf("want sshUser required error, got %v", err)
+
+	if err := certificates.ValidateConfig(cfg, ""); err == nil {
+		t.Fatalf("want sshUser required error, got nil")
 	}
 }
 
-func TestValidateNodeConfig_MissingKeyPath(t *testing.T) {
-	nc := &certificates.NodeConfig{
-		Nodes: []string{"1.1.1.1"},
-		SSH:   certificates.SSHConfig{User: "test"},
+func TestValidateConfig_MissingKeyPath(t *testing.T) {
+	cfg := &certificates.RenewalConfig{
+		ClusterName: "test-cluster",
+		OS:          string(v1alpha1.Ubuntu),
+		ControlPlane: certificates.NodeConfig{
+			Nodes: []string{"1.1.1.1"},
+			SSH:   certificates.SSHConfig{User: "test"},
+		},
 	}
-	if err := certificates.ValidateNodeConfig(nc); err == nil {
-		t.Fatalf("want sshKey required error, got %v", err)
+
+	if err := certificates.ValidateConfig(cfg, ""); err == nil {
+		t.Fatalf("want sshKey required error, got nil")
 	}
 }
 
