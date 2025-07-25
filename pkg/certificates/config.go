@@ -137,14 +137,14 @@ func PopulateConfig(ctx context.Context, cfg *RenewalConfig, kubeClient kubernet
 		return nil
 	}
 
-	controlPlaneIPs, err := GetControlPlaneIPs(ctx, kubeClient, cluster)
+	controlPlaneIPs, err := getControlPlaneIPs(ctx, kubeClient, cluster)
 	if err != nil {
 		return fmt.Errorf("cluster is not reachable, please provide control plane and/or external etcd IP addresses: %w", err)
 	}
 
 	cfg.ControlPlane.Nodes = controlPlaneIPs
 
-	etcdIPs, err := GetEtcdIPs(ctx, kubeClient, cluster)
+	etcdIPs, err := getEtcdIPs(ctx, kubeClient, cluster)
 	if err != nil {
 		return fmt.Errorf("retrieving external etcd IPs for the cluster: %w", err)
 	}
@@ -153,8 +153,7 @@ func PopulateConfig(ctx context.Context, cfg *RenewalConfig, kubeClient kubernet
 	return nil
 }
 
-// GetControlPlaneIPs retrieves the external IP addresses of all control plane nodes.
-func GetControlPlaneIPs(ctx context.Context, kubeClient kubernetes.Client, cluster *types.Cluster) ([]string, error) {
+func getControlPlaneIPs(ctx context.Context, kubeClient kubernetes.Client, cluster *types.Cluster) ([]string, error) {
 	var controlPlaneIPs []string
 
 	machineList := &clusterv1.MachineList{}
@@ -184,8 +183,7 @@ func GetControlPlaneIPs(ctx context.Context, kubeClient kubernetes.Client, clust
 	return controlPlaneIPs, nil
 }
 
-// GetEtcdIPs retrieves the external IP addresses of all etcd nodes.
-func GetEtcdIPs(ctx context.Context, kubeClient kubernetes.Client, cluster *types.Cluster) ([]string, error) {
+func getEtcdIPs(ctx context.Context, kubeClient kubernetes.Client, cluster *types.Cluster) ([]string, error) {
 	var etcdIPs []string
 
 	machineList := &clusterv1.MachineList{}
