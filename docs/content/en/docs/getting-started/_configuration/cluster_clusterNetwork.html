@@ -36,6 +36,11 @@ When specified, Cilium assumes networking for this CIDR is preconfigured and
 hands traffic destined for that range to the Linux network stack without
 applying any SNAT.
 
+### clusterNetwork.cniConfig.cilium.cniExclusive (optional)
+Controls whether Cilium should remove other CNI configuration files.
+When true (default), Cilium removes other CNI configs; when false, it leaves them alone.
+For more information, see <a href="/docs/getting-started/optional/cni/#cni-exclusive-mode-configuration">CNI Exclusive Mode configuration</a>.
+
 ### clusterNetwork.pods.cidrBlocks[0] (required)
 The pod subnet specified in CIDR notation. Only 1 pod CIDR block is permitted.
 The CIDR block should not conflict with the host or service network ranges.
