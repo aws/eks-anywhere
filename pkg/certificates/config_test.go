@@ -329,7 +329,6 @@ func Test_getControlPlaneIPs_Success(t *testing.T) {
 	if _, err := certificates.GetControlPlaneIPs(context.Background(), k, &types.Cluster{Name: clusterLabel}); err != nil {
 		t.Fatalf("GetControlPlaneIPs() expected no error, got: %v", err)
 	}
-
 }
 
 func Test_getEtcdIPs_Success(t *testing.T) {
@@ -357,7 +356,6 @@ func Test_getEtcdIPs_Success(t *testing.T) {
 	if _, err := certificates.GetEtcdIPs(context.Background(), k, &types.Cluster{Name: clusterLabel}); err != nil {
 		t.Fatalf("GetEtcdIPs() expected no error, got: %v", err)
 	}
-
 }
 
 func TestPopulateConfig_EtcdListError(t *testing.T) {

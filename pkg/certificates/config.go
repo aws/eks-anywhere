@@ -94,6 +94,7 @@ func ValidateConfig(config *RenewalConfig, component string) error {
 	return nil
 }
 
+// ValidateNodeConfig validates a node configuration.
 func ValidateNodeConfig(config *NodeConfig) error {
 	if len(config.Nodes) == 0 {
 		return fmt.Errorf("nodes list cannot be empty")
@@ -152,6 +153,7 @@ func PopulateConfig(ctx context.Context, cfg *RenewalConfig, kubeClient kubernet
 	return nil
 }
 
+// GetControlPlaneIPs retrieves the external IP addresses of all control plane nodes.
 func GetControlPlaneIPs(ctx context.Context, kubeClient kubernetes.Client, cluster *types.Cluster) ([]string, error) {
 	var controlPlaneIPs []string
 
@@ -182,6 +184,7 @@ func GetControlPlaneIPs(ctx context.Context, kubeClient kubernetes.Client, clust
 	return controlPlaneIPs, nil
 }
 
+// GetEtcdIPs retrieves the external IP addresses of all etcd nodes.
 func GetEtcdIPs(ctx context.Context, kubeClient kubernetes.Client, cluster *types.Cluster) ([]string, error) {
 	var etcdIPs []string
 
