@@ -57,6 +57,11 @@ func TestBuildUpgradePlan(t *testing.T) {
 						{
 							Name: "EgressMasqueradeInterfaces",
 						},
+						{
+							Name:     cilium.CniExclusiveComponentName,
+							OldValue: "true",
+							NewValue: "true",
+						},
 					},
 				},
 			},
@@ -92,6 +97,11 @@ func TestBuildUpgradePlan(t *testing.T) {
 						},
 						{
 							Name: "EgressMasqueradeInterfaces",
+						},
+						{
+							Name:     cilium.CniExclusiveComponentName,
+							OldValue: "true",
+							NewValue: "true",
 						},
 					},
 				},
@@ -130,6 +140,11 @@ func TestBuildUpgradePlan(t *testing.T) {
 						},
 						{
 							Name: "EgressMasqueradeInterfaces",
+						},
+						{
+							Name:     cilium.CniExclusiveComponentName,
+							OldValue: "true",
+							NewValue: "true",
 						},
 					},
 				},
@@ -176,6 +191,11 @@ func TestBuildUpgradePlan(t *testing.T) {
 						{
 							Name: "EgressMasqueradeInterfaces",
 						},
+						{
+							Name:     cilium.CniExclusiveComponentName,
+							OldValue: "true",
+							NewValue: "true",
+						},
 					},
 				},
 			},
@@ -211,6 +231,11 @@ func TestBuildUpgradePlan(t *testing.T) {
 						},
 						{
 							Name: "EgressMasqueradeInterfaces",
+						},
+						{
+							Name:     cilium.CniExclusiveComponentName,
+							OldValue: "true",
+							NewValue: "true",
 						},
 					},
 				},
@@ -251,6 +276,11 @@ func TestBuildUpgradePlan(t *testing.T) {
 						{
 							Name: "EgressMasqueradeInterfaces",
 						},
+						{
+							Name:     cilium.CniExclusiveComponentName,
+							OldValue: "true",
+							NewValue: "true",
+						},
 					},
 				},
 			},
@@ -289,6 +319,11 @@ func TestBuildUpgradePlan(t *testing.T) {
 						{
 							Name: "EgressMasqueradeInterfaces",
 						},
+						{
+							Name:     cilium.CniExclusiveComponentName,
+							OldValue: "true",
+							NewValue: "true",
+						},
 					},
 				},
 			},
@@ -324,6 +359,10 @@ func TestBuildUpgradePlan(t *testing.T) {
 						},
 						{
 							Name: "EgressMasqueradeInterfaces",
+						},
+						{
+							Name:     cilium.CniExclusiveComponentName,
+							NewValue: "true",
 						},
 					},
 				},
@@ -365,6 +404,11 @@ func TestBuildUpgradePlan(t *testing.T) {
 						},
 						{
 							Name: "EgressMasqueradeInterfaces",
+						},
+						{
+							Name:     cilium.CniExclusiveComponentName,
+							OldValue: "true",
+							NewValue: "true",
 						},
 					},
 				},
@@ -409,6 +453,11 @@ func TestBuildUpgradePlan(t *testing.T) {
 						{
 							Name: "EgressMasqueradeInterfaces",
 						},
+						{
+							Name:     cilium.CniExclusiveComponentName,
+							OldValue: "true",
+							NewValue: "true",
+						},
 					},
 				},
 			},
@@ -451,6 +500,11 @@ func TestBuildUpgradePlan(t *testing.T) {
 							OldValue:     "old",
 							NewValue:     "new",
 							UpdateReason: "Egress masquerade interfaces changed: [old] -> [new]",
+						},
+						{
+							Name:     cilium.CniExclusiveComponentName,
+							OldValue: "true",
+							NewValue: "true",
 						},
 					},
 				},
@@ -497,6 +551,243 @@ func TestBuildUpgradePlan(t *testing.T) {
 							OldValue:     "",
 							NewValue:     "new",
 							UpdateReason: "Egress masquerade interfaces field is not present in config but is configured in cluster spec",
+						},
+						{
+							Name:     cilium.CniExclusiveComponentName,
+							OldValue: "true",
+							NewValue: "true",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "CNIExclusive changed from true to false",
+			installation: &cilium.Installation{
+				DaemonSet: daemonSet("cilium:v1.0.0"),
+				Operator:  deployment("cilium-operator:v1.0.0"),
+				ConfigMap: ciliumConfigMapWithCNIExclusive("default", "", "true"),
+			},
+			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
+				s.VersionsBundles["1.19"].Cilium.Cilium.URI = "cilium:v1.0.0"
+				s.VersionsBundles["1.19"].Cilium.Operator.URI = "cilium-operator:v1.0.0"
+				cniExclusiveFalse := false
+				s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
+					Cilium: &anywherev1.CiliumConfig{
+						CNIExclusive: &cniExclusiveFalse,
+					},
+				}
+			}),
+			want: cilium.UpgradePlan{
+				DaemonSet: cilium.VersionedComponentUpgradePlan{
+					OldImage: "cilium:v1.0.0",
+					NewImage: "cilium:v1.0.0",
+				},
+				Operator: cilium.VersionedComponentUpgradePlan{
+					OldImage: "cilium-operator:v1.0.0",
+					NewImage: "cilium-operator:v1.0.0",
+				},
+				ConfigMap: cilium.ConfigUpdatePlan{
+					UpdateReason: "Cilium cni-exclusive changed: [true] -> [false]",
+					Components: []cilium.ConfigComponentUpdatePlan{
+						{
+							Name:     cilium.PolicyEnforcementComponentName,
+							OldValue: "default",
+							NewValue: "default",
+						},
+						{
+							Name: "EgressMasqueradeInterfaces",
+						},
+						{
+							Name:         cilium.CniExclusiveComponentName,
+							OldValue:     "true",
+							NewValue:     "false",
+							UpdateReason: "Cilium cni-exclusive changed: [true] -> [false]",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "CNIExclusive changed from false to true",
+			installation: &cilium.Installation{
+				DaemonSet: daemonSet("cilium:v1.0.0"),
+				Operator:  deployment("cilium-operator:v1.0.0"),
+				ConfigMap: ciliumConfigMapWithCNIExclusive("default", "", "false"),
+			},
+			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
+				s.VersionsBundles["1.19"].Cilium.Cilium.URI = "cilium:v1.0.0"
+				s.VersionsBundles["1.19"].Cilium.Operator.URI = "cilium-operator:v1.0.0"
+				cniExclusiveTrue := true
+				s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
+					Cilium: &anywherev1.CiliumConfig{
+						CNIExclusive: &cniExclusiveTrue,
+					},
+				}
+			}),
+			want: cilium.UpgradePlan{
+				DaemonSet: cilium.VersionedComponentUpgradePlan{
+					OldImage: "cilium:v1.0.0",
+					NewImage: "cilium:v1.0.0",
+				},
+				Operator: cilium.VersionedComponentUpgradePlan{
+					OldImage: "cilium-operator:v1.0.0",
+					NewImage: "cilium-operator:v1.0.0",
+				},
+				ConfigMap: cilium.ConfigUpdatePlan{
+					UpdateReason: "Cilium cni-exclusive changed: [false] -> [true]",
+					Components: []cilium.ConfigComponentUpdatePlan{
+						{
+							Name:     cilium.PolicyEnforcementComponentName,
+							OldValue: "default",
+							NewValue: "default",
+						},
+						{
+							Name: "EgressMasqueradeInterfaces",
+						},
+						{
+							Name:         cilium.CniExclusiveComponentName,
+							OldValue:     "false",
+							NewValue:     "true",
+							UpdateReason: "Cilium cni-exclusive changed: [false] -> [true]",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "CNIExclusive not present in config, defaults to true",
+			installation: &cilium.Installation{
+				DaemonSet: daemonSet("cilium:v1.0.0"),
+				Operator:  deployment("cilium-operator:v1.0.0"),
+				ConfigMap: ciliumConfigMap("default", ""),
+			},
+			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
+				s.VersionsBundles["1.19"].Cilium.Cilium.URI = "cilium:v1.0.0"
+				s.VersionsBundles["1.19"].Cilium.Operator.URI = "cilium-operator:v1.0.0"
+				cniExclusiveFalse := false
+				s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
+					Cilium: &anywherev1.CiliumConfig{
+						CNIExclusive: &cniExclusiveFalse,
+					},
+				}
+			}),
+			want: cilium.UpgradePlan{
+				DaemonSet: cilium.VersionedComponentUpgradePlan{
+					OldImage: "cilium:v1.0.0",
+					NewImage: "cilium:v1.0.0",
+				},
+				Operator: cilium.VersionedComponentUpgradePlan{
+					OldImage: "cilium-operator:v1.0.0",
+					NewImage: "cilium-operator:v1.0.0",
+				},
+				ConfigMap: cilium.ConfigUpdatePlan{
+					UpdateReason: "Cilium cni-exclusive changed: [true] -> [false]",
+					Components: []cilium.ConfigComponentUpdatePlan{
+						{
+							Name:     cilium.PolicyEnforcementComponentName,
+							OldValue: "default",
+							NewValue: "default",
+						},
+						{
+							Name: "EgressMasqueradeInterfaces",
+						},
+						{
+							Name:         cilium.CniExclusiveComponentName,
+							OldValue:     "true",
+							NewValue:     "false",
+							UpdateReason: "Cilium cni-exclusive changed: [true] -> [false]",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "CNIExclusive nil in spec, should default to true",
+			installation: &cilium.Installation{
+				DaemonSet: daemonSet("cilium:v1.0.0"),
+				Operator:  deployment("cilium-operator:v1.0.0"),
+				ConfigMap: ciliumConfigMapWithCNIExclusive("default", "", "false"),
+			},
+			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
+				s.VersionsBundles["1.19"].Cilium.Cilium.URI = "cilium:v1.0.0"
+				s.VersionsBundles["1.19"].Cilium.Operator.URI = "cilium-operator:v1.0.0"
+				s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
+					Cilium: &anywherev1.CiliumConfig{
+						CNIExclusive: nil, // Should default to true
+					},
+				}
+			}),
+			want: cilium.UpgradePlan{
+				DaemonSet: cilium.VersionedComponentUpgradePlan{
+					OldImage: "cilium:v1.0.0",
+					NewImage: "cilium:v1.0.0",
+				},
+				Operator: cilium.VersionedComponentUpgradePlan{
+					OldImage: "cilium-operator:v1.0.0",
+					NewImage: "cilium-operator:v1.0.0",
+				},
+				ConfigMap: cilium.ConfigUpdatePlan{
+					UpdateReason: "Cilium cni-exclusive changed: [false] -> [true]",
+					Components: []cilium.ConfigComponentUpdatePlan{
+						{
+							Name:     cilium.PolicyEnforcementComponentName,
+							OldValue: "default",
+							NewValue: "default",
+						},
+						{
+							Name: "EgressMasqueradeInterfaces",
+						},
+						{
+							Name:         cilium.CniExclusiveComponentName,
+							OldValue:     "false",
+							NewValue:     "true",
+							UpdateReason: "Cilium cni-exclusive changed: [false] -> [true]",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "CNIExclusive no change needed",
+			installation: &cilium.Installation{
+				DaemonSet: daemonSet("cilium:v1.0.0"),
+				Operator:  deployment("cilium-operator:v1.0.0"),
+				ConfigMap: ciliumConfigMapWithCNIExclusive("default", "", "false"),
+			},
+			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
+				s.VersionsBundles["1.19"].Cilium.Cilium.URI = "cilium:v1.0.0"
+				s.VersionsBundles["1.19"].Cilium.Operator.URI = "cilium-operator:v1.0.0"
+				cniExclusiveFalse := false
+				s.Cluster.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{
+					Cilium: &anywherev1.CiliumConfig{
+						CNIExclusive: &cniExclusiveFalse,
+					},
+				}
+			}),
+			want: cilium.UpgradePlan{
+				DaemonSet: cilium.VersionedComponentUpgradePlan{
+					OldImage: "cilium:v1.0.0",
+					NewImage: "cilium:v1.0.0",
+				},
+				Operator: cilium.VersionedComponentUpgradePlan{
+					OldImage: "cilium-operator:v1.0.0",
+					NewImage: "cilium-operator:v1.0.0",
+				},
+				ConfigMap: cilium.ConfigUpdatePlan{
+					Components: []cilium.ConfigComponentUpdatePlan{
+						{
+							Name:     cilium.PolicyEnforcementComponentName,
+							OldValue: "default",
+							NewValue: "default",
+						},
+						{
+							Name: "EgressMasqueradeInterfaces",
+						},
+						{
+							Name:     cilium.CniExclusiveComponentName,
+							OldValue: "false",
+							NewValue: "false",
 						},
 					},
 				},
@@ -577,6 +868,30 @@ func ciliumConfigMap(enforcementMode, egressMasqueradeInterface string, opts ...
 		Data: map[string]string{
 			cilium.PolicyEnforcementConfigMapKey:    enforcementMode,
 			cilium.EgressMasqueradeInterfacesMapKey: egressMasqueradeInterface,
+		},
+	}
+
+	for _, o := range opts {
+		o(cm)
+	}
+
+	return cm
+}
+
+func ciliumConfigMapWithCNIExclusive(enforcementMode, egressMasqueradeInterface, cniExclusive string, opts ...cmOpt) *corev1.ConfigMap {
+	cm := &corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "ConfigMap",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      cilium.ConfigMapName,
+			Namespace: "kube-system",
+		},
+		Data: map[string]string{
+			cilium.PolicyEnforcementConfigMapKey:    enforcementMode,
+			cilium.EgressMasqueradeInterfacesMapKey: egressMasqueradeInterface,
+			cilium.CniExclusiveConfigMapKey:         cniExclusive,
 		},
 	}
 

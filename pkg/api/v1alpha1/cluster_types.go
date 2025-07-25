@@ -653,6 +653,22 @@ func (n *CiliumConfig) Equal(o *CiliumConfig) bool {
 		return false
 	}
 
+	if n.IPv4NativeRoutingCIDR != o.IPv4NativeRoutingCIDR {
+		return false
+	}
+
+	if n.IPv6NativeRoutingCIDR != o.IPv6NativeRoutingCIDR {
+		return false
+	}
+
+	// Compare CNIExclusive field
+	if (n.CNIExclusive == nil) != (o.CNIExclusive == nil) {
+		return false
+	}
+	if n.CNIExclusive != nil && o.CNIExclusive != nil && *n.CNIExclusive != *o.CNIExclusive {
+		return false
+	}
+
 	oSkipUpgradeIsFalse := o.SkipUpgrade == nil || !*o.SkipUpgrade
 	nSkipUpgradeIsFalse := n.SkipUpgrade == nil || !*n.SkipUpgrade
 
@@ -904,6 +920,11 @@ type CiliumConfig struct {
 	// If this is not set autoDirectNodeRoutes will be set to true
 	// +optional
 	IPv6NativeRoutingCIDR string `json:"ipv6NativeRoutingCIDR,omitempty"`
+
+	// CNIExclusive controls whether Cilium should remove other CNI configuration files.
+	// When true (default), Cilium removes other CNI configs; when false, it leaves them alone.
+	// +optional
+	CNIExclusive *bool `json:"cniExclusive,omitempty"`
 }
 
 // IsManaged returns true if SkipUpgrade is nil or false indicating EKS-A is responsible for
