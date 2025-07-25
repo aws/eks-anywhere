@@ -1197,3 +1197,156 @@ func TestAllowDeleteWhilePaused(t *testing.T) {
 		})
 	}
 }
+
+func TestApplyBundlesSuccess(t *testing.T) {
+	tt := newTest(t)
+
+	// Mock expectations for bundle application
+	tt.mocks.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, gomock.Any()).Return(nil)
+
+	// Mock expectations for audit policy config map application (default policy)
+	tt.mocks.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.Any()).Return(nil)
+
+	existingConfigMap := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      constants.UpgraderConfigMapName,
+			Namespace: constants.EksaSystemNamespace,
+		},
+		Data: map[string]string{},
+	}
+	tt.mocks.client.EXPECT().GetConfigMap(tt.ctx, tt.cluster.KubeconfigFile, constants.UpgraderConfigMapName, constants.EksaSystemNamespace).Return(existingConfigMap, nil)
+	tt.mocks.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.Any()).Return(nil)
+
+	err := tt.clusterManager.ApplyBundles(tt.ctx, tt.clusterSpec, tt.cluster)
+	tt.Expect(err).To(BeNil())
+}
+
+func TestApplyBundlesWithAuditPolicyConfigMap(t *testing.T) {
+	tt := newTest(t)
+
+	existingConfigMap := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      constants.UpgraderConfigMapName,
+			Namespace: constants.EksaSystemNamespace,
+		},
+		Data: map[string]string{},
+	}
+
+	// Set up cluster spec with audit policy config map reference
+	tt.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.AuditPolicyConfigMapRef = &v1alpha1.Ref{
+		Kind: constants.ConfigMapKind,
+		Name: constants.AuditPolicyConfigMapName,
+	}
+	tt.clusterSpec.AuditPolicyConfigMap = &corev1.ConfigMap{
+		Data: map[string]string{
+			"audit-policy.yaml": "test-audit-policy-content",
+		},
+	}
+
+	// Mock expectations for bundle application
+	tt.mocks.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, gomock.Any()).Return(nil)
+
+	// Mock expectations for audit policy config map application
+	tt.mocks.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.Any(), gomock.Any()).
+		Do(func(_ context.Context, _ string, obj interface{}, _ ...interface{}) {
+			configMap := obj.(*corev1.ConfigMap)
+			// Use the actual cluster spec name, not the test cluster name
+			tt.Expect(configMap.Name).To(Equal(fmt.Sprintf("%s-%s", tt.clusterSpec.Cluster.Name, constants.AuditPolicyConfigMapName)))
+			tt.Expect(configMap.Namespace).To(Equal(constants.EksaSystemNamespace))
+			tt.Expect(configMap.Data["audit-policy.yaml"]).To(Equal("test-audit-policy-content"))
+		}).Return(nil)
+
+	// Mock expectations for upgrader config map
+	tt.mocks.client.EXPECT().GetConfigMap(tt.ctx, tt.cluster.KubeconfigFile, constants.UpgraderConfigMapName, constants.EksaSystemNamespace).Return(existingConfigMap, nil)
+	tt.mocks.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.Any(), gomock.Any()).Return(nil)
+
+	err := tt.clusterManager.ApplyBundles(tt.ctx, tt.clusterSpec, tt.cluster)
+	tt.Expect(err).To(BeNil())
+}
+
+func TestApplyBundlesWithoutAuditPolicyConfigMapRef(t *testing.T) {
+	tt := newTest(t)
+
+	// No audit policy config map reference set
+	tt.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.AuditPolicyConfigMapRef = nil
+
+	// Mock expectations for bundle application
+	tt.mocks.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, gomock.Any()).Return(nil)
+
+	// Mock expectations for audit policy config map application (default policy)
+	tt.mocks.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.Any()).Return(nil)
+
+	// Mock expectations for upgrader config map
+	existingConfigMap := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      constants.UpgraderConfigMapName,
+			Namespace: constants.EksaSystemNamespace,
+		},
+		Data: map[string]string{},
+	}
+	tt.mocks.client.EXPECT().GetConfigMap(tt.ctx, tt.cluster.KubeconfigFile, constants.UpgraderConfigMapName, constants.EksaSystemNamespace).Return(existingConfigMap, nil)
+	tt.mocks.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.Any()).Return(nil)
+
+	err := tt.clusterManager.ApplyBundles(tt.ctx, tt.clusterSpec, tt.cluster)
+	tt.Expect(err).To(BeNil())
+}
+
+func TestApplyBundlesErrorApplyingBundles(t *testing.T) {
+	tt := newTest(t)
+
+	applyError := errors.New("failed to apply bundles")
+	tt.mocks.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, gomock.Any()).Return(applyError)
+
+	err := tt.clusterManager.ApplyBundles(tt.ctx, tt.clusterSpec, tt.cluster)
+	tt.Expect(err).To(MatchError(ContainSubstring("applying bundle spec")))
+}
+
+func TestApplyBundlesErrorApplyingAuditPolicyConfigMap(t *testing.T) {
+	tt := newTest(t)
+
+	// Set up cluster spec with audit policy config map reference
+	tt.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.AuditPolicyConfigMapRef = &v1alpha1.Ref{
+		Kind: constants.ConfigMapKind,
+		Name: constants.AuditPolicyConfigMapName,
+	}
+	tt.clusterSpec.AuditPolicyConfigMap = &corev1.ConfigMap{
+		Data: map[string]string{
+			"audit-policy.yaml": "test-audit-policy-content",
+		},
+	}
+
+	// Mock expectations for bundle application
+	tt.mocks.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, gomock.Any()).Return(nil)
+
+	// Mock expectations for audit policy config map application error
+	applyError := errors.New("failed to apply audit policy config map")
+	tt.mocks.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.Any()).Return(applyError)
+
+	err := tt.clusterManager.ApplyBundles(tt.ctx, tt.clusterSpec, tt.cluster)
+	tt.Expect(err).To(MatchError(ContainSubstring("applying upgrader images config map")))
+}
+
+func TestApplyBundlesErrorApplyingUpgraderConfigMap(t *testing.T) {
+	tt := newTest(t)
+
+	// Mock expectations for bundle application
+	tt.mocks.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, gomock.Any()).Return(nil)
+
+	// Mock expectations for audit policy config map application (default policy)
+	tt.mocks.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.Any()).Return(nil)
+
+	// Mock expectations for upgrader config map error
+	existingConfigMap := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      constants.UpgraderConfigMapName,
+			Namespace: constants.EksaSystemNamespace,
+		},
+		Data: map[string]string{},
+	}
+	tt.mocks.client.EXPECT().GetConfigMap(tt.ctx, tt.cluster.KubeconfigFile, constants.UpgraderConfigMapName, constants.EksaSystemNamespace).Return(existingConfigMap, nil)
+	applyError := errors.New("failed to apply upgrader config map")
+	tt.mocks.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.Any()).Return(applyError)
+
+	err := tt.clusterManager.ApplyBundles(tt.ctx, tt.clusterSpec, tt.cluster)
+	tt.Expect(err).To(MatchError(ContainSubstring("applying upgrader images config map")))
+}

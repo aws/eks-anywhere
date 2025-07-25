@@ -20,5 +20,6 @@ func NewDefaultConfigClientBuilder() *ConfigClientBuilder {
 		getAWSIam,
 		getGitOps,
 		getFluxConfig,
+		getAuditPolicy,
 	)
 }

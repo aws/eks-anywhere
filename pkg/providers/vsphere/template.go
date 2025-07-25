@@ -238,13 +238,8 @@ func buildTemplateMapCP(
 		"eksaCloudProviderPassword":            vuc.EksaVsphereCPPassword,
 		"controlPlaneCloneMode":                controlPlaneMachineSpec.CloneMode,
 		"etcdCloneMode":                        etcdMachineSpec.CloneMode,
+		"auditPolicy":                          clusterSpec.AuditPolicy(),
 	}
-
-	auditPolicy, err := common.GetAuditPolicy(clusterSpec.Cluster.Spec.KubernetesVersion)
-	if err != nil {
-		return nil, err
-	}
-	values["auditPolicy"] = auditPolicy
 
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
 		registryMirror := registrymirror.FromCluster(clusterSpec.Cluster)
