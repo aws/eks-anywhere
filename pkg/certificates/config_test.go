@@ -304,7 +304,7 @@ controlPlane:
 	}
 }
 
-func Test_getControlPlaneIPs_Success(t *testing.T) {
+func TestPopulateConfig_ControlPlaneSuccess(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -321,23 +321,42 @@ func Test_getControlPlaneIPs_Success(t *testing.T) {
 
 	k.EXPECT().
 		List(gomock.Any(), gomock.Any(), gomock.Any()).
-		DoAndReturn(func(_ context.Context, l interface{}, _ ...interface{}) error {
+		DoAndReturn(func(_ context.Context, l any, _ ...any) error {
 			*l.(*clusterv1.MachineList) = *machines
 			return nil
 		})
 
-	if _, err := certificates.GetControlPlaneIPs(context.Background(), k, &types.Cluster{Name: clusterLabel}); err != nil {
-		t.Fatalf("GetControlPlaneIPs() expected no error, got: %v", err)
+	k.EXPECT().
+		List(gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(_ context.Context, l any, _ ...any) error {
+			*l.(*clusterv1.MachineList) = *machines
+			return nil
+		})
+
+	cfg := &certificates.RenewalConfig{
+		ClusterName: clusterLabel,
+		OS:          string(v1alpha1.Ubuntu),
+		ControlPlane: certificates.NodeConfig{
+			SSH: certificates.SSHConfig{User: "ec2-user", KeyPath: "/test"},
+		},
+	}
+
+	if err := certificates.PopulateConfig(context.Background(), cfg, k, &types.Cluster{Name: clusterLabel}); err != nil {
+		t.Fatalf("PopulateConfig() expected no error, got: %v", err)
 	}
 }
 
-func Test_getEtcdIPs_Success(t *testing.T) {
+func TestPopulateConfig_EtcdSuccess(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	k := kubemocks.NewMockClient(ctrl)
 
-	machines := &clusterv1.MachineList{
+	cpMachines := &clusterv1.MachineList{
+		Items: []clusterv1.Machine{},
+	}
+
+	etcdMachines := &clusterv1.MachineList{
 		Items: []clusterv1.Machine{
 			buildMachine(map[string]string{
 				clusterNameLabel:  clusterLabel,
@@ -348,13 +367,28 @@ func Test_getEtcdIPs_Success(t *testing.T) {
 
 	k.EXPECT().
 		List(gomock.Any(), gomock.Any(), gomock.Any()).
-		DoAndReturn(func(_ context.Context, l interface{}, _ ...interface{}) error {
-			*l.(*clusterv1.MachineList) = *machines
+		DoAndReturn(func(_ context.Context, l any, _ ...any) error {
+			*l.(*clusterv1.MachineList) = *cpMachines
 			return nil
 		})
 
-	if _, err := certificates.GetEtcdIPs(context.Background(), k, &types.Cluster{Name: clusterLabel}); err != nil {
-		t.Fatalf("GetEtcdIPs() expected no error, got: %v", err)
+	k.EXPECT().
+		List(gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(_ context.Context, l any, _ ...any) error {
+			*l.(*clusterv1.MachineList) = *etcdMachines
+			return nil
+		})
+
+	cfg := &certificates.RenewalConfig{
+		ClusterName: clusterLabel,
+		OS:          string(v1alpha1.Ubuntu),
+		ControlPlane: certificates.NodeConfig{
+			SSH: certificates.SSHConfig{User: "ec2-user", KeyPath: "/test"},
+		},
+	}
+
+	if err := certificates.PopulateConfig(context.Background(), cfg, k, &types.Cluster{Name: clusterLabel}); err != nil {
+		t.Fatalf("PopulateConfig() expected no error, got: %v", err)
 	}
 }
 
@@ -394,21 +428,6 @@ func TestPopulateConfig_EtcdListError(t *testing.T) {
 
 	if err := certificates.PopulateConfig(context.Background(), cfg, k, &types.Cluster{Name: clusterLabel}); err == nil {
 		t.Fatalf("PopulateConfig() expected error, got nil")
-	}
-}
-
-func Test_getControlPlaneIPs_ListError(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	k := kubemocks.NewMockClient(ctrl)
-
-	k.EXPECT().
-		List(gomock.Any(), gomock.Any(), gomock.Any()).
-		Return(errors.New("api server unavailable"))
-
-	if _, err := certificates.GetControlPlaneIPs(context.Background(), k, &types.Cluster{Name: clusterLabel}); err == nil {
-		t.Fatalf("GetControlPlaneIPs() expected error, got nil")
 	}
 }
 
