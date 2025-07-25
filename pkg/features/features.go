@@ -4,7 +4,6 @@ package features
 const (
 	CloudStackKubeVipDisabledEnvVar   = "CLOUDSTACK_KUBE_VIP_DISABLED"
 	CheckpointEnabledEnvVar           = "CHECKPOINT_ENABLED"
-	UseNewWorkflowsEnvVar             = "USE_NEW_WORKFLOWS"
 	UseControllerForCli               = "USE_CONTROLLER_FOR_CLI"
 	VSphereInPlaceEnvVar              = "VSPHERE_IN_PLACE_UPGRADE"
 	APIServerExtraArgsEnabledEnvVar   = "API_SERVER_EXTRA_ARGS_ENABLED"
@@ -40,13 +39,6 @@ func CheckpointEnabled() Feature {
 	return Feature{
 		Name:     "Checkpoint to rerun commands enabled",
 		IsActive: globalFeatures.isActiveForEnvVar(CheckpointEnabledEnvVar),
-	}
-}
-
-func UseNewWorkflows() Feature {
-	return Feature{
-		Name:     "Use new workflow logic for cluster management operations",
-		IsActive: globalFeatures.isActiveForEnvVar(UseNewWorkflowsEnvVar),
 	}
 }
 
