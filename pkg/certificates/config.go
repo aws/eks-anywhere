@@ -76,13 +76,13 @@ func ValidateConfig(config *RenewalConfig, component string) error {
 		return fmt.Errorf("unsupported os %q", config.OS)
 	}
 
-	if err := ValidateNodeConfig(&config.ControlPlane); err != nil {
+	if err := validateNodeConfig(&config.ControlPlane); err != nil {
 		return fmt.Errorf("validating control plane config: %w", err)
 	}
 
 	// Etcd nodes are only required if using external etcd.
 	if len(config.Etcd.Nodes) > 0 {
-		if err := ValidateNodeConfig(&config.Etcd); err != nil {
+		if err := validateNodeConfig(&config.Etcd); err != nil {
 			return fmt.Errorf("validating etcd config: %w", err)
 		}
 	}
@@ -94,8 +94,7 @@ func ValidateConfig(config *RenewalConfig, component string) error {
 	return nil
 }
 
-// ValidateNodeConfig validates a node configuration.
-func ValidateNodeConfig(config *NodeConfig) error {
+func validateNodeConfig(config *NodeConfig) error {
 	if len(config.Nodes) == 0 {
 		return fmt.Errorf("nodes list cannot be empty")
 	}
