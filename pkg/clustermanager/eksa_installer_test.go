@@ -523,6 +523,112 @@ func TestEKSAInstallerFailureApplyUpgraderConfigMap(t *testing.T) {
 	tt.Expect(err.Error()).To(ContainSubstring("applying upgrader images config map"))
 }
 
+// func TestEKSAInstaller_createAuditPolicyConfigMap(t *testing.T) {
+// 	g := NewWithT(t)
+// 	ctx := context.Background()
+// 	log := logr.Discard()
+
+// 	tests := []struct {
+// 		name                        string
+// 		auditPolicyConfigMapRef     *anywherev1.Ref
+// 		existingAuditPolicy         string
+// 		expectConfigMapCreation     bool
+// 		expectedConfigMapName       string
+// 		expectedConfigMapNamespace  string
+// 	}{
+// 		{
+// 			name:                    "no audit policy config map ref specified",
+// 			auditPolicyConfigMapRef: nil,
+// 			expectConfigMapCreation: false,
+// 		},
+// 		{
+// 			name: "audit policy config map ref specified with custom policy",
+// 			auditPolicyConfigMapRef: &anywherev1.Ref{
+// 				Kind: "ConfigMap",
+// 				Name: "custom-audit-policy",
+// 			},
+// 			existingAuditPolicy:         "custom audit policy content",
+// 			expectConfigMapCreation:     true,
+// 			expectedConfigMapName:       "custom-audit-policy",
+// 			expectedConfigMapNamespace:  "default",
+// 		},
+// 		{
+// 			name: "audit policy config map ref specified with default policy",
+// 			auditPolicyConfigMapRef: &anywherev1.Ref{
+// 				Kind: "ConfigMap",
+// 				Name: "default-audit-policy",
+// 			},
+// 			existingAuditPolicy:         "", // Empty, should use default
+// 			expectConfigMapCreation:     true,
+// 			expectedConfigMapName:       "default-audit-policy",
+// 			expectedConfigMapNamespace:  "default",
+// 		},
+// 	}
+
+// 	for _, tt := range tests {
+// 		t.Run(tt.name, func(t *testing.T) {
+// 			ctrl := gomock.NewController(t)
+// 			defer ctrl.Finish()
+
+// 			mockClient := NewMockKubernetesClient(ctrl)
+// 			installer := &EKSAInstaller{
+// 				client: mockClient,
+// 			}
+
+// 			// Create test cluster and spec
+// 			testCluster := &types.Cluster{
+// 				Name:           "test-cluster",
+// 				KubeconfigFile: "/tmp/kubeconfig",
+// 			}
+
+// 			testSpec := &cluster.Spec{
+// 				Config: &cluster.Config{
+// 					AuditPolicy: tt.existingAuditPolicy,
+// 				},
+// 				Cluster: &anywherev1.Cluster{
+// 					ObjectMeta: metav1.ObjectMeta{
+// 						Name:      "test-cluster",
+// 						Namespace: "default",
+// 					},
+// 					Spec: anywherev1.ClusterSpec{
+// 						ControlPlaneConfiguration: anywherev1.ControlPlaneConfiguration{
+// 							AuditPolicyConfigMapRef: tt.auditPolicyConfigMapRef,
+// 						},
+// 					},
+// 				},
+// 			}
+
+// 			if tt.expectConfigMapCreation {
+// 				// Expect the ConfigMap to be applied
+// 				mockClient.EXPECT().
+// 					Apply(ctx, testCluster.KubeconfigFile, gomock.Any()).
+// 					DoAndReturn(func(ctx context.Context, kubeconfigFile string, obj interface{}) error {
+// 						configMap, ok := obj.(*corev1.ConfigMap)
+// 						g.Expect(ok).To(BeTrue(), "Expected ConfigMap object")
+// 						g.Expect(configMap.Name).To(Equal(tt.expectedConfigMapName))
+// 						g.Expect(configMap.Namespace).To(Equal(tt.expectedConfigMapNamespace))
+// 						g.Expect(configMap.Data).To(HaveKey("audit-policy.yaml"))
+
+// 						// If we provided custom policy, it should be used
+// 						if tt.existingAuditPolicy != "" {
+// 							g.Expect(configMap.Data["audit-policy.yaml"]).To(Equal(tt.existingAuditPolicy))
+// 						} else {
+// 							// If no custom policy, default policy should be used
+// 							g.Expect(configMap.Data["audit-policy.yaml"]).ToNot(BeEmpty())
+// 						}
+
+// 						return nil
+// 					}).
+// 					Times(1)
+// 			}
+
+// 			// Call the function
+// 			err := installer.createAuditPolicyConfigMap(ctx, log, testCluster, testSpec)
+// 			g.Expect(err).ToNot(HaveOccurred())
+// 		})
+// 	}
+// }
+
 type deploymentOpt func(*appsv1.Deployment)
 
 func deployment(opts ...deploymentOpt) *appsv1.Deployment {

@@ -1,48 +1,122 @@
-package common
+package cluster
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
+	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	auditv1 "k8s.io/apiserver/pkg/apis/audit/v1"
 	"sigs.k8s.io/yaml"
 
-	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/semver"
+	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
-// GetAuditPolicy returns the audit policy either v1 or v1beta1 depending on kube version.
-func GetAuditPolicy(kubeVersion v1alpha1.KubernetesVersion) (string, error) {
-	// appending the ".0" as the patch version to have a valid semver string and use those semvers for comparison
-	kubeVersionSemver, err := semver.New(string(kubeVersion) + ".0")
-	if err != nil {
-		return "", fmt.Errorf("error converting kubeVersion %v to semver %v", kubeVersion, err)
+func auditPolicyEntry() *ConfigManagerEntry {
+	return &ConfigManagerEntry{
+		APIObjectMapping: map[string]APIObjectGenerator{
+			constants.ConfigMapKind: func() APIObject {
+				return &corev1.ConfigMap{}
+			},
+		},
+		Processors: []ParsedProcessor{processAuditPolicy},
+		Defaulters: []Defaulter{
+			setDefaultAuditPolicy,
+		},
+		Validations: []Validation{validateAuditPolicy},
 	}
-
-	kube124Semver, err := semver.New(string(v1alpha1.Kube124) + ".0")
-	if err != nil {
-		return "", fmt.Errorf("error converting kubeVersion %v to semver %v", kube124Semver, err)
-	}
-
-	if kubeVersionSemver.Compare(kube124Semver) != -1 {
-		auditPolicyv1, err := AuditPolicyV1Yaml()
-		if err != nil {
-			return "", err
-		}
-		return strings.TrimSpace(string(auditPolicyv1)), nil
-	}
-	return auditPolicy, nil
 }
 
-// AuditPolicyV1Yaml returns the byte array for yaml created with v1 api version for audit policy.
-func AuditPolicyV1Yaml() ([]byte, error) {
-	auditPolicy := AuditPolicyV1()
+func processAuditPolicy(c *Config, objects ObjectLookup) {
+	if c.Cluster.Spec.ControlPlaneConfiguration.AuditPolicyConfigMapRef == nil {
+		return
+	}
+
+	configMap := objects.GetFromRef("v1", *c.Cluster.Spec.ControlPlaneConfiguration.AuditPolicyConfigMapRef)
+	if configMap == nil {
+		return
+	}
+
+	cm := configMap.(*corev1.ConfigMap)
+	for _, data := range cm.Data {
+		c.AuditPolicy = data
+		return
+	}
+}
+
+func setDefaultAuditPolicy(c *Config) error {
+	if c.AuditPolicy == "" {
+		defaultPolicy, err := GetDefaultAuditPolicy()
+		if err != nil {
+			return err
+		}
+		c.AuditPolicy = defaultPolicy
+	}
+	return nil
+}
+
+func validateAuditPolicy(c *Config) error {
+	if c.Cluster.Spec.ControlPlaneConfiguration.AuditPolicyConfigMapRef == nil {
+		return nil
+	}
+
+	configMapRef := c.Cluster.Spec.ControlPlaneConfiguration.AuditPolicyConfigMapRef
+
+	if configMapRef.Name == "" {
+		return errors.New("AuditPolicyConfigMapRef.Name is required when AuditPolicyConfigMapRef is provided")
+	}
+
+	if configMapRef.Kind != constants.ConfigMapKind && configMapRef.Kind != "" {
+		return fmt.Errorf("AuditPolicyConfigMapRef.Kind must be %s, got %s",
+			constants.ConfigMapKind, configMapRef.Kind)
+	}
+
+	return nil
+}
+
+func getAuditPolicy(ctx context.Context, client Client, c *Config) error {
+	if c.Cluster.Spec.ControlPlaneConfiguration.AuditPolicyConfigMapRef == nil {
+		if c.AuditPolicy == "" {
+			defaultPolicy, err := GetDefaultAuditPolicy()
+			if err != nil {
+				return err
+			}
+			c.AuditPolicy = defaultPolicy
+		}
+		return nil
+	}
+
+	configMap := &corev1.ConfigMap{}
+	if err := client.Get(ctx, constants.AuditPolicyConfigMapName, constants.EksaSystemNamespace, configMap); err != nil {
+		return err
+	}
+
+	for _, data := range configMap.Data {
+		c.AuditPolicy = data
+		break
+	}
+	return nil
+}
+
+// GetDefaultAuditPolicy returns the default audit policy.
+func GetDefaultAuditPolicy() (string, error) {
+	auditPolicyv1, err := auditPolicyV1Yaml()
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(string(auditPolicyv1)), nil
+}
+
+// auditPolicyV1Yaml returns the byte array for yaml created with v1 api version for audit policy.
+func auditPolicyV1Yaml() ([]byte, error) {
+	auditPolicy := auditPolicyV1()
 	return yaml.Marshal(auditPolicy)
 }
 
-// AuditPolicyV1 returns the v1 audit policy.
-func AuditPolicyV1() *auditv1.Policy {
+// auditPolicyV1 returns the v1 audit policy.
+func auditPolicyV1() *auditv1.Policy {
 	return &auditv1.Policy{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Policy",
@@ -312,4 +386,27 @@ func AuditPolicyV1() *auditv1.Policy {
 			},
 		},
 	}
+}
+
+// GetAuditPolicyConfigMap returns configMap if AuditPolicyConfigMapRef is not nil.
+func GetAuditPolicyConfigMap(spec *Spec) *corev1.ConfigMap {
+	if spec.Cluster.Spec.ControlPlaneConfiguration.AuditPolicyConfigMapRef == nil {
+		return nil
+	}
+
+	auditPolicyConfigMap := &corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "ConfigMap",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      constants.AuditPolicyConfigMapName,
+			Namespace: constants.EksaSystemNamespace,
+		},
+		Data: map[string]string{
+			"audit-policy.yaml": spec.AuditPolicy,
+		},
+	}
+
+	return auditPolicyConfigMap
 }

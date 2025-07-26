@@ -33,6 +33,7 @@ func DevEksaVersion() v1alpha1.EksaVersion {
 func NewClusterSpec(opts ...ClusterSpecOpt) *cluster.Spec {
 	s := &cluster.Spec{}
 	version := DevEksaVersion()
+	auditPolicy, _ := cluster.GetDefaultAuditPolicy()
 	s.Config = &cluster.Config{
 		Cluster: &v1alpha1.Cluster{
 			ObjectMeta: metav1.ObjectMeta{
@@ -75,7 +76,7 @@ func NewClusterSpec(opts ...ClusterSpecOpt) *cluster.Spec {
 		},
 	}
 	s.EKSARelease = EKSARelease()
-
+	s.AuditPolicy = auditPolicy
 	for _, opt := range opts {
 		opt(s)
 	}
