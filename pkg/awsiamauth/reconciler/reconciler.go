@@ -197,6 +197,42 @@ func (r *Reconciler) createKubeconfigSecret(ctx context.Context, clusterSpec *an
 	return nil
 }
 
+// ReconcileWorkloadClusterDelete deletes AWS IAM authenticator resources from the workload cluster
+// This method uses the template-based approach to generate the manifest and then delete the resources.
+func (r *Reconciler) ReconcileWorkloadClusterDelete(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster, awsIamConfig *anywherev1.AWSIamConfig) error {
+	// Build cluster spec with the provided AWSIamConfig
+	clusterSpec, err := anywhereCluster.BuildSpec(ctx, clientutil.NewKubeClient(r.client), cluster)
+	if err != nil {
+		return errors.Wrap(err, "building cluster spec for AWS IAM cleanup")
+	}
+
+	// Override the AWSIamConfig in the spec with the provided one
+	clusterSpec.AWSIamConfig = awsIamConfig
+
+	// Get workload cluster client
+	rClient, err := r.remoteClientRegistry.GetClient(ctx, controller.CapiClusterObjectKey(cluster))
+	if err != nil {
+		return errors.Wrap(err, "getting workload cluster's client for AWS IAM cleanup")
+	}
+
+	// Generate the manifest using the template builder
+	// Use uuid.Nil since we don't need cluster ID for deletion
+	log.Info("Generating AWS IAM authenticator manifest for deletion")
+	yaml, err := r.templateBuilder.GenerateManifest(clusterSpec, r.generateUUID())
+	if err != nil {
+		return errors.Wrap(err, "generating aws-iam-authenticator manifest for deletion")
+	}
+
+	// Delete the resources using the serverside delete functions
+	log.Info("Deleting AWS IAM authenticator resources from workload cluster using template-based approach")
+	if err := serverside.DeleteYaml(ctx, rClient, yaml); err != nil {
+		return errors.Wrap(err, "deleting aws-iam-authenticator resources from workload cluster")
+	}
+
+	log.Info("Successfully cleaned up AWS IAM authenticator resources from workload cluster")
+	return nil
+}
+
 // ReconcileDelete deletes any AWS Iam authenticator specific resources leftover on the eks-a cluster.
 func (r *Reconciler) ReconcileDelete(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) error {
 	secretName := awsiamauth.CASecretName(cluster.Name)
@@ -208,7 +244,7 @@ func (r *Reconciler) ReconcileDelete(ctx context.Context, log logr.Logger, clust
 	}
 
 	log.Info("Deleting aws-iam-authenticator ca secret", "secret", klog.KObj(secret))
-	if err := r.deleteObject(ctx, secret); err != nil {
+	if err := serverside.DeleteObject(ctx, r.client, secret); err != nil {
 		return err
 	}
 
@@ -221,23 +257,8 @@ func (r *Reconciler) ReconcileDelete(ctx context.Context, log logr.Logger, clust
 	}
 
 	log.Info("Deleting aws-iam-authenticator kubeconfig secret", "secret", klog.KObj(kubeConfigSecret))
-	if err := r.deleteObject(ctx, kubeConfigSecret); err != nil {
+	if err := serverside.DeleteObject(ctx, r.client, kubeConfigSecret); err != nil {
 		return err
-	}
-
-	return nil
-}
-
-// deleteObject deletes a kubernetes object. It's idempotent, if the object doesn't exist,
-// it doesn't return an error.
-func (r *Reconciler) deleteObject(ctx context.Context, obj client.Object) error {
-	err := r.client.Delete(ctx, obj)
-	if apierrors.IsNotFound(err) {
-		return nil
-	}
-
-	if err != nil {
-		return errors.Wrapf(err, "deleting aws-iam-authenticator %s %s", obj.GetObjectKind(), obj.GetName())
 	}
 
 	return nil

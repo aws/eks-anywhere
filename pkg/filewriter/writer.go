@@ -72,6 +72,18 @@ func (w *writer) Create(name string, opts ...FileOptionsFunc) (_ io.WriteCloser,
 	return fh, path, err
 }
 
+// Delete removes a file with the given name from w's base directory.
+func (w *writer) Delete(fileName string) error {
+	filePath := filepath.Join(w.dir, fileName)
+
+	// Check if file exists first
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		return nil // File doesn't exist, nothing to delete
+	}
+
+	return os.Remove(filePath)
+}
+
 type options struct {
 	BasePath    string
 	Permissions fs.FileMode

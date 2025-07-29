@@ -8007,24 +8007,8 @@ rules:
   - anywhere.eks.amazonaws.com
   resources:
   - awsiamconfigs
-  - cloudstackdatacenterconfigs
-  - cloudstackmachineconfigs
-  - clusters
-  - dockerdatacenterconfigs
-  - fluxconfigs
-  - gitopsconfigs
-  - nutanixdatacenterconfigs
-  - nutanixmachineconfigs
-  - oidcconfigs
-  - snowdatacenterconfigs
-  - snowippools
-  - snowmachineconfigs
-  - tinkerbelldatacenterconfigs
-  - tinkerbellmachineconfigs
-  - tinkerbelltemplateconfigs
-  - vspheredatacenterconfigs
-  - vspheremachineconfigs
   verbs:
+  - delete
   - get
   - list
   - patch
@@ -8081,6 +8065,32 @@ rules:
   verbs:
   - get
   - list
+  - watch
+- apiGroups:
+  - anywhere.eks.amazonaws.com
+  resources:
+  - cloudstackdatacenterconfigs
+  - cloudstackmachineconfigs
+  - clusters
+  - dockerdatacenterconfigs
+  - fluxconfigs
+  - gitopsconfigs
+  - nutanixdatacenterconfigs
+  - nutanixmachineconfigs
+  - oidcconfigs
+  - snowdatacenterconfigs
+  - snowippools
+  - snowmachineconfigs
+  - tinkerbelldatacenterconfigs
+  - tinkerbellmachineconfigs
+  - tinkerbelltemplateconfigs
+  - vspheredatacenterconfigs
+  - vspheremachineconfigs
+  verbs:
+  - get
+  - list
+  - patch
+  - update
   - watch
 - apiGroups:
   - anywhere.eks.amazonaws.com

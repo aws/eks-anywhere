@@ -201,3 +201,69 @@ func TestWriterCleanUpTempDir(t *testing.T) {
 		t.Errorf("writer.CleanUp(), want err, got nil")
 	}
 }
+
+func TestWriterDeleteSuccess(t *testing.T) {
+	folder := "tmp_folder_delete"
+	defer os.RemoveAll(folder)
+
+	tr, err := filewriter.NewWriter(folder)
+	if err != nil {
+		t.Fatalf("failed creating writer error = %v", err)
+	}
+
+	// Create a file first
+	fileName := "test-file.txt"
+	content := []byte("test content")
+	filePath, err := tr.Write(fileName, content, filewriter.PersistentFile)
+	if err != nil {
+		t.Fatalf("failed to create test file: %v", err)
+	}
+
+	// Verify file exists
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		t.Fatalf("test file should exist before deletion")
+	}
+
+	// Delete the file
+	err = tr.Delete(fileName)
+	if err != nil {
+		t.Fatalf("Delete() error = %v", err)
+	}
+
+	// Verify file is deleted
+	if _, err := os.Stat(filePath); !os.IsNotExist(err) {
+		t.Errorf("file should be deleted after Delete()")
+	}
+}
+
+func TestWriterDeleteFileNotExists(t *testing.T) {
+	folder := "tmp_folder_delete_not_exists"
+	defer os.RemoveAll(folder)
+
+	tr, err := filewriter.NewWriter(folder)
+	if err != nil {
+		t.Fatalf("failed creating writer error = %v", err)
+	}
+
+	// Try to delete non-existent file - should not error
+	err = tr.Delete("non-existent-file.txt")
+	if err != nil {
+		t.Errorf("Delete() on non-existent file should not error, got: %v", err)
+	}
+}
+
+func TestWriterDeleteInvalidPath(t *testing.T) {
+	folder := "tmp_folder_delete_invalid"
+	defer os.RemoveAll(folder)
+
+	tr, err := filewriter.NewWriter(folder)
+	if err != nil {
+		t.Fatalf("failed creating writer error = %v", err)
+	}
+
+	// Try to delete with invalid characters (this should fail on most systems)
+	err = tr.Delete("invalid\x00file.txt")
+	if err == nil {
+		t.Errorf("Delete() with invalid filename should error")
+	}
+}
