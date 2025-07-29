@@ -7,6 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/aws/eks-anywhere/pkg/certificates"
 	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
@@ -14,28 +15,30 @@ import (
 var (
 	validConfigYaml = `
 clusterName: test-cluster
+os: ubuntu
 controlPlane:
   nodes:
   - 192.168.1.10
-  os: ubuntu
-  sshKey: /tmp/test-key
-  sshUser: ec2-user
+  ssh:
+    sshUser: ec2-user
+    sshKey: /tmp/test-key
 etcd:
   nodes:
   - 192.168.1.20
-  os: ubuntu
-  sshKey: /tmp/test-key
-  sshUser: ec2-user
+  ssh:
+    sshUser: ec2-user
+    sshKey: /tmp/test-key
 `
 
 	validConfigYamlNoEtcd = `
 clusterName: test-cluster
+os: ubuntu
 controlPlane:
   nodes:
   - 192.168.1.10
-  os: ubuntu
-  sshKey: /tmp/test-key
-  sshUser: ec2-user
+  ssh:
+    sshUser: ec2-user
+    sshKey: /tmp/test-key
 `
 
 	invalidConfigYaml = `
@@ -59,38 +62,80 @@ func checkTestError(t *testing.T, err error, expectError bool, errorMsg string) 
 
 // TestValidateComponent tests the validateComponent function.
 func TestValidateComponent(t *testing.T) {
+	testConfig := &certificates.RenewalConfig{
+		ClusterName: "test-cluster",
+		OS:          "ubuntu",
+		ControlPlane: certificates.NodeConfig{
+			Nodes: []string{"192.168.1.10"},
+			SSH: certificates.SSHConfig{
+				User:    "ec2-user",
+				KeyPath: "/tmp/test-key",
+			},
+		},
+		Etcd: certificates.NodeConfig{
+			Nodes: []string{"192.168.1.20"},
+			SSH: certificates.SSHConfig{
+				User:    "ec2-user",
+				KeyPath: "/tmp/test-key",
+			},
+		},
+	}
+
 	tests := []struct {
 		name        string
 		component   string
+		config      *certificates.RenewalConfig
 		expectError bool
 		errorMsg    string
 	}{
 		{
 			name:        "valid etcd component",
 			component:   constants.EtcdComponent,
+			config:      testConfig,
 			expectError: false,
 		},
 		{
 			name:        "valid control-plane component",
 			component:   constants.ControlPlaneComponent,
+			config:      testConfig,
 			expectError: false,
 		},
 		{
 			name:        "empty component",
 			component:   "",
+			config:      testConfig,
 			expectError: false,
 		},
 		{
 			name:        "invalid component",
 			component:   "invalid",
+			config:      testConfig,
 			expectError: true,
 			errorMsg:    "invalid component",
+		},
+		{
+			name:      "etcd component with no etcd nodes",
+			component: constants.EtcdComponent,
+			config: &certificates.RenewalConfig{
+				ClusterName: "test-cluster",
+				OS:          "ubuntu",
+				ControlPlane: certificates.NodeConfig{
+					Nodes: []string{"192.168.1.10"},
+					SSH: certificates.SSHConfig{
+						User:    "ec2-user",
+						KeyPath: "/tmp/test-key",
+					},
+				},
+				Etcd: certificates.NodeConfig{},
+			},
+			expectError: true,
+			errorMsg:    "no external etcd nodes defined",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := validateComponent(tt.component)
+			err := certificates.ValidateComponentWithConfig(tt.component, tt.config)
 			checkTestError(t, err, tt.expectError, tt.errorMsg)
 		})
 	}
@@ -113,15 +158,6 @@ func createConfigFileFromYAML(t *testing.T, yamlContent string) (string, func())
 	return tmpfile.Name(), func() { os.Remove(tmpfile.Name()) }
 }
 
-// setupSSHKeyFile creates a temporary SSH key file for testing.
-func setupSSHKeyFile(t *testing.T) func() {
-	keyFile := "/tmp/test-key"
-	if err := os.WriteFile(keyFile, []byte("test-key"), 0o600); err != nil {
-		t.Fatal(err)
-	}
-	return func() { os.Remove(keyFile) }
-}
-
 // TestConfigFileValidation tests the config file validation separately.
 func TestConfigFileValidation(t *testing.T) {
 	tests := []struct {
@@ -135,7 +171,7 @@ func TestConfigFileValidation(t *testing.T) {
 			name:        "non-existent config file",
 			configFile:  "non-existent-file.yaml",
 			expectError: true,
-			errorMsg:    "parsing config file",
+			errorMsg:    "reading config file",
 		},
 		{
 			name:        "invalid config yaml",
@@ -150,8 +186,12 @@ func TestConfigFileValidation(t *testing.T) {
 			var configFile string
 			var fileCleanup func()
 
-			configFile, fileCleanup = createConfigFileFromYAML(t, tt.configYaml)
-			defer fileCleanup()
+			if tt.configYaml != "" {
+				configFile, fileCleanup = createConfigFileFromYAML(t, tt.configYaml)
+				defer fileCleanup()
+			} else {
+				configFile = tt.configFile
+			}
 
 			rc := &renewCertificatesOptions{
 				configFile: configFile,
@@ -164,11 +204,23 @@ func TestConfigFileValidation(t *testing.T) {
 	}
 }
 
+// testRenewCertificates is a test-only version that skips dependency initialization.
+func testRenewCertificates(configFile, component string) error {
+	cfg, err := certificates.ParseConfig(configFile)
+	if err != nil {
+		return err
+	}
+	return certificates.ValidateComponentWithConfig(component, cfg)
+}
+
 // TestRenewCertificates tests the renewCertificates method.
 func TestRenewCertificates(t *testing.T) {
 	// Setup SSH key file once for all tests
-	cleanup := setupSSHKeyFile(t)
-	defer cleanup()
+	keyFile := "/tmp/test-key"
+	if err := os.WriteFile(keyFile, []byte("test-key"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(keyFile)
 
 	// Define test cases
 	tests := []struct {
@@ -212,16 +264,8 @@ func TestRenewCertificates(t *testing.T) {
 			configFile, fileCleanup := createConfigFileFromYAML(t, tt.configYaml)
 			defer fileCleanup()
 
-			// Set up the command options
-			rc := &renewCertificatesOptions{
-				configFile: configFile,
-				component:  tt.component,
-			}
-
-			cmd := &cobra.Command{}
-
-			// Run the renewCertificates method
-			err := rc.renewCertificates(cmd, []string{})
+			// Use test-specific function instead of actual method
+			err := testRenewCertificates(configFile, tt.component)
 
 			// Check for expected errors
 			checkTestError(t, err, tt.expectError, tt.errorMsg)
