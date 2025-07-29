@@ -20,13 +20,37 @@ func (s *writeClusterConfig) Run(ctx context.Context, commandContext *task.Comma
 
 	}
 
-	// Generate AWS IAM kubeconfig only for cluster creation step
-	if commandContext.CurrentClusterSpec == nil && commandContext.ClusterSpec.AWSIamConfig != nil {
-		logger.Info("Generating the aws iam kubeconfig file")
-		err = commandContext.IamAuth.GenerateWorkloadKubeconfig(ctx, commandContext.ManagementCluster, commandContext.WorkloadCluster, commandContext.ClusterSpec)
-		if err != nil {
-			commandContext.SetError(err)
-			logger.Error(err, "Generating the aws iam kubeconfig file")
+	// Handle AWS IAM kubeconfig generation/cleanup during cluster operations
+	if commandContext.CurrentClusterSpec == nil {
+		// New cluster creation
+		if commandContext.ClusterSpec.AWSIamConfig != nil {
+			logger.Info("Generating AWS IAM kubeconfig file for new workload cluster")
+			err = commandContext.IamAuth.GenerateWorkloadKubeconfig(ctx, commandContext.ManagementCluster, commandContext.WorkloadCluster, commandContext.ClusterSpec)
+			if err != nil {
+				commandContext.SetError(err)
+				logger.Error(err, "Generating AWS IAM kubeconfig file for new workload cluster")
+			}
+		}
+	} else {
+		// Workload cluster upgrade scenarios
+		hadAWSIam := commandContext.CurrentClusterSpec.AWSIamConfig != nil
+		hasAWSIam := commandContext.ClusterSpec.AWSIamConfig != nil
+
+		if !hadAWSIam && hasAWSIam {
+			// AWS IAM being added during upgrade
+			logger.Info("Generating AWS IAM kubeconfig file for workload cluster upgrade (AWS IAM added)")
+			err = commandContext.IamAuth.GenerateWorkloadKubeconfig(ctx, commandContext.ManagementCluster, commandContext.WorkloadCluster, commandContext.ClusterSpec)
+			if err != nil {
+				commandContext.SetError(err)
+				logger.Error(err, "Generating AWS IAM kubeconfig file for workload cluster upgrade")
+			}
+		} else if hadAWSIam && !hasAWSIam {
+			// AWS IAM being removed during upgrade - cleanup existing kubeconfig
+			logger.Info("Cleaning up AWS IAM kubeconfig file (AWS IAM removed during workload cluster upgrade)")
+			err = commandContext.IamAuth.CleanupKubeconfig(commandContext.WorkloadCluster.Name)
+			if err != nil {
+				logger.Error(err, "Failed to cleanup AWS IAM kubeconfig file")
+			}
 		}
 	}
 
