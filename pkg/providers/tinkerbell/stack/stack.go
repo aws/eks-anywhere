@@ -553,15 +553,27 @@ func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle
 		tink: map[string]interface{}{
 			controller: map[string]interface{}{
 				image: bundle.TinkerbellStack.Tink.TinkController.URI,
+				"singleNodeClusterConfig": map[string]interface{}{
+					"controlPlaneTolerationsEnabled": true,
+					"nodeAffinityWeight":             1,
+				},
 			},
 			server: map[string]interface{}{
 				image: bundle.TinkerbellStack.Tink.TinkServer.URI,
+				"singleNodeClusterConfig": map[string]interface{}{
+					"controlPlaneTolerationsEnabled": true,
+					"nodeAffinityWeight":             1,
+				},
 			},
 		},
 		hegel: map[string]interface{}{
 			image: bundle.TinkerbellStack.Hegel.URI,
 			"trustedProxies": []string{
 				s.podCidrRange,
+			},
+			"singleNodeClusterConfig": map[string]interface{}{
+				"controlPlaneTolerationsEnabled": true,
+				"nodeAffinityWeight":             1,
 			},
 		},
 		smee: map[string]interface{}{
@@ -593,6 +605,10 @@ func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle
 				"staticIPAMEnabled": true,
 				"url":               isoURL,
 			},
+			"singleNodeClusterConfig": map[string]interface{}{
+				"controlPlaneTolerationsEnabled": true,
+				"nodeAffinityWeight":             1,
+			},
 		},
 		rufio: map[string]interface{}{
 			image: bundle.TinkerbellStack.Rufio.URI,
@@ -600,9 +616,17 @@ func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle
 				"-metrics-bind-address=127.0.0.1:8080",
 				fmt.Sprintf("-max-concurrent-reconciles=%v", rufioMaxConcurrentReconciles),
 			},
+			"singleNodeClusterConfig": map[string]interface{}{
+				"controlPlaneTolerationsEnabled": true,
+				"nodeAffinityWeight":             1,
+			},
 		},
 		stack: map[string]interface{}{
 			image: bundle.TinkerbellStack.Tink.Nginx.URI,
+			"singleNodeClusterConfig": map[string]interface{}{
+				"controlPlaneTolerationsEnabled": true,
+				"nodeAffinityWeight":             1,
+			},
 			kubevip: map[string]interface{}{
 				image:   bundle.KubeVip.URI,
 				enabled: s.loadBalancer,
