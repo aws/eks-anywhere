@@ -1,5 +1,8 @@
 hegel:
   image: public.ecr.aws/eks-anywhere/hegel:latest
+  singleNodeClusterConfig:
+    controlPlaneTolerationsEnabled: true
+    nodeAffinityWeight: 1
   trustedProxies:
   - 192.168.0.0/16
 rufio:
@@ -7,6 +10,9 @@ rufio:
   - -metrics-bind-address=127.0.0.1:8080
   - -max-concurrent-reconciles=10
   image: public.ecr.aws/eks-anywhere/rufio:latest
+  singleNodeClusterConfig:
+    controlPlaneTolerationsEnabled: true
+    nodeAffinityWeight: 1
 smee:
   deploy: true
   http:
@@ -26,6 +32,9 @@ smee:
     staticIPAMEnabled: true
     url: https://my-local-web-server/hook.iso
   publicIP: 1.2.3.4
+  singleNodeClusterConfig:
+    controlPlaneTolerationsEnabled: true
+    nodeAffinityWeight: 1
   tinkWorkerImage: public.ecr.aws/eks-anywhere/tink-worker:latest
   trustedProxies:
   - 192.168.0.0/16
@@ -49,8 +58,17 @@ stack:
     initImage: public.ecr.aws/eks-anywhere/tink-relay-init:latest
   service:
     enabled: false
+  singleNodeClusterConfig:
+    controlPlaneTolerationsEnabled: true
+    nodeAffinityWeight: 1
 tink:
   controller:
     image: public.ecr.aws/eks-anywhere/tink-controller:latest
+    singleNodeClusterConfig:
+      controlPlaneTolerationsEnabled: true
+      nodeAffinityWeight: 1
   server:
     image: public.ecr.aws/eks-anywhere/tink-server:latest
+    singleNodeClusterConfig:
+      controlPlaneTolerationsEnabled: true
+      nodeAffinityWeight: 1
