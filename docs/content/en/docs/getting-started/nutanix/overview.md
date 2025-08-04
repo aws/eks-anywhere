@@ -26,7 +26,7 @@ Details about this config file can be found on the [Nutanix Config]({{< relref "
 
 #### 3. Launch the cluster creation
 
-After modifying the cluster configuration file, run the `eksctl anywhere cluster create` command, providing the cluster config. 
+After modifying the cluster configuration file, run the `eksctl anywhere create cluster` command, providing the cluster config. 
 The verbosity can be increased to see more details on the cluster creation process (-v=9 provides maximum verbosity).
 
 #### 4. Create bootstrap cluster
