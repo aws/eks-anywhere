@@ -24,6 +24,8 @@ type RegistryMirror struct {
 	// InsecureSkipVerify skips the registry certificate verification.
 	// Only use this solution for isolated testing or in a tightly controlled, air-gapped environment.
 	InsecureSkipVerify bool
+	// curatedPackagesMirror enables easy lookup and is populated from namespace map.
+	curatedPackagesMirror string
 }
 
 var re = regexp.MustCompile(constants.DefaultCuratedPackagesRegistryRegex)
@@ -39,18 +41,16 @@ func FromClusterRegistryMirrorConfiguration(config *v1alpha1.RegistryMirrorConfi
 		return nil
 	}
 	registryMap := make(map[string]string)
+	var curatedPackagesMirror string
 	base := net.JoinHostPort(config.Endpoint, config.Port)
 	// add registry mirror base address
 	// for each namespace, add corresponding endpoint
 	for _, ociNamespace := range config.OCINamespaces {
 		mirror := filepath.Join(base, ociNamespace.Namespace)
 		if re.MatchString(ociNamespace.Registry) {
-			// handle curated packages in all regions
-			// static key makes it easier for mirror lookup
-			registryMap[constants.DefaultCuratedPackagesRegistry] = mirror
-		} else {
-			registryMap[ociNamespace.Registry] = mirror
+			curatedPackagesMirror = mirror
 		}
+		registryMap[ociNamespace.Registry] = mirror
 	}
 	if len(registryMap) == 0 {
 		// for backward compatibility, default mapping for public.ecr.aws is added
@@ -63,6 +63,7 @@ func FromClusterRegistryMirrorConfiguration(config *v1alpha1.RegistryMirrorConfi
 		Auth:                  config.Authenticate,
 		CACertContent:         config.CACertContent,
 		InsecureSkipVerify:    config.InsecureSkipVerify,
+		curatedPackagesMirror: curatedPackagesMirror,
 	}
 }
 
@@ -73,7 +74,7 @@ func (r *RegistryMirror) CoreEKSAMirror() string {
 
 // CuratedPackagesMirror returns the mirror for curated packages.
 func (r *RegistryMirror) CuratedPackagesMirror() string {
-	return r.NamespacedRegistryMap[constants.DefaultCuratedPackagesRegistry]
+	return r.curatedPackagesMirror
 }
 
 // ReplaceRegistry replaces the host in a url with corresponding registry mirror
@@ -92,9 +93,6 @@ func (r *RegistryMirror) ReplaceRegistry(url string) string {
 		u.Scheme = ""
 	}
 	key := u.Host
-	if re.MatchString(key) {
-		key = constants.DefaultCuratedPackagesRegistry
-	}
 	if v, ok := r.NamespacedRegistryMap[key]; ok {
 		return strings.Replace(url, u.Host, v, 1)
 	}

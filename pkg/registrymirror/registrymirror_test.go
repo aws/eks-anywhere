@@ -10,6 +10,8 @@ import (
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
 )
 
+const defaultCuratedPackagesRegistry = "783794618700.dkr.ecr.us-west-2.amazonaws.com"
+
 func TestFromCluster(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -56,8 +58,8 @@ func TestFromCluster(t *testing.T) {
 			want: &registrymirror.RegistryMirror{
 				BaseRegistry: "1.2.3.4:443",
 				NamespacedRegistryMap: map[string]string{
-					constants.DefaultCoreEKSARegistry:        "1.2.3.4:443/eks-anywhere",
-					constants.DefaultCuratedPackagesRegistry: "1.2.3.4:443/curated-packages",
+					constants.DefaultCoreEKSARegistry: "1.2.3.4:443/eks-anywhere",
+					defaultCuratedPackagesRegistry:    "1.2.3.4:443/curated-packages",
 				},
 			},
 		},
@@ -174,8 +176,8 @@ func TestFromClusterRegistryMirrorConfiguration(t *testing.T) {
 			want: &registrymirror.RegistryMirror{
 				BaseRegistry: "harbor.eksa.demo:30003",
 				NamespacedRegistryMap: map[string]string{
-					constants.DefaultCoreEKSARegistry:        "harbor.eksa.demo:30003/eks-anywhere",
-					constants.DefaultCuratedPackagesRegistry: "harbor.eksa.demo:30003/curated-packages",
+					constants.DefaultCoreEKSARegistry: "harbor.eksa.demo:30003/eks-anywhere",
+					defaultCuratedPackagesRegistry:    "harbor.eksa.demo:30003/curated-packages",
 				},
 				Auth: false,
 			},
@@ -265,7 +267,7 @@ func TestCuratedPackagesMirror(t *testing.T) {
 			registryMirror: &registrymirror.RegistryMirror{
 				BaseRegistry: "1.2.3.4:443",
 				NamespacedRegistryMap: map[string]string{
-					constants.DefaultCuratedPackagesRegistry: "1.2.3.4:443/curated-packages",
+					defaultCuratedPackagesRegistry: "1.2.3.4:443/curated-packages",
 				},
 			},
 			want: "1.2.3.4:443/curated-packages",
@@ -307,7 +309,7 @@ func TestReplaceRegistry(t *testing.T) {
 			registryMirror: &registrymirror.RegistryMirror{
 				BaseRegistry: "harbor.eksa.demo:30003",
 				NamespacedRegistryMap: map[string]string{
-					constants.DefaultCuratedPackagesRegistry: "harbor.eksa.demo:30003/curated-packages",
+					defaultCuratedPackagesRegistry: "harbor.eksa.demo:30003/curated-packages",
 				},
 			},
 			URL:  "oci://public.ecr.aws/product/chart",
@@ -343,7 +345,7 @@ func TestReplaceRegistry(t *testing.T) {
 			registryMirror: &registrymirror.RegistryMirror{
 				BaseRegistry: "harbor.eksa.demo:30003",
 				NamespacedRegistryMap: map[string]string{
-					constants.DefaultCuratedPackagesRegistry: "harbor.eksa.demo:30003/curated-packages",
+					defaultCuratedPackagesRegistry: "harbor.eksa.demo:30003/curated-packages",
 				},
 			},
 			URL:  "https://783794618700.dkr.ecr.us-west-2.amazonaws.com/product/site",
@@ -360,7 +362,7 @@ func TestReplaceRegistry(t *testing.T) {
 			registryMirror: &registrymirror.RegistryMirror{
 				BaseRegistry: "harbor.eksa.demo:30003",
 				NamespacedRegistryMap: map[string]string{
-					constants.DefaultCuratedPackagesRegistry: "harbor.eksa.demo:30003/curated-packages",
+					defaultCuratedPackagesRegistry: "harbor.eksa.demo:30003/curated-packages",
 				},
 			},
 			URL:  "public.ecr.aws/product/image:tag",
