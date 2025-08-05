@@ -195,6 +195,35 @@ spec:
         ipv4NativeRoutingCIDR: 192.168.0.0/16
 ```
 
+### CNI Exclusive Mode configuration
+
+The `cniExclusive` option controls whether Cilium should remove other CNI configuration files from the nodes.
+By default, Cilium operates in exclusive mode (`cniExclusive: true`), which means it will remove any other CNI configuration files to prevent conflicts.
+
+When set to `false`, Cilium will leave other CNI configuration files alone, allowing for more advanced networking setups or coexistence with other CNI plugins during migration scenarios.
+
+```yaml
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: my-cluster-name
+spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks:
+      - 192.168.0.0/16
+    services:
+      cidrBlocks:
+      - 10.96.0.0/12
+    cniConfig:
+      cilium:
+        cniExclusive: false
+```
+
+{{% alert title="Note" color="primary" %}}
+Setting `cniExclusive: false` is primarily useful for advanced networking scenarios or during CNI migration processes. Most users should leave this at the default value of `true` to ensure proper CNI operation.
+{{% /alert %}}
+
 ### Use a custom CNI
 
 EKS Anywhere can be configured to skip EKS Anywhere's default Cilium CNI upgrades via the `skipUpgrade` field.
