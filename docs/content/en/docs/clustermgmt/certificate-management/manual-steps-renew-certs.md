@@ -9,6 +9,10 @@ description: >
   How to rotate certificates for etcd and control plane nodes
 ---
 
+{{% alert title="Note" color="primary" %}}
+While these manual steps renew the certificates, the [recommended method]({{< relref "eksctl-renew-certs.md" >}}) for certificate renewal is using the `eksctl anywhere renew certificates` command.
+{{% /alert %}}
+
 Certificates for external etcd and control plane nodes expire after 1 year in EKS Anywhere. This page shows the process for manually rotating certificates.
 
 Get more information on EKS Anywhere cluster certificates from [here]({{< relref "monitoring-certificates.md" >}})
