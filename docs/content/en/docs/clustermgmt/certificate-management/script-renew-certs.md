@@ -6,10 +6,6 @@ description: >
 weight: 20
 ---
 
-{{% alert title="Note" color="primary" %}}
-While this script-based approach is supported, the [recommended method]({{< relref "eksctl-renew-certs.md" >}}) for certificate renewal is using the `eksctl anywhere renew certificates` command.
-{{% /alert %}}
-
 Get more information on EKS Anywhere cluster certificates from [here]({{< relref "monitoring-certificates.md" >}})
 
 This script automates:
