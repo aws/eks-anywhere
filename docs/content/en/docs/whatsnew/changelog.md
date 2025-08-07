@@ -56,8 +56,8 @@ description: >
 
 ### Added
 - Add certificate renewal command for control-plane and external etcd components for Ubuntu, Rhel and Bottlerocket OS [#9781](https://github.com/aws/eks-anywhere/pull/9781),[#9782](https://github.com/aws/eks-anywhere/pull/9782)
-  - Implementation ([#9780](https://github.com/aws/eks-anywhere/pull/9780),[#9781](https://github.com/aws/eks-anywhere/pull/9781),[#9782](https://github.com/aws/eks-anywhere/pull/9782),[#9907](https://github.com/aws/eks-anywhere/pull/9907))
-  - Unit Test ([#9925](https://github.com/aws/eks-anywhere/pull/9925))
+- Enable control plane tolerations for Tinkerbell stack components ([#9972](https://github.com/aws/eks-anywhere/pull/9972), [#4748](https://github.com/aws/eks-anywhere-build-tooling/pull/4748))
+- Support external CNI ([#9956](https://github.com/aws/eks-anywhere/pull/9956))
 
 ### Changed
 - EKS Distro:
@@ -75,8 +75,6 @@ description: >
 
 
 ### Fixed
-- Enable control plane tolerations for Tinkerbell stack components ([#9972](https://github.com/aws/eks-anywhere/pull/9972), [#4748](https://github.com/aws/eks-anywhere-build-tooling/pull/4748))
-- Support external CNI ([#9956](https://github.com/aws/eks-anywhere/pull/9956))
 - Fix workload cluster aws.kubeconfig file ([#9905](https://github.com/aws/eks-anywhere/pull/9905))
 
 
