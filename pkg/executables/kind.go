@@ -14,7 +14,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
-	"github.com/aws/eks-anywhere/pkg/providers/common"
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	"github.com/aws/eks-anywhere/pkg/registrymirror/containerd"
 	"github.com/aws/eks-anywhere/pkg/templater"
@@ -70,15 +69,11 @@ func NewKind(executable Executable, writer filewriter.FileWriter) *Kind {
 
 // CreateAuditPolicy creates an audit policy file to be used by the bootstrap cluster's api server.
 func (k *Kind) CreateAuditPolicy(clusterSpec *cluster.Spec) error {
-	auditPolicy, err := common.GetAuditPolicy(clusterSpec.Cluster.Spec.KubernetesVersion)
-	if err != nil {
-		return err
-	}
 	auditPath := filepath.Join(clusterSpec.Cluster.Name, "generated", "kubernetes")
 	if err := os.MkdirAll(auditPath, os.ModePerm); err != nil {
 		return err
 	}
-	if err := os.WriteFile(filepath.Join(auditPath, "audit-policy.yaml"), []byte(auditPolicy), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(auditPath, "audit-policy.yaml"), []byte(clusterSpec.AuditPolicy()), 0o644); err != nil {
 		return fmt.Errorf("error writing the audit policy file: %w", err)
 	}
 	auditPath = filepath.Join(auditPath, "audit-policy.yaml")

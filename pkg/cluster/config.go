@@ -29,6 +29,7 @@ type Config struct {
 	FluxConfig                *anywherev1.FluxConfig
 	SnowCredentialsSecret     *v1.Secret
 	SnowIPPools               map[string]*anywherev1.SnowIPPool
+	AuditPolicyConfigMap      *v1.ConfigMap
 }
 
 func (c *Config) VsphereMachineConfig(name string) *anywherev1.VSphereMachineConfig {
@@ -56,21 +57,38 @@ func (c *Config) AWSIamConfig(name string) *anywherev1.AWSIamConfig {
 	return c.AWSIAMConfigs[name]
 }
 
+// AuditPolicy returns the audit policy string from the AuditPolicyConfigMap.
+// If the ConfigMap is nil or has no data, it returns an empty string.
+func (c *Config) AuditPolicy() string {
+	if c.AuditPolicyConfigMap == nil || c.AuditPolicyConfigMap.Data == nil {
+		return ""
+	}
+
+	// Return the first data value found in the ConfigMap
+	for _, data := range c.AuditPolicyConfigMap.Data {
+		return data
+	}
+
+	return ""
+}
+
 func (c *Config) NutanixMachineConfig(name string) *anywherev1.NutanixMachineConfig {
 	return c.NutanixMachineConfigs[name]
 }
 
 func (c *Config) DeepCopy() *Config {
 	c2 := &Config{
-		Cluster:              c.Cluster.DeepCopy(),
-		CloudStackDatacenter: c.CloudStackDatacenter.DeepCopy(),
-		VSphereDatacenter:    c.VSphereDatacenter.DeepCopy(),
-		NutanixDatacenter:    c.NutanixDatacenter.DeepCopy(),
-		DockerDatacenter:     c.DockerDatacenter.DeepCopy(),
-		SnowDatacenter:       c.SnowDatacenter.DeepCopy(),
-		TinkerbellDatacenter: c.TinkerbellDatacenter.DeepCopy(),
-		GitOpsConfig:         c.GitOpsConfig.DeepCopy(),
-		FluxConfig:           c.FluxConfig.DeepCopy(),
+		Cluster:               c.Cluster.DeepCopy(),
+		CloudStackDatacenter:  c.CloudStackDatacenter.DeepCopy(),
+		VSphereDatacenter:     c.VSphereDatacenter.DeepCopy(),
+		NutanixDatacenter:     c.NutanixDatacenter.DeepCopy(),
+		DockerDatacenter:      c.DockerDatacenter.DeepCopy(),
+		SnowDatacenter:        c.SnowDatacenter.DeepCopy(),
+		TinkerbellDatacenter:  c.TinkerbellDatacenter.DeepCopy(),
+		GitOpsConfig:          c.GitOpsConfig.DeepCopy(),
+		FluxConfig:            c.FluxConfig.DeepCopy(),
+		SnowCredentialsSecret: c.SnowCredentialsSecret.DeepCopy(),
+		AuditPolicyConfigMap:  c.AuditPolicyConfigMap.DeepCopy(),
 	}
 
 	if c.VSphereMachineConfigs != nil {

@@ -60,27 +60,33 @@ func WithEKSAInstallerNoTimeouts() EKSAInstallerOpt {
 }
 
 // Install configures and applies eks-a components in a cluster accordingly to a spec.
-func (i *EKSAInstaller) Install(ctx context.Context, log logr.Logger, cluster *types.Cluster, managementComponents *cluster.ManagementComponents, spec *cluster.Spec) error {
-	if err := i.createEKSAComponents(ctx, log, cluster, managementComponents, spec); err != nil {
+func (i *EKSAInstaller) Install(ctx context.Context, log logr.Logger, currentCluster *types.Cluster, managementComponents *cluster.ManagementComponents, spec *cluster.Spec) error {
+	if err := i.createEKSAComponents(ctx, log, currentCluster, managementComponents, spec); err != nil {
 		return fmt.Errorf("applying EKSA components: %v", err)
 	}
 
-	if err := i.applyBundles(ctx, log, cluster, spec); err != nil {
+	if err := i.applyBundles(ctx, log, currentCluster, spec); err != nil {
 		return fmt.Errorf("applying EKSA bundles: %v", err)
+	}
+
+	// We need to create this config map if custom audit policy config is specified.
+	auditPolicyConfigMap := cluster.GetAuditPolicyConfigMap(spec)
+	if err := i.client.Apply(ctx, currentCluster.KubeconfigFile, auditPolicyConfigMap); err != nil {
+		return fmt.Errorf("applying audit-policy images config map: %v", err)
 	}
 
 	// We need to update this config map with the new upgrader images whenever we
 	// apply a new Bundles object to the cluster in order to support in-place upgrades.
-	cm, err := i.getUpgraderImagesFromBundle(ctx, cluster, spec)
+	cm, err := i.getUpgraderImagesFromBundle(ctx, currentCluster, spec)
 	if err != nil {
 		return fmt.Errorf("getting upgrader images from bundle: %v", err)
 	}
 
-	if err = i.client.Apply(ctx, cluster.KubeconfigFile, cm); err != nil {
+	if err = i.client.Apply(ctx, currentCluster.KubeconfigFile, cm); err != nil {
 		return fmt.Errorf("applying upgrader images config map: %v", err)
 	}
 
-	if err := i.applyReleases(ctx, log, cluster, spec); err != nil {
+	if err := i.applyReleases(ctx, log, currentCluster, spec); err != nil {
 		return fmt.Errorf("applying EKSA releases: %v", err)
 	}
 
