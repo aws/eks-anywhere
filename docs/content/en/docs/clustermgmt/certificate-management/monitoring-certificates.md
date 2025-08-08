@@ -67,5 +67,6 @@ EKS Anywhere automatically rotates certificates when new machines are rolled out
 
 If you need to manually renew certificates, you can use one of the following methods:
 
-- [Manual steps to renew certificates]({{< relref "manual-steps-renew-certs.md" >}}) - Step-by-step manual process
+- [Renew certificates using eksctl anywhere]({{< relref "eksctl-renew-certs.md" >}}) - **Recommended approach** using the eksctl anywhere CLI
 - [Script to renew certificates]({{< relref "script-renew-certs.md" >}}) - Automated approach using a script
+- [Manual steps to renew certificates]({{< relref "manual-steps-renew-certs.md" >}}) - Step-by-step manual process
