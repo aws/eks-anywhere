@@ -8,7 +8,7 @@ description: >
 ---
 
 {{% alert title="Note" color="primary" %}}
-EKS Anywhere Curated Packages are only available to customers with EKS Anywhere Enterprise Subscriptions. To request free trial access to EKS Anywhere Curated Packages, talk to your AWS account team or connect with one [here.](https://aws.amazon.com/contact-us/sales-support-eks/)
+EKS Anywhere Curated Packages are only available to customers with EKS Anywhere Enterprise Subscriptions. To request evaluation access to EKS Anywhere Curated Packages, talk to your AWS account team or connect with one [here.](https://aws.amazon.com/contact-us/sales-support-eks/)
 {{% /alert %}}
 
 ### Overview
