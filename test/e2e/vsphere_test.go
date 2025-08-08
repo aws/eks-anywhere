@@ -316,7 +316,7 @@ func TestVSphereKubernetes133CuratedPackagesSimpleFlow(t *testing.T) {
 func TestVSphereKubernetes129CuratedPackagesWithProxyConfigFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
-		framework.NewVSphere(t, framework.WithUbuntu129()),
+		framework.NewVSphere(t, framework.WithUbuntu129(), framework.WithPrivateNetwork()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube129),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
@@ -329,7 +329,7 @@ func TestVSphereKubernetes129CuratedPackagesWithProxyConfigFlow(t *testing.T) {
 func TestVSphereKubernetes130CuratedPackagesWithProxyConfigFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
-		framework.NewVSphere(t, framework.WithUbuntu130()),
+		framework.NewVSphere(t, framework.WithUbuntu130(), framework.WithPrivateNetwork()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130)),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube130),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
@@ -342,7 +342,7 @@ func TestVSphereKubernetes130CuratedPackagesWithProxyConfigFlow(t *testing.T) {
 func TestVSphereKubernetes131CuratedPackagesWithProxyConfigFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
-		framework.NewVSphere(t, framework.WithUbuntu131()),
+		framework.NewVSphere(t, framework.WithUbuntu131(), framework.WithPrivateNetwork()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube131)),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube131),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
@@ -355,7 +355,7 @@ func TestVSphereKubernetes131CuratedPackagesWithProxyConfigFlow(t *testing.T) {
 func TestVSphereKubernetes132CuratedPackagesWithProxyConfigFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
-		framework.NewVSphere(t, framework.WithUbuntu132()),
+		framework.NewVSphere(t, framework.WithUbuntu132(), framework.WithPrivateNetwork()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube132)),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube132),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
