@@ -73,7 +73,7 @@ func (e *E2ESession) setupRegistryMirrorEnv(testRegex string) error {
 		}
 	}
 
-	re = regexp.MustCompile(`^.*OciNamespaces.*$`)
+	re = regexp.MustCompile(`^.*(OciNamespaces|RegistryMirrorCuratedPackages).*$`)
 	if re.MatchString(testRegex) {
 		ociNamespacesEnvVar := e2etests.RequiredOciNamespacesEnvVars()
 		for _, eVar := range ociNamespacesEnvVar {
