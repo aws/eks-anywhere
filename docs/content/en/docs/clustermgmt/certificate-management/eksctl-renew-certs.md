@@ -95,6 +95,12 @@ When using these environment variables, you can leave the `sshKey` field empty i
 eksctl anywhere renew certificates -f cert-renewal-config.yaml
 ```
 
+You can set the log level verbosity using the `-v` or `--verbosity` flag:
+
+```bash
+eksctl anywhere renew certificates -f cert-renewal-config.yaml -v 9
+```
+
 You can also specify which component's certificates to renew using the `--component` flag:
 
 ```bash
