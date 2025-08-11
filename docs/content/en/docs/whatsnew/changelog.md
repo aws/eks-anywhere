@@ -41,6 +41,43 @@ description: >
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
 
+## [v0.23.1](https://github.com/aws/eks-anywhere/releases/tag/v0.23.1)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.32.0 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+
+\* RHEL 8's kernel version (4.18) is not supported by kubeadm for Kubernetes versions 1.32 and above (see Kubernetes GitHub issue [#129462](https://github.com/kubernetes/kubernetes/issues/129462)). As a result, EKS Anywhere does not support using RHEL 8 as the node operating system for Kubernetes versions 1.32 and above.
+
+### Added
+- Add certificate renewal command for control-plane and external etcd components for Ubuntu, Rhel and Bottlerocket OS ([#9781](https://github.com/aws/eks-anywhere/pull/9781),[#9782](https://github.com/aws/eks-anywhere/pull/9782))
+- Enable control plane tolerations for Tinkerbell stack components ([#9972](https://github.com/aws/eks-anywhere/pull/9972), [#4748](https://github.com/aws/eks-anywhere-build-tooling/pull/4748))
+- Support external CNI ([#9956](https://github.com/aws/eks-anywhere/pull/9956))
+
+### Changed
+- EKS Distro:
+  - [`v1-33-eks-8`](https://distro.eks.amazonaws.com/releases/1-33/8/)
+  - [`v1-32-eks-18`](https://distro.eks.amazonaws.com/releases/1-32/18/)
+  - [`v1-31-eks-25`](https://distro.eks.amazonaws.com/releases/1-31/25/)
+  - [`v1-30-eks-36`](https://distro.eks.amazonaws.com/releases/1-30/36/)
+  - [`v1-29-eks-43`](https://distro.eks.amazonaws.com/releases/1-29/43/)
+  - [`v1-28-eks-54`](https://distro.eks.amazonaws.com/releases/1-28/54/)
+
+- Cluster API Provider Cloudstack: `v0.6.0` to `v0.6.1`
+- local-path-provisioner: `v0.0.31` to `v0.0.32`
+- etcdadm-bootstrap-provider:  `v1.0.15` to `v1.0.16`
+- cloud-provider-nutanix: `v0.5.0` to `v0.5.2`
+
+
+### Fixed
+- Fix workload cluster aws.kubeconfig file ([#9905](https://github.com/aws/eks-anywhere/pull/9905))
+
+
 ## [v0.23.0](https://github.com/aws/eks-anywhere/releases/tag/v0.23.0)
 
 ### Supported OS version details
