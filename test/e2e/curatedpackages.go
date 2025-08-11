@@ -52,7 +52,7 @@ func runDisabledCuratedPackageInstallSimpleFlow(test *framework.ClusterE2ETest) 
 }
 
 func runCuratedPackageInstallSimpleFlowRegistryMirror(test *framework.ClusterE2ETest) {
-	test.WithClusterRegistryMirror(runCuratedPackageInstall)
+	test.WithClusterRegistryMirror(EksaPackagesSourceRegistry, EksaPackagesRegistry, runCuratedPackageInstall)
 }
 
 func runCuratedPackageRemoteClusterInstallSimpleFlow(test *framework.MulticlusterE2ETest) {
