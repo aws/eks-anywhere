@@ -681,6 +681,27 @@ func (e *ClusterE2ETest) ImportImages(opts ...CommandOpt) {
 	e.RunEKSA(importImagesArgs, opts...)
 }
 
+// CopyPackages runs the EKS-A `copy packages` command to copy curated packages to the registry mirror.
+func (e *ClusterE2ETest) CopyPackages(packageChartRegistry string, packageRegistry string, opts ...CommandOpt) {
+	clusterConfig := e.ClusterConfig.Cluster
+	registyMirrorEndpoint, registryMirrorPort := clusterConfig.Spec.RegistryMirrorConfiguration.Endpoint, clusterConfig.Spec.RegistryMirrorConfiguration.Port
+	registryMirrorHost := net.JoinHostPort(registyMirrorEndpoint, registryMirrorPort)
+
+	kubeVersion := string(clusterConfig.Spec.KubernetesVersion)
+
+	copyPackagesArgs := []string{
+		"copy", "packages",
+		registryMirrorHost,
+		"--kube-version", kubeVersion,
+		"--src-chart-registry", packageChartRegistry,
+		"--src-image-registry", packageRegistry,
+		"--dst-insecure",
+	}
+
+	e.T.Logf("Copying curated packages to registry mirror: %s", registryMirrorHost)
+	e.RunEKSA(copyPackagesArgs, opts...)
+}
+
 // ChangeInstanceSecurityGroup modifies the security group of the instance to the provided value.
 func (e *ClusterE2ETest) ChangeInstanceSecurityGroup(securityGroup string) {
 	e.T.Logf("Changing instance security group to %s", securityGroup)
@@ -1324,12 +1345,13 @@ func (e *ClusterE2ETest) WithCluster(f func(e *ClusterE2ETest)) {
 }
 
 // WithClusterRegistryMirror helps with bringing up and tearing down E2E test clusters when using registry mirror.
-func (e *ClusterE2ETest) WithClusterRegistryMirror(f func(e *ClusterE2ETest)) {
+func (e *ClusterE2ETest) WithClusterRegistryMirror(packageChartRegistry string, packageRegistry string, f func(e *ClusterE2ETest)) {
 	e.GenerateClusterConfig()
 	e.DownloadArtifacts()
 	e.ExtractDownloadedArtifacts()
 	e.DownloadImages()
 	e.ImportImages()
+	e.CopyPackages(packageChartRegistry, packageRegistry)
 	e.CreateCluster(WithBundlesOverride(bundleReleasePathFromArtifacts))
 	defer func() {
 		e.GenerateSupportBundleIfTestFailed()

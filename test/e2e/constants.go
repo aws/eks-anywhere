@@ -13,6 +13,7 @@ const (
 	EksaPackageControllerHelmVersion   = "0.2.20-eks-a-v0.0.0-dev-build.4894"
 	EksaPackageBundleURI               = "oci://" + EksaPackagesSourceRegistry + "/eks-anywhere-packages-bundles"
 	EksaPackagesNamespace              = "eksa-packages"
+	EksaPackagesRegistry               = "067575901363.dkr.ecr.us-west-2.amazonaws.com"
 
 	clusterNamespace = "test-namespace"
 
