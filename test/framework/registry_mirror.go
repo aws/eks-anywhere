@@ -65,32 +65,36 @@ func WithRegistryMirrorEndpointAndCert(providerName string) ClusterE2ETestOpt {
 }
 
 // WithRegistryMirrorOciNamespaces sets up e2e for registry mirrors with ocinamespaces.
-func WithRegistryMirrorOciNamespaces(providerName string, optNamespaces ...v1alpha1.OCINamespace) ClusterE2ETestOpt {
+func WithRegistryMirrorOciNamespaces(providerName string) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
-		var ociNamespaces []v1alpha1.OCINamespace
-
-		checkRequiredEnvVars(e.T, registryMirrorOciNamespacesRequiredEnvVars)
-		ociNamespaces = append(ociNamespaces, v1alpha1.OCINamespace{
-			Registry:  os.Getenv(RegistryMirrorOciNamespacesRegistry1Var),
-			Namespace: os.Getenv(RegistryMirrorOciNamespacesNamespace1Var),
-		})
-
-		reg2val, reg2Found := os.LookupEnv(RegistryMirrorOciNamespacesRegistry2Var)
-		ns2val, ns2Found := os.LookupEnv(RegistryMirrorOciNamespacesNamespace2Var)
-		if reg2Found && ns2Found {
-			ociNamespaces = append(ociNamespaces, v1alpha1.OCINamespace{
-				Registry:  reg2val,
-				Namespace: ns2val,
-			})
-		}
-		ociNamespaces = append(ociNamespaces, optNamespaces...)
-
+		ociNamespaces := defaultOciNamespaces(e)
 		setupRegistryMirrorEndpointAndCert(e, providerName, false, ociNamespaces...)
 	}
 }
 
+func defaultOciNamespaces(e *ClusterE2ETest) []v1alpha1.OCINamespace {
+	var ociNamespaces []v1alpha1.OCINamespace
+
+	checkRequiredEnvVars(e.T, registryMirrorOciNamespacesRequiredEnvVars)
+	ociNamespaces = append(ociNamespaces, v1alpha1.OCINamespace{
+		Registry:  os.Getenv(RegistryMirrorOciNamespacesRegistry1Var),
+		Namespace: os.Getenv(RegistryMirrorOciNamespacesNamespace1Var),
+	})
+
+	reg2val, reg2Found := os.LookupEnv(RegistryMirrorOciNamespacesRegistry2Var)
+	ns2val, ns2Found := os.LookupEnv(RegistryMirrorOciNamespacesNamespace2Var)
+	if reg2Found && ns2Found {
+		ociNamespaces = append(ociNamespaces, v1alpha1.OCINamespace{
+			Registry:  reg2val,
+			Namespace: ns2val,
+		})
+	}
+
+	return ociNamespaces
+}
+
 // WithAuthenticatedRegistryMirror sets up e2e for authenticated registry mirrors.
-func WithAuthenticatedRegistryMirror(providerName string) ClusterE2ETestOpt {
+func WithAuthenticatedRegistryMirror(providerName string, optNamespaces ...v1alpha1.OCINamespace) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
 		var endpoint, hostPort, username, password, registryCert string
 		port := "443"
@@ -132,10 +136,14 @@ func WithAuthenticatedRegistryMirror(providerName string) ClusterE2ETestOpt {
 		if err != nil {
 			e.T.Fatalf("error logging into docker registry %s: %v", hostPort, err)
 		}
+
+		ociNamespaces := defaultOciNamespaces(e)
+		ociNamespaces = append(ociNamespaces, optNamespaces...)
+
 		certificate, err := base64.StdEncoding.DecodeString(registryCert)
 		if err == nil {
 			e.clusterFillers = append(e.clusterFillers,
-				api.WithRegistryMirror(endpoint, port, string(certificate), true, false),
+				api.WithRegistryMirror(endpoint, port, string(certificate), true, false, ociNamespaces...),
 			)
 		}
 	}
