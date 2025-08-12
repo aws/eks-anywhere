@@ -8,6 +8,7 @@ import (
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
@@ -21,6 +22,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	c "github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -250,12 +252,18 @@ func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager, log logr.Logger) 
 			&anywherev1.NutanixMachineConfig{},
 			handler.EnqueueRequestsFromMapFunc(childObjectHandler),
 		).
+		Watches(
+			&corev1.ConfigMap{},
+			handler.EnqueueRequestsFromMapFunc(childObjectHandler),
+		).
 		Complete(r)
 }
 
 // +kubebuilder:rbac:groups="",resources=events,verbs=create;patch;update
 // +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;create;delete;update;patch
 // +kubebuilder:rbac:groups="",namespace=eksa-system,resources=secrets,verbs=patch;update
+// +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="v1",namespace=default,resources=configmaps,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups="",resources=namespaces,verbs=get;list;create;delete
 // +kubebuilder:rbac:groups="",resources=nodes,verbs=list
 // +kubebuilder:rbac:groups=addons.cluster.x-k8s.io,resources=clusterresourcesets,verbs=get;list;watch;create;update;patch;delete
@@ -263,6 +271,7 @@ func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager, log logr.Logger) 
 // +kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=awsiamconfigs,verbs=get;list;watch;update;patch;delete
 // +kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=clusters/status;snowmachineconfigs/status;snowippools/status;vspheredatacenterconfigs/status;vspheremachineconfigs/status;dockerdatacenterconfigs/status;tinkerbelldatacenterconfigs/status;tinkerbellmachineconfigs/status;tinkerbelltemplateconfigs/status;cloudstackdatacenterconfigs/status;cloudstackmachineconfigs/status;awsiamconfigs/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=bundles,verbs=get;list;watch
+// +kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=configmaps,verbs=get;list;watch;create;delete;update;patch
 // +kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=clusters/finalizers;snowmachineconfigs/finalizers;snowippools/finalizers;vspheredatacenterconfigs/finalizers;vspheremachineconfigs/finalizers;cloudstackdatacenterconfigs/finalizers;cloudstackmachineconfigs/finalizers;dockerdatacenterconfigs/finalizers;bundles/finalizers;awsiamconfigs/finalizers;tinkerbelldatacenterconfigs/finalizers;tinkerbellmachineconfigs/finalizers;tinkerbelltemplateconfigs/finalizers,verbs=update
 // +kubebuilder:rbac:groups=bootstrap.cluster.x-k8s.io,resources=kubeadmconfigtemplates,verbs=create;get;list;patch;update;watch
 // +kubebuilder:rbac:groups="cluster.x-k8s.io",resources=machinedeployments,verbs=list;watch;get;patch;update;create;delete
@@ -385,10 +394,15 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (re
 		return ctrl.Result{}, nil
 	}
 
-	return r.reconcile(ctx, log, cluster, aggregatedGeneration)
+	return r.reconcile(ctx, log, cluster, aggregatedGeneration, config)
 }
 
-func (r *ClusterReconciler) reconcile(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster, aggregatedGeneration int64) (ctrl.Result, error) {
+func (r *ClusterReconciler) reconcile(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster, aggregatedGeneration int64, c *c.Config) (ctrl.Result, error) {
+	// reconcile config map for auditpolicy
+	if err := r.createDefaultAudiPolicyConfigMapIfNotPresent(ctx, cluster, c); err != nil {
+		return ctrl.Result{}, fmt.Errorf("error from createDefaultAudiPolicyConfigMapIfNotPresent: %v", err)
+	}
+
 	clusterProviderReconciler := r.providerReconcilerRegistry.Get(cluster.Spec.DatacenterRef.Kind)
 
 	var reconcileResult controller.Result
@@ -444,6 +458,28 @@ func (r *ClusterReconciler) reconcile(ctx context.Context, log logr.Logger, clus
 	return ctrl.Result{}, nil
 }
 
+func (r *ClusterReconciler) createDefaultAudiPolicyConfigMapIfNotPresent(ctx context.Context, clusteranywhere *anywherev1.Cluster, c *c.Config) error {
+	auditPolicy := types.NamespacedName{Namespace: clusteranywhere.Namespace, Name: c.AuditPolicyConfigMap.Name}
+	fmt.Printf("audit policy configmap name inside createDefaultAudiPolicyConfigMapIfNotPresent: %s\n", auditPolicy.Name)
+	if err := r.client.Get(ctx, auditPolicy, &corev1.ConfigMap{}); err != nil {
+		fmt.Println("-----error getting audit policy configmap from controller----")
+		fmt.Println(err)
+		if apierrors.IsNotFound(err) {
+			fmt.Println("-----creating audit policy configmap from controller----")
+			auditPolicy, err := cluster.GetDefaultAuditPolicy(clusteranywhere)
+			if err != nil {
+				return err
+			}
+			if err := r.client.Create(ctx, auditPolicy); err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
+	}
+	fmt.Println("-----audit policy configmap already exists from controller----")
+	return nil
+}
 func (r *ClusterReconciler) preClusterProviderReconcile(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
 	// Run some preflight validations that can't be checked in webhook
 	if cluster.HasAWSIamConfig() {
@@ -673,6 +709,7 @@ func (r *ClusterReconciler) reconcileDelete(ctx context.Context, log logr.Logger
 
 func (r *ClusterReconciler) buildClusterConfig(ctx context.Context, clus *anywherev1.Cluster) (*c.Config, error) {
 	builder := c.NewDefaultConfigClientBuilder()
+
 	config, err := builder.Build(ctx, clientutil.NewKubeClient(r.client), clus)
 	if err != nil {
 		var notFound apierrors.APIStatus
@@ -754,6 +791,8 @@ func patchCluster(ctx context.Context, patchHelper *patch.Helper, cluster *anywh
 func aggregatedGeneration(config *c.Config) int64 {
 	var aggregatedGeneration int64
 	for _, obj := range config.ChildObjects() {
+		fmt.Println("-------here inside aggregatedGeneration")
+		fmt.Printf("objectkind: %s, objectName: %s, generation: %d", obj.GetObjectKind(), obj.GetName(), obj.GetGeneration())
 		aggregatedGeneration += obj.GetGeneration()
 	}
 

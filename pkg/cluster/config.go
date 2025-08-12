@@ -176,6 +176,7 @@ func (c *Config) ChildObjects() []kubernetes.Object {
 		c.TinkerbellDatacenter,
 		c.GitOpsConfig,
 		c.FluxConfig,
+		c.AuditPolicyConfigMap,
 	)
 
 	for _, e := range c.VSphereMachineConfigs {

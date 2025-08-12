@@ -11,6 +11,7 @@ import (
 	auditv1 "k8s.io/apiserver/pkg/apis/audit/v1"
 	"sigs.k8s.io/yaml"
 
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
@@ -44,12 +45,11 @@ func processAuditPolicy(c *Config, objects ObjectLookup) {
 }
 
 func setDefaultAuditPolicy(c *Config) error {
-	if c.AuditPolicy() == "" {
-		defaultPolicy, err := GetDefaultAuditPolicy()
+	if c.AuditPolicyConfigMap == nil {
+		defaultPolicy, err := GetDefaultAuditPolicy(c.Cluster)
 		if err != nil {
 			return err
 		}
-		// Create a ConfigMap with the default policy
 		c.AuditPolicyConfigMap = defaultPolicy
 	}
 	return nil
@@ -76,23 +76,22 @@ func validateAuditPolicy(c *Config) error {
 
 func getAuditPolicy(ctx context.Context, client Client, c *Config) error {
 	if c.Cluster.Spec.ControlPlaneConfiguration.AuditPolicyConfigMapRef == nil {
-		if c.AuditPolicy() == "" {
-			defaultPolicy, err := GetDefaultAuditPolicy()
-			if err != nil {
-				return err
-			}
-			// Create a ConfigMap with the default policy
-			c.AuditPolicyConfigMap = defaultPolicy
+		defaultPolicy, err := GetDefaultAuditPolicy(c.Cluster)
+		if err != nil {
+			return err
 		}
+		c.AuditPolicyConfigMap = defaultPolicy
 		return nil
 	}
 
 	configMap := &corev1.ConfigMap{}
-	configMapName := fmt.Sprintf("%s-%s", c.Cluster.Name, constants.AuditPolicyConfigMapName)
-	if err := client.Get(ctx, configMapName, constants.EksaSystemNamespace, configMap); err != nil {
+	configMapName := c.Cluster.Spec.ControlPlaneConfiguration.AuditPolicyConfigMapRef.Name
+	if err := client.Get(ctx, configMapName, c.Cluster.Namespace, configMap); err != nil {
 		return err
 	}
-
+	fmt.Println("--------audit policy config map found!!!!----------")
+	fmt.Println(configMap)
+	fmt.Printf("config map name from getauditpolicy: %s\n", configMap.Name)
 	c.AuditPolicyConfigMap = configMap
 	return nil
 }
@@ -107,23 +106,35 @@ func GetAuditPolicyConfigMap(spec *Spec) *corev1.ConfigMap {
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      configMapName,
-			Namespace: constants.EksaSystemNamespace,
+			Namespace: spec.Cluster.Namespace,
+			// Remove owner references - they should be set by the controller
 		},
 		Data: map[string]string{
 			"audit-policy.yaml": spec.AuditPolicy(),
 		},
 	}
-
+	fmt.Println("--------inside GetAuditPolicyConfigMap----------")
+	fmt.Printf("%+v\n", auditPolicyConfigMap.Data)
 	return auditPolicyConfigMap
 }
 
 // GetDefaultAuditPolicy returns the default audit policy as a ConfigMap.
-func GetDefaultAuditPolicy() (*corev1.ConfigMap, error) {
+func GetDefaultAuditPolicy(cluster *v1alpha1.Cluster) (*corev1.ConfigMap, error) {
 	auditPolicyv1, err := auditPolicyV1Yaml()
 	if err != nil {
 		return nil, err
 	}
+
+	configMapName := fmt.Sprintf("%s-%s", cluster.Name, constants.AuditPolicyConfigMapName)
 	return &corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "ConfigMap",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      configMapName,
+			Namespace: cluster.Namespace,
+		},
 		Data: map[string]string{
 			"audit-policy.yaml": strings.TrimSpace(string(auditPolicyv1)),
 		},

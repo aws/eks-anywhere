@@ -61,7 +61,7 @@ const (
 	// KubeVipManifestName is the name of kube-vip spec file.
 	KubeVipManifestName = "kube-vip.yaml"
 	// AuditPolicyConfigMapName is the name of config map that stores the upgrader images.
-	AuditPolicyConfigMapName = "audit-policy-kcp"
+	AuditPolicyConfigMapName = "default-audit-policy"
 
 	CloudstackAnnotationSuffix = "cloudstack.anywhere.eks.amazonaws.com/v1alpha1"
 
