@@ -240,11 +240,15 @@ func buildTemplateMapCP(
 		"etcdCloneMode":                        etcdMachineSpec.CloneMode,
 	}
 
-	auditPolicy, err := common.GetAuditPolicy(clusterSpec.Cluster.Spec.KubernetesVersion)
-	if err != nil {
-		return nil, err
+	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.AuditPolicyContent != "" {
+		values["auditPolicy"] = clusterSpec.Cluster.Spec.ControlPlaneConfiguration.AuditPolicyContent
+	} else {
+		auditPolicy, err := common.GetAuditPolicy(clusterSpec.Cluster.Spec.KubernetesVersion)
+		if err != nil {
+			return nil, err
+		}
+		values["auditPolicy"] = auditPolicy
 	}
-	values["auditPolicy"] = auditPolicy
 
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
 		registryMirror := registrymirror.FromCluster(clusterSpec.Cluster)

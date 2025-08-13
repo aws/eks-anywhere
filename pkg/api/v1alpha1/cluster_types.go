@@ -321,6 +321,10 @@ type ControlPlaneConfiguration struct {
 	// KubeletConfiguration is a struct that exposes the Kubelet settings for the user to set on control plane nodes.
 	// +kubebuilder:pruning:PreserveUnknownFields
 	KubeletConfiguration *unstructured.Unstructured `json:"kubeletConfiguration,omitempty"`
+	// AuditPolicyContent defines the audit policy configuration as a string.
+	// If not specified, the default audit policy will be used.
+	// +optional
+	AuditPolicyContent string `json:"auditPolicyContent,omitempty"`
 }
 
 // MachineHealthCheck allows to configure timeouts for machine health checks. Machine Health Checks are responsible for remediating unhealthy Machines.
@@ -377,7 +381,8 @@ func (n *ControlPlaneConfiguration) Equal(o *ControlPlaneConfiguration) bool {
 	}
 	return n.Count == o.Count && n.MachineGroupRef.Equal(o.MachineGroupRef) &&
 		TaintsSliceEqual(n.Taints, o.Taints) && MapEqual(n.Labels, o.Labels) &&
-		SliceEqual(n.CertSANs, o.CertSANs) && MapEqual(n.APIServerExtraArgs, o.APIServerExtraArgs)
+		SliceEqual(n.CertSANs, o.CertSANs) && MapEqual(n.APIServerExtraArgs, o.APIServerExtraArgs) &&
+		n.AuditPolicyContent == o.AuditPolicyContent
 }
 
 type Endpoint struct {

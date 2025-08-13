@@ -170,9 +170,15 @@ func buildTemplateMapCP(
 		Append(clusterapi.EtcdEncryptionExtraArgs(clusterSpec.Cluster.Spec.EtcdEncryption))
 	clusterapi.SetPodIAMAuthExtraArgs(clusterSpec.Cluster.Spec.PodIAMConfig, apiServerExtraArgs)
 
-	auditPolicy, err := common.GetAuditPolicy(clusterSpec.Cluster.Spec.KubernetesVersion)
-	if err != nil {
-		return nil, err
+	var auditPolicy string
+	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.AuditPolicyContent != "" {
+		auditPolicy = clusterSpec.Cluster.Spec.ControlPlaneConfiguration.AuditPolicyContent
+	} else {
+		var err error
+		auditPolicy, err = common.GetAuditPolicy(clusterSpec.Cluster.Spec.KubernetesVersion)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	failureDomains := generateNutanixFailureDomains(datacenterSpec.FailureDomains)

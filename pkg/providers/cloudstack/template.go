@@ -198,11 +198,15 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 		"eksaSystemNamespace":                        constants.EksaSystemNamespace,
 	}
 
-	auditPolicy, err := common.GetAuditPolicy(clusterSpec.Cluster.Spec.KubernetesVersion)
-	if err != nil {
-		return nil, err
+	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.AuditPolicyContent != "" {
+		values["auditPolicy"] = clusterSpec.Cluster.Spec.ControlPlaneConfiguration.AuditPolicyContent
+	} else {
+		auditPolicy, err := common.GetAuditPolicy(clusterSpec.Cluster.Spec.KubernetesVersion)
+		if err != nil {
+			return nil, err
+		}
+		values["auditPolicy"] = auditPolicy
 	}
-	values["auditPolicy"] = auditPolicy
 
 	fillDiskOffering(values, controlPlaneMachineSpec.DiskOffering, "ControlPlane")
 	fillDiskOffering(values, etcdMachineSpec.DiskOffering, "Etcd")

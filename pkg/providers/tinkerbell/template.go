@@ -386,9 +386,15 @@ func buildTemplateMapCP(
 	etcdTemplateOverride string,
 	datacenterSpec v1alpha1.TinkerbellDatacenterConfigSpec,
 ) (map[string]interface{}, error) {
-	auditPolicy, err := common.GetAuditPolicy(clusterSpec.Cluster.Spec.KubernetesVersion)
-	if err != nil {
-		return nil, err
+	var auditPolicy string
+	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.AuditPolicyContent != "" {
+		auditPolicy = clusterSpec.Cluster.Spec.ControlPlaneConfiguration.AuditPolicyContent
+	} else {
+		var err error
+		auditPolicy, err = common.GetAuditPolicy(clusterSpec.Cluster.Spec.KubernetesVersion)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	versionsBundle := clusterSpec.RootVersionsBundle()
