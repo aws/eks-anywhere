@@ -682,7 +682,7 @@ func (e *ClusterE2ETest) ImportImages(opts ...CommandOpt) {
 }
 
 // CopyPackages runs the EKS-A `copy packages` command to copy curated packages to the registry mirror.
-func (e *ClusterE2ETest) CopyPackages(packageChartRegistry string, packageRegistry string, opts ...CommandOpt) {
+func (e *ClusterE2ETest) CopyPackages(packageMirrorAlias string, packageChartRegistry string, packageRegistry string, opts ...CommandOpt) {
 	clusterConfig := e.ClusterConfig.Cluster
 	registyMirrorEndpoint, registryMirrorPort := clusterConfig.Spec.RegistryMirrorConfiguration.Endpoint, clusterConfig.Spec.RegistryMirrorConfiguration.Port
 	registryMirrorHost := net.JoinHostPort(registyMirrorEndpoint, registryMirrorPort)
@@ -691,7 +691,7 @@ func (e *ClusterE2ETest) CopyPackages(packageChartRegistry string, packageRegist
 
 	copyPackagesArgs := []string{
 		"copy", "packages",
-		registryMirrorHost,
+		registryMirrorHost + "/" + packageMirrorAlias,
 		"--kube-version", kubeVersion,
 		"--src-chart-registry", packageChartRegistry,
 		"--src-image-registry", packageRegistry,
@@ -1345,13 +1345,13 @@ func (e *ClusterE2ETest) WithCluster(f func(e *ClusterE2ETest)) {
 }
 
 // WithClusterRegistryMirror helps with bringing up and tearing down E2E test clusters when using registry mirror.
-func (e *ClusterE2ETest) WithClusterRegistryMirror(packageChartRegistry string, packageRegistry string, f func(e *ClusterE2ETest)) {
+func (e *ClusterE2ETest) WithClusterRegistryMirror(packageMirrorAlias string, packageChartRegistry string, packageRegistry string, f func(e *ClusterE2ETest)) {
 	e.GenerateClusterConfig()
 	e.DownloadArtifacts()
 	e.ExtractDownloadedArtifacts()
 	e.DownloadImages()
 	e.ImportImages()
-	e.CopyPackages(packageChartRegistry, packageRegistry)
+	e.CopyPackages(packageMirrorAlias, packageChartRegistry, packageRegistry)
 	e.CreateCluster(WithBundlesOverride(bundleReleasePathFromArtifacts))
 	defer func() {
 		e.GenerateSupportBundleIfTestFailed()
