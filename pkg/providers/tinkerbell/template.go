@@ -388,7 +388,7 @@ func buildTemplateMapCP(
 ) (map[string]interface{}, error) {
 	var auditPolicy string
 	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.AuditPolicyContent != "" {
-		auditPolicy = clusterSpec.Cluster.Spec.ControlPlaneConfiguration.AuditPolicyContent
+		auditPolicy = strings.TrimSpace(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.AuditPolicyContent)
 	} else {
 		var err error
 		auditPolicy, err = common.GetAuditPolicy(clusterSpec.Cluster.Spec.KubernetesVersion)

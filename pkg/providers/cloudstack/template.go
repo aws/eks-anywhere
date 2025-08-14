@@ -3,6 +3,7 @@ package cloudstack
 import (
 	"fmt"
 	"net"
+	"strings"
 
 	"sigs.k8s.io/yaml"
 
@@ -199,7 +200,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 	}
 
 	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.AuditPolicyContent != "" {
-		values["auditPolicy"] = clusterSpec.Cluster.Spec.ControlPlaneConfiguration.AuditPolicyContent
+		values["auditPolicy"] = strings.TrimSpace(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.AuditPolicyContent)
 	} else {
 		auditPolicy, err := common.GetAuditPolicy(clusterSpec.Cluster.Spec.KubernetesVersion)
 		if err != nil {
