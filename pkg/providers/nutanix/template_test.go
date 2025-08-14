@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"errors"
 	"os"
+	"regexp"
 	"testing"
 	"time"
 
@@ -16,6 +17,7 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/providers/common"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -933,6 +935,66 @@ func TestTemplateBuilderCcmExcludeNodeIPs(t *testing.T) {
 		assert.NotNil(t, cpSpec)
 		test.AssertContentToFile(t, string(cpSpec), tc.Output)
 	}
+}
+
+func TestNutanixTemplateBuilderGenerateCAPISpecControlPlaneWithCustomAuditPolicy(t *testing.T) {
+	dcConf, machineConf, workerConfs := minimalNutanixConfigSpec(t)
+
+	t.Setenv(constants.EksaNutanixUsernameKey, "admin")
+	t.Setenv(constants.EksaNutanixPasswordKey, "password")
+	creds := GetCredsFromEnv()
+	builder := NewNutanixTemplateBuilder(&dcConf.Spec, &machineConf.Spec, &machineConf.Spec, workerConfs, creds, time.Now)
+	assert.NotNil(t, builder)
+
+	buildSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
+
+	customAuditPolicy := `apiVersion: audit.k8s.io/v1
+kind: Policy
+rules:
+- level: Metadata
+  omitStages:
+  - RequestReceived`
+
+	buildSpec.Cluster.Spec.ControlPlaneConfiguration.AuditPolicyContent = customAuditPolicy
+
+	cpSpec, err := builder.GenerateCAPISpecControlPlane(buildSpec)
+	assert.NoError(t, err)
+	assert.NotNil(t, cpSpec)
+
+	str := collapseWhitespace(string(cpSpec))
+	assert.Contains(t, str, collapseWhitespace(customAuditPolicy))
+
+	defaultAuditPolicy, err := common.GetAuditPolicy(buildSpec.Cluster.Spec.KubernetesVersion)
+	assert.NoError(t, err)
+	assert.NotContains(t, str, collapseWhitespace(defaultAuditPolicy))
+}
+
+func TestNutanixTemplateBuilderGenerateCAPISpecControlPlaneWithDefaultAuditPolicy(t *testing.T) {
+	dcConf, machineConf, workerConfs := minimalNutanixConfigSpec(t)
+
+	t.Setenv(constants.EksaNutanixUsernameKey, "admin")
+	t.Setenv(constants.EksaNutanixPasswordKey, "password")
+	creds := GetCredsFromEnv()
+	builder := NewNutanixTemplateBuilder(&dcConf.Spec, &machineConf.Spec, &machineConf.Spec, workerConfs, creds, time.Now)
+	assert.NotNil(t, builder)
+
+	buildSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
+
+	buildSpec.Cluster.Spec.ControlPlaneConfiguration.AuditPolicyContent = ""
+
+	cpSpec, err := builder.GenerateCAPISpecControlPlane(buildSpec)
+	assert.NoError(t, err)
+	assert.NotNil(t, cpSpec)
+
+	str := collapseWhitespace(string(cpSpec))
+
+	defaultAuditPolicy, err := common.GetAuditPolicy(buildSpec.Cluster.Spec.KubernetesVersion)
+	assert.NoError(t, err)
+	assert.Contains(t, str, collapseWhitespace(defaultAuditPolicy))
+}
+
+func collapseWhitespace(s string) string {
+	return regexp.MustCompile(`\s+`).ReplaceAllString(s, " ")
 }
 
 func minimalNutanixConfigSpec(t *testing.T) (*anywherev1.NutanixDatacenterConfig, *anywherev1.NutanixMachineConfig, map[string]anywherev1.NutanixMachineConfigSpec) {

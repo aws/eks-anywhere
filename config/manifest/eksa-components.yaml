@@ -4119,6 +4119,11 @@ spec:
                     description: APIServerExtraArgs defines the flags to configure
                       for the API server.
                     type: object
+                  auditPolicyContent:
+                    description: |-
+                      AuditPolicyContent defines the audit policy configuration as a string.
+                      If not specified, the default audit policy will be used.
+                    type: string
                   certSans:
                     description: |-
                       CertSANs is a slice of domain names or IPs to be added as Subject Name Alternatives of the

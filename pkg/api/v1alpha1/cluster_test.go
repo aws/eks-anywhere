@@ -4207,3 +4207,65 @@ func TestClusterCPUpgradeInPlace(t *testing.T) {
 	g.Expect(err).To(BeNil())
 	g.Expect(string(clusterSpec)).To(BeEquivalentTo(string(expected)))
 }
+
+func TestValidateAuditPolicyContent(t *testing.T) {
+	tests := []struct {
+		name        string
+		auditPolicy string
+		wantErr     bool
+	}{
+		{
+			name:        "empty audit policy content",
+			auditPolicy: "",
+			wantErr:     false,
+		},
+		{
+			name: "valid audit policy content",
+			auditPolicy: `apiVersion: audit.k8s.io/v1
+kind: Policy
+rules:
+- level: Metadata
+  omitStages:
+  - RequestReceived`,
+			wantErr: false,
+		},
+		{
+			name: "invalid audit policy content - not valid YAML",
+			auditPolicy: `apiVersion: audit.k8s.io/v1
+kind: Policy
+rules:
+- level: Metadata
+  omitStages:
+  - RequestReceived
+  invalid yaml content`,
+			wantErr: true,
+		},
+		{
+			name: "invalid audit policy content - malformed YAML",
+			auditPolicy: `apiVersion: audit.k8s.io/v1
+kind: Policy
+rules:
+- level: Metadata
+  omitStages:
+  - RequestReceived
+ badIndentation: value`,
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &Cluster{
+				Spec: ClusterSpec{
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						AuditPolicyContent: tt.auditPolicy,
+					},
+				},
+			}
+			err := validateAuditPolicyContent(c)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("validateAuditPolicyContent() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
