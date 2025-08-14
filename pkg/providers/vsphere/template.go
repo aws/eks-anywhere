@@ -2,6 +2,7 @@ package vsphere
 
 import (
 	"fmt"
+	"strings"
 
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
@@ -240,11 +241,15 @@ func buildTemplateMapCP(
 		"etcdCloneMode":                        etcdMachineSpec.CloneMode,
 	}
 
-	auditPolicy, err := common.GetAuditPolicy(clusterSpec.Cluster.Spec.KubernetesVersion)
-	if err != nil {
-		return nil, err
+	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.AuditPolicyContent != "" {
+		values["auditPolicy"] = strings.TrimSpace(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.AuditPolicyContent)
+	} else {
+		auditPolicy, err := common.GetAuditPolicy(clusterSpec.Cluster.Spec.KubernetesVersion)
+		if err != nil {
+			return nil, err
+		}
+		values["auditPolicy"] = auditPolicy
 	}
-	values["auditPolicy"] = auditPolicy
 
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
 		registryMirror := registrymirror.FromCluster(clusterSpec.Cluster)

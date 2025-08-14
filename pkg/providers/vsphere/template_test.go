@@ -1,6 +1,7 @@
 package vsphere_test
 
 import (
+	"regexp"
 	"testing"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/config"
+	"github.com/aws/eks-anywhere/pkg/providers/common"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 )
 
@@ -216,4 +218,55 @@ func TestVsphereTemplateBuilderGenerateCAPISpecVCenterTags(t *testing.T) {
 	wData, err := builder.GenerateCAPISpecWorkers(spec, nil, nil)
 	g.Expect(err).ToNot(HaveOccurred())
 	test.AssertContentToFile(t, string(wData), "testdata/expected_kct_vcenter_tags.yaml")
+}
+
+func TestVsphereTemplateBuilderGenerateCAPISpecControlPlaneWithCustomAuditPolicy(t *testing.T) {
+	g := NewWithT(t)
+	spec := test.NewFullClusterSpec(t, "testdata/cluster_main.yaml")
+
+	// Set custom audit policy content
+	customAuditPolicy := `apiVersion: audit.k8s.io/v1
+kind: Policy
+rules:
+- level: Metadata
+  omitStages:
+  - RequestReceived`
+
+	spec.Cluster.Spec.ControlPlaneConfiguration.AuditPolicyContent = customAuditPolicy
+
+	builder := vsphere.NewVsphereTemplateBuilder(time.Now)
+	data, err := builder.GenerateCAPISpecControlPlane(spec, func(values map[string]interface{}) {
+		values["controlPlaneTemplateName"] = clusterapi.ControlPlaneMachineTemplateName(spec.Cluster)
+	})
+
+	g.Expect(err).ToNot(HaveOccurred())
+	str := collapseWhitespace(string(data))
+	g.Expect(str).To(ContainSubstring(collapseWhitespace(customAuditPolicy)))
+
+	defaultAuditPolicy, err := common.GetAuditPolicy(spec.Cluster.Spec.KubernetesVersion)
+	g.Expect(err).ToNot(HaveOccurred())
+	g.Expect(str).ToNot(ContainSubstring(collapseWhitespace(defaultAuditPolicy)))
+}
+
+func collapseWhitespace(s string) string {
+	return regexp.MustCompile(`\s+`).ReplaceAllString(s, " ")
+}
+
+func TestVsphereTemplateBuilderGenerateCAPISpecControlPlaneWithDefaultAuditPolicy(t *testing.T) {
+	g := NewWithT(t)
+	spec := test.NewFullClusterSpec(t, "testdata/cluster_main.yaml")
+
+	spec.Cluster.Spec.ControlPlaneConfiguration.AuditPolicyContent = ""
+
+	builder := vsphere.NewVsphereTemplateBuilder(time.Now)
+	data, err := builder.GenerateCAPISpecControlPlane(spec, func(values map[string]interface{}) {
+		values["controlPlaneTemplateName"] = clusterapi.ControlPlaneMachineTemplateName(spec.Cluster)
+	})
+
+	g.Expect(err).ToNot(HaveOccurred())
+
+	defaultAuditPolicy, err := common.GetAuditPolicy(spec.Cluster.Spec.KubernetesVersion)
+	g.Expect(err).ToNot(HaveOccurred())
+
+	g.Expect(collapseWhitespace(string(data))).To(ContainSubstring(collapseWhitespace(defaultAuditPolicy)))
 }
