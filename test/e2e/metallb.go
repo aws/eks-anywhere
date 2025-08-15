@@ -319,7 +319,7 @@ spec:
 				t.Fatal(err)
 			}
 
-			expectedBGPPeer := `{"disableMP":false,"keepaliveTime":"30s","myASN":123,"peerASN":55001,"peerAddress":"12.2.4.2","peerPort":179}`
+			expectedBGPPeer := `{"disableMP":true,"keepaliveTime":"30s","myASN":123,"peerASN":55001,"peerAddress":"12.2.4.2","peerPort":179}`
 			err = WaitForResource(
 				test,
 				ctx,
