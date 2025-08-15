@@ -8,6 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/validations"
@@ -54,7 +55,11 @@ func runInstallPackageController(cmd *cobra.Command, args []string) error {
 func installPackageController(ctx context.Context) error {
 	kubeConfig := kubeconfig.FromEnvironment()
 
-	clusterSpec, err := readAndValidateClusterSpec(ico.fileName, version.Get())
+	var opts []cluster.FileSpecBuilderOpt
+	if ico.bundlesOverride != "" {
+		opts = append(opts, cluster.WithOverrideBundlesManifest(ico.bundlesOverride))
+	}
+	clusterSpec, err := readAndValidateClusterSpec(ico.fileName, version.Get(), opts...)
 	if err != nil {
 		return fmt.Errorf("the cluster config file provided is invalid: %v", err)
 	}
