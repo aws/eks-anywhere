@@ -257,8 +257,7 @@ spec:
     BGPPeers:
       - myASN: 123
         peerASN: 55001
-        peerAddress: 12.2.4.2
-        keepaliveTime: 30s
+        peerAddress: 10.100.100.2
 `, test.ClusterName, ipTwoSub, ipSub))
 			err := WaitForPackageToBeInstalled(test, ctx, packagePrefix, 120*time.Second)
 			if err != nil {
