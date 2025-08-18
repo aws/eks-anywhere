@@ -2684,7 +2684,7 @@ func TestTinkerbellAirgappedKubernetes132UbuntuProxyConfigFlow(t *testing.T) {
 		t,
 		framework.NewTinkerbell(t,
 			framework.WithUbuntu132Tinkerbell(),
-			framework.WithHookImagesURLPath("http://"+localIp.String()+":8080"),
+			framework.WithHookImagesURLPath(TinkerbellHookOSImagesURLPath),
 		),
 		framework.WithClusterFiller(
 			api.WithKubernetesVersion(v1alpha1.Kube132),
@@ -2694,7 +2694,7 @@ func TestTinkerbellAirgappedKubernetes132UbuntuProxyConfigFlow(t *testing.T) {
 		framework.WithProxy(framework.TinkerbellProxyRequiredEnvVars),
 	)
 
-	runTinkerbellAirgapConfigProxyFlow(test, "10.80.0.0/16", kubeVersion)
+	runTinkerbellAirgapConfigProxyFlow(test, TinkerbellNoProxyCIDR, kubeVersion)
 }
 
 func TestTinkerbellAirgappedKubernetes133UbuntuProxyConfigFlow(t *testing.T) {
@@ -2710,7 +2710,7 @@ func TestTinkerbellAirgappedKubernetes133UbuntuProxyConfigFlow(t *testing.T) {
 		t,
 		framework.NewTinkerbell(t,
 			framework.WithUbuntu133Tinkerbell(),
-			framework.WithHookImagesURLPath("http://"+localIp.String()+":8080"),
+			framework.WithHookImagesURLPath(TinkerbellHookOSImagesURLPath),
 		),
 		framework.WithClusterFiller(
 			api.WithKubernetesVersion(v1alpha1.Kube133),
@@ -2720,7 +2720,7 @@ func TestTinkerbellAirgappedKubernetes133UbuntuProxyConfigFlow(t *testing.T) {
 		framework.WithProxy(framework.TinkerbellProxyRequiredEnvVars),
 	)
 
-	runTinkerbellAirgapConfigProxyFlow(test, "10.80.0.0/16", kubeVersion)
+	runTinkerbellAirgapConfigProxyFlow(test, TinkerbellNoProxyCIDR, kubeVersion)
 }
 
 // OOB tests
