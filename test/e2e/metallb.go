@@ -136,6 +136,8 @@ spec:
     L2Advertisements:
       - ipAddressPools:
         - default
+	speaker:
+      ignoreExcludeLB: true
 `, test.ClusterName, ipSub))
 			err := WaitForPackageToBeInstalled(test, ctx, packagePrefix, 120*time.Second)
 			if err != nil {
