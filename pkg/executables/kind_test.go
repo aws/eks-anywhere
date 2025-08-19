@@ -337,10 +337,10 @@ func TestKindCreateBootstrapClusterExecutableWithRegistryMirrorError(t *testing.
 	})
 
 	if err := os.Unsetenv("REGISTRY_USERNAME"); err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err)
 	}
 	if err := os.Unsetenv("REGISTRY_PASSWORD"); err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err)
 	}
 
 	ctx := context.Background()

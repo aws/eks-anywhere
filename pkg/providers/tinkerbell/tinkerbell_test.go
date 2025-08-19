@@ -972,10 +972,10 @@ func TestProviderGenerateDeploymentFileForWithRegistryMirrorWithCert(t *testing.
 func TestProviderGenerateDeploymentFileForWithRegistryMirrorWithAuth(t *testing.T) {
 	clusterSpecManifest := "cluster_tinkerbell_registry_mirror_with_auth.yaml"
 	if err := os.Setenv("REGISTRY_USERNAME", "username"); err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err)
 	}
 	if err := os.Setenv("REGISTRY_PASSWORD", "password"); err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err)
 	}
 	mockCtrl := gomock.NewController(t)
 	docker := stackmocks.NewMockDocker(mockCtrl)

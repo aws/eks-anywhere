@@ -2,6 +2,7 @@ package nutanix
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -221,7 +222,7 @@ func (v *Validator) validateFailureDomains(ctx context.Context, client Client, s
 		if res := regexName.MatchString(fd.Name); !res {
 			errorStr := `failure domain name should contains only small letters, digits, and hyphens.
 			it should start with small letter or digit`
-			return fmt.Errorf(errorStr)
+			return errors.New(errorStr)
 		}
 
 		if err := v.validateClusterConfig(ctx, client, fd.Cluster); err != nil {

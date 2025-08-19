@@ -1410,10 +1410,10 @@ func TestProviderGenerateDeploymentFileWithMirrorAuth(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	setupContext(t)
 	if err := os.Setenv("REGISTRY_USERNAME", "username"); err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err)
 	}
 	if err := os.Setenv("REGISTRY_PASSWORD", "password"); err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err)
 	}
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
 	cluster := &types.Cluster{Name: "test"}
@@ -2276,7 +2276,7 @@ func TestSetupAndValidateCreateClusterUsedIp(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	ipValidator := mocks.NewMockIPValidator(mockCtrl)
 	provider.ipValidator = ipValidator
-	ipValidator.EXPECT().ValidateControlPlaneIPUniqueness(clusterSpec.Cluster).Return(fmt.Errorf(ipInUseError))
+	ipValidator.EXPECT().ValidateControlPlaneIPUniqueness(clusterSpec.Cluster).Return(errors.New(ipInUseError))
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 
 	thenErrorExpected(t, ipInUseError, err)
@@ -3761,7 +3761,7 @@ func TestProviderGenerateCAPISpecForCreateCloudProviderCredentials(t *testing.T)
 			for k, v := range tt.envMap {
 				previousValues[k] = os.Getenv(k)
 				if err := os.Setenv(k, v); err != nil {
-					t.Fatalf(err.Error())
+					t.Fatal(err)
 				}
 			}
 
@@ -3792,7 +3792,7 @@ func TestProviderGenerateCAPISpecForCreateCloudProviderCredentials(t *testing.T)
 			test.AssertContentToFile(t, string(cp), tt.wantCPFile)
 			for k, v := range previousValues {
 				if err := os.Setenv(k, v); err != nil {
-					t.Fatalf(err.Error())
+					t.Fatal(err)
 				}
 			}
 		})

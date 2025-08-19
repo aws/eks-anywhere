@@ -470,7 +470,7 @@ func TestProviderSetupAndValidateUpgradeClusterFailureOnSecretChanged(t *testing
 	modifiedSecret.Data["api-key"] = []byte("updated-api-key")
 	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.Name).Return(clusterSpec.Cluster, nil)
 	changedSecretMsg := "profile global is different from secret"
-	validator.EXPECT().ValidateSecretsUnchanged(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(fmt.Errorf(changedSecretMsg))
+	validator.EXPECT().ValidateSecretsUnchanged(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(errors.New(changedSecretMsg))
 
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
 	tt.Expect(err).NotTo(BeNil())
