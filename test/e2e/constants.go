@@ -8,7 +8,7 @@ import (
 
 const (
 	EksaPackageControllerHelmChartName = "eks-anywhere-packages"
-	EksaDevRegistryAlias               = "l0g8r8j6"
+	EksaDevRegistryAlias               = "x3k6m8v0"
 	EksaPackagesSourceRegistry         = "public.ecr.aws/" + EksaDevRegistryAlias
 	EksaPackageControllerHelmURI       = "oci://" + EksaPackagesSourceRegistry + "/eks-anywhere-packages"
 	EksaPackageControllerHelmVersion   = "0.2.20-eks-a-v0.0.0-dev-build.4894"
