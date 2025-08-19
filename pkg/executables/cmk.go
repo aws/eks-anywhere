@@ -200,7 +200,7 @@ func (c *Cmk) ValidateAffinityGroupsPresent(ctx context.Context, profile string,
 			return fmt.Errorf("getting affinity group info - %s: %v", result.String(), err)
 		}
 		if result.Len() == 0 {
-			return fmt.Errorf(fmt.Sprintf("affinity group %s not found", affinityGroupId))
+			return fmt.Errorf("affinity group %s not found", affinityGroupId)
 		}
 
 		response := struct {

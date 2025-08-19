@@ -85,7 +85,7 @@ func TestValidatorValidatePrivsError(t *testing.T) {
 	errMsg := "Could not retrieve privs"
 	g := NewWithT(t)
 	vsc.EXPECT().Username().Return("foobar")
-	vsc.EXPECT().GetPrivsOnEntity(ctx, networkPath, govmomi.VSphereTypeNetwork, "foobar").Return(nil, fmt.Errorf(errMsg))
+	vsc.EXPECT().GetPrivsOnEntity(ctx, networkPath, govmomi.VSphereTypeNetwork, "foobar").Return(nil, errors.New(errMsg))
 
 	_, err = v.validatePrivs(ctx, objects, vsc)
 	g.Expect(err).To(MatchError(ContainSubstring(errMsg)))
