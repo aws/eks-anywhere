@@ -111,7 +111,7 @@ func updateConditionsForEtcdAndControlPlane(cluster *anywherev1.Cluster, kcp *co
 func updateControlPlaneReadyCondition(cluster *anywherev1.Cluster, kcp *controlplanev1.KubeadmControlPlane) {
 	initializedCondition := conditions.Get(cluster, anywherev1.ControlPlaneInitializedCondition)
 	if initializedCondition.Status != "True" {
-		conditions.MarkFalse(cluster, anywherev1.ControlPlaneReadyCondition, initializedCondition.Reason, initializedCondition.Severity, initializedCondition.Message)
+		conditions.MarkFalse(cluster, anywherev1.ControlPlaneReadyCondition, initializedCondition.Reason, initializedCondition.Severity, "%s", initializedCondition.Message)
 		return
 	}
 
@@ -170,7 +170,7 @@ func updateControlPlaneReadyCondition(cluster *anywherev1.Cluster, kcp *controlp
 	// at this point but if that is not the case, we report it as an error.
 	kcpControlPlaneHealthyCondition := conditions.Get(kcp, controlplanev1.ControlPlaneComponentsHealthyCondition)
 	if kcpControlPlaneHealthyCondition != nil && kcpControlPlaneHealthyCondition.Status == v1.ConditionFalse {
-		conditions.MarkFalse(cluster, anywherev1.ControlPlaneReadyCondition, anywherev1.ControlPlaneComponentsUnhealthyReason, clusterv1.ConditionSeverityError, kcpControlPlaneHealthyCondition.Message)
+		conditions.MarkFalse(cluster, anywherev1.ControlPlaneReadyCondition, anywherev1.ControlPlaneComponentsUnhealthyReason, clusterv1.ConditionSeverityError, "%s", kcpControlPlaneHealthyCondition.Message)
 		return
 	}
 
