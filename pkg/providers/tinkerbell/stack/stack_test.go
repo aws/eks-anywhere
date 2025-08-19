@@ -409,7 +409,7 @@ func TestUpgradeWithRegistryMirrorAuthError(t *testing.T) {
 	t.Setenv("REGISTRY_PASSWORD", "password")
 
 	expectedErrorMsg := "invalid registry credentials"
-	helm.EXPECT().RegistryLogin(ctx, "1.2.3.4:443", "username", "password").Return(fmt.Errorf(expectedErrorMsg))
+	helm.EXPECT().RegistryLogin(ctx, "1.2.3.4:443", "username", "password").Return(errors.New(expectedErrorMsg))
 
 	s := stack.NewInstaller(docker, writer, helm, "", constants.EksaSystemNamespace, "192.168.0.0/16", registryMirror, nil)
 
