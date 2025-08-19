@@ -46,6 +46,8 @@ const (
 	vsphereInvalidResourcePoolUpdateVar = "*/Resources/INVALID-ResourcePool"
 	vsphereResourcePoolVar              = "T_VSPHERE_RESOURCE_POOL"
 	TinkerbellHardwareCountFile         = "TINKERBELL_HARDWARE_COUNT.yaml"
+	TinkerbellHookOSImagesURLPath       = "http://10.80.18.43:8080/hook"
+	TinkerbellNoProxyCIDR               = "10.80.0.0/16"
 )
 
 var (
