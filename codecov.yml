@@ -18,3 +18,4 @@ ignore:
   - "test/framework" 
   - "internal/aws-sdk-go-v2"
   - "**/mock_*.go"
+  - pkg/curatedpackages/curatedpackages.go

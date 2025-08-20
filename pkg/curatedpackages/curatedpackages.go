@@ -8,8 +8,10 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	"oras.land/oras-go/pkg/content"
-	"oras.land/oras-go/pkg/oras"
+	"github.com/opencontainers/go-digest"
+	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
+	"oras.land/oras-go/v2/content/memory"
+	"oras.land/oras-go/v2/registry/remote"
 
 	"github.com/aws/eks-anywhere-packages/pkg/artifacts"
 	"github.com/aws/eks-anywhere-packages/pkg/bundle"
@@ -92,32 +94,50 @@ func PullLatestBundle(ctx context.Context, log logr.Logger, artifact string) ([]
 }
 
 func PushBundle(ctx context.Context, ref, fileName string, fileContent []byte) error {
-	registry, err := content.NewRegistry(content.RegistryOptions{Insecure: ctx.Value(types.InsecureRegistry).(bool)})
+	// Parse the reference to get repository
+	repo, err := remote.NewRepository(ref)
 	if err != nil {
-		return fmt.Errorf("creating registry: %w", err)
-	}
-	memoryStore := content.NewMemory()
-	desc, err := memoryStore.Add("bundle.yaml", "", fileContent)
-	if err != nil {
-		return err
+		return fmt.Errorf("parsing reference: %w", err)
 	}
 
-	manifest, manifestDesc, config, configDesc, err := content.GenerateManifestAndConfig(nil, nil, desc)
-	if err != nil {
-		return err
+	// Configure repository with insecure option if needed
+	if insecure, ok := ctx.Value(types.InsecureRegistry).(bool); ok && insecure {
+		repo.PlainHTTP = true
 	}
 
-	memoryStore.Set(configDesc, config)
-	err = memoryStore.StoreManifest(ref, manifestDesc, manifest)
-	if err != nil {
-		return err
+	// Create memory store
+	memoryStore := memory.New()
+
+	// Create a descriptor with proper digest calculation
+	mediaType := "application/vnd.oci.image.config.v1+json"
+
+	// Calculate the digest
+	dgst := digest.FromBytes(fileContent)
+
+	// Create descriptor using OCI spec
+	desc := ocispec.Descriptor{
+		MediaType: mediaType,
+		Size:      int64(len(fileContent)),
+		Digest:    dgst,
+		Annotations: map[string]string{
+			"org.opencontainers.image.title": "bundle.yaml",
+		},
 	}
+
+	// Store the content in memory
+	err = memoryStore.Push(ctx, desc, bytes.NewReader(fileContent))
+	if err != nil {
+		return fmt.Errorf("storing content: %w", err)
+	}
+
+	// Push the content to the registry
 	logger.Info(fmt.Sprintf("Pushing %s to %s...", fileName, ref))
-	desc, err = oras.Copy(ctx, memoryStore, ref, registry, "")
+	err = repo.Push(ctx, desc, bytes.NewReader(fileContent))
 	if err != nil {
-		return err
+		return fmt.Errorf("pushing to registry: %w", err)
 	}
-	logger.Info(fmt.Sprintf("Pushed to %s with digest %s", ref, desc.Digest))
+
+	logger.Info(fmt.Sprintf("Pushed to %s with digest %s", ref, desc.Digest.String()))
 	return nil
 }
 
