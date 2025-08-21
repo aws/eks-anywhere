@@ -137,8 +137,10 @@ func WithAuthenticatedRegistryMirror(providerName string, optNamespaces ...v1alp
 			e.T.Fatalf("error logging into docker registry %s: %v", hostPort, err)
 		}
 
-		ociNamespaces := defaultOciNamespaces(e)
-		ociNamespaces = append(ociNamespaces, optNamespaces...)
+		var ociNamespaces []v1alpha1.OCINamespace
+		if len(optNamespaces) > 0 {
+			ociNamespaces = append(defaultOciNamespaces(e), optNamespaces...)
+		}
 
 		certificate, err := base64.StdEncoding.DecodeString(registryCert)
 		if err == nil {
