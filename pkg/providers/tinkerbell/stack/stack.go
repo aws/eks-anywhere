@@ -47,6 +47,9 @@ const (
 	service                      = "service"
 	relay                        = "relay"
 	smeeHTTPPort                 = "7171"
+
+	// localTinkWorkerImage is the path to the tink-worker image in the hook-OS.
+	localTinkWorkerImage = "127.0.0.1/embedded/tink-worker"
 )
 
 type Docker interface {
@@ -297,7 +300,7 @@ func (s *Installer) installBootsOnDocker(ctx context.Context, bundle releasev1al
 func (s *Installer) getSmeeKernelArgs(bundle releasev1alpha1.TinkerbellStackBundle) []string {
 	extraKernelArgs := []string{}
 	if s.bootsOnDocker {
-		extraKernelArgs = append(extraKernelArgs, fmt.Sprintf("tink_worker_image=%s", s.localRegistryURL(bundle.Tink.TinkWorker.URI)))
+		extraKernelArgs = append(extraKernelArgs, fmt.Sprintf("tink_worker_image=%s", localTinkWorkerImage))
 	}
 
 	if s.registryMirror != nil {
@@ -597,7 +600,7 @@ func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle
 				},
 				"additionalKernelArgs": bootEnv,
 			},
-			"tinkWorkerImage": s.localRegistryURL(bundle.TinkerbellStack.Tink.TinkWorker.URI),
+			"tinkWorkerImage": localTinkWorkerImage,
 			"iso": map[string]interface{}{
 				// it's safe to populate the URL and default to true as rufio jobs for mounting and booting
 				// from iso happens only when bootmode is set to iso on tinkerbellmachinetemplate
