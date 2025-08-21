@@ -689,6 +689,8 @@ func (e *ClusterE2ETest) CopyPackages(packageMirrorAlias string, packageChartReg
 
 	kubeVersion := string(clusterConfig.Spec.KubernetesVersion)
 
+	loginToPackagesRegistry(e, packageRegistry)
+
 	copyPackagesArgs := []string{
 		"copy", "packages",
 		registryMirrorHost + "/" + packageMirrorAlias,
