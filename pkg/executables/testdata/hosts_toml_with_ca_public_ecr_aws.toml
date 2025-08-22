@@ -1,0 +1,5 @@
+server = "https://public.ecr.aws"
+
+[host."https://registry-mirror.test:443"]
+  capabilities = ["pull", "resolve"]
+  ca = "/etc/containerd/certs.d/public.ecr.aws/ca.crt"
