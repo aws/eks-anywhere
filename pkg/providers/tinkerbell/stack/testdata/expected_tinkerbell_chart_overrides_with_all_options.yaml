@@ -11,7 +11,7 @@ boots:
     - name: TINKERBELL_GRPC_AUTHORITY
       value: 1.2.3.4:42113
     - name: BOOTS_EXTRA_KERNEL_ARGS
-      value: tink_worker_image=public.ecr.aws/eks-anywhere/tink-worker:latest
+      value: tink_worker_image=127.0.0.1/embedded/tink-worker
   image: public.ecr.aws/eks-anywhere/boots:latest
 createNamespace: true
 envoy:

@@ -38,7 +38,7 @@ smee:
   singleNodeClusterConfig:
     controlPlaneTolerationsEnabled: true
     nodeAffinityWeight: 1
-  tinkWorkerImage: 1.2.3.4:443/custom/eks-anywhere/tink-worker:latest
+  tinkWorkerImage: 127.0.0.1/embedded/tink-worker
   trustedProxies:
   - 192.168.0.0/16
 stack:

@@ -17,7 +17,7 @@ smee:
   deploy: false
   http:
     additionalKernelArgs:
-    - tink_worker_image=public.ecr.aws/eks-anywhere/tink-worker:latest
+    - tink_worker_image=127.0.0.1/embedded/tink-worker
     osieUrl:
       host: anywhere-assests.eks.amazonaws.com
       path: /tinkerbell/hook
@@ -36,7 +36,7 @@ smee:
   singleNodeClusterConfig:
     controlPlaneTolerationsEnabled: true
     nodeAffinityWeight: 1
-  tinkWorkerImage: public.ecr.aws/eks-anywhere/tink-worker:latest
+  tinkWorkerImage: 127.0.0.1/embedded/tink-worker
   trustedProxies:
   - 192.168.0.0/16
 stack:
