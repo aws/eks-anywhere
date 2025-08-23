@@ -2360,18 +2360,6 @@ func getVersionBundle() *cluster.VersionsBundle {
 				Repository: "public.ecr.aws/eks-distro/etcd-io",
 				Tag:        "v3.4.16-eks-1-21-4",
 			},
-			NodeDriverRegistrar: releasev1.Image{
-				URI: "public.ecr.aws/eks-distro/kubernetes-csi/node-driver-registrar:v2.1.0",
-			},
-			LivenessProbe: releasev1.Image{
-				URI: "public.ecr.aws/eks-distro/kubernetes-csi/livenessprobe:v2.2.0",
-			},
-			ExternalAttacher: releasev1.Image{
-				URI: "public.ecr.aws/eks-distro/kubernetes-csi/external-attacher:v3.1.0",
-			},
-			ExternalProvisioner: releasev1.Image{
-				URI: "public.ecr.aws/eks-distro/kubernetes-csi/external-provisioner:v2.1.1",
-			},
 			Pause: releasev1.Image{
 				URI: "public.ecr.aws/eks-distro/kubernetes/pause:v1.21.2-eks-1-21-4",
 			},

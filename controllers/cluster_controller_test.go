@@ -1580,30 +1580,6 @@ func createCSIComponent() eksdv1alpha1.Component {
 	return eksdv1alpha1.Component{
 		Assets: []eksdv1alpha1.Asset{
 			{
-				Name: "node-driver-registrar-image",
-				Image: &eksdv1alpha1.AssetImage{
-					URI: "public.ecr.aws/eks-distro/kubernetes-csi/node-driver-registrar:v2.5.0-eks-1-32-1",
-				},
-			},
-			{
-				Name: "livenessprobe-image",
-				Image: &eksdv1alpha1.AssetImage{
-					URI: "public.ecr.aws/eks-distro/kubernetes-csi/livenessprobe:v2.7.0-eks-1-32-1",
-				},
-			},
-			{
-				Name: "external-attacher-image",
-				Image: &eksdv1alpha1.AssetImage{
-					URI: "public.ecr.aws/eks-distro/kubernetes-csi/external-attacher:v3.4.0-eks-1-32-1",
-				},
-			},
-			{
-				Name: "external-provisioner-image",
-				Image: &eksdv1alpha1.AssetImage{
-					URI: "public.ecr.aws/eks-distro/kubernetes-csi/external-provisioner:v3.2.0-eks-1-32-1",
-				},
-			},
-			{
 				Name: "pause-image",
 				Image: &eksdv1alpha1.AssetImage{
 					URI: "public.ecr.aws/eks-distro/kubernetes/pause:v1.32.0-eks-1-32-1",
