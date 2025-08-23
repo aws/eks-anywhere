@@ -155,10 +155,6 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 		"etcdImageTag":                               versionsBundle.KubeDistro.Etcd.Tag,
 		"corednsRepository":                          versionsBundle.KubeDistro.CoreDNS.Repository,
 		"corednsVersion":                             versionsBundle.KubeDistro.CoreDNS.Tag,
-		"nodeDriverRegistrarImage":                   versionsBundle.KubeDistro.NodeDriverRegistrar.VersionedImage(),
-		"livenessProbeImage":                         versionsBundle.KubeDistro.LivenessProbe.VersionedImage(),
-		"externalAttacherImage":                      versionsBundle.KubeDistro.ExternalAttacher.VersionedImage(),
-		"externalProvisionerImage":                   versionsBundle.KubeDistro.ExternalProvisioner.VersionedImage(),
 		"managerImage":                               versionsBundle.CloudStack.ClusterAPIController.VersionedImage(),
 		"kubeRbacProxyImage":                         versionsBundle.CloudStack.KubeRbacProxy.VersionedImage(),
 		"kubeVipImage":                               versionsBundle.CloudStack.KubeVip.VersionedImage(),
@@ -442,24 +438,4 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupConfiguration 
 	}
 
 	return values, nil
-}
-
-func getEtcdMachineSpec(clusterSpec v1alpha1.ClusterSpec, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig) *v1alpha1.CloudStackMachineConfigSpec {
-	var etcdMachineSpec *v1alpha1.CloudStackMachineConfigSpec
-	if clusterSpec.ExternalEtcdConfiguration != nil {
-		if clusterSpec.ExternalEtcdConfiguration.MachineGroupRef != nil && machineConfigs[clusterSpec.ExternalEtcdConfiguration.MachineGroupRef.Name] != nil {
-			etcdMachineSpec = &machineConfigs[clusterSpec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec
-		}
-	}
-
-	return etcdMachineSpec
-}
-
-func getControlPlaneMachineSpec(clusterSpec v1alpha1.ClusterSpec, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig) *v1alpha1.CloudStackMachineConfigSpec {
-	var controlPlaneMachineSpec *v1alpha1.CloudStackMachineConfigSpec
-	if clusterSpec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterSpec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
-		controlPlaneMachineSpec = &machineConfigs[clusterSpec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec
-	}
-
-	return controlPlaneMachineSpec
 }

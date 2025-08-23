@@ -307,30 +307,6 @@ func wantKubeDistroForEksdRelease() (*eksdv1.Release, *cluster.KubeDistro) {
 					Name: "comp-1",
 					Assets: []eksdv1.Asset{
 						{
-							Name: "external-provisioner-image",
-							Image: &eksdv1.AssetImage{
-								URI: "public.ecr.aws/eks-distro/kubernetes-csi/external-provisioner:v2.1.1",
-							},
-						},
-						{
-							Name: "node-driver-registrar-image",
-							Image: &eksdv1.AssetImage{
-								URI: "public.ecr.aws/eks-distro/kubernetes-csi/node-driver-registrar:v2.1.0",
-							},
-						},
-						{
-							Name: "livenessprobe-image",
-							Image: &eksdv1.AssetImage{
-								URI: "public.ecr.aws/eks-distro/kubernetes-csi/livenessprobe:v2.2.0",
-							},
-						},
-						{
-							Name: "external-attacher-image",
-							Image: &eksdv1.AssetImage{
-								URI: "public.ecr.aws/eks-distro/kubernetes-csi/external-attacher:v3.1.0",
-							},
-						},
-						{
 							Name: "pause-image",
 							Image: &eksdv1.AssetImage{
 								URI: "public.ecr.aws/eks-distro/kubernetes/pause:v1.19.8",
@@ -387,18 +363,6 @@ func wantKubeDistroForEksdRelease() (*eksdv1.Release, *cluster.KubeDistro) {
 		Etcd: cluster.VersionedRepository{
 			Repository: "public.ecr.aws/eks-distro/etcd-io",
 			Tag:        "v3.4.14",
-		},
-		NodeDriverRegistrar: releasev1.Image{
-			URI: "public.ecr.aws/eks-distro/kubernetes-csi/node-driver-registrar:v2.1.0",
-		},
-		LivenessProbe: releasev1.Image{
-			URI: "public.ecr.aws/eks-distro/kubernetes-csi/livenessprobe:v2.2.0",
-		},
-		ExternalAttacher: releasev1.Image{
-			URI: "public.ecr.aws/eks-distro/kubernetes-csi/external-attacher:v3.1.0",
-		},
-		ExternalProvisioner: releasev1.Image{
-			URI: "public.ecr.aws/eks-distro/kubernetes-csi/external-provisioner:v2.1.1",
 		},
 		Pause: releasev1.Image{
 			URI: "public.ecr.aws/eks-distro/kubernetes/pause:v1.19.8",
