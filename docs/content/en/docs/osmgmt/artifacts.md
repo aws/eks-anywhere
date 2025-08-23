@@ -17,6 +17,8 @@ EKS Anywhere supports three different node operating systems:
 Bottlerocket OVAs and images are distributed by the EKS Anywhere project.
 To build your own Ubuntu-based or RHEL-based EKS Anywhere node, see [Building node images]({{< relref "#building-node-images">}}).
 
+**_NOTE:_** [Starting with the v0.19 EKS Anywhere release, we are deprecating Bottlerocket support for bare metal](https://github.com/aws/eks-anywhere/issues/7754)
+
 ## Prerequisites
 
 Several code snippets on this page use `curl` and `yq` commands. Refer to the [Tools section]({{< relref "../getting-started/install/#tools" >}}) to learn how to install them.
@@ -33,6 +35,7 @@ EKS Anywhere does not distribute Ubuntu or RHEL OS images.
 However, see [Building node images]({{< relref "#building-node-images">}}) for information on how to build EKS Anywhere images from those Linux distributions.  Note:  if you utilize your Admin Host to build images, you will need to review the DHCP integration provided by Libvirtd and ensure it is disabled.  If the Libvirtd DHCP is enabled, the "boots container" will detect a port conflict and terminate.
 
 ### Bottlerocket OS images for Bare Metal
+**_NOTE:_** [Starting with the v0.19 EKS Anywhere release, we are deprecating Bottlerocket support for bare metal](https://github.com/aws/eks-anywhere/issues/7754) )
 
 Bottlerocket vends its Baremetal variant Images using a secure distribution tool called `tuftool`. Please refer to [Download Bottlerocket node images]({{< relref "#download-bottlerocket-node-images">}}) for instructions on downloading Bottlerocket Baremetal images. You can also get the download URIs for EKS Anywhere-vended Bottlerocket Baremetal images from the bundle release by running the following commands:
 
