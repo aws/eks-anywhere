@@ -73,10 +73,6 @@ type KubeDistro struct {
 	Kubernetes          VersionedRepository
 	CoreDNS             VersionedRepository
 	Etcd                VersionedRepository
-	NodeDriverRegistrar v1alpha1.Image
-	LivenessProbe       v1alpha1.Image
-	ExternalAttacher    v1alpha1.Image
-	ExternalProvisioner v1alpha1.Image
 	Pause               v1alpha1.Image
 	EtcdImage           v1alpha1.Image
 	EtcdVersion         string
@@ -216,10 +212,6 @@ func buildKubeDistro(eksd *eksdv1alpha1.Release) (*KubeDistro, error) {
 	}
 
 	kubeDistroComponents := map[string]*v1alpha1.Image{
-		"node-driver-registrar-image": &kubeDistro.NodeDriverRegistrar,
-		"livenessprobe-image":         &kubeDistro.LivenessProbe,
-		"external-attacher-image":     &kubeDistro.ExternalAttacher,
-		"external-provisioner-image":  &kubeDistro.ExternalProvisioner,
 		"pause-image":                 &kubeDistro.Pause,
 		"etcd-image":                  &kubeDistro.EtcdImage,
 		"aws-iam-authenticator-image": &kubeDistro.AwsIamAuthImage,
