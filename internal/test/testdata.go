@@ -118,22 +118,6 @@ func EksdRelease(channel string) *eksdv1.Release {
 							Image: &eksdv1.AssetImage{},
 						},
 						{
-							Name:  "node-driver-registrar-image",
-							Image: &eksdv1.AssetImage{},
-						},
-						{
-							Name:  "livenessprobe-image",
-							Image: &eksdv1.AssetImage{},
-						},
-						{
-							Name:  "external-attacher-image",
-							Image: &eksdv1.AssetImage{},
-						},
-						{
-							Name:  "external-provisioner-image",
-							Image: &eksdv1.AssetImage{},
-						},
-						{
 							Name:  "pause-image",
 							Image: &eksdv1.AssetImage{},
 						},
