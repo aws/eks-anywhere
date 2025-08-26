@@ -315,8 +315,8 @@ ssh -i <YOUR_PRIVATE_KEY> <USER_NAME>@<YOUR_CONTROLPLANE_IP> # USER_NAME should 
 
 export CLUSTER_NAME="<YOUR_CLUSTER_NAME_HERE>"
 
-cat /var/lib/kubeadm/admin.conf
-export KUBECONFIG="/var/lib/kubeadm/admin.conf"
+cat /etc/kubernetes/admin.conf
+export KUBECONFIG="/etc/kubernetes/admin.conf"
 
 kubectl get secret ${CLUSTER_NAME}-kubeconfig -n eksa-system -o yaml -o=jsonpath="{.data.value}" | base64 --decode > /tmp/user-admin.kubeconfig
 
