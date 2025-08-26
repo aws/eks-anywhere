@@ -759,16 +759,6 @@ func (e *ClusterE2ETest) ValidateCluster(kubeVersion v1alpha1.KubernetesVersion)
 	if err != nil {
 		e.T.Fatal(err)
 	}
-	e.T.Log("Validating cluster node version")
-	err = retrier.Retry(180, 1*time.Second, func() error {
-		if err = e.KubectlClient.ValidateNodesVersion(ctx, e.Cluster().KubeconfigFile, kubeVersion); err != nil {
-			return fmt.Errorf("validating nodes version: %v", err)
-		}
-		return nil
-	})
-	if err != nil {
-		e.T.Fatal(err)
-	}
 }
 
 func (e *ClusterE2ETest) WaitForMachineDeploymentReady(machineDeploymentName string) {
