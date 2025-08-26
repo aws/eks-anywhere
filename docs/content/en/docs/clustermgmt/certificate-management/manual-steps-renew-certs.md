@@ -206,9 +206,9 @@ If this occurs, update `kubelet-client-current.pem` by running the following com
 
 {{< tabpane >}}
 {{< tab header="Ubuntu or RHEL" lang="bash" >}}
-cat /var/lib/kubeadm/admin.conf | grep client-certificate-data: | sed 's/^.*: //' | base64 -d > /var/lib/kubelet/pki/kubelet-client-current.pem
+cat /etc/kubernetes/admin.conf | grep client-certificate-data: | sed 's/^.*: //' | base64 -d > /var/lib/kubelet/pki/kubelet-client-current.pem
 
-cat /var/lib/kubeadm/admin.conf | grep client-key-data: | sed 's/^.*: //' | base64 -d >> /var/lib/kubelet/pki/kubelet-client-current.pem
+cat /etc/kubernetes/admin.conf | grep client-key-data: | sed 's/^.*: //' | base64 -d >> /var/lib/kubelet/pki/kubelet-client-current.pem
 
 systemctl restart kubelet
 
