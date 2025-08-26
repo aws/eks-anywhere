@@ -35,9 +35,9 @@ spec:
   prismCentral:
 {{- if .nutanixAdditionalTrustBundle }}
     additionalTrustBundle:
-      kind: String
-      data: |
-{{ .nutanixAdditionalTrustBundle | indent 8 }}
+      kind: ConfigMap
+      name: "{{.clusterName}}-trust-bundle"
+      namespace: {{.eksaSystemNamespace}}
 {{- end }}
     address: "{{.nutanixEndpoint}}"
     port: {{.nutanixPort}}
@@ -49,6 +49,17 @@ spec:
     host: "{{.controlPlaneEndpointIp}}"
     port: 6443
 ---
+{{- if .nutanixAdditionalTrustBundle }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .clusterName }}-trust-bundle
+  namespace: {{ .eksaSystemNamespace }}
+data:
+  ca.crt: |
+{{ .nutanixAdditionalTrustBundle | indent 4 }}
+---
+{{- end }}
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: Cluster
 metadata:
