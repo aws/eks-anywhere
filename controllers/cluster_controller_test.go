@@ -1547,7 +1547,6 @@ func createEKSDReleaseStatus() eksdv1alpha1.ReleaseStatus {
 		Components: []eksdv1alpha1.Component{
 			createKubernetesComponent(),
 			createEtcdComponent(),
-			createCSIComponent(),
 		},
 	}
 }
@@ -1562,28 +1561,6 @@ func createKubernetesComponent() eksdv1alpha1.Component {
 					URI: "public.ecr.aws/eks-distro/kubernetes/kube-apiserver:v1.32.0-eks-1-32-1",
 				},
 			},
-		},
-	}
-}
-
-func createEtcdComponent() eksdv1alpha1.Component {
-	return eksdv1alpha1.Component{
-		Name:   "etcd",
-		GitTag: "v3.5.0",
-		Assets: []eksdv1alpha1.Asset{
-			{
-				Name: "etcd-image",
-				Image: &eksdv1alpha1.AssetImage{
-					URI: "public.ecr.aws/eks-distro/etcd-io/etcd:v3.5.0-eks-1-32-1",
-				},
-			},
-		},
-	}
-}
-
-func createCSIComponent() eksdv1alpha1.Component {
-	return eksdv1alpha1.Component{
-		Assets: []eksdv1alpha1.Asset{
 			{
 				Name: "pause-image",
 				Image: &eksdv1alpha1.AssetImage{
@@ -1606,6 +1583,21 @@ func createCSIComponent() eksdv1alpha1.Component {
 				Name: "kube-proxy-image",
 				Image: &eksdv1alpha1.AssetImage{
 					URI: "public.ecr.aws/eks-distro/kubernetes/kube-proxy:v1.32.0-eks-1-32-1",
+				},
+			},
+		},
+	}
+}
+
+func createEtcdComponent() eksdv1alpha1.Component {
+	return eksdv1alpha1.Component{
+		Name:   "etcd",
+		GitTag: "v3.5.0",
+		Assets: []eksdv1alpha1.Asset{
+			{
+				Name: "etcd-image",
+				Image: &eksdv1alpha1.AssetImage{
+					URI: "public.ecr.aws/eks-distro/etcd-io/etcd:v3.5.0-eks-1-32-1",
 				},
 			},
 		},
