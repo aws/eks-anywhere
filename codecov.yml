@@ -18,3 +18,5 @@ ignore:
   - "test/framework" 
   - "internal/aws-sdk-go-v2"
   - "**/mock_*.go"
+  - pkg/curatedpackages/curatedpackages.go
+  - cmd/eksctl-anywhere/cmd/internal/commands/artifacts/import.go
