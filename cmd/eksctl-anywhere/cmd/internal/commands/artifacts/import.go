@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -31,7 +32,18 @@ func (i Import) Run(ctx context.Context) error {
 		return fmt.Errorf("downloading images: %v", err)
 	}
 
-	if err = i.ImageMover.Move(ctx, artifactNames(images)...); err != nil {
+	// Filter out CSI component images as they're not used by EKS Anywhere
+	// but are still referenced in the EKS-D release manifest
+	var filteredImages []releasev1.Image
+	for _, img := range images {
+		if img.URI != "" && strings.Contains(img.URI, "public.ecr.aws/csi-components/") {
+			// Skip CSI component images
+			continue
+		}
+		filteredImages = append(filteredImages, img)
+	}
+
+	if err = i.ImageMover.Move(ctx, artifactNames(filteredImages)...); err != nil {
 		return err
 	}
 

@@ -14,7 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/rand"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
@@ -700,7 +700,7 @@ func generateKcpSpec() *controlplanev1.KubeadmControlPlaneSpec {
 		RolloutStrategy: &controlplanev1.RolloutStrategy{
 			Type: "InPlace",
 		},
-		Replicas: pointer.Int32(3),
+		Replicas: ptr.To(int32(3)),
 		MachineTemplate: controlplanev1.KubeadmControlPlaneMachineTemplate{
 			InfrastructureRef: corev1.ObjectReference{
 				Name: "new-ref",

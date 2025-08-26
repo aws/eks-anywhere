@@ -1059,7 +1059,7 @@ func (k *Kubectl) getPodLogs(ctx context.Context, namespace, podName, containerN
 	}
 	logs := stdOut.String()
 	if strings.Contains(logs, "Internal Error") {
-		return "", fmt.Errorf("Fetched log contains \"Internal Error\": %q", logs)
+		return "", fmt.Errorf("fetched log contains \"Internal Error\": %q", logs)
 	}
 	return logs, err
 }
