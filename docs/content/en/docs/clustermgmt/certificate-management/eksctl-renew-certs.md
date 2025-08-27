@@ -12,7 +12,8 @@ EKS Anywhere provides a simple and recommended way to renew cluster certificates
 Get more information on EKS Anywhere cluster certificates from [Monitoring Certificate Expiration]({{< relref "monitoring-certificates.md" >}})
 
 {{% alert title="Note" color="primary" %}}
-This feature is available starting with EKS Anywhere version `v0.23.1`.
+This feature is officially available starting with EKS Anywhere `v0.23.1`.
+However, it can also be used with clusters running older EKS Anywhere versions. To do so, you can download the new EKS Anywhere CLI at version `v0.23.1` (or later) and use it to renew your existing cluster's certificates.
 {{% /alert %}}
 
 
