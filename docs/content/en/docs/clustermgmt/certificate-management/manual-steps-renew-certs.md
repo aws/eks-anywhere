@@ -104,9 +104,9 @@ ctr -n k8s.io t exec -t --exec-id etcd ${ETCD_CONTAINER_ID} etcdctl \
 
 3. Repeat the above steps for all etcd nodes.
 
-4. Save the `apiserver-etcd-client` `crt` and `key` file as a Secret from one of the etcd nodes, so the `key` can be picked up by new control plane nodes. You will also need them when renewing the certificates on control plane nodes. See the [Kubernetes documentation](https://kubernetes.io/docs/tasks/configmap-secret/managing-secret-using-config-file/#edit-secret) for details on editing Secrets.
+4. Save the `apiserver-etcd-client` `crt` and `key` file from one of the etcd nodes. They need to be updated in the following secret in management cluster. You will also need them when renewing the certificates on control plane nodes.
 ```bash
-kubectl edit secret ${cluster-name}-apiserver-etcd-client -n eksa-system
+kubectl create secret generic ${cluster-name}-apiserver-etcd-client   --from-file=tls.crt=./apiserver-etcd-client.crt   --from-file=tls.key=./apiserver-etcd-client.key   --type=cluster.x-k8s.io/secret   -n eksa-system --dry-run=client -o yaml | kubectl apply -f -
 ```
 
 {{% alert title="Note" color="primary" %}}
