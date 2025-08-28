@@ -2845,7 +2845,7 @@ func TestVSphereKubernetes129UbuntuAuthenticatedRegistryMirrorCuratedPackagesSim
 		framework.WithAuthenticatedRegistryMirror(constants.VSphereProviderName,
 			v1alpha1.OCINamespace{
 				Registry:  EksaPackagesRegistry,
-				Namespace: EksaDevRegistryAlias,
+				Namespace: EksaPackagesRegistryMirrorAlias,
 			}),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube129),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
@@ -2866,7 +2866,7 @@ func TestVSphereKubernetes130UbuntuAuthenticatedRegistryMirrorCuratedPackagesSim
 		framework.WithAuthenticatedRegistryMirror(constants.VSphereProviderName,
 			v1alpha1.OCINamespace{
 				Registry:  EksaPackagesRegistry,
-				Namespace: EksaDevRegistryAlias,
+				Namespace: EksaPackagesRegistryMirrorAlias,
 			}),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube130),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
@@ -2887,7 +2887,7 @@ func TestVSphereKubernetes131UbuntuAuthenticatedRegistryMirrorCuratedPackagesSim
 		framework.WithAuthenticatedRegistryMirror(constants.VSphereProviderName,
 			v1alpha1.OCINamespace{
 				Registry:  EksaPackagesRegistry,
-				Namespace: EksaDevRegistryAlias,
+				Namespace: EksaPackagesRegistryMirrorAlias,
 			}),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube131),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
@@ -2908,7 +2908,7 @@ func TestVSphereKubernetes132UbuntuAuthenticatedRegistryMirrorCuratedPackagesSim
 		framework.WithAuthenticatedRegistryMirror(constants.VSphereProviderName,
 			v1alpha1.OCINamespace{
 				Registry:  EksaPackagesRegistry,
-				Namespace: EksaDevRegistryAlias,
+				Namespace: EksaPackagesRegistryMirrorAlias,
 			}),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube132),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
@@ -2929,7 +2929,7 @@ func TestVSphereKubernetes133UbuntuAuthenticatedRegistryMirrorCuratedPackagesSim
 		framework.WithAuthenticatedRegistryMirror(constants.VSphereProviderName,
 			v1alpha1.OCINamespace{
 				Registry:  EksaPackagesRegistry,
-				Namespace: EksaDevRegistryAlias,
+				Namespace: EksaPackagesRegistryMirrorAlias,
 			}),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube133),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,

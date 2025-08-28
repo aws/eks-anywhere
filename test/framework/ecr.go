@@ -5,8 +5,9 @@ import (
 	"encoding/base64"
 	"os"
 	"strings"
+	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/ecr"
 )
@@ -20,11 +21,16 @@ func loginToPackagesRegistry(e *ClusterE2ETest, registry string) {
 
 // loginToECRWithCredentials performs Docker login with explicit credentials.
 func loginToECRWithCredentials(e *ClusterE2ETest, registry, accessKey, secretKey, sessionToken string) {
-	cfg := aws.Config{
-		Region: defaultRegion,
-		Credentials: aws.NewCredentialsCache(
-			credentials.NewStaticCredentialsProvider(accessKey, secretKey, sessionToken),
-		),
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	cfg, err := config.LoadDefaultConfig(
+		ctx,
+		config.WithRegion(defaultRegion),
+		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKey, secretKey, sessionToken)),
+	)
+	if err != nil {
+		e.T.Fatalf("aws config error: %v", err)
 	}
 
 	ecrClient := ecr.NewFromConfig(cfg)
