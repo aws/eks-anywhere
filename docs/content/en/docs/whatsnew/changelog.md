@@ -64,8 +64,9 @@ description: >
   - [`v1-28-eks-55`](https://distro.eks.amazonaws.com/releases/1-28/57/)
 
 - New EKS-Distro base images with CVE fixes for Amazon Linux 2
-- eks-anywhere-packages: `v0.4.6` to `v0.4.7`
-
+- eks-anywhere-packages: `v0.4.6` to `v0.4.8`
+- cert-manager: `v1.17.2` to `v1.17.4`
+- containerd: `v1.7.27` to `v1.7.28`
 
 ### Fixed
 - Pull tink-worker and action images into hook-os at build time ([#10032](https://github.com/aws/eks-anywhere/pull/10032))
