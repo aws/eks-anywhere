@@ -61,7 +61,7 @@ description: >
   - [`v1-31-eks-28`](https://distro.eks.amazonaws.com/releases/1-31/28/)
   - [`v1-30-eks-39`](https://distro.eks.amazonaws.com/releases/1-30/39/)
   - [`v1-29-eks-46`](https://distro.eks.amazonaws.com/releases/1-29/46/)
-  - [`v1-28-eks-55`](https://distro.eks.amazonaws.com/releases/1-28/57/)
+  - [`v1-28-eks-57`](https://distro.eks.amazonaws.com/releases/1-28/57/)
 
 - New EKS-Distro base images with CVE fixes for Amazon Linux 2
 - eks-anywhere-packages: `v0.4.6` to `v0.4.8`
