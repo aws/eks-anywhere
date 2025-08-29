@@ -191,8 +191,8 @@ github.com/frankban/quicktest v1.14.6/go.mod h1:4ptaffx2x8+WTWXmUCuVU6aPUX1/Mz7z
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
 github.com/fsnotify/fsnotify v1.7.0 h1:8JEhPFa5W2WU7YfeZzPNqzMP6Lwt7L2715Ggo0nosvA=
 github.com/fsnotify/fsnotify v1.7.0/go.mod h1:40Bi/Hjc2AVfZrqy+aj+yEI+/bRxZnMJyTJwOpGvigM=
-github.com/fsouza/go-dockerclient v1.12.2-0.20250814055408-c31f6141d29b h1:MYOBq2qgHa7qL3Knd9h7ZfUaJnCDu4VQBZfqzwZc04s=
-github.com/fsouza/go-dockerclient v1.12.2-0.20250814055408-c31f6141d29b/go.mod h1:6kGnIB6OLnGwDkr+s+rAo44nSAVrAjilOXfwpRORvXE=
+github.com/fsouza/go-dockerclient v1.12.2 h1:+pbP/SacoHfqaVZuiudvcdYGd9jzU7y9EcgoBOHivEI=
+github.com/fsouza/go-dockerclient v1.12.2/go.mod h1:ZGCkAsnBGjnTRG9wV6QaICPJ5ig2KlaxTccDQy5WQ38=
 github.com/fxamacker/cbor/v2 v2.7.0 h1:iM5WgngdRBanHcxugY4JySA0nk1wZorNOpTgCMedv5E=
 github.com/fxamacker/cbor/v2 v2.7.0/go.mod h1:pxXPTn3joSm21Gbwsv0w9OSA2y1HFR9qXEeXQVeNoDQ=
 github.com/ghodss/yaml v0.0.0-20150909031657-73d445a93680/go.mod h1:4dBDuWmgqj2HViK6kFavaiC9ZROes6MMH2rRYeMEF04=
