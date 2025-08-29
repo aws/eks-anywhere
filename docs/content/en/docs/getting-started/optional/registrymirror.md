@@ -122,6 +122,7 @@ eks-anywhere
 eks-distro
 isovalent
 cilium-chart
+curated-packages
 ```
 
 For example, if a registry is available at `private-registry.local`, then the following projects must be created.
@@ -132,6 +133,7 @@ https://private-registry.local/eks-anywhere
 https://private-registry.local/eks-distro
 https://private-registry.local/isovalent
 https://private-registry.local/cilium-chart
+https://private-registry.local/curated-packages
 ```
 
 ### Admin machine configuration
@@ -140,7 +142,7 @@ You must configure the Admin machine with the information it needs to communicat
 Add the registry's CA certificate to the list of CA certificates on the Admin machine if your registry uses self-signed certificates.
 
 - For [Linux](https://docs.docker.com/engine/security/certificates/), you can place your certificate here: `/etc/docker/certs.d/<private-registry-endpoint>/ca.crt`
-- For [Mac](https://docs.docker.com/desktop/mac/#add-tls-certificates), you can follow this guide to add the certificate to your keychain: https://docs.docker.com/desktop/mac/#add-tls-certificates
+- For [Mac](https://docs.docker.com/desktop/troubleshoot-and-support/faqs/macfaqs/#how-do-i-add-tls-certificates), you can follow this guide to add the certificate to your keychain: https://docs.docker.com/desktop/troubleshoot-and-support/faqs/macfaqs/#how-do-i-add-tls-certificates
 
 If your registry uses authentication, the following environment variables must be set on the Admin machine before running the `eksctl anywhere import images` command.
 ```bash
