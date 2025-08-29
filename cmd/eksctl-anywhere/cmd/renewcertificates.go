@@ -58,12 +58,17 @@ func (rc *renewCertificatesOptions) renewCertificates(cmd *cobra.Command, _ []st
 	}
 
 	kubeCfgPath := kubeconfig.FromClusterName(cfg.ClusterName)
+	if cfg.ManagementClusterName != "" {
+		kubeCfgPath, err = getManagementClusterKubeconfig(cfg.ManagementClusterName)
+		if err != nil {
+			return err
+		}
+	}
 
 	kubeClient := deps.UnAuthKubeClient.KubeconfigClient(kubeCfgPath)
 
 	cluster := &types.Cluster{
-		Name:           cfg.ClusterName,
-		KubeconfigFile: kubeCfgPath,
+		Name: cfg.ClusterName,
 	}
 
 	if err := certificates.PopulateConfig(ctx, cfg, kubeClient, cluster); err != nil {

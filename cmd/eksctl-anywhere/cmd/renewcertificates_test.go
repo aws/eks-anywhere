@@ -15,6 +15,7 @@ import (
 var (
 	validConfigYaml = `
 clusterName: test-cluster
+managementCluster: mgmt-cluster
 os: ubuntu
 controlPlane:
   nodes:

@@ -33,10 +33,11 @@ type NodeConfig struct {
 
 // RenewalConfig defines the configuration for certificate renewal operations.
 type RenewalConfig struct {
-	ClusterName  string     `yaml:"clusterName"`
-	OS           string     `yaml:"os"`
-	ControlPlane NodeConfig `yaml:"controlPlane"`
-	Etcd         NodeConfig `yaml:"etcd"`
+	ClusterName           string     `yaml:"clusterName"`
+	ManagementClusterName string     `yaml:"managementCluster"`
+	OS                    string     `yaml:"os"`
+	ControlPlane          NodeConfig `yaml:"controlPlane"`
+	Etcd                  NodeConfig `yaml:"etcd"`
 }
 
 // ParseConfig reads and parses a certificate renewal configuration file.
