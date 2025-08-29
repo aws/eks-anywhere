@@ -41,6 +41,36 @@ description: >
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
 
+## [v0.23.2](https://github.com/aws/eks-anywhere/releases/tag/v0.23.2)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.32.0 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+
+\* RHEL 8's kernel version (4.18) is not supported by kubeadm for Kubernetes versions 1.32 and above (see Kubernetes GitHub issue [#129462](https://github.com/kubernetes/kubernetes/issues/129462)). As a result, EKS Anywhere does not support using RHEL 8 as the node operating system for Kubernetes versions 1.32 and above.
+
+### Changed
+- EKS Distro:
+  - [`v1-33-eks-11`](https://distro.eks.amazonaws.com/releases/1-33/11/)
+  - [`v1-32-eks-21`](https://distro.eks.amazonaws.com/releases/1-32/21/)
+  - [`v1-31-eks-28`](https://distro.eks.amazonaws.com/releases/1-31/28/)
+  - [`v1-30-eks-39`](https://distro.eks.amazonaws.com/releases/1-30/39/)
+  - [`v1-29-eks-46`](https://distro.eks.amazonaws.com/releases/1-29/46/)
+  - [`v1-28-eks-55`](https://distro.eks.amazonaws.com/releases/1-28/57/)
+
+- New EKS-Distro base images with CVE fixes for Amazon Linux 2
+- eks-anywhere-packages: `v0.4.6` to `v0.4.7`
+
+
+### Fixed
+- Pull tink-worker and action images into hook-os at build time ([#10032](https://github.com/aws/eks-anywhere/pull/10032))
+- Honour bundles override flag while installing package controller using helm chart ([#10010](https://github.com/aws/eks-anywhere/pull/10010))
+
 ## [v0.23.1](https://github.com/aws/eks-anywhere/releases/tag/v0.23.1)
 
 ### Supported OS version details
