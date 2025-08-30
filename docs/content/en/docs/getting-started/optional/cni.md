@@ -5,20 +5,19 @@ weight: 15
 aliases:
     /docs/reference/clusterspec/optional/cni/
 description: >
- EKS Anywhere cluster yaml cni plugin specification reference
+ EKS Anywhere cluster yaml CNI plugin specification reference
 ---
 
-### Specifying CNI Plugin in EKS Anywhere cluster spec
+### Specifying CNI Plugin in EKS Anywhere cluster YAML spec
 
 #### Provider support details
 |                | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
 |:--------------:|:-------:|:----------:|:-------:|:----------:|:----:|
 | **Supported?** |   ✓	    |     ✓      |   	 ✓   |     ✓      |  ✓   |
 
-EKS Anywhere currently supports two CNI plugins: Cilium and Kindnet. Only one of them can be selected
-for a cluster, and the plugin cannot be changed once the cluster is created.
-Up until the 0.7.x releases, the plugin had to be specified using the `cni` field on cluster spec.
-Starting with release 0.8, the plugin should be specified using the new `cniConfig` field as follows:
+EKS Anywhere supports Cilium as a CNI plugin on all providers. The plugin cannot be changed by modifying the `cniConfig` field. However, EKS Anywhere Cilium can be replaced with a custom CNI after the cluster has been created. See [Use a custom CNI](#use-a-custom-cni) for more information. 
+Up until the 0.7.x release, the plugin had to be specified using the `cni` field on cluster yaml spec.
+Starting with release 0.8.0, the plugin should be specified using the new `cniConfig` field as follows:
 
 - For selecting Cilium as the CNI plugin:
     ```yaml
@@ -39,27 +38,6 @@ Starting with release 0.8, the plugin should be specified using the new `cniConf
     ```
     EKS Anywhere selects this as the default plugin when generating a cluster config.
 
-- Or for selecting Kindnetd as the CNI plugin:
-    ```yaml
-    apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-    kind: Cluster
-    metadata:
-      name: my-cluster-name
-    spec:
-      clusterNetwork:
-        pods:
-          cidrBlocks:
-          - 192.168.0.0/16
-        services:
-          cidrBlocks:
-          - 10.96.0.0/12
-        cniConfig:
-          kindnetd: {}
-    ```
-
-> NOTE: EKS Anywhere allows specifying only 1 plugin for a cluster and does not allow switching the plugins
-after the cluster is created.
-
 ### Policy Configuration options for Cilium plugin
 
 Cilium accepts policy enforcement modes from the users to determine the allowed traffic between pods.
@@ -67,7 +45,7 @@ The allowed values for this mode are: `default`, `always` and `never`.
 Please refer the official [Cilium documentation]({{< cilium "policy/intro/" >}}) for more details on how each mode affects
 the communication within the cluster and choose a mode accordingly.
 You can choose to not set this field so that cilium will be launched with the `default` mode.
-Starting release 0.8, Cilium's policy enforcement mode can be set through the cluster spec
+Starting release 0.8.0, Cilium's policy enforcement mode can be set through the cluster yaml spec
 as follows:
 
 ```yaml
@@ -133,12 +111,12 @@ spec:
 
 The policy enforcement mode for Cilium can be changed as a part of cluster upgrade
 through the cli upgrade command.
-1. Switching to `always` mode: When switching from `default`/`never` to `always` mode,
+1. To `always` mode: When switching from `default`/`never` to `always` mode,
 EKS Anywhere will create the required NetworkPolicy objects for its core components (listed above).
-   This will ensure that the cluster gets upgraded successfully. But it is up to the user to create
+   This will ensure that the cluster gets upgraded successfully, but it is up to the user to create
    the NetworkPolicy objects required for the user workloads.
 
-2. Switching from `always` mode: When switching from `always` to `default` mode, EKS Anywhere
+2. From `always` mode: When switching from `always` to `default` mode, EKS Anywhere
 will not delete any of the existing NetworkPolicy objects, including the ones required
    for EKS Anywhere components (listed above). The user must delete NetworkPolicy objects as needed.
 
@@ -266,7 +244,7 @@ immediately install a CNI after uninstalling EKS Anywhere Cilium.
 {{% /alert %}}
 
 {{% alert title="Warning" color="warning" %}}
-Clusters created using the Full Lifecycle Controller prior to v0.15 that have removed the EKS Anywhere Cilium CNI must manually populate their `cluster.anywhere.eks.amazonaws.com` object with the following annotation to ensure EKS Anywhere does not attempt to re-install EKS Anywhere Cilium.
+Prior to v0.15.0, clusters created using Kubernetes API-compatible tooling such as kubectl, Terraform, or GitOps that removed the EKS Anywhere Cilium CNI must manually populate their `cluster.anywhere.eks.amazonaws.com` object with the following annotation to ensure EKS Anywhere does not attempt to re-install EKS Anywhere Cilium.
 
 ```
 anywhere.eks.amazonaws.com/eksa-cilium: ""
@@ -275,9 +253,9 @@ anywhere.eks.amazonaws.com/eksa-cilium: ""
 
 ### Node IPs configuration option
 
-Starting with release v0.10, the `node-cidr-mask-size` [flag](https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/#options)
-for Kubernetes controller manager (kube-controller-manager) is configurable via the EKS anywhere cluster spec. The `clusterNetwork.nodes` being an optional field,
-is not generated in the EKS Anywhere spec using `generate clusterconfig` command. This block for `nodes` will need to be manually added to the cluster spec under the
+Starting with release v0.10.0, the `node-cidr-mask-size` [flag](https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/#options)
+for Kubernetes controller manager (kube-controller-manager) is configurable via the EKS anywhere cluster YAML spec. The `clusterNetwork.nodes` being an optional field,
+is not generated in the EKS Anywhere spec using `generate clusterconfig` command. The block for `nodes` will need to be manually added to the cluster YAML spec under the
 `clusterNetwork` section:
 
 ```yaml
@@ -301,7 +279,7 @@ and the node CIDR mask size is `24`. This ensures the cluster 256 blocks of /24 
 
 To support more than 256 nodes, the cluster CIDR block needs to be large, and the node CIDR mask size needs to be
 small, to support that many IPs.
-For instance, to support 1024 nodes, a user can do any of the following things
+For instance, to support 1024 nodes, a user can do any of the following things:
 - Set the pods cidr blocks to `192.168.0.0/16` and node cidr mask size to 26
 - Set the pods cidr blocks to `192.168.0.0/15` and node cidr mask size to 25
 
