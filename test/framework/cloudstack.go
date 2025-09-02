@@ -491,6 +491,10 @@ func (c *CloudStack) WithRedhatVersion(version anywherev1.KubernetesVersion) api
 		return c.WithRedhat130()
 	case anywherev1.Kube131:
 		return c.WithRedhat131()
+	case anywherev1.Kube132:
+		return c.WithRedhat9Kubernetes132()
+	case anywherev1.Kube133:
+		return c.WithRedhat9Kubernetes133()
 	default:
 		return nil
 	}
