@@ -7,14 +7,14 @@ description: >
 ---
 ## Package Bundle Release (08-19-2025)
 #### Changed
-- Upgrade helm version `0.17.2` to `0.18.0`
+- Upgrade helm version `3.14.3` to `3.18.4`
 - Credential-Provider-Package `0.4.6` to `0.4.8`
   - Enable proxy configuration [#1216](https://github.com/aws/eks-anywhere-packages/pull/1216)
 - Cluster-Autoscaler `9.46.6` to `9.47.0` for Kubernetes version 1.33
 - Metallb
   - Enable configuration for flag `ignoreExcludeLB`
   
-  
+
 ## Package Bundle Release (05-22-2025)
 
 #### Changed
