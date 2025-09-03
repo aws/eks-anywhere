@@ -258,7 +258,6 @@ spec:
       - myASN: 123
         peerASN: 55001
         peerAddress: 12.2.4.2
-        keepaliveTime: 30s
 `, test.ClusterName, ipTwoSub, ipSub))
 			err := WaitForPackageToBeInstalled(test, ctx, packagePrefix, 120*time.Second)
 			if err != nil {
@@ -319,7 +318,7 @@ spec:
 				t.Fatal(err)
 			}
 
-			expectedBGPPeer := `{"disableMP":false,"keepaliveTime":"30s","myASN":123,"peerASN":55001,"peerAddress":"12.2.4.2","peerPort":179}`
+			expectedBGPPeer := `{"disableMP":false,"dualStackAddressFamily":false,"myASN":123,"peerASN":55001,"peerAddress":"12.2.4.2","peerPort":179}`
 			err = WaitForResource(
 				test,
 				ctx,
