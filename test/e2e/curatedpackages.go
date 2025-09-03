@@ -120,7 +120,7 @@ func WaitForResource(
 	if !strings.HasPrefix(jsonpath, "jsonpath") {
 		jsonpath = fmt.Sprintf("jsonpath='%s'", jsonpath)
 	}
-	var output := ""
+	var output = ""
 	for time.Now().Before(end) {
 		out, err := test.KubectlClient.Execute(ctx, "get", "-n", namespace,
 			"--kubeconfig="+kubeconfig.FromClusterName(test.ClusterName),
