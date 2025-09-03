@@ -120,11 +120,13 @@ func WaitForResource(
 	if !strings.HasPrefix(jsonpath, "jsonpath") {
 		jsonpath = fmt.Sprintf("jsonpath='%s'", jsonpath)
 	}
+	var output := ""
 	for time.Now().Before(end) {
 		out, err := test.KubectlClient.Execute(ctx, "get", "-n", namespace,
 			"--kubeconfig="+kubeconfig.FromClusterName(test.ClusterName),
 			"-o", jsonpath, resource)
 		outStr := out.String()
+		output = output + outStr + " "
 		trimmed := strings.Trim(outStr, "'")
 		allPredicates := true
 		for _, f := range predicates {
@@ -141,7 +143,7 @@ func WaitForResource(
 		namespace,
 		jsonpath,
 		timeout,
-		outStr,
+		output,
 	)
 }
 
