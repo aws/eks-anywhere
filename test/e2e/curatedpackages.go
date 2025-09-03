@@ -136,11 +136,12 @@ func WaitForResource(
 		time.Sleep(2 * time.Second)
 	}
 	return fmt.Errorf(
-		"timed out waiting for resource: %s [namespace: %s, jsonpath: %s, timeout: %s]",
+		"timed out waiting for resource: %s [namespace: %s, jsonpath: %s, timeout: %s outputStr: %s]",
 		resource,
 		namespace,
 		jsonpath,
 		timeout,
+		outStr,
 	)
 }
 
