@@ -38,7 +38,7 @@ kubeadmConfigPatches:
 containerdConfigPatches:
   - |
     [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-      [plugins."io.containerd.grpc.v1.cri".registry.mirrors."783794618700.dkr.ecr.*.amazonaws.com"]
+      [plugins."io.containerd.grpc.v1.cri".registry.mirrors."783794618700.dkr.ecr.us-west-2.amazonaws.com"]
         endpoint = ["https://registry-mirror.test:443/v2/curated-packages"]
       [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
         endpoint = ["https://registry-mirror.test:443/v2/eks-anywhere"]
