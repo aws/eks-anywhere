@@ -77,8 +77,8 @@ const (
 	// DefaultCuratedPackagesRegistry matches the default registry for curated packages in all regions.
 	DefaultCuratedPackagesRegistryRegex = `783794618700\.dkr\.ecr\..*\.amazonaws\.com`
 
-	// DefaultcuratedPackagesRegistry is a containerd compatible registry format that matches all AWS regions.
-	DefaultCuratedPackagesRegistry = "783794618700.dkr.ecr.*.amazonaws.com"
+	// DefaultcuratedPackagesRegistry is the default registry used by earlier customers using non-regional registry.
+	DefaultCuratedPackagesRegistry = "783794618700.dkr.ecr.us-west-2.amazonaws.com"
 
 	// Provider specific env vars.
 	VSphereUsernameKey     = "VSPHERE_USERNAME"

@@ -185,7 +185,7 @@ spec:
           path: "/etc/containerd/certs.d/1.2.3.4:1234/ca.crt"
         - content: |
             [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-              [plugins."io.containerd.grpc.v1.cri".registry.mirrors."783794618700.dkr.ecr.*.amazonaws.com"]
+              [plugins."io.containerd.grpc.v1.cri".registry.mirrors."783794618700.dkr.ecr.us-west-2.amazonaws.com"]
                 endpoint = ["https://1.2.3.4:1234/v2/curated-packages"]
               [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
                 endpoint = ["https://1.2.3.4:1234/v2/eks-anywhere"]
