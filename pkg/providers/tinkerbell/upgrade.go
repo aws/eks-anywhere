@@ -131,6 +131,11 @@ func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *
 			}
 			p.stackInstaller.AddNoProxyIP(managementCluster.Spec.ControlPlaneConfiguration.Endpoint.Host)
 		}
+
+		// Apply hardware for workload clusters
+		if err := p.applyHardwareUpgrade(ctx, cluster); err != nil {
+			return fmt.Errorf("applying hardware: %v", err)
+		}
 	}
 
 	// Check if the hardware in the catalogue have a BMCRef. Since we only allow either all hardware with bmc
@@ -510,12 +515,13 @@ func (p *Provider) PreCoreComponentsUpgrade(
 		return errors.New("cluster spec is nil")
 	}
 
-	// PreCoreComponentsUpgrade can be called for workload clusters. Ensure we only attempt to
-	// upgrade the stack if we're upgrading a management cluster.
+	// Tink stack and all the crds live on management cluster
+	// skip stack upgrade for workload clusters.
 	if clusterSpec.Cluster.IsManaged() {
 		return nil
 	}
 
+	// For management clusters, upgrade the stack and apply hardware
 	// Attempt the upgrade. This should upgrade the stack in the management cluster by updating
 	// images, installing new CRDs and possibly removing old ones.
 
