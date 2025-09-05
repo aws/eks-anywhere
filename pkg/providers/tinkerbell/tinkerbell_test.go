@@ -1603,6 +1603,7 @@ func TestSetupAndValidateUpgradeWorkloadClusterErrorBMC(t *testing.T) {
 	kubectl.EXPECT().GetProvisionedTinkerbellHardware(ctx, clusterSpec.ManagementCluster.KubeconfigFile, constants.EksaSystemNamespace).Return([]tinkv1alpha1.Hardware{}, nil)
 
 	kubectl.EXPECT().WaitForRufioMachines(ctx, cluster, defaultBMCTimeout, "Contactable", gomock.Any()).Return(fmt.Errorf("error"))
+	kubectl.EXPECT().ApplyKubeSpecFromBytesForce(gomock.Any(), cluster, gomock.Any())
 
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
 	assertError(t, "waiting for baseboard management to be contactable: error", err)

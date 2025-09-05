@@ -936,6 +936,7 @@ func TestProviderSetupAndValidateManagementProxySuccess(t *testing.T) {
 	kubectl.EXPECT().GetEksaCluster(ctx, clusterSpec.ManagementCluster, clusterSpec.Cluster.Spec.ManagementCluster.Name).Return(clusterSpec.Cluster, nil)
 	stackInstaller.EXPECT().AddNoProxyIP(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host).Return()
 	kubectl.EXPECT().WaitForRufioMachines(ctx, clusterSpec.ManagementCluster, defaultBMCTimeout, "Contactable", gomock.Any()).Return(nil)
+	kubectl.EXPECT().ApplyKubeSpecFromBytesForce(gomock.Any(), clusterSpec.ManagementCluster, gomock.Any())
 
 	err := provider.SetupAndValidateUpgradeCluster(ctx, clusterSpec.ManagementCluster, clusterSpec, clusterSpec)
 	if err != nil {
@@ -973,6 +974,54 @@ func TestProviderSetupAndValidateManagementProxyError(t *testing.T) {
 
 	err := provider.SetupAndValidateUpgradeCluster(ctx, clusterSpec.ManagementCluster, clusterSpec, clusterSpec)
 	assertError(t, "error getting management cluster data", err)
+}
+
+func TestProviderSetupAndValidateUpgradeWorkloadCluster(t *testing.T) {
+	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
+	mockCtrl := gomock.NewController(t)
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	ctx := context.Background()
+
+	// Create a hardware catalogue with CP and worker hardware
+	catalogue := hardware.NewCatalogue()
+	_ = catalogue.InsertHardware(&tinkv1.Hardware{ObjectMeta: metav1.ObjectMeta{
+		Labels: map[string]string{"type": "cp"},
+	}})
+	_ = catalogue.InsertHardware(&tinkv1.Hardware{ObjectMeta: metav1.ObjectMeta{
+		Labels: map[string]string{"type": "worker"},
+	}})
+
+	// Set up management cluster
+	managementCluster := &types.Cluster{Name: "test", KubeconfigFile: "kubeconfig-file"}
+
+	// Create workload cluster spec
+	workloadCluster := clusterSpec.DeepCopy()
+	workloadCluster.ManagementCluster = managementCluster
+	workloadCluster.Cluster.Name = "test-wkld"
+	workloadCluster.Cluster.Spec.ManagementCluster = v1alpha1.ManagementCluster{Name: "test"}
+	updatedWorkloadCluster := workloadCluster.DeepCopy()
+
+	// Create provider with the catalogue
+	provider := newTinkerbellProvider(datacenterConfig, machineConfigs, workloadCluster.Cluster, writer, docker, helm, kubectl)
+	provider.stackInstaller = stackInstaller
+	provider.catalogue = catalogue
+
+	// Set up expectations for the mock calls
+	kubectl.EXPECT().GetUnprovisionedTinkerbellHardware(ctx, managementCluster.KubeconfigFile, constants.EksaSystemNamespace).Return([]tinkv1alpha1.Hardware{}, nil)
+	kubectl.EXPECT().GetProvisionedTinkerbellHardware(ctx, managementCluster.KubeconfigFile, constants.EksaSystemNamespace).Return([]tinkv1alpha1.Hardware{}, nil)
+	kubectl.EXPECT().ApplyKubeSpecFromBytesForce(gomock.Any(), managementCluster, gomock.Any()).Return(nil)
+
+	err := provider.SetupAndValidateUpgradeCluster(ctx, managementCluster, workloadCluster, updatedWorkloadCluster)
+	if err != nil {
+		t.Fatalf("Received unexpected error: %v", err)
+	}
 }
 
 func TestProvider_ValidateNewSpec_NoChanges(t *testing.T) {
