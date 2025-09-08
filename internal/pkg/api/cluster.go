@@ -412,3 +412,10 @@ func WithInPlaceUpgradeStrategy() ClusterFiller {
 		}
 	}
 }
+
+// WithSkipAdmissionForSystemResources enables or disables skipping admission plugins for system resources.
+func WithSkipAdmissionForSystemResources(skip bool) ClusterFiller {
+	return func(c *anywherev1.Cluster) {
+		c.Spec.ControlPlaneConfiguration.SkipAdmissionForSystemResources = &skip
+	}
+}

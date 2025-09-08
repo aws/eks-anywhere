@@ -1,0 +1,213 @@
+[
+	{
+		"apiGroup": "",
+		"apiVersion": "v1",
+		"kind": "TokenRequest",
+		"scope": "Namespaced",
+		"namespace": "kube-system",
+		"name": ["*"],
+		"username": "system:kube-controller-manager"
+	},
+	{
+		"apiGroup": "",
+		"apiVersion": "v1",
+		"kind": "ServiceAccount",
+		"scope": "Namespaced",
+		"namespace": "kube-system",
+		"name": ["*"],
+		"username": "system:kube-controller-manager"
+	},
+	{
+		"apiGroup": "coordination.k8s.io",
+		"apiVersion": "v1",
+		"kind": "Lease",
+		"namespace": "kube-system",
+		"scope": "Namespaced",
+		"name": [
+			"kube-controller-manager",
+			"kube-scheduler",
+			"cilium-operator-resource-lock",
+			"cert-manager-controller",
+			"cert-manager-cainjector-leader-election"
+		],
+		"username": "*"
+	},
+	{
+		"apiGroup": "coordination.k8s.io",
+		"apiVersion": "v1",
+		"kind": "Lease",
+		"namespace": "kube-node-lease",
+		"scope": "Namespaced",
+		"name": ["*"],
+		"username": "*"
+	},
+	{
+		"apiGroup": "flowcontrol.apiserver.k8s.io",
+		"apiVersion": "*",
+		"kind": "FlowSchema",
+		"scope": "Cluster",
+		"name": ["*"],
+		"username": "system:apiserver"
+	},
+	{
+		"apiGroup": "flowcontrol.apiserver.k8s.io",
+		"apiVersion": "*",
+		"kind": "PriorityLevelConfiguration",
+		"scope": "Cluster",
+		"name": ["*"],
+		"username": "system:apiserver"
+	},
+	{
+		"apiGroup": "rbac.authorization.k8s.io",
+		"apiVersion": "v1",
+		"kind": "ClusterRole",
+		"scope": "Cluster",
+		"name": ["*"],
+		"username": "system:apiserver"
+	},
+	{
+		"apiGroup": "rbac.authorization.k8s.io",
+		"apiVersion": "v1",
+		"kind": "ClusterRoleBinding",
+		"scope": "Cluster",
+		"name": ["*"],
+		"username": "system:apiserver"
+	},
+	{
+		"apiGroup": "rbac.authorization.k8s.io",
+		"apiVersion": "v1",
+		"kind": "Role",
+		"scope": "Namespaced",
+		"namespace": "kube-system",
+		"name": ["*"],
+		"username": "system:apiserver"
+	},
+	{
+		"apiGroup": "rbac.authorization.k8s.io",
+		"apiVersion": "v1",
+		"kind": "RoleBinding",
+		"scope": "Namespaced",
+		"namespace": "kube-system",
+		"name": ["*"],
+		"username": "system:apiserver"
+	},
+	{
+		"apiGroup": "rbac.authorization.k8s.io",
+		"apiVersion": "v1",
+		"kind": "Role",
+		"scope": "Namespaced",
+		"namespace": "kube-public",
+		"name": ["*"],
+		"username": "system:apiserver"
+	},
+	{
+		"apiGroup": "rbac.authorization.k8s.io",
+		"apiVersion": "v1",
+		"kind": "RoleBinding",
+		"scope": "Namespaced",
+		"namespace": "kube-public",
+		"name": ["*"],
+		"username": "system:apiserver"
+	},
+	{
+		"apiGroup": "apiregistration.k8s.io",
+		"apiVersion": "v1",
+		"kind": "APIService",
+		"scope": "Cluster",
+		"name": [
+			"v1.apps",
+			"v1.autoscaling",
+			"v2.autoscaling",
+			"v2beta1.autoscaling",
+			"v2beta2.autoscaling",
+			"v1.batch",
+			"v1beta1.batch",
+			"v2alpha1.batch",
+			"v1.networking.k8s.io",
+			"v1beta1.networking.k8s.io",
+			"v1alpha1.networking.k8s.io",
+			"v1.policy",
+			"v1beta1.policy",
+			"v1.storage.k8s.io",
+			"v1beta1.storage.k8s.io",
+			"v1alpha1.storage.k8s.io",
+			"v1beta2.resource.k8s.io",
+			"v1beta1.coordination.k8s.io",
+			"v1beta1.certificates.k8s.io",
+			"v1.scheduling.k8s.io",
+			"v1.node.k8s.io",
+			"v1alpha1.node.k8s.io",
+			"v1beta1.node.k8s.io",
+			"v1beta1.resource.k8s.io",
+			"v1alpha3.resource.k8s.io",
+			"v1.events.k8s.io",
+			"v1beta1.events.k8s.io",
+			"v1.authentication.k8s.io",
+			"v1beta1.authentication.k8s.io",
+			"v1alpha1.authentication.k8s.io",
+			"v1.authorization.k8s.io",
+			"v1.certificates.k8s.io",
+			"v1alpha1.certificates.k8s.io",
+			"v1.rbac.authorization.k8s.io",
+			"v1.apiextensions.k8s.io",
+			"v1.admissionregistration.k8s.io",
+			"v1beta1.admissionregistration.k8s.io",
+			"v1alpha1.admissionregistration.k8s.io",
+			"v1.coordination.k8s.io",
+			"v1alpha2.coordination.k8s.io",
+			"v1.discovery.k8s.io",
+			"v1beta1.discovery.k8s.io",
+			"v1.flowcontrol.apiserver.k8s.io",
+			"v1beta3.flowcontrol.apiserver.k8s.io",
+			"v1beta2.flowcontrol.apiserver.k8s.io",
+			"v1beta1.flowcontrol.apiserver.k8s.io",
+			"v1alpha1.flowcontrol.apiserver.k8s.io",
+			"v1alpha1.internal.apiserver.k8s.io",
+			"v1alpha3.resource.k8s.io",
+			"v1alpha1.storagemigration.k8s.io"
+		],
+		"username": "system:apiserver"
+	},
+	{
+		"apiGroup": "",
+		"apiVersion": "v1",
+		"kind": "Pod",
+		"namespace": "kube-system",
+		"scope": "Namespaced",
+		"name": ["*"],
+		"username": "system:serviceaccount:kube-system:daemon-set-controller"
+	},
+	{
+		"apiGroup": "",
+		"apiVersion": "v1",
+		"kind": "Pod",
+		"namespace": "kube-system",
+		"scope": "Namespaced",
+		"name": ["*"],
+		"username": "system:serviceaccount:kube-system:replicaset-controller"
+	},
+	{
+		"apiGroup": "apps",
+		"apiVersion": "v1",
+		"kind": "DaemonSet",
+		"namespace": "kube-system",
+		"scope": "Namespaced",
+		"name": [
+			"cilium",
+			"kube-proxy"
+		],
+		"username": "*"
+	},
+	{
+		"apiGroup": "apps",
+		"apiVersion": "v1",
+		"kind": "Deployment",
+		"namespace": "kube-system",
+		"scope": "Namespaced",
+		"name": [
+			"cilium-operator",
+			"coredns"
+		],
+		"username": "*"
+	}
+]
