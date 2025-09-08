@@ -18,7 +18,6 @@ spec:
   activeBundle: v1-21-83
   defaultImageRegistry: 783794618700.dkr.ecr.us-west-2.amazonaws.com
   defaultRegistry: public.ecr.aws/eks-anywhere
-  privateRegistry: ""
   upgradeCheckInterval: 24h0m0s
 
 ---
@@ -196,13 +195,6 @@ PackageBundleControllerSpec defines the desired state of PackageBundleController
         </td>
         <td>false</td>
       </tr><tr>
-        <td><b>privateRegistry</b></td>
-        <td>string</td>
-        <td>
-          PrivateRegistry is the registry being used for all images, charts and bundles<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
         <td><b>upgradeCheckInterval</b></td>
         <td>string</td>
         <td>
@@ -335,13 +327,6 @@ Spec previous settings
           LogLevel controls the verbosity of logging in the controller.<br/>
           <br/>
             <i>Format</i>: int32<br/>
-        </td>
-        <td>false</td>
-      </tr><tr>
-        <td><b>privateRegistry</b></td>
-        <td>string</td>
-        <td>
-          PrivateRegistry is the registry being used for all images, charts and bundles<br/>
         </td>
         <td>false</td>
       </tr><tr>
