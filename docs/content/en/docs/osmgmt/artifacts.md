@@ -301,17 +301,20 @@ If creating a role with these privileges via the UI, refer to the table below.
 | VirtualMachine | Configuration > Set annotation | VirtualMachine.Config.Annotation |
 | VirtualMachine | Edit Inventory > Create from existing | VirtualMachine.Inventory.CreateFromExisting |
 | VirtualMachine | Edit Inventory > Create new | VirtualMachine.Inventory.Create |
-| VirtualMachine | Edit Inventory > Remove | VirtualMachine.Inventory.Delete |
+| VirtualMachine | Edit Inventory > Remove | VirtualMachine.Inventory.Delete (Optional)|
 | VirtualMachine | Interaction > Configure CD media | VirtualMachine.Interact.SetCDMedia |
 | VirtualMachine | Interaction > Configure floppy media | VirtualMachine.Interact.SetFloppyMedia |
 | VirtualMachine | Interaction > Connect devices | VirtualMachine.Interact.DeviceConnection |
 | VirtualMachine | Interaction > Inject USB HID scan codes | VirtualMachine.Interact.PutUsbScanCodes |
-| VirtualMachine | Interaction > Power off | VirtualMachine.Interact.PowerOff |
+| VirtualMachine | Interaction > Power off | VirtualMachine.Interact.PowerOff (Optional)|
 | VirtualMachine | Interaction > Power on | VirtualMachine.Interact.PowerOn |
-| VirtualMachine | Interaction > Create template from virtual machine | VirtualMachine.Provisioning.CreateTemplateFromVM |
-| VirtualMachine | Interaction > Mark as template | VirtualMachine.Provisioning.MarkAsTemplate |
-| VirtualMachine | Interaction > Mark as virtual machine | VirtualMachine.Provisioning.MarkAsVM |
+| VirtualMachine | Provisioning > Create template from virtual machine | VirtualMachine.Provisioning.CreateTemplateFromVM |
+| VirtualMachine | Provisioning > Mark as template | VirtualMachine.Provisioning.MarkAsTemplate |
+| VirtualMachine | Provisioning > Mark as virtual machine | VirtualMachine.Provisioning.MarkAsVM |
 | VirtualMachine | State > Create snapshot | VirtualMachine.State.CreateSnapshot |
+
+>**_NOTE:_** The VirtualMachine.Inventory.Delete and VirtualMachine.Interact.PowerOff permissions can be omitted from the EKSAImageBuilder user role. While this will result in non-critical error messages like `==> vsphere-iso.vsphere: ServerFaultCode: Permission to perform this operation was denied.` during the cleanup phase, it does not affect the image building process. You will need to manually clean up any remaining virtual machines after the build completes.
+
 
 #### CloudStack requirements
 Refer to the [CloudStack Permissions for CAPC](https://github.com/kubernetes-sigs/cluster-api-provider-cloudstack/blob/main/docs/book/src/topics/cloudstack-permissions.md) doc for required CloudStack user permissions.
