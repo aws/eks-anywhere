@@ -41,6 +41,34 @@ description: >
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
 
+## [v0.22.8](https://github.com/aws/eks-anywhere/releases/tag/v0.22.8)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.46.0 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+
+### Changed
+- EKS Distro:
+  - [`v1-32-eks-21`](https://distro.eks.amazonaws.com/releases/1-32/21/)
+  - [`v1-31-eks-28`](https://distro.eks.amazonaws.com/releases/1-31/28/)
+  - [`v1-30-eks-39`](https://distro.eks.amazonaws.com/releases/1-30/39/)
+  - [`v1-29-eks-46`](https://distro.eks.amazonaws.com/releases/1-29/46/)
+  - [`v1-28-eks-57`](https://distro.eks.amazonaws.com/releases/1-28/57/)
+- Containerd: `v1.7.27` to `v1.7.28`
+- cloud-provider-nutanix: `v0.5.0` to `v0.5.2`
+- local-path-provisioner: `v0.0.31` to `v0.0.32`
+
+### Fixed
+- Apply hardware CSV entries during workload cluster upgrades ([#10103](https://github.com/aws/eks-anywhere/pull/10103))
+- Pull locally embedded tink-worker image ([#10031](https://github.com/aws/eks-anywhere/pull/10031))
+- Enable control plane tolerations for Tinkerbell stack components ([#9971](https://github.com/aws/eks-anywhere/pull/9971))
+- Generate kubeconfig file for workload cluster with aws iam authentication ([#9905](https://github.com/aws/eks-anywhere/pull/9905))
+
 ## [v0.22.7](https://github.com/aws/eks-anywhere/releases/tag/v0.22.7)
 
 ### Supported OS version details
