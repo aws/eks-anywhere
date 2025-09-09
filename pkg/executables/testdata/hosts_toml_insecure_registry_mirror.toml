@@ -1,0 +1,5 @@
+server = "https://registry-mirror.test:443"
+
+[host."https://registry-mirror.test:443"]
+  capabilities = ["pull", "resolve"]
+  skip_verify = true

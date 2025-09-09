@@ -1,0 +1,7 @@
+server = "https://public.ecr.aws"
+
+[host."https://registry-mirror.test:443/v2/eks-anywhere"]
+  capabilities = ["pull", "resolve"]
+  skip_verify = true
+  username = "username"
+  password = "password"

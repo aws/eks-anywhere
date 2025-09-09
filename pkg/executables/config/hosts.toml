@@ -1,0 +1,13 @@
+server = "https://{{.Server}}"
+
+[host."https://{{.Host}}"]
+  capabilities = ["pull", "resolve"]
+{{- if .CACertPath }}
+  ca = "{{.CACertPath}}"
+{{- else }}
+  skip_verify = true
+{{- end }}
+{{- if .Username }}
+  username = "{{.Username}}"
+  password = "{{.Password}}"
+{{- end }}
