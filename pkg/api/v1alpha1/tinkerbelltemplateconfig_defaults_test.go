@@ -194,18 +194,59 @@ warnings:
 					},
 				},
 				{
-					Name:    "write netplan config",
+					Name:    "write network manager config",
 					Image:   "127.0.0.1/embedded/writefile",
 					Timeout: 90,
 					Environment: map[string]string{
-						"DEST_DISK":      "{{ formatPartition ( index .Hardware.Disks 0 ) 1 }}",
-						"DEST_PATH":      "/etc/netplan/config.yaml",
-						"DIRMODE":        "0755",
-						"FS_TYPE":        "ext4",
-						"GID":            "0",
-						"MODE":           "0644",
-						"UID":            "0",
-						"STATIC_NETPLAN": "true",
+						"DEST_DISK": "{{ formatPartition ( index .Hardware.Disks 0 ) 1 }}",
+						"DEST_PATH": "/etc/NetworkManager/system-connections/static-connection.nmconnection",
+						"DIRMODE":   "0755",
+						"FS_TYPE":   "ext4",
+						"GID":       "0",
+						"MODE":      "0600",
+						"UID":       "0",
+						"CONTENTS": `{{ if (index .Hardware.Interfaces 0).DHCP.VLANID }}[connection]
+id=vlan-connection
+type=vlan
+autoconnect=yes
+autoconnect-priority=10
+
+[ethernet]
+mac-address={{ (index .Hardware.Interfaces 0).DHCP.MAC }}
+
+[vlan]
+flags=1
+id={{ (index .Hardware.Interfaces 0).DHCP.VLANID }}
+mac-address={{ (index .Hardware.Interfaces 0).DHCP.MAC }}
+
+[ipv4]
+address1={{ (index .Hardware.Interfaces 0).DHCP.IP.Address }}/{{ netmaskToCIDR (index .Hardware.Interfaces 0).DHCP.IP.Netmask }}
+dns={{ range $i, $ns := (index .Hardware.Interfaces 0).DHCP.NameServers }}{{if $i}};{{end}}{{$ns}}{{end}};
+gateway={{ (index .Hardware.Interfaces 0).DHCP.IP.Gateway }}
+method=manual
+
+[ipv6]
+addr-gen-mode=default
+method=ignore
+{{ else }}[connection]
+id=static-connection
+type=ethernet
+autoconnect=yes
+autoconnect-priority=10
+
+[ethernet]
+mac-address={{ (index .Hardware.Interfaces 0).DHCP.MAC }}
+
+[ipv4]
+address1={{ (index .Hardware.Interfaces 0).DHCP.IP.Address }}/{{ netmaskToCIDR (index .Hardware.Interfaces 0).DHCP.IP.Netmask }}
+dns={{ range $i, $ns := (index .Hardware.Interfaces 0).DHCP.NameServers }}{{if $i}};{{end}}{{$ns}}{{end}};
+gateway={{ (index .Hardware.Interfaces 0).DHCP.IP.Gateway }}
+method=manual
+
+[ipv6]
+addr-gen-mode=default
+method=ignore
+{{ end }}`,
 					},
 					Pid: "host",
 				},
@@ -284,14 +325,50 @@ warnings:
 					Image:   "127.0.0.1/embedded/writefile",
 					Timeout: 90,
 					Environment: map[string]string{
-						"DEST_DISK":      "{{ formatPartition ( index .Hardware.Disks 0 ) 2 }}",
-						"DEST_PATH":      "/etc/netplan/config.yaml",
-						"DIRMODE":        "0755",
-						"FS_TYPE":        "ext4",
-						"GID":            "0",
-						"MODE":           "0644",
-						"UID":            "0",
-						"STATIC_NETPLAN": "true",
+						"DEST_DISK": "{{ formatPartition ( index .Hardware.Disks 0 ) 2 }}",
+						"DEST_PATH": "/etc/netplan/config.yaml",
+						"DIRMODE":   "0755",
+						"FS_TYPE":   "ext4",
+						"GID":       "0",
+						"MODE":      "0644",
+						"UID":       "0",
+						"CONTENTS": `{{ if (index .Hardware.Interfaces 0).DHCP.VLANID }}network:
+    version: 2
+    renderer: networkd
+    ethernets:
+        mainif:
+            match:
+                macaddress: {{ (index .Hardware.Interfaces 0).DHCP.MAC }}
+            set-name: mainif
+
+    vlans:
+        vlan{{ (index .Hardware.Interfaces 0).DHCP.VLANID }}:
+            id: {{ (index .Hardware.Interfaces 0).DHCP.VLANID }}
+            link: mainif
+            addresses:
+            - {{ (index .Hardware.Interfaces 0).DHCP.IP.Address }}/{{ netmaskToCIDR (index .Hardware.Interfaces 0).DHCP.IP.Netmask }}
+            nameservers:
+                addresses: [{{ range $i, $ns := (index .Hardware.Interfaces 0).DHCP.NameServers }}{{if $i}}, {{end}}{{$ns}}{{end}}]
+            {{- if (index .Hardware.Interfaces 0).DHCP.IP.Gateway }}
+            routes:
+                - to: default
+                  via: {{ (index .Hardware.Interfaces 0).DHCP.IP.Gateway }}
+            {{- end }}
+{{ else }}network:
+    version: 2
+    renderer: networkd
+    ethernets:
+        id0:
+            match:
+                macaddress: {{ (index .Hardware.Interfaces 0).DHCP.MAC }}
+            addresses:
+                - {{ (index .Hardware.Interfaces 0).DHCP.IP.Address }}/{{ netmaskToCIDR (index .Hardware.Interfaces 0).DHCP.IP.Netmask }}
+            nameservers:
+                addresses: [{{ range $i, $ns := (index .Hardware.Interfaces 0).DHCP.NameServers }}{{if $i}}, {{end}}{{$ns}}{{end}}]
+            routes:
+                - to: default
+                  via: {{ (index .Hardware.Interfaces 0).DHCP.IP.Gateway }}
+{{ end }}`,
 					},
 					Pid: "host",
 				},
@@ -370,14 +447,50 @@ warnings:
 					Image:   "127.0.0.1/embedded/writefile",
 					Timeout: 90,
 					Environment: map[string]string{
-						"DEST_DISK":      "{{ formatPartition ( index .Hardware.Disks 0 ) 2 }}",
-						"DEST_PATH":      "/etc/netplan/config.yaml",
-						"DIRMODE":        "0755",
-						"FS_TYPE":        "ext4",
-						"GID":            "0",
-						"MODE":           "0644",
-						"UID":            "0",
-						"STATIC_NETPLAN": "true",
+						"DEST_DISK": "{{ formatPartition ( index .Hardware.Disks 0 ) 2 }}",
+						"DEST_PATH": "/etc/netplan/config.yaml",
+						"DIRMODE":   "0755",
+						"FS_TYPE":   "ext4",
+						"GID":       "0",
+						"MODE":      "0644",
+						"UID":       "0",
+						"CONTENTS": `{{ if (index .Hardware.Interfaces 0).DHCP.VLANID }}network:
+    version: 2
+    renderer: networkd
+    ethernets:
+        mainif:
+            match:
+                macaddress: {{ (index .Hardware.Interfaces 0).DHCP.MAC }}
+            set-name: mainif
+
+    vlans:
+        vlan{{ (index .Hardware.Interfaces 0).DHCP.VLANID }}:
+            id: {{ (index .Hardware.Interfaces 0).DHCP.VLANID }}
+            link: mainif
+            addresses:
+            - {{ (index .Hardware.Interfaces 0).DHCP.IP.Address }}/{{ netmaskToCIDR (index .Hardware.Interfaces 0).DHCP.IP.Netmask }}
+            nameservers:
+                addresses: [{{ range $i, $ns := (index .Hardware.Interfaces 0).DHCP.NameServers }}{{if $i}}, {{end}}{{$ns}}{{end}}]
+            {{- if (index .Hardware.Interfaces 0).DHCP.IP.Gateway }}
+            routes:
+                - to: default
+                  via: {{ (index .Hardware.Interfaces 0).DHCP.IP.Gateway }}
+            {{- end }}
+{{ else }}network:
+    version: 2
+    renderer: networkd
+    ethernets:
+        id0:
+            match:
+                macaddress: {{ (index .Hardware.Interfaces 0).DHCP.MAC }}
+            addresses:
+                - {{ (index .Hardware.Interfaces 0).DHCP.IP.Address }}/{{ netmaskToCIDR (index .Hardware.Interfaces 0).DHCP.IP.Netmask }}
+            nameservers:
+                addresses: [{{ range $i, $ns := (index .Hardware.Interfaces 0).DHCP.NameServers }}{{if $i}}, {{end}}{{$ns}}{{end}}]
+            routes:
+                - to: default
+                  via: {{ (index .Hardware.Interfaces 0).DHCP.IP.Gateway }}
+{{ end }}`,
 					},
 					Pid: "host",
 				},
@@ -471,14 +584,50 @@ warnings:
 					Image:   "127.0.0.1/embedded/writefile",
 					Timeout: 90,
 					Environment: map[string]string{
-						"DEST_DISK":      "{{ formatPartition ( index .Hardware.Disks 0 ) 2 }}",
-						"DEST_PATH":      "/etc/netplan/config.yaml",
-						"DIRMODE":        "0755",
-						"FS_TYPE":        "ext4",
-						"GID":            "0",
-						"MODE":           "0644",
-						"UID":            "0",
-						"STATIC_NETPLAN": "true",
+						"DEST_DISK": "{{ formatPartition ( index .Hardware.Disks 0 ) 2 }}",
+						"DEST_PATH": "/etc/netplan/config.yaml",
+						"DIRMODE":   "0755",
+						"FS_TYPE":   "ext4",
+						"GID":       "0",
+						"MODE":      "0644",
+						"UID":       "0",
+						"CONTENTS": `{{ if (index .Hardware.Interfaces 0).DHCP.VLANID }}network:
+    version: 2
+    renderer: networkd
+    ethernets:
+        mainif:
+            match:
+                macaddress: {{ (index .Hardware.Interfaces 0).DHCP.MAC }}
+            set-name: mainif
+
+    vlans:
+        vlan{{ (index .Hardware.Interfaces 0).DHCP.VLANID }}:
+            id: {{ (index .Hardware.Interfaces 0).DHCP.VLANID }}
+            link: mainif
+            addresses:
+            - {{ (index .Hardware.Interfaces 0).DHCP.IP.Address }}/{{ netmaskToCIDR (index .Hardware.Interfaces 0).DHCP.IP.Netmask }}
+            nameservers:
+                addresses: [{{ range $i, $ns := (index .Hardware.Interfaces 0).DHCP.NameServers }}{{if $i}}, {{end}}{{$ns}}{{end}}]
+            {{- if (index .Hardware.Interfaces 0).DHCP.IP.Gateway }}
+            routes:
+                - to: default
+                  via: {{ (index .Hardware.Interfaces 0).DHCP.IP.Gateway }}
+            {{- end }}
+{{ else }}network:
+    version: 2
+    renderer: networkd
+    ethernets:
+        id0:
+            match:
+                macaddress: {{ (index .Hardware.Interfaces 0).DHCP.MAC }}
+            addresses:
+                - {{ (index .Hardware.Interfaces 0).DHCP.IP.Address }}/{{ netmaskToCIDR (index .Hardware.Interfaces 0).DHCP.IP.Netmask }}
+            nameservers:
+                addresses: [{{ range $i, $ns := (index .Hardware.Interfaces 0).DHCP.NameServers }}{{if $i}}, {{end}}{{$ns}}{{end}}]
+            routes:
+                - to: default
+                  via: {{ (index .Hardware.Interfaces 0).DHCP.IP.Gateway }}
+{{ end }}`,
 					},
 					Pid: "host",
 				},
