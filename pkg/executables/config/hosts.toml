@@ -7,7 +7,7 @@ server = "https://{{.Server}}"
 {{- else }}
   skip_verify = true
 {{- end }}
-{{- if .Username }}
-  username = "{{.Username}}"
-  password = "{{.Password}}"
+{{- if .AuthHeader }}
+  [host."https://{{.Host}}".header]
+    authorization = "{{.AuthHeader}}"
 {{- end }}

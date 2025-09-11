@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	_ "embed"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"os"
@@ -215,8 +216,7 @@ type RegistryConfig struct {
 	Server     string // The server URL for the registry
 	Host       string // The host URL to redirect to
 	CACertPath string // CA certificate path
-	Username   string // Registry username for authentication
-	Password   string // Registry password for authentication
+	AuthHeader string
 	OutputDir  string // Directory where to write hosts.toml
 }
 
@@ -276,12 +276,17 @@ func (k *Kind) setupRegistryMirror(clusterSpec *cluster.Spec, registryMirror *re
 	certsBasePath := filepath.Join(clusterSpec.Cluster.Name, "generated", "certs.d")
 	k.execConfig.RegistryConfigDir = certsBasePath
 
-	var username, password string
+	// Generate authorization header if authentication is required
+	var authHeader string
 	if registryMirror.Auth {
-		var err error
-		username, password, err = config.ReadCredentials()
+		username, password, err := config.ReadCredentials()
 		if err != nil {
 			return err
+		}
+		if username != "" {
+			credentials := fmt.Sprintf("%s:%s", username, password)
+			encoded := base64.StdEncoding.EncodeToString([]byte(credentials))
+			authHeader = fmt.Sprintf("Basic %s", encoded)
 		}
 	}
 
@@ -308,8 +313,7 @@ func (k *Kind) setupRegistryMirror(clusterSpec *cluster.Spec, registryMirror *re
 		Server:     mirrorBase,
 		Host:       mirrorBase,
 		CACertPath: mountedCACertPath,
-		Username:   username,
-		Password:   password,
+		AuthHeader: authHeader,
 		OutputDir:  filepath.Join(certsBasePath, mirrorBase),
 	})
 	if err != nil {
@@ -322,8 +326,7 @@ func (k *Kind) setupRegistryMirror(clusterSpec *cluster.Spec, registryMirror *re
 			Server:     originalRegistry,
 			Host:       mirrorEndpoint,
 			CACertPath: mountedCACertPath,
-			Username:   username,
-			Password:   password,
+			AuthHeader: authHeader,
 			OutputDir:  filepath.Join(certsBasePath, originalRegistry),
 		})
 		if err != nil {
