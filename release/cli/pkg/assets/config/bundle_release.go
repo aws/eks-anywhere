@@ -316,6 +316,8 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 				Format: "tarball",
 			},
 		},
+		HasReleaseBranches:             true,
+		HasSeparateTagPerReleaseBranch: true,
 	},
 	// Image-builder cli artifacts
 	{
