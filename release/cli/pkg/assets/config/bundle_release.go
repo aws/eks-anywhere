@@ -308,8 +308,10 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 	},
 	// Containerd artifacts
 	{
-		ProjectName: "containerd",
-		ProjectPath: "projects/containerd/containerd",
+		ProjectName:                    "containerd",
+		ProjectPath:                    "projects/containerd/containerd",
+		HasReleaseBranches:             true,
+		HasSeparateTagPerReleaseBranch: true,
 		Archives: []*assettypes.Archive{
 			{
 				Name:   "containerd",

@@ -41,7 +41,7 @@ func GetEksDReleaseBundle(r *releasetypes.ReleaseConfig, eksDReleaseChannel, kub
 	eksDArtifacts := []releasetypes.Artifact{}
 	eksDArtifacts = append(eksDArtifacts, imageBuilderArtifacts...)
 	eksDArtifacts = append(eksDArtifacts, kindArtifacts...)
-	projectsInBundle := []string{"containerd", "cri-tools", "etcdadm", "image-builder"}
+	projectsInBundle := []string{"cri-tools", "etcdadm", "image-builder"}
 	tarballArtifacts := map[string][]releasetypes.Artifact{}
 	for _, project := range projectsInBundle {
 		projectArtifacts, err := r.BundleArtifactsTable.Load(project)
@@ -50,6 +50,14 @@ func GetEksDReleaseBundle(r *releasetypes.ReleaseConfig, eksDReleaseChannel, kub
 		}
 		tarballArtifacts[project] = projectArtifacts
 	}
+
+	// Handle containerd separately since it's now release-branched
+	containerdProjectName := fmt.Sprintf("containerd-%s", eksDReleaseChannel)
+	containerdArtifacts, err := r.BundleArtifactsTable.Load(containerdProjectName)
+	if err != nil {
+		return anywherev1alpha1.EksDRelease{}, fmt.Errorf("artifacts for project %s not found in bundle artifacts table", containerdProjectName)
+	}
+	tarballArtifacts["containerd"] = containerdArtifacts
 
 	bundleArchiveArtifacts := map[string]anywherev1alpha1.Archive{}
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
