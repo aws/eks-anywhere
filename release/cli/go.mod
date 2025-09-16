@@ -11,7 +11,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/kms v1.37.9
 	github.com/aws/eks-anywhere v0.18.0
 	github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae5e
-	github.com/fsouza/go-dockerclient v1.12.2-0.20250814055408-c31f6141d29b
+	github.com/fsouza/go-dockerclient v1.12.2
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-logr/logr v1.4.2
 	github.com/itchyny/gojq v0.12.17
