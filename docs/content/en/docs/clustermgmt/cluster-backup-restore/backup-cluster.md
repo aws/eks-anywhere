@@ -12,7 +12,11 @@ We strongly advise performing regular cluster backups of all the EKS Anywhere cl
 
 ## Etcd backup
 
-For optimal cluster maintenance, it is crucial to perform regular etcd backups on all your EKS Anywhere management and workload clusters. **Always** take an etcd backup before performing an upgrade so it can be used to restore the cluster to a previous state in the event of a cluster upgrade failure. To create an etcd backup for your cluster, follow the guidelines provided in the [External etcd backup and restore]({{< relref "../etcd-backup-restore/etcdbackup" >}}) section.
+For optimal cluster maintenance, it is crucial to perform regular etcd backups on all your EKS Anywhere management and workload clusters. **Always** take an etcd backup before performing an upgrade so it can be used to restore the cluster to a previous state in the event of a cluster upgrade failure. To create an external etcd backup for your cluster, follow the guidelines provided in the [External etcd backup and restore]({{< relref "../etcd-backup-restore/etcdbackup" >}}) section.
+
+{{% alert title="Note" color="warning" %}}
+Baremetal provider only supports stacked etcd.
+{{% /alert %}}
 
 
 ## Cluster API backup
