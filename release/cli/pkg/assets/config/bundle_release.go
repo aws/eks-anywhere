@@ -314,8 +314,9 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 		HasSeparateTagPerReleaseBranch: true,
 		Archives: []*assettypes.Archive{
 			{
-				Name:   "containerd",
-				Format: "tarball",
+				Name:                "containerd",
+				Format:              "tarball",
+				ArchiveS3PathGetter: archives.ReleaseBranchedTarballArtifactPathGetter,
 			},
 		},
 	},
