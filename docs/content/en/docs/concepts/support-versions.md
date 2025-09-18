@@ -59,10 +59,10 @@ Bottlerocket, Ubuntu, and Red Hat Enterprise Linux (RHEL) can be used as operati
 |               | 1.20.0    | 0.20
 |               | 1.19.1    | 0.19
 |               | 1.15.1    | 0.18
-| RHEL          | 9.x<sup>*</sup>	      | 0.18+
-|               | 8.x	      | 0.12+
+| RHEL          | 9.x       | 0.18+
+|               | 8.x<sup>*</sup>      | 0.12+
 
-<sup>*</sup>Bare Metal, CloudStack and Nutanix only
+<sup>*</sup>RHEL 8's kernel version (4.18) is not supported by kubeadm for Kubernetes versions 1.32 and above (see Kubernetes GitHub issue [#129462](https://github.com/kubernetes/kubernetes/issues/129462)). As a result, EKS Anywhere does not support using RHEL 8 as the node operating system for Kubernetes versions 1.32 and above.
 
 * For details on supported operating systems for Admin machines, [see the Admin Machine page.]({{< relref "../getting-started/install/" >}})
 * Older Bottlerocket versions are omitted from this table for brevity
