@@ -39,8 +39,9 @@ Refer to the [troubleshooting guide]({{< relref "../troubleshoot" >}}) in the ev
    eksctl anywhere generate package cluster-autoscaler --cluster <cluster-name> > cluster-autoscaler.yaml
    ```
 
-1. Add the desired configuration to `cluster-autoscaler.yaml`. See [configuration options]({{< relref "../cluster-autoscaler" >}}) for all configuration options and their default values. See below for an example package file configuring a Cluster Autoscaler package.
+1. Add the desired configuration to `cluster-autoscaler.yaml`. See [configuration options]({{< relref "../cluster-autoscaler" >}}) for all configuration options and their default values. See below for example package files configuring a Cluster Autoscaler package.
 
+    **For Management Cluster Autoscaling:**
     ```yaml
     apiVersion: packages.eks.amazonaws.com/v1alpha1
     kind: Package
@@ -55,6 +56,33 @@ Refer to the [troubleshooting guide]({{< relref "../troubleshoot" >}}) in the ev
           autoDiscovery:
             clusterName: "<cluster-name>"
     ```
+
+    **For Workload Cluster Autoscaling (deployed from Management Cluster):**
+    ```yaml
+    apiVersion: packages.eks.amazonaws.com/v1alpha1
+    kind: Package
+    metadata:
+      name: cluster-autoscaler-<workload-cluster-name>
+      namespace: eksa-packages-<management-cluster-name>
+    spec:
+      packageName: cluster-autoscaler
+      targetNamespace: eksa-system
+      config: |-
+          cloudProvider: "clusterapi"
+          clusterAPIMode: "kubeconfig-incluster"
+          clusterAPIKubeconfigSecret: "<workload-cluster-name>-kubeconfig"
+          autoDiscovery:
+            clusterName: "<workload-cluster-name>"
+    ```
+
+    **Configuration Fields for Workload Cluster Autoscaling:**
+    
+    - `clusterAPIMode`: Set to `"kubeconfig-incluster"` to enable workload cluster autoscaling from the management cluster
+    - `clusterAPIKubeconfigSecret`: Name of the Kubernetes secret containing the kubeconfig for the workload cluster. EKS Anywhere automatically creates this secret in the management cluster with the naming pattern `<workload-cluster-name>-kubeconfig`
+    - `targetNamespace`: Should be set to `eksa-system` for workload cluster autoscaling
+    - `autoDiscovery.clusterName`: Must match the name of the workload cluster to be autoscaled
+
+    > **Note:** The kubeconfig secret for workload clusters is automatically created by EKS Anywhere in the management cluster when a workload cluster is provisioned. This secret provides the necessary credentials for the autoscaler running in the management cluster to manage the workload cluster's nodes.
 
 1. Install Cluster Autoscaler
 
