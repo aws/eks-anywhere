@@ -17,6 +17,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/manifests"
 	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
@@ -381,4 +382,14 @@ func getReleaseManifestFromBundle(clusterSpec v1alpha1.Cluster, bundle *releasev
 	}
 
 	return releaseManifest, nil
+}
+
+// ValidateK8s134Support checks if the 1.34 feature flag is set when using k8s 1.34.
+func ValidateK8s134Support(clusterSpec *cluster.Spec) error {
+	if !features.IsActive(features.K8s134Support()) {
+		if clusterSpec.Cluster.Spec.KubernetesVersion == v1alpha1.Kube134 {
+			return fmt.Errorf("kubernetes version %s is not enabled. Please set the env variable %v", v1alpha1.Kube134, features.K8s134SupportEnvVar)
+		}
+	}
+	return nil
 }

@@ -866,6 +866,7 @@ const (
 	Kube131 KubernetesVersion = "1.31"
 	Kube132 KubernetesVersion = "1.32"
 	Kube133 KubernetesVersion = "1.33"
+	Kube134 KubernetesVersion = "1.34"
 )
 
 // KubeVersionToSemver converts kube version to semver for comparisons.
