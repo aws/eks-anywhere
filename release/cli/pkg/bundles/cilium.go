@@ -37,7 +37,7 @@ const (
 )
 
 func GetCiliumBundle(r *releasetypes.ReleaseConfig) (anywherev1alpha1.CiliumBundle, error) {
-	ciliumContainerRegistry := "public.ecr.aws/isovalent"
+	ciliumContainerRegistry := "public.ecr.aws/eks/cilium"
 	ciliumGitTag, err := filereader.ReadGitTag(constants.CiliumProjectPath, r.BuildRepoSource, r.BuildRepoBranchName)
 	if err != nil {
 		return anywherev1alpha1.CiliumBundle{}, errors.Cause(err)

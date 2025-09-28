@@ -115,12 +115,12 @@ spec:
         imageDigest: sha256:07607f99e841df9d7087003ac3618ba6c3476b87163ddfb631ab6d3368a71ad2
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.17.6-0
+        uri: public.ecr.aws/eks/cilium/cilium:v1.17.6-0
       helmChart:
         description: Helm chart for cilium-chart
         imageDigest: sha256:e0a8e9cdd9d04a15c4a46fcbfbfc7a6d899adc7fd7072f2bc5a09fa9d3cbd31f
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.17.6-0
+        uri: public.ecr.aws/eks/cilium/cilium:1.17.6-0
       operator:
         arch:
         - amd64
@@ -128,7 +128,7 @@ spec:
         imageDigest: sha256:5172f58fef324075e9e927090e17a6b7d3d3a630e35c16c700d0377fc2305127
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.17.6-0
+        uri: public.ecr.aws/eks/cilium/operator-generic:v1.17.6-0
       version: v1.17.6-0
     cloudStack:
       clusterAPIController:
@@ -940,12 +940,12 @@ spec:
         imageDigest: sha256:07607f99e841df9d7087003ac3618ba6c3476b87163ddfb631ab6d3368a71ad2
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.17.6-0
+        uri: public.ecr.aws/eks/cilium/cilium:v1.17.6-0
       helmChart:
         description: Helm chart for cilium-chart
         imageDigest: sha256:e0a8e9cdd9d04a15c4a46fcbfbfc7a6d899adc7fd7072f2bc5a09fa9d3cbd31f
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.17.6-0
+        uri: public.ecr.aws/eks/cilium/cilium:1.17.6-0
       operator:
         arch:
         - amd64
@@ -953,7 +953,7 @@ spec:
         imageDigest: sha256:5172f58fef324075e9e927090e17a6b7d3d3a630e35c16c700d0377fc2305127
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.17.6-0
+        uri: public.ecr.aws/eks/cilium/operator-generic:v1.17.6-0
       version: v1.17.6-0
     cloudStack:
       clusterAPIController:
@@ -1765,12 +1765,12 @@ spec:
         imageDigest: sha256:07607f99e841df9d7087003ac3618ba6c3476b87163ddfb631ab6d3368a71ad2
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.17.6-0
+        uri: public.ecr.aws/eks/cilium/cilium:v1.17.6-0
       helmChart:
         description: Helm chart for cilium-chart
         imageDigest: sha256:e0a8e9cdd9d04a15c4a46fcbfbfc7a6d899adc7fd7072f2bc5a09fa9d3cbd31f
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.17.6-0
+        uri: public.ecr.aws/eks/cilium/cilium:1.17.6-0
       operator:
         arch:
         - amd64
@@ -1778,7 +1778,7 @@ spec:
         imageDigest: sha256:5172f58fef324075e9e927090e17a6b7d3d3a630e35c16c700d0377fc2305127
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.17.6-0
+        uri: public.ecr.aws/eks/cilium/operator-generic:v1.17.6-0
       version: v1.17.6-0
     cloudStack:
       clusterAPIController:
@@ -2590,12 +2590,12 @@ spec:
         imageDigest: sha256:07607f99e841df9d7087003ac3618ba6c3476b87163ddfb631ab6d3368a71ad2
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.17.6-0
+        uri: public.ecr.aws/eks/cilium/cilium:v1.17.6-0
       helmChart:
         description: Helm chart for cilium-chart
         imageDigest: sha256:e0a8e9cdd9d04a15c4a46fcbfbfc7a6d899adc7fd7072f2bc5a09fa9d3cbd31f
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.17.6-0
+        uri: public.ecr.aws/eks/cilium/cilium:1.17.6-0
       operator:
         arch:
         - amd64
@@ -2603,7 +2603,7 @@ spec:
         imageDigest: sha256:5172f58fef324075e9e927090e17a6b7d3d3a630e35c16c700d0377fc2305127
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.17.6-0
+        uri: public.ecr.aws/eks/cilium/operator-generic:v1.17.6-0
       version: v1.17.6-0
     cloudStack:
       clusterAPIController:
@@ -3415,12 +3415,12 @@ spec:
         imageDigest: sha256:07607f99e841df9d7087003ac3618ba6c3476b87163ddfb631ab6d3368a71ad2
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.17.6-0
+        uri: public.ecr.aws/eks/cilium/cilium:v1.17.6-0
       helmChart:
         description: Helm chart for cilium-chart
         imageDigest: sha256:e0a8e9cdd9d04a15c4a46fcbfbfc7a6d899adc7fd7072f2bc5a09fa9d3cbd31f
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.17.6-0
+        uri: public.ecr.aws/eks/cilium/cilium:1.17.6-0
       operator:
         arch:
         - amd64
@@ -3428,7 +3428,7 @@ spec:
         imageDigest: sha256:5172f58fef324075e9e927090e17a6b7d3d3a630e35c16c700d0377fc2305127
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.17.6-0
+        uri: public.ecr.aws/eks/cilium/operator-generic:v1.17.6-0
       version: v1.17.6-0
     cloudStack:
       clusterAPIController:
@@ -4240,12 +4240,12 @@ spec:
         imageDigest: sha256:07607f99e841df9d7087003ac3618ba6c3476b87163ddfb631ab6d3368a71ad2
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.17.6-0
+        uri: public.ecr.aws/eks/cilium/cilium:v1.17.6-0
       helmChart:
         description: Helm chart for cilium-chart
         imageDigest: sha256:e0a8e9cdd9d04a15c4a46fcbfbfc7a6d899adc7fd7072f2bc5a09fa9d3cbd31f
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.17.6-0
+        uri: public.ecr.aws/eks/cilium/cilium:1.17.6-0
       operator:
         arch:
         - amd64
@@ -4253,7 +4253,7 @@ spec:
         imageDigest: sha256:5172f58fef324075e9e927090e17a6b7d3d3a630e35c16c700d0377fc2305127
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.17.6-0
+        uri: public.ecr.aws/eks/cilium/operator-generic:v1.17.6-0
       version: v1.17.6-0
     cloudStack:
       clusterAPIController:
@@ -5065,12 +5065,12 @@ spec:
         imageDigest: sha256:07607f99e841df9d7087003ac3618ba6c3476b87163ddfb631ab6d3368a71ad2
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.17.6-0
+        uri: public.ecr.aws/eks/cilium/cilium:v1.17.6-0
       helmChart:
         description: Helm chart for cilium-chart
         imageDigest: sha256:e0a8e9cdd9d04a15c4a46fcbfbfc7a6d899adc7fd7072f2bc5a09fa9d3cbd31f
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.17.6-0
+        uri: public.ecr.aws/eks/cilium/cilium:1.17.6-0
       operator:
         arch:
         - amd64
@@ -5078,7 +5078,7 @@ spec:
         imageDigest: sha256:5172f58fef324075e9e927090e17a6b7d3d3a630e35c16c700d0377fc2305127
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.17.6-0
+        uri: public.ecr.aws/eks/cilium/operator-generic:v1.17.6-0
       version: v1.17.6-0
     cloudStack:
       clusterAPIController:
