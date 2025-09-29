@@ -120,7 +120,7 @@ The following projects must be created in your registry before importing the EKS
 bottlerocket
 eks-anywhere
 eks-distro
-isovalent
+eks
 cilium-chart
 curated-packages
 ```
@@ -131,7 +131,7 @@ For example, if a registry is available at `private-registry.local`, then the fo
 https://private-registry.local/bottlerocket
 https://private-registry.local/eks-anywhere
 https://private-registry.local/eks-distro
-https://private-registry.local/isovalent
+https://private-registry.local/eks
 https://private-registry.local/cilium-chart
 https://private-registry.local/curated-packages
 ```
