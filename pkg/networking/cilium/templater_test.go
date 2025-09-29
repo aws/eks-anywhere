@@ -43,26 +43,26 @@ func newtemplaterTest(t *testing.T) *templaterTest {
 		h:         h,
 		t:         cilium.NewTemplater(hf),
 		manifest:  []byte("manifestContent"),
-		uri:       "oci://public.ecr.aws/isovalent/cilium",
-		version:   "1.9.11-eksa.1",
+		uri:       "oci://public.ecr.aws/eks/cilium/cilium",
+		version:   "1.17.6-0",
 		namespace: "kube-system",
 		currentSpec: test.NewClusterSpec(func(s *cluster.Spec) {
 			s.Cluster.Spec.KubernetesVersion = "1.22"
 			s.VersionsBundles["1.22"] = test.VersionBundle()
-			s.VersionsBundles["1.22"].Cilium.Version = "v1.9.10-eksa.1"
-			s.VersionsBundles["1.22"].Cilium.Cilium.URI = "public.ecr.aws/isovalent/cilium:v1.9.10-eksa.1"
-			s.VersionsBundles["1.22"].Cilium.Operator.URI = "public.ecr.aws/isovalent/operator-generic:v1.9.10-eksa.1"
-			s.VersionsBundles["1.22"].Cilium.HelmChart.URI = "public.ecr.aws/isovalent/cilium:1.9.10-eksa.1"
+			s.VersionsBundles["1.22"].Cilium.Version = "v1.17.6-0"
+			s.VersionsBundles["1.22"].Cilium.Cilium.URI = "public.ecr.aws/eks/cilium/cilium:v1.17.6-0"
+			s.VersionsBundles["1.22"].Cilium.Operator.URI = "public.ecr.aws/eks/cilium/operator-generic:v1.17.6-0"
+			s.VersionsBundles["1.22"].Cilium.HelmChart.URI = "public.ecr.aws/eks/cilium/cilium:1.17.6-0"
 			s.VersionsBundles["1.22"].KubeDistro.Kubernetes.Tag = "v1.22.5-eks-1-22-9"
 			s.Cluster.Spec.ClusterNetwork.CNIConfig = &v1alpha1.CNIConfig{Cilium: &v1alpha1.CiliumConfig{}}
 		}),
 		spec: test.NewClusterSpec(func(s *cluster.Spec) {
 			s.Cluster.Spec.KubernetesVersion = "1.22"
 			s.VersionsBundles["1.22"] = test.VersionBundle()
-			s.VersionsBundles["1.22"].Cilium.Version = "v1.9.11-eksa.1"
-			s.VersionsBundles["1.22"].Cilium.Cilium.URI = "public.ecr.aws/isovalent/cilium:v1.9.11-eksa.1"
-			s.VersionsBundles["1.22"].Cilium.Operator.URI = "public.ecr.aws/isovalent/operator-generic:v1.9.11-eksa.1"
-			s.VersionsBundles["1.22"].Cilium.HelmChart.URI = "public.ecr.aws/isovalent/cilium:1.9.11-eksa.1"
+			s.VersionsBundles["1.22"].Cilium.Version = "v1.17.6-0"
+			s.VersionsBundles["1.22"].Cilium.Cilium.URI = "public.ecr.aws/eks/cilium/cilium:v1.17.6-0"
+			s.VersionsBundles["1.22"].Cilium.Operator.URI = "public.ecr.aws/eks/cilium/operator-generic:v1.17.6-0"
+			s.VersionsBundles["1.22"].Cilium.HelmChart.URI = "public.ecr.aws/eks/cilium/cilium:1.17.6-0"
 			s.VersionsBundles["1.22"].KubeDistro.Kubernetes.Tag = "v1.22.5-eks-1-22-9"
 			s.Cluster.Spec.ClusterNetwork.CNIConfig = &v1alpha1.CNIConfig{Cilium: &v1alpha1.CiliumConfig{}}
 		}),
@@ -127,13 +127,13 @@ func baseTemplateValues() map[string]interface{} {
 		"routingMode":       "tunnel",
 		"tunnelProtocol":    "geneve",
 		"image": map[string]interface{}{
-			"repository": "public.ecr.aws/isovalent/cilium",
-			"tag":        "v1.9.11-eksa.1",
+			"repository": "public.ecr.aws/eks/cilium/cilium",
+			"tag":        "v1.17.6-0",
 		},
 		"operator": map[string]interface{}{
 			"image": map[string]interface{}{
-				"repository": "public.ecr.aws/isovalent/operator",
-				"tag":        "v1.9.11-eksa.1",
+				"repository": "public.ecr.aws/eks/cilium/operator",
+				"tag":        "v1.17.6-0",
 			},
 			"prometheus": map[string]interface{}{
 				"enabled": true,
@@ -170,8 +170,8 @@ func withPreflightConfig(values map[string]interface{}) {
 	values["preflight"] = map[string]interface{}{
 		"enabled": true,
 		"image": map[string]interface{}{
-			"repository": "public.ecr.aws/isovalent/cilium",
-			"tag":        "v1.9.11-eksa.1",
+			"repository": "public.ecr.aws/eks/cilium/cilium",
+			"tag":        "v1.17.6-0",
 		},
 		"tolerations": []map[string]string{
 			{
@@ -416,7 +416,7 @@ func TestTemplaterGenerateManifestInvalidKubeVersion(t *testing.T) {
 
 func TestTemplaterGenerateManifestUpgradeSameKubernetesVersionSuccess(t *testing.T) {
 	wantValues := baseTemplateValues()
-	withUpgradeCompatibility(wantValues, "1.9")
+	withUpgradeCompatibility(wantValues, "1.17")
 
 	tt := newtemplaterTest(t)
 
@@ -437,7 +437,7 @@ func TestTemplaterGenerateManifestUpgradeSameKubernetesVersionSuccess(t *testing
 
 func TestTemplaterGenerateManifestUpgradeNewKubernetesVersionSuccess(t *testing.T) {
 	wantValues := baseTemplateValues()
-	withUpgradeCompatibility(wantValues, "1.9")
+	withUpgradeCompatibility(wantValues, "1.17")
 
 	tt := newtemplaterTest(t)
 

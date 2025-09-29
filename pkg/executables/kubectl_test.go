@@ -2440,7 +2440,7 @@ func TestKubectlGetDaemonSetSuccess(t *testing.T) {
 						Containers: []corev1.Container{
 							{
 								Command: []string{"cilium-agent"},
-								Image:   "public.ecr.aws/isovalent/cilium:v1.9.11-eksa.1",
+								Image:   "public.ecr.aws/eks/cilium/cilium:v1.17.6-0",
 								Name:    "cilium-agent",
 							},
 						},
