@@ -13,7 +13,7 @@
                         "command": [
                             "cilium-agent"
                         ],
-                        "image": "public.ecr.aws/isovalent/cilium:v1.9.11-eksa.1",
+                        "image": "public.ecr.aws/eks/cilium/cilium:v1.17.6-0",
                         "name": "cilium-agent"
                     }
                 ]
