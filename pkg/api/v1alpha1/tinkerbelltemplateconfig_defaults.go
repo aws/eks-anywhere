@@ -83,7 +83,7 @@ func DefaultActions(clusterSpec *Cluster, osImageOverride, tinkerbellLocalIP, ti
 		partitionPath := fmt.Sprintf(paritionPathFmt, "1")
 
 		actions = append(actions,
-			withNetplanAction(partitionPath, osFamily),
+			withNetworkManagerAction(partitionPath),
 			withDisableCloudInitNetworkCapabilities(partitionPath),
 			withTinkCloudInitAction(partitionPath, strings.Join(mu, ",")),
 			withDsCloudInitAction(partitionPath),
@@ -133,7 +133,6 @@ func withNetplanAction(disk string, osFamily OSFamily) ActionOpt {
 			Timeout: 90,
 			Environment: map[string]string{
 				"DEST_DISK": disk,
-				"DEST_PATH": "/etc/netplan/config.yaml",
 				"DIRMODE":   "0755",
 				"FS_TYPE":   "ext4",
 				"GID":       "0",
@@ -149,7 +148,51 @@ func withNetplanAction(disk string, osFamily OSFamily) ActionOpt {
 			netplanAction.Environment["STATIC_BOTTLEROCKET"] = "true"
 			netplanAction.Environment["IFNAME"] = "eno1"
 		} else {
-			netplanAction.Environment["STATIC_NETPLAN"] = "true"
+			// For other OS families (Ubuntu, etc.), use netplan configuration
+			netplanAction.Environment["DEST_PATH"] = "/etc/netplan/config.yaml"
+
+			// Instead of using DHCP to get network information, use the hardware object directly
+			netplanTemplate := `network:
+    version: 2
+    renderer: networkd
+    ethernets:
+        id0:
+            match:
+                macaddress: {{ (index .Hardware.Interfaces 0).DHCP.MAC }}
+            addresses:
+                - {{ (index .Hardware.Interfaces 0).DHCP.IP.Address }}/{{ netmaskToCIDR (index .Hardware.Interfaces 0).DHCP.IP.Netmask }}
+            nameservers:
+                addresses: [{{ range $i, $ns := (index .Hardware.Interfaces 0).DHCP.NameServers }}{{if $i}}, {{end}}{{$ns}}{{end}}]
+            routes:
+                - to: default
+                  via: {{ (index .Hardware.Interfaces 0).DHCP.IP.Gateway }}
+`
+			// Check if VLAN ID exists in the hardware object and create a VLAN-tagged interface if it does
+			vlanTemplate := `network:
+    version: 2
+    renderer: networkd
+    ethernets:
+        mainif:
+            match:
+                macaddress: {{ (index .Hardware.Interfaces 0).DHCP.MAC }}
+            set-name: mainif
+
+    vlans:
+        vlan{{ (index .Hardware.Interfaces 0).DHCP.VLANID }}:
+            id: {{ (index .Hardware.Interfaces 0).DHCP.VLANID }}
+            link: mainif
+            addresses:
+            - {{ (index .Hardware.Interfaces 0).DHCP.IP.Address }}/{{ netmaskToCIDR (index .Hardware.Interfaces 0).DHCP.IP.Netmask }}
+            nameservers:
+                addresses: [{{ range $i, $ns := (index .Hardware.Interfaces 0).DHCP.NameServers }}{{if $i}}, {{end}}{{$ns}}{{end}}]
+            {{- if (index .Hardware.Interfaces 0).DHCP.IP.Gateway }}
+            routes:
+                - to: default
+                  via: {{ (index .Hardware.Interfaces 0).DHCP.IP.Gateway }}
+            {{- end }}
+`
+			// Use VLAN template if VLANID is present in the hardware object
+			netplanAction.Environment["CONTENTS"] = `{{ if (index .Hardware.Interfaces 0).DHCP.VLANID }}` + vlanTemplate + `{{ else }}` + netplanTemplate + `{{ end }}`
 		}
 		*a = append(*a, netplanAction)
 	}
@@ -266,5 +309,74 @@ func withBottlerocketUserDataAction(disk, metadataURLs string) ActionOpt {
 				"DIRMODE":    "0700",
 			},
 		})
+	}
+}
+
+func withNetworkManagerAction(disk string) ActionOpt {
+	return func(a *[]tinkerbell.Action) {
+		networkManagerAction := tinkerbell.Action{
+			Name:    "write network manager config",
+			Image:   actionWriteFile,
+			Timeout: 90,
+			Environment: map[string]string{
+				"DEST_DISK": disk,
+				"DEST_PATH": "/etc/NetworkManager/system-connections/static-connection.nmconnection",
+				"DIRMODE":   "0755",
+				"FS_TYPE":   "ext4",
+				"GID":       "0",
+				"MODE":      "0600",
+				"UID":       "0",
+			},
+			Pid: "host",
+		}
+
+		// NetworkManager configuration template for RedHat (no VLAN)
+		nmTemplate := `[connection]
+id=static-connection
+type=ethernet
+autoconnect=yes
+autoconnect-priority=10
+
+[ethernet]
+mac-address={{ (index .Hardware.Interfaces 0).DHCP.MAC }}
+
+[ipv4]
+address1={{ (index .Hardware.Interfaces 0).DHCP.IP.Address }}/{{ netmaskToCIDR (index .Hardware.Interfaces 0).DHCP.IP.Netmask }}
+dns={{ range $i, $ns := (index .Hardware.Interfaces 0).DHCP.NameServers }}{{if $i}};{{end}}{{$ns}}{{end}};
+gateway={{ (index .Hardware.Interfaces 0).DHCP.IP.Gateway }}
+method=manual
+
+[ipv6]
+addr-gen-mode=default
+method=ignore
+`
+		// VLAN connection template for RedHat (single file approach)
+		nmVlanTemplate := `[connection]
+id=vlan-connection
+type=vlan
+autoconnect=yes
+autoconnect-priority=10
+
+[ethernet]
+mac-address={{ (index .Hardware.Interfaces 0).DHCP.MAC }}
+
+[vlan]
+flags=1
+id={{ (index .Hardware.Interfaces 0).DHCP.VLANID }}
+mac-address={{ (index .Hardware.Interfaces 0).DHCP.MAC }}
+
+[ipv4]
+address1={{ (index .Hardware.Interfaces 0).DHCP.IP.Address }}/{{ netmaskToCIDR (index .Hardware.Interfaces 0).DHCP.IP.Netmask }}
+dns={{ range $i, $ns := (index .Hardware.Interfaces 0).DHCP.NameServers }}{{if $i}};{{end}}{{$ns}}{{end}};
+gateway={{ (index .Hardware.Interfaces 0).DHCP.IP.Gateway }}
+method=manual
+
+[ipv6]
+addr-gen-mode=default
+method=ignore
+`
+		// Use VLAN template if VLANID is present in the hardware object
+		networkManagerAction.Environment["CONTENTS"] = `{{ if (index .Hardware.Interfaces 0).DHCP.VLANID }}` + nmVlanTemplate + `{{ else }}` + nmTemplate + `{{ end }}`
+		*a = append(*a, networkManagerAction)
 	}
 }

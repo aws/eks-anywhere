@@ -10,7 +10,7 @@ import (
 	"github.com/go-logr/logr"
 	nutanixv1 "github.com/nutanix-cloud-native/cluster-api-provider-nutanix/api/v1beta1"
 	"github.com/spf13/pflag"
-	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
+	tinkv1alpha1 "github.com/tinkerbell/tink/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
