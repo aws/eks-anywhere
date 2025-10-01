@@ -101,6 +101,21 @@ func WithCiliumRoutingMode(mode anywherev1.CiliumRoutingMode) ClusterFiller {
 	}
 }
 
+// WithCiliumHelmValues sets the Helm values configuration for Cilium.
+func WithCiliumHelmValues(helmValues map[string]interface{}) ClusterFiller {
+	return func(c *anywherev1.Cluster) {
+		if c.Spec.ClusterNetwork.CNIConfig == nil {
+			c.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{Cilium: &anywherev1.CiliumConfig{}}
+		}
+		if c.Spec.ClusterNetwork.CNIConfig.Cilium == nil {
+			c.Spec.ClusterNetwork.CNIConfig.Cilium = &anywherev1.CiliumConfig{}
+		}
+		c.Spec.ClusterNetwork.CNIConfig.Cilium.HelmValues = &unstructured.Unstructured{
+			Object: helmValues,
+		}
+	}
+}
+
 func WithClusterNamespace(ns string) ClusterFiller {
 	return func(c *anywherev1.Cluster) {
 		c.Namespace = ns
