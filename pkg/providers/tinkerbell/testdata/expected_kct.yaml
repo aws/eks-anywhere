@@ -57,13 +57,50 @@ spec:
             name: stream image to disk
             timeout: 600
           - environment:
+              CONTENTS: |-
+                {{ if (index .Hardware.Interfaces 0).DHCP.VLANID }}network:
+                    version: 2
+                    renderer: networkd
+                    ethernets:
+                        mainif:
+                            match:
+                                macaddress: {{ (index .Hardware.Interfaces 0).DHCP.MAC }}
+                            set-name: mainif
+        
+                    vlans:
+                        vlan{{ (index .Hardware.Interfaces 0).DHCP.VLANID }}:
+                            id: {{ (index .Hardware.Interfaces 0).DHCP.VLANID }}
+                            link: mainif
+                            addresses:
+                            - {{ (index .Hardware.Interfaces 0).DHCP.IP.Address }}/{{ netmaskToCIDR (index .Hardware.Interfaces 0).DHCP.IP.Netmask }}
+                            nameservers:
+                                addresses: [{{ range $i, $ns := (index .Hardware.Interfaces 0).DHCP.NameServers }}{{if $i}}, {{end}}{{$ns}}{{end}}]
+                            {{- if (index .Hardware.Interfaces 0).DHCP.IP.Gateway }}
+                            routes:
+                                - to: default
+                                  via: {{ (index .Hardware.Interfaces 0).DHCP.IP.Gateway }}
+                            {{- end }}
+                {{ else }}network:
+                    version: 2
+                    renderer: networkd
+                    ethernets:
+                        id0:
+                            match:
+                                macaddress: {{ (index .Hardware.Interfaces 0).DHCP.MAC }}
+                            addresses:
+                                - {{ (index .Hardware.Interfaces 0).DHCP.IP.Address }}/{{ netmaskToCIDR (index .Hardware.Interfaces 0).DHCP.IP.Netmask }}
+                            nameservers:
+                                addresses: [{{ range $i, $ns := (index .Hardware.Interfaces 0).DHCP.NameServers }}{{if $i}}, {{end}}{{$ns}}{{end}}]
+                            routes:
+                                - to: default
+                                  via: {{ (index .Hardware.Interfaces 0).DHCP.IP.Gateway }}
+                {{ end }}
               DEST_DISK: '{{ formatPartition ( index .Hardware.Disks 0 ) 2 }}'
               DEST_PATH: /etc/netplan/config.yaml
               DIRMODE: "0755"
               FS_TYPE: ext4
               GID: "0"
               MODE: "0644"
-              STATIC_NETPLAN: "true"
               UID: "0"
             image: 127.0.0.1/embedded/writefile
             name: write netplan config

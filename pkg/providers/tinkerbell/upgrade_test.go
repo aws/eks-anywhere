@@ -9,8 +9,7 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
-	tinkv1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
-	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
+	tinkv1alpha1 "github.com/tinkerbell/tink/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -264,10 +263,10 @@ func TestProviderPreCoreComponentsUpgrade_RufioConversions(t *testing.T) {
 
 	tests := []struct {
 		Name                 string
-		Hardware             []tinkv1.Hardware
+		Hardware             []tinkv1alpha1.Hardware
 		BaseboardManagements []rufiounreleased.BaseboardManagement
 		ExpectMachines       []rufiov1.Machine
-		ExpectHardware       []tinkv1.Hardware
+		ExpectHardware       []tinkv1alpha1.Hardware
 	}{
 		{
 			Name: "NoBaseboardManagementsOrHardware",
@@ -392,9 +391,9 @@ func TestProviderPreCoreComponentsUpgrade_RufioConversions(t *testing.T) {
 		},
 		{
 			Name: "SingleHardware",
-			Hardware: []tinkv1.Hardware{
+			Hardware: []tinkv1alpha1.Hardware{
 				{
-					Spec: tinkv1.HardwareSpec{
+					Spec: tinkv1alpha1.HardwareSpec{
 						BMCRef: &v1.TypedLocalObjectReference{
 							Kind: "BaseboardManagement",
 							Name: "bm1",
@@ -402,9 +401,9 @@ func TestProviderPreCoreComponentsUpgrade_RufioConversions(t *testing.T) {
 					},
 				},
 			},
-			ExpectHardware: []tinkv1.Hardware{
+			ExpectHardware: []tinkv1alpha1.Hardware{
 				{
-					Spec: tinkv1.HardwareSpec{
+					Spec: tinkv1alpha1.HardwareSpec{
 						BMCRef: &v1.TypedLocalObjectReference{
 							Kind: "Machine",
 							Name: "bm1",
@@ -415,32 +414,32 @@ func TestProviderPreCoreComponentsUpgrade_RufioConversions(t *testing.T) {
 		},
 		{
 			Name: "MultiHardware",
-			Hardware: []tinkv1.Hardware{
+			Hardware: []tinkv1alpha1.Hardware{
 				{
-					Spec: tinkv1.HardwareSpec{
+					Spec: tinkv1alpha1.HardwareSpec{
 						BMCRef: &v1.TypedLocalObjectReference{
 							Name: "bm1",
 						},
 					},
 				},
 				{
-					Spec: tinkv1.HardwareSpec{
+					Spec: tinkv1alpha1.HardwareSpec{
 						BMCRef: &v1.TypedLocalObjectReference{
 							Name: "bm2",
 						},
 					},
 				},
 				{
-					Spec: tinkv1.HardwareSpec{
+					Spec: tinkv1alpha1.HardwareSpec{
 						BMCRef: &v1.TypedLocalObjectReference{
 							Name: "bm3",
 						},
 					},
 				},
 			},
-			ExpectHardware: []tinkv1.Hardware{
+			ExpectHardware: []tinkv1alpha1.Hardware{
 				{
-					Spec: tinkv1.HardwareSpec{
+					Spec: tinkv1alpha1.HardwareSpec{
 						BMCRef: &v1.TypedLocalObjectReference{
 							Kind: "Machine",
 							Name: "bm1",
@@ -448,7 +447,7 @@ func TestProviderPreCoreComponentsUpgrade_RufioConversions(t *testing.T) {
 					},
 				},
 				{
-					Spec: tinkv1.HardwareSpec{
+					Spec: tinkv1alpha1.HardwareSpec{
 						BMCRef: &v1.TypedLocalObjectReference{
 							Kind: "Machine",
 							Name: "bm2",
@@ -456,7 +455,7 @@ func TestProviderPreCoreComponentsUpgrade_RufioConversions(t *testing.T) {
 					},
 				},
 				{
-					Spec: tinkv1.HardwareSpec{
+					Spec: tinkv1alpha1.HardwareSpec{
 						BMCRef: &v1.TypedLocalObjectReference{
 							Kind: "Machine",
 							Name: "bm3",
@@ -467,15 +466,15 @@ func TestProviderPreCoreComponentsUpgrade_RufioConversions(t *testing.T) {
 		},
 		{
 			Name: "HardwareWithoutBMCRef",
-			Hardware: []tinkv1.Hardware{
+			Hardware: []tinkv1alpha1.Hardware{
 				{
-					Spec: tinkv1.HardwareSpec{},
+					Spec: tinkv1alpha1.HardwareSpec{},
 				},
 				{
-					Spec: tinkv1.HardwareSpec{},
+					Spec: tinkv1alpha1.HardwareSpec{},
 				},
 				{
-					Spec: tinkv1.HardwareSpec{},
+					Spec: tinkv1alpha1.HardwareSpec{},
 				},
 			},
 		},
@@ -511,9 +510,9 @@ func TestProviderPreCoreComponentsUpgrade_RufioConversions(t *testing.T) {
 					},
 				}),
 			},
-			Hardware: []tinkv1.Hardware{
+			Hardware: []tinkv1alpha1.Hardware{
 				{
-					Spec: tinkv1.HardwareSpec{
+					Spec: tinkv1alpha1.HardwareSpec{
 						BMCRef: &v1.TypedLocalObjectReference{
 							Kind: "BaseboardManagement",
 							Name: "bm1",
@@ -521,12 +520,12 @@ func TestProviderPreCoreComponentsUpgrade_RufioConversions(t *testing.T) {
 					},
 				},
 				{
-					Spec: tinkv1.HardwareSpec{},
+					Spec: tinkv1alpha1.HardwareSpec{},
 				},
 			},
-			ExpectHardware: []tinkv1.Hardware{
+			ExpectHardware: []tinkv1alpha1.Hardware{
 				{
-					Spec: tinkv1.HardwareSpec{
+					Spec: tinkv1alpha1.HardwareSpec{
 						BMCRef: &v1.TypedLocalObjectReference{
 							Kind: "Machine",
 							Name: "bm1",
@@ -659,14 +658,14 @@ func TestProviderPreCoreComponentsUpgrade_ApplyHardware(t *testing.T) {
 	tconfig := NewPreCoreComponentsUpgradeTestConfig(t)
 
 	catalogue := hardware.NewCatalogue()
-	hw := &tinkv1.Hardware{
+	hw := &tinkv1alpha1.Hardware{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-hardware",
 			Labels: map[string]string{
 				"type": "cp",
 			},
 		},
-		Spec: tinkv1.HardwareSpec{
+		Spec: tinkv1alpha1.HardwareSpec{
 			BMCRef: &v1.TypedLocalObjectReference{
 				Kind: "Machine",
 				Name: "test-machine",
@@ -736,14 +735,14 @@ func TestProviderPreCoreComponentsUpgrade_ApplyHardwareError(t *testing.T) {
 	tconfig := NewPreCoreComponentsUpgradeTestConfig(t)
 
 	catalogue := hardware.NewCatalogue()
-	hw := &tinkv1.Hardware{
+	hw := &tinkv1alpha1.Hardware{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-hardware",
 			Labels: map[string]string{
 				"type": "cp",
 			},
 		},
-		Spec: tinkv1.HardwareSpec{
+		Spec: tinkv1alpha1.HardwareSpec{
 			BMCRef: &v1.TypedLocalObjectReference{
 				Kind: "Machine",
 				Name: "test-machine",
@@ -991,10 +990,10 @@ func TestProviderSetupAndValidateUpgradeWorkloadCluster(t *testing.T) {
 
 	// Create a hardware catalogue with CP and worker hardware
 	catalogue := hardware.NewCatalogue()
-	_ = catalogue.InsertHardware(&tinkv1.Hardware{ObjectMeta: metav1.ObjectMeta{
+	_ = catalogue.InsertHardware(&tinkv1alpha1.Hardware{ObjectMeta: metav1.ObjectMeta{
 		Labels: map[string]string{"type": "cp"},
 	}})
-	_ = catalogue.InsertHardware(&tinkv1.Hardware{ObjectMeta: metav1.ObjectMeta{
+	_ = catalogue.InsertHardware(&tinkv1alpha1.Hardware{ObjectMeta: metav1.ObjectMeta{
 		Labels: map[string]string{"type": "worker"},
 	}})
 
@@ -1288,7 +1287,7 @@ func TestProviderValidateAvailableHardwareOnlyCPUpgradeSuccess(t *testing.T) {
 	newCluster.Cluster.Spec.KubernetesVersion = v1alpha1.Kube122
 	cpRef := newCluster.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
 	machineConfigs[cpRef].Spec.OSImageURL = "https://ubuntu-1-22.gz"
-	_ = catalogue.InsertHardware(&tinkv1.Hardware{ObjectMeta: metav1.ObjectMeta{
+	_ = catalogue.InsertHardware(&tinkv1alpha1.Hardware{ObjectMeta: metav1.ObjectMeta{
 		Labels: map[string]string{"type": "cp"},
 	}})
 	provider.catalogue = catalogue
@@ -1349,7 +1348,7 @@ func TestProviderValidateAvailableHardwareOnlyCPOSImageURLUpgradeSuccess(t *test
 	// newCluster.Cluster.Spec.KubernetesVersion = v1alpha1.Kube122
 	cpRef := newCluster.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
 	machineConfigs[cpRef].Spec.OSImageURL = "https://ubuntu-1-21-patch.gz"
-	_ = catalogue.InsertHardware(&tinkv1.Hardware{ObjectMeta: metav1.ObjectMeta{
+	_ = catalogue.InsertHardware(&tinkv1alpha1.Hardware{ObjectMeta: metav1.ObjectMeta{
 		Labels: map[string]string{"type": "cp"},
 	}})
 	provider.catalogue = catalogue
@@ -1415,7 +1414,7 @@ func TestProviderValidateAvailableHardwareOnlyWorkerUpgradeSuccess(t *testing.T)
 	newCluster := clusterSpec.DeepCopy()
 	kube122 := v1alpha1.Kube122
 	newCluster.Cluster.Spec.WorkerNodeGroupConfigurations[0].KubernetesVersion = &kube122
-	_ = catalogue.InsertHardware(&tinkv1.Hardware{ObjectMeta: metav1.ObjectMeta{
+	_ = catalogue.InsertHardware(&tinkv1alpha1.Hardware{ObjectMeta: metav1.ObjectMeta{
 		Labels: map[string]string{"type": "worker"},
 	}})
 	wngRef := newCluster.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
@@ -1481,7 +1480,7 @@ func TestProviderValidateAvailableHardwareOnlyWorkerOSImageURLUpgradeSuccess(t *
 		newMachineConfigs[k] = v
 	}
 
-	_ = catalogue.InsertHardware(&tinkv1.Hardware{ObjectMeta: metav1.ObjectMeta{
+	_ = catalogue.InsertHardware(&tinkv1alpha1.Hardware{ObjectMeta: metav1.ObjectMeta{
 		Labels: map[string]string{"type": "worker"},
 	}})
 	wngRef := newCluster.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
@@ -1597,8 +1596,8 @@ func TestProviderBMCTimeout(t *testing.T) {
 
 			// Mock the catalogue to have hardware with BMC references
 			catalogue := hardware.NewCatalogue()
-			hw := &tinkv1.Hardware{
-				Spec: tinkv1.HardwareSpec{
+			hw := &tinkv1alpha1.Hardware{
+				Spec: tinkv1alpha1.HardwareSpec{
 					BMCRef: &v1.TypedLocalObjectReference{
 						Kind: "Machine",
 						Name: "test-machine",
@@ -1653,10 +1652,10 @@ func TestProviderValidateAvailableHardwareEksaVersionUpgradeSuccess(t *testing.T
 	catalogue := hardware.NewCatalogue()
 	newCluster := clusterSpec.DeepCopy()
 	newCluster.Bundles.Spec.Number++
-	_ = catalogue.InsertHardware(&tinkv1.Hardware{ObjectMeta: metav1.ObjectMeta{
+	_ = catalogue.InsertHardware(&tinkv1alpha1.Hardware{ObjectMeta: metav1.ObjectMeta{
 		Labels: map[string]string{"type": "cp"},
 	}})
-	_ = catalogue.InsertHardware(&tinkv1.Hardware{ObjectMeta: metav1.ObjectMeta{
+	_ = catalogue.InsertHardware(&tinkv1alpha1.Hardware{ObjectMeta: metav1.ObjectMeta{
 		Labels: map[string]string{"type": "worker"},
 	}})
 	provider.catalogue = catalogue
