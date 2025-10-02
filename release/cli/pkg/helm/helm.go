@@ -20,6 +20,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	docker "github.com/fsouza/go-dockerclient"
 	"github.com/go-logr/logr"
@@ -34,6 +35,7 @@ import (
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	"github.com/aws/eks-anywhere/release/cli/pkg/constants"
+	"github.com/aws/eks-anywhere/release/cli/pkg/retrier"
 	releasetypes "github.com/aws/eks-anywhere/release/cli/pkg/types"
 	commandutils "github.com/aws/eks-anywhere/release/cli/pkg/util/command"
 	packagesutils "github.com/aws/eks-anywhere/release/cli/pkg/util/packages"
@@ -251,13 +253,26 @@ func PushHelmChart(packaged, URI string) error {
 		URI = fmt.Sprintf("oci://%s", URI)
 	}
 
-	cmd := exec.Command("helm", "push", packaged, URI)
-	out, err := commandutils.ExecCommand(cmd)
-	fmt.Println(out)
+	retrier := retrier.NewRetrier(60*time.Minute, retrier.WithRetryPolicy(func(totalRetries int, err error) (retry bool, wait time.Duration) {
+		if err != nil && totalRetries < 10 {
+			return true, 30 * time.Second
+		}
+		return false, 0
+	}))
 
+	err := retrier.Retry(func() error {
+		cmd := exec.Command("helm", "push", packaged, URI)
+		out, err := commandutils.ExecCommand(cmd)
+		fmt.Println(out)
+		if err != nil {
+			return fmt.Errorf("running Helm push command on chart %s with destination URI %s: %v", packaged, URI, err)
+		}
+		return nil
+	})
 	if err != nil {
-		return fmt.Errorf("running Helm push command on chart %s with destination URI %s: %v", packaged, URI, err)
+		return fmt.Errorf("retries exhausted performing helm chart push from [%s] to [%s]: %v", packaged, URI, err)
 	}
+
 	return nil
 }
 
@@ -285,7 +300,7 @@ func helmLog(log logr.Logger) action.DebugLog {
 // UnTarHelmChart will attempt to move the helm chart out of the helm cache, by untaring it to the pwd and creating the filesystem to unpack it into.
 func UnTarHelmChart(chartRef, chartPath, dest string) error {
 	if chartRef == "" || chartPath == "" || dest == "" {
-		return fmt.Errorf("Empty input value given for UnTarHelmChart")
+		return fmt.Errorf("all input values are empty for UnTarHelmChart function")
 	}
 	_, err := os.Stat(dest)
 	if os.IsNotExist(err) {
@@ -377,7 +392,6 @@ func parseHelmRequires(fileName string, helmrequires *Requires) error {
 		if err != nil {
 			return fmt.Errorf("unable to UnmarshalStrict %v\nyaml: %s\n %v", helmrequires, string(c), err)
 		}
-		return nil
 	}
 	return fmt.Errorf("requires.yaml file [%s] is invalid or does not contain kind %v", fileName, helmrequires)
 }
@@ -421,9 +435,8 @@ func parseHelmChart(fileName string, helmChart *chart.Metadata) error {
 		if err != nil {
 			return fmt.Errorf("unable to UnmarshalStrict %v\nyaml: %s\n %v", helmChart, string(c), err)
 		}
-		return nil
 	}
-	return fmt.Errorf("Chart.yaml file [%s] is invalid or does not contain kind %v", fileName, helmChart)
+	return fmt.Errorf("the Chart.yaml file [%s] is invalid or does not contain kind %v", fileName, helmChart)
 }
 
 func OverwriteChartYaml(filename string, helmChart *chart.Metadata) error {
@@ -490,7 +503,7 @@ func GetPackagesImageTags(packagesArtifacts map[string][]releasetypes.Artifact) 
 		}
 	}
 	if len(m) == 0 {
-		return nil, fmt.Errorf("No assets found for eks-anywhere-packages, or ecr-token-refresher in packagesArtifacts")
+		return nil, fmt.Errorf("assets not found for eks-anywhere-packages or ecr-token-refresher in packagesArtifacts")
 	}
 	return m, nil
 }

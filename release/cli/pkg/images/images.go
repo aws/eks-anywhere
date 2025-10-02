@@ -345,11 +345,11 @@ func GetPreviousReleaseImageSemver(r *releasetypes.ReleaseConfig, releaseImageUr
 		if keyExists {
 			contents, err := filereader.ReadHttpFile(bundleManifestUrl)
 			if err != nil {
-				return "", fmt.Errorf("Error reading bundle manifest from S3: %v", err)
+				return "", fmt.Errorf("reading bundle manifest from S3: %v", err)
 			}
 
 			if err = yaml.Unmarshal(contents, bundles); err != nil {
-				return "", fmt.Errorf("Error unmarshaling bundles manifest from [%s]: %v", bundleManifestUrl, err)
+				return "", fmt.Errorf("unmarshaling bundles manifest from [%s]: %v", bundleManifestUrl, err)
 			}
 
 			for _, versionedBundle := range bundles.Spec.VersionsBundles {
@@ -412,14 +412,14 @@ func CheckRepositoryImagesAndTagsCountLimit(sourceImageUri, releaseImageUri, sou
 
 	var sourceImageDigest string
 	var err error
-	switch ecrClient.(type) {
+	switch client := ecrClient.(type) {
 	case *ecrsdk.ECR:
-		sourceImageDigest, err = ecr.GetImageDigest(sourceImageUri, sourceContainerRegistry, ecrClient.(*ecrsdk.ECR))
+		sourceImageDigest, err = ecr.GetImageDigest(sourceImageUri, sourceContainerRegistry, client)
 		if err != nil {
 			return errors.Cause(err)
 		}
 	case *ecrpublicsdk.ECRPublic:
-		sourceImageDigest, err = ecrpublic.GetImageDigest(sourceImageUri, sourceContainerRegistry, ecrClient.(*ecrpublicsdk.ECRPublic))
+		sourceImageDigest, err = ecrpublic.GetImageDigest(sourceImageUri, sourceContainerRegistry, client)
 		if err != nil {
 			return errors.Cause(err)
 		}
