@@ -34,7 +34,6 @@ import (
 	"sigs.k8s.io/yaml"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
-	"github.com/aws/eks-anywhere/release/cli/pkg/constants"
 	"github.com/aws/eks-anywhere/release/cli/pkg/retrier"
 	releasetypes "github.com/aws/eks-anywhere/release/cli/pkg/types"
 	commandutils "github.com/aws/eks-anywhere/release/cli/pkg/util/command"
@@ -191,21 +190,27 @@ func ModifyAndPushChartYaml(i releasetypes.ImageArtifact, r *releasetypes.Releas
 }
 
 func (d *helmDriver) HelmRegistryLogin(r *releasetypes.ReleaseConfig, remoteType string) error {
-	var authConfig *docker.AuthConfiguration
-	var remote string
-	if remoteType == "source" {
+	var (
+		authConfig *docker.AuthConfiguration
+		remote     string
+	)
+
+	switch remoteType {
+	case "source":
 		authConfig = r.SourceClients.ECR.AuthConfig
 		remote = r.SourceContainerRegistry
-	} else if remoteType == "packages" {
+	case "packages":
 		authConfig = r.SourceClients.Packages.AuthConfig
 		remote = r.PackagesSourceContainerRegistry
-	} else if remoteType == "destination" {
+	case "destination":
 		authConfig = r.ReleaseClients.ECRPublic.AuthConfig
 		remote = r.ReleaseContainerRegistry
+	default:
+		return fmt.Errorf("unknown remoteType: %s", remoteType)
 	}
+
 	login := action.NewRegistryLogin(d.cfg)
-	err := login.Run(os.Stdout, remote, authConfig.Username, authConfig.Password)
-	if err != nil {
+	if err := login.Run(os.Stdout, remote, authConfig.Username, authConfig.Password); err != nil {
 		return fmt.Errorf("running the Helm registry login command: %w", err)
 	}
 
@@ -214,16 +219,20 @@ func (d *helmDriver) HelmRegistryLogin(r *releasetypes.ReleaseConfig, remoteType
 
 func (d *helmDriver) HelmRegistryLogout(r *releasetypes.ReleaseConfig, remoteType string) error {
 	var remote string
-	if remoteType == "source" {
+
+	switch remoteType {
+	case "source":
 		remote = r.SourceContainerRegistry
-	} else if remoteType == "packages" {
+	case "packages":
 		remote = r.PackagesSourceContainerRegistry
-	} else if remoteType == "destination" {
+	case "destination":
 		remote = r.ReleaseContainerRegistry
+	default:
+		return fmt.Errorf("unknown remoteType: %s", remoteType)
 	}
+
 	logout := action.NewRegistryLogout(d.cfg)
-	err := logout.Run(os.Stdout, remote)
-	if err != nil {
+	if err := logout.Run(os.Stdout, remote); err != nil {
 		return fmt.Errorf("running the Helm registry logout command: %w", err)
 	}
 
@@ -382,18 +391,12 @@ func (helmrequires *Requires) validateHelmRequiresNotEmpty() error {
 func parseHelmRequires(fileName string, helmrequires *Requires) error {
 	content, err := os.ReadFile(fileName)
 	if err != nil {
-		return fmt.Errorf("unable to read file due to: %v", err)
+		return fmt.Errorf("unable to read file: %w", err)
 	}
-	for _, c := range strings.Split(string(content), constants.YamlSeparator) {
-		if err = yaml.Unmarshal([]byte(c), helmrequires); err != nil {
-			return fmt.Errorf("unable to parse %s\nyaml: %s\n %v", fileName, string(c), err)
-		}
-		err = yaml.UnmarshalStrict([]byte(c), helmrequires)
-		if err != nil {
-			return fmt.Errorf("unable to UnmarshalStrict %v\nyaml: %s\n %v", helmrequires, string(c), err)
-		}
+	if err := yaml.UnmarshalStrict(content, helmrequires); err != nil {
+		return fmt.Errorf("unable to parse %s: %w", fileName, err)
 	}
-	return fmt.Errorf("requires.yaml file [%s] is invalid or does not contain kind %v", fileName, helmrequires)
+	return nil
 }
 
 // Chart yaml functions
@@ -425,18 +428,12 @@ func ValidateHelmChart(fileName string) (*chart.Metadata, error) {
 func parseHelmChart(fileName string, helmChart *chart.Metadata) error {
 	content, err := os.ReadFile(fileName)
 	if err != nil {
-		return fmt.Errorf("unable to read file due to: %v", err)
+		return fmt.Errorf("unable to read file: %w", err)
 	}
-	for _, c := range strings.Split(string(content), constants.YamlSeparator) {
-		if err = yaml.Unmarshal([]byte(c), helmChart); err != nil {
-			return fmt.Errorf("unable to parse %s\nyaml: %s\n %v", fileName, string(c), err)
-		}
-		err = yaml.UnmarshalStrict([]byte(c), helmChart)
-		if err != nil {
-			return fmt.Errorf("unable to UnmarshalStrict %v\nyaml: %s\n %v", helmChart, string(c), err)
-		}
+	if err := yaml.UnmarshalStrict(content, helmChart); err != nil {
+		return fmt.Errorf("unable to parse %s: %w", fileName, err)
 	}
-	return fmt.Errorf("the Chart.yaml file [%s] is invalid or does not contain kind %v", fileName, helmChart)
+	return nil
 }
 
 func OverwriteChartYaml(filename string, helmChart *chart.Metadata) error {
