@@ -7,6 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -3000,6 +3001,180 @@ func TestCiliumConfigEquality(t *testing.T) {
 				PolicyEnforcementMode:      "always",
 				EgressMasqueradeInterfaces: "eth0",
 				CNIExclusive:               ptr.Bool(false),
+			},
+			Equal: false,
+		},
+		{
+			Name: "HelmValues both nil",
+			A: &v1alpha1.CiliumConfig{
+				HelmValues: nil,
+			},
+			B: &v1alpha1.CiliumConfig{
+				HelmValues: nil,
+			},
+			Equal: true,
+		},
+		{
+			Name: "HelmValues one nil, one set",
+			A: &v1alpha1.CiliumConfig{
+				HelmValues: nil,
+			},
+			B: &v1alpha1.CiliumConfig{
+				HelmValues: &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"prometheus": map[string]interface{}{
+							"enabled": true,
+						},
+					},
+				},
+			},
+			Equal: false,
+		},
+		{
+			Name: "HelmValues both set to same values",
+			A: &v1alpha1.CiliumConfig{
+				HelmValues: &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"prometheus": map[string]interface{}{
+							"enabled": true,
+						},
+						"operator": map[string]interface{}{
+							"replicas": 2,
+						},
+					},
+				},
+			},
+			B: &v1alpha1.CiliumConfig{
+				HelmValues: &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"prometheus": map[string]interface{}{
+							"enabled": true,
+						},
+						"operator": map[string]interface{}{
+							"replicas": 2,
+						},
+					},
+				},
+			},
+			Equal: true,
+		},
+		{
+			Name: "HelmValues both set to different values",
+			A: &v1alpha1.CiliumConfig{
+				HelmValues: &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"prometheus": map[string]interface{}{
+							"enabled": true,
+						},
+					},
+				},
+			},
+			B: &v1alpha1.CiliumConfig{
+				HelmValues: &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"prometheus": map[string]interface{}{
+							"enabled": false,
+						},
+					},
+				},
+			},
+			Equal: false,
+		},
+		{
+			Name: "HelmValues one with Object nil, one with data",
+			A: &v1alpha1.CiliumConfig{
+				HelmValues: &unstructured.Unstructured{
+					Object: nil,
+				},
+			},
+			B: &v1alpha1.CiliumConfig{
+				HelmValues: &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"prometheus": map[string]interface{}{
+							"enabled": true,
+						},
+					},
+				},
+			},
+			Equal: false,
+		},
+		{
+			Name: "HelmValues both with Object nil",
+			A: &v1alpha1.CiliumConfig{
+				HelmValues: &unstructured.Unstructured{
+					Object: nil,
+				},
+			},
+			B: &v1alpha1.CiliumConfig{
+				HelmValues: &unstructured.Unstructured{
+					Object: nil,
+				},
+			},
+			Equal: true,
+		},
+		{
+			Name: "HelmValues with complex nested structure same",
+			A: &v1alpha1.CiliumConfig{
+				HelmValues: &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"hubble": map[string]interface{}{
+							"enabled": true,
+							"metrics": map[string]interface{}{
+								"enabled": []string{"dns", "drop", "tcp"},
+							},
+						},
+						"ipam": map[string]interface{}{
+							"operator": map[string]interface{}{
+								"clusterPoolIPv4PodCIDRList": []string{"10.0.0.0/8"},
+							},
+						},
+					},
+				},
+			},
+			B: &v1alpha1.CiliumConfig{
+				HelmValues: &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"hubble": map[string]interface{}{
+							"enabled": true,
+							"metrics": map[string]interface{}{
+								"enabled": []string{"dns", "drop", "tcp"},
+							},
+						},
+						"ipam": map[string]interface{}{
+							"operator": map[string]interface{}{
+								"clusterPoolIPv4PodCIDRList": []string{"10.0.0.0/8"},
+							},
+						},
+					},
+				},
+			},
+			Equal: true,
+		},
+		{
+			Name: "HelmValues with complex nested structure different",
+			A: &v1alpha1.CiliumConfig{
+				HelmValues: &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"hubble": map[string]interface{}{
+							"enabled": true,
+							"metrics": map[string]interface{}{
+								"enabled": []string{"dns", "drop"},
+							},
+						},
+					},
+				},
+			},
+			B: &v1alpha1.CiliumConfig{
+				HelmValues: &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"hubble": map[string]interface{}{
+							"enabled": true,
+							"metrics": map[string]interface{}{
+								"enabled": []string{"dns", "tcp"},
+							},
+						},
+					},
+				},
 			},
 			Equal: false,
 		},
