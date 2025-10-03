@@ -595,6 +595,36 @@ func (v *VSphere) Ubuntu2204Kubernetes133Template() api.VSphereFiller {
 	return v.templateForKubeVersionAndOS(anywherev1.Kube133, Ubuntu2204, nil)
 }
 
+// Ubuntu2404Kubernetes128Template returns vsphere filler for 1.28 Ubuntu 24.04.
+func (v *VSphere) Ubuntu2404Kubernetes128Template() api.VSphereFiller {
+	return v.templateForKubeVersionAndOS(anywherev1.Kube128, Ubuntu2404, nil)
+}
+
+// Ubuntu2404Kubernetes129Template returns vsphere filler for 1.29 Ubuntu 24.04.
+func (v *VSphere) Ubuntu2404Kubernetes129Template() api.VSphereFiller {
+	return v.templateForKubeVersionAndOS(anywherev1.Kube129, Ubuntu2404, nil)
+}
+
+// Ubuntu2404Kubernetes130Template returns vsphere filler for 1.30 Ubuntu 24.04.
+func (v *VSphere) Ubuntu2404Kubernetes130Template() api.VSphereFiller {
+	return v.templateForKubeVersionAndOS(anywherev1.Kube130, Ubuntu2404, nil)
+}
+
+// Ubuntu2404Kubernetes131Template returns vsphere filler for 1.31 Ubuntu 24.04.
+func (v *VSphere) Ubuntu2404Kubernetes131Template() api.VSphereFiller {
+	return v.templateForKubeVersionAndOS(anywherev1.Kube131, Ubuntu2404, nil)
+}
+
+// Ubuntu2404Kubernetes132Template returns vsphere filler for 1.32 Ubuntu 24.04.
+func (v *VSphere) Ubuntu2404Kubernetes132Template() api.VSphereFiller {
+	return v.templateForKubeVersionAndOS(anywherev1.Kube132, Ubuntu2404, nil)
+}
+
+// Ubuntu2404Kubernetes133Template returns vsphere filler for 1.33 Ubuntu 24.04.
+func (v *VSphere) Ubuntu2404Kubernetes133Template() api.VSphereFiller {
+	return v.templateForKubeVersionAndOS(anywherev1.Kube133, Ubuntu2404, nil)
+}
+
 // Bottlerocket128Template returns vsphere filler for 1.28 BR.
 func (v *VSphere) Bottlerocket128Template() api.VSphereFiller {
 	return v.templateForKubeVersionAndOS(anywherev1.Kube128, Bottlerocket1, nil)
