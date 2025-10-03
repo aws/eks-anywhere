@@ -3122,6 +3122,96 @@ func TestVSphereKubernetes133Ubuntu2204SimpleFlow(t *testing.T) {
 	runSimpleFlowWithoutClusterConfigGeneration(test)
 }
 
+func TestVSphereKubernetes128Ubuntu2404SimpleFlow(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	provider := framework.NewVSphere(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+	).WithClusterConfig(
+		provider.WithKubeVersionAndOS(v1alpha1.Kube128, framework.Ubuntu2404, nil),
+		api.ClusterToConfigFiller(
+			api.WithLicenseToken(licenseToken),
+		),
+	)
+	runSimpleFlowWithoutClusterConfigGeneration(test)
+}
+
+func TestVSphereKubernetes129Ubuntu2404SimpleFlow(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	provider := framework.NewVSphere(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+	).WithClusterConfig(
+		provider.WithKubeVersionAndOS(v1alpha1.Kube129, framework.Ubuntu2404, nil),
+		api.ClusterToConfigFiller(
+			api.WithLicenseToken(licenseToken),
+		),
+	)
+	runSimpleFlowWithoutClusterConfigGeneration(test)
+}
+
+func TestVSphereKubernetes130Ubuntu2404SimpleFlow(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	provider := framework.NewVSphere(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+	).WithClusterConfig(
+		provider.WithKubeVersionAndOS(v1alpha1.Kube130, framework.Ubuntu2404, nil),
+		api.ClusterToConfigFiller(
+			api.WithLicenseToken(licenseToken),
+		),
+	)
+	runSimpleFlowWithoutClusterConfigGeneration(test)
+}
+
+func TestVSphereKubernetes131Ubuntu2404SimpleFlow(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	provider := framework.NewVSphere(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+	).WithClusterConfig(
+		provider.WithKubeVersionAndOS(v1alpha1.Kube131, framework.Ubuntu2404, nil),
+		api.ClusterToConfigFiller(
+			api.WithLicenseToken(licenseToken),
+		),
+	)
+	runSimpleFlowWithoutClusterConfigGeneration(test)
+}
+
+func TestVSphereKubernetes132Ubuntu2404SimpleFlow(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	provider := framework.NewVSphere(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+	).WithClusterConfig(
+		provider.WithKubeVersionAndOS(v1alpha1.Kube132, framework.Ubuntu2404, nil),
+		api.ClusterToConfigFiller(
+			api.WithLicenseToken(licenseToken),
+		),
+	)
+	runSimpleFlowWithoutClusterConfigGeneration(test)
+}
+
+func TestVSphereKubernetes133Ubuntu2404SimpleFlow(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	provider := framework.NewVSphere(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+	).WithClusterConfig(
+		provider.WithKubeVersionAndOS(v1alpha1.Kube133, framework.Ubuntu2404, nil),
+		api.ClusterToConfigFiller(
+			api.WithLicenseToken(licenseToken),
+		),
+	)
+	runSimpleFlowWithoutClusterConfigGeneration(test)
+}
+
 func TestVSphereKubernetes128RedHatSimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -4056,6 +4146,211 @@ func TestVSphereKubernetes132To133Ubuntu2204StackedEtcdUpgrade(t *testing.T) {
 		v1alpha1.Kube133,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube133)),
 		provider.WithProviderUpgrade(provider.Ubuntu2204Kubernetes133Template()),
+	)
+}
+
+func TestVSphereKubernetes128To129Ubuntu2404Upgrade(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	provider := framework.NewVSphere(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+	).WithClusterConfig(
+		provider.WithKubeVersionAndOS(v1alpha1.Kube128, framework.Ubuntu2404, nil),
+		api.ClusterToConfigFiller(
+			api.WithLicenseToken(licenseToken),
+		),
+	)
+	runSimpleUpgradeFlowWithoutClusterConfigGeneration(
+		test,
+		v1alpha1.Kube129,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube129)),
+		provider.WithProviderUpgrade(provider.Ubuntu2404Kubernetes129Template()),
+	)
+}
+
+func TestVSphereKubernetes129To130Ubuntu2404Upgrade(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	provider := framework.NewVSphere(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+	).WithClusterConfig(
+		provider.WithKubeVersionAndOS(v1alpha1.Kube129, framework.Ubuntu2404, nil),
+		api.ClusterToConfigFiller(
+			api.WithLicenseToken(licenseToken),
+		),
+	)
+	runSimpleUpgradeFlowWithoutClusterConfigGeneration(
+		test,
+		v1alpha1.Kube130,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube130)),
+		provider.WithProviderUpgrade(provider.Ubuntu2404Kubernetes130Template()),
+	)
+}
+
+func TestVSphereKubernetes130To131Ubuntu2404Upgrade(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	provider := framework.NewVSphere(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+	).WithClusterConfig(
+		provider.WithKubeVersionAndOS(v1alpha1.Kube130, framework.Ubuntu2404, nil),
+		api.ClusterToConfigFiller(
+			api.WithLicenseToken(licenseToken),
+		),
+	)
+	runSimpleUpgradeFlowWithoutClusterConfigGeneration(
+		test,
+		v1alpha1.Kube131,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube131)),
+		provider.WithProviderUpgrade(provider.Ubuntu2404Kubernetes131Template()),
+	)
+}
+
+func TestVSphereKubernetes131To132Ubuntu2404Upgrade(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	provider := framework.NewVSphere(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+	).WithClusterConfig(
+		provider.WithKubeVersionAndOS(v1alpha1.Kube131, framework.Ubuntu2404, nil),
+		api.ClusterToConfigFiller(
+			api.WithLicenseToken(licenseToken),
+		),
+	)
+	runSimpleUpgradeFlowWithoutClusterConfigGeneration(
+		test,
+		v1alpha1.Kube132,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube132)),
+		provider.WithProviderUpgrade(provider.Ubuntu2404Kubernetes132Template()),
+	)
+}
+
+func TestVSphereKubernetes132To133Ubuntu2404Upgrade(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	provider := framework.NewVSphere(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+	).WithClusterConfig(
+		provider.WithKubeVersionAndOS(v1alpha1.Kube132, framework.Ubuntu2404, nil),
+		api.ClusterToConfigFiller(
+			api.WithLicenseToken(licenseToken),
+		),
+	)
+	runSimpleUpgradeFlowWithoutClusterConfigGeneration(
+		test,
+		v1alpha1.Kube133,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube133)),
+		provider.WithProviderUpgrade(provider.Ubuntu2404Kubernetes133Template()),
+	)
+}
+
+func TestVSphereKubernetes128To129Ubuntu2404StackedEtcdUpgrade(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	provider := framework.NewVSphere(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+	).WithClusterConfig(
+		provider.WithKubeVersionAndOS(v1alpha1.Kube128, framework.Ubuntu2404, nil),
+		api.ClusterToConfigFiller(
+			api.WithStackedEtcdTopology(),
+			api.WithLicenseToken(licenseToken),
+		),
+	)
+	runSimpleUpgradeFlowWithoutClusterConfigGeneration(
+		test,
+		v1alpha1.Kube129,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube129)),
+		provider.WithProviderUpgrade(provider.Ubuntu2404Kubernetes129Template()),
+	)
+}
+
+func TestVSphereKubernetes129To130Ubuntu2404StackedEtcdUpgrade(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	provider := framework.NewVSphere(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+	).WithClusterConfig(
+		provider.WithKubeVersionAndOS(v1alpha1.Kube129, framework.Ubuntu2404, nil),
+		api.ClusterToConfigFiller(
+			api.WithStackedEtcdTopology(),
+			api.WithLicenseToken(licenseToken),
+		),
+	)
+	runSimpleUpgradeFlowWithoutClusterConfigGeneration(
+		test,
+		v1alpha1.Kube130,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube130)),
+		provider.WithProviderUpgrade(provider.Ubuntu2404Kubernetes130Template()),
+	)
+}
+
+func TestVSphereKubernetes130To131Ubuntu2404StackedEtcdUpgrade(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	provider := framework.NewVSphere(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+	).WithClusterConfig(
+		provider.WithKubeVersionAndOS(v1alpha1.Kube130, framework.Ubuntu2404, nil),
+		api.ClusterToConfigFiller(
+			api.WithStackedEtcdTopology(),
+			api.WithLicenseToken(licenseToken),
+		),
+	)
+	runSimpleUpgradeFlowWithoutClusterConfigGeneration(
+		test,
+		v1alpha1.Kube131,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube131)),
+		provider.WithProviderUpgrade(provider.Ubuntu2404Kubernetes131Template()),
+	)
+}
+
+func TestVSphereKubernetes131To132Ubuntu2404StackedEtcdUpgrade(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	provider := framework.NewVSphere(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+	).WithClusterConfig(
+		provider.WithKubeVersionAndOS(v1alpha1.Kube131, framework.Ubuntu2404, nil),
+		api.ClusterToConfigFiller(
+			api.WithStackedEtcdTopology(),
+			api.WithLicenseToken(licenseToken),
+		),
+	)
+	runSimpleUpgradeFlowWithoutClusterConfigGeneration(
+		test,
+		v1alpha1.Kube132,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube132)),
+		provider.WithProviderUpgrade(provider.Ubuntu2404Kubernetes132Template()),
+	)
+}
+
+func TestVSphereKubernetes132To133Ubuntu2404StackedEtcdUpgrade(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	provider := framework.NewVSphere(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+	).WithClusterConfig(
+		provider.WithKubeVersionAndOS(v1alpha1.Kube132, framework.Ubuntu2404, nil),
+		api.ClusterToConfigFiller(
+			api.WithStackedEtcdTopology(),
+			api.WithLicenseToken(licenseToken),
+		),
+	)
+	runSimpleUpgradeFlowWithoutClusterConfigGeneration(
+		test,
+		v1alpha1.Kube133,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube133)),
+		provider.WithProviderUpgrade(provider.Ubuntu2404Kubernetes133Template()),
 	)
 }
 
