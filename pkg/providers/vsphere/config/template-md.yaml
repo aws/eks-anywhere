@@ -228,8 +228,15 @@ spec:
       memoryMiB: {{.workloadVMsMemoryMiB}}
       network:
         devices:
+{{- if .vsphereMultiNetworks }}
+        {{range .vsphereMultiNetworks}}
+        - dhcp4: true
+          networkName: {{.}}
+        {{- end }}
+{{- else}}
         - dhcp4: true
           networkName: {{.vsphereNetwork}}
+{{- end }}
       numCPUs: {{.workloadVMsNumCPUs}}
       resourcePool: '{{.workerVsphereResourcePool}}'
       server: {{.vsphereServer}}

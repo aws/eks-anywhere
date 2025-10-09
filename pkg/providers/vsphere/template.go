@@ -14,6 +14,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/crypto"
+	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/common"
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
@@ -134,6 +135,8 @@ func (vs *VsphereTemplateBuilder) GenerateCAPISpecWorkers(
 			return nil, err
 		}
 		workerSpecs = append(workerSpecs, bytes)
+		logger.V(6).Info("worker spec is :", string(bytes))
+
 	}
 
 	return templater.AppendYamlResources(workerSpecs...), nil
@@ -464,6 +467,7 @@ func buildTemplateMapMD(
 		"workerVsphereDatastore":         workerNodeGroupMachineSpec.Datastore,
 		"workerVsphereFolder":            workerNodeGroupMachineSpec.Folder,
 		"vsphereNetwork":                 datacenterSpec.Network,
+		"vsphereMultiNetworks":           workerNodeGroupMachineSpec.Networks,
 		"workerVsphereResourcePool":      workerNodeGroupMachineSpec.ResourcePool,
 		"vsphereServer":                  datacenterSpec.Server,
 		"workerVsphereStoragePolicyName": workerNodeGroupMachineSpec.StoragePolicyName,
