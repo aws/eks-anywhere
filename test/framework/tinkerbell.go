@@ -30,15 +30,18 @@ const (
 	tinkerbellImageUbuntu2204Kubernetes131RTOSEnvVar    = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_31_RTOS"
 	tinkerbellImageUbuntu2204Kubernetes132RTOSEnvVar    = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_32_RTOS"
 	tinkerbellImageUbuntu2204Kubernetes133RTOSEnvVar    = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_33_RTOS"
+	tinkerbellImageUbuntu2404Kubernetes133RTOSEnvVar    = "T_TINKERBELL_IMAGE_UBUNTU_2404_1_33_RTOS"
 	tinkerbellImageUbuntu2204Kubernetes129GenericEnvVar = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_29_GENERIC"
 	tinkerbellImageUbuntu2204Kubernetes130GenericEnvVar = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_30_GENERIC"
 	tinkerbellImageUbuntu2204Kubernetes131GenericEnvVar = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_31_GENERIC"
 	tinkerbellImageUbuntu2204Kubernetes132GenericEnvVar = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_32_GENERIC"
 	tinkerbellImageUbuntu2204Kubernetes133GenericEnvVar = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_33_GENERIC"
+	tinkerbellImageUbuntu2404Kubernetes133GenericEnvVar = "T_TINKERBELL_IMAGE_UBUNTU_2404_1_33_GENERIC"
 	tinkerbellImageUbuntu2204Kubernetes130EnvVar        = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_30"
 	tinkerbellImageUbuntu2204Kubernetes131EnvVar        = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_31"
 	tinkerbellImageUbuntu2204Kubernetes132EnvVar        = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_32"
 	tinkerbellImageUbuntu2204Kubernetes133EnvVar        = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_33"
+	tinkerbellImageUbuntu2404Kubernetes133EnvVar        = "T_TINKERBELL_IMAGE_UBUNTU_2404_1_33"
 	tinkerbellImageRedHat128EnvVar                      = "T_TINKERBELL_IMAGE_REDHAT_1_28"
 	tinkerbellImageRedHat129EnvVar                      = "T_TINKERBELL_IMAGE_REDHAT_1_29"
 	tinkerbellImageRedHat130EnvVar                      = "T_TINKERBELL_IMAGE_REDHAT_1_30"
@@ -72,15 +75,18 @@ var requiredTinkerbellEnvVars = []string{
 	tinkerbellImageUbuntu2204Kubernetes131RTOSEnvVar,
 	tinkerbellImageUbuntu2204Kubernetes132RTOSEnvVar,
 	tinkerbellImageUbuntu2204Kubernetes133RTOSEnvVar,
+	tinkerbellImageUbuntu2404Kubernetes133RTOSEnvVar,
 	tinkerbellImageUbuntu2204Kubernetes129GenericEnvVar,
 	tinkerbellImageUbuntu2204Kubernetes130GenericEnvVar,
 	tinkerbellImageUbuntu2204Kubernetes131GenericEnvVar,
 	tinkerbellImageUbuntu2204Kubernetes132GenericEnvVar,
 	tinkerbellImageUbuntu2204Kubernetes133GenericEnvVar,
+	tinkerbellImageUbuntu2404Kubernetes133GenericEnvVar,
 	tinkerbellImageUbuntu2204Kubernetes130EnvVar,
 	tinkerbellImageUbuntu2204Kubernetes131EnvVar,
 	tinkerbellImageUbuntu2204Kubernetes132EnvVar,
 	tinkerbellImageUbuntu2204Kubernetes133EnvVar,
+	tinkerbellImageUbuntu2404Kubernetes133EnvVar,
 	tinkerbellImageRedHat128EnvVar,
 	tinkerbellImageRedHat129EnvVar,
 	tinkerbellImageRedHat130EnvVar,
@@ -527,14 +533,54 @@ func Ubuntu2204Kubernetes133Image() api.TinkerbellFiller {
 	return imageForKubeVersionAndOS(anywherev1.Kube133, Ubuntu2204, "")
 }
 
+// Ubuntu2404Kubernetes128Image represents an Ubuntu 24.04 raw image corresponding to Kubernetes 1.28.
+func Ubuntu2404Kubernetes128Image() api.TinkerbellFiller {
+	return imageForKubeVersionAndOS(anywherev1.Kube128, Ubuntu2404, "")
+}
+
+// Ubuntu2404Kubernetes129Image represents an Ubuntu 24.04 raw image corresponding to Kubernetes 1.29.
+func Ubuntu2404Kubernetes129Image() api.TinkerbellFiller {
+	return imageForKubeVersionAndOS(anywherev1.Kube129, Ubuntu2404, "")
+}
+
+// Ubuntu2404Kubernetes130Image represents an Ubuntu 24.04 raw image corresponding to Kubernetes 1.30.
+func Ubuntu2404Kubernetes130Image() api.TinkerbellFiller {
+	return imageForKubeVersionAndOS(anywherev1.Kube130, Ubuntu2404, "")
+}
+
+// Ubuntu2404Kubernetes131Image represents an Ubuntu 24.04 raw image corresponding to Kubernetes 1.31.
+func Ubuntu2404Kubernetes131Image() api.TinkerbellFiller {
+	return imageForKubeVersionAndOS(anywherev1.Kube131, Ubuntu2404, "")
+}
+
+// Ubuntu2404Kubernetes132Image represents an Ubuntu 24.04 raw image corresponding to Kubernetes 1.32.
+func Ubuntu2404Kubernetes132Image() api.TinkerbellFiller {
+	return imageForKubeVersionAndOS(anywherev1.Kube132, Ubuntu2404, "")
+}
+
+// Ubuntu2404Kubernetes133Image represents an Ubuntu 24.04 raw image corresponding to Kubernetes 1.33.
+func Ubuntu2404Kubernetes133Image() api.TinkerbellFiller {
+	return imageForKubeVersionAndOS(anywherev1.Kube133, Ubuntu2404, "")
+}
+
 // Ubuntu2204Kubernetes129RTOSImage represents an Ubuntu 22.04 raw image with RTOS kernel corresponding to Kubernetes 1.29.
 func Ubuntu2204Kubernetes129RTOSImage() api.TinkerbellFiller {
 	return imageForKubeVersionAndOS(anywherev1.Kube129, Ubuntu2204, "", "RTOS")
 }
 
+// Ubuntu2404Kubernetes133RTOSImage represents an Ubuntu 24.04 raw image with RTOS kernel corresponding to Kubernetes 1.33.
+func Ubuntu2404Kubernetes133RTOSImage() api.TinkerbellFiller {
+	return imageForKubeVersionAndOS(anywherev1.Kube133, Ubuntu2404, "", "RTOS")
+}
+
 // Ubuntu2204Kubernetes129GenericImage represents an Ubuntu 22.04 raw image with Generic kernel corresponding to Kubernetes 1.29.
 func Ubuntu2204Kubernetes129GenericImage() api.TinkerbellFiller {
 	return imageForKubeVersionAndOS(anywherev1.Kube129, Ubuntu2204, "", "GENERIC")
+}
+
+// Ubuntu2404Kubernetes133GenericImage represents an Ubuntu 24.04 raw image with Generic kernel corresponding to Kubernetes 1.33.
+func Ubuntu2404Kubernetes133GenericImage() api.TinkerbellFiller {
+	return imageForKubeVersionAndOS(anywherev1.Kube133, Ubuntu2404, "", "GENERIC")
 }
 
 // HookIsoURLOverride returns the Hook ISO URL from the environment variable.
