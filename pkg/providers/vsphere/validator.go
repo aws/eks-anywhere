@@ -223,11 +223,6 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, vsphereCl
 		}
 	}
 
-	// Validate networks field usage and network existence
-	if err := v.validateNetworksFieldUsage(ctx, vsphereClusterSpec); err != nil {
-		return err
-	}
-
 	if err := v.validateTemplates(ctx, vsphereClusterSpec); err != nil {
 		return err
 	}
