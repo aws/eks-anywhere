@@ -214,12 +214,18 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, vsphereCl
 		return err
 	}
 
+	// validate
 	for _, config := range vsphereClusterSpec.VSphereMachineConfigs {
 		var b bool                                                                                             // Temporary until we remove the need to pass a bool pointer
 		err := v.govc.ValidateVCenterSetupMachineConfig(ctx, vsphereClusterSpec.VSphereDatacenter, config, &b) // TODO: remove side effects from this implementation or directly move it to set defaults (pointer to bool is not needed)
 		if err != nil {
 			return fmt.Errorf("validating vCenter setup for VSphereMachineConfig %v: %v", config.Name, err)
 		}
+	}
+
+	// Validate networks field usage and network existence
+	if err := v.validateNetworksFieldUsage(ctx, vsphereClusterSpec); err != nil {
+		return err
 	}
 
 	if err := v.validateTemplates(ctx, vsphereClusterSpec); err != nil {
@@ -394,6 +400,44 @@ func (v *Validator) validateNetwork(ctx context.Context, network string) error {
 	}
 	logger.MarkPass("Network validated")
 
+	return nil
+}
+
+func (v *Validator) validateNetworksFieldUsage(ctx context.Context, vsphereClusterSpec *Spec) error {
+	// Check control plane - should NOT have networks field
+	controlPlaneMachineConfig := vsphereClusterSpec.controlPlaneMachineConfig()
+	if controlPlaneMachineConfig != nil && len(controlPlaneMachineConfig.Spec.Networks) > 0 {
+		return fmt.Errorf("networks field is not supported for control plane machine config '%s'. Control plane uses the datacenter network configuration", controlPlaneMachineConfig.Name)
+	}
+
+	// Check etcd - should NOT have networks field
+	if vsphereClusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
+		etcdMachineConfig := vsphereClusterSpec.etcdMachineConfig()
+		if etcdMachineConfig != nil && len(etcdMachineConfig.Spec.Networks) > 0 {
+			return fmt.Errorf("networks field is not supported for etcd machine config '%s'. Etcd uses the datacenter network configuration", etcdMachineConfig.Name)
+		}
+	}
+
+	// Validate worker node networks (where it IS supported)
+	for _, workerNodeGroupConfiguration := range vsphereClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
+		workerMachineConfig := vsphereClusterSpec.workerMachineConfig(workerNodeGroupConfiguration)
+		if workerMachineConfig != nil {
+			if err := v.validateWorkerMachineConfigNetworks(ctx, workerMachineConfig, workerNodeGroupConfiguration.Name); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func (v *Validator) validateWorkerMachineConfigNetworks(ctx context.Context, machineConfig *anywherev1.VSphereMachineConfig, workerGroupName string) error {
+	for _, network := range machineConfig.Spec.Networks {
+		if err := v.validateNetwork(ctx, network); err != nil {
+			return fmt.Errorf("network '%s' not found for worker group '%s' machine config '%s'", network, workerGroupName, machineConfig.Name)
+		}
+	}
+	logger.MarkPass("Worker machine config networks validated")
 	return nil
 }
 
