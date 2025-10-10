@@ -153,6 +153,9 @@ func baseTemplateValues() map[string]interface{} {
 				},
 			},
 		},
+		"envoy": map[string]interface{}{
+			"enabled": false,
+		},
 	}
 }
 
