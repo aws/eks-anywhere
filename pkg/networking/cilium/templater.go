@@ -236,6 +236,9 @@ func templateValues(spec *cluster.Spec, versionsBundle *cluster.VersionsBundle) 
 				},
 			},
 		},
+		"envoy": values{
+			"enabled": false,
+		},
 	}
 
 	if len(spec.Cluster.Spec.WorkerNodeGroupConfigurations) == 0 && spec.Cluster.Spec.ControlPlaneConfiguration.Count == 1 {
