@@ -330,8 +330,9 @@ func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 		return err
 	}
 
+	// Validate machine config networks right after basic vCenter validation
 	if err := p.validator.validateNetworksFieldUsage(ctx, vSphereClusterSpec); err != nil {
-		return fmt.Errorf("network field validation failed: %v", err)
+		return err
 	}
 
 	if err := p.validator.ValidateFailureDomains(ctx, vSphereClusterSpec); err != nil {
@@ -413,6 +414,11 @@ func (p *vsphereProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cl
 	}
 
 	if err := p.validator.ValidateVCenterConfig(ctx, vSphereClusterSpec.VSphereDatacenter); err != nil {
+		return err
+	}
+
+	// Validate machine config networks right after basic vCenter validation
+	if err := p.validator.validateNetworksFieldUsage(ctx, vSphereClusterSpec); err != nil {
 		return err
 	}
 

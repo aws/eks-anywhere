@@ -186,12 +186,14 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, vsphereCl
 	var etcdMachineConfig *anywherev1.VSphereMachineConfig
 
 	controlPlaneMachineConfig := vsphereClusterSpec.controlPlaneMachineConfig()
+	logger.MarkPass("controlplane config: %s", controlPlaneMachineConfig)
 	if controlPlaneMachineConfig == nil {
 		return fmt.Errorf("cannot find VSphereMachineConfig %v for control plane", vsphereClusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name)
 	}
 
 	for _, workerNodeGroupConfiguration := range vsphereClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
 		workerNodeGroupMachineConfig := vsphereClusterSpec.workerMachineConfig(workerNodeGroupConfiguration)
+		logger.MarkPass("workernode  config: %s", workerNodeGroupMachineConfig)
 		if workerNodeGroupMachineConfig == nil {
 			return fmt.Errorf("cannot find VSphereMachineConfig %v for worker nodes", workerNodeGroupConfiguration.MachineGroupRef.Name)
 		}
@@ -423,6 +425,7 @@ func (v *Validator) validateNetworksFieldUsage(ctx context.Context, vsphereClust
 		}
 	}
 
+	logger.MarkPass("Machine config networks validated")
 	return nil
 }
 
@@ -432,7 +435,6 @@ func (v *Validator) validateWorkerMachineConfigNetworks(ctx context.Context, mac
 			return fmt.Errorf("network '%s' not found for worker group '%s' machine config '%s'", network, workerGroupName, machineConfig.Name)
 		}
 	}
-	logger.MarkPass("Worker machine config networks validated")
 	return nil
 }
 
