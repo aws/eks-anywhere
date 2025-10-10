@@ -90,21 +90,6 @@ func (v *Validator) ValidateVCenterConfig(ctx context.Context, datacenterConfig 
 	return nil
 }
 
-// ValidateVCenterConfigWithMachineConfigs validates vCenter config and machine config networks early in the process
-func (v *Validator) ValidateVCenterConfigWithMachineConfigs(ctx context.Context, vsphereClusterSpec *Spec) error {
-	// First validate the basic vCenter configuration
-	if err := v.ValidateVCenterConfig(ctx, vsphereClusterSpec.VSphereDatacenter); err != nil {
-		return err
-	}
-
-	// Then validate machine config networks early
-	if err := v.validateNetworksFieldUsage(ctx, vsphereClusterSpec); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // ValidateFailureDomains validates the provided list of failure domains.
 func (v *Validator) ValidateFailureDomains(ctx context.Context, vsphereClusterSpec *Spec) error {
 	failureDomains := vsphereClusterSpec.VSphereDatacenter.Spec.FailureDomains
@@ -229,12 +214,18 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, vsphereCl
 		return err
 	}
 
+	// validate
 	for _, config := range vsphereClusterSpec.VSphereMachineConfigs {
 		var b bool                                                                                             // Temporary until we remove the need to pass a bool pointer
 		err := v.govc.ValidateVCenterSetupMachineConfig(ctx, vsphereClusterSpec.VSphereDatacenter, config, &b) // TODO: remove side effects from this implementation or directly move it to set defaults (pointer to bool is not needed)
 		if err != nil {
 			return fmt.Errorf("validating vCenter setup for VSphereMachineConfig %v: %v", config.Name, err)
 		}
+	}
+
+	// Validate networks field usage and network existence
+	if err := v.validateNetworksFieldUsage(ctx, vsphereClusterSpec); err != nil {
+		return err
 	}
 
 	if err := v.validateTemplates(ctx, vsphereClusterSpec); err != nil {
