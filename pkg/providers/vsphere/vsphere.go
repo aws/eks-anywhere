@@ -326,7 +326,7 @@ func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 		return err
 	}
 
-	if err := p.validator.ValidateVCenterConfig(ctx, vSphereClusterSpec.VSphereDatacenter); err != nil {
+	if err := p.validator.ValidateVCenterConfigWithMachineConfigs(ctx, vSphereClusterSpec); err != nil {
 		return err
 	}
 
@@ -408,7 +408,7 @@ func (p *vsphereProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cl
 		return err
 	}
 
-	if err := p.validator.ValidateVCenterConfig(ctx, vSphereClusterSpec.VSphereDatacenter); err != nil {
+	if err := p.validator.ValidateVCenterConfigWithMachineConfigs(ctx, vSphereClusterSpec); err != nil {
 		return err
 	}
 
