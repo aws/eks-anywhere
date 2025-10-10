@@ -31,6 +31,12 @@ const (
 	tinkerbellImageUbuntu2204Kubernetes132RTOSEnvVar    = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_32_RTOS"
 	tinkerbellImageUbuntu2204Kubernetes133RTOSEnvVar    = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_33_RTOS"
 	tinkerbellImageUbuntu2404Kubernetes133RTOSEnvVar    = "T_TINKERBELL_IMAGE_UBUNTU_2404_1_33_RTOS"
+	tinkerbellImageUbuntu2404Kubernetes128EnvVar        = "T_TINKERBELL_IMAGE_UBUNTU_2404_1_28"
+	tinkerbellImageUbuntu2404Kubernetes129EnvVar        = "T_TINKERBELL_IMAGE_UBUNTU_2404_1_29"
+	tinkerbellImageUbuntu2404Kubernetes130EnvVar        = "T_TINKERBELL_IMAGE_UBUNTU_2404_1_30"
+	tinkerbellImageUbuntu2404Kubernetes131EnvVar        = "T_TINKERBELL_IMAGE_UBUNTU_2404_1_31"
+	tinkerbellImageUbuntu2404Kubernetes132EnvVar        = "T_TINKERBELL_IMAGE_UBUNTU_2404_1_32"
+	tinkerbellImageUbuntu2404Kubernetes133EnvVar        = "T_TINKERBELL_IMAGE_UBUNTU_2404_1_33"
 	tinkerbellImageUbuntu2204Kubernetes129GenericEnvVar = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_29_GENERIC"
 	tinkerbellImageUbuntu2204Kubernetes130GenericEnvVar = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_30_GENERIC"
 	tinkerbellImageUbuntu2204Kubernetes131GenericEnvVar = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_31_GENERIC"
@@ -41,7 +47,6 @@ const (
 	tinkerbellImageUbuntu2204Kubernetes131EnvVar        = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_31"
 	tinkerbellImageUbuntu2204Kubernetes132EnvVar        = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_32"
 	tinkerbellImageUbuntu2204Kubernetes133EnvVar        = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_33"
-	tinkerbellImageUbuntu2404Kubernetes133EnvVar        = "T_TINKERBELL_IMAGE_UBUNTU_2404_1_33"
 	tinkerbellImageRedHat128EnvVar                      = "T_TINKERBELL_IMAGE_REDHAT_1_28"
 	tinkerbellImageRedHat129EnvVar                      = "T_TINKERBELL_IMAGE_REDHAT_1_29"
 	tinkerbellImageRedHat130EnvVar                      = "T_TINKERBELL_IMAGE_REDHAT_1_30"
@@ -86,6 +91,11 @@ var requiredTinkerbellEnvVars = []string{
 	tinkerbellImageUbuntu2204Kubernetes131EnvVar,
 	tinkerbellImageUbuntu2204Kubernetes132EnvVar,
 	tinkerbellImageUbuntu2204Kubernetes133EnvVar,
+	tinkerbellImageUbuntu2404Kubernetes128EnvVar,
+	tinkerbellImageUbuntu2404Kubernetes129EnvVar,
+	tinkerbellImageUbuntu2404Kubernetes130EnvVar,
+	tinkerbellImageUbuntu2404Kubernetes131EnvVar,
+	tinkerbellImageUbuntu2404Kubernetes132EnvVar,
 	tinkerbellImageUbuntu2404Kubernetes133EnvVar,
 	tinkerbellImageRedHat128EnvVar,
 	tinkerbellImageRedHat129EnvVar,
