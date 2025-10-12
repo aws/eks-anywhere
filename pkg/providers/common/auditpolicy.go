@@ -72,6 +72,208 @@ func AuditPolicyV1() *auditv1.Policy {
 				Namespaces: []string{"kube-system"},
 			},
 			{
+				Level: auditv1.Level("Request"),
+				Verbs: []string{
+					"create",
+					"update",
+					"patch",
+				},
+				Namespaces: []string{
+					"kube-system",
+					"eksa-system",
+					"cert-manager",
+					"capi-system",
+					"capi-kubeadm-bootstrap-system",
+					"capi-kubeadm-control-plane-system",
+					"etcdadm-controller-system",
+					"etcdadm-bootstrap-provider-system",
+					"capv-system",
+					"capc-system",
+					"capt-system",
+					"capx-system",
+				},
+				Resources: []auditv1.GroupResources{
+					{
+						Group: "",
+						Resources: []string{
+							"pods",
+							"services",
+							"configmaps",
+						},
+					},
+					{
+						Group: "apps",
+						Resources: []string{
+							"deployments",
+							"daemonsets",
+							"statefulsets",
+						},
+					},
+				},
+				OmitStages: []auditv1.Stage{
+					"RequestReceived",
+					"ResponseStarted",
+				},
+			},
+			{
+				Level: auditv1.Level("Metadata"),
+				Verbs: []string{
+					"create",
+					"update",
+					"patch",
+				},
+				Namespaces: []string{
+					"kube-system",
+					"eksa-system",
+					"cert-manager",
+					"capi-system",
+					"capi-kubeadm-bootstrap-system",
+					"capi-kubeadm-control-plane-system",
+					"etcdadm-controller-system",
+					"etcdadm-bootstrap-provider-system",
+					"capv-system",
+					"capc-system",
+					"capt-system",
+					"capx-system",
+				},
+				Resources: []auditv1.GroupResources{
+					{
+						Group: "",
+						Resources: []string{
+							"secrets",
+						},
+					},
+				},
+			},
+			{
+				Level: auditv1.Level("Metadata"),
+				Verbs: []string{
+					"delete",
+					"deletecollection",
+				},
+				Namespaces: []string{
+					"kube-system",
+					"eksa-system",
+					"cert-manager",
+					"capi-system",
+					"capi-kubeadm-bootstrap-system",
+					"capi-kubeadm-control-plane-system",
+					"etcdadm-controller-system",
+					"etcdadm-bootstrap-provider-system",
+					"capv-system",
+					"capc-system",
+					"capt-system",
+					"capx-system",
+				},
+				Resources: []auditv1.GroupResources{
+					{
+						Group: "",
+						Resources: []string{
+							"pods",
+							"services",
+							"configmaps",
+							"secrets",
+						},
+					},
+					{
+						Group: "apps",
+						Resources: []string{
+							"deployments",
+							"daemonsets",
+							"statefulsets",
+						},
+					},
+				},
+			},
+			{
+				Level: auditv1.Level("Request"),
+				Verbs: []string{
+					"create",
+					"update",
+					"patch",
+				},
+				Resources: []auditv1.GroupResources{
+					{
+						Group: "apiextensions.k8s.io",
+						Resources: []string{
+							"customresourcedefinitions",
+						},
+					},
+					{
+						Group: "",
+						Resources: []string{
+							"nodes",
+						},
+					},
+					{
+						Group: "admissionregistration.k8s.io",
+						Resources: []string{
+							"validatingwebhookconfigurations",
+							"mutatingwebhookconfigurations",
+						},
+					},
+				},
+				OmitStages: []auditv1.Stage{
+					"RequestReceived",
+					"ResponseStarted",
+				},
+			},
+			{
+				Level: auditv1.Level("Metadata"),
+				Verbs: []string{
+					"create",
+					"update",
+					"patch",
+					"approve",
+				},
+				Resources: []auditv1.GroupResources{
+					{
+						Group: "certificates.k8s.io",
+						Resources: []string{
+							"certificatesigningrequests",
+							"certificatesigningrequests/approval",
+							"certificatesigningrequests/status",
+						},
+					},
+				},
+			},
+			{
+				Level: auditv1.Level("Metadata"),
+				Verbs: []string{
+					"delete",
+					"deletecollection",
+				},
+				Resources: []auditv1.GroupResources{
+					{
+						Group: "apiextensions.k8s.io",
+						Resources: []string{
+							"customresourcedefinitions",
+						},
+					},
+					{
+						Group: "",
+						Resources: []string{
+							"nodes",
+						},
+					},
+					{
+						Group: "admissionregistration.k8s.io",
+						Resources: []string{
+							"validatingwebhookconfigurations",
+							"mutatingwebhookconfigurations",
+						},
+					},
+					{
+						Group: "certificates.k8s.io",
+						Resources: []string{
+							"certificatesigningrequests",
+							"certificatesigningrequests/approval",
+							"certificatesigningrequests/status",
+						},
+					},
+				},
+			},
+			{
 				Level: auditv1.Level("None"),
 				Users: []string{"system:kube-proxy"},
 				Verbs: []string{"watch"},
