@@ -15,7 +15,7 @@ import (
 	types "github.com/aws/eks-anywhere/pkg/types"
 	v1beta1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	gomock "github.com/golang/mock/gomock"
-	v1alpha10 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
+	v1alpha10 "github.com/tinkerbell/tink/api/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 	v1beta10 "sigs.k8s.io/cluster-api/api/v1beta1"
 	v1beta11 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
