@@ -191,9 +191,14 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, vsphereCl
 		return fmt.Errorf("cannot find VSphereMachineConfig %v for control plane", vsphereClusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name)
 	}
 
+	if controlPlaneMachineConfig.Spec.Networks != nil {
+		return fmt.Errorf("networks cannot be specified in the control plane machine config")
+	}
+
 	for _, workerNodeGroupConfiguration := range vsphereClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
 		workerNodeGroupMachineConfig := vsphereClusterSpec.workerMachineConfig(workerNodeGroupConfiguration)
 		logger.MarkPass("workernode  config: %s", workerNodeGroupMachineConfig)
+		logger.Info("=======================Validating worker node machine config=======================")
 		if workerNodeGroupMachineConfig == nil {
 			return fmt.Errorf("cannot find VSphereMachineConfig %v for worker nodes", workerNodeGroupConfiguration.MachineGroupRef.Name)
 		}
@@ -205,6 +210,9 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, vsphereCl
 		}
 		if !v.sameOSFamily(vsphereClusterSpec.VSphereMachineConfigs) {
 			return errors.New("all VSphereMachineConfigs must have the same osFamily specified")
+		}
+		if etcdMachineConfig.Spec.Networks != nil {
+			return fmt.Errorf("networks cannot be specified in the etcd machine config")
 		}
 		if etcdMachineConfig.Spec.HostOSConfiguration != nil && etcdMachineConfig.Spec.HostOSConfiguration.BottlerocketConfiguration != nil && etcdMachineConfig.Spec.HostOSConfiguration.BottlerocketConfiguration.Kubernetes != nil {
 			logger.Info("Bottlerocket Kubernetes settings are not supported for etcd machines. Ignoring Kubernetes settings for etcd machines.", "etcdMachineConfig", etcdMachineConfig.Name)
