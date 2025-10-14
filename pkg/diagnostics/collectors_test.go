@@ -75,16 +75,12 @@ func TestVsphereDataCenterConfigCollectors(t *testing.T) {
 	datacenter := eksav1alpha1.Ref{Kind: eksav1alpha1.VSphereDatacenterKind}
 	factory := diagnostics.NewDefaultCollectorFactory(test.NewFileReader())
 	collectors := factory.DataCenterConfigCollectors(datacenter, spec)
-	g.Expect(collectors).To(HaveLen(11), "DataCenterConfigCollectors() mismatch between number of desired collectors and actual")
+	g.Expect(collectors).To(HaveLen(4), "DataCenterConfigCollectors() mismatch between number of desired collectors and actual")
 	g.Expect(collectors[0].Logs.Namespace).To(Equal(constants.CapvSystemNamespace))
 	g.Expect(collectors[0].Logs.Name).To(Equal(fmt.Sprintf("logs/%s", constants.CapvSystemNamespace)))
-	for _, collector := range collectors[1:7] {
-		g.Expect(collector.RunPod.PodSpec.Containers[0].Command).To(Equal([]string{"kubectl"}))
-		g.Expect(collector.RunPod.Namespace).To(Equal("eksa-diagnostics"))
-	}
-	g.Expect(collectors[8].RunPod.PodSpec.Containers[0].Name).To(Equal("check-host-port"))
-	g.Expect(collectors[9].RunPod.PodSpec.Containers[0].Name).To(Equal("ping-host-ip"))
-	g.Expect(collectors[10].RunPod.PodSpec.Containers[0].Name).To(Equal("check-cloud-controller"))
+	g.Expect(collectors[1].RunPod.PodSpec.Containers[0].Name).To(Equal("check-host-port"))
+	g.Expect(collectors[2].RunPod.PodSpec.Containers[0].Name).To(Equal("ping-host-ip"))
+	g.Expect(collectors[3].RunPod.PodSpec.Containers[0].Name).To(Equal("check-cloud-controller"))
 }
 
 func TestCloudStackDataCenterConfigCollectors(t *testing.T) {
@@ -93,13 +89,9 @@ func TestCloudStackDataCenterConfigCollectors(t *testing.T) {
 	datacenter := eksav1alpha1.Ref{Kind: eksav1alpha1.CloudStackDatacenterKind}
 	factory := diagnostics.NewDefaultCollectorFactory(test.NewFileReader())
 	collectors := factory.DataCenterConfigCollectors(datacenter, spec)
-	g.Expect(collectors).To(HaveLen(10), "DataCenterConfigCollectors() mismatch between number of desired collectors and actual")
+	g.Expect(collectors).To(HaveLen(1), "DataCenterConfigCollectors() mismatch between number of desired collectors and actual")
 	g.Expect(collectors[0].Logs.Namespace).To(Equal(constants.CapcSystemNamespace))
 	g.Expect(collectors[0].Logs.Name).To(Equal(fmt.Sprintf("logs/%s", constants.CapcSystemNamespace)))
-	for _, collector := range collectors[1:] {
-		g.Expect([]string{"kubectl"}).To(Equal(collector.RunPod.PodSpec.Containers[0].Command))
-		g.Expect("eksa-diagnostics").To(Equal(collector.RunPod.Namespace))
-	}
 }
 
 func TestTinkerbellDataCenterConfigCollectors(t *testing.T) {
@@ -108,13 +100,9 @@ func TestTinkerbellDataCenterConfigCollectors(t *testing.T) {
 	datacenter := eksav1alpha1.Ref{Kind: eksav1alpha1.TinkerbellDatacenterKind}
 	factory := diagnostics.NewDefaultCollectorFactory(test.NewFileReader())
 	collectors := factory.DataCenterConfigCollectors(datacenter, spec)
-	g.Expect(collectors).To(HaveLen(13), "DataCenterConfigCollectors() mismatch between number of desired collectors and actual")
+	g.Expect(collectors).To(HaveLen(1), "DataCenterConfigCollectors() mismatch between number of desired collectors and actual")
 	g.Expect(collectors[0].Logs.Namespace).To(Equal(constants.CaptSystemNamespace))
 	g.Expect(collectors[0].Logs.Name).To(Equal(fmt.Sprintf("logs/%s", constants.CaptSystemNamespace)))
-	for _, collector := range collectors[1:] {
-		g.Expect([]string{"kubectl"}).To(Equal(collector.RunPod.PodSpec.Containers[0].Command))
-		g.Expect("eksa-diagnostics").To(Equal(collector.RunPod.Namespace))
-	}
 }
 
 func TestSnowCollectors(t *testing.T) {
@@ -123,13 +111,9 @@ func TestSnowCollectors(t *testing.T) {
 	datacenter := eksav1alpha1.Ref{Kind: eksav1alpha1.SnowDatacenterKind}
 	factory := diagnostics.NewDefaultCollectorFactory(test.NewFileReader())
 	collectors := factory.DataCenterConfigCollectors(datacenter, spec)
-	g.Expect(collectors).To(HaveLen(6), "DataCenterConfigCollectors() mismatch between number of desired collectors and actual")
+	g.Expect(collectors).To(HaveLen(1), "DataCenterConfigCollectors() mismatch between number of desired collectors and actual")
 	g.Expect(collectors[0].Logs.Namespace).To(Equal(constants.CapasSystemNamespace))
 	g.Expect(collectors[0].Logs.Name).To(Equal(fmt.Sprintf("logs/%s", constants.CapasSystemNamespace)))
-	for _, collector := range collectors[1:] {
-		g.Expect([]string{"kubectl"}).To(Equal(collector.RunPod.PodSpec.Containers[0].Command))
-		g.Expect("eksa-diagnostics").To(Equal(collector.RunPod.Namespace))
-	}
 }
 
 func TestNutanixCollectors(t *testing.T) {
@@ -138,13 +122,9 @@ func TestNutanixCollectors(t *testing.T) {
 	datacenter := eksav1alpha1.Ref{Kind: eksav1alpha1.NutanixDatacenterKind}
 	factory := diagnostics.NewDefaultCollectorFactory(test.NewFileReader())
 	collectors := factory.DataCenterConfigCollectors(datacenter, spec)
-	g.Expect(collectors).To(HaveLen(6), "DataCenterConfigCollectors() mismatch between number of desired collectors and actual")
+	g.Expect(collectors).To(HaveLen(1), "DataCenterConfigCollectors() mismatch between number of desired collectors and actual")
 	g.Expect(collectors[0].Logs.Namespace).To(Equal(constants.CapxSystemNamespace))
 	g.Expect(collectors[0].Logs.Name).To(Equal(fmt.Sprintf("logs/%s", constants.CapxSystemNamespace)))
-	for _, collector := range collectors[1:] {
-		g.Expect([]string{"kubectl"}).To(Equal(collector.RunPod.PodSpec.Containers[0].Command))
-		g.Expect("eksa-diagnostics").To(Equal(collector.RunPod.Namespace))
-	}
 }
 
 func TestHostCollectors(t *testing.T) {
@@ -231,4 +211,58 @@ func TestAuditLogCollectors(t *testing.T) {
 			g.Expect(podSpec.Tolerations[0].Key).To(Equal("node-role.kubernetes.io/control-plane"), "Toleration key should be 'node-role.kubernetes.io/control-plane'")
 		})
 	}
+}
+
+func TestWebhookConfigCollectors(t *testing.T) {
+	g := NewGomegaWithT(t)
+	factory := diagnostics.NewDefaultCollectorFactory(test.NewFileReader())
+
+	collectors := factory.DefaultCollectors()
+
+	// Verify webhook collectors are included in default collectors
+	var webhookCollectors []*diagnostics.Collect
+	for _, collector := range collectors {
+		if collector.RunPod != nil {
+			name := collector.RunPod.Name
+			if name == "validatingwebhookconfigurations" || name == "mutatingwebhookconfigurations" {
+				webhookCollectors = append(webhookCollectors, collector)
+			}
+		}
+	}
+
+	g.Expect(webhookCollectors).To(HaveLen(2), "DefaultCollectors() should include 2 webhook configuration collectors")
+
+	// Verify validating webhook collector
+	var validatingCollector *diagnostics.Collect
+	for _, c := range webhookCollectors {
+		if c.RunPod.Name == "validatingwebhookconfigurations" {
+			validatingCollector = c
+			break
+		}
+	}
+	g.Expect(validatingCollector).NotTo(BeNil(), "Should have validating webhook configuration collector")
+	g.Expect(validatingCollector.RunPod.CollectorName).To(Equal("validatingwebhookconfigurations"))
+	g.Expect(validatingCollector.RunPod.Namespace).To(Equal(constants.EksaDiagnosticsNamespace))
+	g.Expect(validatingCollector.RunPod.PodSpec.Containers).To(HaveLen(1))
+	g.Expect(validatingCollector.RunPod.PodSpec.Containers[0].Command).To(Equal([]string{"kubectl"}))
+	g.Expect(validatingCollector.RunPod.PodSpec.Containers[0].Args).To(Equal([]string{"get", "validatingwebhookconfigurations", "-o", "json"}))
+	g.Expect(validatingCollector.RunPod.PodSpec.HostNetwork).To(BeTrue())
+	g.Expect(validatingCollector.RunPod.Timeout).To(Equal("30s"))
+
+	// Verify mutating webhook collector
+	var mutatingCollector *diagnostics.Collect
+	for _, c := range webhookCollectors {
+		if c.RunPod.Name == "mutatingwebhookconfigurations" {
+			mutatingCollector = c
+			break
+		}
+	}
+	g.Expect(mutatingCollector).NotTo(BeNil(), "Should have mutating webhook configuration collector")
+	g.Expect(mutatingCollector.RunPod.CollectorName).To(Equal("mutatingwebhookconfigurations"))
+	g.Expect(mutatingCollector.RunPod.Namespace).To(Equal(constants.EksaDiagnosticsNamespace))
+	g.Expect(mutatingCollector.RunPod.PodSpec.Containers).To(HaveLen(1))
+	g.Expect(mutatingCollector.RunPod.PodSpec.Containers[0].Command).To(Equal([]string{"kubectl"}))
+	g.Expect(mutatingCollector.RunPod.PodSpec.Containers[0].Args).To(Equal([]string{"get", "mutatingwebhookconfigurations", "-o", "json"}))
+	g.Expect(mutatingCollector.RunPod.PodSpec.HostNetwork).To(BeTrue())
+	g.Expect(mutatingCollector.RunPod.Timeout).To(Equal("30s"))
 }
