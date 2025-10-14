@@ -41,6 +41,38 @@ description: >
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
 
+## [v0.23.4](https://github.com/aws/eks-anywhere/releases/tag/v0.23.4)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.33.0 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+
+\* RHEL 8's kernel version (4.18) is not supported by kubeadm for Kubernetes versions 1.32 and above (see Kubernetes GitHub issue [#129462](https://github.com/kubernetes/kubernetes/issues/129462)). As a result, EKS Anywhere does not support using RHEL 8 as the node operating system for Kubernetes versions 1.32 and above.
+
+### Changed
+- EKS Distro:
+  - [`v1-33-eks-16`](https://distro.eks.amazonaws.com/releases/1-33/16/)
+  - [`v1-32-eks-26`](https://distro.eks.amazonaws.com/releases/1-32/26/)
+  - [`v1-31-eks-33`](https://distro.eks.amazonaws.com/releases/1-31/33/)
+  - [`v1-30-eks-44`](https://distro.eks.amazonaws.com/releases/1-30/44/)
+  - [`v1-29-eks-51`](https://distro.eks.amazonaws.com/releases/1-29/51/)
+  - [`v1-28-eks-62`](https://distro.eks.amazonaws.com/releases/1-28/62/)
+
+- Upgraded Hook Os Linux Kernel version from 5.5.y to 6.6.y
+
+### Added
+- Configure static IPAM through Tinkerbell templates for Ubuntu and Redhat ([#10163](https://github.com/aws/eks-anywhere/pull/10163))
+
+### Fixed
+- Fix Hook OS iso image booting in blind mode ([#4879](https://github.com/aws/eks-anywhere-build-tooling/pull/4879))
+- Remove DHCP info accessed during Tinkerbell Workflows ([#4887](https://github.com/aws/eks-anywhere-build-tooling/pull/4887))
+
+
 ## [v0.23.3](https://github.com/aws/eks-anywhere/releases/tag/v0.23.3)
 
 ### Supported OS version details
@@ -48,7 +80,7 @@ description: >
 |:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
 |    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
 |    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
-| Bottlerocket 1.32.0 |    ✔    |     —      |    —    |     —      |  —   |
+| Bottlerocket 1.33.0 |    ✔    |     —      |    —    |     —      |  —   |
 |      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
 |      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
 
@@ -79,7 +111,7 @@ description: >
 |:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
 |    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
 |    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
-| Bottlerocket 1.32.0 |    ✔    |     —      |    —    |     —      |  —   |
+| Bottlerocket 1.33.0 |    ✔    |     —      |    —    |     —      |  —   |
 |      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
 |      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
 
@@ -110,7 +142,7 @@ description: >
 |:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
 |    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
 |    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
-| Bottlerocket 1.32.0 |    ✔    |     —      |    —    |     —      |  —   |
+| Bottlerocket 1.33.0 |    ✔    |     —      |    —    |     —      |  —   |
 |      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
 |      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
 
