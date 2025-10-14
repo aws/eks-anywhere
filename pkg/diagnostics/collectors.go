@@ -57,6 +57,7 @@ func (c *EKSACollectorFactory) DefaultCollectors() []*Collect {
 		},
 	}
 	collectors = append(collectors, c.defaultLogCollectors()...)
+	collectors = append(collectors, c.webhookConfigCollectors()...)
 	return collectors
 }
 
@@ -734,4 +735,44 @@ func hostlogPath(logType string) string {
 
 func crdPath(crdType string) string {
 	return fmt.Sprintf("crds/%s", crdType)
+}
+
+// webhookConfigCollectors returns collectors for admission webhook configurations.
+func (c *EKSACollectorFactory) webhookConfigCollectors() []*Collect {
+	return []*Collect{
+		c.webhookConfigCollector("validatingwebhookconfigurations"),
+		c.webhookConfigCollector("mutatingwebhookconfigurations"),
+	}
+}
+
+func (c *EKSACollectorFactory) webhookConfigCollector(resourceType string) *Collect {
+	command := []string{"kubectl"}
+	args := []string{"get", resourceType, "-o", "json"}
+	return &Collect{
+		RunPod: &runPod{
+			collectorMeta: collectorMeta{
+				CollectorName: resourceType,
+			},
+			Name:      resourceType,
+			Namespace: constants.EksaDiagnosticsNamespace,
+			PodSpec: &v1.PodSpec{
+				Containers: []v1.Container{{
+					Name:    resourceType,
+					Image:   c.DiagnosticCollectorImage,
+					Command: command,
+					Args:    args,
+				}},
+				// It's possible for networking to not be working on the cluster or the nodes
+				// not being ready, so adding tolerations and running the pod on host networking
+				// to be able to pull the resources from the cluster
+				HostNetwork: true,
+				Tolerations: []v1.Toleration{{
+					Key:    "node.kubernetes.io",
+					Value:  "not-ready",
+					Effect: "NoSchedule",
+				}},
+			},
+			Timeout: "30s",
+		},
+	}
 }

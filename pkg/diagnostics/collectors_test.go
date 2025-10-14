@@ -232,3 +232,57 @@ func TestAuditLogCollectors(t *testing.T) {
 		})
 	}
 }
+
+func TestWebhookConfigCollectors(t *testing.T) {
+	g := NewGomegaWithT(t)
+	factory := diagnostics.NewDefaultCollectorFactory(test.NewFileReader())
+
+	collectors := factory.DefaultCollectors()
+
+	// Verify webhook collectors are included in default collectors
+	var webhookCollectors []*diagnostics.Collect
+	for _, collector := range collectors {
+		if collector.RunPod != nil {
+			name := collector.RunPod.Name
+			if name == "validatingwebhookconfigurations" || name == "mutatingwebhookconfigurations" {
+				webhookCollectors = append(webhookCollectors, collector)
+			}
+		}
+	}
+
+	g.Expect(webhookCollectors).To(HaveLen(2), "DefaultCollectors() should include 2 webhook configuration collectors")
+
+	// Verify validating webhook collector
+	var validatingCollector *diagnostics.Collect
+	for _, c := range webhookCollectors {
+		if c.RunPod.Name == "validatingwebhookconfigurations" {
+			validatingCollector = c
+			break
+		}
+	}
+	g.Expect(validatingCollector).NotTo(BeNil(), "Should have validating webhook configuration collector")
+	g.Expect(validatingCollector.RunPod.CollectorName).To(Equal("validatingwebhookconfigurations"))
+	g.Expect(validatingCollector.RunPod.Namespace).To(Equal(constants.EksaDiagnosticsNamespace))
+	g.Expect(validatingCollector.RunPod.PodSpec.Containers).To(HaveLen(1))
+	g.Expect(validatingCollector.RunPod.PodSpec.Containers[0].Command).To(Equal([]string{"kubectl"}))
+	g.Expect(validatingCollector.RunPod.PodSpec.Containers[0].Args).To(Equal([]string{"get", "validatingwebhookconfigurations", "-o", "json"}))
+	g.Expect(validatingCollector.RunPod.PodSpec.HostNetwork).To(BeTrue())
+	g.Expect(validatingCollector.RunPod.Timeout).To(Equal("30s"))
+
+	// Verify mutating webhook collector
+	var mutatingCollector *diagnostics.Collect
+	for _, c := range webhookCollectors {
+		if c.RunPod.Name == "mutatingwebhookconfigurations" {
+			mutatingCollector = c
+			break
+		}
+	}
+	g.Expect(mutatingCollector).NotTo(BeNil(), "Should have mutating webhook configuration collector")
+	g.Expect(mutatingCollector.RunPod.CollectorName).To(Equal("mutatingwebhookconfigurations"))
+	g.Expect(mutatingCollector.RunPod.Namespace).To(Equal(constants.EksaDiagnosticsNamespace))
+	g.Expect(mutatingCollector.RunPod.PodSpec.Containers).To(HaveLen(1))
+	g.Expect(mutatingCollector.RunPod.PodSpec.Containers[0].Command).To(Equal([]string{"kubectl"}))
+	g.Expect(mutatingCollector.RunPod.PodSpec.Containers[0].Args).To(Equal([]string{"get", "mutatingwebhookconfigurations", "-o", "json"}))
+	g.Expect(mutatingCollector.RunPod.PodSpec.HostNetwork).To(BeTrue())
+	g.Expect(mutatingCollector.RunPod.Timeout).To(Equal("30s"))
+}
