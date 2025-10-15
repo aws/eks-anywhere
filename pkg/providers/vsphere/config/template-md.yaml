@@ -251,3 +251,21 @@ spec:
       - {{ . }}
       {{- end }}
 {{- end }}
+# #cloud-config
+# write_files:
+#   - path: /var/lib/netdog/net.toml
+#     content: |
+#       version = 2
+#       [eth0]
+#       dhcp4 = true
+#       primary = true
+#       [eth1]
+#       dhcp4 = true
+#     permissions: '0644'
+# runcmd:
+#   - systemctl restart netdog
+#   - sleep 10  # Wait for network to be ready
+
+      customVMXKeys:
+        guestinfo.userdata: "I2Nsb3VkLWNvbmZpZwp3cml0ZV9maWxlczoKICAtIHBhdGg6IC92YXIvbGliL25ldGRvZy9uZXQudG9tbAogICAgY29udGVudDogfAogICAgICB2ZXJzaW9uID0gMgogICAgICBbZXRoMF0KICAgICAgZGhjcDQgPSB0cnVlCiAgICAgIHByaW1hcnkgPSB0cnVlCiAgICAgIFtldGgxXQogICAgICBkaGNwNCA9IHRydWUKICAgIHBlcm1pc3Npb25zOiAnMDY0NCcKcnVuY21kOgogIC0gc3lzdGVtY3RsIHJlc3RhcnQgbmV0ZG9nCiAgLSBzbGVlcCAxMCAgIyBXYWl0IGZvciBuZXR3b3JrIHRvIGJlIHJlYWR5Cg=="
+        guestinfo.userdata.encoding: "base64"
