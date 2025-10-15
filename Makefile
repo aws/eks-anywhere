@@ -459,7 +459,8 @@ generate: export PATH := $(GO_PATH):$(PATH)
 generate: $(CONTROLLER_GEN)  ## Generate zz_generated.deepcopy.go
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" \
 		paths=./pkg/api/... \
-		paths="./release/api/..."
+		paths="./release/api/..." \
+		paths="./pkg/providers/snow/api/..."
 	
 .PHONY: verify-generate
 verify-generate: generate ## Verify if generated zz_generated.deepcopy.go files need to be updated

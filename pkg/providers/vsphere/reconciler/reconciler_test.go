@@ -14,10 +14,10 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
-	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
-	addonsv1 "sigs.k8s.io/cluster-api/exp/addons/api/v1beta1"
+	addonsv1 "sigs.k8s.io/cluster-api/api/addons/v1beta1"
+	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -166,9 +166,6 @@ func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
 func TestReconcilerFailureDomainsSuccess(t *testing.T) {
 	features.ClearCache()
 	tt := newReconcilerTest(t)
-	tt.eksaSupportObjs = append(tt.eksaSupportObjs, test.CAPICluster(func(c *clusterv1.Cluster) {
-		c.Name = tt.cluster.Name
-	}))
 	tt.createAllObjs()
 
 	spec := tt.buildSpec()
@@ -190,9 +187,6 @@ func TestReconcilerFailureDomainsSuccess(t *testing.T) {
 func TestValidateFailureDomainsSuccess(t *testing.T) {
 	features.ClearCache()
 	tt := newReconcilerTest(t)
-	tt.eksaSupportObjs = append(tt.eksaSupportObjs, test.CAPICluster(func(c *clusterv1.Cluster) {
-		c.Name = tt.cluster.Name
-	}))
 	tt.createAllObjs()
 
 	spec := tt.buildSpec()
@@ -222,9 +216,6 @@ func TestValidateFailureDomainsSuccess(t *testing.T) {
 func TestValidateFailureDomainsFailure(t *testing.T) {
 	features.ClearCache()
 	tt := newReconcilerTest(t)
-	tt.eksaSupportObjs = append(tt.eksaSupportObjs, test.CAPICluster(func(c *clusterv1.Cluster) {
-		c.Name = tt.cluster.Name
-	}))
 	tt.createAllObjs()
 
 	spec := tt.buildSpec()

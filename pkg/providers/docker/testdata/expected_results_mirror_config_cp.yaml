@@ -289,6 +289,10 @@ spec:
     - systemctl daemon-reload
     - systemctl restart containerd
   replicas: 3
+  rolloutStrategy:
+    rollingUpdate:
+      maxSurge: 1
+    type: RollingUpdate
   version: v1.21.2-eks-1-21-4
 ---
 kind: EtcdadmCluster

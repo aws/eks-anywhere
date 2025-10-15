@@ -11,8 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 	apierrors "k8s.io/apimachinery/pkg/util/errors"
-	"sigs.k8s.io/cluster-api/api/v1beta1"
-	"sigs.k8s.io/cluster-api/util/conditions"
+	"sigs.k8s.io/cluster-api/api/core/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
@@ -34,9 +33,16 @@ func ValidateClusterReady(ctx context.Context, vc clusterf.StateValidationConfig
 	if capiCluster == nil {
 		return fmt.Errorf("cluster %s does not exist", clus.Name)
 	}
-	if conditions.IsFalse(capiCluster, v1beta1.ReadyCondition) {
-		return fmt.Errorf("CAPI cluster %s not ready yet. %s", capiCluster.GetName(), conditions.GetReason(capiCluster, v1beta1.ReadyCondition))
+
+	for _, condition := range capiCluster.Status.Conditions {
+		if condition.Type == v1beta1.ReadyCondition {
+			if condition.Status != corev1.ConditionTrue {
+				return fmt.Errorf("capi cluster %s not ready yet", capiCluster.GetName())
+			}
+			break
+		}
 	}
+
 	if clus.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy != nil && clus.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy.Type == v1alpha1.InPlaceStrategyType {
 		return validateCAPIobjectsForInPlace(ctx, vc)
 	}
@@ -88,9 +94,16 @@ func validateKCP(ctx context.Context, vc clusterf.StateValidationConfig) error {
 	if kcp == nil {
 		return errors.New("KubeadmControlPlane object not found")
 	}
-	if conditions.IsFalse(kcp, v1beta1.ReadyCondition) {
-		return errors.New("kcp ready condition is not true")
-	} else if kcp.Status.UpdatedReplicas != kcp.Status.ReadyReplicas || *kcp.Spec.Replicas != kcp.Status.UpdatedReplicas {
+
+	for _, condition := range kcp.Status.Conditions {
+		if condition.Type == v1beta1.ReadyCondition {
+			if condition.Status != corev1.ConditionTrue {
+				return fmt.Errorf("kcp %s is not ready yet", kcp.GetName())
+			}
+			break
+		}
+	}
+	if kcp.Status.UpdatedReplicas != kcp.Status.ReadyReplicas || *kcp.Spec.Replicas != kcp.Status.UpdatedReplicas {
 		return fmt.Errorf("kcp replicas count %d, updated replicas count %d and ready replicas count %d are not in sync", *kcp.Spec.Replicas, kcp.Status.UpdatedReplicas, kcp.Status.ReadyReplicas)
 	}
 	return nil
@@ -101,16 +114,23 @@ func validateMDs(ctx context.Context, vc clusterf.StateValidationConfig) error {
 	if err != nil {
 		return fmt.Errorf("failed to retrieve machinedeployments: %s", err)
 	}
-	if len(mds) == 0 && len(vc.ClusterSpec.Config.Cluster.Spec.WorkerNodeGroupConfigurations) != 0 {
+	if len(mds) == 0 && len(vc.ClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations) != 0 {
 		return errors.New("machinedeployment object not found")
 	}
 	for _, md := range mds {
-		if conditions.IsFalse(&md, v1beta1.ReadyCondition) {
-			return fmt.Errorf("md ready condition is not true for md %s", md.Name)
-		} else if md.Status.UpdatedReplicas != md.Status.ReadyReplicas || *md.Spec.Replicas != md.Status.UpdatedReplicas {
+		for _, condition := range md.Status.Conditions {
+			if condition.Type == v1beta1.ReadyCondition {
+				if condition.Status != corev1.ConditionTrue {
+					return fmt.Errorf("md ready condition is not true for md %s", md.Name)
+				}
+				break
+			}
+		}
+		if md.Status.UpdatedReplicas != md.Status.ReadyReplicas || *md.Spec.Replicas != md.Status.UpdatedReplicas {
 			return fmt.Errorf("md replicas count %d, updated replicas count %d and ready replicas count %d for md %s are not in sync", *md.Spec.Replicas, md.Status.UpdatedReplicas, md.Status.ReadyReplicas, md.Name)
 		}
 	}
+
 	return nil
 }
 
