@@ -18,9 +18,11 @@ The steps below are based on the [guide for configuring IRSA for DIY Kubernetes,
 
 You must use a single OIDC provider per EKS Anywhere cluster, which is the best practice to prevent a token from one cluster being used with another cluster. These steps describe the process of using a S3 bucket to host the OIDC `discovery.json` and `keys.json` documents.
 
+If your organization has policies that restrict the use of public S3 buckets, you can alternatively use Amazon CloudFront to host the OIDC discovery and key files. This approach uses a Cloudfront distribution in front of a private S3 bucket. For a sample implementation, see the [sample-eks-anywhere-irsa-cloudfront](https://github.com/aws-samples/sample-eks-anywhere-irsa-cloudfront) repository.
+
 1. [Create an S3 bucket to host the public signing keys and OIDC discovery document for your cluster](https://github.com/aws/amazon-eks-pod-identity-webhook/blob/master/SELF_HOSTED_SETUP.md#create-an-s3-bucket). Make a note of the `$HOSTNAME` and `$ISSUER_HOSTPATH`.
 
-1. Create the OIDC discovery document as follows:
+2. Create the OIDC discovery document as follows:
 
     ```bash
     cat <<EOF > discovery.json
@@ -45,37 +47,37 @@ You must use a single OIDC provider per EKS Anywhere cluster, which is the best 
     EOF
     ```
 
-1. Upload the `discovery.json` file to the S3 bucket:
+3. Upload the `discovery.json` file to the S3 bucket:
     ```bash
     aws s3 cp ./discovery.json s3://$S3_BUCKET/.well-known/openid-configuration
     ```
 
-1. Create an [OIDC provider](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_create_oidc.html) for your cluster. Set the _Provider URL_ to `https://$ISSUER_HOSTPATH` and _Audience_ to `sts.amazonaws.com`.
+4. Create an [OIDC provider](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_create_oidc.html) for your cluster. Set the _Provider URL_ to `https://$ISSUER_HOSTPATH` and _Audience_ to `sts.amazonaws.com`.
 
-1. Make a note of the `Provider` field of OIDC provider after it is created.
+5. Make a note of the `Provider` field of OIDC provider after it is created.
 
-1. Assign an IAM role to the OIDC provider.
+6. Assign an IAM role to the OIDC provider.
 
     1. Navigate to the AWS IAM Console.
 
-	1. Click on the OIDC provider.
+	2. Click on the OIDC provider.
 
-    1. Click _Assign role_.
+    3. Click _Assign role_.
 
-	1. Select _Create a new role_.
+	4. Select _Create a new role_.
 
-	1. Select _Web identity_ as the trusted entity.
+	5. Select _Web identity_ as the trusted entity.
 
-	1. In the _Web identity_ section:
+	6. In the _Web identity_ section:
 
 		* If your _Identity provider_ is not auto selected, select it.
 		* Select `sts.amazonaws.com` as the _Audience_.
 
-	1. Click _Next_.
+	7. Click _Next_.
 
-	1. Configure your desired _Permissions poilicies_.
+	8. Configure your desired _Permissions poilicies_.
 
-	1. Below is a sample trust policy of IAM role for your pods. Replace `ACCOUNT_ID`, `ISSUER_HOSTPATH`, `NAMESPACE` and `SERVICE_ACCOUNT`.
+	9. Below is a sample trust policy of IAM role for your pods. Replace `ACCOUNT_ID`, `ISSUER_HOSTPATH`, `NAMESPACE` and `SERVICE_ACCOUNT`.
         _Example: Scoped to a service account_
         ```json
         {
@@ -97,9 +99,9 @@ You must use a single OIDC provider per EKS Anywhere cluster, which is the best 
         }
        ```
 
-	1. Create the IAM Role and make a note of the _Role name_.
+	10. Create the IAM Role and make a note of the _Role name_.
 
-	1. After the cluster is created you can grant service accounts access to the role by modifying the trust relationship. See the [How to use trust policies with IAM Roles](https://aws.amazon.com/blogs/security/how-to-use-trust-policies-with-iam-roles/) for more information on trust policies. Refer to [Configure the trust relationship for the OIDC provider's IAM Role](#configure-the-trust-relationship-for-the-oidc-providers-iam-role) for a working example.
+	11. After the cluster is created you can grant service accounts access to the role by modifying the trust relationship. See the [How to use trust policies with IAM Roles](https://aws.amazon.com/blogs/security/how-to-use-trust-policies-with-iam-roles/) for more information on trust policies. Refer to [Configure the trust relationship for the OIDC provider's IAM Role](#configure-the-trust-relationship-for-the-oidc-providers-iam-role) for a working example.
 
 ### Create (or upgrade) the EKS Anywhere cluster
 
