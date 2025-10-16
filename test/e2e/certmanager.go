@@ -27,11 +27,11 @@ func runCertManagerRemoteClusterInstallSimpleFlow(test *framework.MulticlusterE2
 		packagePrefix := "test"
 		test.ManagementCluster.InstallCertManagerPackageWithAwsCredentials(packagePrefix, packageName, EksaPackagesNamespace, e.ClusterName)
 		// Ensure cleanup happens even if the test fails
-		defer func() {
+		e.T.Cleanup(func() {
 			if err := e.CleanupCerts(withCluster(test.ManagementCluster)); err != nil {
 				e.T.Logf("Warning: Failed to cleanup certificates: %v", err)
 			}
-		}()
+		})
 		e.VerifyCertManagerPackageInstalled(packagePrefix, EksaPackagesNamespace, cmPackageName, withCluster(test.ManagementCluster))
 		e.DeleteClusterWithKubectl()
 		e.ValidateClusterDelete()
