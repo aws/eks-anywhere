@@ -186,7 +186,6 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, vsphereCl
 	var etcdMachineConfig *anywherev1.VSphereMachineConfig
 
 	controlPlaneMachineConfig := vsphereClusterSpec.controlPlaneMachineConfig()
-	logger.MarkPass("controlplane config: %s", controlPlaneMachineConfig)
 	if controlPlaneMachineConfig == nil {
 		return fmt.Errorf("cannot find VSphereMachineConfig %v for control plane", vsphereClusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name)
 	}
@@ -197,8 +196,6 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, vsphereCl
 
 	for _, workerNodeGroupConfiguration := range vsphereClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
 		workerNodeGroupMachineConfig := vsphereClusterSpec.workerMachineConfig(workerNodeGroupConfiguration)
-		logger.MarkPass("workernode  config: %s", workerNodeGroupMachineConfig)
-		logger.Info("=======================Validating worker node machine config=======================")
 		if workerNodeGroupMachineConfig == nil {
 			return fmt.Errorf("cannot find VSphereMachineConfig %v for worker nodes", workerNodeGroupConfiguration.MachineGroupRef.Name)
 		}
@@ -224,7 +221,6 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, vsphereCl
 		return err
 	}
 
-	// validate
 	for _, config := range vsphereClusterSpec.VSphereMachineConfigs {
 		var b bool                                                                                             // Temporary until we remove the need to pass a bool pointer
 		err := v.govc.ValidateVCenterSetupMachineConfig(ctx, vsphereClusterSpec.VSphereDatacenter, config, &b) // TODO: remove side effects from this implementation or directly move it to set defaults (pointer to bool is not needed)
@@ -423,7 +419,7 @@ func (v *Validator) validateNetworksFieldUsage(ctx context.Context, vsphereClust
 		}
 	}
 
-	// Validate worker node networks (where it IS supported)
+	// Validate worker node networks
 	for _, workerNodeGroupConfiguration := range vsphereClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
 		workerMachineConfig := vsphereClusterSpec.workerMachineConfig(workerNodeGroupConfiguration)
 		if workerMachineConfig != nil {
