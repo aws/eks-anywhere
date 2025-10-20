@@ -125,10 +125,51 @@ func waitForStatusUpdated(ctx context.Context, t testing.TB, c client.Client, o 
 		if !found {
 			return errors.New("no status found in updated object")
 		}
+
+		// Filter out CAPI v1beta1 fields that are deprecated in v1beta2 for CAPI objects
+		// These fields (infrastructureReady, controlPlaneReady, ready) are removed in CAPI v1beta2
+		// and may not be preserved during API version conversions
+		// TODO: Remove these conditions once we move to using CAPI v1beta2 objects inside EKS-Anywhere
+		if isCAPIObject(o) || isDockerInfraObject(o) {
+			updatedStatus = filterDeprecatedCAPIFields(updatedStatus)
+			newStatus = filterDeprecatedCAPIFields(newStatus)
+		}
+
 		g.Expect(updatedStatus).To(gomega.Equal(newStatus), "updated status should be equal to desired status")
 
 		return nil
 	}, 5*time.Second).Should(gomega.Succeed(), "the status should be updated")
+}
+
+// isCAPIObject checks if the object is any CAPI object that might have deprecated fields.
+func isCAPIObject(obj client.Object) bool {
+	gvk := obj.GetObjectKind().GroupVersionKind()
+	// Check for CAPI core objects and infrastructure objects
+	return gvk.Group == "cluster.x-k8s.io" ||
+		gvk.Group == "controlplane.cluster.x-k8s.io" ||
+		gvk.Group == "infrastructure.cluster.x-k8s.io"
+}
+
+// isDockerInfraObject checks if the object is a Docker infrastructure object used in tests.
+func isDockerInfraObject(obj client.Object) bool {
+	gvk := obj.GetObjectKind().GroupVersionKind()
+	// Check for Docker infrastructure objects used in CAPI tests
+	return gvk.Group == "infrastructure.cluster.x-k8s.io" &&
+		(gvk.Kind == "DockerCluster" || gvk.Kind == "DockerMachineTemplate")
+}
+
+// filterDeprecatedCAPIFields removes deprecated CAPI v1beta1 fields that don't exist in v1beta2.
+func filterDeprecatedCAPIFields(status map[string]interface{}) map[string]interface{} {
+	filtered := make(map[string]interface{})
+	for k, v := range status {
+		// Skip deprecated fields that were removed in CAPI v1beta2
+		if k == "infrastructureReady" || k == "controlPlaneReady" || k == "ready" ||
+			k == "unavailableReplicas" || k == "initialized" || k == "updatedReplicas" {
+			continue
+		}
+		filtered[k] = v
+	}
+	return filtered
 }
 
 func waitForObjectAvailable(ctx context.Context, t testing.TB, c client.Client, obj client.Object) *unstructured.Unstructured {

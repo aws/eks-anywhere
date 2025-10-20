@@ -13,9 +13,10 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
-	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
+	"k8s.io/apimachinery/pkg/util/intstr"
+	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -1262,6 +1263,7 @@ version: "0.1"
 `
 
 func tinkerbellCP(clusterName string, opts ...cpOpt) *tinkerbell.ControlPlane {
+	maxSurge := intstr.FromInt(1)
 	cp := &tinkerbell.ControlPlane{
 		BaseControlPlane: tinkerbell.BaseControlPlane{
 			Cluster: &clusterv1.Cluster{
@@ -1311,11 +1313,18 @@ func tinkerbellCP(clusterName string, opts ...cpOpt) *tinkerbell.ControlPlane {
 				},
 				Spec: controlplanev1.KubeadmControlPlaneSpec{
 					Replicas: ptr.Int32(1),
-					Version:  "v1.19.8",
+					RolloutStrategy: &controlplanev1.RolloutStrategy{
+						RollingUpdate: &controlplanev1.RollingUpdate{
+							MaxSurge: &maxSurge,
+						},
+						Type: controlplanev1.RollingUpdateStrategyType,
+					},
+					Version: "v1.19.8",
 					MachineTemplate: controlplanev1.KubeadmControlPlaneMachineTemplate{
 						InfrastructureRef: corev1.ObjectReference{
 							Kind:       "TinkerbellMachineTemplate",
 							Name:       "workload-cluster-control-plane-1",
+							Namespace:  "eksa-system",
 							APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
 						},
 					},
@@ -1410,7 +1419,6 @@ func tinkerbellCP(clusterName string, opts ...cpOpt) *tinkerbell.ControlPlane {
 							ControlPlane:                          nil,
 							SkipPhases:                            nil,
 							Patches:                               nil,
-							BottlerocketCustomHostContainers:      nil,
 							BottlerocketCustomBootstrapContainers: nil,
 						},
 						Files: []bootstrapv1.File{

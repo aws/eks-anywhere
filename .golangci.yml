@@ -5,6 +5,7 @@ linters:
     - godot
     - nakedret
     - revive
+    - staticcheck
   settings:
     gocyclo:
       min-complexity: 10
@@ -12,6 +13,8 @@ linters:
       exclude:
         - (?i)^\s*todo
       period: true
+    staticcheck:
+      checks: ["-SA1019"]
   exclusions:
     generated: lax
     presets:

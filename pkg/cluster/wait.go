@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
-	"sigs.k8s.io/cluster-api/util/conditions"
+	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
@@ -20,7 +20,7 @@ import (
 // total field is to check the total number of times the given condition is met for consistency.
 func WaitForCondition(ctx context.Context, log logr.Logger, client kubernetes.Reader, cluster *anywherev1.Cluster, total int, retrier *retrier.Retrier, conditionType anywherev1.ConditionType) error {
 	return WaitFor(ctx, log, client, cluster, total, retrier, func(c *anywherev1.Cluster) error {
-		condition := conditions.Get(c, conditionType)
+		condition := v1beta1conditions.Get(c, conditionType)
 		if condition == nil {
 			return fmt.Errorf("cluster doesn't yet have condition %s", conditionType)
 		}

@@ -11,9 +11,9 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
-	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
+	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/internal/test"
@@ -452,6 +452,7 @@ func dockerMachineTemplate(name string) *dockerv1.DockerMachineTemplate {
 }
 
 func kubeadmControlPlane(opts ...func(*controlplanev1.KubeadmControlPlane)) *controlplanev1.KubeadmControlPlane {
+	maxSurge := intstr.FromInt(1)
 	kcp := &controlplanev1.KubeadmControlPlane{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "KubeadmControlPlane",
@@ -715,7 +716,13 @@ rules:
 				},
 			},
 			Replicas: ptr.Int32(3),
-			Version:  "v1.23.12-eks-1-23-6",
+			RolloutStrategy: &controlplanev1.RolloutStrategy{
+				RollingUpdate: &controlplanev1.RollingUpdate{
+					MaxSurge: &maxSurge,
+				},
+				Type: controlplanev1.RollingUpdateStrategyType,
+			},
+			Version: "v1.23.12-eks-1-23-6",
 		},
 	}
 	for _, opt := range opts {

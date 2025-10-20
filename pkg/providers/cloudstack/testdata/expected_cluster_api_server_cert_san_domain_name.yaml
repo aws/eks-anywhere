@@ -57,6 +57,7 @@ spec:
       apiVersion: infrastructure.cluster.x-k8s.io/v1beta3
       kind: CloudStackMachineTemplate
       name: test-control-plane-1
+      namespace: eksa-system
   kubeadmConfigSpec:
     clusterConfiguration:
       imageRepository: public.ecr.aws/eks-distro/kubernetes
@@ -363,7 +364,6 @@ spec:
     mounts:
       - - LABEL=data_disk
         - /data-small
-    useExperimentalRetryJoin: true
     users:
     - name: mySshUsername
       sshAuthorizedKeys:
@@ -371,6 +371,10 @@ spec:
       sudo: ALL=(ALL) NOPASSWD:ALL
     format: cloud-config
   replicas: 1
+  rolloutStrategy:
+    rollingUpdate:
+      maxSurge: 1
+    type: RollingUpdate
   version: v1.21.2-eks-1-21-4
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta3

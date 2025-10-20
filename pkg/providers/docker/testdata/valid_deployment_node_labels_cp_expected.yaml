@@ -281,6 +281,10 @@ spec:
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
           node-labels: label1=foo,label2=bar
   replicas: 3
+  rolloutStrategy:
+    rollingUpdate:
+      maxSurge: 1
+    type: RollingUpdate
   version: v1.19.6-eks-1-19-2
 ---
 kind: EtcdadmCluster

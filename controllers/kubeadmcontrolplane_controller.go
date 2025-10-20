@@ -29,10 +29,9 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	"sigs.k8s.io/cluster-api/util/annotations"
-	"sigs.k8s.io/cluster-api/util/collections"
 	"sigs.k8s.io/cluster-api/util/patch"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -191,7 +190,7 @@ func (r *KubeadmControlPlaneReconciler) machinesToUpgrade(ctx context.Context, k
 	if err := r.client.List(ctx, machineList, &client.ListOptions{LabelSelector: selector, Namespace: kcp.ObjectMeta.Namespace}); err != nil {
 		return nil, err
 	}
-	machines := collections.FromMachineList(machineList).SortedByCreationTimestamp()
+	machines := sortMachinesByCreationTimestamp(machineList)
 	machineObjects := make([]corev1.ObjectReference, 0, len(machines))
 	for _, machine := range machines {
 		machineObjects = append(machineObjects,

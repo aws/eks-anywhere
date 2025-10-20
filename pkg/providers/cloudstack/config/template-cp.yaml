@@ -66,6 +66,7 @@ spec:
       apiVersion: infrastructure.cluster.x-k8s.io/v1beta3
       kind: CloudStackMachineTemplate
       name: {{.controlPlaneTemplateName}}
+      namespace: {{.eksaSystemNamespace}}
   kubeadmConfigSpec:
     clusterConfiguration:
 {{- if (and (ge (atoi $kube_minor_version) 29) (lt (atoi $kube_minor_version) 33)) }}
@@ -410,7 +411,6 @@ spec:
       - - LABEL={{ .cloudstackControlPlaneDiskOfferingLabel }}
         - {{ .cloudstackControlPlaneDiskOfferingPath }}
 {{- end }}
-    useExperimentalRetryJoin: true
     users:
     - name: {{.controlPlaneSshUsername}}
       sshAuthorizedKeys:
@@ -422,6 +422,11 @@ spec:
   rolloutStrategy:
     rollingUpdate:
       maxSurge: {{.maxSurge}}
+  {{- else }}
+  rolloutStrategy:
+    rollingUpdate:
+      maxSurge: 1
+    type: RollingUpdate
   {{- end }}
   version: {{.kubernetesVersion}}
 {{- if .externalEtcd }}
