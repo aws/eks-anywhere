@@ -211,6 +211,7 @@ export KUBEVERSION="1.31"
 ## Building node images
 
 The `image-builder` CLI lets you build your own Ubuntu-based vSphere OVAs, Nutanix qcow2 images, RHEL-based qcow2 images, or Bare Metal gzip images to use in EKS Anywhere clusters.
+The `image-builder` CLI uses the upstream [kubernetes-sigs/image-builder](https://github.com/kubernetes-sigs/image-builder) project by cloning it and applying custom patches from the [eks-anywhere-build-tooling](https://github.com/aws/eks-anywhere-build-tooling) repository.
 When you run `image-builder`, it will pull in all components needed to build images to be used as Kubernetes nodes in an EKS Anywhere cluster, including the latest operating system, Kubernetes control plane components, and EKS Distro security updates, bug fixes, and patches.
 When building an image using this tool, you get to choose:
 
@@ -244,6 +245,9 @@ To use `image-builder`, you must meet the following prerequisites:
 * 8 GB RAM
 * **Baremetal only:** Run on a bare metal machine with virtualization enabled
 
+#### Tools requirements
+In addition to the requirements in [Tools section]({{< relref "../getting-started/install/#tools" >}}), image-builder CLI also requires `GNU make <= 4.3` as there are some changes in the latest version (`4.4.1`) that breaks some Make targets in the image-builder project.
+
 #### Network connectivity requirements
 * public.ecr.aws (to download container images from EKS Anywhere)
 * anywhere-assets.eks.amazonaws.com (to download the EKS Anywhere artifacts such as binaries, manifests and OS images)
@@ -264,7 +268,7 @@ To use `image-builder`, you must meet the following prerequisites:
 
 #### vSphere requirements
 
-image-builder uses the Hashicorp [vsphere-iso](https://developer.hashicorp.com/packer/plugins/builders/vsphere/vsphere-iso#packer-builder-for-vmware-vsphere) Packer Builder for building vSphere OVAs.
+image-builder supports both Hashicorp [vsphere-iso](https://developer.hashicorp.com/packer/integrations/hashicorp/vsphere/latest/components/builder/vsphere-iso) and [vsphere-clone](https://developer.hashicorp.com/packer/integrations/hashicorp/vsphere/latest/components/builder/vsphere-clone) Packer Builder for building vSphere OVAs.
 
 ##### Permissions
 
@@ -272,8 +276,9 @@ Configure a user with a role containing the following permissions.
 
 The role can be configured programmatically with the `govc` command below, or configured in the vSphere UI using the table below as reference.
 
-Note that no matter how the role is created, it must be assigned to the user or user group at the **Global Permissions** level.
+>**_NOTE:_** It is recommended to configure the role at Global Permission level. However, if a user has decided to use a specific datastore, network, or resource pool for the image-build process, the role can also be configured with Object-Level Permission. You need to ensure that after configuring object-level permission, the vSphere user being used by image-builder has all the required privilege on these vSphere object.
 
+###### Create role with global permission
 Unfortunately there is no API for managing vSphere Global Permissions, so they must be set on the user via the UI under `Administration > Access Control > Global Permissions`.
 
 To generate a role named EKSAImageBuilder with the required privileges via `govc`, run the following:
@@ -315,6 +320,24 @@ If creating a role with these privileges via the UI, refer to the table below.
 
 >**_NOTE:_** The VirtualMachine.Inventory.Delete and VirtualMachine.Interact.PowerOff permissions can be omitted from the EKSAImageBuilder user role. While this will result in non-critical error messages like `==> vsphere-iso.vsphere: ServerFaultCode: Permission to perform this operation was denied.` during the cleanup phase, it does not affect the image building process. You will need to manually clean up any remaining virtual machines after the build completes.
 
+###### Create a role with object-level Permission
+A role with object-level permission has to be created through the vSphere UI. Refer to Broadcom's documentation for this process.
+
+For vSphere 7.0: [Using vCenter Server Roles to Assign Privileges](https://techdocs.broadcom.com/us/en/vmware-cis/vsphere/vsphere/7-0/vsphere-security-7-0/vsphere-permissions-and-user-management-tasks/using-roles-to-assign-privileges.html)
+
+For vSphere 8.0: [Using vCenter Server Roles to Assign Privileges](https://techdocs.broadcom.com/us/en/vmware-cis/vsphere/vsphere/8-0/vsphere-security-8-0/vsphere-permissions-and-user-management-tasks/using-roles-to-assign-privileges.html)
+
+The following example creates a role with object-level permission on a Datastore in vSphere 8.0:
+
+1. Navigate to `Administration > Single Sign On > Users and Groups` and create a user that will be used to authenticate to the vSphere server.
+
+2. Create a role and configure its permission following the table in the `Create role with global permission` section.
+
+3. Navigate to `Inventory > Storage` and identify the datastore that will be used in the image-build process.
+
+4. Right click on the datastore, then click `Add Permissions` and select the user created in step 1 and the role created in step 2.
+
+Object-level permission can be configured on `Network`, `Datastore` and `Resource Pool` objects.
 
 #### CloudStack requirements
 Refer to the [CloudStack Permissions for CAPC](https://github.com/kubernetes-sigs/cluster-api-provider-cloudstack/blob/main/docs/book/src/topics/cloudstack-permissions.md) doc for required CloudStack user permissions.
@@ -452,6 +475,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
      "network": "",
      "password": "",
      "resource_pool": "",
+     "template": "",
      "username": "",
      "vcenter_server": ""
    }
@@ -489,6 +513,9 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    ##### **[resource_pool](https://developer.hashicorp.com/packer/integrations/hashicorp/vsphere/latest/components/builder/vsphere-iso#connection-configuration)**
    The vSphere resource pool where the virtual machine is created. If this is not specified, the root resource pool associated with the cluster is used.
 
+   ##### **[template](https://developer.hashicorp.com/packer/integrations/hashicorp/vsphere/latest/components/builder/vsphere-clone#clone-configuration)**
+   The name of the source virtual machine/OVF template to clone (required if using vsphere-clone builder).
+
    ##### **[username](https://developer.hashicorp.com/packer/integrations/hashicorp/vsphere/latest/components/builder/vsphere-iso#connection-configuration)**
    The username used to connect to vSphere.
 
@@ -505,16 +532,18 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
      "rhel_password": "<RHSM password>"
    }
    ```
-1. Create an Ubuntu or Redhat image:
+   >**_NOTE:_** Image-builder currently only supports building RHEL images with the full DVD ISO and does not support minimal ISOs.
+
+1. Create an Ubuntu or Redhat image with vsphere-iso builder:
 
    **Ubuntu**
 
    To create an Ubuntu-based image, run `image-builder` with the following options:
 
       * `--os`: `ubuntu`
-      * `--os-version`: `20.04` or `22.04` (default: `20.04`)
+      * `--os-version`: `20.04`, `22.04` or `24.04` (default: `20.04`)
       * `--hypervisor`: For vSphere use `vsphere`
-      * `--release-channel`: Supported EKS Distro releases include 1-27, 1-28, 1-29, 1-30 and 1-31.
+      * `--release-channel`: Supported Kubernetes version, from 1-28 to 1-34.
       * `--vsphere-config`: vSphere configuration file (`vsphere.json` in this example)
 
       ```bash
@@ -526,13 +555,56 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    To create a RHEL-based image, run `image-builder` with the following options:
 
       * `--os`: `redhat`
-      * `--os-version`: `8` (default: `8`)
+      * `--os-version`: `8`, `9` (default: `8`)
       * `--hypervisor`: For vSphere use `vsphere`
-      * `--release-channel`: Supported EKS Distro releases include 1-27, 1-28, 1-29, 1-30 and 1-31.
+      * `--release-channel`: Supported Kubernetes versions, from 1-28 to 1-34.
       * `--vsphere-config`: vSphere configuration file (`vsphere.json` in this example)
 
       ```bash
       image-builder build --os redhat --hypervisor vsphere --release-channel 1-31 --vsphere-config vsphere.json
+      ```
+
+2. Create an Ubuntu or Red Hat image with vsphere-clone builder:
+   [Vsphere clone builder](https://developer.hashicorp.com/packer/integrations/hashicorp/vsphere/latest/components/builder/vsphere-clone) support has been added to EKS-A image-builder in v0.7.0. The vsphere clone builder allows user to clone an existing virtual machine/OVF template on vCenter and convert it into an EKS Anywhere node image.
+
+   **Requirements on base template**
+   The base template needs to have an SSH user named `builder` with a known password. This is because image-builder will be using this user to establish an SSH connection to the builder machine on vSphere.
+
+   The password needs to be set via the following environment variable:
+   ```bash
+      export SSH_PASSWORD=<ssh-password-of-user-builder>
+   ```
+
+   **Ubuntu**
+
+   To create an Ubuntu-based image, run `image-builder` with the following options:
+
+      * `--os`: `ubuntu`
+      * `--os-version`: `20.04`, `22.04` or `24.04` (default: `20.04`)
+      * `--hypervisor`: For vSphere use `vsphere`
+      * `--release-channel`: Supported Kubernetes version, from 1-28 to 1-34.
+      * `--vsphere-config`: vSphere configuration file (`vsphere.json` in this example)
+      * `--builder`: vSphere builder type used by image-builder, can be `iso` or `clone`, defaults to `iso`.
+      * `--firmware`: Desired firmware for image build, can be `bios` or `efi`, defaults to `bios`
+
+      ```bash
+      image-builder build --os ubuntu --hypervisor vsphere --builder clone --release-channel 1-31 --vsphere-config vsphere.json
+      ```
+
+   **Red Hat Enterprise Linux**
+
+   To create a RHEL-based image, run `image-builder` with the following options:
+
+      * `--os`: `redhat`
+      * `--os-version`: `8`, `9` (default: `8`)
+      * `--hypervisor`: For vSphere use `vsphere`
+      * `--release-channel`: Supported Kubernetes version, from 1-28 to 1-34.
+      * `--vsphere-config`: vSphere configuration file (`vsphere.json` in this example)
+      * `--builder`: vSphere builder type used by image-builder, can be `iso` or `clone`, defaults to `iso`.
+      * `--firmware`: Desired firmware for image build, can be `bios` or `efi`, defaults to `bios`
+
+      ```bash
+      image-builder build --os redhat --hypervisor vsphere --builder clone --release-channel 1-31 --vsphere-config vsphere.json
       ```
 
 ### Build Bare Metal node images
@@ -605,9 +677,10 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    To create an Ubuntu-based image, run `image-builder` with the following options:
 
       * `--os`: `ubuntu`
-      * `--os-version`: `20.04` or `22.04` (default: `20.04`)
+      * `--os-version`: `20.04`, `22.04` or `24.04` (default: `20.04`)
       * `--hypervisor`: `baremetal`
-      * `--release-channel`: Supported EKS Distro releases include 1-27, 1-28, 1-29, 1-30 and 1-31.
+      * `--release-channel`: Supported Kubernetes version, from 1-28 to 1-34.
+      * `--firmware`: Desired firmware for image build, can be `bios` or `efi`, defaults to `bios`
       * `--baremetal-config`: baremetal config file if using proxy
 
       ```bash
@@ -636,7 +709,8 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
       * `--os`: `redhat`
       * `--os-version`: `8` or `9` (default: `8`)
       * `--hypervisor`: `baremetal`
-      * `--release-channel`: Supported EKS Distro releases include 1-27, 1-28, 1-29, 1-30 and 1-31.
+      * `--release-channel`: Supported Kubernetes version, from 1-28 to 1-34.
+      * `--firmware`: Desired firmware for image build, can be `bios` or `efi`, defaults to `bios`
       * `--baremetal-config`: Bare metal config file
 
    Image builder only supports building RHEL 9 raw images with EFI firmware. Refer to [UEFI Support]({{< relref "#uefi-support">}}) to enable image builds with EFI firmware.
@@ -1010,20 +1084,29 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
             <td>22.04.3</td>
             <td>22.04</td>
         </tr>
+        <tr>
+            <td>24.04.1</td>
+            <td>24.04</td>
+            <td rowspan=2>Supported on Baremetal and vSphere</td>
+        </tr>
         <tr >
             <td rowspan=2><b>RHEL</b></td>
-            <td>8.8</td>
+            <td>8.10</td>
             <td>8</td>
             <td rowspan=2>8</td>
             <td>All hypervisors except AMI</td>
         </tr>
         <tr>
-            <td>9.2</td>
+            <td>9.6</td>
             <td>9</td>
-            <td>CloudStack and Nutanix only</td>
+            <td>All hypervisors except AMI</td>
         </tr>
     </tbody>
 </table>
+
+### Configuring Ansible Logging Verbosity
+
+By default `image-builder` does not display the details of the Ansible tasks during the image-build process. But it allows users to specify logging verbosity for Ansible using the `--ansible-verbosity` option. The value is in range `0-6`.
 
 ### Building images for a specific EKS Anywhere version
 
@@ -1161,6 +1244,19 @@ In order to use Red Hat Satellite in the image build process follow the steps be
    ```bash
    image-builder build --os <OS> --hypervisor <hypervisor> --release-channel <release channel> --<hypervisor>-config config.json
    ```
+
+### Red Hat image minor version upgrade behavior
+
+By default, `image-builder` performs a `yum update` task during the image-build process, which updates the RHEL minor version to the latest. For example, if a user builds a RHEL image using an ISO of version `9.4`, the final image artifact will have RHEL version `9.6`.
+
+This is an expected behavior of image-builder. However, if you want to preserve the Red Hat minor version, you can manually specify the `rhsm_server_release_version` in config.json file to keep Red Hat minor version on the value that you specified.
+
+For example, if you want the Red Hat minor version to remain `9.4`, add the following to config.json file:
+```json
+   {
+     "rhsm_server_release_version": "9.4"
+   }
+```
 
 ### Air Gapped Image Building
 `image-builder` supports building node OS images in an air-gapped environment. Currently only building Ubuntu-based node OS images for baremetal provider is supported in air-gapped building mode.
