@@ -7823,6 +7823,13 @@ spec:
                 type: object
               memoryMiB:
                 type: integer
+              networks:
+                description: The field Networks is for enabling multiple network interfaces
+                  for workernode
+                items:
+                  type: string
+                maxItems: 2
+                type: array
               numCPUs:
                 type: integer
               osFamily:
