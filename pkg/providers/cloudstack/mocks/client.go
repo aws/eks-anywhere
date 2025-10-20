@@ -14,8 +14,8 @@ import (
 	v1beta1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	gomock "github.com/golang/mock/gomock"
 	v1 "k8s.io/api/core/v1"
-	v1beta10 "sigs.k8s.io/cluster-api/api/v1beta1"
-	v1beta11 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
+	v1beta10 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
+	v1beta11 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 )
 
 // MockProviderCmkClient is a mock of ProviderCmkClient interface.
@@ -315,14 +315,14 @@ func (mr *MockProviderKubectlClientMockRecorder) GetEtcdadmCluster(arg0, arg1, a
 }
 
 // GetKubeadmControlPlane mocks base method.
-func (m *MockProviderKubectlClient) GetKubeadmControlPlane(arg0 context.Context, arg1 *types.Cluster, arg2 string, arg3 ...executables.KubectlOpt) (*v1beta11.KubeadmControlPlane, error) {
+func (m *MockProviderKubectlClient) GetKubeadmControlPlane(arg0 context.Context, arg1 *types.Cluster, arg2 string, arg3 ...executables.KubectlOpt) (*v1beta10.KubeadmControlPlane, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0, arg1, arg2}
 	for _, a := range arg3 {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetKubeadmControlPlane", varargs...)
-	ret0, _ := ret[0].(*v1beta11.KubeadmControlPlane)
+	ret0, _ := ret[0].(*v1beta10.KubeadmControlPlane)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -335,14 +335,14 @@ func (mr *MockProviderKubectlClientMockRecorder) GetKubeadmControlPlane(arg0, ar
 }
 
 // GetMachineDeployment mocks base method.
-func (m *MockProviderKubectlClient) GetMachineDeployment(arg0 context.Context, arg1 string, arg2 ...executables.KubectlOpt) (*v1beta10.MachineDeployment, error) {
+func (m *MockProviderKubectlClient) GetMachineDeployment(arg0 context.Context, arg1 string, arg2 ...executables.KubectlOpt) (*v1beta11.MachineDeployment, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0, arg1}
 	for _, a := range arg2 {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetMachineDeployment", varargs...)
-	ret0, _ := ret[0].(*v1beta10.MachineDeployment)
+	ret0, _ := ret[0].(*v1beta11.MachineDeployment)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

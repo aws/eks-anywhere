@@ -18,9 +18,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
-	"sigs.k8s.io/cluster-api/util/conditions"
+	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -320,11 +320,11 @@ func TestClusterReconcilerReconcileConditions(t *testing.T) {
 			},
 			machineDeploymentStatus: clusterv1.MachineDeploymentStatus{},
 			wantConditions: []anywherev1.Condition{
-				*conditions.FalseCondition(anywherev1.ControlPlaneInitializedCondition, anywherev1.ControlPlaneInitializationInProgressReason, clusterv1.ConditionSeverityInfo, "%s", controlPlaneInitalizationInProgressReason),
-				*conditions.FalseCondition(anywherev1.ControlPlaneReadyCondition, anywherev1.ControlPlaneInitializationInProgressReason, clusterv1.ConditionSeverityInfo, "%s", controlPlaneInitalizationInProgressReason),
-				*conditions.FalseCondition(anywherev1.DefaultCNIConfiguredCondition, anywherev1.ControlPlaneNotReadyReason, clusterv1.ConditionSeverityInfo, ""),
-				*conditions.FalseCondition(anywherev1.WorkersReadyCondition, anywherev1.ControlPlaneNotInitializedReason, clusterv1.ConditionSeverityInfo, ""),
-				*conditions.FalseCondition(anywherev1.ReadyCondition, anywherev1.ControlPlaneInitializationInProgressReason, clusterv1.ConditionSeverityInfo, "%s", controlPlaneInitalizationInProgressReason),
+				*v1beta1conditions.FalseCondition(anywherev1.ControlPlaneInitializedCondition, anywherev1.ControlPlaneInitializationInProgressReason, clusterv1.ConditionSeverityInfo, "%s", controlPlaneInitalizationInProgressReason),
+				*v1beta1conditions.FalseCondition(anywherev1.ControlPlaneReadyCondition, anywherev1.ControlPlaneInitializationInProgressReason, clusterv1.ConditionSeverityInfo, "%s", controlPlaneInitalizationInProgressReason),
+				*v1beta1conditions.FalseCondition(anywherev1.DefaultCNIConfiguredCondition, anywherev1.ControlPlaneNotReadyReason, clusterv1.ConditionSeverityInfo, ""),
+				*v1beta1conditions.FalseCondition(anywherev1.WorkersReadyCondition, anywherev1.ControlPlaneNotInitializedReason, clusterv1.ConditionSeverityInfo, ""),
+				*v1beta1conditions.FalseCondition(anywherev1.ReadyCondition, anywherev1.ControlPlaneInitializationInProgressReason, clusterv1.ConditionSeverityInfo, "%s", controlPlaneInitalizationInProgressReason),
 			},
 			result: ctrl.Result{Requeue: false, RequeueAfter: 10 * time.Second},
 		},
@@ -346,11 +346,11 @@ func TestClusterReconcilerReconcileConditions(t *testing.T) {
 			},
 			machineDeploymentStatus: clusterv1.MachineDeploymentStatus{},
 			wantConditions: []anywherev1.Condition{
-				*conditions.TrueCondition(anywherev1.ControlPlaneInitializedCondition),
-				*conditions.FalseCondition(anywherev1.ControlPlaneReadyCondition, anywherev1.ScalingUpReason, clusterv1.ConditionSeverityInfo, "Scaling up control plane nodes, 1 expected (0 actual)"),
-				*conditions.FalseCondition(anywherev1.DefaultCNIConfiguredCondition, anywherev1.ControlPlaneNotReadyReason, clusterv1.ConditionSeverityInfo, ""),
-				*conditions.FalseCondition(anywherev1.WorkersReadyCondition, anywherev1.ScalingUpReason, clusterv1.ConditionSeverityInfo, "Scaling up worker nodes, 1 expected (0 actual)"),
-				*conditions.FalseCondition(anywherev1.ReadyCondition, anywherev1.ScalingUpReason, clusterv1.ConditionSeverityInfo, "Scaling up control plane nodes, 1 expected (0 actual)"),
+				*v1beta1conditions.TrueCondition(anywherev1.ControlPlaneInitializedCondition),
+				*v1beta1conditions.FalseCondition(anywherev1.ControlPlaneReadyCondition, anywherev1.ScalingUpReason, clusterv1.ConditionSeverityInfo, "Scaling up control plane nodes, 1 expected (0 actual)"),
+				*v1beta1conditions.FalseCondition(anywherev1.DefaultCNIConfiguredCondition, anywherev1.ControlPlaneNotReadyReason, clusterv1.ConditionSeverityInfo, ""),
+				*v1beta1conditions.FalseCondition(anywherev1.WorkersReadyCondition, anywherev1.ScalingUpReason, clusterv1.ConditionSeverityInfo, "Scaling up worker nodes, 1 expected (0 actual)"),
+				*v1beta1conditions.FalseCondition(anywherev1.ReadyCondition, anywherev1.ScalingUpReason, clusterv1.ConditionSeverityInfo, "Scaling up control plane nodes, 1 expected (0 actual)"),
 			},
 			result: ctrl.Result{Requeue: false, RequeueAfter: 10 * time.Second},
 		},
@@ -379,11 +379,11 @@ func TestClusterReconcilerReconcileConditions(t *testing.T) {
 			},
 			machineDeploymentStatus: clusterv1.MachineDeploymentStatus{},
 			wantConditions: []anywherev1.Condition{
-				*conditions.FalseCondition(anywherev1.ReadyCondition, anywherev1.ScalingUpReason, clusterv1.ConditionSeverityInfo, "Scaling up worker nodes, 1 expected (0 actual)"),
-				*conditions.TrueCondition(anywherev1.ControlPlaneReadyCondition),
-				*conditions.TrueCondition(anywherev1.DefaultCNIConfiguredCondition),
-				*conditions.FalseCondition(anywherev1.WorkersReadyCondition, anywherev1.ScalingUpReason, clusterv1.ConditionSeverityInfo, "Scaling up worker nodes, 1 expected (0 actual)"),
-				*conditions.TrueCondition(anywherev1.ControlPlaneInitializedCondition),
+				*v1beta1conditions.FalseCondition(anywherev1.ReadyCondition, anywherev1.ScalingUpReason, clusterv1.ConditionSeverityInfo, "Scaling up worker nodes, 1 expected (0 actual)"),
+				*v1beta1conditions.TrueCondition(anywherev1.ControlPlaneReadyCondition),
+				*v1beta1conditions.TrueCondition(anywherev1.DefaultCNIConfiguredCondition),
+				*v1beta1conditions.FalseCondition(anywherev1.WorkersReadyCondition, anywherev1.ScalingUpReason, clusterv1.ConditionSeverityInfo, "Scaling up worker nodes, 1 expected (0 actual)"),
+				*v1beta1conditions.TrueCondition(anywherev1.ControlPlaneInitializedCondition),
 			},
 			result: ctrl.Result{Requeue: false, RequeueAfter: 10 * time.Second},
 		},
@@ -416,11 +416,11 @@ func TestClusterReconcilerReconcileConditions(t *testing.T) {
 				UpdatedReplicas: 1,
 			},
 			wantConditions: []anywherev1.Condition{
-				*conditions.TrueCondition(anywherev1.ReadyCondition),
-				*conditions.TrueCondition(anywherev1.ControlPlaneReadyCondition),
-				*conditions.TrueCondition(anywherev1.DefaultCNIConfiguredCondition),
-				*conditions.TrueCondition(anywherev1.WorkersReadyCondition),
-				*conditions.TrueCondition(anywherev1.ControlPlaneInitializedCondition),
+				*v1beta1conditions.TrueCondition(anywherev1.ReadyCondition),
+				*v1beta1conditions.TrueCondition(anywherev1.ControlPlaneReadyCondition),
+				*v1beta1conditions.TrueCondition(anywherev1.DefaultCNIConfiguredCondition),
+				*v1beta1conditions.TrueCondition(anywherev1.WorkersReadyCondition),
+				*v1beta1conditions.TrueCondition(anywherev1.ControlPlaneInitializedCondition),
 			},
 			result: ctrl.Result{},
 		},
@@ -453,11 +453,11 @@ func TestClusterReconcilerReconcileConditions(t *testing.T) {
 				UpdatedReplicas: 1,
 			},
 			wantConditions: []anywherev1.Condition{
-				*conditions.TrueCondition(anywherev1.ReadyCondition),
-				*conditions.TrueCondition(anywherev1.ControlPlaneReadyCondition),
-				*conditions.FalseCondition(anywherev1.DefaultCNIConfiguredCondition, anywherev1.SkipUpgradesForDefaultCNIConfiguredReason, clusterv1.ConditionSeverityWarning, "Configured to skip default Cilium CNI upgrades"),
-				*conditions.TrueCondition(anywherev1.WorkersReadyCondition),
-				*conditions.TrueCondition(anywherev1.ControlPlaneInitializedCondition),
+				*v1beta1conditions.TrueCondition(anywherev1.ReadyCondition),
+				*v1beta1conditions.TrueCondition(anywherev1.ControlPlaneReadyCondition),
+				*v1beta1conditions.FalseCondition(anywherev1.DefaultCNIConfiguredCondition, anywherev1.SkipUpgradesForDefaultCNIConfiguredReason, clusterv1.ConditionSeverityWarning, "Configured to skip default Cilium CNI upgrades"),
+				*v1beta1conditions.TrueCondition(anywherev1.WorkersReadyCondition),
+				*v1beta1conditions.TrueCondition(anywherev1.ControlPlaneInitializedCondition),
 			},
 			result: ctrl.Result{},
 		},
@@ -490,11 +490,11 @@ func TestClusterReconcilerReconcileConditions(t *testing.T) {
 				UpdatedReplicas: 1,
 			},
 			wantConditions: []anywherev1.Condition{
-				*conditions.FalseCondition(anywherev1.ReadyCondition, anywherev1.DefaultCNIUpgradeInProgressReason, clusterv1.ConditionSeverityInfo, "Cilium version upgrade needed"),
-				*conditions.TrueCondition(anywherev1.ControlPlaneReadyCondition),
-				*conditions.FalseCondition(anywherev1.DefaultCNIConfiguredCondition, anywherev1.DefaultCNIUpgradeInProgressReason, clusterv1.ConditionSeverityInfo, "Cilium version upgrade needed"),
-				*conditions.TrueCondition(anywherev1.WorkersReadyCondition),
-				*conditions.TrueCondition(anywherev1.ControlPlaneInitializedCondition),
+				*v1beta1conditions.FalseCondition(anywherev1.ReadyCondition, anywherev1.DefaultCNIUpgradeInProgressReason, clusterv1.ConditionSeverityInfo, "Cilium version upgrade needed"),
+				*v1beta1conditions.TrueCondition(anywherev1.ControlPlaneReadyCondition),
+				*v1beta1conditions.FalseCondition(anywherev1.DefaultCNIConfiguredCondition, anywherev1.DefaultCNIUpgradeInProgressReason, clusterv1.ConditionSeverityInfo, "Cilium version upgrade needed"),
+				*v1beta1conditions.TrueCondition(anywherev1.WorkersReadyCondition),
+				*v1beta1conditions.TrueCondition(anywherev1.ControlPlaneInitializedCondition),
 			},
 			result: ctrl.Result{Requeue: false, RequeueAfter: 10 * time.Second},
 		},
@@ -563,24 +563,24 @@ func TestClusterReconcilerReconcileConditions(t *testing.T) {
 			iam.EXPECT().Reconcile(logCtx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(config.Cluster)).Return(controller.Result{}, nil)
 			providerReconciler.EXPECT().Reconcile(logCtx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(config.Cluster)).Times(1).Do(
 				func(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) {
-					kcpReadyCondition := conditions.Get(kcp, clusterv1.ReadyCondition)
+					kcpReadyCondition := v1beta1conditions.Get(kcp, clusterv1.ReadyCondition)
 					if kcpReadyCondition == nil ||
 						(kcpReadyCondition.Status == "False") {
-						conditions.MarkFalse(cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.ControlPlaneNotReadyReason, clusterv1.ConditionSeverityInfo, "")
+						v1beta1conditions.MarkFalse(cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.ControlPlaneNotReadyReason, clusterv1.ConditionSeverityInfo, "")
 						return
 					}
 
 					if tt.skipCNIUpgrade {
-						conditions.MarkFalse(cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.SkipUpgradesForDefaultCNIConfiguredReason, clusterv1.ConditionSeverityWarning, "Configured to skip default Cilium CNI upgrades")
+						v1beta1conditions.MarkFalse(cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.SkipUpgradesForDefaultCNIConfiguredReason, clusterv1.ConditionSeverityWarning, "Configured to skip default Cilium CNI upgrades")
 						return
 					}
 
 					if tt.cniUpgradeInProgress {
-						conditions.MarkFalse(cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.DefaultCNIUpgradeInProgressReason, clusterv1.ConditionSeverityInfo, "Cilium version upgrade needed")
+						v1beta1conditions.MarkFalse(cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.DefaultCNIUpgradeInProgressReason, clusterv1.ConditionSeverityInfo, "Cilium version upgrade needed")
 						return
 					}
 
-					conditions.MarkTrue(cluster, anywherev1.DefaultCNIConfiguredCondition)
+					v1beta1conditions.MarkTrue(cluster, anywherev1.DefaultCNIConfiguredCondition)
 				},
 			)
 			clusterValidator.EXPECT().ValidateManagementClusterName(logCtx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(config.Cluster)).Return(nil)
@@ -606,9 +606,9 @@ func TestClusterReconcilerReconcileConditions(t *testing.T) {
 
 			api.ShouldEventuallyMatch(logCtx, c, func(g Gomega) {
 				for _, wantCondition := range tt.wantConditions {
-					condition := conditions.Get(c, wantCondition.Type)
+					condition := v1beta1conditions.Get(c, wantCondition.Type)
 					g.Expect(condition).ToNot(BeNil())
-					g.Expect(condition).To((conditions.HaveSameStateOf(&wantCondition)))
+					g.Expect(condition).To((v1beta1conditions.HaveSameStateOf(&wantCondition)))
 				}
 			})
 		})
@@ -641,11 +641,11 @@ func TestClusterReconcilerReconcileSelfManagedClusterConditions(t *testing.T) {
 			machineDeploymentStatus: clusterv1.MachineDeploymentStatus{},
 			skipCNIUpgrade:          false,
 			wantConditions: []anywherev1.Condition{
-				*conditions.TrueCondition(anywherev1.ControlPlaneInitializedCondition),
-				*conditions.FalseCondition(anywherev1.ControlPlaneReadyCondition, anywherev1.ScalingUpReason, clusterv1.ConditionSeverityInfo, "Scaling up control plane nodes, 1 expected (0 actual)"),
-				*conditions.FalseCondition(anywherev1.DefaultCNIConfiguredCondition, anywherev1.ControlPlaneNotReadyReason, clusterv1.ConditionSeverityInfo, ""),
-				*conditions.FalseCondition(anywherev1.WorkersReadyCondition, anywherev1.ScalingUpReason, clusterv1.ConditionSeverityInfo, "Scaling up worker nodes, 1 expected (0 actual)"),
-				*conditions.FalseCondition(anywherev1.ReadyCondition, anywherev1.ScalingUpReason, clusterv1.ConditionSeverityInfo, "Scaling up control plane nodes, 1 expected (0 actual)"),
+				*v1beta1conditions.TrueCondition(anywherev1.ControlPlaneInitializedCondition),
+				*v1beta1conditions.FalseCondition(anywherev1.ControlPlaneReadyCondition, anywherev1.ScalingUpReason, clusterv1.ConditionSeverityInfo, "Scaling up control plane nodes, 1 expected (0 actual)"),
+				*v1beta1conditions.FalseCondition(anywherev1.DefaultCNIConfiguredCondition, anywherev1.ControlPlaneNotReadyReason, clusterv1.ConditionSeverityInfo, ""),
+				*v1beta1conditions.FalseCondition(anywherev1.WorkersReadyCondition, anywherev1.ScalingUpReason, clusterv1.ConditionSeverityInfo, "Scaling up worker nodes, 1 expected (0 actual)"),
+				*v1beta1conditions.FalseCondition(anywherev1.ReadyCondition, anywherev1.ScalingUpReason, clusterv1.ConditionSeverityInfo, "Scaling up control plane nodes, 1 expected (0 actual)"),
 			},
 			result: ctrl.Result{Requeue: false, RequeueAfter: 10 * time.Second},
 		},
@@ -673,11 +673,11 @@ func TestClusterReconcilerReconcileSelfManagedClusterConditions(t *testing.T) {
 			machineDeploymentStatus: clusterv1.MachineDeploymentStatus{},
 			skipCNIUpgrade:          false,
 			wantConditions: []anywherev1.Condition{
-				*conditions.FalseCondition(anywherev1.ReadyCondition, anywherev1.ScalingUpReason, clusterv1.ConditionSeverityInfo, "Scaling up worker nodes, 1 expected (0 actual)"),
-				*conditions.TrueCondition(anywherev1.ControlPlaneReadyCondition),
-				*conditions.TrueCondition(anywherev1.DefaultCNIConfiguredCondition),
-				*conditions.FalseCondition(anywherev1.WorkersReadyCondition, anywherev1.ScalingUpReason, clusterv1.ConditionSeverityInfo, "Scaling up worker nodes, 1 expected (0 actual)"),
-				*conditions.TrueCondition(anywherev1.ControlPlaneInitializedCondition),
+				*v1beta1conditions.FalseCondition(anywherev1.ReadyCondition, anywherev1.ScalingUpReason, clusterv1.ConditionSeverityInfo, "Scaling up worker nodes, 1 expected (0 actual)"),
+				*v1beta1conditions.TrueCondition(anywherev1.ControlPlaneReadyCondition),
+				*v1beta1conditions.TrueCondition(anywherev1.DefaultCNIConfiguredCondition),
+				*v1beta1conditions.FalseCondition(anywherev1.WorkersReadyCondition, anywherev1.ScalingUpReason, clusterv1.ConditionSeverityInfo, "Scaling up worker nodes, 1 expected (0 actual)"),
+				*v1beta1conditions.TrueCondition(anywherev1.ControlPlaneInitializedCondition),
 			},
 			result: ctrl.Result{Requeue: false, RequeueAfter: 10 * time.Second},
 		},
@@ -705,11 +705,11 @@ func TestClusterReconcilerReconcileSelfManagedClusterConditions(t *testing.T) {
 			machineDeploymentStatus: clusterv1.MachineDeploymentStatus{},
 			skipCNIUpgrade:          true,
 			wantConditions: []anywherev1.Condition{
-				*conditions.FalseCondition(anywherev1.ReadyCondition, anywherev1.ScalingUpReason, clusterv1.ConditionSeverityInfo, "Scaling up worker nodes, 1 expected (0 actual)"),
-				*conditions.TrueCondition(anywherev1.ControlPlaneReadyCondition),
-				*conditions.FalseCondition(anywherev1.DefaultCNIConfiguredCondition, anywherev1.SkipUpgradesForDefaultCNIConfiguredReason, clusterv1.ConditionSeverityWarning, "Configured to skip default Cilium CNI upgrades"),
-				*conditions.FalseCondition(anywherev1.WorkersReadyCondition, anywherev1.ScalingUpReason, clusterv1.ConditionSeverityInfo, "Scaling up worker nodes, 1 expected (0 actual)"),
-				*conditions.TrueCondition(anywherev1.ControlPlaneInitializedCondition),
+				*v1beta1conditions.FalseCondition(anywherev1.ReadyCondition, anywherev1.ScalingUpReason, clusterv1.ConditionSeverityInfo, "Scaling up worker nodes, 1 expected (0 actual)"),
+				*v1beta1conditions.TrueCondition(anywherev1.ControlPlaneReadyCondition),
+				*v1beta1conditions.FalseCondition(anywherev1.DefaultCNIConfiguredCondition, anywherev1.SkipUpgradesForDefaultCNIConfiguredReason, clusterv1.ConditionSeverityWarning, "Configured to skip default Cilium CNI upgrades"),
+				*v1beta1conditions.FalseCondition(anywherev1.WorkersReadyCondition, anywherev1.ScalingUpReason, clusterv1.ConditionSeverityInfo, "Scaling up worker nodes, 1 expected (0 actual)"),
+				*v1beta1conditions.TrueCondition(anywherev1.ControlPlaneInitializedCondition),
 			},
 			result: ctrl.Result{Requeue: false, RequeueAfter: 10 * time.Second},
 		},
@@ -741,11 +741,11 @@ func TestClusterReconcilerReconcileSelfManagedClusterConditions(t *testing.T) {
 			},
 			skipCNIUpgrade: true,
 			wantConditions: []anywherev1.Condition{
-				*conditions.TrueCondition(anywherev1.ReadyCondition),
-				*conditions.TrueCondition(anywherev1.ControlPlaneReadyCondition),
-				*conditions.FalseCondition(anywherev1.DefaultCNIConfiguredCondition, anywherev1.SkipUpgradesForDefaultCNIConfiguredReason, clusterv1.ConditionSeverityWarning, "Configured to skip default Cilium CNI upgrades"),
-				*conditions.TrueCondition(anywherev1.WorkersReadyCondition),
-				*conditions.TrueCondition(anywherev1.ControlPlaneInitializedCondition),
+				*v1beta1conditions.TrueCondition(anywherev1.ReadyCondition),
+				*v1beta1conditions.TrueCondition(anywherev1.ControlPlaneReadyCondition),
+				*v1beta1conditions.FalseCondition(anywherev1.DefaultCNIConfiguredCondition, anywherev1.SkipUpgradesForDefaultCNIConfiguredReason, clusterv1.ConditionSeverityWarning, "Configured to skip default Cilium CNI upgrades"),
+				*v1beta1conditions.TrueCondition(anywherev1.WorkersReadyCondition),
+				*v1beta1conditions.TrueCondition(anywherev1.ControlPlaneInitializedCondition),
 			},
 			result: ctrl.Result{},
 		},
@@ -777,11 +777,11 @@ func TestClusterReconcilerReconcileSelfManagedClusterConditions(t *testing.T) {
 			},
 			skipCNIUpgrade: false,
 			wantConditions: []anywherev1.Condition{
-				*conditions.TrueCondition(anywherev1.ReadyCondition),
-				*conditions.TrueCondition(anywherev1.ControlPlaneReadyCondition),
-				*conditions.TrueCondition(anywherev1.DefaultCNIConfiguredCondition),
-				*conditions.TrueCondition(anywherev1.WorkersReadyCondition),
-				*conditions.TrueCondition(anywherev1.ControlPlaneInitializedCondition),
+				*v1beta1conditions.TrueCondition(anywherev1.ReadyCondition),
+				*v1beta1conditions.TrueCondition(anywherev1.ControlPlaneReadyCondition),
+				*v1beta1conditions.TrueCondition(anywherev1.DefaultCNIConfiguredCondition),
+				*v1beta1conditions.TrueCondition(anywherev1.WorkersReadyCondition),
+				*v1beta1conditions.TrueCondition(anywherev1.ControlPlaneInitializedCondition),
 			},
 			result: ctrl.Result{},
 		},
@@ -839,19 +839,19 @@ func TestClusterReconcilerReconcileSelfManagedClusterConditions(t *testing.T) {
 
 			providerReconciler.EXPECT().Reconcile(gomock.Any(), gomock.Any(), gomock.Any()).Times(1).Do(
 				func(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) {
-					kcpReadyCondition := conditions.Get(kcp, clusterv1.ReadyCondition)
+					kcpReadyCondition := v1beta1conditions.Get(kcp, clusterv1.ReadyCondition)
 					if kcpReadyCondition == nil ||
 						(kcpReadyCondition.Status == "False") {
-						conditions.MarkFalse(cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.ControlPlaneNotReadyReason, clusterv1.ConditionSeverityInfo, "")
+						v1beta1conditions.MarkFalse(cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.ControlPlaneNotReadyReason, clusterv1.ConditionSeverityInfo, "")
 						return
 					}
 
 					if tt.skipCNIUpgrade {
-						conditions.MarkFalse(cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.SkipUpgradesForDefaultCNIConfiguredReason, clusterv1.ConditionSeverityWarning, "Configured to skip default Cilium CNI upgrades")
+						v1beta1conditions.MarkFalse(cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.SkipUpgradesForDefaultCNIConfiguredReason, clusterv1.ConditionSeverityWarning, "Configured to skip default Cilium CNI upgrades")
 						return
 					}
 
-					conditions.MarkTrue(cluster, anywherev1.DefaultCNIConfiguredCondition)
+					v1beta1conditions.MarkTrue(cluster, anywherev1.DefaultCNIConfiguredCondition)
 				},
 			)
 			mhcReconciler.EXPECT().Reconcile(logCtx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(config.Cluster)).Return(nil)
@@ -873,9 +873,9 @@ func TestClusterReconcilerReconcileSelfManagedClusterConditions(t *testing.T) {
 
 			api.ShouldEventuallyMatch(logCtx, c, func(g Gomega) {
 				for _, wantCondition := range tt.wantConditions {
-					condition := conditions.Get(c, wantCondition.Type)
+					condition := v1beta1conditions.Get(c, wantCondition.Type)
 					g.Expect(condition).ToNot(BeNil())
-					g.Expect(condition).To((conditions.HaveSameStateOf(&wantCondition)))
+					g.Expect(condition).To((v1beta1conditions.HaveSameStateOf(&wantCondition)))
 				}
 			})
 		})
@@ -1393,11 +1393,11 @@ func TestClusterReconcilerFailureDomainsFailure(t *testing.T) {
 	tt := newVsphereClusterReconcilerWithFailureDomainsTest(t, cl, objs...)
 	tt.ipValidator.EXPECT().ValidateControlPlaneIP(gomock.Any(), gomock.Any(), gomock.Any()).Return(controller.Result{}, nil).AnyTimes()
 	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
-	tt.govcClient.EXPECT().SearchTemplate(gomock.Any(), gomock.Any(), gomock.Any()).Return("test", nil)
-	tt.govcClient.EXPECT().GetTags(gomock.Any(), gomock.Any()).Return([]string{"os:ubuntu", fmt.Sprintf("eksdRelease:%s", bundle.Spec.VersionsBundles[0].EksD.Name)}, nil)
-	tt.govcClient.EXPECT().ListTags(ctx).Return([]executables.Tag{}, nil)
-	tt.govcClient.EXPECT().NetworkExists(gomock.Any(), gomock.Any()).Return(true, nil)
-	tt.govcClient.EXPECT().ValidateFailureDomainConfig(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+	tt.govcClient.EXPECT().SearchTemplate(gomock.Any(), gomock.Any(), gomock.Any()).Return("test", nil).AnyTimes()
+	tt.govcClient.EXPECT().GetTags(gomock.Any(), gomock.Any()).Return([]string{"os:ubuntu", fmt.Sprintf("eksdRelease:%s", bundle.Spec.VersionsBundles[0].EksD.Name)}, nil).AnyTimes()
+	tt.govcClient.EXPECT().ListTags(ctx).Return([]executables.Tag{}, nil).AnyTimes()
+	tt.govcClient.EXPECT().NetworkExists(gomock.Any(), gomock.Any()).Return(true, nil).AnyTimes()
+	tt.govcClient.EXPECT().ValidateFailureDomainConfig(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 	req := clusterRequest(cluster)
 
 	fdz := &vspherev1.VSphereDeploymentZone{}

@@ -6,10 +6,14 @@ import (
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/rest"
 	clusterctlv1 "sigs.k8s.io/cluster-api/cmd/clusterctl/api/v1alpha3"
+	"sigs.k8s.io/controller-runtime/pkg/config"
 
 	"github.com/aws/eks-anywhere/controllers"
 	"github.com/aws/eks-anywhere/controllers/mocks"
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 )
 
 func TestFactoryBuildAllVSphereReconciler(t *testing.T) {
@@ -19,7 +23,6 @@ func TestFactoryBuildAllVSphereReconciler(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	manager := mocks.NewMockManager(ctrl)
 	manager.EXPECT().GetClient().AnyTimes()
-	manager.EXPECT().GetScheme().AnyTimes()
 
 	f := controllers.NewFactory(logger, manager).
 		WithVSphereDatacenterReconciler()
@@ -97,9 +100,18 @@ func TestFactoryBuildAllNutanixReconciler(t *testing.T) {
 	ctx := context.Background()
 	logger := nullLog()
 	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 	manager := mocks.NewMockManager(ctrl)
 	manager.EXPECT().GetClient().AnyTimes()
-	manager.EXPECT().GetScheme().AnyTimes()
+	scheme := runtime.NewScheme()
+	_ = kubernetes.InitScheme(scheme)
+	manager.EXPECT().GetScheme().AnyTimes().Return(scheme)
+	manager.EXPECT().GetConfig().AnyTimes().Return(&rest.Config{})
+	manager.EXPECT().GetHTTPClient().AnyTimes()
+	manager.EXPECT().GetCache().AnyTimes()
+	manager.EXPECT().GetControllerOptions().AnyTimes().Return(config.Controller{})
+	manager.EXPECT().GetLogger().AnyTimes().Return(logger)
+	manager.EXPECT().Add(gomock.Any()).AnyTimes().Return(nil)
 
 	f := controllers.NewFactory(logger, manager).
 		WithNutanixDatacenterReconciler().
@@ -129,9 +141,18 @@ func TestFactoryBuildClusterReconciler(t *testing.T) {
 	ctx := context.Background()
 	logger := nullLog()
 	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 	manager := mocks.NewMockManager(ctrl)
 	manager.EXPECT().GetClient().AnyTimes()
-	manager.EXPECT().GetScheme().AnyTimes()
+	scheme := runtime.NewScheme()
+	_ = kubernetes.InitScheme(scheme)
+	manager.EXPECT().GetScheme().AnyTimes().Return(scheme)
+	manager.EXPECT().GetConfig().AnyTimes().Return(&rest.Config{})
+	manager.EXPECT().GetHTTPClient().AnyTimes()
+	manager.EXPECT().GetCache().AnyTimes()
+	manager.EXPECT().GetControllerOptions().AnyTimes().Return(config.Controller{})
+	manager.EXPECT().GetLogger().AnyTimes().Return(logger)
+	manager.EXPECT().Add(gomock.Any()).AnyTimes().Return(nil)
 
 	providers := []clusterctlv1.Provider{
 		{
@@ -277,9 +298,18 @@ func TestFactoryWithNodeUpgradeReconciler(t *testing.T) {
 	ctx := context.Background()
 	logger := nullLog()
 	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 	manager := mocks.NewMockManager(ctrl)
 	manager.EXPECT().GetClient().AnyTimes()
-	manager.EXPECT().GetScheme().AnyTimes()
+	scheme := runtime.NewScheme()
+	_ = kubernetes.InitScheme(scheme)
+	manager.EXPECT().GetScheme().AnyTimes().Return(scheme)
+	manager.EXPECT().GetConfig().AnyTimes().Return(&rest.Config{})
+	manager.EXPECT().GetHTTPClient().AnyTimes()
+	manager.EXPECT().GetCache().AnyTimes()
+	manager.EXPECT().GetControllerOptions().AnyTimes().Return(config.Controller{})
+	manager.EXPECT().GetLogger().AnyTimes().Return(logger)
+	manager.EXPECT().Add(gomock.Any()).AnyTimes().Return(nil)
 
 	f := controllers.NewFactory(logger, manager).
 		WithNodeUpgradeReconciler()
@@ -297,9 +327,18 @@ func TestFactoryWithControlPlaneUpgradeReconciler(t *testing.T) {
 	ctx := context.Background()
 	logger := nullLog()
 	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 	manager := mocks.NewMockManager(ctrl)
 	manager.EXPECT().GetClient().AnyTimes()
-	manager.EXPECT().GetScheme().AnyTimes()
+	scheme := runtime.NewScheme()
+	_ = kubernetes.InitScheme(scheme)
+	manager.EXPECT().GetScheme().AnyTimes().Return(scheme)
+	manager.EXPECT().GetConfig().AnyTimes().Return(&rest.Config{})
+	manager.EXPECT().GetHTTPClient().AnyTimes()
+	manager.EXPECT().GetCache().AnyTimes()
+	manager.EXPECT().GetControllerOptions().AnyTimes().Return(config.Controller{})
+	manager.EXPECT().GetLogger().AnyTimes().Return(logger)
+	manager.EXPECT().Add(gomock.Any()).AnyTimes().Return(nil)
 
 	f := controllers.NewFactory(logger, manager).
 		WithControlPlaneUpgradeReconciler()

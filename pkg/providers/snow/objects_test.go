@@ -11,9 +11,9 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
-	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
+	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
@@ -338,11 +338,14 @@ func TestControlPlaneObjectsGetOldMachineTemplateError(t *testing.T) {
 			constants.EksaSystemNamespace,
 			&controlplanev1.KubeadmControlPlane{},
 		).
-		Return(nil)
+		DoAndReturn(func(_ context.Context, _, _ string, obj *controlplanev1.KubeadmControlPlane) error {
+			obj.Spec.MachineTemplate.InfrastructureRef.Name = "test-cp-1"
+			return nil
+		})
 	g.kubeconfigClient.EXPECT().
 		Get(
 			g.ctx,
-			"",
+			"test-cp-1",
 			constants.EksaSystemNamespace,
 			&snowv1.AWSSnowMachineTemplate{},
 		).

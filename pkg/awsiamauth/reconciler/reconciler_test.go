@@ -15,8 +15,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/pointer"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -243,13 +243,17 @@ func TestReconcileRemoteGetClientError(t *testing.T) {
 		kcp.Status = controlplanev1.KubeadmControlPlaneStatus{
 			Conditions: clusterv1.Conditions{
 				{
-					Type:               clusterapi.ReadyCondition,
+					Type:               clusterv1.ClusterAvailableV1Beta2Condition,
 					Status:             corev1.ConditionTrue,
 					LastTransitionTime: metav1.NewTime(time.Now()),
 				},
 			},
-			Version: pointer.String(kcpVersion),
+			Version:            pointer.String(kcpVersion),
+			ReadyReplicas:      1,
+			Replicas:           1,
+			ObservedGeneration: 1,
 		}
+		kcp.Generation = 1
 	})
 	sec := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
@@ -267,7 +271,7 @@ func TestReconcileRemoteGetClientError(t *testing.T) {
 	_ = controlplanev1.AddToScheme(scheme)
 	cl := cb.WithScheme(scheme).WithRuntimeObjects(objs...).Build()
 
-	remoteClientRegistry.EXPECT().GetClient(context.Background(), gomock.AssignableToTypeOf(client.ObjectKey{})).Return(nil, errors.New("client error"))
+	remoteClientRegistry.EXPECT().GetClient(ctx, gomock.AssignableToTypeOf(client.ObjectKey{})).Return(nil, errors.New("client error"))
 
 	r := reconciler.New(certs, generateUUID, cl, remoteClientRegistry)
 	result, err := r.Reconcile(ctx, nullLog(), cluster)
@@ -320,13 +324,17 @@ func TestReconcileConfigMapNotFoundApplyError(t *testing.T) {
 		kcp.Status = controlplanev1.KubeadmControlPlaneStatus{
 			Conditions: clusterv1.Conditions{
 				{
-					Type:               clusterapi.ReadyCondition,
+					Type:               clusterv1.ClusterAvailableV1Beta2Condition,
 					Status:             corev1.ConditionTrue,
 					LastTransitionTime: metav1.NewTime(time.Now()),
 				},
 			},
-			Version: pointer.String(kcpVersion),
+			Version:            pointer.String(kcpVersion),
+			ReadyReplicas:      1,
+			Replicas:           1,
+			ObservedGeneration: 1,
 		}
+		kcp.Generation = 1
 	})
 	sec := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{

@@ -13,8 +13,8 @@ import (
 	types "github.com/aws/eks-anywhere/pkg/types"
 	v1beta1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	gomock "github.com/golang/mock/gomock"
-	v1beta10 "sigs.k8s.io/cluster-api/api/v1beta1"
-	v1beta11 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
+	v1beta10 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
+	v1beta11 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 )
 
 // MockProviderKubectlClient is a mock of ProviderKubectlClient interface.
@@ -148,14 +148,14 @@ func (mr *MockProviderKubectlClientMockRecorder) GetEtcdadmCluster(ctx, cluster,
 }
 
 // GetKubeadmControlPlane mocks base method.
-func (m *MockProviderKubectlClient) GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*v1beta11.KubeadmControlPlane, error) {
+func (m *MockProviderKubectlClient) GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*v1beta10.KubeadmControlPlane, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, cluster, clusterName}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetKubeadmControlPlane", varargs...)
-	ret0, _ := ret[0].(*v1beta11.KubeadmControlPlane)
+	ret0, _ := ret[0].(*v1beta10.KubeadmControlPlane)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -168,14 +168,14 @@ func (mr *MockProviderKubectlClientMockRecorder) GetKubeadmControlPlane(ctx, clu
 }
 
 // GetMachineDeployment mocks base method.
-func (m *MockProviderKubectlClient) GetMachineDeployment(ctx context.Context, workerNodeGroupName string, opts ...executables.KubectlOpt) (*v1beta10.MachineDeployment, error) {
+func (m *MockProviderKubectlClient) GetMachineDeployment(ctx context.Context, workerNodeGroupName string, opts ...executables.KubectlOpt) (*v1beta11.MachineDeployment, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, workerNodeGroupName}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetMachineDeployment", varargs...)
-	ret0, _ := ret[0].(*v1beta10.MachineDeployment)
+	ret0, _ := ret[0].(*v1beta11.MachineDeployment)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
