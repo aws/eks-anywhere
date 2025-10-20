@@ -1,0 +1,575 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.14.0
+  name: nutanixmachinetemplates.infrastructure.cluster.x-k8s.io
+spec:
+  group: infrastructure.cluster.x-k8s.io
+  names:
+    categories:
+    - cluster-api
+    kind: NutanixMachineTemplate
+    listKind: NutanixMachineTemplateList
+    plural: nutanixmachinetemplates
+    shortNames:
+    - nmtmpl
+    singular: nutanixmachinetemplate
+  scope: Namespaced
+  versions:
+  - name: v1alpha4
+    schema:
+      openAPIV3Schema:
+        description: NutanixMachineTemplate is the Schema for the nutanixmachinetemplates
+          API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: NutanixMachineTemplateSpec defines the desired state of NutanixMachineTemplate
+            properties:
+              template:
+                description: NutanixMachineTemplateResource describes the data needed
+                  to create a NutanixMachine from a template
+                properties:
+                  metadata:
+                    description: |-
+                      Standard object metadata.
+                      Ref: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+                    properties:
+                      annotations:
+                        additionalProperties:
+                          type: string
+                        description: |-
+                          Annotations is an unstructured key value map stored with a resource that may be
+                          set by external tools to store and retrieve arbitrary metadata. They are not
+                          queryable and should be preserved when modifying objects.
+                          More info: http://kubernetes.io/docs/user-guide/annotations
+                        type: object
+                      labels:
+                        additionalProperties:
+                          type: string
+                        description: |-
+                          Map of string keys and values that can be used to organize and categorize
+                          (scope and select) objects. May match selectors of replication controllers
+                          and services.
+                          More info: http://kubernetes.io/docs/user-guide/labels
+                        type: object
+                    type: object
+                  spec:
+                    description: Spec is the specification of the desired behavior
+                      of the machine.
+                    properties:
+                      additionalCategories:
+                        description: List of categories that need to be added to the
+                          machines. Categories must already exist in Prism Central
+                        items:
+                          properties:
+                            key:
+                              description: key is the Key of category in PC.
+                              type: string
+                            value:
+                              description: value is the category value linked to the
+                                category key in PC
+                              type: string
+                          type: object
+                        type: array
+                      bootType:
+                        description: Defines the boot type of the virtual machine.
+                          Only supports UEFI and Legacy
+                        enum:
+                        - legacy
+                        - uefi
+                        type: string
+                      bootstrapRef:
+                        description: |-
+                          BootstrapRef is a reference to a bootstrap provider-specific resource
+                          that holds configuration details.
+                        properties:
+                          apiVersion:
+                            description: API version of the referent.
+                            type: string
+                          fieldPath:
+                            description: |-
+                              If referring to a piece of an object instead of an entire object, this string
+                              should contain a valid JSON/Go field access statement, such as desiredState.manifest.containers[2].
+                              For example, if the object reference is to a container within a pod, this would take on a value like:
+                              "spec.containers{name}" (where "name" refers to the name of the container that triggered
+                              the event) or if no container name is specified "spec.containers[2]" (container with
+                              index 2 in this pod). This syntax is chosen only to have some well-defined way of
+                              referencing a part of an object.
+                              TODO: this design is not final and this field is subject to change in the future.
+                            type: string
+                          kind:
+                            description: |-
+                              Kind of the referent.
+                              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+                            type: string
+                          name:
+                            description: |-
+                              Name of the referent.
+                              More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                            type: string
+                          namespace:
+                            description: |-
+                              Namespace of the referent.
+                              More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
+                            type: string
+                          resourceVersion:
+                            description: |-
+                              Specific resourceVersion to which this reference is made, if any.
+                              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
+                            type: string
+                          uid:
+                            description: |-
+                              UID of the referent.
+                              More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids
+                            type: string
+                        type: object
+                        x-kubernetes-map-type: atomic
+                      cluster:
+                        description: |-
+                          cluster is to identify the cluster (the Prism Element under management
+                          of the Prism Central), in which the Machine's VM will be created.
+                          The cluster identifier (uuid or name) can be obtained from the Prism Central console
+                          or using the prism_central API.
+                        properties:
+                          name:
+                            description: name is the resource name in the PC
+                            type: string
+                          type:
+                            description: Type is the identifier type to use for this
+                              resource.
+                            enum:
+                            - uuid
+                            - name
+                            type: string
+                          uuid:
+                            description: uuid is the UUID of the resource in the PC.
+                            type: string
+                        required:
+                        - type
+                        type: object
+                      image:
+                        description: |-
+                          image is to identify the rhcos image uploaded to the Prism Central (PC)
+                          The image identifier (uuid or name) can be obtained from the Prism Central console
+                          or using the prism_central API.
+                        properties:
+                          name:
+                            description: name is the resource name in the PC
+                            type: string
+                          type:
+                            description: Type is the identifier type to use for this
+                              resource.
+                            enum:
+                            - uuid
+                            - name
+                            type: string
+                          uuid:
+                            description: uuid is the UUID of the resource in the PC.
+                            type: string
+                        required:
+                        - type
+                        type: object
+                      memorySize:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        description: |-
+                          memorySize is the memory size (in Quantity format) of the VM
+                          The minimum memorySize is 2Gi bytes
+                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                        x-kubernetes-int-or-string: true
+                      project:
+                        description: Add the machine resources to a Prism Central
+                          project
+                        properties:
+                          name:
+                            description: name is the resource name in the PC
+                            type: string
+                          type:
+                            description: Type is the identifier type to use for this
+                              resource.
+                            enum:
+                            - uuid
+                            - name
+                            type: string
+                          uuid:
+                            description: uuid is the UUID of the resource in the PC.
+                            type: string
+                        required:
+                        - type
+                        type: object
+                      providerID:
+                        type: string
+                      subnet:
+                        description: |-
+                          subnet is to identify the cluster's network subnet to use for the Machine's VM
+                          The cluster identifier (uuid or name) can be obtained from the Prism Central console
+                          or using the prism_central API.
+                        items:
+                          description: NutanixResourceIdentifier holds the identity
+                            of a Nutanix PC resource (cluster, image, subnet, etc.)
+                          properties:
+                            name:
+                              description: name is the resource name in the PC
+                              type: string
+                            type:
+                              description: Type is the identifier type to use for
+                                this resource.
+                              enum:
+                              - uuid
+                              - name
+                              type: string
+                            uuid:
+                              description: uuid is the UUID of the resource in the
+                                PC.
+                              type: string
+                          required:
+                          - type
+                          type: object
+                        type: array
+                      systemDiskSize:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        description: |-
+                          systemDiskSize is size (in Quantity format) of the system disk of the VM
+                          The minimum systemDiskSize is 20Gi bytes
+                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                        x-kubernetes-int-or-string: true
+                      vcpuSockets:
+                        description: vcpuSockets is the number of vCPU sockets of
+                          the VM
+                        format: int32
+                        minimum: 1
+                        type: integer
+                      vcpusPerSocket:
+                        description: vcpusPerSocket is the number of vCPUs per socket
+                          of the VM
+                        format: int32
+                        minimum: 1
+                        type: integer
+                    required:
+                    - image
+                    - memorySize
+                    - providerID
+                    - systemDiskSize
+                    - vcpuSockets
+                    - vcpusPerSocket
+                    type: object
+                required:
+                - spec
+                type: object
+            required:
+            - template
+            type: object
+        type: object
+    served: true
+    storage: false
+  - name: v1beta1
+    schema:
+      openAPIV3Schema:
+        description: NutanixMachineTemplate is the Schema for the nutanixmachinetemplates
+          API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: NutanixMachineTemplateSpec defines the desired state of NutanixMachineTemplate
+            properties:
+              template:
+                description: NutanixMachineTemplateResource describes the data needed
+                  to create a NutanixMachine from a template
+                properties:
+                  metadata:
+                    description: |-
+                      Standard object metadata.
+                      Ref: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+                    properties:
+                      annotations:
+                        additionalProperties:
+                          type: string
+                        description: |-
+                          Annotations is an unstructured key value map stored with a resource that may be
+                          set by external tools to store and retrieve arbitrary metadata. They are not
+                          queryable and should be preserved when modifying objects.
+                          More info: http://kubernetes.io/docs/user-guide/annotations
+                        type: object
+                      labels:
+                        additionalProperties:
+                          type: string
+                        description: |-
+                          Map of string keys and values that can be used to organize and categorize
+                          (scope and select) objects. May match selectors of replication controllers
+                          and services.
+                          More info: http://kubernetes.io/docs/user-guide/labels
+                        type: object
+                    type: object
+                  spec:
+                    description: Spec is the specification of the desired behavior
+                      of the machine.
+                    properties:
+                      additionalCategories:
+                        description: List of categories that need to be added to the
+                          machines. Categories must already exist in Prism Central
+                        items:
+                          properties:
+                            key:
+                              description: key is the Key of category in PC.
+                              type: string
+                            value:
+                              description: value is the category value linked to the
+                                category key in PC
+                              type: string
+                          type: object
+                        type: array
+                      bootType:
+                        description: Defines the boot type of the virtual machine.
+                          Only supports UEFI and Legacy
+                        enum:
+                        - legacy
+                        - uefi
+                        type: string
+                      bootstrapRef:
+                        description: |-
+                          BootstrapRef is a reference to a bootstrap provider-specific resource
+                          that holds configuration details.
+                        properties:
+                          apiVersion:
+                            description: API version of the referent.
+                            type: string
+                          fieldPath:
+                            description: |-
+                              If referring to a piece of an object instead of an entire object, this string
+                              should contain a valid JSON/Go field access statement, such as desiredState.manifest.containers[2].
+                              For example, if the object reference is to a container within a pod, this would take on a value like:
+                              "spec.containers{name}" (where "name" refers to the name of the container that triggered
+                              the event) or if no container name is specified "spec.containers[2]" (container with
+                              index 2 in this pod). This syntax is chosen only to have some well-defined way of
+                              referencing a part of an object.
+                              TODO: this design is not final and this field is subject to change in the future.
+                            type: string
+                          kind:
+                            description: |-
+                              Kind of the referent.
+                              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+                            type: string
+                          name:
+                            description: |-
+                              Name of the referent.
+                              More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                            type: string
+                          namespace:
+                            description: |-
+                              Namespace of the referent.
+                              More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
+                            type: string
+                          resourceVersion:
+                            description: |-
+                              Specific resourceVersion to which this reference is made, if any.
+                              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency
+                            type: string
+                          uid:
+                            description: |-
+                              UID of the referent.
+                              More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids
+                            type: string
+                        type: object
+                        x-kubernetes-map-type: atomic
+                      cluster:
+                        description: |-
+                          cluster is to identify the cluster (the Prism Element under management
+                          of the Prism Central), in which the Machine's VM will be created.
+                          The cluster identifier (uuid or name) can be obtained from the Prism Central console
+                          or using the prism_central API.
+                        properties:
+                          name:
+                            description: name is the resource name in the PC
+                            type: string
+                          type:
+                            description: Type is the identifier type to use for this
+                              resource.
+                            enum:
+                            - uuid
+                            - name
+                            type: string
+                          uuid:
+                            description: uuid is the UUID of the resource in the PC.
+                            type: string
+                        required:
+                        - type
+                        type: object
+                      gpus:
+                        description: List of GPU devices that need to be added to
+                          the machines.
+                        items:
+                          properties:
+                            deviceID:
+                              description: deviceID is the id of the GPU entity.
+                              format: int64
+                              type: integer
+                            name:
+                              description: name is the GPU name
+                              type: string
+                            type:
+                              description: Type is the identifier type to use for
+                                this resource.
+                              enum:
+                              - deviceID
+                              - name
+                              type: string
+                          required:
+                          - type
+                          type: object
+                        type: array
+                      image:
+                        description: |-
+                          image is to identify the rhcos image uploaded to the Prism Central (PC)
+                          The image identifier (uuid or name) can be obtained from the Prism Central console
+                          or using the prism_central API.
+                        properties:
+                          name:
+                            description: name is the resource name in the PC
+                            type: string
+                          type:
+                            description: Type is the identifier type to use for this
+                              resource.
+                            enum:
+                            - uuid
+                            - name
+                            type: string
+                          uuid:
+                            description: uuid is the UUID of the resource in the PC.
+                            type: string
+                        required:
+                        - type
+                        type: object
+                      memorySize:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        description: |-
+                          memorySize is the memory size (in Quantity format) of the VM
+                          The minimum memorySize is 2Gi bytes
+                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                        x-kubernetes-int-or-string: true
+                      project:
+                        description: Add the machine resources to a Prism Central
+                          project
+                        properties:
+                          name:
+                            description: name is the resource name in the PC
+                            type: string
+                          type:
+                            description: Type is the identifier type to use for this
+                              resource.
+                            enum:
+                            - uuid
+                            - name
+                            type: string
+                          uuid:
+                            description: uuid is the UUID of the resource in the PC.
+                            type: string
+                        required:
+                        - type
+                        type: object
+                      providerID:
+                        type: string
+                      subnet:
+                        description: |-
+                          subnet is to identify the cluster's network subnet to use for the Machine's VM
+                          The cluster identifier (uuid or name) can be obtained from the Prism Central console
+                          or using the prism_central API.
+                        items:
+                          description: NutanixResourceIdentifier holds the identity
+                            of a Nutanix PC resource (cluster, image, subnet, etc.)
+                          properties:
+                            name:
+                              description: name is the resource name in the PC
+                              type: string
+                            type:
+                              description: Type is the identifier type to use for
+                                this resource.
+                              enum:
+                              - uuid
+                              - name
+                              type: string
+                            uuid:
+                              description: uuid is the UUID of the resource in the
+                                PC.
+                              type: string
+                          required:
+                          - type
+                          type: object
+                        type: array
+                      systemDiskSize:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        description: |-
+                          systemDiskSize is size (in Quantity format) of the system disk of the VM
+                          The minimum systemDiskSize is 20Gi bytes
+                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                        x-kubernetes-int-or-string: true
+                      vcpuSockets:
+                        description: vcpuSockets is the number of vCPU sockets of
+                          the VM
+                        format: int32
+                        minimum: 1
+                        type: integer
+                      vcpusPerSocket:
+                        description: vcpusPerSocket is the number of vCPUs per socket
+                          of the VM
+                        format: int32
+                        minimum: 1
+                        type: integer
+                    required:
+                    - image
+                    - memorySize
+                    - providerID
+                    - systemDiskSize
+                    - vcpuSockets
+                    - vcpusPerSocket
+                    type: object
+                required:
+                - spec
+                type: object
+            required:
+            - template
+            type: object
+        type: object
+    served: true
+    storage: true
