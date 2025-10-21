@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	. "github.com/onsi/gomega"
-	"sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
+	"sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 )
 
 func TestValidateHostOSConfig(t *testing.T) {

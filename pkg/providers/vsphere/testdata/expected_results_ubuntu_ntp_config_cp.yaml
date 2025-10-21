@@ -362,6 +362,7 @@ spec:
     - echo "127.0.0.1   localhost" >>/etc/hosts
     - echo "127.0.0.1   {{ ds.meta_data.hostname }}" >>/etc/hosts
     - echo "{{ ds.meta_data.hostname }}" >/etc/hostname
+    useExperimentalRetryJoin: true
     users:
     - name: ec2-user
       sshAuthorizedKeys:
@@ -369,10 +370,6 @@ spec:
       sudo: ALL=(ALL) NOPASSWD:ALL
     format: cloud-config
   replicas: 3
-  rolloutStrategy:
-    rollingUpdate:
-      maxSurge: 1
-    type: RollingUpdate
   version: v1.21.2-eks-1-21-4
 ---
 apiVersion: addons.cluster.x-k8s.io/v1beta1

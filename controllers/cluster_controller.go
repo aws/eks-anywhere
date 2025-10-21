@@ -11,9 +11,9 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
-	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
-	v1beta1patch "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/patch"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	"sigs.k8s.io/cluster-api/util/conditions"
+	"sigs.k8s.io/cluster-api/util/patch"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -299,7 +299,7 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (re
 	}
 
 	// Initialize the patch helper
-	patchHelper, err := v1beta1patch.NewHelper(cluster, r.client)
+	patchHelper, err := patch.NewHelper(cluster, r.client)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -311,7 +311,7 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (re
 		}
 
 		// Always attempt to patch the object and status after each reconciliation.
-		patchOpts := []v1beta1patch.Option{}
+		patchOpts := []patch.Option{}
 
 		// We want the observedGeneration to indicate, that the status shown is up-to-date given the desired spec of the same generation.
 		// However, if there is an error while updating the status, we may get a partial status update, In this case,
@@ -319,7 +319,7 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (re
 
 		// Patch ObservedGeneration only if the reconciliation completed without error
 		if reterr == nil {
-			patchOpts = append(patchOpts, v1beta1patch.WithStatusObservedGeneration{})
+			patchOpts = append(patchOpts, patch.WithStatusObservedGeneration{})
 		}
 		if err := patchCluster(ctx, patchHelper, cluster, patchOpts...); err != nil {
 			reterr = kerrors.NewAggregate([]error{reterr, err})
@@ -329,7 +329,7 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (re
 		// We do this to be able to update the status continuously until the cluster becomes ready,
 		// since there might be changes in state of the world that don't trigger reconciliation requests
 
-		if reterr == nil && !result.Requeue && result.RequeueAfter <= 0 && v1beta1conditions.IsFalse(cluster, anywherev1.ReadyCondition) {
+		if reterr == nil && !result.Requeue && result.RequeueAfter <= 0 && conditions.IsFalse(cluster, anywherev1.ReadyCondition) {
 			result = ctrl.Result{RequeueAfter: 10 * time.Second}
 		}
 	}()
@@ -534,6 +534,7 @@ func (r *ClusterReconciler) updateStatus(ctx context.Context, log logr.Logger, c
 	}
 
 	log.Info("Updating cluster status")
+
 	if err := clusters.UpdateClusterStatusForControlPlane(ctx, r.client, cluster); err != nil {
 		return errors.Wrap(err, "updating status for control plane")
 	}
@@ -554,7 +555,7 @@ func (r *ClusterReconciler) updateStatus(ctx context.Context, log logr.Logger, c
 		anywherev1.WorkersReadyCondition,
 	}
 
-	defaultCNIConfiguredCondition := v1beta1conditions.Get(cluster, anywherev1.DefaultCNIConfiguredCondition)
+	defaultCNIConfiguredCondition := conditions.Get(cluster, anywherev1.DefaultCNIConfiguredCondition)
 	if defaultCNIConfiguredCondition == nil ||
 		(defaultCNIConfiguredCondition.Status == "False" &&
 			defaultCNIConfiguredCondition.Reason != anywherev1.SkipUpgradesForDefaultCNIConfiguredReason) {
@@ -562,8 +563,8 @@ func (r *ClusterReconciler) updateStatus(ctx context.Context, log logr.Logger, c
 	}
 
 	// Always update the readyCondition by summarizing the state of other conditions.
-	v1beta1conditions.SetSummary(cluster,
-		v1beta1conditions.WithConditions(summarizedConditionTypes...),
+	conditions.SetSummary(cluster,
+		conditions.WithConditions(summarizedConditionTypes...),
 	)
 
 	return nil
@@ -730,10 +731,10 @@ func (r *ClusterReconciler) ensureClusterOwnerReferences(ctx context.Context, cl
 	return nil
 }
 
-func patchCluster(ctx context.Context, patchHelper *v1beta1patch.Helper, cluster *anywherev1.Cluster, patchOpts ...v1beta1patch.Option) error {
+func patchCluster(ctx context.Context, patchHelper *patch.Helper, cluster *anywherev1.Cluster, patchOpts ...patch.Option) error {
 	// Patch the object, ignoring conflicts on the conditions owned by this controller.
-	options := append([]v1beta1patch.Option{
-		v1beta1patch.WithOwnedConditions{Conditions: []clusterv1.ConditionType{
+	options := append([]patch.Option{
+		patch.WithOwnedConditions{Conditions: []clusterv1.ConditionType{
 			// Add each condition her that the controller should ignored conflicts for.
 			anywherev1.ReadyCondition,
 			anywherev1.ControlPlaneInitializedCondition,

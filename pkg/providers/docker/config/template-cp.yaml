@@ -285,12 +285,7 @@ spec:
 {{- if .upgradeRolloutStrategy }}
   rolloutStrategy:
     rollingUpdate:
-      maxSurge: {{.maxSurge}}
-{{- else }}
-  rolloutStrategy:
-    rollingUpdate:
-      maxSurge: 1
-    type: RollingUpdate
+      maxSurge: {{.maxSurge}} 
 {{- end }}
   version: {{.kubernetesVersion}}
 {{- if .externalEtcd }}

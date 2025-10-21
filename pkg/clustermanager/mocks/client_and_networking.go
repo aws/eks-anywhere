@@ -21,8 +21,8 @@ import (
 	gomock "github.com/golang/mock/gomock"
 	v1 "k8s.io/api/core/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
-	v1beta1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
-	v1beta10 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	v1beta1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	v1beta10 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 )
 
 // MockClusterClient is a mock of ClusterClient interface.
@@ -224,7 +224,7 @@ func (mr *MockClusterClientMockRecorder) DeleteOIDCConfig(arg0, arg1, arg2, arg3
 }
 
 // DeleteOldWorkerNodeGroup mocks base method.
-func (m *MockClusterClient) DeleteOldWorkerNodeGroup(arg0 context.Context, arg1 *v1beta10.MachineDeployment, arg2 string) error {
+func (m *MockClusterClient) DeleteOldWorkerNodeGroup(arg0 context.Context, arg1 *v1beta1.MachineDeployment, arg2 string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteOldWorkerNodeGroup", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
@@ -433,14 +433,14 @@ func (mr *MockClusterClientMockRecorder) GetEksdRelease(arg0, arg1, arg2, arg3 i
 }
 
 // GetKubeadmControlPlane mocks base method.
-func (m *MockClusterClient) GetKubeadmControlPlane(arg0 context.Context, arg1 *types.Cluster, arg2 string, arg3 ...executables.KubectlOpt) (*v1beta1.KubeadmControlPlane, error) {
+func (m *MockClusterClient) GetKubeadmControlPlane(arg0 context.Context, arg1 *types.Cluster, arg2 string, arg3 ...executables.KubectlOpt) (*v1beta10.KubeadmControlPlane, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0, arg1, arg2}
 	for _, a := range arg3 {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetKubeadmControlPlane", varargs...)
-	ret0, _ := ret[0].(*v1beta1.KubeadmControlPlane)
+	ret0, _ := ret[0].(*v1beta10.KubeadmControlPlane)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -453,14 +453,14 @@ func (mr *MockClusterClientMockRecorder) GetKubeadmControlPlane(arg0, arg1, arg2
 }
 
 // GetMachineDeployment mocks base method.
-func (m *MockClusterClient) GetMachineDeployment(arg0 context.Context, arg1 string, arg2 ...executables.KubectlOpt) (*v1beta10.MachineDeployment, error) {
+func (m *MockClusterClient) GetMachineDeployment(arg0 context.Context, arg1 string, arg2 ...executables.KubectlOpt) (*v1beta1.MachineDeployment, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0, arg1}
 	for _, a := range arg2 {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetMachineDeployment", varargs...)
-	ret0, _ := ret[0].(*v1beta10.MachineDeployment)
+	ret0, _ := ret[0].(*v1beta1.MachineDeployment)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -473,14 +473,14 @@ func (mr *MockClusterClientMockRecorder) GetMachineDeployment(arg0, arg1 interfa
 }
 
 // GetMachineDeploymentsForCluster mocks base method.
-func (m *MockClusterClient) GetMachineDeploymentsForCluster(arg0 context.Context, arg1 string, arg2 ...executables.KubectlOpt) ([]v1beta10.MachineDeployment, error) {
+func (m *MockClusterClient) GetMachineDeploymentsForCluster(arg0 context.Context, arg1 string, arg2 ...executables.KubectlOpt) ([]v1beta1.MachineDeployment, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0, arg1}
 	for _, a := range arg2 {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetMachineDeploymentsForCluster", varargs...)
-	ret0, _ := ret[0].([]v1beta10.MachineDeployment)
+	ret0, _ := ret[0].([]v1beta1.MachineDeployment)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -719,6 +719,34 @@ func (mr *MockClusterClientMockRecorder) WaitForClusterReady(arg0, arg1, arg2, a
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitForClusterReady", reflect.TypeOf((*MockClusterClient)(nil).WaitForClusterReady), arg0, arg1, arg2, arg3)
 }
 
+// WaitForControlPlaneAvailable mocks base method.
+func (m *MockClusterClient) WaitForControlPlaneAvailable(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WaitForControlPlaneAvailable", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WaitForControlPlaneAvailable indicates an expected call of WaitForControlPlaneAvailable.
+func (mr *MockClusterClientMockRecorder) WaitForControlPlaneAvailable(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitForControlPlaneAvailable", reflect.TypeOf((*MockClusterClient)(nil).WaitForControlPlaneAvailable), arg0, arg1, arg2, arg3)
+}
+
+// WaitForControlPlaneNotReady mocks base method.
+func (m *MockClusterClient) WaitForControlPlaneNotReady(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WaitForControlPlaneNotReady", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WaitForControlPlaneNotReady indicates an expected call of WaitForControlPlaneNotReady.
+func (mr *MockClusterClientMockRecorder) WaitForControlPlaneNotReady(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitForControlPlaneNotReady", reflect.TypeOf((*MockClusterClient)(nil).WaitForControlPlaneNotReady), arg0, arg1, arg2, arg3)
+}
+
 // WaitForControlPlaneReady mocks base method.
 func (m *MockClusterClient) WaitForControlPlaneReady(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 string) error {
 	m.ctrl.T.Helper()
@@ -745,6 +773,34 @@ func (m *MockClusterClient) WaitForDeployment(arg0 context.Context, arg1 *types.
 func (mr *MockClusterClientMockRecorder) WaitForDeployment(arg0, arg1, arg2, arg3, arg4, arg5 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitForDeployment", reflect.TypeOf((*MockClusterClient)(nil).WaitForDeployment), arg0, arg1, arg2, arg3, arg4, arg5)
+}
+
+// WaitForManagedExternalEtcdNotReady mocks base method.
+func (m *MockClusterClient) WaitForManagedExternalEtcdNotReady(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WaitForManagedExternalEtcdNotReady", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WaitForManagedExternalEtcdNotReady indicates an expected call of WaitForManagedExternalEtcdNotReady.
+func (mr *MockClusterClientMockRecorder) WaitForManagedExternalEtcdNotReady(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitForManagedExternalEtcdNotReady", reflect.TypeOf((*MockClusterClient)(nil).WaitForManagedExternalEtcdNotReady), arg0, arg1, arg2, arg3)
+}
+
+// WaitForManagedExternalEtcdReady mocks base method.
+func (m *MockClusterClient) WaitForManagedExternalEtcdReady(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WaitForManagedExternalEtcdReady", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WaitForManagedExternalEtcdReady indicates an expected call of WaitForManagedExternalEtcdReady.
+func (mr *MockClusterClientMockRecorder) WaitForManagedExternalEtcdReady(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitForManagedExternalEtcdReady", reflect.TypeOf((*MockClusterClient)(nil).WaitForManagedExternalEtcdReady), arg0, arg1, arg2, arg3)
 }
 
 // MockEKSAComponents is a mock of EKSAComponents interface.
@@ -984,7 +1040,7 @@ func (mr *MockKubernetesClientMockRecorder) DeleteOIDCConfig(arg0, arg1, arg2, a
 }
 
 // DeleteOldWorkerNodeGroup mocks base method.
-func (m *MockKubernetesClient) DeleteOldWorkerNodeGroup(arg0 context.Context, arg1 *v1beta10.MachineDeployment, arg2 string) error {
+func (m *MockKubernetesClient) DeleteOldWorkerNodeGroup(arg0 context.Context, arg1 *v1beta1.MachineDeployment, arg2 string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteOldWorkerNodeGroup", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
@@ -1193,14 +1249,14 @@ func (mr *MockKubernetesClientMockRecorder) GetEksdRelease(arg0, arg1, arg2, arg
 }
 
 // GetKubeadmControlPlane mocks base method.
-func (m *MockKubernetesClient) GetKubeadmControlPlane(arg0 context.Context, arg1 *types.Cluster, arg2 string, arg3 ...executables.KubectlOpt) (*v1beta1.KubeadmControlPlane, error) {
+func (m *MockKubernetesClient) GetKubeadmControlPlane(arg0 context.Context, arg1 *types.Cluster, arg2 string, arg3 ...executables.KubectlOpt) (*v1beta10.KubeadmControlPlane, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0, arg1, arg2}
 	for _, a := range arg3 {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetKubeadmControlPlane", varargs...)
-	ret0, _ := ret[0].(*v1beta1.KubeadmControlPlane)
+	ret0, _ := ret[0].(*v1beta10.KubeadmControlPlane)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -1213,14 +1269,14 @@ func (mr *MockKubernetesClientMockRecorder) GetKubeadmControlPlane(arg0, arg1, a
 }
 
 // GetMachineDeployment mocks base method.
-func (m *MockKubernetesClient) GetMachineDeployment(arg0 context.Context, arg1 string, arg2 ...executables.KubectlOpt) (*v1beta10.MachineDeployment, error) {
+func (m *MockKubernetesClient) GetMachineDeployment(arg0 context.Context, arg1 string, arg2 ...executables.KubectlOpt) (*v1beta1.MachineDeployment, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0, arg1}
 	for _, a := range arg2 {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetMachineDeployment", varargs...)
-	ret0, _ := ret[0].(*v1beta10.MachineDeployment)
+	ret0, _ := ret[0].(*v1beta1.MachineDeployment)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -1233,14 +1289,14 @@ func (mr *MockKubernetesClientMockRecorder) GetMachineDeployment(arg0, arg1 inte
 }
 
 // GetMachineDeploymentsForCluster mocks base method.
-func (m *MockKubernetesClient) GetMachineDeploymentsForCluster(arg0 context.Context, arg1 string, arg2 ...executables.KubectlOpt) ([]v1beta10.MachineDeployment, error) {
+func (m *MockKubernetesClient) GetMachineDeploymentsForCluster(arg0 context.Context, arg1 string, arg2 ...executables.KubectlOpt) ([]v1beta1.MachineDeployment, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0, arg1}
 	for _, a := range arg2 {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetMachineDeploymentsForCluster", varargs...)
-	ret0, _ := ret[0].([]v1beta10.MachineDeployment)
+	ret0, _ := ret[0].([]v1beta1.MachineDeployment)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -1436,6 +1492,34 @@ func (mr *MockKubernetesClientMockRecorder) WaitForClusterReady(arg0, arg1, arg2
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitForClusterReady", reflect.TypeOf((*MockKubernetesClient)(nil).WaitForClusterReady), arg0, arg1, arg2, arg3)
 }
 
+// WaitForControlPlaneAvailable mocks base method.
+func (m *MockKubernetesClient) WaitForControlPlaneAvailable(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WaitForControlPlaneAvailable", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WaitForControlPlaneAvailable indicates an expected call of WaitForControlPlaneAvailable.
+func (mr *MockKubernetesClientMockRecorder) WaitForControlPlaneAvailable(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitForControlPlaneAvailable", reflect.TypeOf((*MockKubernetesClient)(nil).WaitForControlPlaneAvailable), arg0, arg1, arg2, arg3)
+}
+
+// WaitForControlPlaneNotReady mocks base method.
+func (m *MockKubernetesClient) WaitForControlPlaneNotReady(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WaitForControlPlaneNotReady", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WaitForControlPlaneNotReady indicates an expected call of WaitForControlPlaneNotReady.
+func (mr *MockKubernetesClientMockRecorder) WaitForControlPlaneNotReady(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitForControlPlaneNotReady", reflect.TypeOf((*MockKubernetesClient)(nil).WaitForControlPlaneNotReady), arg0, arg1, arg2, arg3)
+}
+
 // WaitForControlPlaneReady mocks base method.
 func (m *MockKubernetesClient) WaitForControlPlaneReady(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 string) error {
 	m.ctrl.T.Helper()
@@ -1462,6 +1546,34 @@ func (m *MockKubernetesClient) WaitForDeployment(arg0 context.Context, arg1 *typ
 func (mr *MockKubernetesClientMockRecorder) WaitForDeployment(arg0, arg1, arg2, arg3, arg4, arg5 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitForDeployment", reflect.TypeOf((*MockKubernetesClient)(nil).WaitForDeployment), arg0, arg1, arg2, arg3, arg4, arg5)
+}
+
+// WaitForManagedExternalEtcdNotReady mocks base method.
+func (m *MockKubernetesClient) WaitForManagedExternalEtcdNotReady(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WaitForManagedExternalEtcdNotReady", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WaitForManagedExternalEtcdNotReady indicates an expected call of WaitForManagedExternalEtcdNotReady.
+func (mr *MockKubernetesClientMockRecorder) WaitForManagedExternalEtcdNotReady(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitForManagedExternalEtcdNotReady", reflect.TypeOf((*MockKubernetesClient)(nil).WaitForManagedExternalEtcdNotReady), arg0, arg1, arg2, arg3)
+}
+
+// WaitForManagedExternalEtcdReady mocks base method.
+func (m *MockKubernetesClient) WaitForManagedExternalEtcdReady(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WaitForManagedExternalEtcdReady", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WaitForManagedExternalEtcdReady indicates an expected call of WaitForManagedExternalEtcdReady.
+func (mr *MockKubernetesClientMockRecorder) WaitForManagedExternalEtcdReady(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitForManagedExternalEtcdReady", reflect.TypeOf((*MockKubernetesClient)(nil).WaitForManagedExternalEtcdReady), arg0, arg1, arg2, arg3)
 }
 
 // MockClientFactory is a mock of ClientFactory interface.

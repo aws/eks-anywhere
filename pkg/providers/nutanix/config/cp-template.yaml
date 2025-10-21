@@ -424,6 +424,7 @@ spec:
 {{- end }}
     postKubeadmCommands:
       - echo export KUBECONFIG=/etc/kubernetes/admin.conf >> /root/.bashrc
+    useExperimentalRetryJoin: true
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: NutanixMachineTemplate

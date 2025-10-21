@@ -534,6 +534,7 @@ spec:
 {{- if and (ge (atoi $kube_minor_version) 29) (ne .format "bottlerocket") }}
     - "if [ -f /run/kubeadm/kubeadm.yaml ]; then sed -i 's#path: /etc/kubernetes/admin.conf#path: /etc/kubernetes/super-admin.conf#' /etc/kubernetes/manifests/kube-vip.yaml; fi"
 {{- end }}
+    useExperimentalRetryJoin: true
     users:
     - name: {{.controlPlaneSshUsername}}
       sshAuthorizedKeys:
@@ -549,11 +550,6 @@ spec:
     rollingUpdate:
       maxSurge: {{.maxSurge}} 
 {{- end }}
-{{- else }}
-  rolloutStrategy:
-    rollingUpdate:
-      maxSurge: 1
-    type: RollingUpdate
 {{- end }}
   version: {{.kubernetesVersion}}
 ---

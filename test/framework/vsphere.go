@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
+	"sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/internal/test/cleanup"
@@ -224,12 +224,6 @@ func WithUbuntu132() VSphereOpt {
 // and the "ubuntu" osFamily in all machine configs.
 func WithUbuntu133() VSphereOpt {
 	return withVSphereKubeVersionAndOS(anywherev1.Kube133, Ubuntu2004, nil)
-}
-
-// WithUbuntu134 returns a VSphereOpt that adds API fillers to use a Ubuntu vSphere template for k8s 1.34
-// and the "ubuntu" osFamily in all machine configs.
-func WithUbuntu134() VSphereOpt {
-	return withVSphereKubeVersionAndOS(anywherev1.Kube134, Ubuntu2204, nil)
 }
 
 // WithBottleRocket128 returns br 1.28 var.
@@ -473,12 +467,6 @@ func (v *VSphere) WithUbuntu133() api.ClusterConfigFiller {
 	return v.WithKubeVersionAndOS(anywherev1.Kube133, Ubuntu2004, nil)
 }
 
-// WithUbuntu134 returns a cluster config filler that sets the kubernetes version of the cluster to 1.34
-// as well as the right ubuntu template and osFamily for all VSphereMachineConfigs.
-func (v *VSphere) WithUbuntu134() api.ClusterConfigFiller {
-	return v.WithKubeVersionAndOS(anywherev1.Kube134, Ubuntu2204, nil)
-}
-
 // WithBottleRocket131 returns a cluster config filler that sets the kubernetes version of the cluster to 1.31
 // as well as the right bottlerocket template and osFamily for all VSphereMachineConfigs.
 func (v *VSphere) WithBottleRocket131() api.ClusterConfigFiller {
@@ -570,11 +558,6 @@ func (v *VSphere) Ubuntu132Template() api.VSphereFiller {
 // Ubuntu133Template returns vsphere filler for 1.33 Ubuntu.
 func (v *VSphere) Ubuntu133Template() api.VSphereFiller {
 	return v.templateForKubeVersionAndOS(anywherev1.Kube133, Ubuntu2004, nil)
-}
-
-// Ubuntu134Template returns vsphere filler for 1.34 Ubuntu.
-func (v *VSphere) Ubuntu134Template() api.VSphereFiller {
-	return v.templateForKubeVersionAndOS(anywherev1.Kube134, Ubuntu2204, nil)
 }
 
 // Ubuntu129TemplateForMachineConfig returns vsphere filler for 1.29 Ubuntu for a specific machine config.

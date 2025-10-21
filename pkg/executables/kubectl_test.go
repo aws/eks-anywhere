@@ -21,8 +21,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/version"
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
-	addons "sigs.k8s.io/cluster-api/api/addons/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	addons "sigs.k8s.io/cluster-api/exp/addons/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
@@ -256,7 +256,7 @@ func TestKubectlDeleteSpecFromBytesError(t *testing.T) {
 
 func TestKubectlApplyKubeSpecFromBytesWithNamespaceSuccess(t *testing.T) {
 	t.Parallel()
-	data := []byte("someData")
+	var data []byte = []byte("someData")
 	var namespace string
 
 	k, ctx, cluster, e := newKubectl(t)
@@ -281,7 +281,7 @@ func TestKubectlApplyKubeSpecFromBytesWithNamespaceSuccessWithEmptyInput(t *test
 
 func TestKubectlApplyKubeSpecFromBytesWithNamespaceError(t *testing.T) {
 	t.Parallel()
-	data := []byte("someData")
+	var data []byte = []byte("someData")
 	var namespace string
 
 	k, ctx, cluster, e := newKubectl(t)
@@ -2040,78 +2040,6 @@ func TestKubectlGetKubeAdmControlPlanes(t *testing.T) {
 	}
 }
 
-func TestKubectlGetKubeadmControlPlane_V1Beta2Conversion(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		testName      string
-		jsonPayload   string
-		wantName      string
-		wantReplicas  int32
-		wantExtraArgs map[string]string
-	}{
-		{
-			testName: "v1beta2 KubeadmControlPlane with extraArgs",
-			jsonPayload: `{
-				"apiVersion": "controlplane.cluster.x-k8s.io/v1beta2",
-				"kind": "KubeadmControlPlane",
-				"metadata": { "name": "test-cluster" },
-				"spec": {
-					"replicas": 3,
-					"kubeadmConfigSpec": {
-						"clusterConfiguration": {
-							"apiServer": {
-								"extraArgs": [
-									{
-										"name": "enable-admission-plugins",
-										"value": "NodeRestriction,PodSecurityPolicy"
-									}
-								]
-							}
-						}
-					}
-				}
-			}`,
-			wantName:     "test-cluster",
-			wantReplicas: 3,
-			wantExtraArgs: map[string]string{
-				"enable-admission-plugins": "NodeRestriction,PodSecurityPolicy",
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.testName, func(t *testing.T) {
-			k, ctx, cluster, e := newKubectl(t)
-
-			// Mock Execute to return the JSON from variable
-			e.EXPECT().
-				Execute(ctx, []string{"get", "kubeadmcontrolplanes.controlplane.cluster.x-k8s.io", "test-cluster", "-o", "json"}).
-				Return(*bytes.NewBufferString(tt.jsonPayload), nil)
-
-			// Call the function
-			gotKcp, err := k.GetKubeadmControlPlane(ctx, cluster, "test-cluster")
-			if err != nil {
-				t.Fatalf("GetKubeadmControlPlane() error = %v, want nil", err)
-			}
-
-			// Verify the basic fields
-			if gotKcp.Name != tt.wantName {
-				t.Errorf("Name = %s, want %s", gotKcp.Name, tt.wantName)
-			}
-			if gotKcp.Spec.Replicas == nil || *gotKcp.Spec.Replicas != tt.wantReplicas {
-				t.Errorf("Replicas = %v, want %v", gotKcp.Spec.Replicas, tt.wantReplicas)
-			}
-
-			// Verify extraArgs
-			gotExtraArgs := gotKcp.Spec.KubeadmConfigSpec.ClusterConfiguration.APIServer.ExtraArgs
-			if !reflect.DeepEqual(gotExtraArgs, tt.wantExtraArgs) {
-				t.Errorf("ExtraArgs = %+v, want %+v", gotExtraArgs, tt.wantExtraArgs)
-			}
-		})
-	}
-}
-
 func TestKubectlVersion(t *testing.T) {
 	t.Parallel()
 	k, ctx, cluster, e := newKubectl(t)
@@ -3199,6 +3127,20 @@ func TestKubectlDeleteClusterObjectError(t *testing.T) {
 	tt.Expect(tt.k.DeleteClusterObject(tt.ctx, resourceType, name, tt.kubeconfig)).NotTo(Succeed())
 }
 
+func TestKubectlWaitForManagedExternalEtcdNotReady(t *testing.T) {
+	t.Parallel()
+	tt := newKubectlTest(t)
+	timeout := "5m"
+	expectedTimeout := "300.00s"
+
+	tt.e.EXPECT().Execute(
+		tt.ctx,
+		"wait", "--timeout", expectedTimeout, "--for=condition=ManagedEtcdReady=false", "clusters.cluster.x-k8s.io/test", "--kubeconfig", tt.cluster.KubeconfigFile, "-n", "eksa-system",
+	).Return(bytes.Buffer{}, nil)
+
+	tt.Expect(tt.k.WaitForManagedExternalEtcdNotReady(tt.ctx, tt.cluster, timeout, "test")).To(Succeed())
+}
+
 func TestKubectlWaitForMachineDeploymentReady(t *testing.T) {
 	t.Parallel()
 	tt := newKubectlTest(t)
@@ -3207,7 +3149,7 @@ func TestKubectlWaitForMachineDeploymentReady(t *testing.T) {
 
 	tt.e.EXPECT().Execute(
 		tt.ctx,
-		"wait", "--timeout", expectedTimeout, "--for=condition=Available=true", "machinedeployments.cluster.x-k8s.io/test", "--kubeconfig", tt.cluster.KubeconfigFile, "-n", "eksa-system",
+		"wait", "--timeout", expectedTimeout, "--for=condition=Ready=true", "machinedeployments.cluster.x-k8s.io/test", "--kubeconfig", tt.cluster.KubeconfigFile, "-n", "eksa-system",
 	).Return(bytes.Buffer{}, nil)
 
 	tt.Expect(tt.k.WaitForMachineDeploymentReady(tt.ctx, tt.cluster, timeout, "test")).To(Succeed())
@@ -3217,13 +3159,12 @@ func TestKubectlWaitForClusterReady(t *testing.T) {
 	t.Parallel()
 	tt := newKubectlTest(t)
 
-	timeout := "300.00s"
-
+	timeout := "5m"
 	expectedTimeout := "300.00s"
 
 	tt.e.EXPECT().Execute(
 		tt.ctx,
-		"wait", "--timeout", expectedTimeout, "--for=condition=Available", "clusters.cluster.x-k8s.io/test", "--kubeconfig", tt.cluster.KubeconfigFile, "-n", "eksa-system",
+		"wait", "--timeout", expectedTimeout, "--for=condition=Ready", "clusters.cluster.x-k8s.io/test", "--kubeconfig", tt.cluster.KubeconfigFile, "-n", "eksa-system",
 	).Return(bytes.Buffer{}, nil)
 
 	tt.Expect(tt.k.WaitForClusterReady(tt.ctx, tt.cluster, timeout, "test")).To(Succeed())
@@ -4021,314 +3962,6 @@ func TestKubectlDeleteCRD(t *testing.T) {
 
 			if tt.ExpectErr && !strings.Contains(err.Error(), tt.Error.Error()) {
 				t.Fatalf("Expected error: %v; Received: %v", tt.ExpectErr, err)
-			}
-		})
-	}
-}
-
-func TestKubectlWaitForControlPlaneReady(t *testing.T) {
-	t.Parallel()
-	tests := []struct {
-		name        string
-		timeout     string
-		clusterName string
-		execError   error
-		wantError   bool
-		returnValue string
-	}{
-		{
-			name:        "timeout error",
-			timeout:     "invalid-timeout",
-			clusterName: "test-cluster",
-			execError:   nil,
-			wantError:   true,
-			returnValue: "",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			g := NewWithT(t)
-			k, ctx, cluster, e := newKubectl(t)
-
-			if tt.timeout != "invalid-timeout" {
-				// Mock the get call that WaitJSONPathLoop makes
-				expectedParams := []string{
-					"get", fmt.Sprintf("clusters.cluster.x-k8s.io/%s", tt.clusterName),
-					"-o", "jsonpath='{.status.initialization.controlPlaneInitialized}'",
-					"--kubeconfig", cluster.KubeconfigFile,
-					"-n", constants.EksaSystemNamespace,
-				}
-				if tt.execError == nil {
-					// Return 'true' to satisfy the condition immediately
-					e.EXPECT().Execute(ctx, gomock.Eq(expectedParams)).Return(*bytes.NewBufferString(tt.returnValue), nil).AnyTimes()
-				} else {
-					e.EXPECT().Execute(ctx, gomock.Eq(expectedParams)).Return(bytes.Buffer{}, tt.execError).AnyTimes()
-				}
-			}
-
-			err := k.WaitForControlPlaneReady(ctx, cluster, tt.timeout, tt.clusterName)
-
-			if tt.wantError {
-				g.Expect(err).To(HaveOccurred())
-			} else {
-				g.Expect(err).To(BeNil())
-			}
-		})
-	}
-}
-
-func TestKubectlValidateControlPlaneNodes(t *testing.T) {
-	t.Parallel()
-	tests := []struct {
-		name         string
-		kcpJSON      string
-		execError    error
-		wantError    bool
-		errorMessage string
-	}{
-		{
-			name: "success - all replicas ready",
-			kcpJSON: `{
-				"apiVersion": "controlplane.cluster.x-k8s.io/v1beta1",
-				"kind": "KubeadmControlPlane",
-				"metadata": {
-					"name": "test-cluster",
-					"generation": 1
-				},
-				"status": {
-					"observedGeneration": 1,
-					"replicas": 3,
-					"readyReplicas": 3,
-					"unavailableReplicas": 0
-				}
-			}`,
-			execError: nil,
-			wantError: false,
-		},
-		{
-			name: "error - observed generation mismatch",
-			kcpJSON: `{
-				"apiVersion": "controlplane.cluster.x-k8s.io/v1beta1",
-				"kind": "KubeadmControlPlane",
-				"metadata": {
-					"name": "test-cluster",
-					"generation": 2
-				},
-				"status": {
-					"observedGeneration": 1,
-					"replicas": 3,
-					"readyReplicas": 3,
-					"unavailableReplicas": 0
-				}
-			}`,
-			execError:    nil,
-			wantError:    true,
-			errorMessage: "status needs to be refreshed",
-		},
-		{
-			name: "error - not all replicas ready",
-			kcpJSON: `{
-				"apiVersion": "controlplane.cluster.x-k8s.io/v1beta1",
-				"kind": "KubeadmControlPlane",
-				"metadata": {
-					"name": "test-cluster",
-					"generation": 1
-				},
-				"status": {
-					"observedGeneration": 1,
-					"replicas": 3,
-					"readyReplicas": 2,
-					"unavailableReplicas": 0
-				}
-			}`,
-			execError:    nil,
-			wantError:    true,
-			errorMessage: "api server is not fully ready",
-		},
-		{
-			name: "error - unavailable replicas",
-			kcpJSON: `{
-				"apiVersion": "controlplane.cluster.x-k8s.io/v1beta1",
-				"kind": "KubeadmControlPlane",
-				"metadata": {
-					"name": "test-cluster",
-					"generation": 1
-				},
-				"status": {
-					"observedGeneration": 1,
-					"replicas": 3,
-					"readyReplicas": 3,
-					"unavailableReplicas": 1
-				}
-			}`,
-			execError:    nil,
-			wantError:    true,
-			errorMessage: "control plane replicas are unavailable",
-		},
-		{
-			name:         "error - kubectl execution fails",
-			kcpJSON:      "",
-			execError:    errors.New("kubectl get failed"),
-			wantError:    true,
-			errorMessage: "kubectl get failed",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			g := NewWithT(t)
-			k, ctx, cluster, e := newKubectl(t)
-			clusterName := "test-cluster"
-
-			expectedParams := []string{
-				"get", "kubeadmcontrolplanes.controlplane.cluster.x-k8s.io", clusterName,
-				"-o", "json", "--kubeconfig", cluster.KubeconfigFile,
-				"--namespace", constants.EksaSystemNamespace,
-			}
-
-			if tt.kcpJSON != "" {
-				e.EXPECT().Execute(ctx, gomock.Eq(expectedParams)).Return(*bytes.NewBufferString(tt.kcpJSON), tt.execError)
-			} else {
-				e.EXPECT().Execute(ctx, gomock.Eq(expectedParams)).Return(bytes.Buffer{}, tt.execError)
-			}
-
-			err := k.ValidateControlPlaneNodes(ctx, cluster, clusterName)
-
-			if tt.wantError {
-				g.Expect(err).To(HaveOccurred())
-				if tt.errorMessage != "" {
-					g.Expect(err.Error()).To(ContainSubstring(tt.errorMessage))
-				}
-			} else {
-				g.Expect(err).To(BeNil())
-			}
-		})
-	}
-}
-
-func TestKubectlConvertExtraArgsField(t *testing.T) {
-	t.Parallel()
-
-	// We'll test the convertExtraArgsField function indirectly through GetKubeadmControlPlane
-	// since it's a private method that gets called during the conversion process
-	tests := []struct {
-		name      string
-		kcpJSON   string
-		wantError bool
-	}{
-		{
-			name: "v1beta2 array format conversion",
-			kcpJSON: `{
-				"apiVersion": "controlplane.cluster.x-k8s.io/v1beta2",
-				"kind": "KubeadmControlPlane",
-				"metadata": {"name": "test-cluster"},
-				"spec": {
-					"replicas": 3,
-					"kubeadmConfigSpec": {
-						"clusterConfiguration": {
-							"apiServer": {
-								"extraArgs": [
-									{
-										"name": "enable-admission-plugins",
-										"value": "NodeRestriction,PodSecurityPolicy"
-									},
-									{
-										"name": "audit-log-maxage",
-										"value": "30"
-									}
-								]
-							}
-						}
-					}
-				}
-			}`,
-			wantError: false,
-		},
-		{
-			name: "v1beta1 map format - no conversion needed",
-			kcpJSON: `{
-				"apiVersion": "controlplane.cluster.x-k8s.io/v1beta1",
-				"kind": "KubeadmControlPlane",
-				"metadata": {"name": "test-cluster"},
-				"spec": {
-					"replicas": 3,
-					"kubeadmConfigSpec": {
-						"clusterConfiguration": {
-							"apiServer": {
-								"extraArgs": {
-									"enable-admission-plugins": "NodeRestriction,PodSecurityPolicy",
-									"audit-log-maxage": "30"
-								}
-							}
-						}
-					}
-				}
-			}`,
-			wantError: false,
-		},
-		{
-			name: "no extraArgs field",
-			kcpJSON: `{
-				"apiVersion": "controlplane.cluster.x-k8s.io/v1beta1",
-				"kind": "KubeadmControlPlane",
-				"metadata": {"name": "test-cluster"},
-				"spec": {
-					"replicas": 3,
-					"kubeadmConfigSpec": {
-						"clusterConfiguration": {
-							"apiServer": {}
-						}
-					}
-				}
-			}`,
-			wantError: false,
-		},
-		{
-			name: "invalid array format - missing name field",
-			kcpJSON: `{
-				"apiVersion": "controlplane.cluster.x-k8s.io/v1beta2",
-				"kind": "KubeadmControlPlane",
-				"metadata": {"name": "test-cluster"},
-				"spec": {
-					"replicas": 3,
-					"kubeadmConfigSpec": {
-						"clusterConfiguration": {
-							"apiServer": {
-								"extraArgs": [
-									{
-										"value": "NodeRestriction,PodSecurityPolicy"
-									}
-								]
-							}
-						}
-					}
-				}
-			}`,
-			wantError: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			g := NewWithT(t)
-			k, ctx, cluster, e := newKubectl(t)
-			clusterName := "test-cluster"
-
-			expectedParams := []string{
-				"get", "kubeadmcontrolplanes.controlplane.cluster.x-k8s.io", clusterName,
-				"-o", "json", "--kubeconfig", cluster.KubeconfigFile,
-				"--namespace", constants.EksaSystemNamespace,
-			}
-
-			e.EXPECT().Execute(ctx, gomock.Eq(expectedParams)).Return(*bytes.NewBufferString(tt.kcpJSON), nil)
-
-			_, err := k.GetKubeadmControlPlane(ctx, cluster, clusterName, executables.WithCluster(cluster), executables.WithNamespace(constants.EksaSystemNamespace))
-
-			if tt.wantError {
-				g.Expect(err).To(HaveOccurred())
-			} else {
-				g.Expect(err).To(BeNil())
 			}
 		})
 	}

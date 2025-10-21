@@ -449,7 +449,6 @@ spec:
       apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
       kind: TinkerbellMachineTemplate
       name: {{.controlPlaneTemplateName}}
-      namespace: {{.eksaSystemNamespace}}
   replicas: {{.controlPlaneReplicas}}
 {{- if .upgradeRolloutStrategy }}
   rolloutStrategy:
@@ -459,11 +458,6 @@ spec:
     rollingUpdate:
       maxSurge: {{.maxSurge}}
 {{- end }}
-{{- else }}
-  rolloutStrategy:
-    rollingUpdate:
-      maxSurge: 1
-    type: RollingUpdate
 {{- end }}
   version: {{.kubernetesVersion}}
 ---

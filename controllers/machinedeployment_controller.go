@@ -21,7 +21,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"sort"
 	"strings"
 	"time"
 
@@ -30,7 +29,8 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	"sigs.k8s.io/cluster-api/util/collections"
 	"sigs.k8s.io/cluster-api/util/patch"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -198,8 +198,7 @@ func (r *MachineDeploymentReconciler) machinesToUpgrade(ctx context.Context, md 
 	if err := r.client.List(ctx, machineList, &client.ListOptions{LabelSelector: selector, Namespace: md.ObjectMeta.Namespace}); err != nil {
 		return nil, nil, err
 	}
-
-	machines := sortMachinesByCreationTimestamp(machineList)
+	machines := collections.FromMachineList(machineList).SortedByCreationTimestamp()
 	machineObjects := make([]corev1.ObjectReference, 0, len(machines))
 	for _, machine := range machines {
 		machineObjects = append(machineObjects,
@@ -211,19 +210,6 @@ func (r *MachineDeploymentReconciler) machinesToUpgrade(ctx context.Context, md 
 		)
 	}
 	return machines, machineObjects, nil
-}
-
-func sortMachinesByCreationTimestamp(list *clusterv1.MachineList) []*clusterv1.Machine {
-	machines := make([]*clusterv1.Machine, len(list.Items))
-	for i := range list.Items {
-		machines[i] = &list.Items[i]
-	}
-
-	sort.Slice(machines, func(i, j int) bool {
-		return machines[i].CreationTimestamp.Before(&machines[j].CreationTimestamp)
-	})
-
-	return machines
 }
 
 func machineDeploymentUpgrade(md *clusterv1.MachineDeployment, machines []corev1.ObjectReference) (*anywherev1.MachineDeploymentUpgrade, error) {

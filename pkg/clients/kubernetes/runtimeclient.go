@@ -40,11 +40,6 @@ func initScheme(scheme *runtime.Scheme) error {
 	return addToScheme(scheme, adders...)
 }
 
-// InitScheme initializes a runtime scheme with all required types.
-func InitScheme(scheme *runtime.Scheme) error {
-	return initScheme(scheme)
-}
-
 func newRuntimeClient(data []byte, rc restConfigurator, scheme *runtime.Scheme) (client.Client, error) {
 	if rc == nil {
 		rc = restConfigurator(clientcmd.RESTConfigFromKubeConfig)

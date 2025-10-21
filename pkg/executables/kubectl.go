@@ -27,9 +27,9 @@ import (
 	"k8s.io/apimachinery/pkg/version"
 	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta3"
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
-	addons "sigs.k8s.io/cluster-api/api/addons/v1beta1"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
+	addons "sigs.k8s.io/cluster-api/exp/addons/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
@@ -371,16 +371,32 @@ func (k *Kubectl) DeleteKubeSpecFromBytes(ctx context.Context, cluster *types.Cl
 }
 
 func (k *Kubectl) WaitForClusterReady(ctx context.Context, cluster *types.Cluster, timeout string, clusterName string) error {
-	return k.Wait(ctx, cluster.KubeconfigFile, timeout, "Available", fmt.Sprintf("%s/%s", capiClustersResourceType, clusterName), constants.EksaSystemNamespace)
+	return k.Wait(ctx, cluster.KubeconfigFile, timeout, "Ready", fmt.Sprintf("%s/%s", capiClustersResourceType, clusterName), constants.EksaSystemNamespace)
 }
 
 func (k *Kubectl) WaitForControlPlaneReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error {
-	jsonpath := ".status.initialization.controlPlaneInitialized"
-	return k.WaitJSONPathLoop(ctx, cluster.KubeconfigFile, timeout, jsonpath, "true", fmt.Sprintf("%s/%s", capiClustersResourceType, newClusterName), constants.EksaSystemNamespace)
+	return k.Wait(ctx, cluster.KubeconfigFile, timeout, "ControlPlaneReady", fmt.Sprintf("%s/%s", capiClustersResourceType, newClusterName), constants.EksaSystemNamespace)
+}
+
+// WaitForControlPlaneAvailable blocks until the first control plane is available.
+func (k *Kubectl) WaitForControlPlaneAvailable(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error {
+	return k.Wait(ctx, cluster.KubeconfigFile, timeout, "ControlPlaneInitialized", fmt.Sprintf("%s/%s", capiClustersResourceType, newClusterName), constants.EksaSystemNamespace)
+}
+
+func (k *Kubectl) WaitForControlPlaneNotReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error {
+	return k.Wait(ctx, cluster.KubeconfigFile, timeout, "ControlPlaneReady=false", fmt.Sprintf("%s/%s", capiClustersResourceType, newClusterName), constants.EksaSystemNamespace)
+}
+
+func (k *Kubectl) WaitForManagedExternalEtcdReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error {
+	return k.Wait(ctx, cluster.KubeconfigFile, timeout, "ManagedEtcdReady", fmt.Sprintf("clusters.%s/%s", clusterv1.GroupVersion.Group, newClusterName), constants.EksaSystemNamespace)
+}
+
+func (k *Kubectl) WaitForManagedExternalEtcdNotReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error {
+	return k.Wait(ctx, cluster.KubeconfigFile, timeout, "ManagedEtcdReady=false", fmt.Sprintf("clusters.%s/%s", clusterv1.GroupVersion.Group, newClusterName), constants.EksaSystemNamespace)
 }
 
 func (k *Kubectl) WaitForMachineDeploymentReady(ctx context.Context, cluster *types.Cluster, timeout string, machineDeploymentName string) error {
-	return k.Wait(ctx, cluster.KubeconfigFile, timeout, "Available=true", fmt.Sprintf("%s/%s", capiMachineDeploymentsType, machineDeploymentName), constants.EksaSystemNamespace)
+	return k.Wait(ctx, cluster.KubeconfigFile, timeout, "Ready=true", fmt.Sprintf("%s/%s", capiMachineDeploymentsType, machineDeploymentName), constants.EksaSystemNamespace)
 }
 
 // WaitForService blocks until an IP address is assigned.
@@ -875,9 +891,8 @@ func (k *Kubectl) ValidateControlPlaneNodes(ctx context.Context, cluster *types.
 		return fmt.Errorf("kubeadm control plane %s status needs to be refreshed: generation=%v, observedGeneration=%d", cp.Name, generation, observedGeneration)
 	}
 
-	if cp.Status.ReadyReplicas != cp.Status.Replicas {
-		return fmt.Errorf("api server is not fully ready: %d/%d replicas ready",
-			cp.Status.ReadyReplicas, cp.Status.Replicas)
+	if !cp.Status.Ready {
+		return errors.New("api server is not ready")
 	}
 
 	if cp.Status.UnavailableReplicas != 0 {
@@ -1398,21 +1413,10 @@ func (k *Kubectl) GetKubeadmControlPlane(ctx context.Context, cluster *types.Clu
 		return nil, fmt.Errorf("getting kubeadmcontrolplane: %v", err)
 	}
 
-	// Use unstructured to handle the conversion manually
-	var unstructuredKCP unstructured.Unstructured
-	if err := json.Unmarshal(stdOut.Bytes(), &unstructuredKCP); err != nil {
-		return nil, fmt.Errorf("parsing kubeadmcontrolplane as unstructured: %v", err)
-	}
-
-	// Convert extraArgs from array format to map format if needed
-	if err := k.convertExtraArgsInUnstructured(&unstructuredKCP); err != nil {
-		return nil, fmt.Errorf("converting extraArgs format: %v", err)
-	}
-
-	// Convert unstructured to v1beta1 KubeadmControlPlane
 	response := &controlplanev1.KubeadmControlPlane{}
-	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredKCP.Object, response); err != nil {
-		return nil, fmt.Errorf("converting unstructured to kubeadmcontrolplane: %v", err)
+	err = json.Unmarshal(stdOut.Bytes(), response)
+	if err != nil {
+		return nil, fmt.Errorf("parsing get kubeadmcontrolplane response: %v", err)
 	}
 
 	return response, nil
@@ -2529,85 +2533,4 @@ func (k *Kubectl) DeleteCRD(ctx context.Context, crd, kubeconfig string) error {
 	}
 
 	return nil
-}
-
-// convertExtraArgsInUnstructured converts extraArgs from v1beta2 array format to v1beta1 map format
-// in an unstructured object to handle CAPI v1.11 migration.
-func (k *Kubectl) convertExtraArgsInUnstructured(obj *unstructured.Unstructured) error {
-	return k.convertExtraArgsRecursive(obj.Object)
-}
-
-// convertExtraArgsRecursive recursively searches for extraArgs fields and converts them from array to map format.
-// We will remove this function when we move on to using v1beta2 CAPI APIs.
-//
-//nolint:gocyclo // This function has complex logic for recursive type conversion that is difficult to simplify.
-func (k *Kubectl) convertExtraArgsRecursive(obj interface{}) error {
-	switch v := obj.(type) {
-	case map[string]interface{}:
-		// Check if this map contains extraArgs or kubeletExtraArgs
-		fieldsToConvert := []string{"extraArgs", "kubeletExtraArgs"}
-		for _, fieldName := range fieldsToConvert {
-			if extraArgs, exists := v[fieldName]; exists {
-				if converted, err := k.convertExtraArgsField(extraArgs); err != nil {
-					return err
-				} else if converted != nil {
-					v[fieldName] = converted
-				}
-			}
-		}
-
-		// Recursively process nested objects
-		for _, value := range v {
-			if err := k.convertExtraArgsRecursive(value); err != nil {
-				return err
-			}
-		}
-	case []interface{}:
-		// Recursively process array elements
-		for _, item := range v {
-			if err := k.convertExtraArgsRecursive(item); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-// convertExtraArgsField converts a single extraArgs field from array to map format.
-func (k *Kubectl) convertExtraArgsField(extraArgs interface{}) (map[string]string, error) {
-	switch args := extraArgs.(type) {
-	case []interface{}:
-		// This is the v1beta2 array format: [{"name": "key", "value": "val"}]
-		result := make(map[string]string)
-		for _, item := range args {
-			if argMap, ok := item.(map[string]interface{}); ok {
-				name, nameOk := argMap["name"].(string)
-				value, valueOk := argMap["value"].(string)
-				if nameOk && valueOk {
-					result[name] = value
-				} else {
-					return nil, fmt.Errorf("invalid extraArgs array format: expected name and value fields")
-				}
-			} else {
-				return nil, fmt.Errorf("invalid extraArgs array format: expected object with name and value")
-			}
-		}
-		return result, nil
-	case map[string]interface{}:
-		// This is already the v1beta1 map format: {"key": "val"}
-		result := make(map[string]string)
-		for k, v := range args {
-			if str, ok := v.(string); ok {
-				result[k] = str
-			} else {
-				return nil, fmt.Errorf("invalid extraArgs map format: expected string values")
-			}
-		}
-		return result, nil
-	case nil:
-		// No extraArgs field
-		return nil, nil
-	default:
-		return nil, fmt.Errorf("unsupported extraArgs format: %T", extraArgs)
-	}
 }

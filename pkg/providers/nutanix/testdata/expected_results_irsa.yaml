@@ -340,6 +340,7 @@ spec:
       - echo "127.0.0.1   {{ ds.meta_data.hostname }}" >> /etc/hosts
     postKubeadmCommands:
       - echo export KUBECONFIG=/etc/kubernetes/admin.conf >> /root/.bashrc
+    useExperimentalRetryJoin: true
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: NutanixMachineTemplate
