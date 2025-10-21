@@ -169,6 +169,11 @@ spec:
         certSANs:
         {{- toYaml . | nindent 8 }}
         {{- end }}
+{{- if .admissionExclusionPolicy }}
+        extraEnvs:
+        - name: EKS_PATCH_EXCLUSION_RULES_FILE
+          value: /etc/kubernetes/admission-plugin-exclusion-rules.json
+{{- end }}
         extraArgs:
 {{- if (lt (atoi $kube_minor_version) 33) }}
           cloud-provider: external
@@ -200,6 +205,17 @@ spec:
           name: audit-log-dir
           pathType: DirectoryOrCreate
           readOnly: false
+{{- if .admissionExclusionPolicy }}
+{{- if (eq .format "bottlerocket") }}
+        - hostPath: /var/lib/kubeadm/admission-plugin-exclusion-rules.json
+{{- else }}
+        - hostPath: /etc/kubernetes/admission-plugin-exclusion-rules.json
+{{- end }}
+          mountPath: /etc/kubernetes/admission-plugin-exclusion-rules.json
+          name: admission-exclusion-rules
+          pathType: File
+          readOnly: true
+{{- end }}
 {{- if .awsIamAuth}}
         - hostPath: /var/lib/kubeadm/aws-iam-authenticator/
           mountPath: /etc/kubernetes/aws-iam-authenticator/
@@ -323,6 +339,12 @@ spec:
         status: {}
       owner: root:root
       path: /etc/kubernetes/manifests/kube-vip.yaml
+{{- if .admissionExclusionPolicy }}
+    - content: |
+{{ .admissionExclusionPolicy | indent 8 }}
+      owner: root:root
+      path: /etc/kubernetes/admission-plugin-exclusion-rules.json
+{{- end }}
     - content: |
 {{ .auditPolicy | indent 8 }}
       owner: root:root

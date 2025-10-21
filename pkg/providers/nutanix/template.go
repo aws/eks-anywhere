@@ -235,6 +235,15 @@ func buildTemplateMapCP(
 		"nutanixPCPassword":            creds.PrismCentral.BasicAuth.Password,
 	}
 
+	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.SkipAdmissionForSystemResources != nil &&
+		*clusterSpec.Cluster.Spec.ControlPlaneConfiguration.SkipAdmissionForSystemResources {
+		admissionExclusionPolicy, err := common.GetAdmissionPluginExclusionPolicy()
+		if err != nil {
+			return nil, err
+		}
+		values["admissionExclusionPolicy"] = admissionExclusionPolicy
+	}
+
 	if controlPlaneMachineSpec.Project != nil {
 		values["projectIDType"] = controlPlaneMachineSpec.Project.Type
 		values["projectName"] = controlPlaneMachineSpec.Project.Name

@@ -205,6 +205,15 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 		values["auditPolicy"] = auditPolicy
 	}
 
+	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.SkipAdmissionForSystemResources != nil &&
+		*clusterSpec.Cluster.Spec.ControlPlaneConfiguration.SkipAdmissionForSystemResources {
+		admissionExclusionPolicy, err := common.GetAdmissionPluginExclusionPolicy()
+		if err != nil {
+			return nil, err
+		}
+		values["admissionExclusionPolicy"] = admissionExclusionPolicy
+	}
+
 	fillDiskOffering(values, controlPlaneMachineSpec.DiskOffering, "ControlPlane")
 	fillDiskOffering(values, etcdMachineSpec.DiskOffering, "Etcd")
 
