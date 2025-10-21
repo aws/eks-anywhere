@@ -107,7 +107,7 @@ spec:
           namespace: {{.eksaSystemNamespace}}
       clusterName: {{.clusterName}}
       infrastructureRef:
-        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
         kind: DockerMachineTemplate
         name: {{.workloadTemplateName}}
         namespace: {{.eksaSystemNamespace}}
@@ -119,7 +119,7 @@ spec:
       maxUnavailable: {{.maxUnavailable}}
 {{- end }}
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
 kind: DockerMachineTemplate
 metadata:
   name: {{.workloadTemplateName}}

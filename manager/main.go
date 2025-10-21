@@ -27,6 +27,7 @@ import (
 	clusterv2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	clusterctlv1 "sigs.k8s.io/cluster-api/cmd/clusterctl/api/v1alpha3"
 	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1"
+	dockerv1beta2 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta2"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
@@ -58,6 +59,7 @@ func init() {
 	utilruntime.Must(vspherev1.AddToScheme(scheme))
 	utilruntime.Must(cloudstackv1.AddToScheme(scheme))
 	utilruntime.Must(dockerv1.AddToScheme(scheme))
+	utilruntime.Must(dockerv1beta2.AddToScheme(scheme))
 	utilruntime.Must(etcdv1.AddToScheme(scheme))
 	utilruntime.Must(kubeadmv1.AddToScheme(scheme))
 	utilruntime.Must(eksdv1alpha1.AddToScheme(scheme))

@@ -38,13 +38,13 @@ spec:
           namespace: eksa-system
       clusterName: test-cluster
       infrastructureRef:
-        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
         kind: DockerMachineTemplate
         name: test-cluster-md-0-1234567890000
         namespace: eksa-system
       version: v1.19.6-eks-1-19-2
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
 kind: DockerMachineTemplate
 metadata:
   name: test-cluster-md-0-1234567890000
@@ -98,13 +98,13 @@ spec:
           namespace: eksa-system
       clusterName: test-cluster
       infrastructureRef:
-        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
         kind: DockerMachineTemplate
         name: test-cluster-md-1-1234567890000
         namespace: eksa-system
       version: v1.19.6-eks-1-19-2
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
 kind: DockerMachineTemplate
 metadata:
   name: test-cluster-md-1-1234567890000
