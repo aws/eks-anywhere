@@ -4201,6 +4201,13 @@ spec:
                           minutes).
                         type: string
                     type: object
+                  skipAdmissionForSystemResources:
+                    description: |-
+                      SkipAdmissionForSystemResources skips admission plugin checks for system-level Kubernetes resources
+                      When enabled, operations on system resources (such as kube-system ns resources Pods,
+                      RBAC, API service registrations, flow control, etc. and system user operations) will bypass admission plugins
+                      will bypass admission plugins to prevent potential deadlocks or failures for cluster operations.
+                    type: boolean
                   skipLoadBalancerDeployment:
                     description: |-
                       SkipLoadBalancerDeployment skip deploying control plane load balancer.

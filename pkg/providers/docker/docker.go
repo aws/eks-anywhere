@@ -325,6 +325,15 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 	}
 	values["auditPolicy"] = auditPolicy
 
+	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.SkipAdmissionForSystemResources != nil &&
+		*clusterSpec.Cluster.Spec.ControlPlaneConfiguration.SkipAdmissionForSystemResources {
+		admissionExclusionPolicy, err := common.GetAdmissionPluginExclusionPolicy()
+		if err != nil {
+			return nil, err
+		}
+		values["admissionExclusionPolicy"] = admissionExclusionPolicy
+	}
+
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
 		values, err := populateRegistryMirrorValues(clusterSpec, values)
 		if err != nil {

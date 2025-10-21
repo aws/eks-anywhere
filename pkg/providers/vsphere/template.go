@@ -247,6 +247,15 @@ func buildTemplateMapCP(
 		values["auditPolicy"] = auditPolicy
 	}
 
+	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.SkipAdmissionForSystemResources != nil &&
+		*clusterSpec.Cluster.Spec.ControlPlaneConfiguration.SkipAdmissionForSystemResources {
+		admissionExclusionPolicy, err := common.GetAdmissionPluginExclusionPolicy()
+		if err != nil {
+			return nil, err
+		}
+		values["admissionExclusionPolicy"] = admissionExclusionPolicy
+	}
+
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
 		registryMirror := registrymirror.FromCluster(clusterSpec.Cluster)
 		values["registryMirrorMap"] = containerd.ToAPIEndpoints(registryMirror.NamespacedRegistryMap)

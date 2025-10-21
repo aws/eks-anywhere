@@ -92,6 +92,11 @@ spec:
         {{- with .apiServerCertSANs }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
+{{- if .admissionExclusionPolicy }}
+        extraEnvs:
+        - name: EKS_PATCH_EXCLUSION_RULES_FILE
+          value: /etc/kubernetes/admission-plugin-exclusion-rules.json
+{{- end }}
         extraArgs:
           audit-policy-file: /etc/kubernetes/audit-policy.yaml
           audit-log-path: /var/log/kubernetes/api-audit.log
@@ -113,6 +118,13 @@ spec:
           name: audit-log-dir
           pathType: DirectoryOrCreate
           readOnly: false
+{{- if .admissionExclusionPolicy }}
+        - hostPath: /etc/kubernetes/admission-plugin-exclusion-rules.json
+          mountPath: /etc/kubernetes/admission-plugin-exclusion-rules.json
+          name: admission-exclusion-rules
+          pathType: File
+          readOnly: true
+{{- end }}
 {{- if .awsIamAuth}}
         - hostPath: /var/lib/kubeadm/aws-iam-authenticator/
           mountPath: /etc/kubernetes/aws-iam-authenticator/
@@ -143,6 +155,12 @@ spec:
       owner: root:root
       permissions: "0644"
       path: /etc/kubernetes/patches/kubeletconfiguration0+strategic.yaml
+{{- end }}
+{{- if .admissionExclusionPolicy }}
+    - content: |
+{{ .admissionExclusionPolicy | indent 8 }}
+      owner: root:root
+      path: /etc/kubernetes/admission-plugin-exclusion-rules.json
 {{- end }}
     - content: |
 {{ .auditPolicy | indent 8 }}

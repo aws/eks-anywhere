@@ -15,6 +15,12 @@ linters:
       period: true
     staticcheck:
       checks: ["-SA1019"]
+    revive:
+      rules:
+        - name: dot-imports
+          arguments:
+            - allowedPackages:
+              - github.com/onsi/gomega
   exclusions:
     generated: lax
     presets:

@@ -560,6 +560,15 @@ func buildTemplateMapCP(
 		values["isoUrl"] = isoURL.String()
 	}
 
+	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.SkipAdmissionForSystemResources != nil &&
+		*clusterSpec.Cluster.Spec.ControlPlaneConfiguration.SkipAdmissionForSystemResources {
+		admissionExclusionPolicy, err := common.GetAdmissionPluginExclusionPolicy()
+		if err != nil {
+			return nil, err
+		}
+		values["admissionExclusionPolicy"] = admissionExclusionPolicy
+	}
+
 	return values, nil
 }
 

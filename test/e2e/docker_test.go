@@ -14,6 +14,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -1902,4 +1903,106 @@ func TestDockerKubernetes133KubeletConfigurationSimpleFlow(t *testing.T) {
 		framework.WithKubeletConfig(),
 	)
 	runKubeletConfigurationFlow(test)
+}
+
+// Skip Admission for System Resources
+func TestDockerKubernetes133SkipAdmissionForSystemResources(t *testing.T) {
+	provider := framework.NewDocker(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube133),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+		),
+	)
+
+	// Create cluster without the feature enabled
+	test.GenerateClusterConfig()
+	test.CreateCluster()
+
+	ctx := context.Background()
+
+	// Define a broken validating webhook that targets cilium daemonset
+	// This webhook points to a non-existent service and will block updates to cilium
+	brokenWebhook := `apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: broken-cilium-webhook
+webhooks:
+- name: broken.webhook.test
+  clientConfig:
+    service:
+      name: non-existent-webhook-service
+      namespace: kube-system
+      path: "/validate"
+  rules:
+  - apiGroups: ["apps"]
+    apiVersions: ["v1"]
+    operations: ["UPDATE"]
+    resources: ["daemonsets"]
+    scope: "Namespaced"
+  namespaceSelector:
+    matchLabels:
+      kubernetes.io/metadata.name: kube-system
+  objectSelector:
+    matchLabels:
+      k8s-app: cilium
+  failurePolicy: Fail
+  sideEffects: None
+  admissionReviewVersions: ["v1"]`
+
+	// Apply the broken webhook
+	t.Log("Deploying broken validating webhook targeting cilium daemonset")
+	err := test.KubectlClient.ApplyKubeSpecFromBytes(ctx, test.Cluster(), []byte(brokenWebhook))
+	if err != nil {
+		t.Fatalf("Failed to apply broken webhook: %v", err)
+	}
+
+	// Try to annotate cilium daemonset - this should FAIL due to the broken webhook
+	t.Log("Attempting to annotate cilium daemonset (expected to fail)")
+	err = test.KubectlClient.UpdateAnnotation(
+		ctx,
+		"daemonset",
+		"cilium",
+		map[string]string{"test.eks.amazonaws.com/admission-test": "before-upgrade"},
+		executables.WithKubeconfig(test.Cluster().KubeconfigFile),
+		executables.WithNamespace("kube-system"),
+	)
+	if err == nil {
+		t.Fatal("Expected annotation to fail due to broken webhook, but it succeeded")
+	}
+	t.Logf("Annotation correctly failed as expected: %v", err)
+
+	// Upgrade cluster with SkipAdmissionForSystemResources enabled
+	t.Log("Upgrading cluster with skipAdmissionForSystemResources enabled")
+	test.UpgradeClusterWithNewConfig([]framework.ClusterE2ETestOpt{
+		framework.WithClusterUpgrade(
+			api.WithSkipAdmissionForSystemResources(true),
+		),
+	})
+
+	// Validate cluster is healthy after upgrade
+	test.ValidateCluster(v1alpha1.Kube133)
+
+	// Retry annotation on cilium daemonset - should SUCCEED now
+	t.Log("Retrying annotation on cilium daemonset (expected to succeed)")
+	err = test.KubectlClient.UpdateAnnotation(
+		ctx,
+		"daemonset",
+		"cilium",
+		map[string]string{"test.eks.amazonaws.com/admission-test": "after-upgrade"},
+		executables.WithKubeconfig(test.Cluster().KubeconfigFile),
+		executables.WithNamespace("kube-system"),
+		executables.WithOverwrite(),
+	)
+	if err != nil {
+		t.Fatalf("Expected annotation to succeed after enabling skipAdmissionForSystemResources, but got error: %v", err)
+	}
+	t.Log("Annotation succeeded - feature is working correctly!")
+
+	// Cleanup
+	test.StopIfFailed()
+	test.DeleteCluster()
 }
