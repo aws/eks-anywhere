@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
-	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1"
+	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -181,7 +181,7 @@ func kubeadmConfigTemplate(name, namespace string) *bootstrapv1.KubeadmConfigTem
 func dockerMachineTemplate(name, namespace string) *dockerv1.DockerMachineTemplate {
 	return &dockerv1.DockerMachineTemplate{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
 			Kind:       "DockerMachineTemplate",
 		},
 		ObjectMeta: metav1.ObjectMeta{

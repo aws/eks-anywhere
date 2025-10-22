@@ -16,7 +16,7 @@ spec:
     name: {{.clusterName}}
     namespace: {{.eksaSystemNamespace}}
   infrastructureRef:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
     kind: DockerCluster
     name: {{.clusterName}}
     namespace: {{.eksaSystemNamespace}}
@@ -28,7 +28,7 @@ spec:
     namespace: {{.eksaSystemNamespace}}
 {{- end }}
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
 kind: DockerCluster
 metadata:
   name: {{.clusterName}}
@@ -38,7 +38,7 @@ spec:
     imageRepository: {{.haproxyImageRepository}}
     imageTag: {{.haproxyImageTag}}
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
 kind: DockerMachineTemplate
 metadata:
   name: {{.controlPlaneTemplateName}}
@@ -59,7 +59,7 @@ metadata:
 spec:
   machineTemplate:
     infrastructureRef:
-      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
       kind: DockerMachineTemplate
       name: {{.controlPlaneTemplateName}}
       namespace: {{.eksaSystemNamespace}}
@@ -339,12 +339,12 @@ spec:
       {{- end }}
 {{- end }}
   infrastructureTemplate:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
     kind: DockerMachineTemplate
     name: {{.etcdTemplateName}}
     namespace: {{.eksaSystemNamespace}}
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
 kind: DockerMachineTemplate
 metadata:
   name: {{.etcdTemplateName}}

@@ -12,7 +12,7 @@ import (
 	"sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
-	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1"
+	dockerv1beta2 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta2"
 	"sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -293,6 +293,12 @@ func controlPlaneStackedEtcd(namespace string) *clusters.ControlPlane {
 					Name:      clusterName,
 					Namespace: namespace,
 				},
+				InfrastructureRef: &corev1.ObjectReference{
+					APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
+					Kind:       "DockerCluster",
+					Name:       clusterName,
+					Namespace:  namespace,
+				},
 			},
 		},
 		KubeadmControlPlane: &controlplanev1.KubeadmControlPlane{
@@ -311,19 +317,32 @@ func controlPlaneStackedEtcd(namespace string) *clusters.ControlPlane {
 				},
 			},
 		},
-		ProviderCluster: &dockerv1.DockerCluster{
+		ProviderCluster: &dockerv1beta2.DockerCluster{
 			TypeMeta: metav1.TypeMeta{
-				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
 				Kind:       "DockerCluster",
 			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      clusterName,
 				Namespace: namespace,
 			},
+			Spec: dockerv1beta2.DockerClusterSpec{
+				LoadBalancer: dockerv1beta2.DockerLoadBalancer{
+					ImageMeta: dockerv1beta2.ImageMeta{
+						ImageRepository: "public.ecr.aws/l0g8r8j6/kubernetes-sigs/kind",
+						ImageTag:        "v0.11.1-eks-a-v0.0.0-dev-build.1464",
+					},
+				},
+			},
+			Status: dockerv1beta2.DockerClusterStatus{
+				Initialization: dockerv1beta2.DockerClusterInitializationStatus{
+					Provisioned: &[]bool{true}[0],
+				},
+			},
 		},
-		ControlPlaneMachineTemplate: &dockerv1.DockerMachineTemplate{
+		ControlPlaneMachineTemplate: &dockerv1beta2.DockerMachineTemplate{
 			TypeMeta: metav1.TypeMeta{
-				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
 				Kind:       "DockerMachineTemplate",
 			},
 			ObjectMeta: metav1.ObjectMeta{
@@ -359,9 +378,9 @@ func controlPlaneExternalEtcd(namespace string) *clusters.ControlPlane {
 		Namespace: cp.EtcdCluster.Namespace,
 	}
 
-	cp.EtcdMachineTemplate = &dockerv1.DockerMachineTemplate{
+	cp.EtcdMachineTemplate = &dockerv1beta2.DockerMachineTemplate{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
 			Kind:       "DockerMachineTemplate",
 		},
 		ObjectMeta: metav1.ObjectMeta{

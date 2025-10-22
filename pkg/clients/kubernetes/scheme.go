@@ -15,6 +15,7 @@ import (
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1"
+	dockerv1beta2 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta2"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	tinkerbellv1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1/thirdparty/tinkerbell/capt/v1beta1"
@@ -37,6 +38,7 @@ var schemeAdders = []schemeAdder{
 	snowv1.AddToScheme,
 	cloudstackv1.AddToScheme,
 	dockerv1.AddToScheme,
+	dockerv1beta2.AddToScheme,
 	releasev1.AddToScheme,
 	eksdv1alpha1.AddToScheme,
 	vspherev1.AddToScheme,

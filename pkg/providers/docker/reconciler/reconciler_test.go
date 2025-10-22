@@ -17,7 +17,7 @@ import (
 	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
-	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1"
+	dockerv1beta2 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
@@ -67,7 +67,7 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 		},
 	)
 	tt.ShouldEventuallyExist(tt.ctx,
-		&dockerv1.DockerMachineTemplate{
+		&dockerv1beta2.DockerMachineTemplate{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      tt.cluster.Name + "-control-plane-1",
 				Namespace: constants.EksaSystemNamespace,
@@ -75,7 +75,7 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 		},
 	)
 	tt.ShouldEventuallyExist(tt.ctx,
-		&dockerv1.DockerCluster{
+		&dockerv1beta2.DockerCluster{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      tt.cluster.Name,
 				Namespace: constants.EksaSystemNamespace,
@@ -83,7 +83,7 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 		},
 	)
 	tt.ShouldEventuallyNotExist(tt.ctx,
-		&dockerv1.DockerMachineTemplate{
+		&dockerv1beta2.DockerMachineTemplate{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      tt.cluster.Name + "-etcd-1",
 				Namespace: constants.EksaSystemNamespace,
@@ -118,7 +118,7 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 	)
 
 	tt.ShouldEventuallyExist(tt.ctx,
-		&dockerv1.DockerMachineTemplate{
+		&dockerv1beta2.DockerMachineTemplate{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      tt.cluster.Name + "-md-0-1",
 				Namespace: constants.EksaSystemNamespace,
@@ -201,7 +201,7 @@ func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
 	)
 
 	tt.ShouldEventuallyExist(tt.ctx,
-		&dockerv1.DockerMachineTemplate{
+		&dockerv1beta2.DockerMachineTemplate{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      tt.cluster.Name + "-md-0-1",
 				Namespace: constants.EksaSystemNamespace,
@@ -247,7 +247,7 @@ func TestReconcileControlPlaneStackedEtcdSuccess(t *testing.T) {
 		},
 	)
 	tt.ShouldEventuallyExist(tt.ctx,
-		&dockerv1.DockerMachineTemplate{
+		&dockerv1beta2.DockerMachineTemplate{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      tt.cluster.Name + "-control-plane-1",
 				Namespace: constants.EksaSystemNamespace,
@@ -255,7 +255,7 @@ func TestReconcileControlPlaneStackedEtcdSuccess(t *testing.T) {
 		},
 	)
 	tt.ShouldEventuallyExist(tt.ctx,
-		&dockerv1.DockerCluster{
+		&dockerv1beta2.DockerCluster{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      tt.cluster.Name,
 				Namespace: constants.EksaSystemNamespace,
@@ -263,7 +263,7 @@ func TestReconcileControlPlaneStackedEtcdSuccess(t *testing.T) {
 		},
 	)
 	tt.ShouldEventuallyNotExist(tt.ctx,
-		&dockerv1.DockerMachineTemplate{
+		&dockerv1beta2.DockerMachineTemplate{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      tt.cluster.Name + "-etcd-1",
 				Namespace: constants.EksaSystemNamespace,
@@ -303,7 +303,7 @@ func TestReconcileControlPlaneUnstackedEtcdSuccess(t *testing.T) {
 		},
 	)
 	tt.ShouldEventuallyExist(tt.ctx,
-		&dockerv1.DockerMachineTemplate{
+		&dockerv1beta2.DockerMachineTemplate{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      tt.cluster.Name + "-control-plane-1",
 				Namespace: constants.EksaSystemNamespace,
@@ -311,7 +311,7 @@ func TestReconcileControlPlaneUnstackedEtcdSuccess(t *testing.T) {
 		},
 	)
 	tt.ShouldEventuallyExist(tt.ctx,
-		&dockerv1.DockerCluster{
+		&dockerv1beta2.DockerCluster{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      tt.cluster.Name,
 				Namespace: constants.EksaSystemNamespace,
@@ -319,7 +319,7 @@ func TestReconcileControlPlaneUnstackedEtcdSuccess(t *testing.T) {
 		},
 	)
 	tt.ShouldEventuallyExist(tt.ctx,
-		&dockerv1.DockerMachineTemplate{
+		&dockerv1beta2.DockerMachineTemplate{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      tt.cluster.Name + "-etcd-1",
 				Namespace: constants.EksaSystemNamespace,
@@ -453,7 +453,7 @@ func (tt *reconcilerTest) cleanup() {
 	tt.DeleteAndWait(tt.ctx, tt.allObjs()...)
 
 	tt.DeleteAllOfAndWait(tt.ctx, &clusterv1.Cluster{})
-	tt.DeleteAllOfAndWait(tt.ctx, &dockerv1.DockerMachineTemplate{})
+	tt.DeleteAllOfAndWait(tt.ctx, &dockerv1beta2.DockerMachineTemplate{})
 	tt.DeleteAllOfAndWait(tt.ctx, &etcdv1.EtcdadmCluster{})
 }
 

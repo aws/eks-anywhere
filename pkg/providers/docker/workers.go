@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
-	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1"
+	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta2"
 
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"

@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
-	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1"
+	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta2"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -238,8 +238,8 @@ func TestWorkersSpecNoMachineTemplateChanges(t *testing.T) {
 
 	// This is testing defaults. It's possible that some default logic will set items that are not set in our machine templates.
 	// We need to take this into consideration when checking for equality.
-	currentGroup1.ProviderMachineTemplate.Spec.Template.Spec.ProviderID = ptr.String("default-id")
-	currentGroup2.ProviderMachineTemplate.Spec.Template.Spec.ProviderID = ptr.String("default-id")
+	currentGroup1.ProviderMachineTemplate.Spec.Template.Spec.ProviderID = "default-id"
+	currentGroup2.ProviderMachineTemplate.Spec.Template.Spec.ProviderID = "default-id"
 
 	objs := make([]kubernetes.Object, 0, 6)
 	objs = append(objs, currentGroup1.Objects()...)
@@ -443,7 +443,7 @@ func machineDeployment(opts ...func(*clusterv1.MachineDeployment)) *clusterv1.Ma
 					InfrastructureRef: corev1.ObjectReference{
 						Kind:       "DockerMachineTemplate",
 						Name:       "test-md-0-1",
-						APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+						APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
 						Namespace:  "eksa-system",
 					},
 					Version: ptr.String("v1.23.12-eks-1-23-6"),
