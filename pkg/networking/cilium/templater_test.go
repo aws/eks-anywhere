@@ -44,25 +44,25 @@ func newtemplaterTest(t *testing.T) *templaterTest {
 		t:         cilium.NewTemplater(hf),
 		manifest:  []byte("manifestContent"),
 		uri:       "oci://public.ecr.aws/eks/cilium/cilium",
-		version:   "1.17.6-0",
+		version:   "1.17.8-0",
 		namespace: "kube-system",
 		currentSpec: test.NewClusterSpec(func(s *cluster.Spec) {
 			s.Cluster.Spec.KubernetesVersion = "1.22"
 			s.VersionsBundles["1.22"] = test.VersionBundle()
-			s.VersionsBundles["1.22"].Cilium.Version = "v1.17.6-0"
-			s.VersionsBundles["1.22"].Cilium.Cilium.URI = "public.ecr.aws/eks/cilium/cilium:v1.17.6-0"
-			s.VersionsBundles["1.22"].Cilium.Operator.URI = "public.ecr.aws/eks/cilium/operator-generic:v1.17.6-0"
-			s.VersionsBundles["1.22"].Cilium.HelmChart.URI = "public.ecr.aws/eks/cilium/cilium:1.17.6-0"
+			s.VersionsBundles["1.22"].Cilium.Version = "v1.17.8-0"
+			s.VersionsBundles["1.22"].Cilium.Cilium.URI = "public.ecr.aws/eks/cilium/cilium:v1.17.8-0"
+			s.VersionsBundles["1.22"].Cilium.Operator.URI = "public.ecr.aws/eks/cilium/operator-generic:v1.17.8-0"
+			s.VersionsBundles["1.22"].Cilium.HelmChart.URI = "public.ecr.aws/eks/cilium/cilium:1.17.8-0"
 			s.VersionsBundles["1.22"].KubeDistro.Kubernetes.Tag = "v1.22.5-eks-1-22-9"
 			s.Cluster.Spec.ClusterNetwork.CNIConfig = &v1alpha1.CNIConfig{Cilium: &v1alpha1.CiliumConfig{}}
 		}),
 		spec: test.NewClusterSpec(func(s *cluster.Spec) {
 			s.Cluster.Spec.KubernetesVersion = "1.22"
 			s.VersionsBundles["1.22"] = test.VersionBundle()
-			s.VersionsBundles["1.22"].Cilium.Version = "v1.17.6-0"
-			s.VersionsBundles["1.22"].Cilium.Cilium.URI = "public.ecr.aws/eks/cilium/cilium:v1.17.6-0"
-			s.VersionsBundles["1.22"].Cilium.Operator.URI = "public.ecr.aws/eks/cilium/operator-generic:v1.17.6-0"
-			s.VersionsBundles["1.22"].Cilium.HelmChart.URI = "public.ecr.aws/eks/cilium/cilium:1.17.6-0"
+			s.VersionsBundles["1.22"].Cilium.Version = "v1.17.8-0"
+			s.VersionsBundles["1.22"].Cilium.Cilium.URI = "public.ecr.aws/eks/cilium/cilium:v1.17.8-0"
+			s.VersionsBundles["1.22"].Cilium.Operator.URI = "public.ecr.aws/eks/cilium/operator-generic:v1.17.8-0"
+			s.VersionsBundles["1.22"].Cilium.HelmChart.URI = "public.ecr.aws/eks/cilium/cilium:1.17.8-0"
 			s.VersionsBundles["1.22"].KubeDistro.Kubernetes.Tag = "v1.22.5-eks-1-22-9"
 			s.Cluster.Spec.ClusterNetwork.CNIConfig = &v1alpha1.CNIConfig{Cilium: &v1alpha1.CiliumConfig{}}
 		}),
@@ -128,12 +128,12 @@ func baseTemplateValues() map[string]interface{} {
 		"tunnelProtocol":    "geneve",
 		"image": map[string]interface{}{
 			"repository": "public.ecr.aws/eks/cilium/cilium",
-			"tag":        "v1.17.6-0",
+			"tag":        "v1.17.8-0",
 		},
 		"operator": map[string]interface{}{
 			"image": map[string]interface{}{
 				"repository": "public.ecr.aws/eks/cilium/operator",
-				"tag":        "v1.17.6-0",
+				"tag":        "v1.17.8-0",
 			},
 			"prometheus": map[string]interface{}{
 				"enabled": true,
@@ -174,7 +174,7 @@ func withPreflightConfig(values map[string]interface{}) {
 		"enabled": true,
 		"image": map[string]interface{}{
 			"repository": "public.ecr.aws/eks/cilium/cilium",
-			"tag":        "v1.17.6-0",
+			"tag":        "v1.17.8-0",
 		},
 		"tolerations": []map[string]string{
 			{
