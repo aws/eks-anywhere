@@ -103,10 +103,16 @@ spec:
       apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
       kind: NutanixMachineTemplate
       name: "{{.controlPlaneTemplateName}}"
+      namespace: {{.eksaSystemNamespace}}
 {{- if .upgradeRolloutStrategy }}
   rolloutStrategy:
     rollingUpdate:
       maxSurge: {{.maxSurge}} 
+  {{- else }}
+  rolloutStrategy:
+    rollingUpdate:
+      maxSurge: 1
+    type: RollingUpdate
 {{- end }}
   kubeadmConfigSpec:
     clusterConfiguration:
