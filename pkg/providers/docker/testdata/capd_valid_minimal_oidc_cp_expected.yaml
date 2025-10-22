@@ -16,7 +16,7 @@ spec:
     name: test-cluster
     namespace: eksa-system
   infrastructureRef:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
     kind: DockerCluster
     name: test-cluster
     namespace: eksa-system
@@ -26,7 +26,7 @@ spec:
     name: test-cluster-etcd
     namespace: eksa-system
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
 kind: DockerCluster
 metadata:
   name: test-cluster
@@ -36,7 +36,7 @@ spec:
     imageRepository: public.ecr.aws/l0g8r8j6/kubernetes-sigs/kind
     imageTag: v0.11.1-eks-a-v0.0.0-dev-build.1464
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
 kind: DockerMachineTemplate
 metadata:
   name: test-cluster-control-plane-template-1234567890000
@@ -57,7 +57,7 @@ metadata:
 spec:
   machineTemplate:
     infrastructureRef:
-      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
       kind: DockerMachineTemplate
       name: test-cluster-control-plane-template-1234567890000
       namespace: eksa-system
@@ -301,12 +301,12 @@ spec:
       etcdReleaseURL: https://distro.eks.amazonaws.com/kubernetes-1-21/releases/4/artifacts/etcd/v3.4.16/etcd-linux-amd64-v3.4.16.tar.gz
     cipherSuites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
   infrastructureTemplate:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
     kind: DockerMachineTemplate
     name: test-cluster-etcd-template-1234567890000
     namespace: eksa-system
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
 kind: DockerMachineTemplate
 metadata:
   name: test-cluster-etcd-template-1234567890000
