@@ -3,6 +3,10 @@ kind: KubeadmControlPlane
 metadata:
   name: eksa-unit-test
 spec:
+  rolloutStrategy:
+    rollingUpdate:
+      maxSurge: 1
+    type: RollingUpdate
   kubeadmConfigSpec:
     clusterConfiguration:
       apiServer:
