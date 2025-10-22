@@ -57,6 +57,11 @@ spec:
       apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
       kind: NutanixMachineTemplate
       name: "<no value>"
+      namespace: eksa-system
+  rolloutStrategy:
+    rollingUpdate:
+      maxSurge: 1
+    type: RollingUpdate
   kubeadmConfigSpec:
     clusterConfiguration:
       imageRepository: "public.ecr.aws/eks-distro/kubernetes"
