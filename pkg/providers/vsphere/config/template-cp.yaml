@@ -98,7 +98,7 @@ spec:
       etcd:
 {{- if .externalEtcd }}
         external:
-          endpoints: []
+          endpoints: ["{{.placeholderExternalEtcdEndpoint}}"]
 {{- if (eq .format "bottlerocket") }}
           caFile: "/var/lib/kubeadm/pki/etcd/ca.crt"
           certFile: "/var/lib/kubeadm/pki/server-etcd-client.crt"

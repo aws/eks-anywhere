@@ -214,7 +214,7 @@ func wantKubeadmControlPlaneUnstackedEtcd() *controlplanev1.KubeadmControlPlane 
 	kcp := wantKubeadmControlPlane("1.21")
 	kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd = bootstrapv1.Etcd{
 		External: &bootstrapv1.ExternalEtcd{
-			Endpoints: []string{},
+			Endpoints: []string{constants.PlaceholderExternalEtcdEndpoint},
 			CAFile:    "/etc/kubernetes/pki/etcd/ca.crt",
 			CertFile:  "/etc/kubernetes/pki/apiserver-etcd-client.crt",
 			KeyFile:   "/etc/kubernetes/pki/apiserver-etcd-client.key",

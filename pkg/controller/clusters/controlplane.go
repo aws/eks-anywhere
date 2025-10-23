@@ -211,7 +211,7 @@ func reconcileControlPlaneNodeChanges(ctx context.Context, log logr.Logger, c cl
 	// We do not want to update the field with an empty slice again, so here we check if the endpoints for the
 	// external etcd have already been populated on the KubeadmControlPlane object and override ours before applying it.
 	externalEndpoints := currentKCP.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External.Endpoints
-	if len(externalEndpoints) != 0 {
+	if len(externalEndpoints) != 0 && !isPlaceholderEndpoint(externalEndpoints) {
 		desiredCP.KubeadmControlPlane.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External.Endpoints = externalEndpoints
 	}
 
@@ -235,6 +235,14 @@ func reconcileControlPlaneNodeChanges(ctx context.Context, log logr.Logger, c cl
 	}
 
 	return controller.Result{}, nil
+}
+
+// isPlaceholderEndpoint checks if endpoints are placeholder values that we set by default.
+func isPlaceholderEndpoint(endpoints []string) bool {
+	if len(endpoints) == 1 && endpoints[0] == "https://placeholder:2379" {
+		return true
+	}
+	return false
 }
 
 func getEtcdadmCluster(ctx context.Context, c client.Client, cluster *clusterv1.Cluster) (*etcdv1.EtcdadmCluster, error) {

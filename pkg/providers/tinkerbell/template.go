@@ -472,6 +472,7 @@ func buildTemplateMapCP(
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
 		values["externalEtcd"] = true
 		values["externalEtcdReplicas"] = clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.Count
+		values["placeholderExternalEtcdEndpoint"] = constants.PlaceholderExternalEtcdEndpoint
 		values["etcdSshUsername"] = etcdMachineSpec.Users[0].Name
 		values["etcdTemplateOverride"] = etcdTemplateOverride
 		values["etcdHardwareSelector"] = etcdMachineSpec.HardwareSelector

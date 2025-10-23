@@ -97,7 +97,7 @@ spec:
         imageTag: v1.8.0-eks-1-19-4
       etcd:
         external:
-          endpoints: []
+          endpoints: ["https://placeholder:2379"]
           caFile: "/etc/kubernetes/pki/etcd/ca.crt"
           certFile: "/etc/kubernetes/pki/apiserver-etcd-client.crt"
           keyFile: "/etc/kubernetes/pki/apiserver-etcd-client.key"
