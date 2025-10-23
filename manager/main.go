@@ -76,6 +76,7 @@ type config struct {
 	metricsAddr          string
 	enableLeaderElection bool
 	probeAddr            string
+	diagnosticsAddr      string
 	gates                []string
 	logging              *logsv1.LoggingConfiguration
 }
@@ -95,6 +96,7 @@ func initFlags(fs *pflag.FlagSet, config *config) {
 
 	fs.StringVar(&config.metricsAddr, "metrics-bind-address", "localhost:8080", "The address the metric endpoint binds to.")
 	fs.StringVar(&config.probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
+	fs.StringVar(&config.diagnosticsAddr, "diagnostics-address", ":8443", "The address the diagnostics endpoint binds to.")
 	fs.BoolVar(&config.enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
@@ -131,6 +133,7 @@ func main() {
 			Port: 9443,
 		}),
 		HealthProbeBindAddress: config.probeAddr,
+		PprofBindAddress:       config.diagnosticsAddr,
 		LeaderElection:         config.enableLeaderElection,
 		LeaderElectionID:       "f64ae69e.eks.amazonaws.com",
 	})

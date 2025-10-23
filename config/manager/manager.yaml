@@ -19,6 +19,7 @@ spec:
       containers:
       - args:
         - --leader-elect
+        - "--diagnostics-address=:8443"
         image: controller:latest
         imagePullPolicy: Always
         name: manager
