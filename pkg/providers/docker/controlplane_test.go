@@ -476,7 +476,7 @@ func kubeadmControlPlane(opts ...func(*controlplanev1.KubeadmControlPlane)) *con
 					ImageRepository: "public.ecr.aws/eks-distro/kubernetes",
 					Etcd: bootstrapv1.Etcd{
 						External: &bootstrapv1.ExternalEtcd{
-							Endpoints: []string{},
+							Endpoints: []string{constants.PlaceholderExternalEtcdEndpoint},
 							CAFile:    "/etc/kubernetes/pki/etcd/ca.crt",
 							CertFile:  "/etc/kubernetes/pki/apiserver-etcd-client.crt",
 							KeyFile:   "/etc/kubernetes/pki/apiserver-etcd-client.key",

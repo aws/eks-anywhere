@@ -69,7 +69,7 @@ spec:
       etcd:
 {{- if .externalEtcd }}
         external:
-          endpoints: []
+          endpoints: ["{{.placeholderExternalEtcdEndpoint}}"]
           caFile: "/etc/kubernetes/pki/etcd/ca.crt"
           certFile: "/etc/kubernetes/pki/apiserver-etcd-client.crt"
           keyFile: "/etc/kubernetes/pki/apiserver-etcd-client.key"

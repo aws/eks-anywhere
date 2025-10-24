@@ -314,6 +314,7 @@ func buildTemplateMapCP(
 
 		values["externalEtcd"] = true
 		values["externalEtcdReplicas"] = clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.Count
+		values["placeholderExternalEtcdEndpoint"] = constants.PlaceholderExternalEtcdEndpoint
 		values["etcdVsphereDatastore"] = etcdMachineSpec.Datastore
 		values["etcdVsphereFolder"] = etcdMachineSpec.Folder
 		values["etcdDiskGiB"] = etcdMachineSpec.DiskGiB

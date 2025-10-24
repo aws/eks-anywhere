@@ -114,6 +114,9 @@ const (
 	// DefaultWorkerMaxUnhealthy is the default maxUnhealthy value for worker node machine health checks.
 	DefaultWorkerMaxUnhealthy = "40%"
 
+	// PlaceholderExternalEtcdEndpoint is the default placeholder endpoint for external etcd configuration.
+	PlaceholderExternalEtcdEndpoint = "https://placeholder:2379"
+
 	// SignatureAnnotation applied to the bundle during bundle manifest signing.
 	SignatureAnnotation = "anywhere.eks.amazonaws.com/signature"
 	// ExcludesAnnotation applied to the bundle during bundle manifest signing.
