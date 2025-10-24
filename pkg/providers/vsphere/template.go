@@ -474,6 +474,7 @@ func buildTemplateMapMD(
 		"workerVsphereDatastore":         workerNodeGroupMachineSpec.Datastore,
 		"workerVsphereFolder":            workerNodeGroupMachineSpec.Folder,
 		"vsphereNetwork":                 datacenterSpec.Network,
+		"vsphereMultiNetworks":           workerNodeGroupMachineSpec.Networks,
 		"workerVsphereResourcePool":      workerNodeGroupMachineSpec.ResourcePool,
 		"vsphereServer":                  datacenterSpec.Server,
 		"workerVsphereStoragePolicyName": workerNodeGroupMachineSpec.StoragePolicyName,
