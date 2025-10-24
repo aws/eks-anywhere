@@ -307,13 +307,26 @@ spec:
       owner: root:root
       path: /etc/containerd/certs.d/10.10.10.10:443/ca.crt
     - content: |
-        [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-          [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
-            endpoint = ["https://10.10.10.10:443"]
-          [plugins."io.containerd.grpc.v1.cri".registry.configs."10.10.10.10:443".tls]
-            ca_file = "/etc/containerd/certs.d/10.10.10.10:443/ca.crt"
+        [plugins."io.containerd.grpc.v1.cri".registry]
+          config_path = "/etc/containerd/certs.d"
       owner: root:root
       path: /etc/containerd/config_append.toml
+    - content: |
+        server = "https://10.10.10.10:443"
+
+        [host."https://10.10.10.10:443"]
+          capabilities = ["pull", "resolve"]
+          ca = "/etc/containerd/certs.d/10.10.10.10:443/ca.crt"
+      owner: root:root
+      path: /etc/containerd/certs.d/10.10.10.10:443/hosts.toml
+    - content: |
+        server = "https://public.ecr.aws"
+
+        [host."https://10.10.10.10:443"]
+          capabilities = ["pull", "resolve"]
+          ca = "/etc/containerd/certs.d/10.10.10.10:443/ca.crt"
+      owner: root:root
+      path: /etc/containerd/certs.d/public.ecr.aws/hosts.toml
     format: cloud-config
     initConfiguration:
       nodeRegistration:
