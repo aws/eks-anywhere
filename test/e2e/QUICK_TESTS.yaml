@@ -28,10 +28,10 @@ quick_tests:
 - TestCloudStackKubernetes132To133RedhatMultipleFieldsUpgrade
 - TestCloudStackKubernetes132To133StackedEtcdRedhatMultipleFieldsUpgrade
 # Nutanix
-- TestNutanixKubernetes132to133RedHat9Upgrade
-- TestNutanixKubernetes132to133StackedEtcdRedHat9Upgrade
-- TestNutanixKubernetes132To133UbuntuUpgrade
-- TestNutanixKubernetes132To133StackedEtcdUbuntuUpgrade
+- TestNutanixKubernetes133to134RedHat9Upgrade
+- TestNutanixKubernetes133to134StackedEtcdRedHat9Upgrade
+- TestNutanixKubernetes133To134UbuntuUpgrade
+- TestNutanixKubernetes133To134StackedEtcdUbuntuUpgrade
 # Snow
 # - TestSnowKubernetes128SimpleFlow
 # - TestSnowKubernetes128StackedEtcdSimpleFlow
