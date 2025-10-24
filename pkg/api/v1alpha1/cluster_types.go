@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -694,6 +695,16 @@ func (n *CiliumConfig) Equal(o *CiliumConfig) bool {
 		return false
 	}
 
+	// Compare HelmValues field
+	if (n.HelmValues == nil) != (o.HelmValues == nil) {
+		return false
+	}
+	if n.HelmValues != nil && o.HelmValues != nil {
+		if !reflect.DeepEqual(n.HelmValues.Raw, o.HelmValues.Raw) {
+			return false
+		}
+	}
+
 	return true
 }
 
@@ -903,24 +914,29 @@ func (n *CNIConfig) IsManaged() bool {
 
 // CiliumConfig contains configuration specific to the Cilium CNI.
 type CiliumConfig struct {
+	// DEPRECATED: Use HelmValues instead. This field will be ignored when HelmValues is set.
 	// PolicyEnforcementMode determines communication allowed between pods. Accepted values are default, always, never.
 	PolicyEnforcementMode CiliumPolicyEnforcementMode `json:"policyEnforcementMode,omitempty"`
 
+	// DEPRECATED: Use HelmValues instead. This field will be ignored when HelmValues is set.
 	// EgressMasquaradeInterfaces determines which network interfaces are used for masquerading. Accepted values are a valid interface name or interface prefix.
 	// +optional
 	EgressMasqueradeInterfaces string `json:"egressMasqueradeInterfaces,omitempty"`
 
+	// DEPRECATED: Use HelmValues instead. This field will be ignored when HelmValues is set.
 	// SkipUpgrade indicicates that Cilium maintenance should be skipped during upgrades. This can
 	// be used when operators wish to self manage the Cilium installation.
 	// +optional
 	SkipUpgrade *bool `json:"skipUpgrade,omitempty"`
 
+	// DEPRECATED: Use HelmValues instead. This field will be ignored when HelmValues is set.
 	// RoutingMode indicates the routing tunnel mode to use for Cilium. Accepted values are overlay (geneve tunnel with overlay)
 	// or direct (tunneling disabled with direct routing)
 	// Defaults to overlay.
 	// +optional
 	RoutingMode CiliumRoutingMode `json:"routingMode,omitempty"`
 
+	// DEPRECATED: Use HelmValues instead. This field will be ignored when HelmValues is set.
 	// IPv4NativeRoutingCIDR specifies the CIDR to use when RoutingMode is set to direct.
 	// When specified, Cilium assumes networking for this CIDR is preconfigured and
 	// hands traffic destined for that range to the Linux network stack without
@@ -929,6 +945,7 @@ type CiliumConfig struct {
 	// +optional
 	IPv4NativeRoutingCIDR string `json:"ipv4NativeRoutingCIDR,omitempty"`
 
+	// DEPRECATED: Use HelmValues instead. This field will be ignored when HelmValues is set.
 	// IPv6NativeRoutingCIDR specifies the IPv6 CIDR to use when RoutingMode is set to direct.
 	// When specified, Cilium assumes networking for this CIDR is preconfigured and
 	// hands traffic destined for that range to the Linux network stack without
@@ -937,10 +954,20 @@ type CiliumConfig struct {
 	// +optional
 	IPv6NativeRoutingCIDR string `json:"ipv6NativeRoutingCIDR,omitempty"`
 
+	// DEPRECATED: Use HelmValues instead. This field will be ignored when HelmValues is set.
 	// CNIExclusive controls whether Cilium should remove other CNI configuration files.
 	// When true (default), Cilium removes other CNI configs; when false, it leaves them alone.
 	// +optional
 	CNIExclusive *bool `json:"cniExclusive,omitempty"`
+
+	// HelmValues specifies the complete Helm values configuration for Cilium in YAML format.
+	// When set, this parameter takes precedence over all other Cilium-specific fields in this configuration.
+	// All other Cilium properties (CNIExclusive, EgressMasqueradeInterfaces, IPv4NativeRoutingCIDR, etc.)
+	// will be ignored when HelmValues is specified.
+	// +kubebuilder:pruning:PreserveUnknownFields
+	// +kubebuilder:validation:Schemaless
+	// +optional
+	HelmValues *apiextensionsv1.JSON `json:"helmValues,omitempty"`
 }
 
 // IsManaged returns true if SkipUpgrade is nil or false indicating EKS-A is responsible for
