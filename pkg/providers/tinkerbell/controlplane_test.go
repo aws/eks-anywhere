@@ -857,14 +857,28 @@ spec:
       path: /var/lib/kubeadm/aws-iam-authenticator/pki/key.pem
       permissions: "0640"
     - content: |
-        [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-          [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
-            endpoint = ["https://:"]
-          [plugins."io.containerd.grpc.v1.cri".registry.configs.":".auth]
-            username = "username"
-            password = "password"
+        [plugins."io.containerd.grpc.v1.cri".registry]
+          config_path = "/etc/containerd/certs.d"
       owner: root:root
       path: /etc/containerd/config_append.toml
+    - content: |
+        server = "https://:"
+        
+        [host."https://:"]
+          capabilities = ["pull", "resolve"]
+          [host."https://:".header]
+            authorization = "Basic dXNlcm5hbWU6cGFzc3dvcmQ="
+      owner: root:root
+      path: /etc/containerd/certs.d/:/hosts.toml
+    - content: |
+        server = "https://public.ecr.aws"
+        
+        [host."https://:"]
+          capabilities = ["pull", "resolve"]
+          [host."https://:".header]
+            authorization = "Basic dXNlcm5hbWU6cGFzc3dvcmQ="
+      owner: root:root
+      path: /etc/containerd/certs.d/public.ecr.aws/hosts.toml
     format: cloud-config
     initConfiguration:
       localAPIEndpoint: {}

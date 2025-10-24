@@ -265,11 +265,24 @@ spec:
       owner: root:root
       path: /etc/kubernetes/audit-policy.yaml
     - content: |
-        [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-          [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
-            endpoint = ["https://1.2.3.4:1234/v2/eks-anywhere"]
+        [plugins."io.containerd.grpc.v1.cri".registry]
+          config_path = "/etc/containerd/certs.d"
       owner: root:root
       path: "/etc/containerd/config_append.toml"
+    - content: |
+        server = "https://1.2.3.4:1234"
+        
+        [host."https://1.2.3.4:1234"]
+          capabilities = ["pull", "resolve"]
+      owner: root:root
+      path: "/etc/containerd/certs.d/1.2.3.4:1234/hosts.toml"
+    - content: |
+        server = "https://public.ecr.aws"
+        
+        [host."https://1.2.3.4:1234/v2/eks-anywhere"]
+          capabilities = ["pull", "resolve"]
+      owner: root:root
+      path: "/etc/containerd/certs.d/public.ecr.aws/hosts.toml"
     initConfiguration:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock

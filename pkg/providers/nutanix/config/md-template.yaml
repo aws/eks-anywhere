@@ -299,25 +299,48 @@ spec:
 {{- end }}
 {{- if .registryMirrorMap }}
       - content: |
-          [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-            {{- range $orig, $mirror := .registryMirrorMap }}
-            [plugins."io.containerd.grpc.v1.cri".registry.mirrors."{{ $orig }}"]
-              endpoint = ["https://{{ $mirror }}"]
-{{- end }}
-{{- if or .registryCACert .insecureSkip }}
-            [plugins."io.containerd.grpc.v1.cri".registry.configs."{{ .mirrorBase }}".tls]
-{{- if .registryCACert }}
-              ca_file = "/etc/containerd/certs.d/{{ .mirrorBase }}/ca.crt"
-{{- end }}
-{{- if .insecureSkip }}
-              insecure_skip_verify = {{ .insecureSkip }}
-{{- end }}
-{{- end }}
-{{- if .registryAuth }}
-            [plugins."io.containerd.grpc.v1.cri".registry.configs."{{ .mirrorBase }}".auth]
-              username = "{{.registryUsername}}"
-              password = "{{.registryPassword}}"
-{{- end }}
+          [plugins."io.containerd.grpc.v1.cri".registry]
+            config_path = "/etc/containerd/certs.d"
         owner: root:root
         path: "/etc/containerd/config_append.toml"
+      - content: |
+          server = "https://{{ .mirrorBase }}"
+          
+          [host."https://{{ .mirrorBase }}"]
+            capabilities = ["pull", "resolve"]
+          {{- if or .registryCACert .insecureSkip }}
+          {{- if .registryCACert }}
+            ca = "/etc/containerd/certs.d/{{ .mirrorBase }}/ca.crt"
+          {{- end }}
+          {{- if .insecureSkip }}
+            skip_verify = true
+          {{- end }}
+          {{- end }}
+          {{- if .registryAuth }}
+            [host."https://{{ .mirrorBase }}".header]
+              authorization = "Basic {{ printf "%s:%s" .registryUsername .registryPassword | b64enc }}"
+          {{- end }}
+        owner: root:root
+        path: "/etc/containerd/certs.d/{{ .mirrorBase }}/hosts.toml"
+      {{- range $orig, $mirror := .registryMirrorMap }}
+      - content: |
+          server = "https://{{ $orig }}"
+          
+          [host."https://{{ $mirror }}"]
+            capabilities = ["pull", "resolve"]
+          {{- if or $.registryCACert $.insecureSkip }}
+          {{- if $.registryCACert }}
+            ca = "/etc/containerd/certs.d/{{ $.mirrorBase }}/ca.crt"
+          {{- end }}
+          {{- if $.insecureSkip }}
+            skip_verify = true
+          {{- end }}
+          {{- end }}
+          {{- if $.registryAuth }}
+            [host."https://{{ $mirror }}".header]
+              authorization = "Basic {{ printf "%s:%s" $.registryUsername $.registryPassword | b64enc }}"
+          {{- end }}
+        owner: root:root
+        path: "/etc/containerd/certs.d/{{ $orig }}/hosts.toml"
+      {{- end }}
 {{- end }}
