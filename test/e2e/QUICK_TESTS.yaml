@@ -47,6 +47,6 @@ quick_tests:
 # - TestSnowKubernetes128SimpleFlow
 # - TestSnowKubernetes128StackedEtcdSimpleFlow
 # Tinkerbell
-- ^TestTinkerbellKubernetes132UbuntuTo133Upgrade$
-- TestTinkerbellKubernetes133Ubuntu2004To2204Upgrade
-- TestTinkerbellKubernetes132To133Ubuntu2204Upgrade
+- ^TestTinkerbellKubernetes133UbuntuTo134Upgrade$
+- TestTinkerbellKubernetes134Ubuntu2004To2204Upgrade
+- TestTinkerbellKubernetes133To134Ubuntu2204Upgrade
