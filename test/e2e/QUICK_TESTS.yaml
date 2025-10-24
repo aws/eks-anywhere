@@ -1,6 +1,6 @@
 quick_tests:
 # Docker
-- TestDocker.*133
+- TestDocker.*134
 # vSphere
 - ^TestVSphereKubernetes130To131RedHatUpgrade$
 - TestVSphereKubernetes130To131StackedEtcdRedHatUpgrade
@@ -22,20 +22,31 @@ quick_tests:
 - TestVSphereKubernetes133Ubuntu2004To2204Upgrade
 - TestVSphereKubernetes132BottlerocketTo133Upgrade
 - TestVSphereKubernetes132BottlerocketTo133StackedEtcdUpgrade
+- ^TestVSphereKubernetes133To134RedHatUpgrade$
+- TestVSphereKubernetes133To134StackedEtcdRedHatUpgrade
+- ^TestVSphereKubernetes133UbuntuTo134Upgrade$
+- TestVSphereKubernetes133UbuntuTo134StackedEtcdUpgrade
+- TestVSphereKubernetes133To134Ubuntu2204Upgrade
+- TestVSphereKubernetes133To134Ubuntu2204StackedEtcdUpgrade
+- TestVSphereKubernetes134Ubuntu2004To2204Upgrade
+- TestVSphereKubernetes133BottlerocketTo134Upgrade
+- TestVSphereKubernetes133BottlerocketTo134StackedEtcdUpgrade
 # CloudStack
 - TestCloudStackKubernetes131To132RedhatMultipleFieldsUpgrade
 - TestCloudStackKubernetes131To132StackedEtcdRedhatMultipleFieldsUpgrade
 - TestCloudStackKubernetes132To133RedhatMultipleFieldsUpgrade
 - TestCloudStackKubernetes132To133StackedEtcdRedhatMultipleFieldsUpgrade
+- TestCloudStackKubernetes133To134RedhatMultipleFieldsUpgrade
+- TestCloudStackKubernetes133To134StackedEtcdRedhatMultipleFieldsUpgrade
 # Nutanix
-- TestNutanixKubernetes132to133RedHat9Upgrade
-- TestNutanixKubernetes132to133StackedEtcdRedHat9Upgrade
-- TestNutanixKubernetes132To133UbuntuUpgrade
-- TestNutanixKubernetes132To133StackedEtcdUbuntuUpgrade
+- TestNutanixKubernetes133to134RedHat9Upgrade
+- TestNutanixKubernetes133to134StackedEtcdRedHat9Upgrade
+- TestNutanixKubernetes133To134UbuntuUpgrade
+- TestNutanixKubernetes133To134StackedEtcdUbuntuUpgrade
 # Snow
 # - TestSnowKubernetes128SimpleFlow
 # - TestSnowKubernetes128StackedEtcdSimpleFlow
 # Tinkerbell
-- ^TestTinkerbellKubernetes132UbuntuTo133Upgrade$
-- TestTinkerbellKubernetes133Ubuntu2004To2204Upgrade
-- TestTinkerbellKubernetes132To133Ubuntu2204Upgrade
+- ^TestTinkerbellKubernetes133UbuntuTo134Upgrade$
+- TestTinkerbellKubernetes134Ubuntu2004To2204Upgrade
+- TestTinkerbellKubernetes133To134Ubuntu2204Upgrade
