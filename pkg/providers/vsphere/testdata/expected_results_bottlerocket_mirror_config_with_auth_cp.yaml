@@ -82,7 +82,7 @@ spec:
       imageRepository: public.ecr.aws/eks-distro/kubernetes
       etcd:
         external:
-          endpoints: []
+          endpoints: ["https://placeholder:2379"]
           caFile: "/var/lib/kubeadm/pki/etcd/ca.crt"
           certFile: "/var/lib/kubeadm/pki/server-etcd-client.crt"
           keyFile: "/var/lib/kubeadm/pki/apiserver-etcd-client.key"
