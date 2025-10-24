@@ -10,6 +10,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -20,6 +21,15 @@ import (
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/semver"
 )
+
+// Helper function to create JSON from map.
+func toJSON(m map[string]interface{}) *apiextensionsv1.JSON {
+	if m == nil {
+		return nil
+	}
+	raw, _ := json.Marshal(m)
+	return &apiextensionsv1.JSON{Raw: raw}
+}
 
 type templaterTest struct {
 	*WithT
@@ -264,6 +274,149 @@ func TestTemplaterGenerateManifestSuccess(t *testing.T) {
 	tt.expectHelmTemplateWith(eqMap(wantValues), "1.22").Return(tt.manifest, nil)
 
 	tt.Expect(tt.t.GenerateManifest(tt.ctx, tt.spec)).To(Equal(tt.manifest), "templater.GenerateManifest() should return right manifest")
+}
+
+// TestTemplaterGenerateManifestWithHelmValues tests the new helmValues functionality.
+func TestTemplaterGenerateManifestWithHelmValues(t *testing.T) {
+	customHelmValues := map[string]interface{}{
+		"prometheus": map[string]interface{}{
+			"enabled": true,
+		},
+		"operator": map[string]interface{}{
+			"prometheus": map[string]interface{}{
+				"enabled": false,
+			},
+		},
+		"encryption": map[string]interface{}{
+			"wireguard": map[string]interface{}{
+				"enabled": true,
+			},
+		},
+		"cgroup": map[string]interface{}{
+			"autoMount": map[string]interface{}{
+				"enabled": false,
+			},
+			"hostRoot": "/sys/fs/cgroup",
+		},
+	}
+
+	tt := newtemplaterTest(t)
+
+	// Set helmValues in the spec
+	tt.spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.HelmValues = toJSON(customHelmValues)
+
+	tt.expectHelmClientFactoryGet("", "")
+	tt.expectHelmTemplateWith(eqMap(customHelmValues), "1.22").Return(tt.manifest, nil)
+
+	tt.Expect(tt.t.GenerateManifest(tt.ctx, tt.spec)).To(Equal(tt.manifest), "templater.GenerateManifest() should use helmValues when provided")
+}
+
+// TestTemplaterGenerateManifestHelmValuesPrecedence tests that helmValues overrides deprecated fields.
+func TestTemplaterGenerateManifestHelmValuesPrecedence(t *testing.T) {
+	customHelmValues := map[string]interface{}{
+		"routingMode":                "native",
+		"policyEnforcementMode":      "never",
+		"egressMasqueradeInterfaces": "custom-interface",
+	}
+
+	tt := newtemplaterTest(t)
+
+	// Set both helmValues and deprecated fields - helmValues should take precedence
+	tt.spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.HelmValues = toJSON(customHelmValues)
+	// These deprecated settings should be ignored
+	tt.spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.RoutingMode = v1alpha1.CiliumRoutingModeOverlay
+	tt.spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode = v1alpha1.CiliumPolicyModeAlways
+	tt.spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.EgressMasqueradeInterfaces = "deprecated-interface"
+
+	tt.expectHelmClientFactoryGet("", "")
+	tt.expectHelmTemplateWith(eqMap(customHelmValues), "1.22").Return(tt.manifest, nil)
+
+	tt.Expect(tt.t.GenerateManifest(tt.ctx, tt.spec)).To(Equal(tt.manifest), "templater.GenerateManifest() should use helmValues over deprecated fields")
+}
+
+// TestTemplaterGenerateManifestHelmValuesEmpty tests that empty helmValues falls back to deprecated fields.
+func TestTemplaterGenerateManifestHelmValuesEmpty(t *testing.T) {
+	wantValues := baseTemplateValues()
+	withPolicyEnforcementMode(wantValues, "always")
+
+	tt := newtemplaterTest(t)
+
+	// Set empty helmValues and deprecated fields - should use deprecated fields
+	tt.spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.HelmValues = nil
+	tt.spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode = v1alpha1.CiliumPolicyModeAlways
+
+	tt.expectHelmClientFactoryGet("", "")
+	tt.expectHelmTemplateWith(eqMap(wantValues), "1.22").Return(tt.manifest, nil)
+
+	gotManifest, err := tt.t.GenerateManifest(tt.ctx, tt.spec)
+	tt.Expect(err).NotTo(HaveOccurred())
+	// Should get more content due to network policy being appended
+	tt.Expect(len(gotManifest)).To(BeNumerically(">", len(tt.manifest)))
+}
+
+// TestTemplaterGenerateManifestHelmValuesNil tests backward compatibility when helmValues is nil.
+func TestTemplaterGenerateManifestHelmValuesNil(t *testing.T) {
+	wantValues := baseTemplateValues()
+	withDirectRouting(wantValues)
+
+	tt := newtemplaterTest(t)
+
+	// Set helmValues to nil and use deprecated fields - should use deprecated fields
+	tt.spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.HelmValues = nil
+	tt.spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.RoutingMode = v1alpha1.CiliumRoutingModeDirect
+
+	tt.expectHelmClientFactoryGet("", "")
+	tt.expectHelmTemplateWith(eqMap(wantValues), "1.22").Return(tt.manifest, nil)
+
+	tt.Expect(tt.t.GenerateManifest(tt.ctx, tt.spec)).To(Equal(tt.manifest), "templater.GenerateManifest() should use deprecated fields when helmValues is nil")
+}
+
+// TestTemplaterGenerateManifestHelmValuesComplexStructure tests complex nested helmValues.
+func TestTemplaterGenerateManifestHelmValuesComplexStructure(t *testing.T) {
+	complexHelmValues := map[string]interface{}{
+		"image": map[string]interface{}{
+			"repository": "custom.registry.com/cilium",
+			"tag":        "v1.18.0",
+		},
+		"operator": map[string]interface{}{
+			"image": map[string]interface{}{
+				"repository": "custom.registry.com/operator",
+				"tag":        "v1.18.0",
+			},
+			"replicas": 2,
+			"prometheus": map[string]interface{}{
+				"enabled": true,
+				"port":    9090,
+			},
+		},
+		"hubble": map[string]interface{}{
+			"enabled": true,
+			"metrics": map[string]interface{}{
+				"enabled": []string{"dns", "drop", "tcp", "flow", "icmp", "http"},
+			},
+			"relay": map[string]interface{}{
+				"enabled": true,
+			},
+			"ui": map[string]interface{}{
+				"enabled": true,
+			},
+		},
+		"ipam": map[string]interface{}{
+			"mode": "cluster-pool",
+			"operator": map[string]interface{}{
+				"clusterPoolIPv4PodCIDRList": []string{"10.0.0.0/8"},
+			},
+		},
+	}
+
+	tt := newtemplaterTest(t)
+
+	tt.spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.HelmValues = toJSON(complexHelmValues)
+
+	tt.expectHelmClientFactoryGet("", "")
+	tt.expectHelmTemplateWith(eqMap(complexHelmValues), "1.22").Return(tt.manifest, nil)
+
+	tt.Expect(tt.t.GenerateManifest(tt.ctx, tt.spec)).To(Equal(tt.manifest), "templater.GenerateManifest() should handle complex nested helmValues")
 }
 
 func TestTemplaterGenerateManifestCNIExclusiveTrue(t *testing.T) {

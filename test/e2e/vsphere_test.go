@@ -3637,6 +3637,199 @@ func TestVSphereKubernetes128CiliumAlwaysPolicyEnforcementModeSimpleFlow(t *test
 	runSimpleFlow(test)
 }
 
+// Cilium Helm Values Tests - Ubuntu
+func TestVSphereKubernetes128CiliumHelmValuesUbuntuSimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithUbuntu128()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
+		framework.WithClusterFiller(api.WithCiliumHelmValues(map[string]interface{}{
+			"prometheus": map[string]interface{}{
+				"enabled": true,
+			},
+			"operator": map[string]interface{}{
+				"prometheus": map[string]interface{}{
+					"enabled": false,
+				},
+			},
+		})),
+	)
+	runSimpleFlow(test)
+}
+
+func TestVSphereKubernetes129CiliumHelmValuesUbuntuSimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithUbuntu129()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
+		framework.WithClusterFiller(api.WithCiliumHelmValues(map[string]interface{}{
+			"prometheus": map[string]interface{}{
+				"enabled": true,
+			},
+			"operator": map[string]interface{}{
+				"prometheus": map[string]interface{}{
+					"enabled": false,
+				},
+			},
+		})),
+	)
+	runSimpleFlow(test)
+}
+
+func TestVSphereKubernetes130CiliumHelmValuesUbuntuSimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithUbuntu130()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130)),
+		framework.WithClusterFiller(api.WithCiliumHelmValues(map[string]interface{}{
+			"prometheus": map[string]interface{}{
+				"enabled": true,
+			},
+			"operator": map[string]interface{}{
+				"prometheus": map[string]interface{}{
+					"enabled": false,
+				},
+			},
+		})),
+	)
+	runSimpleFlow(test)
+}
+
+func TestVSphereKubernetes131CiliumHelmValuesUbuntuSimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithUbuntu131()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube131)),
+		framework.WithClusterFiller(api.WithCiliumHelmValues(map[string]interface{}{
+			"prometheus": map[string]interface{}{
+				"enabled": true,
+			},
+			"operator": map[string]interface{}{
+				"prometheus": map[string]interface{}{
+					"enabled": false,
+				},
+			},
+		})),
+	)
+	runSimpleFlow(test)
+}
+
+func TestVSphereKubernetes132CiliumHelmValuesUbuntuSimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithUbuntu132()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube132)),
+		framework.WithClusterFiller(api.WithCiliumHelmValues(map[string]interface{}{
+			"prometheus": map[string]interface{}{
+				"enabled": true,
+			},
+			"operator": map[string]interface{}{
+				"prometheus": map[string]interface{}{
+					"enabled": false,
+				},
+			},
+		})),
+	)
+	runSimpleFlow(test)
+}
+
+func TestVSphereKubernetes133CiliumHelmValuesUbuntuSimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithUbuntu133()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133)),
+		framework.WithClusterFiller(api.WithCiliumHelmValues(map[string]interface{}{
+			"prometheus": map[string]interface{}{
+				"enabled": true,
+			},
+			"operator": map[string]interface{}{
+				"prometheus": map[string]interface{}{
+					"enabled": false,
+				},
+			},
+		})),
+	)
+	runSimpleFlow(test)
+}
+
+// Cilium Helm Values Precedence Tests - Validate helmValues overrides deprecated fields
+func TestVSphereKubernetes128CiliumHelmValuesPrecedenceUbuntuFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithUbuntu128()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
+		framework.WithClusterFiller(api.WithCiliumPolicyEnforcementMode(v1alpha1.CiliumPolicyModeDefault)), // This should be ignored
+		framework.WithClusterFiller(api.WithCiliumHelmValues(map[string]interface{}{
+			"policyEnforcementMode": "always", // This should take precedence
+			"prometheus": map[string]interface{}{
+				"enabled": true,
+			},
+		})),
+	)
+	runSimpleFlow(test)
+}
+
+func TestVSphereKubernetes133CiliumHelmValuesPrecedenceUbuntuFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithUbuntu133()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133)),
+		framework.WithClusterFiller(api.WithCiliumPolicyEnforcementMode(v1alpha1.CiliumPolicyModeDefault)), // This should be ignored
+		framework.WithClusterFiller(api.WithCiliumHelmValues(map[string]interface{}{
+			"policyEnforcementMode": "always", // This should take precedence
+			"prometheus": map[string]interface{}{
+				"enabled": true,
+			},
+		})),
+	)
+	runSimpleFlow(test)
+}
+
+// Cilium Helm Values Complex Configuration Tests
+func TestVSphereKubernetes128CiliumHelmValuesComplexConfigUbuntuFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithUbuntu128()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
+		framework.WithClusterFiller(api.WithCiliumHelmValues(map[string]interface{}{
+			"prometheus": map[string]interface{}{
+				"enabled": true,
+			},
+			"operator": map[string]interface{}{
+				"prometheus": map[string]interface{}{
+					"enabled": false,
+				},
+				"replicas": 2,
+			},
+			"policyEnforcementMode": "always",
+			"routingMode":           "native",
+		})),
+	)
+	runSimpleFlow(test)
+}
+
+func TestVSphereKubernetes133CiliumHelmValuesComplexConfigUbuntuFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithUbuntu133()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133)),
+		framework.WithClusterFiller(api.WithCiliumHelmValues(map[string]interface{}{
+			"prometheus": map[string]interface{}{
+				"enabled": true,
+			},
+			"operator": map[string]interface{}{
+				"prometheus": map[string]interface{}{
+					"enabled": false,
+				},
+				"replicas": 2,
+			},
+			"policyEnforcementMode": "always",
+			"routingMode":           "native",
+		})),
+	)
+	runSimpleFlow(test)
+}
+
 // NTP Servers test
 func TestVSphereKubernetes128BottleRocketWithNTP(t *testing.T) {
 	test := framework.NewClusterE2ETest(
