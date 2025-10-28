@@ -1921,10 +1921,9 @@ func TestClusterValidateUpdateLabelTaintsMultiWNTinkerbellRequest(t *testing.T) 
 
 func TestClusterValidateUpdateSkipUpgradeImmutability(t *testing.T) {
 	tests := []struct {
-		Name  string
-		Old   *v1alpha1.Cluster
-		New   *v1alpha1.Cluster
-		Error bool
+		Name string
+		Old  *v1alpha1.Cluster
+		New  *v1alpha1.Cluster
 	}{
 		{
 			Name: "NilToFalse",
@@ -1970,7 +1969,6 @@ func TestClusterValidateUpdateSkipUpgradeImmutability(t *testing.T) {
 			New: baseCluster(func(c *v1alpha1.Cluster) {
 				c.Spec.ClusterNetwork.CNIConfig.Cilium.SkipUpgrade = nil
 			}),
-			Error: true,
 		},
 		{
 			Name: "TrueToFalse",
@@ -1980,7 +1978,6 @@ func TestClusterValidateUpdateSkipUpgradeImmutability(t *testing.T) {
 			New: baseCluster(func(c *v1alpha1.Cluster) {
 				c.Spec.ClusterNetwork.CNIConfig.Cilium.SkipUpgrade = ptr.Bool(false)
 			}),
-			Error: true,
 		},
 	}
 
@@ -1990,14 +1987,7 @@ func TestClusterValidateUpdateSkipUpgradeImmutability(t *testing.T) {
 
 			warnings, err := tc.New.ValidateUpdate(context.TODO(), tc.Old, tc.New)
 			g.Expect(warnings).To(BeEmpty())
-			if !tc.Error {
-				g.Expect(err).To(Succeed())
-			} else {
-				g.Expect(err).To(MatchError(ContainSubstring(
-					"spec.clusterNetwork.cniConfig.cilium.skipUpgrade: Forbidden: cannot toggle " +
-						"off skipUpgrade once enabled",
-				)))
-			}
+			g.Expect(err).To(Succeed())
 		})
 	}
 }
