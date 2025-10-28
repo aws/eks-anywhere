@@ -13,7 +13,7 @@ import (
 )
 
 // TestVsphereTemplateBuilderGenerateCAPISpecWorkersWithNetworks tests the complete YAML output
-// using golden file comparison for exact structure validation
+// using golden file comparison for exact structure validation.
 func TestVsphereTemplateBuilderGenerateCAPISpecWorkersWithNetworks(t *testing.T) {
 	g := NewWithT(t)
 	spec := test.NewFullClusterSpec(t, "testdata/cluster_with_networks.yaml")
@@ -30,7 +30,7 @@ func TestVsphereTemplateBuilderGenerateCAPISpecWorkersWithNetworks(t *testing.T)
 // Test case 1: WorkerNode with 2 networks config
 // Test case 2: WorkerNode with 1 networks config
 // Test case 3: WorkerNode with networks field empty
-// Test case 4: WorkerNode without networks field
+// Test case 4: WorkerNode without networks field.
 func TestNetworksFieldConfigurationCase(t *testing.T) {
 	testCases := []struct {
 		name             string
@@ -80,7 +80,7 @@ func TestNetworksFieldConfigurationCase(t *testing.T) {
 	}
 }
 
-// validateNetworkDevicesInYAML parses the generated YAML and validates the network devices structure
+// validateNetworkDevicesInYAML parses the generated YAML and validates the network devices structure.
 func validateNetworkDevicesInYAML(t *testing.T, yamlData []byte, expectedNetworks []string) {
 	g := NewWithT(t)
 
