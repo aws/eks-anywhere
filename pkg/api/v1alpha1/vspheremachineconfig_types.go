@@ -21,7 +21,7 @@ type VSphereMachineConfigSpec struct {
 	OSFamily          OSFamily `json:"osFamily"`
 	ResourcePool      string   `json:"resourcePool"`
 	StoragePolicyName string   `json:"storagePolicyName,omitempty"`
-	// The field Networks is for enabling multiple network interfaces for workernode
+	// The field Networks is for configuring custom networks for worker nodes. This can be used to configure upto 2 networks for a worker node group.
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:validation:MaxItems=2
 	Networks []string `json:"networks,omitempty"`
