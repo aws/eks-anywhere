@@ -32,7 +32,7 @@ import (
 	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	"sigs.k8s.io/cluster-api/util/annotations"
-	"sigs.k8s.io/cluster-api/util/patch"
+	v1beta1patch "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/patch"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -84,7 +84,7 @@ func (r *KubeadmControlPlaneReconciler) Reconcile(ctx context.Context, req ctrl.
 		return ctrl.Result{}, nil
 	}
 
-	patchHelper, err := patch.NewHelper(kcp, r.client)
+	patchHelper, err := v1beta1patch.NewHelper(kcp, r.client)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -127,7 +127,7 @@ func (r *KubeadmControlPlaneReconciler) reconcile(ctx context.Context, log logr.
 		}
 		return ctrl.Result{}, fmt.Errorf("getting MachineHealthCheck %s: %v", cpMachineHealthCheckName(kcp.ObjectMeta.Name), err)
 	}
-	mhcPatchHelper, err := patch.NewHelper(mhc, r.client)
+	mhcPatchHelper, err := v1beta1patch.NewHelper(mhc, r.client)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -214,12 +214,12 @@ func (r *KubeadmControlPlaneReconciler) validateStackedEtcd(kcp *controlplanev1.
 	return nil
 }
 
-func pauseMachineHealthCheck(ctx context.Context, mhc *clusterv1.MachineHealthCheck, mhcPatchHelper *patch.Helper) error {
+func pauseMachineHealthCheck(ctx context.Context, mhc *clusterv1.MachineHealthCheck, mhcPatchHelper *v1beta1patch.Helper) error {
 	annotations.AddAnnotations(mhc, map[string]string{clusterv1.PausedAnnotation: "true"})
 	return mhcPatchHelper.Patch(ctx, mhc)
 }
 
-func resumeMachineHealthCheck(ctx context.Context, mhc *clusterv1.MachineHealthCheck, mhcPatchHelper *patch.Helper) error {
+func resumeMachineHealthCheck(ctx context.Context, mhc *clusterv1.MachineHealthCheck, mhcPatchHelper *v1beta1patch.Helper) error {
 	delete(mhc.Annotations, clusterv1.PausedAnnotation)
 	return mhcPatchHelper.Patch(ctx, mhc)
 }
