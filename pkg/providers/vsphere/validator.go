@@ -397,6 +397,44 @@ func (v *Validator) validateNetwork(ctx context.Context, network string) error {
 	return nil
 }
 
+func (v *Validator) validateNetworksFieldUsage(ctx context.Context, vsphereClusterSpec *Spec) error {
+	// Check control plane - should NOT have networks field
+	controlPlaneMachineConfig := vsphereClusterSpec.controlPlaneMachineConfig()
+	if controlPlaneMachineConfig != nil && len(controlPlaneMachineConfig.Spec.Networks) > 0 {
+		return fmt.Errorf("networks field is not supported for control plane machine config '%s'. Control plane uses the datacenter network configuration", controlPlaneMachineConfig.Name)
+	}
+
+	// Check etcd - should NOT have networks field
+	if vsphereClusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
+		etcdMachineConfig := vsphereClusterSpec.etcdMachineConfig()
+		if etcdMachineConfig != nil && len(etcdMachineConfig.Spec.Networks) > 0 {
+			return fmt.Errorf("networks field is not supported for etcd machine config '%s'. Etcd uses the datacenter network configuration", etcdMachineConfig.Name)
+		}
+	}
+
+	// Validate worker node networks
+	for _, workerNodeGroupConfiguration := range vsphereClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
+		workerMachineConfig := vsphereClusterSpec.workerMachineConfig(workerNodeGroupConfiguration)
+		if workerMachineConfig != nil {
+			if err := v.validateWorkerMachineConfigNetworks(ctx, workerMachineConfig, workerNodeGroupConfiguration.Name); err != nil {
+				return err
+			}
+		}
+	}
+
+	logger.MarkPass("Machine config networks validated")
+	return nil
+}
+
+func (v *Validator) validateWorkerMachineConfigNetworks(ctx context.Context, machineConfig *anywherev1.VSphereMachineConfig, workerGroupName string) error {
+	for _, network := range machineConfig.Spec.Networks {
+		if err := v.validateNetwork(ctx, network); err != nil {
+			return fmt.Errorf("network '%s' not found for worker group '%s' machine config '%s'", network, workerGroupName, machineConfig.Name)
+		}
+	}
+	return nil
+}
+
 func (v *Validator) collectResourcePathConfig(_ context.Context, spec *Spec) ([]ResourcePaths, error) {
 	resourcePaths := []ResourcePaths{}
 	controlPlaneMachineConfig := spec.controlPlaneMachineConfig()
