@@ -3,6 +3,7 @@ package kubernetes
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -10,6 +11,19 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
+
+// machineSetWarningFilter is a custom warning handler that filters out cluster.x-k8s.io v1beta1 deprecation warnings.
+type machineSetWarningFilter struct{}
+
+// HandleWarningHeader filters out warnings related to cluster.x-k8s.io v1beta1 deprecation.
+func (machineSetWarningFilter) HandleWarningHeader(code int, agent string, message string) {
+	// Suppress cluster.x-k8s.io v1beta1 deprecation warnings (e.g., MachineSet, Cluster, etc.)
+	if strings.Contains(message, "cluster.x-k8s.io/v1beta1") && strings.Contains(message, "is deprecated") {
+		return
+	}
+	// Log other warnings to stderr
+	rest.NewWarningWriter(os.Stderr, rest.WarningWriterOptions{}).HandleWarningHeader(code, agent, message)
+}
 
 // ClientFactory builds clients from a kubeconfig file by
 // wrapping around NewRuntimeClientFromFileName to facilitate mocking.
@@ -54,6 +68,10 @@ func newRuntimeClient(data []byte, rc restConfigurator, scheme *runtime.Scheme) 
 		return nil, err
 	}
 
+	// Suppress cluster.x-k8s.io v1beta1 deprecation warnings from the API server
+	// Remove this after we have completed the migration from CAPI v1beta1 to v1beta2
+	restConfig.WarningHandler = NewMachineSetWarningFilter()
+
 	if err := initScheme(scheme); err != nil {
 		return nil, fmt.Errorf("failed to init client scheme %v", err)
 	}
@@ -90,4 +108,9 @@ func ObjectsToRuntimeObjects[T runtime.Object](objs []T) []runtime.Object {
 	}
 
 	return runtimeObjs
+}
+
+// NewMachineSetWarningFilter creates a new machineSetWarningFilter for testing purposes.
+func NewMachineSetWarningFilter() rest.WarningHandler {
+	return machineSetWarningFilter{}
 }
