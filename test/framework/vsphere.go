@@ -590,7 +590,7 @@ func (v *VSphere) Ubuntu133Template() api.VSphereFiller {
 
 // Ubuntu134Template returns vsphere filler for 1.34 Ubuntu.
 func (v *VSphere) Ubuntu134Template() api.VSphereFiller {
-	return v.templateForKubeVersionAndOS(anywherev1.Kube134, Ubuntu2204, nil)
+	return v.templateForKubeVersionAndOS(anywherev1.Kube134, Ubuntu2004, nil)
 }
 
 // Ubuntu129TemplateForMachineConfig returns vsphere filler for 1.29 Ubuntu for a specific machine config.
@@ -600,7 +600,7 @@ func (v *VSphere) Ubuntu129TemplateForMachineConfig(name string) api.VSphereFill
 
 // Ubuntu134TemplateForMachineConfig returns vsphere filler for 1.34 Ubuntu for a specific machine config.
 func (v *VSphere) Ubuntu134TemplateForMachineConfig(name string) api.VSphereFiller {
-	return v.templateForKubeVersionAndOSMachineConfig(name, anywherev1.Kube134, Ubuntu2204)
+	return v.templateForKubeVersionAndOSMachineConfig(name, anywherev1.Kube134, Ubuntu2004)
 }
 
 // Ubuntu2204Kubernetes128Template returns vsphere filler for 1.28 Ubuntu 22.04.
@@ -633,6 +633,11 @@ func (v *VSphere) Ubuntu2204Kubernetes133Template() api.VSphereFiller {
 	return v.templateForKubeVersionAndOS(anywherev1.Kube133, Ubuntu2204, nil)
 }
 
+// Ubuntu2204Kubernetes134Template returns vsphere filler for 1.34 Ubuntu 22.04.
+func (v *VSphere) Ubuntu2204Kubernetes134Template() api.VSphereFiller {
+	return v.templateForKubeVersionAndOS(anywherev1.Kube134, Ubuntu2204, nil)
+}
+
 // Ubuntu2404Kubernetes128Template returns vsphere filler for 1.28 Ubuntu 24.04.
 func (v *VSphere) Ubuntu2404Kubernetes128Template() api.VSphereFiller {
 	return v.templateForKubeVersionAndOS(anywherev1.Kube128, Ubuntu2404, nil)
@@ -661,11 +666,6 @@ func (v *VSphere) Ubuntu2404Kubernetes132Template() api.VSphereFiller {
 // Ubuntu2404Kubernetes133Template returns vsphere filler for 1.33 Ubuntu 24.04.
 func (v *VSphere) Ubuntu2404Kubernetes133Template() api.VSphereFiller {
 	return v.templateForKubeVersionAndOS(anywherev1.Kube133, Ubuntu2404, nil)
-}
-
-// Ubuntu2204Kubernetes134Template returns vsphere filler for 1.34 Ubuntu 22.04.
-func (v *VSphere) Ubuntu2204Kubernetes134Template() api.VSphereFiller {
-	return v.templateForKubeVersionAndOS(anywherev1.Kube134, Ubuntu2204, nil)
 }
 
 // Ubuntu2404Kubernetes134Template returns vsphere filler for 1.34 Ubuntu 24.04.
