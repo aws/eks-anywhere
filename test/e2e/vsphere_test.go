@@ -4367,6 +4367,8 @@ func TestVSphereKubernetes128CiliumHelmValuesComplexConfigUbuntuFlow(t *testing.
 			},
 			"policyEnforcementMode": "always",
 			"routingMode":           "native",
+			"ipv4NativeRoutingCIDR": "192.168.0.0/16",
+			"autoDirectNodeRoutes":  "true",
 		})),
 	)
 	runSimpleFlow(test)
@@ -4389,6 +4391,8 @@ func TestVSphereKubernetes133CiliumHelmValuesComplexConfigUbuntuFlow(t *testing.
 			},
 			"policyEnforcementMode": "always",
 			"routingMode":           "native",
+			"ipv4NativeRoutingCIDR": "192.168.0.0/16",
+			"autoDirectNodeRoutes":  "true",
 		})),
 	)
 	runSimpleFlow(test)
