@@ -42,7 +42,8 @@ func runTinkerbellAWSIamAuthFlow(test *framework.ClusterE2ETest) {
 func runAWSIamAuthFlowWorkload(test *framework.MulticlusterE2ETest) {
 	test.CreateManagementClusterWithConfig()
 	test.RunInWorkloadClusters(func(w *framework.WorkloadCluster) {
-		w.GenerateClusterConfig()
+		licenseToken := framework.GetLicenseToken2()
+		w.GenerateClusterConfigWithLicenseToken(licenseToken)
 		w.CreateCluster()
 		w.ValidateAWSIamAuth()
 		w.StopIfFailed()
