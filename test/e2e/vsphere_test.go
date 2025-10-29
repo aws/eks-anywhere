@@ -7411,18 +7411,6 @@ func TestVSphereKubernetes134MulticlusterWorkloadClusterAPI(t *testing.T) {
 				api.WithStackedEtcdTopology(),
 				api.WithLicenseToken(licenseToken),
 			),
-			vsphere.WithUbuntu128(),
-		),
-		framework.NewClusterE2ETest(
-			t, vsphere, framework.WithClusterName(test.NewWorkloadClusterName()),
-		).WithClusterConfig(
-			api.ClusterToConfigFiller(
-				api.WithManagementCluster(managementCluster.ClusterName),
-				api.WithControlPlaneCount(1),
-				api.WithWorkerNodeCount(1),
-				api.WithStackedEtcdTopology(),
-				api.WithLicenseToken(licenseToken2),
-			),
 			vsphere.WithUbuntu129(),
 		),
 		framework.NewClusterE2ETest(
@@ -7433,6 +7421,7 @@ func TestVSphereKubernetes134MulticlusterWorkloadClusterAPI(t *testing.T) {
 				api.WithControlPlaneCount(1),
 				api.WithWorkerNodeCount(1),
 				api.WithStackedEtcdTopology(),
+				api.WithLicenseToken(licenseToken2),
 			),
 			vsphere.WithUbuntu130(),
 		),
@@ -8273,18 +8262,6 @@ func TestVSphereKubernetes133MulticlusterWorkloadClusterAPI(t *testing.T) {
 				api.WithStackedEtcdTopology(),
 				api.WithLicenseToken(licenseToken),
 			),
-			vsphere.WithUbuntu128(),
-		),
-		framework.NewClusterE2ETest(
-			t, vsphere, framework.WithClusterName(test.NewWorkloadClusterName()),
-		).WithClusterConfig(
-			api.ClusterToConfigFiller(
-				api.WithManagementCluster(managementCluster.ClusterName),
-				api.WithControlPlaneCount(1),
-				api.WithWorkerNodeCount(1),
-				api.WithStackedEtcdTopology(),
-				api.WithLicenseToken(licenseToken2),
-			),
 			vsphere.WithUbuntu129(),
 		),
 		framework.NewClusterE2ETest(
@@ -8295,6 +8272,7 @@ func TestVSphereKubernetes133MulticlusterWorkloadClusterAPI(t *testing.T) {
 				api.WithControlPlaneCount(1),
 				api.WithWorkerNodeCount(1),
 				api.WithStackedEtcdTopology(),
+				api.WithLicenseToken(licenseToken2),
 			),
 			vsphere.WithUbuntu130(),
 		),
