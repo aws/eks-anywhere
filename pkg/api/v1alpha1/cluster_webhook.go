@@ -330,21 +330,6 @@ func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
 			field.Forbidden(specPath.Child("clusterNetwork", "dns"), "field is immutable"))
 	}
 
-	// We don't want users to be able to toggle off SkipUpgrade until we've understood the
-	// implications so we are temporarily disallowing it.
-
-	oCNI := old.Spec.ClusterNetwork.CNIConfig
-	nCNI := new.Spec.ClusterNetwork.CNIConfig
-	if oCNI != nil && oCNI.Cilium != nil && !oCNI.Cilium.IsManaged() && nCNI.Cilium.IsManaged() {
-		allErrs = append(
-			allErrs,
-			field.Forbidden(
-				specPath.Child("clusterNetwork", "cniConfig", "cilium", "skipUpgrade"),
-				"cannot toggle off skipUpgrade once enabled",
-			),
-		)
-	}
-
 	if !new.Spec.ClusterNetwork.Nodes.Equal(old.Spec.ClusterNetwork.Nodes) {
 		allErrs = append(
 			allErrs,

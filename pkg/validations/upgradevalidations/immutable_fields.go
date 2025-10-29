@@ -57,15 +57,6 @@ func ValidateImmutableFields(ctx context.Context, k validations.KubectlClient, c
 		return fmt.Errorf("spec.clusterNetwork.CNI/CNIConfig is immutable")
 	}
 
-	// We don't want users to be able to toggle  off SkipUpgrade until we've understood the
-	// implications so we are temporarily disallowing it.
-
-	oCNI := prevSpec.Spec.ClusterNetwork.CNIConfig
-	nCNI := spec.Cluster.Spec.ClusterNetwork.CNIConfig
-	if oCNI != nil && oCNI.Cilium != nil && !oCNI.Cilium.IsManaged() && nCNI.Cilium.IsManaged() {
-		return fmt.Errorf("spec.clusterNetwork.cniConfig.cilium.skipUpgrade cannot be toggled off")
-	}
-
 	if !nSpec.ProxyConfiguration.Equal(oSpec.ProxyConfiguration) {
 		return fmt.Errorf("spec.proxyConfiguration is immutable")
 	}

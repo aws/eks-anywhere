@@ -299,7 +299,6 @@ func TestValidateImmutableFields(t *testing.T) {
 					},
 				}
 			},
-			ExpectedError: "spec.clusterNetwork.cniConfig.cilium.skipUpgrade cannot be toggled off",
 		},
 		{
 			Name: "Add AWS IAM identity provider when none existed",
