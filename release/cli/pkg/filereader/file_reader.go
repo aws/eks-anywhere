@@ -22,6 +22,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
@@ -35,6 +36,9 @@ import (
 	releasetypes "github.com/aws/eks-anywhere/release/cli/pkg/types"
 	artifactutils "github.com/aws/eks-anywhere/release/cli/pkg/util/artifacts"
 )
+
+// Global mutex for synchronizing git operations to prevent concurrent git lock issues
+var gitOperationMutex sync.Mutex
 
 type EksDLatestRelease struct {
 	Branch               string `json:"branch"`
@@ -347,6 +351,12 @@ func ReadHttpFile(uri string) ([]byte, error) {
 }
 
 func ReadGitTag(projectPath, gitRootPath, branch string) (string, error) {
+	gitOperationMutex.Lock()
+	defer gitOperationMutex.Unlock()
+
+	// Clean up any potential lock files before git operations
+	cleanupGitLockFiles(gitRootPath)
+
 	currentBranch, err := git.GetCurrentBranch(gitRootPath)
 	if err != nil {
 		return "", fmt.Errorf("error getting current branch: %v", err)
@@ -366,4 +376,15 @@ func ReadGitTag(projectPath, gitRootPath, branch string) (string, error) {
 	}
 
 	return gitTag, nil
+}
+
+// cleanupGitLockFiles removes git lock files that might prevent concurrent operations
+func cleanupGitLockFiles(gitRootPath string) {
+	lockFile := filepath.Join(gitRootPath, ".git", "index.lock")
+	if _, err := os.Stat(lockFile); err == nil {
+		fmt.Printf("Removing stale git lock file: %s\n", lockFile)
+		if removeErr := os.Remove(lockFile); removeErr != nil {
+			fmt.Printf("Warning: Failed to remove git lock file %s: %v\n", lockFile, removeErr)
+		}
+	}
 }
