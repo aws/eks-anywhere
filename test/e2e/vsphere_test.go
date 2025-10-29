@@ -276,6 +276,47 @@ func TestVSphereKubernetes133To134AWSIamAuthUpgrade(t *testing.T) {
 	)
 }
 
+// AWS IAM Auth Add/Remove Tests
+func TestVSphereKubernetes128UbuntuAddAWSIamAuthUpgrade(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithUbuntu128()),
+		framework.WithAwsIamEnvVarCheck(),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
+	)
+	runUpgradeFlowAddAWSIamAuth(test, v1alpha1.Kube128)
+}
+
+func TestVSphereKubernetes134UbuntuAddAWSIamAuthUpgrade(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithUbuntu134()),
+		framework.WithAwsIamEnvVarCheck(),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube134)),
+	)
+	runUpgradeFlowAddAWSIamAuth(test, v1alpha1.Kube134)
+}
+
+func TestVSphereKubernetes128UbuntuRemoveAWSIamAuthUpgrade(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithUbuntu128()),
+		framework.WithAWSIam(),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
+	)
+	runUpgradeFlowRemoveAWSIamAuth(test, v1alpha1.Kube128)
+}
+
+func TestVSphereKubernetes134UbuntuRemoveAWSIamAuthUpgrade(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithUbuntu134()),
+		framework.WithAWSIam(),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube134)),
+	)
+	runUpgradeFlowRemoveAWSIamAuth(test, v1alpha1.Kube134)
+}
+
 // Curated Packages
 func TestVSphereKubernetes128CuratedPackagesSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
