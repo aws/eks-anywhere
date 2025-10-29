@@ -17,10 +17,8 @@ package operations
 import (
 	"context"
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 	"time"
 
 	s3sdk "github.com/aws/aws-sdk-go/service/s3"
@@ -35,9 +33,6 @@ import (
 	releasetypes "github.com/aws/eks-anywhere/release/cli/pkg/types"
 	artifactutils "github.com/aws/eks-anywhere/release/cli/pkg/util/artifacts"
 )
-
-// Global mutex for synchronizing git operations to prevent concurrent git lock issues
-var gitOperationMutex sync.Mutex
 
 func DownloadArtifacts(ctx context.Context, r *releasetypes.ReleaseConfig, eksaArtifacts releasetypes.ArtifactsTable) error {
 	// Retrier for downloading source S3 objects. This retrier has a max timeout of 60 minutes. It
@@ -58,9 +53,6 @@ func DownloadArtifacts(ctx context.Context, r *releasetypes.ReleaseConfig, eksaA
 	fmt.Println("==========================================================")
 	fmt.Println("                  Artifacts Download")
 	fmt.Println("==========================================================")
-
-	// Clean up any existing git lock files before starting the download process
-	cleanupGitLockFiles(r.BuildRepoSource)
 
 	errGroup, ctx := errgroup.WithContext(ctx)
 
@@ -120,7 +112,7 @@ func handleArchiveDownload(_ context.Context, r *releasetypes.ReleaseConfig, art
 				if strings.Contains(sourceS3Key, "eksctl-anywhere") {
 					latestSourceS3PrefixFromMain = strings.NewReplacer(r.CliRepoBranchName, "latest").Replace(sourceS3Prefix)
 				} else {
-					gitTagFromMain, err := readGitTagThreadSafe(artifact.Archive.ProjectPath, r.BuildRepoSource, "main")
+					gitTagFromMain, err := filereader.ReadGitTag(artifact.Archive.ProjectPath, r.BuildRepoSource, "main")
 					if err != nil {
 						return errors.Cause(err)
 					}
@@ -174,7 +166,7 @@ func handleArchiveDownload(_ context.Context, r *releasetypes.ReleaseConfig, art
 					if strings.Contains(sourceS3Key, "eksctl-anywhere") {
 						latestSourceS3PrefixFromMain = strings.NewReplacer(r.CliRepoBranchName, "latest").Replace(sourceS3Prefix)
 					} else {
-						gitTagFromMain, err := readGitTagThreadSafe(artifact.Archive.ProjectPath, r.BuildRepoSource, "main")
+						gitTagFromMain, err := filereader.ReadGitTag(artifact.Archive.ProjectPath, r.BuildRepoSource, "main")
 						if err != nil {
 							return errors.Cause(err)
 						}
@@ -218,7 +210,7 @@ func handleManifestDownload(_ context.Context, r *releasetypes.ReleaseConfig, ar
 	if err != nil {
 		if r.BuildRepoBranchName != "main" {
 			fmt.Printf("Artifact corresponding to %s branch not found for %s manifest. Using artifact from main\n", r.BuildRepoBranchName, sourceS3Key)
-			gitTagFromMain, err := readGitTagThreadSafe(artifact.Manifest.ProjectPath, r.BuildRepoSource, "main")
+			gitTagFromMain, err := filereader.ReadGitTag(artifact.Manifest.ProjectPath, r.BuildRepoSource, "main")
 			if err != nil {
 				return errors.Cause(err)
 			}
@@ -235,26 +227,4 @@ func handleManifestDownload(_ context.Context, r *releasetypes.ReleaseConfig, ar
 	}
 
 	return nil
-}
-
-// cleanupGitLockFiles removes git lock files that might prevent concurrent operations
-func cleanupGitLockFiles(gitRootPath string) {
-	lockFile := filepath.Join(gitRootPath, ".git", "index.lock")
-	if _, err := os.Stat(lockFile); err == nil {
-		fmt.Printf("Removing stale git lock file: %s\n", lockFile)
-		if removeErr := os.Remove(lockFile); removeErr != nil {
-			fmt.Printf("Warning: Failed to remove git lock file %s: %v\n", lockFile, removeErr)
-		}
-	}
-}
-
-// readGitTagThreadSafe provides thread-safe git tag reading with proper synchronization
-func readGitTagThreadSafe(projectPath, gitRootPath, branch string) (string, error) {
-	gitOperationMutex.Lock()
-	defer gitOperationMutex.Unlock()
-
-	// Clean up any potential lock files before git operations
-	cleanupGitLockFiles(gitRootPath)
-
-	return filereader.ReadGitTag(projectPath, gitRootPath, branch)
 }
