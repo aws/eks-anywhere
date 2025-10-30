@@ -3673,15 +3673,8 @@ func TestVSphereKubernetes133Ubuntu2204NetworksSimpleFlow(t *testing.T) {
 			api.WithLicenseToken(licenseToken),
 		),
 	)
+	runSimpleFlowWithoutClusterConfigGeneration(test)
 
-	test.CreateCluster()
-
-	// Wait for cluster to be ready
-	test.WaitForControlPlaneReady()
-
-	test.DeleteCluster()
-
-	//runSimpleFlowWithoutClusterConfigGenerationWithNetworkValidation(test)
 }
 
 func TestVSphereKubernetes128Ubuntu2404SimpleFlow(t *testing.T) {
