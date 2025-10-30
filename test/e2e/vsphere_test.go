@@ -3660,7 +3660,7 @@ func TestVSphereKubernetes133Ubuntu2204NetworksSimpleFlow(t *testing.T) {
 			framework.WithWorkerNodeGroup("worker-networks", api.WithCount(1)),
 			api.WithNetworks([]string{
 				os.Getenv("T_VSPHERE_NETWORK"),
-				"/SDDC-Datacenter/network/sddc-cgw-network-1",
+				os.Getenv("T_VSPHERE_SECOND_NETWORK"),
 			}),
 		),
 	)
@@ -3673,6 +3673,8 @@ func TestVSphereKubernetes133Ubuntu2204NetworksSimpleFlow(t *testing.T) {
 			api.WithLicenseToken(licenseToken),
 		),
 	)
+
+	// [todo]This part will be replaced with a flow with network validation
 	runSimpleFlowWithoutClusterConfigGeneration(test)
 
 }
