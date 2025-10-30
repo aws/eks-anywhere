@@ -5,6 +5,7 @@
 package e2e
 
 import (
+	"os"
 	"testing"
 
 	corev1 "k8s.io/api/core/v1"
@@ -3649,6 +3650,38 @@ func TestVSphereKubernetes133Ubuntu2204SimpleFlow(t *testing.T) {
 		api.ClusterToConfigFiller(api.WithLicenseToken(licenseToken)),
 	)
 	runSimpleFlowWithoutClusterConfigGeneration(test)
+}
+
+func TestVSphereKubernetes133Ubuntu2204NetworksSimpleFlow(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	provider := framework.NewVSphere(t,
+		framework.WithVSphereWorkerNodeGroup(
+			"worker-networks",
+			framework.WithWorkerNodeGroup("worker-networks", api.WithCount(1)),
+			api.WithNetworks([]string{
+				os.Getenv("T_VSPHERE_NETWORK"),
+				"/SDDC-Datacenter/network/sddc-cgw-network-1",
+			}),
+		),
+	)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+	).WithClusterConfig(
+		provider.WithKubeVersionAndOS(v1alpha1.Kube133, framework.Ubuntu2204, nil),
+		api.ClusterToConfigFiller(
+			api.WithLicenseToken(licenseToken),
+		),
+	)
+
+	test.CreateCluster()
+
+	// Wait for cluster to be ready
+	test.WaitForControlPlaneReady()
+
+	test.DeleteCluster()
+
+	//runSimpleFlowWithoutClusterConfigGenerationWithNetworkValidation(test)
 }
 
 func TestVSphereKubernetes128Ubuntu2404SimpleFlow(t *testing.T) {
