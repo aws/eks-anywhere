@@ -2,7 +2,7 @@ version: 0.2
 
 env:
   variables:
-    INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT: 40
+    INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT: 50
     EKSA_GIT_KNOWN_HOSTS: "/tmp/known_hosts"
     EKSA_GIT_PRIVATE_KEY: "/tmp/private-key"
     INTEGRATION_TEST_INFRA_CONFIG: "/tmp/test-infra.yml"
