@@ -60,6 +60,7 @@ env:
     T_VSPHERE_DATASTORE: "vsphere_ci_beta_connection:datastore"
     T_VSPHERE_FOLDER: "vsphere_ci_beta_connection:folder"
     T_VSPHERE_NETWORK: "vsphere_ci_beta_connection:network"
+    T_VSPHERE_SECOND_NETWORK: "vsphere_ci_beta_connection:second_network"
     T_VSPHERE_PRIVATE_NETWORK: "vsphere_ci_beta_connection:private_network"
     T_VSPHERE_CIDR: "vsphere_ci_beta_connection:vsphere_cidr"
     T_VSPHERE_PRIVATE_NETWORK_CIDR: "vsphere_ci_beta_connection:vsphere_private_network_cidr"
