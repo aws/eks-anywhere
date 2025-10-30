@@ -151,3 +151,10 @@ func WithAwsIamConfig() api.ClusterConfigFiller {
 		)
 	}, api.ClusterToConfigFiller(api.WithAWSIamIdentityProviderRef(defaultClusterName)))
 }
+
+// RemoveAWSIamConfig removes AWS IAM config from cluster config.
+func RemoveAWSIamConfig() api.ClusterConfigFiller {
+	return func(config *cluster.Config) {
+		delete(config.AWSIAMConfigs, defaultClusterName)
+	}
+}
