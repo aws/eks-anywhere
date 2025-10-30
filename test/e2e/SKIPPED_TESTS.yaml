@@ -182,6 +182,7 @@ skipped_tests:
 - TestTinkerbellKubernetes134Ubuntu2204To2404GenericUpgrade
 - TestTinkerbellKubernetes134Ubuntu2404RTOSSimpleFlow
 - TestTinkerbellKubernetes134Ubuntu2404GenericSimpleFlow
+- TestTinkerbellKubernetes134Ubuntu2204To2404RTOSUpgrade
 
 # Vsphere 
 # Auto import tests fail from time to time if the underlying template doesn't go well with the content library.
