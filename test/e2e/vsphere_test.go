@@ -3656,8 +3656,8 @@ func TestVSphereKubernetes133Ubuntu2204NetworksSimpleFlow(t *testing.T) {
 	licenseToken := framework.GetLicenseToken()
 	provider := framework.NewVSphere(t,
 		framework.WithVSphereWorkerNodeGroup(
-			"worker-networks",
-			framework.WithWorkerNodeGroup("worker-networks", api.WithCount(1)),
+			worker0,
+			framework.WithWorkerNodeGroup(worker0, api.WithCount(1)),
 			api.WithNetworks([]string{
 				os.Getenv("T_VSPHERE_NETWORK"),
 				os.Getenv("T_VSPHERE_SECOND_NETWORK"),
