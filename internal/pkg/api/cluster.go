@@ -346,19 +346,6 @@ func WithAWSIamIdentityProviderRef(name string) ClusterFiller {
 	}
 }
 
-func RemoveAWSIamIdentityProviderRef() ClusterFiller {
-	return func(c *anywherev1.Cluster) {
-		// Filter out AWS IAM identity provider refs
-		filtered := make([]anywherev1.Ref, 0, len(c.Spec.IdentityProviderRefs))
-		for _, ref := range c.Spec.IdentityProviderRefs {
-			if ref.Kind != anywherev1.AWSIamConfigKind {
-				filtered = append(filtered, ref)
-			}
-		}
-		c.Spec.IdentityProviderRefs = filtered
-	}
-}
-
 func RemoveAllWorkerNodeGroups() ClusterFiller {
 	return func(c *anywherev1.Cluster) {
 		c.Spec.WorkerNodeGroupConfigurations = make([]anywherev1.WorkerNodeGroupConfiguration, 0)
