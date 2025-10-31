@@ -20,7 +20,7 @@ func runTaintsUpgradeFlow(test *framework.ClusterE2ETest, updateVersion v1alpha1
 	// where it fails during upgrade preflight validation
 	// when packages controller installs credentials provider package on the node
 	if test.Provider.Name() == constants.VSphereProviderName {
-		test.T.Log("Waiting 1 minute before starting vSphere upgrade...")
+		test.T.Log("Waiting 2 minute before starting vSphere upgrade...")
 		time.Sleep(1 * time.Minute)
 	}
 	test.UpgradeClusterWithNewConfig(clusterOpts)
