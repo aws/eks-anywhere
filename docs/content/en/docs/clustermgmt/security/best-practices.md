@@ -172,3 +172,34 @@ EKS Anywhere creates clusters with server hardening configurations out of the bo
 `kube-bench` runs checks documented in the [CIS Benchmark for Kubernetes](https://www.cisecurity.org/benchmark/kubernetes/), such as, pod specification file permissions, disabling insecure arguments, and so on.
 
 Refer to the [EKS Anywhere CIS Self-Assessment Guide]({{< relref "./kube-bench.md" >}}) for more information on how to evaluate the security configurations of your EKS Anywhere cluster.
+
+### Admission Webhooks
+
+Custom admission webhooks are a Kubernetes extension mechanism that can validate or mutate resources before they are persisted to etcd. Webhooks enable use cases such as policy enforcement and security controls, but they can also introduce operational risks.
+
+Misconfigured or faulty admission webhooks can block security patches from being applied to control plane components, prevent security-critical operations such as RBAC updates or certificate rotations, or disrupt critical infrastructure components such as Cilium or CoreDNS.
+
+To protect against these risks, enable the `skipAdmissionForSystemResources` feature for production clusters running Kubernetes 1.31 or later. This feature prevents custom admission webhooks from interfering with system operations while allowing them to continue validating application workloads.
+
+```yaml
+spec:
+  controlPlaneConfiguration:
+    skipAdmissionForSystemResources: true
+```
+
+This protection mechanism uses the same approach as AWS EKS, requires no changes to existing webhook configurations, and protects system resources during cluster upgrades and normal operations while maintaining webhook functionality for application workloads. For detailed information about this feature, including configuration options and protected resources, see the [Admission Webhook Protection]({{< relref "../reliability/admission-webhook-protection.md" >}}) documentation.
+
+#### Additional Webhook Security Best Practices
+
+When deploying custom admission webhooks:
+
+1. **Use appropriate failure policies**: Set `failurePolicy: Ignore` for non-critical validations to prevent blocking operations during webhook unavailability
+2. **Scope webhooks carefully**: Use `namespaceSelector` and `objectSelector` to limit webhook scope to only the intended resources
+3. **Avoid targeting system resources**: Unless absolutely necessary, do not configure webhooks to intercept operations on `kube-system`, control plane components, or critical infrastructure
+4. **Monitor webhook health**: Implement monitoring and alerting for webhook service availability and response times
+5. **Test thoroughly**: Test webhook behavior during cluster upgrades and failure scenarios before deploying to production
+6. **Maintain webhook services**: Ensure webhook backend services are highly available and can handle expected load
+
+For more information on admission webhooks, refer to:
+* [EKS Best Practices: Admission Webhooks](https://docs.aws.amazon.com/eks/latest/best-practices/control-plane.html#reliability_cpadmission_webhooks)
+* [Kubernetes Extensible Admission Controllers](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/)
