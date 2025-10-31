@@ -30,11 +30,11 @@ This section provides information about:
 
 
 ## Cilium Features
-The following table lists Cilium features and notes which of those features are built into EKS Anywhere's default Cilium version , upstream Open Source, and Cilium Enterprise.
+The following table lists Cilium features and notes which of those features are supported by AWS with the default EKS Anywhere Cilium version, which features are available in upstream Open Source Cilium, and which require Cilium Enterprise. If you plan to use functionality outside the scope of AWS support, we recommend obtaining alternative commercial support for Cilium or have the in-house expertise to troubleshoot and contribute fixes to the Cilium project.
 
 <details><summary>Expand to see Cilium Features</summary>
 
-| Headline/Feature   | &nbsp;&nbsp;EKS Anywhere Default Cilium | &nbsp;&nbsp;Cilium OSS |  &nbsp;&nbsp;Isovalent Cilium Enterprise |
+| Headline/Feature   | &nbsp;&nbsp;Cilium features supported by AWS | &nbsp;&nbsp;Cilium OSS |  &nbsp;&nbsp;Isovalent Cilium Enterprise |
 | ---------------    | ---------- | ---------- |  --------------------        |
 | Networking Routing with tunneling mode |  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |  &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |  &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
 | Networking Routing with native routing mode |  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |  &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |  &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
@@ -126,16 +126,3 @@ For next steps on leveraging Network Policy, we encourage you to explore:
 * The #networkpolicy channel on [Cilium Slack](https://cilium.io/slack) .
 
 * Other resources on [networkpolicy.io](https://networkpolicy.io) .
-
-
-## Additional Cilium Features
-
-Some advanced features of Cilium are not enabled as part of EKS Anywhere, including:
-
-* [Hubble observability](https://docs.isovalent.com/operations-guide/features/network-visibility/index.html)
-* [DNS-aware and HTTP-Aware Network Policy](https://docs.isovalent.com/quick-start/policy_lifecycle.html)
-* [Multi-cluster Routing](https://docs.isovalent.com/operations-guide/features/cluster-mesh/index.html)
-* [Transparent Encryption](https://docs.cilium.io/en/v1.13/security/network/encryption/)
-* [Advanced Load-balancing](https://docs.isovalent.com/operations-guide/features/cilium-standalone-gateway.html)
-
-Please contact the EKS Anywhere team if you are interested in leveraging these advanced features along with EKS Anywhere.
