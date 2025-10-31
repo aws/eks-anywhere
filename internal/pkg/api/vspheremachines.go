@@ -71,6 +71,13 @@ func WithStringFromEnvVar(envVar string, opt func(string) VSphereMachineConfigFi
 	return opt(os.Getenv(envVar))
 }
 
+// WithNetworks sets the Networks field for a VSphereMachineConfig.
+func WithNetworks(networks []string) VSphereMachineConfigFiller {
+	return func(m *anywherev1.VSphereMachineConfig) {
+		m.Spec.Networks = networks
+	}
+}
+
 func setSSHKeyForFirstUser(m *anywherev1.VSphereMachineConfig, key string) {
 	m.SetUserDefaults()
 	m.Spec.Users[0].SshAuthorizedKeys = []string{key}
