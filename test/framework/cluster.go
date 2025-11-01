@@ -556,12 +556,19 @@ func (e *ClusterE2ETest) UpdateClusterConfig(fillers ...api.ClusterConfigFiller)
 }
 
 func (e *ClusterE2ETest) baseClusterConfigUpdates() []api.ClusterConfigFiller {
-	clusterFillers := make([]api.ClusterFiller, 0, len(e.clusterFillers)+3)
+	clusterFillers := make([]api.ClusterFiller, 0, len(e.clusterFillers)+4)
 	// This defaults all tests to a 1:1:1 configuration. Since all the fillers defined on each test are run
-	// after these 3, if the tests is explicit about any of these, the defaults will be overwritten
+	// after these defaults, if the tests is explicit about any of these, the defaults will be overwritten
 	clusterFillers = append(clusterFillers,
 		api.WithControlPlaneCount(1), api.WithWorkerNodeCount(1), api.WithEtcdCountIfExternal(1),
 	)
+
+	// Disable packages by default for non-package e2e tests
+	// Package tests have "CuratedPackages" in their test name
+	if !strings.Contains(e.T.Name(), "CuratedPackages") {
+		clusterFillers = append(clusterFillers, api.WithPackagesDisabled())
+	}
+
 	clusterFillers = append(clusterFillers, e.clusterFillers...)
 	configFillers := make([]api.ClusterConfigFiller, 0, len(e.clusterConfigFillers)+1)
 	configFillers = append(configFillers, api.ClusterToConfigFiller(clusterFillers...))
