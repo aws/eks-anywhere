@@ -4,24 +4,14 @@
 package e2e
 
 import (
-	"time"
-
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
 func runSimpleUpgradeFlow(test *framework.ClusterE2ETest, updateVersion v1alpha1.KubernetesVersion, clusterOpts ...framework.ClusterE2ETestOpt) {
 	test.GenerateClusterConfig()
 	test.CreateCluster()
-	// Add 1-minute wait for vSphere upgrade tests
-	// where it fails during upgrade preflight validation
-	// when packages controller installs credentials provider package on the node
-	if test.Provider.Name() == constants.VSphereProviderName {
-		test.T.Log("Waiting 2 minute before starting vSphere upgrade...")
-		time.Sleep(1 * time.Minute)
-	}
 	test.UpgradeClusterWithNewConfig(clusterOpts)
 	test.ValidateCluster(updateVersion)
 	test.StopIfFailed()
@@ -33,13 +23,6 @@ func runSimpleUpgradeFlow(test *framework.ClusterE2ETest, updateVersion v1alpha1
 // and avoids regenerating a cluster config with defaults.
 func runSimpleUpgradeFlowWithoutClusterConfigGeneration(test *framework.ClusterE2ETest, updateVersion v1alpha1.KubernetesVersion, clusterOpts ...framework.ClusterE2ETestOpt) {
 	test.CreateCluster()
-	// Add 1-minute wait for vSphere upgrade tests
-	// where it fails during upgrade preflight validation
-	// when packages controller installs credentials provider package on the node
-	if test.Provider.Name() == constants.VSphereProviderName {
-		test.T.Log("Waiting 2 minute before starting vSphere upgrade...")
-		time.Sleep(1 * time.Minute)
-	}
 	test.UpgradeClusterWithNewConfig(clusterOpts)
 	test.ValidateCluster(updateVersion)
 	test.StopIfFailed()
