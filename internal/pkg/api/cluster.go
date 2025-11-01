@@ -412,3 +412,13 @@ func WithInPlaceUpgradeStrategy() ClusterFiller {
 		}
 	}
 }
+
+// WithPackagesDisabled disables the package controller installation on the cluster.
+func WithPackagesDisabled() ClusterFiller {
+	return func(c *anywherev1.Cluster) {
+		if c.Spec.Packages == nil {
+			c.Spec.Packages = &anywherev1.PackageConfiguration{}
+		}
+		c.Spec.Packages.Disable = true
+	}
+}
