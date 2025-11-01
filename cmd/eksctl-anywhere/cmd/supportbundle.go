@@ -115,5 +115,37 @@ func (csbo *createSupportBundleOptions) createBundle(ctx context.Context, since,
 		return fmt.Errorf("printing analysis")
 	}
 
+	// Also collect management cluster bundle for workload cluster debugging
+	// This provides CAPI resources and controller logs which are essential for debugging
+	if clusterSpec.Cluster.IsSelfManaged() {
+		// This is a self-managed cluster, skip management cluster bundle collection
+		return nil
+	}
+
+	log.Println("Collecting management cluster support bundle for additional debugging information")
+	managementClusterName := clusterSpec.Cluster.ManagedBy()
+
+	managementKubeconfigPath := kubeconfig.FromClusterName(managementClusterName)
+
+	// Check if management cluster kubeconfig exists
+	if err := kubeconfig.ValidateFilename(managementKubeconfigPath); err != nil {
+		log.Printf("Warning: Management cluster kubeconfig not accessible, skipping management cluster bundle collection: %v (managementCluster: %s)\n", err, managementClusterName)
+	} else {
+		managementBundle, err := deps.DignosticCollectorFactory.DiagnosticBundleManagementCluster(clusterSpec, managementKubeconfigPath)
+		if err != nil {
+			log.Printf("Warning: Failed to create management cluster diagnostic bundle: %v (managementCluster: %s)\n", err, managementClusterName)
+		} else {
+			err = managementBundle.CollectAndAnalyze(ctx, sinceTimeValue)
+			if err != nil {
+				log.Printf("Warning: Failed to collect management cluster bundle: %v (managementCluster: %s)\n", err, managementClusterName)
+			} else {
+				err = managementBundle.PrintAnalysis()
+				if err != nil {
+					log.Printf("Warning: Failed to print management cluster analysis: %v (managementCluster: %s)\n", err, managementClusterName)
+				}
+			}
+		}
+	}
+
 	return nil
 }
