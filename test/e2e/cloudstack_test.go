@@ -237,9 +237,6 @@ func TestCloudStackKubernetes128RedhatCuratedPackagesSimpleFlow(t *testing.T) {
 		t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes128()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube128),
-			"my-packages-test", EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackageInstallSimpleFlow(test)
 }
@@ -250,9 +247,6 @@ func TestCloudStackKubernetes129RedhatCuratedPackagesSimpleFlow(t *testing.T) {
 		t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes129()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube129),
-			"my-packages-test", EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackageInstallSimpleFlow(test)
 }
@@ -263,9 +257,6 @@ func TestCloudStackKubernetes130RedhatCuratedPackagesSimpleFlow(t *testing.T) {
 		t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes130()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube130),
-			"my-packages-test", EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackageInstallSimpleFlow(test)
 }
@@ -276,9 +267,6 @@ func TestCloudStackKubernetes131RedhatCuratedPackagesSimpleFlow(t *testing.T) {
 		t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes131()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube131)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube131),
-			"my-packages-test", EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackageInstallSimpleFlow(test)
 }
@@ -289,9 +277,6 @@ func TestCloudStackKubernetes132RedhatCuratedPackagesSimpleFlow(t *testing.T) {
 		t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes132()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube132)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube132),
-			"my-packages-test", EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackageInstallSimpleFlow(test)
 }
@@ -302,9 +287,6 @@ func TestCloudStackKubernetes133RedhatCuratedPackagesSimpleFlow(t *testing.T) {
 		t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes133()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube133),
-			"my-packages-test", EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackageInstallSimpleFlow(test)
 }
@@ -315,9 +297,6 @@ func TestCloudStackKubernetes134RedhatCuratedPackagesSimpleFlow(t *testing.T) {
 		t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes134()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube134)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube134),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackageInstallSimpleFlow(test)
 }
@@ -329,9 +308,6 @@ func TestCloudStackKubernetes128RedhatCuratedPackagesEmissarySimpleFlow(t *testi
 		t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes128()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube128),
-			"my-packages-test", EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackageEmissaryInstallSimpleFlow(test)
 }
@@ -342,9 +318,6 @@ func TestCloudStackKubernetes129RedhatCuratedPackagesEmissarySimpleFlow(t *testi
 		t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes129()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube129),
-			"my-packages-test", EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackageEmissaryInstallSimpleFlow(test)
 }
@@ -355,9 +328,6 @@ func TestCloudStackKubernetes130RedhatCuratedPackagesEmissarySimpleFlow(t *testi
 		t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes130()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube130),
-			"my-packages-test", EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackageEmissaryInstallSimpleFlow(test)
 }
@@ -368,9 +338,6 @@ func TestCloudStackKubernetes131RedhatCuratedPackagesEmissarySimpleFlow(t *testi
 		t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes131()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube131)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube131),
-			"my-packages-test", EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackageEmissaryInstallSimpleFlow(test)
 }
@@ -381,9 +348,6 @@ func TestCloudStackKubernetes132RedhatCuratedPackagesEmissarySimpleFlow(t *testi
 		t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes132()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube132)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube132),
-			"my-packages-test", EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackageEmissaryInstallSimpleFlow(test)
 }
@@ -394,9 +358,6 @@ func TestCloudStackKubernetes133RedhatCuratedPackagesEmissarySimpleFlow(t *testi
 		t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes133()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube133),
-			"my-packages-test", EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackageEmissaryInstallSimpleFlow(test)
 }
@@ -407,9 +368,6 @@ func TestCloudStackKubernetes134RedhatCuratedPackagesEmissarySimpleFlow(t *testi
 		t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes134()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube134)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube134),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackageEmissaryInstallSimpleFlow(test)
 }
@@ -421,9 +379,6 @@ func TestCloudStackKubernetes128RedhatCuratedPackagesHarborSimpleFlow(t *testing
 		t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes128()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube128),
-			"my-packages-test", EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackageHarborInstallSimpleFlowLocalStorageProvisioner(test)
 }
@@ -434,9 +389,6 @@ func TestCloudStackKubernetes129RedhatCuratedPackagesHarborSimpleFlow(t *testing
 		t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes129()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube129),
-			"my-packages-test", EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackageHarborInstallSimpleFlowLocalStorageProvisioner(test)
 }
@@ -447,9 +399,6 @@ func TestCloudStackKubernetes130RedhatCuratedPackagesHarborSimpleFlow(t *testing
 		t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes130()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube130),
-			"my-packages-test", EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackageHarborInstallSimpleFlowLocalStorageProvisioner(test)
 }
@@ -460,9 +409,6 @@ func TestCloudStackKubernetes131RedhatCuratedPackagesHarborSimpleFlow(t *testing
 		t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes131()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube131)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube131),
-			"my-packages-test", EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackageHarborInstallSimpleFlowLocalStorageProvisioner(test)
 }
@@ -473,9 +419,6 @@ func TestCloudStackKubernetes132RedhatCuratedPackagesHarborSimpleFlow(t *testing
 		t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes132()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube132)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube132),
-			"my-packages-test", EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackageHarborInstallSimpleFlowLocalStorageProvisioner(test)
 }
@@ -486,9 +429,6 @@ func TestCloudStackKubernetes133RedhatCuratedPackagesHarborSimpleFlow(t *testing
 		t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes133()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube133),
-			"my-packages-test", EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackageHarborInstallSimpleFlowLocalStorageProvisioner(test)
 }
@@ -499,9 +439,6 @@ func TestCloudStackKubernetes134RedhatCuratedPackagesHarborSimpleFlow(t *testing
 		t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes134()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube134)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube134),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackageHarborInstallSimpleFlowLocalStorageProvisioner(test)
 }
@@ -668,9 +605,6 @@ func TestCloudStackKubernetes128RedhatCuratedPackagesAdotSimpleFlow(t *testing.T
 	test := framework.NewClusterE2ETest(t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes128()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube128),
-			"my-packages-test", EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackagesAdotInstallSimpleFlow(test)
 }
@@ -680,9 +614,6 @@ func TestCloudStackKubernetes129RedhatCuratedPackagesAdotSimpleFlow(t *testing.T
 	test := framework.NewClusterE2ETest(t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes129()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube129),
-			"my-packages-test", EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackagesAdotInstallSimpleFlow(test)
 }
@@ -692,9 +623,6 @@ func TestCloudStackKubernetes130RedhatCuratedPackagesAdotSimpleFlow(t *testing.T
 	test := framework.NewClusterE2ETest(t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes130()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube130),
-			"my-packages-test", EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackagesAdotInstallSimpleFlow(test)
 }
@@ -704,9 +632,6 @@ func TestCloudStackKubernetes131RedhatCuratedPackagesAdotSimpleFlow(t *testing.T
 	test := framework.NewClusterE2ETest(t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes131()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube131)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube131),
-			"my-packages-test", EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackagesAdotInstallSimpleFlow(test)
 }
@@ -716,9 +641,6 @@ func TestCloudStackKubernetes132RedhatCuratedPackagesAdotSimpleFlow(t *testing.T
 	test := framework.NewClusterE2ETest(t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes132()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube132)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube132),
-			"my-packages-test", EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackagesAdotInstallSimpleFlow(test)
 }
@@ -728,9 +650,6 @@ func TestCloudStackKubernetes133RedhatCuratedPackagesAdotSimpleFlow(t *testing.T
 	test := framework.NewClusterE2ETest(t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes133()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube133),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackagesAdotInstallSimpleFlow(test)
 }
@@ -740,9 +659,6 @@ func TestCloudStackKubernetes134RedhatCuratedPackagesAdotSimpleFlow(t *testing.T
 	test := framework.NewClusterE2ETest(t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes134()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube134)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube134),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackagesAdotInstallSimpleFlow(test)
 }
@@ -752,9 +668,6 @@ func TestCloudStackKubernetes128RedhatCuratedPackagesAdotUpdateFlow(t *testing.T
 	test := framework.NewClusterE2ETest(t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes128()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube128),
-			"my-packages-test", EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackagesAdotInstallUpdateFlow(test)
 }
@@ -764,9 +677,6 @@ func TestCloudStackKubernetes129RedhatCuratedPackagesAdotUpdateFlow(t *testing.T
 	test := framework.NewClusterE2ETest(t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes129()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube129),
-			"my-packages-test", EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackagesAdotInstallUpdateFlow(test)
 }
@@ -776,9 +686,6 @@ func TestCloudStackKubernetes130RedhatCuratedPackagesAdotUpdateFlow(t *testing.T
 	test := framework.NewClusterE2ETest(t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes130()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube130),
-			"my-packages-test", EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackagesAdotInstallUpdateFlow(test)
 }
@@ -788,9 +695,6 @@ func TestCloudStackKubernetes131RedhatCuratedPackagesAdotUpdateFlow(t *testing.T
 	test := framework.NewClusterE2ETest(t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes131()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube131)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube131),
-			"my-packages-test", EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackagesAdotInstallUpdateFlow(test)
 }
@@ -800,9 +704,6 @@ func TestCloudStackKubernetes132RedhatCuratedPackagesAdotUpdateFlow(t *testing.T
 	test := framework.NewClusterE2ETest(t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes132()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube132)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube132),
-			"my-packages-test", EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackagesAdotInstallUpdateFlow(test)
 }
@@ -812,9 +713,6 @@ func TestCloudStackKubernetes133RedhatCuratedPackagesAdotUpdateFlow(t *testing.T
 	test := framework.NewClusterE2ETest(t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes133()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube133),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackagesAdotInstallUpdateFlow(test)
 }
@@ -824,9 +722,6 @@ func TestCloudStackKubernetes134RedhatCuratedPackagesAdotUpdateFlow(t *testing.T
 	test := framework.NewClusterE2ETest(t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes134()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube134)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube134),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackagesAdotInstallUpdateFlow(test)
 }
@@ -840,9 +735,6 @@ func TestCloudStackKubernetes128RedHatCuratedPackagesClusterAutoscalerSimpleFlow
 		t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes128()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube128),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runAutoscalerWithMetricsServerSimpleFlow(test)
 }
@@ -855,9 +747,6 @@ func TestCloudStackKubernetes129RedHatCuratedPackagesClusterAutoscalerSimpleFlow
 		t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes129()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube129),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runAutoscalerWithMetricsServerSimpleFlow(test)
 }
@@ -870,9 +759,6 @@ func TestCloudStackKubernetes130RedHatCuratedPackagesClusterAutoscalerSimpleFlow
 		t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes130()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube130),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runAutoscalerWithMetricsServerSimpleFlow(test)
 }
@@ -885,9 +771,6 @@ func TestCloudStackKubernetes131RedHatCuratedPackagesClusterAutoscalerSimpleFlow
 		t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes131()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube131), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube131),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runAutoscalerWithMetricsServerSimpleFlow(test)
 }
@@ -900,9 +783,6 @@ func TestCloudStackKubernetes132RedHatCuratedPackagesClusterAutoscalerSimpleFlow
 		t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes132()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube132), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube132),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runAutoscalerWithMetricsServerSimpleFlow(test)
 }
@@ -915,9 +795,6 @@ func TestCloudStackKubernetes133RedHatCuratedPackagesClusterAutoscalerSimpleFlow
 		t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes133()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube133),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runAutoscalerWithMetricsServerSimpleFlow(test)
 }
@@ -930,9 +807,6 @@ func TestCloudStackKubernetes134RedHatCuratedPackagesClusterAutoscalerSimpleFlow
 		t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes134()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube134), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube134),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runAutoscalerWithMetricsServerSimpleFlow(test)
 }
@@ -943,9 +817,6 @@ func TestCloudStackKubernetes128RedhatCuratedPackagesPrometheusSimpleFlow(t *tes
 	test := framework.NewClusterE2ETest(t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes128()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube128),
-			"my-packages-test", EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackagesPrometheusInstallSimpleFlow(test)
 }
@@ -955,9 +826,6 @@ func TestCloudStackKubernetes129RedhatCuratedPackagesPrometheusSimpleFlow(t *tes
 	test := framework.NewClusterE2ETest(t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes129()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube129),
-			"my-packages-test", EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackagesPrometheusInstallSimpleFlow(test)
 }
@@ -967,9 +835,6 @@ func TestCloudStackKubernetes130RedhatCuratedPackagesPrometheusSimpleFlow(t *tes
 	test := framework.NewClusterE2ETest(t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes130()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube130),
-			"my-packages-test", EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackagesPrometheusInstallSimpleFlow(test)
 }
@@ -979,9 +844,6 @@ func TestCloudStackKubernetes131RedhatCuratedPackagesPrometheusSimpleFlow(t *tes
 	test := framework.NewClusterE2ETest(t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes131()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube131)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube131),
-			"my-packages-test", EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackagesPrometheusInstallSimpleFlow(test)
 }
@@ -991,9 +853,6 @@ func TestCloudStackKubernetes132RedhatCuratedPackagesPrometheusSimpleFlow(t *tes
 	test := framework.NewClusterE2ETest(t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes132()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube132)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube132),
-			"my-packages-test", EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackagesPrometheusInstallSimpleFlow(test)
 }
@@ -1003,9 +862,6 @@ func TestCloudStackKubernetes133RedhatCuratedPackagesPrometheusSimpleFlow(t *tes
 	test := framework.NewClusterE2ETest(t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes133()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube133),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackagesPrometheusInstallSimpleFlow(test)
 }
@@ -1015,9 +871,6 @@ func TestCloudStackKubernetes134RedhatCuratedPackagesPrometheusSimpleFlow(t *tes
 	test := framework.NewClusterE2ETest(t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat9Kubernetes134()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube134)),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube134),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackagesPrometheusInstallSimpleFlow(test)
 }

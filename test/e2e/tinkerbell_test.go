@@ -1357,9 +1357,6 @@ func TestTinkerbellKubernetes128UbuntuSingleNodeCuratedPackagesFlow(t *testing.T
 		framework.NewTinkerbell(t, framework.WithUbuntu128Tinkerbell()),
 		framework.WithClusterSingleNode(v1alpha1.Kube128),
 		framework.WithControlPlaneHardware(1),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube128),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackageInstallTinkerbellSingleNodeFlow(test)
 }
@@ -1369,9 +1366,6 @@ func TestTinkerbellKubernetes128UbuntuSingleNodeCuratedPackagesEmissaryFlow(t *t
 		framework.NewTinkerbell(t, framework.WithUbuntu128Tinkerbell()),
 		framework.WithClusterSingleNode(v1alpha1.Kube128),
 		framework.WithControlPlaneHardware(1),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube128),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackageEmissaryInstallTinkerbellSingleNodeFlow(test)
 }
@@ -1381,9 +1375,6 @@ func TestTinkerbellKubernetes128UbuntuSingleNodeCuratedPackagesHarborFlow(t *tes
 		framework.NewTinkerbell(t, framework.WithUbuntu128Tinkerbell()),
 		framework.WithClusterSingleNode(v1alpha1.Kube128),
 		framework.WithControlPlaneHardware(1),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube128),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackageHarborInstallTinkerbellSimpleFlow(test)
 }
@@ -1394,9 +1385,6 @@ func TestTinkerbellKubernetes128UbuntuCuratedPackagesAdotSimpleFlow(t *testing.T
 		framework.NewTinkerbell(t, framework.WithUbuntu128Tinkerbell()),
 		framework.WithClusterSingleNode(v1alpha1.Kube128),
 		framework.WithControlPlaneHardware(1),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube128),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackagesAdotInstallTinkerbellSimpleFlow(test)
 }
@@ -1407,9 +1395,6 @@ func TestTinkerbellKubernetes128UbuntuCuratedPackagesPrometheusSimpleFlow(t *tes
 		framework.NewTinkerbell(t, framework.WithUbuntu128Tinkerbell()),
 		framework.WithClusterSingleNode(v1alpha1.Kube128),
 		framework.WithControlPlaneHardware(1),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube128),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackagesPrometheusInstallTinkerbellSimpleFlow(test)
 }
@@ -1423,9 +1408,6 @@ func TestTinkerbellKubernetes128UbuntuCuratedPackagesClusterAutoscalerSimpleFlow
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
 		framework.WithControlPlaneHardware(1),
 		framework.WithWorkerHardware(2),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube128),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runAutoscalerWithMetricsServerTinkerbellSimpleFlow(test)
 }
@@ -1435,9 +1417,6 @@ func TestTinkerbellKubernetes132UbuntuSingleNodeCuratedPackagesFlow(t *testing.T
 		framework.NewTinkerbell(t, framework.WithUbuntu132Tinkerbell()),
 		framework.WithClusterSingleNode(v1alpha1.Kube132),
 		framework.WithControlPlaneHardware(1),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube132),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackageInstallTinkerbellSingleNodeFlow(test)
 }
@@ -1447,9 +1426,6 @@ func TestTinkerbellKubernetes134UbuntuSingleNodeCuratedPackagesFlow(t *testing.T
 		framework.NewTinkerbell(t, framework.WithUbuntu134Tinkerbell()),
 		framework.WithClusterSingleNode(v1alpha1.Kube134),
 		framework.WithControlPlaneHardware(1),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube134),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackageInstallTinkerbellSingleNodeFlow(test)
 }
@@ -1459,9 +1435,6 @@ func TestTinkerbellKubernetes132UbuntuSingleNodeCuratedPackagesEmissaryFlow(t *t
 		framework.NewTinkerbell(t, framework.WithUbuntu132Tinkerbell()),
 		framework.WithClusterSingleNode(v1alpha1.Kube132),
 		framework.WithControlPlaneHardware(1),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube132),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackageEmissaryInstallTinkerbellSingleNodeFlow(test)
 }
@@ -1471,9 +1444,6 @@ func TestTinkerbellKubernetes134UbuntuSingleNodeCuratedPackagesEmissaryFlow(t *t
 		framework.NewTinkerbell(t, framework.WithUbuntu134Tinkerbell()),
 		framework.WithClusterSingleNode(v1alpha1.Kube134),
 		framework.WithControlPlaneHardware(1),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube134),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackageEmissaryInstallTinkerbellSingleNodeFlow(test)
 }
@@ -1483,9 +1453,6 @@ func TestTinkerbellKubernetes132UbuntuSingleNodeCuratedPackagesHarborFlow(t *tes
 		framework.NewTinkerbell(t, framework.WithUbuntu132Tinkerbell()),
 		framework.WithClusterSingleNode(v1alpha1.Kube132),
 		framework.WithControlPlaneHardware(1),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube132),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackageHarborInstallTinkerbellSimpleFlow(test)
 }
@@ -1495,9 +1462,6 @@ func TestTinkerbellKubernetes134UbuntuSingleNodeCuratedPackagesHarborFlow(t *tes
 		framework.NewTinkerbell(t, framework.WithUbuntu134Tinkerbell()),
 		framework.WithClusterSingleNode(v1alpha1.Kube134),
 		framework.WithControlPlaneHardware(1),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube134),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackageHarborInstallTinkerbellSimpleFlow(test)
 }
@@ -1508,9 +1472,6 @@ func TestTinkerbellKubernetes132UbuntuCuratedPackagesAdotSimpleFlow(t *testing.T
 		framework.NewTinkerbell(t, framework.WithUbuntu132Tinkerbell()),
 		framework.WithClusterSingleNode(v1alpha1.Kube132),
 		framework.WithControlPlaneHardware(1),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube132),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackagesAdotInstallTinkerbellSimpleFlow(test)
 }
@@ -1521,9 +1482,6 @@ func TestTinkerbellKubernetes134UbuntuCuratedPackagesAdotSimpleFlow(t *testing.T
 		framework.NewTinkerbell(t, framework.WithUbuntu134Tinkerbell()),
 		framework.WithClusterSingleNode(v1alpha1.Kube134),
 		framework.WithControlPlaneHardware(1),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube134),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackagesAdotInstallTinkerbellSimpleFlow(test)
 }
@@ -1534,9 +1492,6 @@ func TestTinkerbellKubernetes132UbuntuCuratedPackagesPrometheusSimpleFlow(t *tes
 		framework.NewTinkerbell(t, framework.WithUbuntu132Tinkerbell()),
 		framework.WithClusterSingleNode(v1alpha1.Kube132),
 		framework.WithControlPlaneHardware(1),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube132),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackagesPrometheusInstallTinkerbellSimpleFlow(test)
 }
@@ -1547,9 +1502,6 @@ func TestTinkerbellKubernetes134UbuntuCuratedPackagesPrometheusSimpleFlow(t *tes
 		framework.NewTinkerbell(t, framework.WithUbuntu134Tinkerbell()),
 		framework.WithClusterSingleNode(v1alpha1.Kube134),
 		framework.WithControlPlaneHardware(1),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube134),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runCuratedPackagesPrometheusInstallTinkerbellSimpleFlow(test)
 }
@@ -1563,9 +1515,6 @@ func TestTinkerbellKubernetes132UbuntuCuratedPackagesClusterAutoscalerSimpleFlow
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube132), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
 		framework.WithControlPlaneHardware(1),
 		framework.WithWorkerHardware(2),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube132),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runAutoscalerWithMetricsServerTinkerbellSimpleFlow(test)
 }
@@ -1579,9 +1528,6 @@ func TestTinkerbellKubernetes134UbuntuCuratedPackagesClusterAutoscalerSimpleFlow
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube134), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
 		framework.WithControlPlaneHardware(1),
 		framework.WithWorkerHardware(2),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube134),
-			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
-			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 	)
 	runAutoscalerWithMetricsServerTinkerbellSimpleFlow(test)
 }
