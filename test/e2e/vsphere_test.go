@@ -5,7 +5,6 @@
 package e2e
 
 import (
-	"os"
 	"testing"
 
 	corev1 "k8s.io/api/core/v1"
@@ -3638,10 +3637,7 @@ func TestVSphereKubernetes133Ubuntu2204NetworksSimpleFlow(t *testing.T) {
 		framework.WithVSphereWorkerNodeGroup(
 			worker0,
 			framework.WithWorkerNodeGroup(worker0, api.WithCount(1)),
-			api.WithNetworks([]string{
-				os.Getenv("T_VSPHERE_NETWORK"),
-				os.Getenv("T_VSPHERE_SECOND_NETWORK"),
-			}),
+			framework.WithSecondNetwork(),
 		),
 	)
 	test := framework.NewClusterE2ETest(
@@ -3654,9 +3650,8 @@ func TestVSphereKubernetes133Ubuntu2204NetworksSimpleFlow(t *testing.T) {
 		),
 	)
 
-	// [todo]This part will be replaced with a flow with network validation
-	runSimpleFlowWithoutClusterConfigGeneration(test)
-
+	// Create cluster and validate the network is up
+	runSimpleFlowWithSecondNetworkValidation()
 }
 
 func TestVSphereKubernetes128Ubuntu2404SimpleFlow(t *testing.T) {

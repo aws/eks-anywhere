@@ -38,3 +38,9 @@ func runTinkerbellSimpleFlowWithoutClusterConfigGeneration(test *framework.Clust
 	test.DeleteCluster()
 	test.ValidateHardwareDecommissioned()
 }
+
+func runSimpleFlowWithSecondNetworkValidation(test *framework.ClusterE2ETest) {
+	test.CreateCluster()
+	test.ValidateNetworkUp()
+	test.DeleteCluster()
+}

@@ -26,6 +26,7 @@ const (
 	vsphereDatastoreVar         = "T_VSPHERE_DATASTORE"
 	vsphereFolderVar            = "T_VSPHERE_FOLDER"
 	vsphereNetworkVar           = "T_VSPHERE_NETWORK"
+	vsphereSecondNetworkVar     = "T_VSPHERE_SECOND_NETWORK"
 	vspherePrivateNetworkVar    = "T_VSPHERE_PRIVATE_NETWORK"
 	vsphereResourcePoolVar      = "T_VSPHERE_RESOURCE_POOL"
 	vsphereServerVar            = "T_VSPHERE_SERVER"
@@ -50,6 +51,7 @@ var requiredEnvVars = []string{
 	vsphereDatastoreVar,
 	vsphereFolderVar,
 	vsphereNetworkVar,
+	vsphereSecondNetworkVar,
 	vspherePrivateNetworkVar,
 	vsphereResourcePoolVar,
 	vsphereServerVar,
@@ -270,6 +272,14 @@ func WithBottleRocket133() VSphereOpt {
 // WithBottleRocket134 returns br 1.34 var.
 func WithBottleRocket134() VSphereOpt {
 	return withVSphereKubeVersionAndOS(anywherev1.Kube134, Bottlerocket1, nil)
+}
+
+// WithSecondNetwork returns a VSphereMachineConfigFiller that configures second network
+func WithSecondNetwork() api.VSphereMachineConfigFiller {
+	return func(machineConfig *anywherev1.VSphereMachineConfig) {
+		networks := []string{os.Getenv(vsphereNetworkVar), os.Getenv(vsphereSecondNetworkVar)}
+		machineConfig.Spec.Networks = networks
+	}
 }
 
 func WithPrivateNetwork() VSphereOpt {
