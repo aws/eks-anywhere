@@ -20,3 +20,4 @@ ignore:
   - "**/mock_*.go"
   - pkg/curatedpackages/curatedpackages.go
   - cmd/eksctl-anywhere/cmd/internal/commands/artifacts/import.go
+  - cmd/eksctl-anywhere/cmd/supportbundle.go
