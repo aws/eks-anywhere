@@ -491,6 +491,7 @@ spec:
       kind: TinkerbellMachineTemplate
       name: {{.controlPlaneTemplateName}}
       namespace: {{.eksaSystemNamespace}}
+    nodeDeletionTimeout: 30s
   replicas: {{.controlPlaneReplicas}}
 {{- if .upgradeRolloutStrategy }}
   rolloutStrategy:

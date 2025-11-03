@@ -30,6 +30,7 @@ spec:
           kind: KubeadmConfigTemplate
           name: {{.workloadkubeadmconfigTemplateName}}
       clusterName: {{.clusterName}}
+      nodeDeletionTimeout: 30s
       infrastructureRef:
         apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
         kind: TinkerbellMachineTemplate
