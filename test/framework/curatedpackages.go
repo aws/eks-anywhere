@@ -3,33 +3,7 @@ package framework
 import (
 	"os"
 	"testing"
-
-	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
-
-type PackageConfig struct {
-	*HelmInstallConfig
-	bundleURI            string
-	packageConfiguration *v1alpha1.PackageConfiguration
-}
-
-func WithPackageConfig(t *testing.T, bundleURI, chartName, chartURI,
-	chartVersion string, chartValues []string, packageConfiguration *v1alpha1.PackageConfiguration,
-) ClusterE2ETestOpt {
-	return func(e *ClusterE2ETest) {
-		e.PackageConfig = &PackageConfig{
-			HelmInstallConfig: &HelmInstallConfig{
-				chartName:    chartName,
-				chartURI:     chartURI,
-				chartVersion: chartVersion,
-				chartValues:  chartValues,
-				HelmClient:   buildHelm(t),
-			},
-			packageConfiguration: packageConfiguration,
-			bundleURI:            bundleURI,
-		}
-	}
-}
 
 const (
 	eksaPackagesSecretKey       = "EKSA_AWS_SECRET_ACCESS_KEY"
