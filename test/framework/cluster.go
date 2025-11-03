@@ -102,8 +102,6 @@ type ClusterE2ETest struct {
 	KubectlClient        *executables.Kubectl
 	GitProvider          git.ProviderClient
 	GitClient            git.Client
-	HelmInstallConfig    *HelmInstallConfig
-	PackageConfig        *PackageConfig
 	GitWriter            filewriter.FileWriter
 	eksaBinaryLocation   string
 	OSFamily             v1alpha1.OSFamily
@@ -872,10 +870,6 @@ func (e *ClusterE2ETest) generateClusterConfigYaml() []byte {
 	childObjs := e.ClusterConfig.ChildObjects()
 	yamlB := make([][]byte, 0, len(childObjs)+1)
 
-	if e.PackageConfig != nil {
-		e.ClusterConfig.Cluster.Spec.Packages = e.PackageConfig.packageConfiguration
-	}
-
 	// This is required because Flux requires a namespace be specified for objects
 	// to be able to reconcile right.
 	if e.ClusterConfig.Cluster.Namespace == "" {
@@ -1165,16 +1159,6 @@ func setEksctlVersionEnvVar() error {
 		}
 	}
 	return nil
-}
-
-func (e *ClusterE2ETest) InstallHelmChart() {
-	kubeconfig := e.KubeconfigFilePath()
-	ctx := context.Background()
-
-	err := e.HelmInstallConfig.HelmClient.InstallChart(ctx, e.HelmInstallConfig.chartName, e.HelmInstallConfig.chartURI, e.HelmInstallConfig.chartVersion, kubeconfig, "", "", false, e.HelmInstallConfig.chartValues)
-	if err != nil {
-		e.T.Fatalf("Error installing %s helm chart on the cluster: %v", e.HelmInstallConfig.chartName, err)
-	}
 }
 
 // CreateNamespace creates a namespace.

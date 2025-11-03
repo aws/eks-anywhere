@@ -7,14 +7,11 @@ import (
 )
 
 const (
-	EksaPackageControllerHelmChartName = "eks-anywhere-packages"
-	EksaPackagesRegistryMirrorAlias    = "curated-packages"
-	EksaPackagesSourceRegistry         = "public.ecr.aws/x3k6m8v0"
-	EksaPackageControllerHelmURI       = "oci://" + EksaPackagesSourceRegistry + "/eks-anywhere-packages"
-	EksaPackageControllerHelmVersion   = "0.2.20-eks-a-v0.0.0-dev-build.4894"
-	EksaPackageBundleURI               = "oci://" + EksaPackagesSourceRegistry + "/eks-anywhere-packages-bundles"
-	EksaPackagesNamespace              = "eksa-packages"
-	EksaPackagesRegistry               = "067575901363.dkr.ecr.us-west-2.amazonaws.com"
+	EksaPackagesRegistryMirrorAlias = "curated-packages"
+	EksaPackagesSourceRegistry      = "public.ecr.aws/x3k6m8v0"
+	EksaPackageBundleURI            = "oci://" + EksaPackagesSourceRegistry + "/eks-anywhere-packages-bundles"
+	EksaPackagesNamespace           = "eksa-packages"
+	EksaPackagesRegistry            = "067575901363.dkr.ecr.us-west-2.amazonaws.com"
 
 	clusterNamespace = "test-namespace"
 
@@ -51,6 +48,5 @@ const (
 )
 
 var (
-	EksaPackageControllerHelmValues = []string{"sourceRegistry=public.ecr.aws/l0g8r8j6"}
-	KubeVersions                    = []v1alpha1.KubernetesVersion{v1alpha1.Kube128, v1alpha1.Kube129, v1alpha1.Kube130, v1alpha1.Kube131, v1alpha1.Kube132, v1alpha1.Kube133, v1alpha1.Kube134}
+	KubeVersions = []v1alpha1.KubernetesVersion{v1alpha1.Kube128, v1alpha1.Kube129, v1alpha1.Kube130, v1alpha1.Kube131, v1alpha1.Kube132, v1alpha1.Kube133, v1alpha1.Kube134}
 )
