@@ -11,47 +11,7 @@ import (
 
 // ValidateNetworkUp validates that nodes have 2 different external IPs indicating both NICs are up
 func (e *ClusterE2ETest) ValidateNetworkUp() {
-
-	e.T.Log("Validating that worker nodes have 2 different external IPs (both NICs are up)")
-
-	// Get all nodes
-	nodes, err := e.getAllNodes()
-	if err != nil {
-		e.T.Fatalf("Failed to get nodes: %v", err)
-	}
-
-	for _, node := range nodes {
-		// Skip non-worker nodes (control plane nodes)
-		if !e.isWorkerNode(node) {
-			e.T.Logf("Skipping non-worker node: %s", node.Name)
-			continue
-		}
-
-		e.T.Logf("Validating network interfaces for worker node: %s", node.Name)
-
-		// Extract external IPs from node status
-		externalIPs := e.getExternalIPsFromNode(node)
-
-		if len(externalIPs) < 2 {
-			e.T.Fatalf("Node %s does not have 2 external IPs. Found %d IPs: %v",
-				node.Name, len(externalIPs), externalIPs)
-		}
-
-		// Validate that the IPs are different
-		if !e.areIPsDifferent(externalIPs) {
-			e.T.Fatalf("Node %s has duplicate external IPs: %v", node.Name, externalIPs)
-		}
-
-		e.T.Logf("Node %s has %d different external IPs: %v ✓",
-			node.Name, len(externalIPs), externalIPs)
-	}
-
-	e.T.Log("Network validation completed successfully - all nodes have multiple external IPs")
-}
-
-// ValidateNetworkUpWithWaitLoop validates network using WaitJSONPathLoop approach
-func (e *ClusterE2ETest) ValidateNetworkUpWithWaitLoop() {
-	e.T.Log("Validating network using WaitJSONPathLoop approach")
+	e.T.Log("Validating worker nodes have 2 different external IP")
 
 	// First get all node names
 	nodes, err := e.getAllNodes()
@@ -80,7 +40,24 @@ func (e *ClusterE2ETest) ValidateNetworkUpWithWaitLoop() {
 	e.T.Log("WaitLoop network validation completed successfully")
 }
 
-// Helper method to get external IPs from a node
+// Get all nodes in the cluster using kubectl
+func (e *ClusterE2ETest) getAllNodes() ([]corev1.Node, error) {
+	params := []string{"get", "nodes", "-o", "json", "--kubeconfig", e.KubeconfigFilePath()}
+	stdOut, err := e.KubectlClient.Execute(context.Background(), params...)
+	if err != nil {
+		return nil, fmt.Errorf("getting nodes: %v", err)
+	}
+
+	response := &corev1.NodeList{}
+	err = json.Unmarshal(stdOut.Bytes(), response)
+	if err != nil {
+		return nil, fmt.Errorf("unmarshaling nodes: %v", err)
+	}
+
+	return response.Items, nil
+}
+
+// Get external IPs from a node
 func (e *ClusterE2ETest) getExternalIPsFromNode(node corev1.Node) []string {
 	var externalIPs []string
 	for _, addr := range node.Status.Addresses {
@@ -91,7 +68,7 @@ func (e *ClusterE2ETest) getExternalIPsFromNode(node corev1.Node) []string {
 	return externalIPs
 }
 
-// Helper method to check if IPs are different
+// Check if IPs are different
 func (e *ClusterE2ETest) areIPsDifferent(ips []string) bool {
 	if len(ips) < 2 {
 		return false
@@ -107,23 +84,23 @@ func (e *ClusterE2ETest) areIPsDifferent(ips []string) bool {
 	return true
 }
 
-// Helper method to check if a node is a worker node
+// Check if a node is a worker node
 func (e *ClusterE2ETest) isWorkerNode(node corev1.Node) bool {
 	// Check if node has control-plane role label
 	if _, hasControlPlaneRole := node.Labels["node-role.kubernetes.io/control-plane"]; hasControlPlaneRole {
 		return false
 	}
 
-	// Check for legacy master role label
-	if _, hasMasterRole := node.Labels["node-role.kubernetes.io/master"]; hasMasterRole {
+	// Check for etcd role label
+	if _, hasEtcdRole := node.Labels["node-role.kubernetes.io/etcd"]; hasEtcdRole {
 		return false
 	}
 
-	// If it doesn't have control-plane or master role, it's a worker node
+	// If it doesn't have control-plane or etcd role, it's a worker node
 	return true
 }
 
-// Helper method to wait for multiple external IPs using a custom approach
+// Wait for multiple external IPs using a custom approach
 func (e *ClusterE2ETest) waitForMultipleExternalIPs(nodeName, timeout string) error {
 	// Parse timeout
 	timeoutDuration, err := time.ParseDuration(timeout)
@@ -168,21 +145,4 @@ func (e *ClusterE2ETest) waitForMultipleExternalIPs(nodeName, timeout string) er
 	}
 
 	return fmt.Errorf("timeout waiting for node %s to have multiple external IPs", nodeName)
-}
-
-// Helper method to get all nodes in the cluster using kubectl
-func (e *ClusterE2ETest) getAllNodes() ([]corev1.Node, error) {
-	params := []string{"get", "nodes", "-o", "json", "--kubeconfig", e.KubeconfigFilePath()}
-	stdOut, err := e.KubectlClient.Execute(context.Background(), params...)
-	if err != nil {
-		return nil, fmt.Errorf("getting nodes: %v", err)
-	}
-
-	response := &corev1.NodeList{}
-	err = json.Unmarshal(stdOut.Bytes(), response)
-	if err != nil {
-		return nil, fmt.Errorf("unmarshaling nodes: %v", err)
-	}
-
-	return response.Items, nil
 }
