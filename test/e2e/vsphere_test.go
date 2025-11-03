@@ -3651,7 +3651,7 @@ func TestVSphereKubernetes133Ubuntu2204NetworksSimpleFlow(t *testing.T) {
 	)
 
 	// Create cluster and validate the network is up
-	runSimpleFlowWithSecondNetworkValidation()
+	runSimpleFlowWithSecondNetworkValidation(test)
 }
 
 func TestVSphereKubernetes128Ubuntu2404SimpleFlow(t *testing.T) {
