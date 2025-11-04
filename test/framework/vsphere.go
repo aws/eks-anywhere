@@ -274,7 +274,7 @@ func WithBottleRocket134() VSphereOpt {
 	return withVSphereKubeVersionAndOS(anywherev1.Kube134, Bottlerocket1, nil)
 }
 
-// WithSecondNetwork returns a VSphereMachineConfigFiller that configures second network
+// WithSecondNetwork returns a VSphereMachineConfigFiller that configures second network.
 func WithSecondNetwork() api.VSphereMachineConfigFiller {
 	return func(machineConfig *anywherev1.VSphereMachineConfig) {
 		networks := []string{os.Getenv(vsphereNetworkVar), os.Getenv(vsphereSecondNetworkVar)}
