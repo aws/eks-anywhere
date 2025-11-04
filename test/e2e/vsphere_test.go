@@ -3634,6 +3634,7 @@ func TestVSphereKubernetes133Ubuntu2204SimpleFlow(t *testing.T) {
 func TestVSphereKubernetes133Ubuntu2204NetworksSimpleFlow(t *testing.T) {
 	licenseToken := framework.GetLicenseToken()
 	provider := framework.NewVSphere(t,
+		// Add worker node group with second network config
 		framework.WithVSphereWorkerNodeGroup(
 			worker0,
 			framework.WithWorkerNodeGroup(worker0, api.WithCount(1)),
@@ -3647,6 +3648,8 @@ func TestVSphereKubernetes133Ubuntu2204NetworksSimpleFlow(t *testing.T) {
 		provider.WithKubeVersionAndOS(v1alpha1.Kube133, framework.Ubuntu2204, nil),
 		api.ClusterToConfigFiller(
 			api.WithLicenseToken(licenseToken),
+			// Remove the default workernode group md-0
+			api.RemoveWorkerNodeGroup(nodeGroupLabel1),
 		),
 	)
 
