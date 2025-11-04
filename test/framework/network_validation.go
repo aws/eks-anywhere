@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	clusterv2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
@@ -27,10 +28,12 @@ func (e *ClusterE2ETest) ValidateNetworkUp(workerNodeWithSecondNetwork string) {
 		}
 
 		// Only validate machines that contain the specified worker node name (the workernode group that has second NIC)
-		// if !strings.Contains(machine.Name, workerNodeWithSecondNetwork) {
-		// 	e.T.Logf("Skipping worker machine without '%s' in name: %s", workerNodeWithSecondNetwork, machine.Name)
-		// 	continue
-		// }
+		if !strings.Contains(machine.Name, workerNodeWithSecondNetwork) {
+			e.T.Logf("Skipping worker machine without '%s' in name: %s", workerNodeWithSecondNetwork, machine.Name)
+			continue
+		} else {
+			e.T.Logf("Worker machine %s need to have 2 IPs", machine.Name)
+		}
 
 		e.T.Logf("Waiting for worker machine %s to have multiple external IPs", machine.Name)
 
@@ -44,6 +47,7 @@ func (e *ClusterE2ETest) ValidateNetworkUp(workerNodeWithSecondNetwork string) {
 	}
 
 	e.T.Log("Machine network validation completed successfully")
+	e.T.Fatalf("THe test actually pass")
 }
 
 // Get all machines in the cluster using kubectl
