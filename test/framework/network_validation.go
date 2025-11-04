@@ -10,7 +10,7 @@ import (
 	clusterv2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 )
 
-// ValidateNetworkUpUsingMachines validates that worker machines have 2 different external IPs indicating both NICs are up
+// ValidateNetworkUpUsingMachines validates that worker machines have 2 different external IPs indicating both NICs are up.
 func (e *ClusterE2ETest) ValidateNetworkUp(workerNodeWithSecondNetwork string) {
 	e.T.Log("Validating worker machines have 2 different external IPs")
 
@@ -27,7 +27,7 @@ func (e *ClusterE2ETest) ValidateNetworkUp(workerNodeWithSecondNetwork string) {
 			continue
 		}
 
-		// Only validate machines that contain the specified worker node name (the workernode group that has second NIC)
+		// Only validate machines that contain the specified worker node name (the workernode group that has second NIC).
 		if !strings.Contains(machine.Name, workerNodeWithSecondNetwork) {
 			e.T.Logf("Skipping worker machine without '%s' in name: %s", workerNodeWithSecondNetwork, machine.Name)
 			continue
@@ -49,7 +49,7 @@ func (e *ClusterE2ETest) ValidateNetworkUp(workerNodeWithSecondNetwork string) {
 	e.T.Log("Machine network validation completed successfully")
 }
 
-// Get all machines in the cluster using kubectl
+// Get all machines in the cluster using kubectl.
 func (e *ClusterE2ETest) getAllMachines() ([]clusterv2.Machine, error) {
 	params := []string{"get", "machines.cluster.x-k8s.io", "-o", "json", "--kubeconfig", e.KubeconfigFilePath(), "-n", "eksa-system"}
 	stdOut, err := e.KubectlClient.Execute(context.Background(), params...)
@@ -66,7 +66,7 @@ func (e *ClusterE2ETest) getAllMachines() ([]clusterv2.Machine, error) {
 	return response.Items, nil
 }
 
-// Get external IPs from machine.c
+// Get external IPs from machine.c.
 func (e *ClusterE2ETest) getExternalIPsFromMachine(machine clusterv2.Machine) []string {
 	var externalIPs []string
 	for _, addr := range machine.Status.Addresses {
@@ -77,7 +77,7 @@ func (e *ClusterE2ETest) getExternalIPsFromMachine(machine clusterv2.Machine) []
 	return externalIPs
 }
 
-// Check if IPs are different
+// Check if IPs are different.
 func (e *ClusterE2ETest) areIPsDifferent(ips []string) bool {
 	if len(ips) < 2 {
 		return false
@@ -86,14 +86,14 @@ func (e *ClusterE2ETest) areIPsDifferent(ips []string) bool {
 	seen := make(map[string]bool)
 	for _, ip := range ips {
 		if seen[ip] {
-			return false // Found duplicate
+			return false
 		}
 		seen[ip] = true
 	}
 	return true
 }
 
-// Check if a machine is a worker machine
+// Check if a machine is a worker machine.
 func (e *ClusterE2ETest) isWorkerMachine(machine clusterv2.Machine) bool {
 	// Check machine labels for control plane or etcd roles
 	if _, hasControlPlaneLabel := machine.Labels["cluster.x-k8s.io/control-plane"]; hasControlPlaneLabel {
@@ -113,7 +113,7 @@ func (e *ClusterE2ETest) isWorkerMachine(machine clusterv2.Machine) bool {
 	return true
 }
 
-// Wait for multiple external IPs on a machine
+// Wait for multiple external IPs on a machine.
 func (e *ClusterE2ETest) waitForMultipleExternalIPsOnMachine(machineName, timeout string) error {
 	// Parse timeout
 	timeoutDuration, err := time.ParseDuration(timeout)
@@ -124,13 +124,7 @@ func (e *ClusterE2ETest) waitForMultipleExternalIPsOnMachine(machineName, timeou
 	deadline := time.Now().Add(timeoutDuration)
 
 	for time.Now().Before(deadline) {
-		// Get the specific machine
-		output, err := e.KubectlClient.ExecuteCommand(context.Background(),
-			"get", "machine.cluster.x-k8s.io", machineName,
-			"-o", "json",
-			"--kubeconfig", e.KubeconfigFilePath(),
-			"-n", "eksa-system")
-
+		output, err := e.KubectlClient.ExecuteCommand(context.Background(), "get", "machine.cluster.x-k8s.io", machineName, "-o", "json", "--kubeconfig", e.KubeconfigFilePath(), "-n", "eksa-system")
 		if err != nil {
 			e.T.Logf("Failed to get machine %s, retrying: %v", machineName, err)
 			time.Sleep(10 * time.Second)
