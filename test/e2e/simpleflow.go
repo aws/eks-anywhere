@@ -38,3 +38,10 @@ func runTinkerbellSimpleFlowWithoutClusterConfigGeneration(test *framework.Clust
 	test.DeleteCluster()
 	test.ValidateHardwareDecommissioned()
 }
+
+// runSimpleFlowWithSecondNetworkValidation runs the Create and Delete cluster flows and validate the cluster with 2 interfaces get 2 IPs
+func runSimpleFlowWithSecondNetworkValidation(test *framework.ClusterE2ETest, workerNodeWithSecondNetwork string) {
+	test.CreateCluster()
+	test.ValidateNetworkUp(workerNodeWithSecondNetwork)
+	test.DeleteCluster()
+}
