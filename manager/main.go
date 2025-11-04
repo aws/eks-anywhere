@@ -28,9 +28,9 @@ import (
 	clusterctlv1 "sigs.k8s.io/cluster-api/cmd/clusterctl/api/v1alpha3"
 	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1"
 	dockerv1beta2 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta2"
+	capiflags "sigs.k8s.io/cluster-api/util/flags"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
-	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	"github.com/aws/eks-anywhere/controllers"
@@ -73,11 +73,11 @@ func init() {
 }
 
 type config struct {
-	metricsAddr          string
 	enableLeaderElection bool
 	probeAddr            string
 	gates                []string
 	logging              *logsv1.LoggingConfiguration
+	managerOptions       capiflags.ManagerOptions
 }
 
 func newConfig() *config {
@@ -93,14 +93,16 @@ func newConfig() *config {
 func initFlags(fs *pflag.FlagSet, config *config) {
 	logsv1.AddFlags(config.logging, fs)
 
-	fs.StringVar(&config.metricsAddr, "metrics-bind-address", "localhost:8080", "The address the metric endpoint binds to.")
 	fs.StringVar(&config.probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	fs.BoolVar(&config.enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
 	fs.StringSliceVar(&config.gates, "feature-gates", []string{}, "A set of key=value pairs that describe feature gates for alpha/experimental features. ")
+	capiflags.AddManagerOptions(fs, &config.managerOptions)
 }
 
+// +kubebuilder:rbac:groups=authentication.k8s.io,resources=tokenreviews,verbs=create
+// +kubebuilder:rbac:groups=authorization.k8s.io,resources=subjectaccessreviews,verbs=create
 func main() {
 	config := newConfig()
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
@@ -122,11 +124,15 @@ func main() {
 
 	features.FeedGates(config.gates)
 
+	_, metricsServerOpts, err := capiflags.GetManagerOptions(config.managerOptions)
+	if err != nil {
+		setupLog.Error(err, "Unable to start manager: invalid metrics server flags")
+		os.Exit(1)
+	}
+
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme: scheme,
-		Metrics: server.Options{
-			BindAddress: config.metricsAddr,
-		},
+		Scheme:  scheme,
+		Metrics: *metricsServerOpts,
 		WebhookServer: webhook.NewServer(webhook.Options{
 			Port: 9443,
 		}),
