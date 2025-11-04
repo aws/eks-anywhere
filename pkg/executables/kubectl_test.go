@@ -3763,9 +3763,10 @@ func TestRunCurlPod(t *testing.T) {
 	t.Parallel()
 	tt := newKubectlTest(t)
 	var b bytes.Buffer
-	expectedParam := []string{"run", "testpod-123", "--image=public.ecr.aws/eks-anywhere/diagnostic-collector:v0.16.2-eks-a-41", "-o", "json", "--kubeconfig", "c.kubeconfig", "--namespace", "eksa-packages", "--restart=Never", "--", "pwd"}
+	testImage := "public.ecr.aws/eks-anywhere/diagnostic-collector:v0.16.2-eks-a-41"
+	expectedParam := []string{"run", "testpod-123", "--image=" + testImage, "-o", "json", "--kubeconfig", "c.kubeconfig", "--namespace", "eksa-packages", "--restart=Never", "--", "pwd"}
 	tt.e.EXPECT().Execute(gomock.Any(), gomock.Eq(expectedParam)).Return(b, nil).AnyTimes()
-	if _, err := tt.k.RunCurlPod(tt.ctx, "eksa-packages", "testpod-123", tt.cluster.KubeconfigFile, []string{"pwd"}); err != nil {
+	if _, err := tt.k.RunCurlPod(tt.ctx, "eksa-packages", "testpod-123", tt.cluster.KubeconfigFile, testImage, []string{"pwd"}); err != nil {
 		t.Errorf("Kubectl.RunCurlPod() error = %v, want nil", err)
 	}
 }
