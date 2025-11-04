@@ -3648,13 +3648,13 @@ func TestVSphereKubernetes133Ubuntu2204NetworksSimpleFlow(t *testing.T) {
 		provider.WithKubeVersionAndOS(v1alpha1.Kube133, framework.Ubuntu2204, nil),
 		api.ClusterToConfigFiller(
 			api.WithLicenseToken(licenseToken),
-			// Remove the default workernode group md-0
-			api.RemoveWorkerNodeGroup(nodeGroupLabel1),
+			api.RemoveAllWorkerNodeGroups(),
+			api.WithWorkerNodeGroup(worker0, api.WithCount(1)),
 		),
 	)
 
 	// Create cluster and validate the network is up
-	runSimpleFlowWithSecondNetworkValidation(test)
+	runSimpleFlowWithSecondNetworkValidation(test, worker0)
 }
 
 func TestVSphereKubernetes128Ubuntu2404SimpleFlow(t *testing.T) {
