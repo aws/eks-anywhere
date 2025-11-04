@@ -2188,10 +2188,22 @@ func (e *ClusterE2ETest) ApplyPackageFile(packageName, targetNamespace string, P
 func (e *ClusterE2ETest) CurlEndpoint(endpoint, namespace string, extraCurlArgs ...string) string {
 	ctx := context.Background()
 
+	// Fetch the bundle to get the diagnostic collector image
+	bundleName := e.ClusterConfig.Cluster.Spec.BundlesRef.Name
+	bundleNamespace := e.ClusterConfig.Cluster.Spec.BundlesRef.Namespace
+	bundle, err := e.KubectlClient.GetBundles(ctx, e.KubeconfigFilePath(), bundleName, bundleNamespace)
+	if err != nil {
+		e.T.Fatalf("failed to get bundle: %v", err)
+	}
+
+	// Extract the diagnostic collector image
+	diagnosticCollectorImage := bundle.Spec.VersionsBundles[0].Eksa.DiagnosticCollector.VersionedImage()
+
 	e.T.Log("Launching pod to curl endpoint", endpoint)
 	randomname := fmt.Sprintf("%s-%s", "curl-test", utilrand.String(7))
 	curlPodName, err := e.KubectlClient.RunCurlPod(context.TODO(),
-		namespace, randomname, e.KubeconfigFilePath(), append([]string{"curl", endpoint}, extraCurlArgs...))
+		namespace, randomname, e.KubeconfigFilePath(), diagnosticCollectorImage,
+		append([]string{"curl", endpoint}, extraCurlArgs...))
 	if err != nil {
 		e.T.Fatalf("error launching pod: %s", err)
 	}
