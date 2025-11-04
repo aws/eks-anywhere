@@ -10,7 +10,7 @@ import (
 )
 
 // ValidateNetworkUpUsingMachines validates that worker machines have 2 different external IPs indicating both NICs are up
-func (e *ClusterE2ETest) ValidateNetworkUpUsingMachines(workerNodeWithSecondNetwork string) {
+func (e *ClusterE2ETest) ValidateNetworkUp(workerNodeWithSecondNetwork string) {
 	e.T.Log("Validating worker machines have 2 different external IPs")
 
 	// Get all machines.c
