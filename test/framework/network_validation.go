@@ -47,7 +47,6 @@ func (e *ClusterE2ETest) ValidateNetworkUp(workerNodeWithSecondNetwork string) {
 	}
 
 	e.T.Log("Machine network validation completed successfully")
-	e.T.Fatalf("THe test actually pass")
 }
 
 // Get all machines in the cluster using kubectl
@@ -67,7 +66,7 @@ func (e *ClusterE2ETest) getAllMachines() ([]clusterv2.Machine, error) {
 	return response.Items, nil
 }
 
-// Get external IPs from a machine.c
+// Get external IPs from machine.c
 func (e *ClusterE2ETest) getExternalIPsFromMachine(machine clusterv2.Machine) []string {
 	var externalIPs []string
 	for _, addr := range machine.Status.Addresses {
@@ -101,7 +100,7 @@ func (e *ClusterE2ETest) isWorkerMachine(machine clusterv2.Machine) bool {
 		return false
 	}
 
-	if _, hasEtcdLabel := machine.Labels["cluster.x-k8s.io/etcd"]; hasEtcdLabel {
+	if _, hasEtcdLabel := machine.Labels["cluster.x-k8s.io/etcd-cluster"]; hasEtcdLabel {
 		return false
 	}
 
@@ -154,7 +153,7 @@ func (e *ClusterE2ETest) waitForMultipleExternalIPsOnMachine(machineName, timeou
 			return nil
 		}
 
-		e.T.Logf("Machine %s has %d external IPs, waiting for 2+ different IPs: %v",
+		e.T.Logf("Machine %s has %d external IPs, waiting for 2 different IPs: %v",
 			machineName, len(externalIPs), externalIPs)
 		time.Sleep(10 * time.Second)
 	}
