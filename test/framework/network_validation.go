@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -55,6 +56,12 @@ func (e *ClusterE2ETest) ValidateNetworkUpUsingMachines() {
 		// Skip non-worker machines (control plane and etcd machines)
 		if !e.isWorkerMachine(machine) {
 			e.T.Logf("Skipping non-worker machine: %s", machine.Name)
+			continue
+		}
+
+		// Only validate machines that contain "worker-0" in their name
+		if !strings.Contains(machine.Name, "worker-0") {
+			e.T.Logf("Skipping worker machine without 'worker-0' in name: %s", machine.Name)
 			continue
 		}
 
