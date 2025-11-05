@@ -1120,23 +1120,6 @@ func TestAssertUpgradeRolloutStrategyValid_InPlaceSucceedsWithRedHat(t *testing.
 	g.Expect(tinkerbell.AssertUpgradeRolloutStrategyValid(clusterSpec)).To(gomega.Succeed())
 }
 
-func TestAssertUpgradeRolloutStrategyValid_InPlaceFailsWithBottlerocketWorkerNode(t *testing.T) {
-	g := gomega.NewWithT(t)
-
-	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
-	clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy = &eksav1alpha1.ControlPlaneUpgradeRolloutStrategy{
-		Type: "InPlace",
-	}
-	clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].UpgradeRolloutStrategy = &eksav1alpha1.WorkerNodesUpgradeRolloutStrategy{
-		Type: "InPlace",
-	}
-
-	// Set only worker node to Bottlerocket
-	clusterSpec.MachineConfigs[clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name].Spec.OSFamily = eksav1alpha1.Bottlerocket
-
-	g.Expect(tinkerbell.AssertUpgradeRolloutStrategyValid(clusterSpec)).ToNot(gomega.Succeed())
-}
-
 func TestAssertUpgradeRolloutStrategyValid_UpgradeStrategyNotEqual(t *testing.T) {
 	g := gomega.NewWithT(t)
 

@@ -7928,9 +7928,9 @@ func TestVSphereKubernetes128UbuntuTo129InPlaceUpgrade_1CP_3Worker(t *testing.T)
 	)
 }
 
-func TestVSphereKubernetes132UbuntuTo133InPlaceUpgrade_1CP_1Worker(t *testing.T) {
+func TestVSphereKubernetes133UbuntuTo134InPlaceUpgrade_1CP_1Worker(t *testing.T) {
 	licenseToken := framework.GetLicenseToken()
-	provider := framework.NewVSphere(t, framework.WithUbuntu132())
+	provider := framework.NewVSphere(t, framework.WithUbuntu133())
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
@@ -7944,13 +7944,39 @@ func TestVSphereKubernetes132UbuntuTo133InPlaceUpgrade_1CP_1Worker(t *testing.T)
 			api.WithLicenseToken(licenseToken),
 		),
 		api.VSphereToConfigFiller(api.RemoveEtcdVsphereMachineConfig()),
-		provider.WithKubeVersionAndOS(v1alpha1.Kube132, framework.Ubuntu2004, nil),
+		provider.WithKubeVersionAndOS(v1alpha1.Kube133, framework.Ubuntu2004, nil),
 	)
 
 	runInPlaceUpgradeFlow(
 		test,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube133)),
-		provider.WithProviderUpgrade(provider.Ubuntu133Template()),
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube134)),
+		provider.WithProviderUpgrade(provider.Ubuntu134Template()),
+	)
+}
+
+func TestVSphereKubernetes133RedHat9To134InPlaceUpgrade_1CP_1Worker(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	provider := framework.NewVSphere(t, framework.WithRedHat9133VSphere())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithEnvVar(features.VSphereInPlaceEnvVar, "true"),
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+			api.WithStackedEtcdTopology(),
+			api.WithInPlaceUpgradeStrategy(),
+			api.WithLicenseToken(licenseToken),
+		),
+		api.VSphereToConfigFiller(api.RemoveEtcdVsphereMachineConfig()),
+		provider.WithKubeVersionAndOS(v1alpha1.Kube133, framework.RedHat9, nil),
+	)
+
+	runInPlaceUpgradeFlow(
+		test,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube134)),
+		provider.WithProviderUpgrade(provider.Redhat9134Template()),
 	)
 }
 
