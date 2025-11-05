@@ -1080,9 +1080,59 @@ func TestAssertUpgradeRolloutStrategyValid_InPlaceFails(t *testing.T) {
 	}
 
 	for _, mc := range clusterSpec.MachineConfigs {
-		// InPlace upgrades are only supported on the Ubuntu OS family
+		// Bottlerocket does not support InPlace upgrades
 		mc.Spec.OSFamily = eksav1alpha1.Bottlerocket
 	}
+
+	g.Expect(tinkerbell.AssertUpgradeRolloutStrategyValid(clusterSpec)).ToNot(gomega.Succeed())
+}
+
+func TestAssertUpgradeRolloutStrategyValid_InPlaceSucceedsWithUbuntu(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy = &eksav1alpha1.ControlPlaneUpgradeRolloutStrategy{
+		Type: "InPlace",
+	}
+	clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].UpgradeRolloutStrategy = &eksav1alpha1.WorkerNodesUpgradeRolloutStrategy{
+		Type: "InPlace",
+	}
+
+	// Default builder uses Ubuntu, so this should succeed
+	g.Expect(tinkerbell.AssertUpgradeRolloutStrategyValid(clusterSpec)).To(gomega.Succeed())
+}
+
+func TestAssertUpgradeRolloutStrategyValid_InPlaceSucceedsWithRedHat(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy = &eksav1alpha1.ControlPlaneUpgradeRolloutStrategy{
+		Type: "InPlace",
+	}
+	clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].UpgradeRolloutStrategy = &eksav1alpha1.WorkerNodesUpgradeRolloutStrategy{
+		Type: "InPlace",
+	}
+
+	for _, mc := range clusterSpec.MachineConfigs {
+		mc.Spec.OSFamily = eksav1alpha1.RedHat
+	}
+
+	g.Expect(tinkerbell.AssertUpgradeRolloutStrategyValid(clusterSpec)).To(gomega.Succeed())
+}
+
+func TestAssertUpgradeRolloutStrategyValid_InPlaceFailsWithBottlerocketWorkerNode(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy = &eksav1alpha1.ControlPlaneUpgradeRolloutStrategy{
+		Type: "InPlace",
+	}
+	clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].UpgradeRolloutStrategy = &eksav1alpha1.WorkerNodesUpgradeRolloutStrategy{
+		Type: "InPlace",
+	}
+
+	// Set only worker node to Bottlerocket
+	clusterSpec.MachineConfigs[clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name].Spec.OSFamily = eksav1alpha1.Bottlerocket
 
 	g.Expect(tinkerbell.AssertUpgradeRolloutStrategyValid(clusterSpec)).ToNot(gomega.Succeed())
 }
