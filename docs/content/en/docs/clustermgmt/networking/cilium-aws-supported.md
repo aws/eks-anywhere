@@ -3,7 +3,7 @@ title: "Cilium supported by AWS"
 linkTitle: "Cilium supported by AWS"
 weight: 40
 description: >
-  How to implement and manage versions of the Cilium CNI build maintained by AWS for EKS Anywhere clusters
+  How to install and manage versions of the Cilium CNI build maintained by AWS for EKS Anywhere clusters
 ---
 
 ## Overview
