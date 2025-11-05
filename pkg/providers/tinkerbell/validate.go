@@ -71,8 +71,8 @@ func validateUpgradeRolloutStrategy(spec *ClusterSpec) error {
 		controlPlaneRef := spec.ControlPlaneConfiguration().MachineGroupRef
 		controlPlaneOsFamily := spec.MachineConfigs[controlPlaneRef.Name].OSFamily()
 
-		if controlPlaneOsFamily != v1alpha1.Ubuntu && cpUpgradeRolloutStrategyType == v1alpha1.InPlaceStrategyType {
-			return errors.New("InPlace upgrades are only supported on the Ubuntu OS family")
+		if controlPlaneOsFamily == v1alpha1.Bottlerocket && cpUpgradeRolloutStrategyType == v1alpha1.InPlaceStrategyType {
+			return fmt.Errorf("InPlace upgrades are not supported for OS family %s", controlPlaneOsFamily)
 		}
 	}
 
@@ -82,8 +82,9 @@ func validateUpgradeRolloutStrategy(spec *ClusterSpec) error {
 
 		if group.UpgradeRolloutStrategy != nil {
 			wnUpgradeRolloutStrategyType = group.UpgradeRolloutStrategy.Type
-			if spec.MachineConfigs[groupRef.Name].OSFamily() != v1alpha1.Ubuntu && wnUpgradeRolloutStrategyType == v1alpha1.InPlaceStrategyType {
-				return errors.New("InPlace upgrades are only supported on the Ubuntu OS family")
+			workerOsFamily := spec.MachineConfigs[groupRef.Name].OSFamily()
+			if workerOsFamily == v1alpha1.Bottlerocket && wnUpgradeRolloutStrategyType == v1alpha1.InPlaceStrategyType {
+				return fmt.Errorf("InPlace upgrades are not supported for OS family %s", workerOsFamily)
 			}
 		}
 		if wnUpgradeRolloutStrategyType != cpUpgradeRolloutStrategyType {
