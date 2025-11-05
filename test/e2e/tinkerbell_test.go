@@ -1318,6 +1318,39 @@ func TestTinkerbellKubernetes133UbuntuTo134SingleNodeInPlaceUpgrade(t *testing.T
 	)
 }
 
+func TestTinkerbellKubernetes133RedHat9To134SingleNodeInPlaceUpgrade(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	provider := framework.NewTinkerbell(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterSingleNode(v1alpha1.Kube133),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithEtcdCountIfExternal(0)),
+		framework.WithClusterFiller(api.RemoveAllWorkerNodeGroups()),
+		framework.WithClusterFiller(api.WithInPlaceUpgradeStrategy()),
+		framework.WithControlPlaneHardware(1),
+	).WithClusterConfig(
+		provider.WithKubeVersionAndOS(v1alpha1.Kube133, framework.RedHat9, nil),
+		api.ClusterToConfigFiller(
+			api.WithLicenseToken(licenseToken),
+		),
+	)
+	runInPlaceUpgradeFlowForBareMetal(
+		test,
+		framework.WithUpgradeClusterConfig(
+			api.ClusterToConfigFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube134),
+				api.WithInPlaceUpgradeStrategy(),
+			),
+			api.TinkerbellToConfigFiller(
+				api.RemoveTinkerbellWorkerMachineConfig(),
+			),
+		),
+		provider.WithProviderUpgrade(framework.RedHat9Kubernetes134Image()),
+	)
+}
+
 func TestTinkerbellKubernetes132UbuntuTo133SingleNodeInPlaceUpgrade(t *testing.T) {
 	licenseToken := framework.GetLicenseToken()
 	provider := framework.NewTinkerbell(t)

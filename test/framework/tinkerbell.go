@@ -654,6 +654,11 @@ func Ubuntu2404Kubernetes134GenericImage() api.TinkerbellFiller {
 	return imageForKubeVersionAndOS(anywherev1.Kube134, Ubuntu2404, "", "GENERIC")
 }
 
+// RedHat9Kubernetes134Image represents a RedHat 9 raw image corresponding to Kubernetes 1.34.
+func RedHat9Kubernetes134Image() api.TinkerbellFiller {
+	return imageForKubeVersionAndOS(anywherev1.Kube134, RedHat9, "")
+}
+
 // HookIsoURLOverride returns the Hook ISO URL from the environment variable.
 func HookIsoURLOverride() string {
 	return os.Getenv(tinkerbellHookIsoURLEnvVar)
