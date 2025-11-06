@@ -277,17 +277,17 @@ func (r *Reconciler) ensureOwnerReferences(ctx context.Context, log logr.Logger,
 
 	// Set owner references on ClusterResourceSets
 	if err := r.setOwnerReferencesOnObjects(ctx, log, capiCluster, toClientObjects(cp.ClusterResourceSets)); err != nil {
-		return fmt.Errorf("setting owner references on ClusterResourceSets: %w", err)
+		return fmt.Errorf("failed setting owner references on ClusterResourceSets: %w", err)
 	}
 
 	// Set owner references on ConfigMaps
 	if err := r.setOwnerReferencesOnObjects(ctx, log, capiCluster, toClientObjects(cp.ConfigMaps)); err != nil {
-		return fmt.Errorf("setting owner references on ConfigMaps: %w", err)
+		return fmt.Errorf("failed setting owner references on ConfigMaps: %w", err)
 	}
 
 	// Set owner references on Secrets
 	if err := r.setOwnerReferencesOnObjects(ctx, log, capiCluster, toClientObjects(cp.Secrets)); err != nil {
-		return fmt.Errorf("setting owner references on Secrets: %w", err)
+		return fmt.Errorf("failed setting owner references on Secrets: %w", err)
 	}
 
 	return nil
@@ -327,7 +327,7 @@ func (r *Reconciler) setOwnerReferencesOnObjects(ctx context.Context, log logr.L
 
 		// Set the owner reference
 		if err := controllerutil.SetOwnerReference(owner, currentObj, r.client.Scheme()); err != nil {
-			return fmt.Errorf("setting owner reference on %s %s: %w", currentObj.GetObjectKind().GroupVersionKind().Kind, currentObj.GetName(), err)
+			return fmt.Errorf("failed setting owner reference on %s %s: %w", currentObj.GetObjectKind().GroupVersionKind().Kind, currentObj.GetName(), err)
 		}
 
 		// Update the object with the new owner reference
