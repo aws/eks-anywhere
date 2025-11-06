@@ -140,8 +140,8 @@ eksa:
 kube:
 - version: '1.34'
   releasedIn: '0.24'
-  endOfStandardSupport: 2026-12-02
-  endOfExtendedSupport: 2027-12-02
+  endOfStandardSupport: 2026-12-31
+  endOfExtendedSupport: 2027-12-31
 
 - version: '1.33'
   releasedIn: '0.23'
