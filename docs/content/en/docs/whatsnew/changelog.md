@@ -41,6 +41,34 @@ description: >
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
 
+## [v0.23.5](https://github.com/aws/eks-anywhere/releases/tag/v0.23.5)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.50.0 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+
+\* RHEL 8's kernel version (4.18) is not supported by kubeadm for Kubernetes versions 1.32 and above (see Kubernetes GitHub issue [#129462](https://github.com/kubernetes/kubernetes/issues/129462)). As a result, EKS Anywhere does not support using RHEL 8 as the node operating system for Kubernetes versions 1.32 and above.
+
+### Changed
+- Runc: `v1.1.15` to `1.3.3` ([CVE-2025-31133](https://github.com/opencontainers/runc/security/advisories/GHSA-9493-h29p-rfm2), [CVE-2025-52565](https://github.com/opencontainers/runc/security/advisories/GHSA-qw9x-cqr3-wc7r), [CVE-2025-52881](https://github.com/opencontainers/runc/security/advisories/GHSA-cgrx-mc8f-2prm))
+- cloud-provider-nutanix `v0.5.2` to `v0.5.3`
+- cluster-api-provider-nutanix `v1.6.1` to `v1.6.2`
+- cloud-provider-vsphere 1-33 `v1.33.0` to `v1.33.1`
+- cloud-provider-vsphere 1-32 `v1.32.2` to `v1.32.3`
+- cluster-api-provider-aws-snow `v0.2.6` to `v0.2.7`
+- Upgraded tinkerbell/ipxedust and tinkerbell/rufio to latest versions
+
+### Added
+- Enable support for in-place upgrades on RedHat for Bare Metal clusters [#10290](https://github.com/aws/eks-anywhere/pull/10290)
+
+### Fixed
+- Collect management cluster support bundle as well when target is a workload cluster [#10277](https://github.com/aws/eks-anywhere/pull/10277)
+
 ## [v0.23.4](https://github.com/aws/eks-anywhere/releases/tag/v0.23.4)
 
 ### Supported OS version details
@@ -48,7 +76,7 @@ description: >
 |:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
 |    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
 |    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
-| Bottlerocket 1.33.0 |    ✔    |     —      |    —    |     —      |  —   |
+| Bottlerocket 1.46.0 |    ✔    |     —      |    —    |     —      |  —   |
 |      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
 |      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
 
@@ -80,7 +108,7 @@ description: >
 |:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
 |    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
 |    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
-| Bottlerocket 1.33.0 |    ✔    |     —      |    —    |     —      |  —   |
+| Bottlerocket 1.46.0 |    ✔    |     —      |    —    |     —      |  —   |
 |      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
 |      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
 
@@ -111,7 +139,7 @@ description: >
 |:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
 |    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
 |    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
-| Bottlerocket 1.33.0 |    ✔    |     —      |    —    |     —      |  —   |
+| Bottlerocket 1.40.0 |    ✔    |     —      |    —    |     —      |  —   |
 |      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
 |      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
 
