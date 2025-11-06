@@ -13,14 +13,11 @@ description: >
 
 EKS Anywhere supports configuring [AWS IAM Authenticator](https://github.com/kubernetes-sigs/aws-iam-authenticator) as an authentication provider for clusters.
 
-When you create a cluster with IAM Authenticator enabled, EKS Anywhere 
+When you enable IAM Authenticator on a cluster, EKS Anywhere 
 * Installs `aws-iam-authenticator` server as a DaemonSet on the workload cluster.
 * Configures the Kubernetes API Server to communicate with iam authenticator using a [token authentication webhook](https://kubernetes.io/docs/admin/authentication/#webhook-token-authentication).
 * Creates the necessary ConfigMaps based on user options.
 
-{{% alert title="Note" color="primary" %}}
-Enabling IAM Authenticator needs to be done during cluster creation.
-{{% /alert %}}
 
 ### Create IAM Authenticator enabled cluster
 Generate your cluster configuration and add the necessary IAM Authenticator configuration. For a full spec reference check [AWSIamConfig]({{< relref "../../getting-started/optional/iamauth" >}}).
@@ -104,10 +101,100 @@ ${PWD}/${CLUSTER_NAME}/${CLUSTER_NAME}-aws.kubeconfig
     kubectl get pods -A
     ```
 
-### Modify IAM Authenticator mappings
-EKS Anywhere supports modifying IAM ARNs that are mapped on the cluster. The mappings can be modified by either running the `upgrade cluster` command or using `GitOps`.
+### Managing AWS IAM Authenticator
+EKS Anywhere supports adding, removing, and modifying AWS IAM Authenticator configuration on existing clusters. These operations can be performed using the `upgrade cluster` command or `GitOps`.
 
-#### upgrade command
+### Add AWS IAM Authenticator to existing cluster
+You can add AWS IAM Authenticator to an existing cluster that was created without it.
+
+1. Add the `identityProviderRefs` section to your cluster configuration and create the `AWSIamConfig` resource:
+
+```yaml
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+   name: my-cluster-name
+spec:
+   ...
+   # Add IAM Authenticator to existing cluster
+   identityProviderRefs:
+      - kind: AWSIamConfig
+        name: aws-iam-auth-config
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: AWSIamConfig
+metadata:
+   name: aws-iam-auth-config
+spec:
+    awsRegion: us-west-1
+    backendMode:
+        - EKSConfigMap
+    mapRoles:
+        - roleARN: arn:aws:iam::XXXXXXXXXXXX:role/myRole
+          username: myKubernetesUsername
+          groups:
+          - system:masters
+    mapUsers:
+        - userARN: arn:aws:iam::XXXXXXXXXXXX:user/myUser
+          username: myKubernetesUsername
+          groups:
+          - system:masters
+    partition: aws
+```
+
+2. Run the upgrade command:
+```bash
+CLUSTER_NAME=my-cluster-name
+eksctl anywhere upgrade cluster -f ${CLUSTER_NAME}.yaml
+```
+
+EKS Anywhere will:
+* Install the `aws-iam-authenticator` server on the workload cluster
+* Configure the Kubernetes API Server with the authentication webhook
+* Create the necessary ConfigMaps
+* Generate the AWS IAM-based kubeconfig file at `${PWD}/${CLUSTER_NAME}/${CLUSTER_NAME}-aws.kubeconfig`
+
+{{% alert title="Note" color="primary" %}}
+Adding AWS IAM Authenticator to an existing cluster will roll out control plane nodes in the cluster.
+{{% /alert %}}
+
+### Remove AWS IAM Authenticator from cluster
+You can remove AWS IAM Authenticator from a cluster that has it enabled.
+
+1. Set `identityProviderRefs` to an empty array in your cluster configuration:
+
+```yaml
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+   name: my-cluster-name
+spec:
+   ...
+   # Set to empty array to remove IAM Authenticator
+   identityProviderRefs: []
+```
+
+{{% alert title="Important" color="primary" %}}
+You must explicitly set `identityProviderRefs: []` (empty array) in your cluster configuration. Simply removing or commenting out the field will not properly remove the IAM Authenticator configuration due to Kubernetes server-side apply merge behavior.
+{{% /alert %}}
+
+2. Run the upgrade command:
+```bash
+CLUSTER_NAME=my-cluster-name
+eksctl anywhere upgrade cluster -f ${CLUSTER_NAME}.yaml
+```
+
+EKS Anywhere will:
+* Remove the `aws-iam-authenticator` server from the workload cluster
+* Clean up the authentication webhook configuration
+* Remove ConfigMaps and other related resources
+* Clean up the AWS IAM-based kubeconfig file
+
+{{% alert title="Warning" color="warning" %}}
+Removing AWS IAM Authenticator will roll out control plane nodes in the cluster. After removal, users will no longer be able to authenticate using the AWS IAM-based kubeconfig file. Ensure you have alternative authentication methods configured before removing IAM Authenticator.
+{{% /alert %}}
+
+### Modify IAM Authenticator mappings
 The `mapRoles` and `mapUsers` lists in `AWSIamConfig` can be modified when running the `upgrade cluster` command from EKS Anywhere.
 
 As an example, let's add another IAM user to the above example configuration.
@@ -132,10 +219,10 @@ and then run the upgrade command
 CLUSTER_NAME=my-cluster-name
 eksctl anywhere upgrade cluster -f ${CLUSTER_NAME}.yaml
 ```
-EKS Anywhere now updates the role mappings for IAM authenticator in the cluster and a new user gains access to the cluster.
+EKS Anywhere now updates the role mappings for IAM authenticator in the cluster and the new user gains access to the cluster.
 
 #### GitOps
-If the cluster created has GitOps configured, then the `mapRoles` and `mapUsers` list in `AWSIamConfig` can be modified by the GitOps controller. For GitOps configuration details refer to [Manage Cluster with GitOps]({{< relref "../../clustermgmt/cluster-flux" >}}).
+If the cluster has GitOps configured, then AWS IAM Authenticator can be added, removed, or modified by the GitOps controller. For GitOps configuration details refer to [Manage Cluster with GitOps]({{< relref "../../clustermgmt/cluster-flux" >}}).
 
 {{% alert title="Note" color="primary" %}}
 GitOps support for the `AWSIamConfig` is currently only on management or self-managed clusters.
@@ -146,11 +233,16 @@ GitOps support for the `AWSIamConfig` is currently only on management or self-ma
     ```
     clusters/$CLUSTER_NAME/eksa-system/eksa-cluster.yaml
     ```
-2. Modify the `AWSIamConfig` object and add to the `mapRoles` and `mapUsers` object lists.
+2. To **add** AWS IAM Authenticator: Add the `identityProviderRefs` section and `AWSIamConfig` resource to the cluster specification.
+   
+   To **remove** AWS IAM Authenticator: Set `identityProviderRefs: []` (empty array) in the cluster specification.
+   
+   To **modify** mappings: Update the `mapRoles` and `mapUsers` lists in the `AWSIamConfig` object.
+
 3. Commit the file to your git repository
     ```bash
     git add eksa-cluster.yaml
-    git commit -m 'Adding IAM Authenticator access ARNs'
+    git commit -m 'Update IAM Authenticator configuration'
     git push origin main
     ```
-EKS Anywhere GitOps Controller now updates the role mappings for IAM authenticator in the cluster and users gains access to the cluster.
+EKS Anywhere GitOps Controller will apply the changes to the cluster, adding, removing, or updating the IAM authenticator configuration as specified.
