@@ -37,18 +37,18 @@ spec:
         arch:
         - amd64
         description: Container image for bottlerocket-admin image
-        imageDigest: sha256:371a8b16dbd84be8dd792eee89461167601c62c90bcd12972914c6dda7903200
+        imageDigest: sha256:74ef7ad8f631da0b77712548f3f42c308c4541a7f88744eb7a8645aafc61bb61
         name: bottlerocket-admin
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.12.3
+        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.12.4
       control:
         arch:
         - amd64
         description: Container image for bottlerocket-control image
-        imageDigest: sha256:191515155fba738587308b95e6c27a93062163bd4a09836b5c6054ef580785c6
+        imageDigest: sha256:257b23028c87330962c45c4d3245752e7da8a591ef67be95c76cf8429ee81347
         name: bottlerocket-control
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.8.8
+        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.8.10
       kubeadmBootstrap:
         arch:
         - amd64
@@ -329,7 +329,7 @@ spec:
     endOfStandardSupport: "2024-12-31"
     etcdadmBootstrap:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.17/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.18/bootstrap-components.yaml
       controller:
         arch:
         - amd64
@@ -338,7 +338,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: etcdadm-bootstrap-provider
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/etcdadm-bootstrap-provider:v1.0.17-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/etcdadm-bootstrap-provider:v1.0.18-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -349,11 +349,11 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.20.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.17/metadata.yaml
-      version: v1.0.17+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.18/metadata.yaml
+      version: v1.0.18+abcdef1
     etcdadmController:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.25/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.26/bootstrap-components.yaml
       controller:
         arch:
         - amd64
@@ -362,7 +362,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: etcdadm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.25-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.26-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -373,8 +373,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.20.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.25/metadata.yaml
-      version: v1.0.25+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.26/metadata.yaml
+      version: v1.0.26+abcdef1
     flux:
       helmController:
         arch:
@@ -508,7 +508,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-snow:v1-28-63-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.2.6/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.2.7/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -526,10 +526,10 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-snow-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.2.6-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.2.7-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.2.6/metadata.yaml
-      version: v0.2.6+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.2.7/metadata.yaml
+      version: v0.2.7+abcdef1
     tinkerbell:
       clusterAPIController:
         arch:
@@ -862,18 +862,18 @@ spec:
         arch:
         - amd64
         description: Container image for bottlerocket-admin image
-        imageDigest: sha256:371a8b16dbd84be8dd792eee89461167601c62c90bcd12972914c6dda7903200
+        imageDigest: sha256:74ef7ad8f631da0b77712548f3f42c308c4541a7f88744eb7a8645aafc61bb61
         name: bottlerocket-admin
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.12.3
+        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.12.4
       control:
         arch:
         - amd64
         description: Container image for bottlerocket-control image
-        imageDigest: sha256:191515155fba738587308b95e6c27a93062163bd4a09836b5c6054ef580785c6
+        imageDigest: sha256:257b23028c87330962c45c4d3245752e7da8a591ef67be95c76cf8429ee81347
         name: bottlerocket-control
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.8.8
+        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.8.10
       kubeadmBootstrap:
         arch:
         - amd64
@@ -1154,7 +1154,7 @@ spec:
     endOfStandardSupport: "2025-04-30"
     etcdadmBootstrap:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.17/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.18/bootstrap-components.yaml
       controller:
         arch:
         - amd64
@@ -1163,7 +1163,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: etcdadm-bootstrap-provider
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/etcdadm-bootstrap-provider:v1.0.17-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/etcdadm-bootstrap-provider:v1.0.18-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -1174,11 +1174,11 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.20.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.17/metadata.yaml
-      version: v1.0.17+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.18/metadata.yaml
+      version: v1.0.18+abcdef1
     etcdadmController:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.25/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.26/bootstrap-components.yaml
       controller:
         arch:
         - amd64
@@ -1187,7 +1187,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: etcdadm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.25-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.26-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -1198,8 +1198,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.20.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.25/metadata.yaml
-      version: v1.0.25+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.26/metadata.yaml
+      version: v1.0.26+abcdef1
     flux:
       helmController:
         arch:
@@ -1333,7 +1333,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-snow:v1-29-52-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.2.6/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.2.7/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -1351,10 +1351,10 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-snow-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.2.6-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.2.7-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.2.6/metadata.yaml
-      version: v0.2.6+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.2.7/metadata.yaml
+      version: v0.2.7+abcdef1
     tinkerbell:
       clusterAPIController:
         arch:
@@ -1687,18 +1687,18 @@ spec:
         arch:
         - amd64
         description: Container image for bottlerocket-admin image
-        imageDigest: sha256:371a8b16dbd84be8dd792eee89461167601c62c90bcd12972914c6dda7903200
+        imageDigest: sha256:74ef7ad8f631da0b77712548f3f42c308c4541a7f88744eb7a8645aafc61bb61
         name: bottlerocket-admin
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.12.3
+        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.12.4
       control:
         arch:
         - amd64
         description: Container image for bottlerocket-control image
-        imageDigest: sha256:191515155fba738587308b95e6c27a93062163bd4a09836b5c6054ef580785c6
+        imageDigest: sha256:257b23028c87330962c45c4d3245752e7da8a591ef67be95c76cf8429ee81347
         name: bottlerocket-control
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.8.8
+        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.8.10
       kubeadmBootstrap:
         arch:
         - amd64
@@ -1979,7 +1979,7 @@ spec:
     endOfStandardSupport: "2025-08-31"
     etcdadmBootstrap:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.17/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.18/bootstrap-components.yaml
       controller:
         arch:
         - amd64
@@ -1988,7 +1988,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: etcdadm-bootstrap-provider
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/etcdadm-bootstrap-provider:v1.0.17-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/etcdadm-bootstrap-provider:v1.0.18-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -1999,11 +1999,11 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.20.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.17/metadata.yaml
-      version: v1.0.17+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.18/metadata.yaml
+      version: v1.0.18+abcdef1
     etcdadmController:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.25/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.26/bootstrap-components.yaml
       controller:
         arch:
         - amd64
@@ -2012,7 +2012,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: etcdadm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.25-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.26-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -2023,8 +2023,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.20.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.25/metadata.yaml
-      version: v1.0.25+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.26/metadata.yaml
+      version: v1.0.26+abcdef1
     flux:
       helmController:
         arch:
@@ -2158,7 +2158,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-snow:v1-30-45-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.2.6/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.2.7/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -2176,10 +2176,10 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-snow-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.2.6-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.2.7-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.2.6/metadata.yaml
-      version: v0.2.6+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.2.7/metadata.yaml
+      version: v0.2.7+abcdef1
     tinkerbell:
       clusterAPIController:
         arch:
@@ -2512,18 +2512,18 @@ spec:
         arch:
         - amd64
         description: Container image for bottlerocket-admin image
-        imageDigest: sha256:371a8b16dbd84be8dd792eee89461167601c62c90bcd12972914c6dda7903200
+        imageDigest: sha256:74ef7ad8f631da0b77712548f3f42c308c4541a7f88744eb7a8645aafc61bb61
         name: bottlerocket-admin
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.12.3
+        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.12.4
       control:
         arch:
         - amd64
         description: Container image for bottlerocket-control image
-        imageDigest: sha256:191515155fba738587308b95e6c27a93062163bd4a09836b5c6054ef580785c6
+        imageDigest: sha256:257b23028c87330962c45c4d3245752e7da8a591ef67be95c76cf8429ee81347
         name: bottlerocket-control
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.8.8
+        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.8.10
       kubeadmBootstrap:
         arch:
         - amd64
@@ -2804,7 +2804,7 @@ spec:
     endOfStandardSupport: "2025-12-31"
     etcdadmBootstrap:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.17/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.18/bootstrap-components.yaml
       controller:
         arch:
         - amd64
@@ -2813,7 +2813,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: etcdadm-bootstrap-provider
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/etcdadm-bootstrap-provider:v1.0.17-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/etcdadm-bootstrap-provider:v1.0.18-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -2824,11 +2824,11 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.20.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.17/metadata.yaml
-      version: v1.0.17+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.18/metadata.yaml
+      version: v1.0.18+abcdef1
     etcdadmController:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.25/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.26/bootstrap-components.yaml
       controller:
         arch:
         - amd64
@@ -2837,7 +2837,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: etcdadm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.25-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.26-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -2848,8 +2848,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.20.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.25/metadata.yaml
-      version: v1.0.25+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.26/metadata.yaml
+      version: v1.0.26+abcdef1
     flux:
       helmController:
         arch:
@@ -2983,7 +2983,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-snow:v1-31-34-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.2.6/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.2.7/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -3001,10 +3001,10 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-snow-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.2.6-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.2.7-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.2.6/metadata.yaml
-      version: v0.2.6+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.2.7/metadata.yaml
+      version: v0.2.7+abcdef1
     tinkerbell:
       clusterAPIController:
         arch:
@@ -3337,18 +3337,18 @@ spec:
         arch:
         - amd64
         description: Container image for bottlerocket-admin image
-        imageDigest: sha256:371a8b16dbd84be8dd792eee89461167601c62c90bcd12972914c6dda7903200
+        imageDigest: sha256:74ef7ad8f631da0b77712548f3f42c308c4541a7f88744eb7a8645aafc61bb61
         name: bottlerocket-admin
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.12.3
+        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.12.4
       control:
         arch:
         - amd64
         description: Container image for bottlerocket-control image
-        imageDigest: sha256:191515155fba738587308b95e6c27a93062163bd4a09836b5c6054ef580785c6
+        imageDigest: sha256:257b23028c87330962c45c4d3245752e7da8a591ef67be95c76cf8429ee81347
         name: bottlerocket-control
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.8.8
+        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.8.10
       kubeadmBootstrap:
         arch:
         - amd64
@@ -3629,7 +3629,7 @@ spec:
     endOfStandardSupport: "2026-04-30"
     etcdadmBootstrap:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.17/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.18/bootstrap-components.yaml
       controller:
         arch:
         - amd64
@@ -3638,7 +3638,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: etcdadm-bootstrap-provider
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/etcdadm-bootstrap-provider:v1.0.17-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/etcdadm-bootstrap-provider:v1.0.18-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -3649,11 +3649,11 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.20.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.17/metadata.yaml
-      version: v1.0.17+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.18/metadata.yaml
+      version: v1.0.18+abcdef1
     etcdadmController:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.25/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.26/bootstrap-components.yaml
       controller:
         arch:
         - amd64
@@ -3662,7 +3662,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: etcdadm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.25-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.26-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -3673,8 +3673,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.20.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.25/metadata.yaml
-      version: v1.0.25+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.26/metadata.yaml
+      version: v1.0.26+abcdef1
     flux:
       helmController:
         arch:
@@ -3808,7 +3808,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-snow:v1-32-27-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.2.6/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.2.7/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -3826,10 +3826,10 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-snow-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.2.6-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.2.7-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.2.6/metadata.yaml
-      version: v0.2.6+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.2.7/metadata.yaml
+      version: v0.2.7+abcdef1
     tinkerbell:
       clusterAPIController:
         arch:
@@ -4162,18 +4162,18 @@ spec:
         arch:
         - amd64
         description: Container image for bottlerocket-admin image
-        imageDigest: sha256:371a8b16dbd84be8dd792eee89461167601c62c90bcd12972914c6dda7903200
+        imageDigest: sha256:74ef7ad8f631da0b77712548f3f42c308c4541a7f88744eb7a8645aafc61bb61
         name: bottlerocket-admin
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.12.3
+        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.12.4
       control:
         arch:
         - amd64
         description: Container image for bottlerocket-control image
-        imageDigest: sha256:191515155fba738587308b95e6c27a93062163bd4a09836b5c6054ef580785c6
+        imageDigest: sha256:257b23028c87330962c45c4d3245752e7da8a591ef67be95c76cf8429ee81347
         name: bottlerocket-control
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.8.8
+        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.8.10
       kubeadmBootstrap:
         arch:
         - amd64
@@ -4454,7 +4454,7 @@ spec:
     endOfStandardSupport: "2026-08-31"
     etcdadmBootstrap:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.17/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.18/bootstrap-components.yaml
       controller:
         arch:
         - amd64
@@ -4463,7 +4463,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: etcdadm-bootstrap-provider
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/etcdadm-bootstrap-provider:v1.0.17-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/etcdadm-bootstrap-provider:v1.0.18-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -4474,11 +4474,11 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.20.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.17/metadata.yaml
-      version: v1.0.17+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.18/metadata.yaml
+      version: v1.0.18+abcdef1
     etcdadmController:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.25/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.26/bootstrap-components.yaml
       controller:
         arch:
         - amd64
@@ -4487,7 +4487,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: etcdadm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.25-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.26-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -4498,8 +4498,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.20.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.25/metadata.yaml
-      version: v1.0.25+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.26/metadata.yaml
+      version: v1.0.26+abcdef1
     flux:
       helmController:
         arch:
@@ -4633,7 +4633,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-snow:v1-33-17-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.2.6/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.2.7/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -4651,10 +4651,10 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-snow-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.2.6-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.2.7-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.2.6/metadata.yaml
-      version: v0.2.6+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.2.7/metadata.yaml
+      version: v0.2.7+abcdef1
     tinkerbell:
       clusterAPIController:
         arch:
@@ -4987,18 +4987,18 @@ spec:
         arch:
         - amd64
         description: Container image for bottlerocket-admin image
-        imageDigest: sha256:371a8b16dbd84be8dd792eee89461167601c62c90bcd12972914c6dda7903200
+        imageDigest: sha256:74ef7ad8f631da0b77712548f3f42c308c4541a7f88744eb7a8645aafc61bb61
         name: bottlerocket-admin
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.12.3
+        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.12.4
       control:
         arch:
         - amd64
         description: Container image for bottlerocket-control image
-        imageDigest: sha256:191515155fba738587308b95e6c27a93062163bd4a09836b5c6054ef580785c6
+        imageDigest: sha256:257b23028c87330962c45c4d3245752e7da8a591ef67be95c76cf8429ee81347
         name: bottlerocket-control
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.8.8
+        uri: public.ecr.aws/bottlerocket/bottlerocket-control:v0.8.10
       kubeadmBootstrap:
         arch:
         - amd64
@@ -5279,7 +5279,7 @@ spec:
     endOfStandardSupport: "2026-12-31"
     etcdadmBootstrap:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.17/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.18/bootstrap-components.yaml
       controller:
         arch:
         - amd64
@@ -5288,7 +5288,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: etcdadm-bootstrap-provider
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/etcdadm-bootstrap-provider:v1.0.17-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/etcdadm-bootstrap-provider:v1.0.18-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -5299,11 +5299,11 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.20.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.17/metadata.yaml
-      version: v1.0.17+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.18/metadata.yaml
+      version: v1.0.18+abcdef1
     etcdadmController:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.25/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.26/bootstrap-components.yaml
       controller:
         arch:
         - amd64
@@ -5312,7 +5312,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: etcdadm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.25-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.26-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -5323,8 +5323,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.20.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.25/metadata.yaml
-      version: v1.0.25+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.26/metadata.yaml
+      version: v1.0.26+abcdef1
     flux:
       helmController:
         arch:
@@ -5458,7 +5458,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-snow:v1-34-8-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.2.6/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.2.7/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -5476,10 +5476,10 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-snow-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.2.6-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.2.7-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.2.6/metadata.yaml
-      version: v0.2.6+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.2.7/metadata.yaml
+      version: v0.2.7+abcdef1
     tinkerbell:
       clusterAPIController:
         arch:
