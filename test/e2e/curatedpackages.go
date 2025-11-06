@@ -51,8 +51,57 @@ func runDisabledCuratedPackageInstallSimpleFlow(test *framework.ClusterE2ETest) 
 	test.WithCluster(runDisabledCuratedPackage)
 }
 
+// addDefaultOCINamespacesFromEnv adds default OCI namespaces from environment variables if they're not already set.
+func addDefaultOCINamespacesFromEnv(test *framework.ClusterE2ETest) {
+	if test.ClusterConfig.Cluster.Spec.RegistryMirrorConfiguration == nil {
+		return
+	}
+
+	if len(test.ClusterConfig.Cluster.Spec.RegistryMirrorConfiguration.OCINamespaces) > 0 {
+		return
+	}
+
+	test.T.Log("Adding default OCI namespaces from environment variables")
+	test.ClusterConfig.Cluster.Spec.RegistryMirrorConfiguration.OCINamespaces = framework.DefaultOciNamespaces(test)
+}
+
 func runCuratedPackageInstallSimpleFlowRegistryMirror(test *framework.ClusterE2ETest) {
-	test.WithClusterRegistryMirror(EksaPackagesRegistryMirrorAlias, EksaPackagesSourceRegistry, EksaPackagesRegistry, runCuratedPackageInstall)
+	test.GenerateClusterConfig()
+	test.DownloadArtifacts()
+	test.ExtractDownloadedArtifacts()
+
+	// Determine the correct alias from the bundle after download
+	alias, err := test.DeterminePackageRegistryAlias()
+	if err != nil {
+		test.T.Fatalf("Failed to determine package registry alias: %v", err)
+	}
+	test.T.Logf("Using registry alias: %s for curated packages", alias)
+
+	// Add default OCI namespaces from env vars, then append the curated packages one
+	if test.ClusterConfig.Cluster.Spec.RegistryMirrorConfiguration != nil {
+		addDefaultOCINamespacesFromEnv(test)
+
+		test.ClusterConfig.Cluster.Spec.RegistryMirrorConfiguration.OCINamespaces = append(
+			test.ClusterConfig.Cluster.Spec.RegistryMirrorConfiguration.OCINamespaces,
+			v1alpha1.OCINamespace{
+				Registry:  EksaPackagesRegistry,
+				Namespace: alias,
+			},
+		)
+	}
+	test.UpdateClusterConfig()
+
+	test.DownloadImages()
+	test.ImportImages()
+	test.CopyPackages(alias, EksaPackagesSourceRegistry, EksaPackagesRegistry)
+
+	bundlePath := "./eks-anywhere-downloads/bundle-release.yaml"
+	test.CreateCluster(framework.WithBundlesOverride(bundlePath))
+	defer func() {
+		test.GenerateSupportBundleIfTestFailed()
+		test.DeleteCluster(framework.WithBundlesOverride(bundlePath))
+	}()
+	runCuratedPackageInstall(test)
 }
 
 func runCuratedPackageRemoteClusterInstallSimpleFlow(test *framework.MulticlusterE2ETest) {

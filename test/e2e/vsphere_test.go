@@ -2931,11 +2931,7 @@ func TestVSphereKubernetes129UbuntuAuthenticatedRegistryMirrorCuratedPackagesSim
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
-		framework.WithAuthenticatedRegistryMirror(constants.VSphereProviderName,
-			v1alpha1.OCINamespace{
-				Registry:  EksaPackagesRegistry,
-				Namespace: EksaPackagesRegistryMirrorAlias,
-			}),
+		framework.WithAuthenticatedRegistryMirror(constants.VSphereProviderName),
 	)
 	runCuratedPackageInstallSimpleFlowRegistryMirror(test)
 }
@@ -2949,11 +2945,7 @@ func TestVSphereKubernetes134UbuntuAuthenticatedRegistryMirrorCuratedPackagesSim
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube134)),
-		framework.WithAuthenticatedRegistryMirror(constants.VSphereProviderName,
-			v1alpha1.OCINamespace{
-				Registry:  EksaPackagesRegistry,
-				Namespace: EksaPackagesRegistryMirrorAlias,
-			}),
+		framework.WithAuthenticatedRegistryMirror(constants.VSphereProviderName),
 	)
 	runCuratedPackageInstallSimpleFlowRegistryMirror(test)
 }
@@ -2967,11 +2959,7 @@ func TestVSphereKubernetes130UbuntuAuthenticatedRegistryMirrorCuratedPackagesSim
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130)),
-		framework.WithAuthenticatedRegistryMirror(constants.VSphereProviderName,
-			v1alpha1.OCINamespace{
-				Registry:  EksaPackagesRegistry,
-				Namespace: EksaPackagesRegistryMirrorAlias,
-			}),
+		framework.WithAuthenticatedRegistryMirror(constants.VSphereProviderName),
 	)
 	runCuratedPackageInstallSimpleFlowRegistryMirror(test)
 }
@@ -2985,11 +2973,7 @@ func TestVSphereKubernetes131UbuntuAuthenticatedRegistryMirrorCuratedPackagesSim
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube131)),
-		framework.WithAuthenticatedRegistryMirror(constants.VSphereProviderName,
-			v1alpha1.OCINamespace{
-				Registry:  EksaPackagesRegistry,
-				Namespace: EksaPackagesRegistryMirrorAlias,
-			}),
+		framework.WithAuthenticatedRegistryMirror(constants.VSphereProviderName),
 	)
 	runCuratedPackageInstallSimpleFlowRegistryMirror(test)
 }
@@ -3003,11 +2987,7 @@ func TestVSphereKubernetes132UbuntuAuthenticatedRegistryMirrorCuratedPackagesSim
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube132)),
-		framework.WithAuthenticatedRegistryMirror(constants.VSphereProviderName,
-			v1alpha1.OCINamespace{
-				Registry:  EksaPackagesRegistry,
-				Namespace: EksaPackagesRegistryMirrorAlias,
-			}),
+		framework.WithAuthenticatedRegistryMirror(constants.VSphereProviderName),
 	)
 	runCuratedPackageInstallSimpleFlowRegistryMirror(test)
 }
@@ -3021,11 +3001,7 @@ func TestVSphereKubernetes133UbuntuAuthenticatedRegistryMirrorCuratedPackagesSim
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133)),
-		framework.WithAuthenticatedRegistryMirror(constants.VSphereProviderName,
-			v1alpha1.OCINamespace{
-				Registry:  EksaPackagesRegistry,
-				Namespace: EksaPackagesRegistryMirrorAlias,
-			}),
+		framework.WithAuthenticatedRegistryMirror(constants.VSphereProviderName),
 	)
 	runCuratedPackageInstallSimpleFlowRegistryMirror(test)
 }
