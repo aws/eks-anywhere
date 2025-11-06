@@ -137,7 +137,7 @@ func ReleaseBranchedTarballArtifactPathGetter(rc *releasetypes.ReleaseConfig, ar
 		sourceS3Prefix = fmt.Sprintf("%s/%s", projectPath, latestPath)
 	} else {
 		sourceS3Key = fmt.Sprintf("%s-%s-%s.tar.gz", archive.Name, os, arch)
-		sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/%s/%s", rc.BundleNumber, archive.Name, gitTag)
+		sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/%s/%s/%s", rc.BundleNumber, eksDReleaseChannel, archive.Name, gitTag)
 	}
 
 	if rc.DevRelease {
