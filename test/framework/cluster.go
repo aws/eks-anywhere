@@ -662,13 +662,7 @@ func getBundleManifestLocation() string {
 func (e *ClusterE2ETest) DownloadImages(opts ...CommandOpt) {
 	downloadImagesArgs := []string{"download", "images", "-o", defaultDownloadImagesOutputLocation}
 	if getBundlesOverride() == "true" {
-		var bundleManifestLocation string
-		if _, err := os.Stat(defaultDownloadArtifactsOutputLocation); err == nil {
-			bundleManifestLocation = bundleReleasePathFromArtifacts
-		} else {
-			bundleManifestLocation = defaultBundleReleaseManifestFile
-		}
-		downloadImagesArgs = append(downloadImagesArgs, "--bundles-override", bundleManifestLocation)
+		downloadImagesArgs = append(downloadImagesArgs, "--bundles-override", getBundleManifestLocation())
 	}
 	e.RunEKSA(downloadImagesArgs, opts...)
 	if _, err := os.Stat(defaultDownloadImagesOutputLocation); err != nil {
@@ -683,12 +677,7 @@ func (e *ClusterE2ETest) ImportImages(opts ...CommandOpt) {
 	clusterConfig := e.ClusterConfig.Cluster
 	registyMirrorEndpoint, registryMirrorPort := clusterConfig.Spec.RegistryMirrorConfiguration.Endpoint, clusterConfig.Spec.RegistryMirrorConfiguration.Port
 	registryMirrorHost := net.JoinHostPort(registyMirrorEndpoint, registryMirrorPort)
-	var bundleManifestLocation string
-	if _, err := os.Stat(defaultDownloadArtifactsOutputLocation); err == nil {
-		bundleManifestLocation = bundleReleasePathFromArtifacts
-	} else {
-		bundleManifestLocation = defaultBundleReleaseManifestFile
-	}
+	bundleManifestLocation := getBundleManifestLocation()
 	importImagesArgs := []string{"import images", "--input", defaultDownloadImagesOutputLocation, "--bundles", bundleManifestLocation, "--registry", registryMirrorHost, "--insecure"}
 	e.RunEKSA(importImagesArgs, opts...)
 }
@@ -723,8 +712,32 @@ func (e *ClusterE2ETest) GetDiagnosticCollectorImage() string {
 	return bundles.Spec.VersionsBundles[0].Eksa.DiagnosticCollector.VersionedImage()
 }
 
+// GetPackageControllerRepo returns the bundle's package controller chart image.
+func (e *ClusterE2ETest) GetPackageControlleChartRepo() (string, error) {
+	bundleManifestLocation := getBundleManifestLocation()
+
+	// Read the bundle file
+	bundleData, err := os.ReadFile(bundleManifestLocation)
+	if err != nil {
+		return "", fmt.Errorf("failed to read bundle file %s: %w", bundleManifestLocation, err)
+	}
+
+	// Parse the bundle
+	var bundles releasev1.Bundles
+	if err := yaml.Unmarshal(bundleData, &bundles); err != nil {
+		return "", fmt.Errorf("failed to parse bundle file: %w", err)
+	}
+
+	// Get the package controller chart image from the first version bundle
+	if len(bundles.Spec.VersionsBundles) == 0 {
+		return "", fmt.Errorf("no version bundles found in bundle file")
+	}
+
+	return bundles.Spec.VersionsBundles[0].PackageController.HelmChart.Image(), nil
+}
+
 // CopyPackages runs the EKS-A `copy packages` command to copy curated packages to the registry mirror.
-func (e *ClusterE2ETest) CopyPackages(packageMirrorAlias string, packageChartRegistry string, packageRegistry string, opts ...CommandOpt) {
+func (e *ClusterE2ETest) CopyPackages(packageMirrorAlias string, packageRegistry string, opts ...CommandOpt) {
 	clusterConfig := e.ClusterConfig.Cluster
 	registyMirrorEndpoint, registryMirrorPort := clusterConfig.Spec.RegistryMirrorConfiguration.Endpoint, clusterConfig.Spec.RegistryMirrorConfiguration.Port
 	registryMirrorHost := net.JoinHostPort(registyMirrorEndpoint, registryMirrorPort)
@@ -737,12 +750,12 @@ func (e *ClusterE2ETest) CopyPackages(packageMirrorAlias string, packageChartReg
 		"copy", "packages",
 		registryMirrorHost + "/" + packageMirrorAlias,
 		"--kube-version", kubeVersion,
-		"--src-chart-registry", packageChartRegistry,
+		"--src-chart-registry", packageRegistry,
 		"--src-image-registry", packageRegistry,
 		"--dst-insecure",
 	}
 
-	e.T.Logf("Copying curated packages to registry mirror: %s", registryMirrorHost)
+	e.T.Logf("Copying curated packages to registry mirror: %s/%s", registryMirrorHost, packageMirrorAlias)
 	e.RunEKSA(copyPackagesArgs, opts...)
 }
 
@@ -1360,22 +1373,6 @@ func (e *ClusterE2ETest) WithCluster(f func(e *ClusterE2ETest)) {
 	defer func() {
 		e.GenerateSupportBundleIfTestFailed()
 		e.DeleteCluster()
-	}()
-	f(e)
-}
-
-// WithClusterRegistryMirror helps with bringing up and tearing down E2E test clusters when using registry mirror.
-func (e *ClusterE2ETest) WithClusterRegistryMirror(packageMirrorAlias string, packageChartRegistry string, packageRegistry string, f func(e *ClusterE2ETest)) {
-	e.GenerateClusterConfig()
-	e.DownloadArtifacts()
-	e.ExtractDownloadedArtifacts()
-	e.DownloadImages()
-	e.ImportImages()
-	e.CopyPackages(packageMirrorAlias, packageChartRegistry, packageRegistry)
-	e.CreateCluster(WithBundlesOverride(bundleReleasePathFromArtifacts))
-	defer func() {
-		e.GenerateSupportBundleIfTestFailed()
-		e.DeleteCluster(WithBundlesOverride(bundleReleasePathFromArtifacts))
 	}()
 	f(e)
 }
