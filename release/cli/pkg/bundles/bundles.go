@@ -173,6 +173,11 @@ func GetVersionsBundles(r *releasetypes.ReleaseConfig, imageDigests releasetypes
 			return nil, errors.Wrapf(err, "Error getting bundle for bottlerocket host containers")
 		}
 
+		bottlerocketBootstrapContainersBundle, err := GetBottlerocketBootstrapContainersBundle(r, channel, imageDigests)
+		if err != nil {
+			return nil, errors.Wrapf(err, "Error getting bundle for bottlerocket bootstrap containers")
+		}
+
 		snowBundle, err := GetSnowBundle(r, channel, imageDigests)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error getting bundle for Snow infrastructure provider")
@@ -184,28 +189,29 @@ func GetVersionsBundles(r *releasetypes.ReleaseConfig, imageDigests releasetypes
 		}
 
 		versionsBundle := anywherev1alpha1.VersionsBundle{
-			KubeVersion:                shortKubeVersion,
-			EksD:                       eksDReleaseBundle,
-			CertManager:                certManagerBundle,
-			ClusterAPI:                 coreClusterApiBundle,
-			Bootstrap:                  kubeadmBootstrapBundle,
-			ControlPlane:               kubeadmControlPlaneBundle,
-			VSphere:                    vsphereBundle,
-			CloudStack:                 cloudStackBundle,
-			Docker:                     dockerBundle,
-			Eksa:                       eksaBundle,
-			Cilium:                     ciliumBundle,
-			Kindnetd:                   kindnetdBundle,
-			Flux:                       fluxBundle,
-			PackageController:          packageBundle,
-			ExternalEtcdBootstrap:      etcdadmBootstrapBundle,
-			ExternalEtcdController:     etcdadmControllerBundle,
-			BottleRocketHostContainers: bottlerocketHostContainersBundle,
-			Tinkerbell:                 tinkerbellBundle,
-			Haproxy:                    haproxyBundle,
-			Snow:                       snowBundle,
-			Nutanix:                    nutanixBundle,
-			Upgrader:                   upgraderBundle,
+			KubeVersion:                     shortKubeVersion,
+			EksD:                            eksDReleaseBundle,
+			CertManager:                     certManagerBundle,
+			ClusterAPI:                      coreClusterApiBundle,
+			Bootstrap:                       kubeadmBootstrapBundle,
+			ControlPlane:                    kubeadmControlPlaneBundle,
+			VSphere:                         vsphereBundle,
+			CloudStack:                      cloudStackBundle,
+			Docker:                          dockerBundle,
+			Eksa:                            eksaBundle,
+			Cilium:                          ciliumBundle,
+			Kindnetd:                        kindnetdBundle,
+			Flux:                            fluxBundle,
+			PackageController:               packageBundle,
+			ExternalEtcdBootstrap:           etcdadmBootstrapBundle,
+			ExternalEtcdController:          etcdadmControllerBundle,
+			BottleRocketHostContainers:      bottlerocketHostContainersBundle,
+			BottleRocketBootstrapContainers: bottlerocketBootstrapContainersBundle,
+			Tinkerbell:                      tinkerbellBundle,
+			Haproxy:                         haproxyBundle,
+			Snow:                            snowBundle,
+			Nutanix:                         nutanixBundle,
+			Upgrader:                        upgraderBundle,
 		}
 		if endOfStandardSupport != "" {
 			versionsBundle.EndOfStandardSupport = endOfStandardSupport
