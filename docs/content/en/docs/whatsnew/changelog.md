@@ -41,6 +41,62 @@ description: >
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
 
+## [v0.24.0](https://github.com/aws/eks-anywhere/releases/tag/v0.24.0)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+|    Ubuntu 24.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.50.0 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+
+### Added
+- Support for Kubernetes v1.34
+- Enable second network interface configuration for VSphere (Ubuntu, Redhat) [#10211](https://github.com/aws/eks-anywhere/pull/10211)
+- Configure Audit Policy content for Control Plane nodes [#10004](https://github.com/aws/eks-anywhere/pull/10004)
+- Add support for protection of system resources from admission webhooks [#10179](https://github.com/aws/eks-anywhere/pull/10179)
+- Add support for First-party Supported Cilium CNI [#10157](https://github.com/aws/eks-anywhere/pull/10157), [#10256](https://github.com/aws/eks-anywhere/pull/10256), [#10158](https://github.com/aws/eks-anywhere/pull/10158)
+- Add Cilium helmValues feature support to configure cilium parameters [#10161](https://github.com/aws/eks-anywhere/pull/10161), [#10222](https://github.com/aws/eks-anywhere/pull/10222)
+- Add diagnostic address flag to eksa controller, etcdadm-bootstrap-provider and etcdadm-controller to support secure serving of metrics, pprof endpoint, and dynamic log level changes in production [#10282](https://github.com/aws/eks-anywhere/pull/10282), [#49](https://github.com/aws/etcdadm-bootstrap-provider/pull/49), [#73](https://github.com/aws/etcdadm-controller/pull/73)
+- VSphere image clone builder [#4784](https://github.com/aws/eks-anywhere-build-tooling/pull/4784)
+- Support addition or removal of aws iam authentication using cluster upgrade [#9897](https://github.com/aws/eks-anywhere/pull/9897)
+- Enable support for in-place upgrades on RedHat for Bare Metal clusters [#10290](https://github.com/aws/eks-anywhere/pull/10290)
+- Allow toggling Cilium skipUpgrade from true to false [#10231](https://github.com/aws/eks-anywhere/pull/10231)
+- EKS Distro:
+  - [`v1-34-eks-8`](https://distro.eks.amazonaws.com/releases/1-34/8/)
+  - [`v1-33-eks-17`](https://distro.eks.amazonaws.com/releases/1-33/17/)
+  - [`v1-32-eks-27`](https://distro.eks.amazonaws.com/releases/1-32/27/)
+  - [`v1-31-eks-34`](https://distro.eks.amazonaws.com/releases/1-31/34/)
+  - [`v1-30-eks-45`](https://distro.eks.amazonaws.com/releases/1-30/45/)
+  - [`v1-29-eks-52`](https://distro.eks.amazonaws.com/releases/1-29/52/)
+  - [`v1-28-eks-63`](https://distro.eks.amazonaws.com/releases/1-28/63/)
+- Containerd: `v2.1.4` for Kubernetes `1.34`
+- Autoscaler: `cluster-autoscaler-1.34.1` for Kubernetes `1.34`
+
+### Changed
+- Cluster-api (CAPI): `v1.10.2` to `v1.11.1`
+- Runc: `v1.1.15` to `1.3.3` ([CVE-2025-31133](https://github.com/opencontainers/runc/security/advisories/GHSA-9493-h29p-rfm2), [CVE-2025-52565](https://github.com/opencontainers/runc/security/advisories/GHSA-qw9x-cqr3-wc7r), [CVE-2025-52881](https://github.com/opencontainers/runc/security/advisories/GHSA-cgrx-mc8f-2prm))
+- Cert-manager: `v1.17.2` to `v1.18.2`
+- kube-rbac-proxy: `v0.19.1` to `v0.20.0`
+- Cri-tools: `v1.33.0` to `v1.34.0`
+- Govmomi: `v0.51.0` to `v0.52.0`
+- Flux:
+  - Cli: `v2.6.4` to `v2.7.0`
+  - Source Controller: `v1.6.2` to `v1.7.0`
+  - Helm Controller: `v1.3.0` to `v1.4.0`
+  - Kustomize Controller: `v1.6.1` to `v1.7.0`
+  - Notification Controller: `v1.6.0` to `v1.7.1`
+- Troubleshoot: `v0.121.2` to `v0.122.0`
+- Image builder: `v0.1.44` to `v0.6.0`
+- Kube-vip: `v0.9.2` to `v1.0.0`
+- etcdadm-controller: `v1.0.24` to `v1.0.26`
+- etcdadm-bootstrap-provider: `v1.0.16` to `v1.0.18`
+- controller-runtime: `v0.20.4` to `v0.21.0`
+
+
 ## [v0.23.4](https://github.com/aws/eks-anywhere/releases/tag/v0.23.4)
 
 ### Supported OS version details
