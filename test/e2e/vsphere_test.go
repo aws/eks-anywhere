@@ -3358,6 +3358,57 @@ func TestVSphereKubernetes133Ubuntu2204NetworksSimpleFlow(t *testing.T) {
 	runSimpleFlowWithSecondNetworkValidation(test, worker0)
 }
 
+func TestVSphereKubernetes134BottlerocketNetworksSimpleFlow(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	provider := framework.NewVSphere(t,
+		framework.WithBottleRocket134(),
+		// Add worker node group with second network config
+		framework.WithVSphereWorkerNodeGroup(
+			worker0,
+			framework.WithWorkerNodeGroup(worker0, api.WithCount(1)),
+
+			framework.WithSecondNetwork(),
+		),
+	)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithLicenseToken(licenseToken),
+			api.WithKubernetesVersion(v1alpha1.Kube134),
+		),
+	)
+
+	// Create cluster and validate the network is up
+	runSimpleFlowWithSecondNetworkValidation(test, worker0)
+}
+
+func TestVSphereKubernetes134Redhat9NetworksSimpleFlow(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	provider := framework.NewVSphere(t,
+		framework.WithRedHat9134VSphere(),
+		// Add worker node group with second network config
+		framework.WithVSphereWorkerNodeGroup(
+			worker0,
+			framework.WithWorkerNodeGroup(worker0, api.WithCount(1)),
+			framework.WithSecondNetwork(),
+		),
+	)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithLicenseToken(licenseToken),
+			api.WithKubernetesVersion(v1alpha1.Kube134),
+		),
+	)
+
+	// Create cluster and validate the network is up
+	runSimpleFlowWithSecondNetworkValidation(test, worker0)
+}
+
 func TestVSphereKubernetes128Ubuntu2404SimpleFlow(t *testing.T) {
 	licenseToken := framework.GetLicenseToken()
 	provider := framework.NewVSphere(t)
