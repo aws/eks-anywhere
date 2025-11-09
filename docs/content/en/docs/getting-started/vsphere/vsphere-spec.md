@@ -320,7 +320,9 @@ Size of disk on virtual machines if snapshots aren't included (Default: 25)
 The path to the VM network to deploy your EKS Anywhere cluster on. For example, `/<DATACENTER>/network/<NETWORK_NAME>`. Use the array to specify the networks you want to use, the first one will be your primary interface and is highly recommended 
 Use `govc find -type n` to see a list of networks
 
->**_NOTE:_** Multiple network interfaces are only supported on **worker nodes** with Ubuntu and RHEL operating systems. This feature is not available with Bottlerocket or on control plane nodes.
+>**_NOTE:_** 
+1. Multiple network interfaces are only supported on **worker nodes** with Ubuntu and RHEL operating systems. This feature is not available with Bottlerocket or on control plane nodes.
+2. Supports a maximum of 2 network interfaces.
 
 ### users (optional)
 The users you want to configure to access your virtual machines. Only one is permitted at this time
