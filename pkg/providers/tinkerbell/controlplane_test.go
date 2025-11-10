@@ -544,6 +544,7 @@ spec:
       kind: TinkerbellMachineTemplate
       name: test-control-plane-1
       namespace: eksa-system
+    nodeDeletionTimeout: 30s
   replicas: 1
   version: v1.21.2-eks-1-21-4`)
 	if err := yaml.UnmarshalStrict(b, &kcp); err != nil {
@@ -920,6 +921,7 @@ spec:
       name: test-control-plane-1
       namespace: eksa-system
     metadata: {}
+    nodeDeletionTimeout: 30s
   replicas: 1
   rolloutStrategy:
     rollingUpdate:

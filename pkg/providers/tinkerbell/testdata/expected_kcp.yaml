@@ -317,6 +317,7 @@ spec:
       kind: TinkerbellMachineTemplate
       name: <no value>
       namespace: eksa-system
+    nodeDeletionTimeout: 30s
   replicas: 1
   rolloutStrategy:
     rollingUpdate:
