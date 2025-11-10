@@ -3361,12 +3361,10 @@ func TestVSphereKubernetes133Ubuntu2204NetworksSimpleFlow(t *testing.T) {
 func TestVSphereKubernetes134BottlerocketNetworksSimpleFlow(t *testing.T) {
 	licenseToken := framework.GetLicenseToken()
 	provider := framework.NewVSphere(t,
-		framework.WithBottleRocket134(),
 		// Add worker node group with second network config
 		framework.WithVSphereWorkerNodeGroup(
 			worker0,
 			framework.WithWorkerNodeGroup(worker0, api.WithCount(1)),
-
 			framework.WithSecondNetwork(),
 		),
 	)
@@ -3374,9 +3372,9 @@ func TestVSphereKubernetes134BottlerocketNetworksSimpleFlow(t *testing.T) {
 		t,
 		provider,
 	).WithClusterConfig(
+		provider.WithKubeVersionAndOS(v1alpha1.Kube134, framework.Bottlerocket134Template, nil),
 		api.ClusterToConfigFiller(
 			api.WithLicenseToken(licenseToken),
-			api.WithKubernetesVersion(v1alpha1.Kube134),
 		),
 	)
 
@@ -3387,7 +3385,6 @@ func TestVSphereKubernetes134BottlerocketNetworksSimpleFlow(t *testing.T) {
 func TestVSphereKubernetes134Redhat9NetworksSimpleFlow(t *testing.T) {
 	licenseToken := framework.GetLicenseToken()
 	provider := framework.NewVSphere(t,
-		framework.WithRedHat9134VSphere(),
 		// Add worker node group with second network config
 		framework.WithVSphereWorkerNodeGroup(
 			worker0,
@@ -3399,9 +3396,9 @@ func TestVSphereKubernetes134Redhat9NetworksSimpleFlow(t *testing.T) {
 		t,
 		provider,
 	).WithClusterConfig(
+		provider.WithKubeVersionAndOS(v1alpha1.Kube134, framework.RedHat9, nil),
 		api.ClusterToConfigFiller(
 			api.WithLicenseToken(licenseToken),
-			api.WithKubernetesVersion(v1alpha1.Kube134),
 		),
 	)
 
