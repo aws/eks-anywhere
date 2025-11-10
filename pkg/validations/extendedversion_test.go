@@ -3,12 +3,14 @@ package validations
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -56,26 +58,7 @@ func TestValidateExtendedK8sVersionSupport(t *testing.T) {
 					KubernetesVersion: "1.28",
 				},
 			},
-			bundle: &v1alpha1.Bundles{
-				TypeMeta: v1.TypeMeta{
-					Kind:       "Bundles",
-					APIVersion: v1alpha1.GroupVersion.String(),
-				},
-				ObjectMeta: v1.ObjectMeta{
-					Annotations: map[string]string{
-						constants.SignatureAnnotation: "MEYCIQCYJwrDjICgUQImFpJdOLjQlC7OSQutCsqBk+0jUheZTQIhALSj7peTLSTSy9rvNfYwyqbP0fOi3elggWwPcAz89csc",
-					},
-				},
-				Spec: v1alpha1.BundlesSpec{
-					Number: 1,
-					VersionsBundles: []v1alpha1.VersionsBundle{
-						{
-							KubeVersion:          "1.28",
-							EndOfStandardSupport: "2024-31-12",
-						},
-					},
-				},
-			},
+			bundle:  bundleWithInvalidDateFormat(),
 			wantErr: fmt.Errorf("parsing EndOfStandardSupport field format"),
 		},
 		{
@@ -93,12 +76,12 @@ func TestValidateExtendedK8sVersionSupport(t *testing.T) {
 					APIVersion: eksdv1alpha1.GroupVersion.String(),
 				},
 				ObjectMeta: v1.ObjectMeta{
-					Name:      "kubernetes-1-28-46",
+					Name:      "kubernetes-1-28-eks-63",
 					Namespace: constants.EksaSystemNamespace,
 				},
 				Spec: eksdv1alpha1.ReleaseSpec{
 					Channel: "1-28",
-					Number:  46,
+					Number:  63,
 				},
 				Status: eksdv1alpha1.ReleaseStatus{
 					Components: []eksdv1alpha1.Component{
@@ -124,19 +107,19 @@ func TestValidateExtendedK8sVersionSupport(t *testing.T) {
 					LicenseToken:      "invalid-token",
 				},
 			},
-			bundle:  validBundle(),
+			bundle: validBundle(),
 			eksdRelease: &eksdv1alpha1.Release{
 				TypeMeta: v1.TypeMeta{
 					Kind:       "Release",
 					APIVersion: eksdv1alpha1.GroupVersion.String(),
 				},
 				ObjectMeta: v1.ObjectMeta{
-					Name:      "kubernetes-1-28-46",
+					Name:      "kubernetes-1-28-eks-63",
 					Namespace: constants.EksaSystemNamespace,
 				},
 				Spec: eksdv1alpha1.ReleaseSpec{
 					Channel: "1-28",
-					Number:  46,
+					Number:  63,
 				},
 				Status: eksdv1alpha1.ReleaseStatus{
 					Components: []eksdv1alpha1.Component{
@@ -362,30 +345,33 @@ func TestValidateEKSDistroManifestSignature(t *testing.T) {
 }
 
 func validBundle() *v1alpha1.Bundles {
-	return &v1alpha1.Bundles{
-		TypeMeta: v1.TypeMeta{
-			Kind:       "Bundles",
-			APIVersion: v1alpha1.GroupVersion.String(),
-		},
-		ObjectMeta: v1.ObjectMeta{
-			Annotations: map[string]string{
-				constants.SignatureAnnotation:                                  "MEUCIC1XI8WELDFzpbc3GEy8N0ZHIGWYmuoxVhK7nNU7lB3JAiEAkw3jtXn3eHnRuuo/P9Nr+Z6X8FXhTGVv+0ZiOpx7Sls=",
-				fmt.Sprintf("%s-1-28", constants.EKSDistroSignatureAnnotation): "MEUCIQC3uP3Dhfb/nhCeir0Hwtf4bddKVfVIauFWBidT18XZOwIgHjzH1mOxBm1N2l2w9wBVy9W1o6CQXpdDz7UcbCszZYc=",
-			},
-		},
-		Spec: v1alpha1.BundlesSpec{
-			Number: 1,
-			VersionsBundles: []v1alpha1.VersionsBundle{
-				{
-					KubeVersion:          "1.28",
-					EndOfStandardSupport: "2024-12-31",
-					EksD: v1alpha1.EksDRelease{
-						Name:           "kubernetes-1-28-46",
-						ReleaseChannel: "1-28",
-						EksDReleaseUrl: "https://distro.eks.amazonaws.com/kubernetes-1-28/kubernetes-1-28-eks-46.yaml",
-					},
-				},
-			},
-		},
+	// Load the properly signed bundle from testdata
+	// This bundle was signed with AWS KMS and includes all required signatures
+	data, err := os.ReadFile("testdata/test-bundle.yaml")
+	if err != nil {
+		panic(fmt.Sprintf("failed to read test bundle: %v", err))
 	}
+
+	bundle := &v1alpha1.Bundles{}
+	if err := yaml.Unmarshal(data, bundle); err != nil {
+		panic(fmt.Sprintf("failed to unmarshal test bundle: %v", err))
+	}
+
+	return bundle
+}
+
+func bundleWithInvalidDateFormat() *v1alpha1.Bundles {
+	// Load a bundle with an invalid date format (2024-31-12) but valid signature
+	// This tests that date parsing validation happens after signature validation
+	data, err := os.ReadFile("testdata/bundle-invalid-date.yaml")
+	if err != nil {
+		panic(fmt.Sprintf("failed to read bundle with invalid date: %v", err))
+	}
+
+	bundle := &v1alpha1.Bundles{}
+	if err := yaml.Unmarshal(data, bundle); err != nil {
+		panic(fmt.Sprintf("failed to unmarshal bundle with invalid date: %v", err))
+	}
+
+	return bundle
 }
