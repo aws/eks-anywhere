@@ -95,7 +95,7 @@ spec:
 kind: Bundles
 metadata:
   annotations:
-    anywhere.eks.amazonaws.com/signature: MEQCICjq1rZmhH0FYOlruZmh6QADCrr5ccrN6hE7Lu0vaXGrAiBhV+kfh64sqLblBt98DvIfHMerEqJVhHzpGy1YJthZQw==
+    anywhere.eks.amazonaws.com/signature: MEQCIGVQhkoTaTVqIY8TyQqpqzODgkprGR5+a312QabdkhuoAiBnaoEu+LN3Xw0nr49qedCS/Zv/mIt6KI5UwwCEkqKEWQ==
   name: bundles-1
 spec:
   number: 1
@@ -103,7 +103,7 @@ spec:
   - kubeVersion: "1.31"
     endOfStandardSupport: "2026-12-31"
     eksD:
-      name: "test"
+      name: "kubernetes-1-31-eks-1"
       channel: "1-31"
       manifestUrl: "https://distro.eks.amazonaws.com/kubernetes-1-31/kubernetes-1-31-eks-1.yaml"`
 

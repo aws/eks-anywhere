@@ -926,7 +926,7 @@ spec:
   - kubeVersion: "1.31"
     endOfStandardSupport: "2026-12-31"
     eksD:
-      name: "test"
+      name: "kubernetes-1-31-eks-1"
       channel: "1-31"
       manifestUrl: "https://distro.eks.amazonaws.com/kubernetes-1-31/kubernetes-1-31-eks-1.yaml"`
 	reader.EXPECT().ReadFile("https://bundles/bundles.yaml").Return([]byte(bundlesManifest), nil)
@@ -972,7 +972,7 @@ spec:
 kind: Bundles
 metadata:
   annotations:
-    anywhere.eks.amazonaws.com/signature: MEQCICjq1rZmhH0FYOlruZmh6QADCrr5ccrN6hE7Lu0vaXGrAiBhV+kfh64sqLblBt98DvIfHMerEqJVhHzpGy1YJthZQw==
+    anywhere.eks.amazonaws.com/signature: MEQCIGVQhkoTaTVqIY8TyQqpqzODgkprGR5+a312QabdkhuoAiBnaoEu+LN3Xw0nr49qedCS/Zv/mIt6KI5UwwCEkqKEWQ==
   name: bundles-1
 spec:
   number: 1
@@ -980,7 +980,7 @@ spec:
   - kubeVersion: "1.31"
     endOfStandardSupport: "2026-12-31"
     eksD:
-      name: "test"
+      name: "kubernetes-1-31-eks-1"
       channel: "1-31"
       manifestUrl: "https://distro.eks.amazonaws.com/kubernetes-1-31/kubernetes-1-31-eks-1.yaml"`
 
@@ -1007,7 +1007,7 @@ func TestValidateExtendedKubernetesSupportWithBundlesOverrideSuccess(t *testing.
 kind: Bundles
 metadata:
   annotations:
-    anywhere.eks.amazonaws.com/signature: MEQCICjq1rZmhH0FYOlruZmh6QADCrr5ccrN6hE7Lu0vaXGrAiBhV+kfh64sqLblBt98DvIfHMerEqJVhHzpGy1YJthZQw==
+    anywhere.eks.amazonaws.com/signature: MEQCIGVQhkoTaTVqIY8TyQqpqzODgkprGR5+a312QabdkhuoAiBnaoEu+LN3Xw0nr49qedCS/Zv/mIt6KI5UwwCEkqKEWQ==
   name: bundles-1
 spec:
   number: 1
@@ -1015,7 +1015,7 @@ spec:
   - kubeVersion: "1.31"
     endOfStandardSupport: "2026-12-31"
     eksD:
-      name: "test"
+      name: "kubernetes-1-31-eks-1"
       channel: "1-31"
       manifestUrl: "https://distro.eks.amazonaws.com/kubernetes-1-31/kubernetes-1-31-eks-1.yaml"`
 
@@ -1116,7 +1116,7 @@ spec:
 kind: Bundles
 metadata:
   annotations:
-    anywhere.eks.amazonaws.com/signature: MEQCICjq1rZmhH0FYOlruZmh6QADCrr5ccrN6hE7Lu0vaXGrAiBhV+kfh64sqLblBt98DvIfHMerEqJVhHzpGy1YJthZQw==
+    anywhere.eks.amazonaws.com/signature: MEQCIGVQhkoTaTVqIY8TyQqpqzODgkprGR5+a312QabdkhuoAiBnaoEu+LN3Xw0nr49qedCS/Zv/mIt6KI5UwwCEkqKEWQ==
   name: bundles-1
 spec:
   number: 1
@@ -1124,7 +1124,7 @@ spec:
   - kubeVersion: "1.31"
     endOfStandardSupport: "2026-12-31"
     eksD:
-      name: "test"
+      name: "kubernetes-1-31-eks-1"
       channel: "1-31"
       manifestUrl: "https://distro.eks.amazonaws.com/kubernetes-1-31/kubernetes-1-31-eks-1.yaml"`
 				reader.EXPECT().ReadFile("https://bundles/bundles.yaml").Return([]byte(bundlesManifest), nil)
@@ -1145,7 +1145,7 @@ spec:
 kind: Bundles
 metadata:
   annotations:
-    anywhere.eks.amazonaws.com/signature: MEQCICjq1rZmhH0FYOlruZmh6QADCrr5ccrN6hE7Lu0vaXGrAiBhV+kfh64sqLblBt98DvIfHMerEqJVhHzpGy1YJthZQw==
+    anywhere.eks.amazonaws.com/signature: MEQCIGVQhkoTaTVqIY8TyQqpqzODgkprGR5+a312QabdkhuoAiBnaoEu+LN3Xw0nr49qedCS/Zv/mIt6KI5UwwCEkqKEWQ==
   name: bundles-1
 spec:
   number: 1
@@ -1153,7 +1153,7 @@ spec:
   - kubeVersion: "1.31"
     endOfStandardSupport: "2026-12-31"
     eksD:
-      name: "test"
+      name: "kubernetes-1-31-eks-1"
       channel: "1-31"
       manifestUrl: "https://distro.eks.amazonaws.com/kubernetes-1-31/kubernetes-1-31-eks-1.yaml"`
 				reader.EXPECT().ReadFile("bundles-override.yaml").Return([]byte(bundlesManifest), nil)
@@ -1220,7 +1220,7 @@ spec:
 kind: Bundles
 metadata:
   annotations:
-    anywhere.eks.amazonaws.com/signature: MEQCICjq1rZmhH0FYOlruZmh6QADCrr5ccrN6hE7Lu0vaXGrAiBhV+kfh64sqLblBt98DvIfHMerEqJVhHzpGy1YJthZQw==
+    anywhere.eks.amazonaws.com/signature: MEQCIGVQhkoTaTVqIY8TyQqpqzODgkprGR5+a312QabdkhuoAiBnaoEu+LN3Xw0nr49qedCS/Zv/mIt6KI5UwwCEkqKEWQ==
   name: bundles-1
 spec:
   number: 1
@@ -1228,7 +1228,7 @@ spec:
   - kubeVersion: "1.31"
     endOfStandardSupport: "2026-12-31"
     eksD:
-      name: "test"
+      name: "kubernetes-1-31-eks-1"
       channel: "1-31"
       manifestUrl: "%s"`, tempFile.Name())
 
@@ -1259,7 +1259,7 @@ func TestValidateExtendedKubernetesVersionSupportAirgappedFileReadError(t *testi
 kind: Bundles
 metadata:
   annotations:
-    anywhere.eks.amazonaws.com/signature: MEQCICjq1rZmhH0FYOlruZmh6QADCrr5ccrN6hE7Lu0vaXGrAiBhV+kfh64sqLblBt98DvIfHMerEqJVhHzpGy1YJthZQw==
+    anywhere.eks.amazonaws.com/signature: MEQCIGVQhkoTaTVqIY8TyQqpqzODgkprGR5+a312QabdkhuoAiBnaoEu+LN3Xw0nr49qedCS/Zv/mIt6KI5UwwCEkqKEWQ==
   name: bundles-1
 spec:
   number: 1
@@ -1267,7 +1267,7 @@ spec:
   - kubeVersion: "1.31"
     endOfStandardSupport: "2026-12-31"
     eksD:
-      name: "test"
+      name: "kubernetes-1-31-eks-1"
       channel: "1-31"
       manifestUrl: "/nonexistent/eks-anywhere-downloads/file.yaml"`
 
@@ -1307,7 +1307,7 @@ func TestValidateExtendedKubernetesVersionSupportAirgappedUnmarshalError(t *test
 kind: Bundles
 metadata:
   annotations:
-    anywhere.eks.amazonaws.com/signature: MEQCICjq1rZmhH0FYOlruZmh6QADCrr5ccrN6hE7Lu0vaXGrAiBhV+kfh64sqLblBt98DvIfHMerEqJVhHzpGy1YJthZQw==
+    anywhere.eks.amazonaws.com/signature: MEQCIGVQhkoTaTVqIY8TyQqpqzODgkprGR5+a312QabdkhuoAiBnaoEu+LN3Xw0nr49qedCS/Zv/mIt6KI5UwwCEkqKEWQ==
   name: bundles-1
 spec:
   number: 1
@@ -1315,7 +1315,7 @@ spec:
   - kubeVersion: "1.31"
     endOfStandardSupport: "2026-12-31"
     eksD:
-      name: "test"
+      name: "kubernetes-1-31-eks-1"
       channel: "1-31"
       manifestUrl: "%s"`, tempFile.Name())
 
@@ -1359,7 +1359,7 @@ spec:
 kind: Bundles
 metadata:
   annotations:
-    anywhere.eks.amazonaws.com/signature: MEQCICjq1rZmhH0FYOlruZmh6QADCrr5ccrN6hE7Lu0vaXGrAiBhV+kfh64sqLblBt98DvIfHMerEqJVhHzpGy1YJthZQw==
+    anywhere.eks.amazonaws.com/signature: MEQCIGVQhkoTaTVqIY8TyQqpqzODgkprGR5+a312QabdkhuoAiBnaoEu+LN3Xw0nr49qedCS/Zv/mIt6KI5UwwCEkqKEWQ==
   name: bundles-1
 spec:
   number: 1
@@ -1367,7 +1367,7 @@ spec:
   - kubeVersion: "1.31"
     endOfStandardSupport: "2026-12-31"
     eksD:
-      name: "test"
+      name: "kubernetes-1-31-eks-1"
       channel: "1-31"
       manifestUrl: "%s"`, server.URL)
 
@@ -1402,7 +1402,7 @@ func TestValidateExtendedKubernetesVersionSupportNonAirgappedHTTPError(t *testin
 kind: Bundles
 metadata:
   annotations:
-    anywhere.eks.amazonaws.com/signature: MEQCICjq1rZmhH0FYOlruZmh6QADCrr5ccrN6hE7Lu0vaXGrAiBhV+kfh64sqLblBt98DvIfHMerEqJVhHzpGy1YJthZQw==
+    anywhere.eks.amazonaws.com/signature: MEQCIGVQhkoTaTVqIY8TyQqpqzODgkprGR5+a312QabdkhuoAiBnaoEu+LN3Xw0nr49qedCS/Zv/mIt6KI5UwwCEkqKEWQ==
   name: bundles-1
 spec:
   number: 1
@@ -1410,7 +1410,7 @@ spec:
   - kubeVersion: "1.31"
     endOfStandardSupport: "2026-12-31"
     eksD:
-      name: "test"
+      name: "kubernetes-1-31-eks-1"
       channel: "1-31"
       manifestUrl: "%s"`, server.URL)
 
@@ -1447,7 +1447,7 @@ func TestValidateExtendedKubernetesVersionSupportNonAirgappedHTTPInvalidYAML(t *
 kind: Bundles
 metadata:
   annotations:
-    anywhere.eks.amazonaws.com/signature: MEQCICjq1rZmhH0FYOlruZmh6QADCrr5ccrN6hE7Lu0vaXGrAiBhV+kfh64sqLblBt98DvIfHMerEqJVhHzpGy1YJthZQw==
+    anywhere.eks.amazonaws.com/signature: MEQCIGVQhkoTaTVqIY8TyQqpqzODgkprGR5+a312QabdkhuoAiBnaoEu+LN3Xw0nr49qedCS/Zv/mIt6KI5UwwCEkqKEWQ==
   name: bundles-1
 spec:
   number: 1
@@ -1455,7 +1455,7 @@ spec:
   - kubeVersion: "1.31"
     endOfStandardSupport: "2026-12-31"
     eksD:
-      name: "test"
+      name: "kubernetes-1-31-eks-1"
       channel: "1-31"
       manifestUrl: "%s"`, server.URL)
 
