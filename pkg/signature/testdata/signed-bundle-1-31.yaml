@@ -1,0 +1,177 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Bundles
+metadata:
+  annotations:
+    anywhere.eks.amazonaws.com/excludes: LnNwZWMudmVyc2lvbnNCdW5kbGVzW10uYm9vdHN0cmFwCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLmJvdHRsZXJvY2tldEhvc3RDb250YWluZXJzCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLmNlcnRNYW5hZ2VyCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLmNpbGl1bQouc3BlYy52ZXJzaW9uc0J1bmRsZXNbXS5jbG91ZFN0YWNrCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLmNsdXN0ZXJBUEkKLnNwZWMudmVyc2lvbnNCdW5kbGVzW10uY29udHJvbFBsYW5lCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLmRvY2tlcgouc3BlYy52ZXJzaW9uc0J1bmRsZXNbXS5la3NhCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLmVrc0QuY29tcG9uZW50cwouc3BlYy52ZXJzaW9uc0J1bmRsZXNbXS5la3NELm1hbmlmZXN0VXJsCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLmV0Y2RhZG1Cb290c3RyYXAKLnNwZWMudmVyc2lvbnNCdW5kbGVzW10uZXRjZGFkbUNvbnRyb2xsZXIKLnNwZWMudmVyc2lvbnNCdW5kbGVzW10uZmx1eAouc3BlYy52ZXJzaW9uc0J1bmRsZXNbXS5oYXByb3h5Ci5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLmtpbmRuZXRkCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLm51dGFuaXgKLnNwZWMudmVyc2lvbnNCdW5kbGVzW10ucGFja2FnZUNvbnRyb2xsZXIKLnNwZWMudmVyc2lvbnNCdW5kbGVzW10uc25vdwouc3BlYy52ZXJzaW9uc0J1bmRsZXNbXS50aW5rZXJiZWxsCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLnVwZ3JhZGVyCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLnZTcGhlcmU=
+    anywhere.eks.amazonaws.com/signature: MEYCIQCX6Ri50we6Xntnz/lZP0WHU581i6EGsyg26T6ZCpfPhAIhAMw/wenHJlEtkJ/yI4KPnqxUQTSN9OJAnxcX57OrTVh1
+  creationTimestamp: null
+  name: test-bundle-1-31
+spec:
+  cliMaxVersion: ""
+  cliMinVersion: ""
+  number: 1
+  versionsBundles:
+  - bootstrap:
+      components: {}
+      controller: {}
+      kubeProxy: {}
+      metadata: {}
+      version: ""
+    bottlerocketBootstrapContainers:
+      vsphereMultiNetworkBootstrap: {}
+    bottlerocketHostContainers:
+      admin: {}
+      control: {}
+      kubeadmBootstrap: {}
+    certManager:
+      acmesolver: {}
+      cainjector: {}
+      controller: {}
+      manifest: {}
+      startupapicheck: {}
+      webhook: {}
+    cilium:
+      cilium: {}
+      helmChart: {}
+      operator: {}
+    cloudStack:
+      clusterAPIController: {}
+      components: {}
+      kubeRbacProxy: {}
+      kubeVip: {}
+      metadata: {}
+      version: ""
+    clusterAPI:
+      components: {}
+      controller: {}
+      kubeProxy: {}
+      metadata: {}
+      version: ""
+    controlPlane:
+      components: {}
+      controller: {}
+      kubeProxy: {}
+      metadata: {}
+      version: ""
+    docker:
+      clusterTemplate: {}
+      components: {}
+      kubeProxy: {}
+      manager: {}
+      metadata: {}
+      version: ""
+    eksD:
+      ami:
+        bottlerocket: {}
+      containerd: {}
+      crictl: {}
+      etcdadm: {}
+      imagebuilder: {}
+      kindNode: {}
+      name: kubernetes-1-31-46
+      ova:
+        bottlerocket: {}
+      raw:
+        bottlerocket: {}
+    eksa:
+      cliTools: {}
+      clusterController: {}
+      components: {}
+      diagnosticCollector: {}
+    endOfStandardSupport: "2026-12-31"
+    etcdadmBootstrap:
+      components: {}
+      controller: {}
+      kubeProxy: {}
+      metadata: {}
+      version: ""
+    etcdadmController:
+      components: {}
+      controller: {}
+      kubeProxy: {}
+      metadata: {}
+      version: ""
+    flux:
+      helmController: {}
+      kustomizeController: {}
+      notificationController: {}
+      sourceController: {}
+    haproxy:
+      image: {}
+    kindnetd:
+      manifest: {}
+    kubeVersion: "1.31"
+    nutanix:
+      cloudProvider: {}
+      clusterAPIController: {}
+      clusterTemplate: {}
+      components: {}
+      kubeVip: {}
+      metadata: {}
+      version: ""
+    packageController:
+      credentialProviderPackage: {}
+      helmChart: {}
+      packageController: {}
+      tokenRefresher: {}
+    snow:
+      bottlerocketBootstrapSnow: {}
+      components: {}
+      kubeVip: {}
+      manager: {}
+      metadata: {}
+      version: ""
+    tinkerbell:
+      clusterAPIController: {}
+      clusterTemplate: {}
+      components: {}
+      envoy: {}
+      kubeVip: {}
+      metadata: {}
+      tinkerbellStack:
+        actions:
+          cexec: {}
+          imageToDisk: {}
+          kexec: {}
+          ociToDisk: {}
+          reboot: {}
+          writeFile: {}
+        boots: {}
+        hegel: {}
+        hook:
+          bootkit: {}
+          docker: {}
+          initramfs:
+            amd: {}
+            arm: {}
+          iso:
+            amd: {}
+            arm: {}
+          kernel: {}
+          vmlinuz:
+            amd: {}
+            arm: {}
+        rufio: {}
+        stack: {}
+        tink:
+          nginx: {}
+          tinkController: {}
+          tinkRelay: {}
+          tinkRelayInit: {}
+          tinkServer: {}
+          tinkWorker: {}
+        tinkerbellChart: {}
+        tinkerbellCrds: {}
+      version: ""
+    upgrader:
+      upgrader: {}
+    vSphere:
+      clusterAPIController: {}
+      clusterTemplate: {}
+      components: {}
+      kubeProxy: {}
+      kubeVip: {}
+      manager: {}
+      metadata: {}
+      version: ""
+status: {}

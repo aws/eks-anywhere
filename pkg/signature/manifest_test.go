@@ -7,11 +7,13 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 	"time"
 
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
+	"github.com/ghodss/yaml"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/onsi/gomega"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -137,25 +139,18 @@ func TestValidateSignature(t *testing.T) {
 		},
 		{
 			name: "signature verification succeeded",
-			bundle: &anywherev1alpha1.Bundles{
-				TypeMeta: v1.TypeMeta{
-					Kind:       "Bundles",
-					APIVersion: anywherev1alpha1.GroupVersion.String(),
-				},
-				ObjectMeta: v1.ObjectMeta{
-					Annotations: map[string]string{
-						constants.SignatureAnnotation: "MEYCIQCiWwxw/Nchkgtan47FzagXHgB45Op7YWxvSZjFzHau8wIhALG2kbm+H8HJEfN/rUQ0ldo298MnzyhukBptUm0jCtZZ",
-					},
-				},
-				Spec: anywherev1alpha1.BundlesSpec{
-					Number: 1,
-					VersionsBundles: []anywherev1alpha1.VersionsBundle{
-						{
-							KubeVersion: "1.31",
-						},
-					},
-				},
-			},
+			bundle: func() *anywherev1alpha1.Bundles {
+				// Load from file to ensure exact structure match
+				data, err := os.ReadFile("testdata/signed-bundle-1-31.yaml")
+				if err != nil {
+					panic(fmt.Sprintf("failed to read test bundle: %v", err))
+				}
+				bundle := &anywherev1alpha1.Bundles{}
+				if err := yaml.Unmarshal(data, bundle); err != nil {
+					panic(fmt.Sprintf("failed to unmarshal test bundle: %v", err))
+				}
+				return bundle
+			}(),
 			publicKey: constants.KMSPublicKey,
 			valid:     true,
 			wantErr:   nil,
