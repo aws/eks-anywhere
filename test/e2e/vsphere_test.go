@@ -3372,7 +3372,7 @@ func TestVSphereKubernetes134BottlerocketNetworksSimpleFlow(t *testing.T) {
 		t,
 		provider,
 	).WithClusterConfig(
-		provider.WithKubeVersionAndOS(v1alpha1.Kube134, framework.Bottlerocket134Template, nil),
+		provider.WithKubeVersionAndOS(v1alpha1.Kube134, framework.Bottlerocket1, nil),
 		api.ClusterToConfigFiller(
 			api.WithLicenseToken(licenseToken),
 		),
