@@ -32,6 +32,17 @@ spec:
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.11.1/metadata.yaml
       version: v1.11.1+abcdef1
+    bottlerocketBootstrapContainers:
+      vsphereMultiNetworkBootstrap:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for bottlerocket-bootstrap-vsphere-multi-network
+          image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: bottlerocket-bootstrap-vsphere-multi-network
+        os: linux
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-vsphere-multi-network:v1-28-63-eks-a-v0.0.0-dev-build.1
     bottlerocketHostContainers:
       admin:
         arch:
@@ -857,6 +868,17 @@ spec:
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.11.1/metadata.yaml
       version: v1.11.1+abcdef1
+    bottlerocketBootstrapContainers:
+      vsphereMultiNetworkBootstrap:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for bottlerocket-bootstrap-vsphere-multi-network
+          image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: bottlerocket-bootstrap-vsphere-multi-network
+        os: linux
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-vsphere-multi-network:v1-29-52-eks-a-v0.0.0-dev-build.1
     bottlerocketHostContainers:
       admin:
         arch:
@@ -1682,6 +1704,17 @@ spec:
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.11.1/metadata.yaml
       version: v1.11.1+abcdef1
+    bottlerocketBootstrapContainers:
+      vsphereMultiNetworkBootstrap:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for bottlerocket-bootstrap-vsphere-multi-network
+          image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: bottlerocket-bootstrap-vsphere-multi-network
+        os: linux
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-vsphere-multi-network:v1-30-45-eks-a-v0.0.0-dev-build.1
     bottlerocketHostContainers:
       admin:
         arch:
@@ -2507,6 +2540,17 @@ spec:
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.11.1/metadata.yaml
       version: v1.11.1+abcdef1
+    bottlerocketBootstrapContainers:
+      vsphereMultiNetworkBootstrap:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for bottlerocket-bootstrap-vsphere-multi-network
+          image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: bottlerocket-bootstrap-vsphere-multi-network
+        os: linux
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-vsphere-multi-network:v1-31-34-eks-a-v0.0.0-dev-build.1
     bottlerocketHostContainers:
       admin:
         arch:
@@ -3332,6 +3376,17 @@ spec:
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.11.1/metadata.yaml
       version: v1.11.1+abcdef1
+    bottlerocketBootstrapContainers:
+      vsphereMultiNetworkBootstrap:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for bottlerocket-bootstrap-vsphere-multi-network
+          image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: bottlerocket-bootstrap-vsphere-multi-network
+        os: linux
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-vsphere-multi-network:v1-32-27-eks-a-v0.0.0-dev-build.1
     bottlerocketHostContainers:
       admin:
         arch:
@@ -4157,6 +4212,17 @@ spec:
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.11.1/metadata.yaml
       version: v1.11.1+abcdef1
+    bottlerocketBootstrapContainers:
+      vsphereMultiNetworkBootstrap:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for bottlerocket-bootstrap-vsphere-multi-network
+          image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: bottlerocket-bootstrap-vsphere-multi-network
+        os: linux
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-vsphere-multi-network:v1-33-17-eks-a-v0.0.0-dev-build.1
     bottlerocketHostContainers:
       admin:
         arch:
@@ -4982,6 +5048,17 @@ spec:
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.11.1/metadata.yaml
       version: v1.11.1+abcdef1
+    bottlerocketBootstrapContainers:
+      vsphereMultiNetworkBootstrap:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for bottlerocket-bootstrap-vsphere-multi-network
+          image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: bottlerocket-bootstrap-vsphere-multi-network
+        os: linux
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-vsphere-multi-network:v1-34-8-eks-a-v0.0.0-dev-build.1
     bottlerocketHostContainers:
       admin:
         arch:
