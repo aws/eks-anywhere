@@ -1,0 +1,616 @@
+package reconciler
+
+import (
+	"context"
+	"testing"
+
+	"github.com/go-logr/logr"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	apiv1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
+	addonsv1 "sigs.k8s.io/cluster-api/api/addons/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+
+	"github.com/aws/eks-anywhere/internal/test"
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/providers/nutanix"
+)
+
+func TestToClientObjects(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    interface{}
+		expected int
+	}{
+		{
+			name: "convert ConfigMaps",
+			input: []*apiv1.ConfigMap{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-cm-1",
+						Namespace: constants.EksaSystemNamespace,
+					},
+				},
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-cm-2",
+						Namespace: constants.EksaSystemNamespace,
+					},
+				},
+			},
+			expected: 2,
+		},
+		{
+			name: "convert Secrets",
+			input: []*apiv1.Secret{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-secret-1",
+						Namespace: constants.EksaSystemNamespace,
+					},
+				},
+			},
+			expected: 1,
+		},
+		{
+			name: "convert ClusterResourceSets",
+			input: []*addonsv1.ClusterResourceSet{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-crs-1",
+						Namespace: constants.EksaSystemNamespace,
+					},
+				},
+			},
+			expected: 1,
+		},
+		{
+			name:     "empty slice",
+			input:    []*apiv1.ConfigMap{},
+			expected: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var result []client.Object
+
+			switch v := tt.input.(type) {
+			case []*apiv1.ConfigMap:
+				result = toClientObjects(v)
+			case []*apiv1.Secret:
+				result = toClientObjects(v)
+			case []*addonsv1.ClusterResourceSet:
+				result = toClientObjects(v)
+			}
+
+			assert.Equal(t, tt.expected, len(result))
+			for _, obj := range result {
+				assert.NotNil(t, obj)
+			}
+		})
+	}
+}
+
+func TestSetOwnerReferencesOnObjects(t *testing.T) {
+	scheme := runtime.NewScheme()
+	require.NoError(t, apiv1.AddToScheme(scheme))
+	require.NoError(t, clusterv1.AddToScheme(scheme))
+
+	owner := &clusterv1.Cluster{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "cluster.x-k8s.io/v1beta1",
+			Kind:       "Cluster",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-cluster",
+			Namespace: constants.EksaSystemNamespace,
+			UID:       types.UID("test-uid-123"),
+		},
+	}
+
+	tests := []struct {
+		name           string
+		objects        []client.Object
+		existingObjs   []client.Object
+		wantErr        bool
+		wantOwnerRefs  bool
+		expectedErrMsg string
+	}{
+		{
+			name: "set owner reference on ConfigMap",
+			objects: []client.Object{
+				&apiv1.ConfigMap{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: "v1",
+						Kind:       "ConfigMap",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-cm",
+						Namespace: constants.EksaSystemNamespace,
+					},
+				},
+			},
+			existingObjs: []client.Object{
+				&apiv1.ConfigMap{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: "v1",
+						Kind:       "ConfigMap",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-cm",
+						Namespace: constants.EksaSystemNamespace,
+					},
+				},
+			},
+			wantErr:       false,
+			wantOwnerRefs: true,
+		},
+		{
+			name: "set owner reference on Secret",
+			objects: []client.Object{
+				&apiv1.Secret{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: "v1",
+						Kind:       "Secret",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-secret",
+						Namespace: constants.EksaSystemNamespace,
+					},
+				},
+			},
+			existingObjs: []client.Object{
+				&apiv1.Secret{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: "v1",
+						Kind:       "Secret",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-secret",
+						Namespace: constants.EksaSystemNamespace,
+					},
+				},
+			},
+			wantErr:       false,
+			wantOwnerRefs: true,
+		},
+		{
+			name: "skip non-existent object",
+			objects: []client.Object{
+				&apiv1.ConfigMap{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: "v1",
+						Kind:       "ConfigMap",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "non-existent-cm",
+						Namespace: constants.EksaSystemNamespace,
+					},
+				},
+			},
+			existingObjs:  []client.Object{},
+			wantErr:       false,
+			wantOwnerRefs: false,
+		},
+		{
+			name: "skip object with existing owner reference",
+			objects: []client.Object{
+				&apiv1.ConfigMap{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: "v1",
+						Kind:       "ConfigMap",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-cm-with-owner",
+						Namespace: constants.EksaSystemNamespace,
+					},
+				},
+			},
+			existingObjs: []client.Object{
+				&apiv1.ConfigMap{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: "v1",
+						Kind:       "ConfigMap",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-cm-with-owner",
+						Namespace: constants.EksaSystemNamespace,
+						OwnerReferences: []metav1.OwnerReference{
+							{
+								APIVersion: "cluster.x-k8s.io/v1beta1",
+								Kind:       "Cluster",
+								Name:       "test-cluster",
+								UID:        types.UID("test-uid-123"),
+							},
+						},
+					},
+				},
+			},
+			wantErr:       false,
+			wantOwnerRefs: true,
+		},
+		{
+			name: "handle multiple objects",
+			objects: []client.Object{
+				&apiv1.ConfigMap{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: "v1",
+						Kind:       "ConfigMap",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-cm-1",
+						Namespace: constants.EksaSystemNamespace,
+					},
+				},
+				&apiv1.ConfigMap{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: "v1",
+						Kind:       "ConfigMap",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-cm-2",
+						Namespace: constants.EksaSystemNamespace,
+					},
+				},
+			},
+			existingObjs: []client.Object{
+				&apiv1.ConfigMap{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: "v1",
+						Kind:       "ConfigMap",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-cm-1",
+						Namespace: constants.EksaSystemNamespace,
+					},
+				},
+				&apiv1.ConfigMap{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: "v1",
+						Kind:       "ConfigMap",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-cm-2",
+						Namespace: constants.EksaSystemNamespace,
+					},
+				},
+			},
+			wantErr:       false,
+			wantOwnerRefs: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Initialize fake client with existing objects
+			initObjs := append([]client.Object{owner}, tt.existingObjs...)
+			fakeClient := fake.NewClientBuilder().
+				WithScheme(scheme).
+				WithObjects(initObjs...).
+				Build()
+
+			r := &Reconciler{
+				client: fakeClient,
+			}
+
+			logger := test.NewNullLogger()
+			err := r.setOwnerReferencesOnObjects(context.TODO(), logger, owner, tt.objects)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+				if tt.expectedErrMsg != "" {
+					assert.Contains(t, err.Error(), tt.expectedErrMsg)
+				}
+			} else {
+				assert.NoError(t, err)
+
+				// If we expect owner refs and have existing objects, verify them
+				if tt.wantOwnerRefs && len(tt.existingObjs) > 0 {
+					for _, obj := range tt.objects {
+						// Get the updated object
+						key := client.ObjectKey{
+							Name:      obj.GetName(),
+							Namespace: obj.GetNamespace(),
+						}
+
+						// Create a new object of the same type to fetch into
+						var fetchedObj client.Object
+						switch obj.(type) {
+						case *apiv1.ConfigMap:
+							fetchedObj = &apiv1.ConfigMap{}
+						case *apiv1.Secret:
+							fetchedObj = &apiv1.Secret{}
+						}
+
+						err := fakeClient.Get(context.TODO(), key, fetchedObj)
+						if err == nil {
+							// Verify owner reference exists
+							ownerRefs := fetchedObj.GetOwnerReferences()
+							hasOwnerRef := false
+							for _, ref := range ownerRefs {
+								if ref.UID == owner.UID {
+									hasOwnerRef = true
+									break
+								}
+							}
+							assert.True(t, hasOwnerRef, "Expected owner reference on object %s", obj.GetName())
+						}
+					}
+				}
+			}
+		})
+	}
+}
+
+func TestEnsureOwnerReferences(t *testing.T) {
+	scheme := runtime.NewScheme()
+	require.NoError(t, apiv1.AddToScheme(scheme))
+	require.NoError(t, clusterv1.AddToScheme(scheme))
+	require.NoError(t, addonsv1.AddToScheme(scheme))
+	require.NoError(t, anywherev1.AddToScheme(scheme))
+
+	capiCluster := &clusterv1.Cluster{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "cluster.x-k8s.io/v1beta1",
+			Kind:       "Cluster",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-cluster",
+			Namespace: constants.EksaSystemNamespace,
+			UID:       types.UID("test-uid-123"),
+		},
+	}
+
+	tests := []struct {
+		name           string
+		clusterSpec    *cluster.Spec
+		controlPlane   *nutanix.ControlPlane
+		existingObjs   []client.Object
+		wantErr        bool
+		expectedErrMsg string
+	}{
+		{
+			name: "successfully set owner references on all resources",
+			clusterSpec: &cluster.Spec{
+				Config: &cluster.Config{
+					Cluster: &anywherev1.Cluster{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "test-cluster",
+							Namespace: constants.EksaSystemNamespace,
+						},
+					},
+				},
+			},
+			controlPlane: &nutanix.ControlPlane{
+				ConfigMaps: []*apiv1.ConfigMap{
+					{
+						TypeMeta: metav1.TypeMeta{
+							APIVersion: "v1",
+							Kind:       "ConfigMap",
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "test-cm",
+							Namespace: constants.EksaSystemNamespace,
+						},
+					},
+				},
+				Secrets: []*apiv1.Secret{
+					{
+						TypeMeta: metav1.TypeMeta{
+							APIVersion: "v1",
+							Kind:       "Secret",
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "test-secret",
+							Namespace: constants.EksaSystemNamespace,
+						},
+					},
+				},
+				ClusterResourceSets: []*addonsv1.ClusterResourceSet{},
+			},
+			existingObjs: []client.Object{
+				capiCluster,
+				&apiv1.ConfigMap{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: "v1",
+						Kind:       "ConfigMap",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-cm",
+						Namespace: constants.EksaSystemNamespace,
+					},
+				},
+				&apiv1.Secret{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: "v1",
+						Kind:       "Secret",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-secret",
+						Namespace: constants.EksaSystemNamespace,
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "skip when CAPI cluster not found",
+			clusterSpec: &cluster.Spec{
+				Config: &cluster.Config{
+					Cluster: &anywherev1.Cluster{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "non-existent-cluster",
+							Namespace: constants.EksaSystemNamespace,
+						},
+					},
+				},
+			},
+			controlPlane: &nutanix.ControlPlane{
+				ConfigMaps:          []*apiv1.ConfigMap{},
+				Secrets:             []*apiv1.Secret{},
+				ClusterResourceSets: []*addonsv1.ClusterResourceSet{},
+			},
+			existingObjs: []client.Object{},
+			wantErr:      false,
+		},
+		{
+			name: "handle empty control plane resources",
+			clusterSpec: &cluster.Spec{
+				Config: &cluster.Config{
+					Cluster: &anywherev1.Cluster{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "test-cluster",
+							Namespace: constants.EksaSystemNamespace,
+						},
+					},
+				},
+			},
+			controlPlane: &nutanix.ControlPlane{
+				ConfigMaps:          []*apiv1.ConfigMap{},
+				Secrets:             []*apiv1.Secret{},
+				ClusterResourceSets: []*addonsv1.ClusterResourceSet{},
+			},
+			existingObjs: []client.Object{capiCluster},
+			wantErr:      false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fakeClient := fake.NewClientBuilder().
+				WithScheme(scheme).
+				WithObjects(tt.existingObjs...).
+				Build()
+
+			r := &Reconciler{
+				client: fakeClient,
+			}
+
+			logger := test.NewNullLogger()
+			err := r.ensureOwnerReferences(context.TODO(), logger, tt.clusterSpec, tt.controlPlane)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+				if tt.expectedErrMsg != "" {
+					assert.Contains(t, err.Error(), tt.expectedErrMsg)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestEnsureOwnerReferencesIntegration(t *testing.T) {
+	// This test verifies the full integration of ensureOwnerReferences
+	scheme := runtime.NewScheme()
+	require.NoError(t, apiv1.AddToScheme(scheme))
+	require.NoError(t, clusterv1.AddToScheme(scheme))
+	require.NoError(t, addonsv1.AddToScheme(scheme))
+	require.NoError(t, anywherev1.AddToScheme(scheme))
+
+	capiCluster := &clusterv1.Cluster{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "cluster.x-k8s.io/v1beta1",
+			Kind:       "Cluster",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "integration-cluster",
+			Namespace: constants.EksaSystemNamespace,
+			UID:       types.UID("integration-uid"),
+		},
+	}
+
+	configMap := &apiv1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "ConfigMap",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "integration-cm",
+			Namespace: constants.EksaSystemNamespace,
+		},
+	}
+
+	secret := &apiv1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Secret",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "integration-secret",
+			Namespace: constants.EksaSystemNamespace,
+		},
+	}
+
+	fakeClient := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(capiCluster, configMap, secret).
+		Build()
+
+	r := &Reconciler{
+		client: fakeClient,
+	}
+
+	clusterSpec := &cluster.Spec{
+		Config: &cluster.Config{
+			Cluster: &anywherev1.Cluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "integration-cluster",
+					Namespace: constants.EksaSystemNamespace,
+				},
+			},
+		},
+	}
+
+	controlPlane := &nutanix.ControlPlane{
+		ConfigMaps:          []*apiv1.ConfigMap{configMap},
+		Secrets:             []*apiv1.Secret{secret},
+		ClusterResourceSets: []*addonsv1.ClusterResourceSet{},
+	}
+
+	logger := logr.Discard()
+	err := r.ensureOwnerReferences(context.TODO(), logger, clusterSpec, controlPlane)
+	require.NoError(t, err)
+
+	// Verify ConfigMap has owner reference
+	updatedCM := &apiv1.ConfigMap{}
+	err = fakeClient.Get(context.TODO(), client.ObjectKey{
+		Name:      "integration-cm",
+		Namespace: constants.EksaSystemNamespace,
+	}, updatedCM)
+	require.NoError(t, err)
+	assert.Len(t, updatedCM.OwnerReferences, 1)
+	assert.Equal(t, capiCluster.UID, updatedCM.OwnerReferences[0].UID)
+
+	// Verify Secret has owner reference
+	updatedSecret := &apiv1.Secret{}
+	err = fakeClient.Get(context.TODO(), client.ObjectKey{
+		Name:      "integration-secret",
+		Namespace: constants.EksaSystemNamespace,
+	}, updatedSecret)
+	require.NoError(t, err)
+	assert.Len(t, updatedSecret.OwnerReferences, 1)
+	assert.Equal(t, capiCluster.UID, updatedSecret.OwnerReferences[0].UID)
+
+	// Call ensureOwnerReferences again to verify it doesn't add duplicate owner references
+	err = r.ensureOwnerReferences(context.TODO(), logger, clusterSpec, controlPlane)
+	require.NoError(t, err)
+
+	// Verify no duplicate owner references
+	updatedCM2 := &apiv1.ConfigMap{}
+	err = fakeClient.Get(context.TODO(), client.ObjectKey{
+		Name:      "integration-cm",
+		Namespace: constants.EksaSystemNamespace,
+	}, updatedCM2)
+	require.NoError(t, err)
+	assert.Len(t, updatedCM2.OwnerReferences, 1, "Should not add duplicate owner references")
+}
