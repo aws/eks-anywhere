@@ -3,8 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.8.0
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.17.2
   name: bundles.anywhere.eks.amazonaws.com
 spec:
   group: anywhere.eks.amazonaws.com
@@ -21,14 +20,19 @@ spec:
         description: Bundles is the Schema for the bundles API.
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -44,23 +48,34 @@ spec:
                 type: integer
               versionsBundles:
                 items:
+                  description: VersionsBundle defines the versions of each component
+                    for a specific Kubernetes version in the Bundles CRD.
                   properties:
                     aws:
                       description: This field has been deprecated
                       properties:
                         clusterTemplate:
+                          description: |-
+                            Manifest represents a reference to a manifest, typically containing
+                            further resource definitions or configurations.
                           properties:
                             uri:
                               description: URI points to the manifest yaml file
                               type: string
                           type: object
                         components:
+                          description: |-
+                            Manifest represents a reference to a manifest, typically containing
+                            further resource definitions or configurations.
                           properties:
                             uri:
                               description: URI points to the manifest yaml file
                               type: string
                           type: object
                         controller:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -90,6 +105,9 @@ spec:
                               type: string
                           type: object
                         kubeProxy:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -119,6 +137,9 @@ spec:
                               type: string
                           type: object
                         metadata:
+                          description: |-
+                            Manifest represents a reference to a manifest, typically containing
+                            further resource definitions or configurations.
                           properties:
                             uri:
                               description: URI points to the manifest yaml file
@@ -135,14 +156,22 @@ spec:
                       - version
                       type: object
                     bootstrap:
+                      description: KubeadmBootstrapBundle defines the bootstrap controller
+                        images and version for this bundle.
                       properties:
                         components:
+                          description: |-
+                            Manifest represents a reference to a manifest, typically containing
+                            further resource definitions or configurations.
                           properties:
                             uri:
                               description: URI points to the manifest yaml file
                               type: string
                           type: object
                         controller:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -172,6 +201,9 @@ spec:
                               type: string
                           type: object
                         kubeProxy:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -201,6 +233,9 @@ spec:
                               type: string
                           type: object
                         metadata:
+                          description: |-
+                            Manifest represents a reference to a manifest, typically containing
+                            further resource definitions or configurations.
                           properties:
                             uri:
                               description: URI points to the manifest yaml file
@@ -215,9 +250,51 @@ spec:
                       - metadata
                       - version
                       type: object
+                    bottlerocketBootstrapContainers:
+                      description: BottlerocketBootstrapContainersBundle defines the
+                        Bottlerocket bootstrap containers used by the bundle.
+                      properties:
+                        vsphereMultiNetworkBootstrap:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
+                          properties:
+                            arch:
+                              description: Architectures of the asset
+                              items:
+                                type: string
+                              type: array
+                            description:
+                              type: string
+                            imageDigest:
+                              description: The SHA256 digest of the image manifest
+                              type: string
+                            name:
+                              description: The asset name
+                              type: string
+                            os:
+                              description: Operating system of the asset
+                              enum:
+                              - linux
+                              - darwin
+                              - windows
+                              type: string
+                            osName:
+                              description: Name of the OS like ubuntu, bottlerocket
+                              type: string
+                            uri:
+                              description: The image repository, name, and tag
+                              type: string
+                          type: object
+                      type: object
                     bottlerocketHostContainers:
+                      description: BottlerocketHostContainersBundle defines the Bottlerocket
+                        host containers used by the bundle.
                       properties:
                         admin:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -247,6 +324,9 @@ spec:
                               type: string
                           type: object
                         control:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -276,6 +356,9 @@ spec:
                               type: string
                           type: object
                         kubeadmBootstrap:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -310,8 +393,13 @@ spec:
                       - kubeadmBootstrap
                       type: object
                     certManager:
+                      description: CertManagerBundle defines the Cert Manager version
+                        and images for this bundle.
                       properties:
                         acmesolver:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -341,6 +429,9 @@ spec:
                               type: string
                           type: object
                         cainjector:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -370,6 +461,9 @@ spec:
                               type: string
                           type: object
                         controller:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -429,12 +523,18 @@ spec:
                               type: string
                           type: object
                         manifest:
+                          description: |-
+                            Manifest represents a reference to a manifest, typically containing
+                            further resource definitions or configurations.
                           properties:
                             uri:
                               description: URI points to the manifest yaml file
                               type: string
                           type: object
                         startupapicheck:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -466,6 +566,9 @@ spec:
                         version:
                           type: string
                         webhook:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -503,8 +606,13 @@ spec:
                       - webhook
                       type: object
                     cilium:
+                      description: CiliumBundle defines the Cilium version and images
+                        used for CNI in this bundle.
                       properties:
                         cilium:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -534,6 +642,9 @@ spec:
                               type: string
                           type: object
                         helmChart:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -570,6 +681,9 @@ spec:
                               type: string
                           type: object
                         operator:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -605,8 +719,13 @@ spec:
                       - operator
                       type: object
                     cloudStack:
+                      description: CloudStackBundle defines the CloudStack provider
+                        images and version for this bundle.
                       properties:
                         clusterAPIController:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -636,12 +755,18 @@ spec:
                               type: string
                           type: object
                         components:
+                          description: |-
+                            Manifest represents a reference to a manifest, typically containing
+                            further resource definitions or configurations.
                           properties:
                             uri:
                               description: URI points to the manifest yaml file
                               type: string
                           type: object
                         kubeRbacProxy:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -671,6 +796,9 @@ spec:
                               type: string
                           type: object
                         kubeVip:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -700,6 +828,9 @@ spec:
                               type: string
                           type: object
                         metadata:
+                          description: |-
+                            Manifest represents a reference to a manifest, typically containing
+                            further resource definitions or configurations.
                           properties:
                             uri:
                               description: URI points to the manifest yaml file
@@ -716,14 +847,22 @@ spec:
                       - version
                       type: object
                     clusterAPI:
+                      description: CoreClusterAPI defines the Core Cluster API version
+                        and images used in this bundle.
                       properties:
                         components:
+                          description: |-
+                            Manifest represents a reference to a manifest, typically containing
+                            further resource definitions or configurations.
                           properties:
                             uri:
                               description: URI points to the manifest yaml file
                               type: string
                           type: object
                         controller:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -753,6 +892,9 @@ spec:
                               type: string
                           type: object
                         kubeProxy:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -782,6 +924,9 @@ spec:
                               type: string
                           type: object
                         metadata:
+                          description: |-
+                            Manifest represents a reference to a manifest, typically containing
+                            further resource definitions or configurations.
                           properties:
                             uri:
                               description: URI points to the manifest yaml file
@@ -797,14 +942,22 @@ spec:
                       - version
                       type: object
                     controlPlane:
+                      description: KubeadmControlPlaneBundle defines the control plane
+                        controller images and version for this bundle.
                       properties:
                         components:
+                          description: |-
+                            Manifest represents a reference to a manifest, typically containing
+                            further resource definitions or configurations.
                           properties:
                             uri:
                               description: URI points to the manifest yaml file
                               type: string
                           type: object
                         controller:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -834,6 +987,9 @@ spec:
                               type: string
                           type: object
                         kubeProxy:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -863,6 +1019,9 @@ spec:
                               type: string
                           type: object
                         metadata:
+                          description: |-
+                            Manifest represents a reference to a manifest, typically containing
+                            further resource definitions or configurations.
                           properties:
                             uri:
                               description: URI points to the manifest yaml file
@@ -878,20 +1037,31 @@ spec:
                       - version
                       type: object
                     docker:
+                      description: DockerBundle defines the Docker provider images
+                        and version for this bundle.
                       properties:
                         clusterTemplate:
+                          description: |-
+                            Manifest represents a reference to a manifest, typically containing
+                            further resource definitions or configurations.
                           properties:
                             uri:
                               description: URI points to the manifest yaml file
                               type: string
                           type: object
                         components:
+                          description: |-
+                            Manifest represents a reference to a manifest, typically containing
+                            further resource definitions or configurations.
                           properties:
                             uri:
                               description: URI points to the manifest yaml file
                               type: string
                           type: object
                         kubeProxy:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -921,6 +1091,9 @@ spec:
                               type: string
                           type: object
                         manager:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -950,6 +1123,9 @@ spec:
                               type: string
                           type: object
                         metadata:
+                          description: |-
+                            Manifest represents a reference to a manifest, typically containing
+                            further resource definitions or configurations.
                           properties:
                             uri:
                               description: URI points to the manifest yaml file
@@ -966,12 +1142,17 @@ spec:
                       - version
                       type: object
                     eksD:
+                      description: EksDRelease defines the EKS-D specific release
+                        information.
                       properties:
                         ami:
                           description: Ami points to a collection of AMIs built with
                             this eks-d version
                           properties:
                             bottlerocket:
+                              description: |-
+                                Archive represents an archive asset (e.g. tarball) along with its OS/architecture metadata,
+                                and checksums for file integrity.
                               properties:
                                 arch:
                                   description: Architectures of the asset
@@ -1197,8 +1378,9 @@ spec:
                           description: Release number of EKS-D release
                           type: string
                         manifestUrl:
-                          description: Url pointing to the EKS-D release manifest
-                            using which assets where created
+                          description: |-
+                            Url pointing to the EKS-D release manifest using which
+                            assets where created
                           type: string
                         name:
                           type: string
@@ -1207,6 +1389,9 @@ spec:
                             this eks-d version
                           properties:
                             bottlerocket:
+                              description: |-
+                                Archive represents an archive asset (e.g. tarball) along with its OS/architecture metadata,
+                                and checksums for file integrity.
                               properties:
                                 arch:
                                   description: Architectures of the asset
@@ -1246,6 +1431,9 @@ spec:
                             with this eks-d version
                           properties:
                             bottlerocket:
+                              description: |-
+                                Archive represents an archive asset (e.g. tarball) along with its OS/architecture metadata,
+                                and checksums for file integrity.
                               properties:
                                 arch:
                                   description: Architectures of the asset
@@ -1282,8 +1470,13 @@ spec:
                           type: object
                       type: object
                     eksa:
+                      description: EksaBundle defines EKS Anywhere-specific images
+                        and configurations for this bundle.
                       properties:
                         cliTools:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -1313,6 +1506,9 @@ spec:
                               type: string
                           type: object
                         clusterController:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -1342,12 +1538,18 @@ spec:
                               type: string
                           type: object
                         components:
+                          description: |-
+                            Manifest represents a reference to a manifest, typically containing
+                            further resource definitions or configurations.
                           properties:
                             uri:
                               description: URI points to the manifest yaml file
                               type: string
                           type: object
                         diagnosticCollector:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -1387,14 +1589,22 @@ spec:
                     endOfStandardSupport:
                       type: string
                     etcdadmBootstrap:
+                      description: EtcdadmBootstrapBundle defines the bootstrap mechanism
+                        for external etcd in this bundle.
                       properties:
                         components:
+                          description: |-
+                            Manifest represents a reference to a manifest, typically containing
+                            further resource definitions or configurations.
                           properties:
                             uri:
                               description: URI points to the manifest yaml file
                               type: string
                           type: object
                         controller:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -1424,6 +1634,9 @@ spec:
                               type: string
                           type: object
                         kubeProxy:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -1453,6 +1666,9 @@ spec:
                               type: string
                           type: object
                         metadata:
+                          description: |-
+                            Manifest represents a reference to a manifest, typically containing
+                            further resource definitions or configurations.
                           properties:
                             uri:
                               description: URI points to the manifest yaml file
@@ -1468,14 +1684,22 @@ spec:
                       - version
                       type: object
                     etcdadmController:
+                      description: EtcdadmControllerBundle defines the external etcd
+                        controller images and version for this bundle.
                       properties:
                         components:
+                          description: |-
+                            Manifest represents a reference to a manifest, typically containing
+                            further resource definitions or configurations.
                           properties:
                             uri:
                               description: URI points to the manifest yaml file
                               type: string
                           type: object
                         controller:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -1505,6 +1729,9 @@ spec:
                               type: string
                           type: object
                         kubeProxy:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -1534,6 +1761,9 @@ spec:
                               type: string
                           type: object
                         metadata:
+                          description: |-
+                            Manifest represents a reference to a manifest, typically containing
+                            further resource definitions or configurations.
                           properties:
                             uri:
                               description: URI points to the manifest yaml file
@@ -1549,8 +1779,13 @@ spec:
                       - version
                       type: object
                     flux:
+                      description: FluxBundle defines the Flux components and versions
+                        used in this bundle.
                       properties:
                         helmController:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -1580,6 +1815,9 @@ spec:
                               type: string
                           type: object
                         kustomizeController:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -1609,6 +1847,9 @@ spec:
                               type: string
                           type: object
                         notificationController:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -1638,6 +1879,9 @@ spec:
                               type: string
                           type: object
                         sourceController:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -1675,8 +1919,13 @@ spec:
                       - sourceController
                       type: object
                     haproxy:
+                      description: HaproxyBundle defines the HAProxy image used for
+                        this bundle.
                       properties:
                         image:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -1709,8 +1958,13 @@ spec:
                       - image
                       type: object
                     kindnetd:
+                      description: KindnetdBundle defines the Kindnetd version and
+                        manifest for this bundle.
                       properties:
                         manifest:
+                          description: |-
+                            Manifest represents a reference to a manifest, typically containing
+                            further resource definitions or configurations.
                           properties:
                             uri:
                               description: URI points to the manifest yaml file
@@ -1724,8 +1978,13 @@ spec:
                     kubeVersion:
                       type: string
                     nutanix:
+                      description: NutanixBundle defines the Nutanix provider images
+                        and configurations for this bundle.
                       properties:
                         cloudProvider:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -1755,6 +2014,9 @@ spec:
                               type: string
                           type: object
                         clusterAPIController:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -1784,18 +2046,27 @@ spec:
                               type: string
                           type: object
                         clusterTemplate:
+                          description: |-
+                            Manifest represents a reference to a manifest, typically containing
+                            further resource definitions or configurations.
                           properties:
                             uri:
                               description: URI points to the manifest yaml file
                               type: string
                           type: object
                         components:
+                          description: |-
+                            Manifest represents a reference to a manifest, typically containing
+                            further resource definitions or configurations.
                           properties:
                             uri:
                               description: URI points to the manifest yaml file
                               type: string
                           type: object
                         kubeVip:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -1825,6 +2096,9 @@ spec:
                               type: string
                           type: object
                         metadata:
+                          description: |-
+                            Manifest represents a reference to a manifest, typically containing
+                            further resource definitions or configurations.
                           properties:
                             uri:
                               description: URI points to the manifest yaml file
@@ -1841,8 +2115,13 @@ spec:
                       - version
                       type: object
                     packageController:
+                      description: PackageBundle defines the EKS Anywhere package
+                        controller and related images for this bundle.
                       properties:
                         credentialProviderPackage:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -1872,6 +2151,9 @@ spec:
                               type: string
                           type: object
                         helmChart:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -1901,6 +2183,9 @@ spec:
                               type: string
                           type: object
                         packageController:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -1930,6 +2215,9 @@ spec:
                               type: string
                           type: object
                         tokenRefresher:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -1965,8 +2253,13 @@ spec:
                       - tokenRefresher
                       type: object
                     snow:
+                      description: SnowBundle defines the Snow provider images and
+                        configurations for this bundle.
                       properties:
                         bottlerocketBootstrapSnow:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -1996,12 +2289,18 @@ spec:
                               type: string
                           type: object
                         components:
+                          description: |-
+                            Manifest represents a reference to a manifest, typically containing
+                            further resource definitions or configurations.
                           properties:
                             uri:
                               description: URI points to the manifest yaml file
                               type: string
                           type: object
                         kubeVip:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -2031,6 +2330,9 @@ spec:
                               type: string
                           type: object
                         manager:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -2060,6 +2362,9 @@ spec:
                               type: string
                           type: object
                         metadata:
+                          description: |-
+                            Manifest represents a reference to a manifest, typically containing
+                            further resource definitions or configurations.
                           properties:
                             uri:
                               description: URI points to the manifest yaml file
@@ -2076,8 +2381,13 @@ spec:
                       - version
                       type: object
                     tinkerbell:
+                      description: TinkerbellBundle defines Tinkerbell provider images
+                        and configurations for this bundle.
                       properties:
                         clusterAPIController:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -2107,18 +2417,27 @@ spec:
                               type: string
                           type: object
                         clusterTemplate:
+                          description: |-
+                            Manifest represents a reference to a manifest, typically containing
+                            further resource definitions or configurations.
                           properties:
                             uri:
                               description: URI points to the manifest yaml file
                               type: string
                           type: object
                         components:
+                          description: |-
+                            Manifest represents a reference to a manifest, typically containing
+                            further resource definitions or configurations.
                           properties:
                             uri:
                               description: URI points to the manifest yaml file
                               type: string
                           type: object
                         envoy:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -2148,6 +2467,9 @@ spec:
                               type: string
                           type: object
                         kubeVip:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -2177,17 +2499,26 @@ spec:
                               type: string
                           type: object
                         metadata:
+                          description: |-
+                            Manifest represents a reference to a manifest, typically containing
+                            further resource definitions or configurations.
                           properties:
                             uri:
                               description: URI points to the manifest yaml file
                               type: string
                           type: object
                         tinkerbellStack:
+                          description: TinkerbellStackBundle defines the Tinkerbell
+                            stack components for provisioning bare metal.
                           properties:
                             actions:
-                              description: Tinkerbell Template Actions.
+                              description: ActionsBundle defines the Tinkerbell template
+                                actions.
                               properties:
                                 cexec:
+                                  description: |-
+                                    Image represents a container image asset along with metadata such as OS,
+                                    architecture, and registry information.
                                   properties:
                                     arch:
                                       description: Architectures of the asset
@@ -2219,6 +2550,9 @@ spec:
                                       type: string
                                   type: object
                                 imageToDisk:
+                                  description: |-
+                                    Image represents a container image asset along with metadata such as OS,
+                                    architecture, and registry information.
                                   properties:
                                     arch:
                                       description: Architectures of the asset
@@ -2250,6 +2584,9 @@ spec:
                                       type: string
                                   type: object
                                 kexec:
+                                  description: |-
+                                    Image represents a container image asset along with metadata such as OS,
+                                    architecture, and registry information.
                                   properties:
                                     arch:
                                       description: Architectures of the asset
@@ -2281,6 +2618,9 @@ spec:
                                       type: string
                                   type: object
                                 ociToDisk:
+                                  description: |-
+                                    Image represents a container image asset along with metadata such as OS,
+                                    architecture, and registry information.
                                   properties:
                                     arch:
                                       description: Architectures of the asset
@@ -2312,6 +2652,9 @@ spec:
                                       type: string
                                   type: object
                                 reboot:
+                                  description: |-
+                                    Image represents a container image asset along with metadata such as OS,
+                                    architecture, and registry information.
                                   properties:
                                     arch:
                                       description: Architectures of the asset
@@ -2343,6 +2686,9 @@ spec:
                                       type: string
                                   type: object
                                 writeFile:
+                                  description: |-
+                                    Image represents a container image asset along with metadata such as OS,
+                                    architecture, and registry information.
                                   properties:
                                     arch:
                                       description: Architectures of the asset
@@ -2382,6 +2728,9 @@ spec:
                               - writeFile
                               type: object
                             boots:
+                              description: |-
+                                Image represents a container image asset along with metadata such as OS,
+                                architecture, and registry information.
                               properties:
                                 arch:
                                   description: Architectures of the asset
@@ -2411,6 +2760,9 @@ spec:
                                   type: string
                               type: object
                             hegel:
+                              description: |-
+                                Image represents a container image asset along with metadata such as OS,
+                                architecture, and registry information.
                               properties:
                                 arch:
                                   description: Architectures of the asset
@@ -2440,9 +2792,13 @@ spec:
                                   type: string
                               type: object
                             hook:
-                              description: Tinkerbell hook OS.
+                              description: HookBundle defines the Tinkerbell hook
+                                OS images used for provisioning.
                               properties:
                                 bootkit:
+                                  description: |-
+                                    Image represents a container image asset along with metadata such as OS,
+                                    architecture, and registry information.
                                   properties:
                                     arch:
                                       description: Architectures of the asset
@@ -2474,6 +2830,9 @@ spec:
                                       type: string
                                   type: object
                                 docker:
+                                  description: |-
+                                    Image represents a container image asset along with metadata such as OS,
+                                    architecture, and registry information.
                                   properties:
                                     arch:
                                       description: Architectures of the asset
@@ -2505,8 +2864,13 @@ spec:
                                       type: string
                                   type: object
                                 initramfs:
+                                  description: HookArch defines the Tinkerbell hook
+                                    architecture-specific artifacts.
                                   properties:
                                     amd:
+                                      description: |-
+                                        Archive represents an archive asset (e.g. tarball) along with its OS/architecture metadata,
+                                        and checksums for file integrity.
                                       properties:
                                         arch:
                                           description: Architectures of the asset
@@ -2543,6 +2907,9 @@ spec:
                                           type: string
                                       type: object
                                     arm:
+                                      description: |-
+                                        Archive represents an archive asset (e.g. tarball) along with its OS/architecture metadata,
+                                        and checksums for file integrity.
                                       properties:
                                         arch:
                                           description: Architectures of the asset
@@ -2587,9 +2954,9 @@ spec:
                                     architecture-specific artifacts.
                                   properties:
                                     amd:
-                                      description: Archive represents an archive asset
-                                        (e.g. tarball) along with its OS/architecture
-                                        metadata, and checksums for file integrity.
+                                      description: |-
+                                        Archive represents an archive asset (e.g. tarball) along with its OS/architecture metadata,
+                                        and checksums for file integrity.
                                       properties:
                                         arch:
                                           description: Architectures of the asset
@@ -2626,9 +2993,9 @@ spec:
                                           type: string
                                       type: object
                                     arm:
-                                      description: Archive represents an archive asset
-                                        (e.g. tarball) along with its OS/architecture
-                                        metadata, and checksums for file integrity.
+                                      description: |-
+                                        Archive represents an archive asset (e.g. tarball) along with its OS/architecture metadata,
+                                        and checksums for file integrity.
                                       properties:
                                         arch:
                                           description: Architectures of the asset
@@ -2669,6 +3036,9 @@ spec:
                                   - arm
                                   type: object
                                 kernel:
+                                  description: |-
+                                    Image represents a container image asset along with metadata such as OS,
+                                    architecture, and registry information.
                                   properties:
                                     arch:
                                       description: Architectures of the asset
@@ -2700,8 +3070,13 @@ spec:
                                       type: string
                                   type: object
                                 vmlinuz:
+                                  description: HookArch defines the Tinkerbell hook
+                                    architecture-specific artifacts.
                                   properties:
                                     amd:
+                                      description: |-
+                                        Archive represents an archive asset (e.g. tarball) along with its OS/architecture metadata,
+                                        and checksums for file integrity.
                                       properties:
                                         arch:
                                           description: Architectures of the asset
@@ -2738,6 +3113,9 @@ spec:
                                           type: string
                                       type: object
                                     arm:
+                                      description: |-
+                                        Archive represents an archive asset (e.g. tarball) along with its OS/architecture metadata,
+                                        and checksums for file integrity.
                                       properties:
                                         arch:
                                           description: Architectures of the asset
@@ -2786,6 +3164,9 @@ spec:
                               - vmlinuz
                               type: object
                             rufio:
+                              description: |-
+                                Image represents a container image asset along with metadata such as OS,
+                                architecture, and registry information.
                               properties:
                                 arch:
                                   description: Architectures of the asset
@@ -2815,6 +3196,9 @@ spec:
                                   type: string
                               type: object
                             stack:
+                              description: |-
+                                Image represents a container image asset along with metadata such as OS,
+                                architecture, and registry information.
                               properties:
                                 arch:
                                   description: Architectures of the asset
@@ -2844,8 +3228,13 @@ spec:
                                   type: string
                               type: object
                             tink:
+                              description: TinkBundle defines the images required
+                                for Tinkerbell controller and worker processes.
                               properties:
                                 nginx:
+                                  description: |-
+                                    Image represents a container image asset along with metadata such as OS,
+                                    architecture, and registry information.
                                   properties:
                                     arch:
                                       description: Architectures of the asset
@@ -2877,6 +3266,9 @@ spec:
                                       type: string
                                   type: object
                                 tinkController:
+                                  description: |-
+                                    Image represents a container image asset along with metadata such as OS,
+                                    architecture, and registry information.
                                   properties:
                                     arch:
                                       description: Architectures of the asset
@@ -2908,6 +3300,9 @@ spec:
                                       type: string
                                   type: object
                                 tinkRelay:
+                                  description: |-
+                                    Image represents a container image asset along with metadata such as OS,
+                                    architecture, and registry information.
                                   properties:
                                     arch:
                                       description: Architectures of the asset
@@ -2939,6 +3334,9 @@ spec:
                                       type: string
                                   type: object
                                 tinkRelayInit:
+                                  description: |-
+                                    Image represents a container image asset along with metadata such as OS,
+                                    architecture, and registry information.
                                   properties:
                                     arch:
                                       description: Architectures of the asset
@@ -2970,6 +3368,9 @@ spec:
                                       type: string
                                   type: object
                                 tinkServer:
+                                  description: |-
+                                    Image represents a container image asset along with metadata such as OS,
+                                    architecture, and registry information.
                                   properties:
                                     arch:
                                       description: Architectures of the asset
@@ -3001,6 +3402,9 @@ spec:
                                       type: string
                                   type: object
                                 tinkWorker:
+                                  description: |-
+                                    Image represents a container image asset along with metadata such as OS,
+                                    architecture, and registry information.
                                   properties:
                                     arch:
                                       description: Architectures of the asset
@@ -3040,6 +3444,9 @@ spec:
                               - tinkWorker
                               type: object
                             tinkerbellChart:
+                              description: |-
+                                Image represents a container image asset along with metadata such as OS,
+                                architecture, and registry information.
                               properties:
                                 arch:
                                   description: Architectures of the asset
@@ -3069,6 +3476,9 @@ spec:
                                   type: string
                               type: object
                             tinkerbellCrds:
+                              description: |-
+                                Image represents a container image asset along with metadata such as OS,
+                                architecture, and registry information.
                               properties:
                                 arch:
                                   description: Architectures of the asset
@@ -3120,10 +3530,13 @@ spec:
                       - version
                       type: object
                     upgrader:
-                      description: UpgraderBundle is a In-place Kubernetes version
-                        upgrader bundle.
+                      description: UpgraderBundle is a bundle for in-place Kubernetes
+                        version upgrader images.
                       properties:
                         upgrader:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -3156,8 +3569,13 @@ spec:
                       - upgrader
                       type: object
                     vSphere:
+                      description: VSphereBundle defines the vSphere provider images
+                        and version for this bundle.
                       properties:
                         clusterAPIController:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -3187,12 +3605,18 @@ spec:
                               type: string
                           type: object
                         clusterTemplate:
+                          description: |-
+                            Manifest represents a reference to a manifest, typically containing
+                            further resource definitions or configurations.
                           properties:
                             uri:
                               description: URI points to the manifest yaml file
                               type: string
                           type: object
                         components:
+                          description: |-
+                            Manifest represents a reference to a manifest, typically containing
+                            further resource definitions or configurations.
                           properties:
                             uri:
                               description: URI points to the manifest yaml file
@@ -3229,6 +3653,9 @@ spec:
                               type: string
                           type: object
                         kubeProxy:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -3258,6 +3685,9 @@ spec:
                               type: string
                           type: object
                         kubeVip:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -3287,6 +3717,9 @@ spec:
                               type: string
                           type: object
                         manager:
+                          description: |-
+                            Image represents a container image asset along with metadata such as OS,
+                            architecture, and registry information.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -3316,6 +3749,9 @@ spec:
                               type: string
                           type: object
                         metadata:
+                          description: |-
+                            Manifest represents a reference to a manifest, typically containing
+                            further resource definitions or configurations.
                           properties:
                             uri:
                               description: URI points to the manifest yaml file
@@ -3396,9 +3832,3 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
