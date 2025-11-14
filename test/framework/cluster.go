@@ -686,6 +686,50 @@ func (e *ClusterE2ETest) ImportImages(opts ...CommandOpt) {
 	e.RunEKSA(importImagesArgs, opts...)
 }
 
+// DeterminePackageRegistryAlias determines the correct registry alias based on the bundle's package controller chart image.
+// It returns the alias to use for registry mirror destination paths (x3k6m8v0 for dev, w9m0f3l5 for staging, eks-anywhere for prod).
+func (e *ClusterE2ETest) DeterminePackageRegistryAlias() (string, error) {
+	var bundleManifestLocation string
+	if _, err := os.Stat(defaultDownloadArtifactsOutputLocation); err == nil {
+		bundleManifestLocation = bundleReleasePathFromArtifacts
+	} else {
+		bundleManifestLocation = defaultBundleReleaseManifestFile
+	}
+
+	// Read the bundle file
+	bundleData, err := os.ReadFile(bundleManifestLocation)
+	if err != nil {
+		return "", fmt.Errorf("failed to read bundle file %s: %w", bundleManifestLocation, err)
+	}
+
+	// Parse the bundle
+	var bundles releasev1.Bundles
+	if err := yaml.Unmarshal(bundleData, &bundles); err != nil {
+		return "", fmt.Errorf("failed to parse bundle file: %w", err)
+	}
+
+	// Get the package controller chart image from the first version bundle
+	if len(bundles.Spec.VersionsBundles) == 0 {
+		return "", fmt.Errorf("no version bundles found in bundle file")
+	}
+
+	// Image() returns the URI without the tag: registry/alias/image-name
+	// Example: public.ecr.aws/x3k6m8v0/eks-anywhere-packages
+	// We want to extract "x3k6m8v0" (the second-to-last path component)
+	packageControllerImage := bundles.Spec.VersionsBundles[0].PackageController.HelmChart.Image()
+
+	// Split by '/' and get the second-to-last component
+	// We need at least 3 parts: registry, alias, and image name
+	parts := strings.Split(packageControllerImage, "/")
+	if len(parts) < 3 {
+		return "", fmt.Errorf("invalid package controller image format: %s", packageControllerImage)
+	}
+
+	// The alias is the second-to-last component (last is eks-anywhere-packages)
+	alias := parts[len(parts)-2]
+	return alias, nil
+}
+
 // CopyPackages runs the EKS-A `copy packages` command to copy curated packages to the registry mirror.
 func (e *ClusterE2ETest) CopyPackages(packageMirrorAlias string, packageChartRegistry string, packageRegistry string, opts ...CommandOpt) {
 	clusterConfig := e.ClusterConfig.Cluster
@@ -705,7 +749,7 @@ func (e *ClusterE2ETest) CopyPackages(packageMirrorAlias string, packageChartReg
 		"--dst-insecure",
 	}
 
-	e.T.Logf("Copying curated packages to registry mirror: %s", registryMirrorHost)
+	e.T.Logf("Copying curated packages to registry mirror: %s/%s", registryMirrorHost, packageMirrorAlias)
 	e.RunEKSA(copyPackagesArgs, opts...)
 }
 
@@ -1323,22 +1367,6 @@ func (e *ClusterE2ETest) WithCluster(f func(e *ClusterE2ETest)) {
 	defer func() {
 		e.GenerateSupportBundleIfTestFailed()
 		e.DeleteCluster()
-	}()
-	f(e)
-}
-
-// WithClusterRegistryMirror helps with bringing up and tearing down E2E test clusters when using registry mirror.
-func (e *ClusterE2ETest) WithClusterRegistryMirror(packageMirrorAlias string, packageChartRegistry string, packageRegistry string, f func(e *ClusterE2ETest)) {
-	e.GenerateClusterConfig()
-	e.DownloadArtifacts()
-	e.ExtractDownloadedArtifacts()
-	e.DownloadImages()
-	e.ImportImages()
-	e.CopyPackages(packageMirrorAlias, packageChartRegistry, packageRegistry)
-	e.CreateCluster(WithBundlesOverride(bundleReleasePathFromArtifacts))
-	defer func() {
-		e.GenerateSupportBundleIfTestFailed()
-		e.DeleteCluster(WithBundlesOverride(bundleReleasePathFromArtifacts))
 	}()
 	f(e)
 }
@@ -2188,10 +2216,22 @@ func (e *ClusterE2ETest) ApplyPackageFile(packageName, targetNamespace string, P
 func (e *ClusterE2ETest) CurlEndpoint(endpoint, namespace string, extraCurlArgs ...string) string {
 	ctx := context.Background()
 
+	// Fetch the bundle to get the diagnostic collector image
+	bundleName := e.ClusterConfig.Cluster.Spec.BundlesRef.Name
+	bundleNamespace := e.ClusterConfig.Cluster.Spec.BundlesRef.Namespace
+	bundle, err := e.KubectlClient.GetBundles(ctx, e.KubeconfigFilePath(), bundleName, bundleNamespace)
+	if err != nil {
+		e.T.Fatalf("failed to get bundle: %v", err)
+	}
+
+	// Extract the diagnostic collector image
+	diagnosticCollectorImage := bundle.Spec.VersionsBundles[0].Eksa.DiagnosticCollector.VersionedImage()
+
 	e.T.Log("Launching pod to curl endpoint", endpoint)
 	randomname := fmt.Sprintf("%s-%s", "curl-test", utilrand.String(7))
 	curlPodName, err := e.KubectlClient.RunCurlPod(context.TODO(),
-		namespace, randomname, e.KubeconfigFilePath(), append([]string{"curl", endpoint}, extraCurlArgs...))
+		namespace, randomname, e.KubeconfigFilePath(), diagnosticCollectorImage,
+		append([]string{"curl", endpoint}, extraCurlArgs...))
 	if err != nil {
 		e.T.Fatalf("error launching pod: %s", err)
 	}

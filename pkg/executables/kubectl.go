@@ -992,8 +992,8 @@ func (k *Kubectl) ValidatePods(ctx context.Context, kubeconfig string) error {
 }
 
 // RunCurlPod will run Kubectl with an image (with curl installed) and the command you pass in.
-func (k *Kubectl) RunCurlPod(ctx context.Context, namespace, name, kubeconfig string, command []string) (string, error) {
-	params := []string{"run", name, "--image=public.ecr.aws/eks-anywhere/diagnostic-collector:v0.16.2-eks-a-41", "-o", "json", "--kubeconfig", kubeconfig, "--namespace", namespace, "--restart=Never", "--"}
+func (k *Kubectl) RunCurlPod(ctx context.Context, namespace, name, kubeconfig, image string, command []string) (string, error) {
+	params := []string{"run", name, "--image=" + image, "-o", "json", "--kubeconfig", kubeconfig, "--namespace", namespace, "--restart=Never", "--"}
 	params = append(params, command...)
 	_, err := k.Execute(ctx, params...)
 	if err != nil {
