@@ -68,6 +68,10 @@ const (
 	// ClusterctlMoveLabelName adds the clusterctl move label.
 	ClusterctlMoveLabelName = "clusterctl.cluster.x-k8s.io/move"
 
+	// SkipBMCContactCheckLabel is the label to skip BMC contact check for RufioMachines.
+	// When set to "true", the machine will be excluded from BMC contactable validation.
+	SkipBMCContactCheckLabel = "bmc.tinkerbell.org/skip-contact-check"
+
 	// CloudstackFailureDomainPlaceholder Provider specific keywork placeholder.
 	CloudstackFailureDomainPlaceholder = "ds.meta_data.failuredomain"
 
