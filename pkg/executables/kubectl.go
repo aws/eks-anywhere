@@ -463,8 +463,11 @@ func (k *Kubectl) WaitForPod(ctx context.Context, cluster *types.Cluster, timeou
 }
 
 // WaitForRufioMachines blocks until all Rufio Machines have the desired condition.
+// RufioMachines with the skip-contactability-check label set to "true" are excluded from the wait.
 func (k *Kubectl) WaitForRufioMachines(ctx context.Context, cluster *types.Cluster, timeout string, condition string, namespace string) error {
-	return k.Wait(ctx, cluster.KubeconfigFile, timeout, condition, rufioMachineResourceType, namespace, WithWaitAll())
+	// Use label selector to exclude machines with skip-contactability-check=true
+	labelSelector := fmt.Sprintf("%s!=true", constants.SkipBMCContactCheckLabel)
+	return k.Wait(ctx, cluster.KubeconfigFile, timeout, condition, rufioMachineResourceType, namespace, WithWaitAll(), WithSelector(labelSelector))
 }
 
 // WaitForJobCompleted waits for a job resource to reach desired condition before returning.

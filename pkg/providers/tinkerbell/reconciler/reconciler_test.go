@@ -713,6 +713,71 @@ func TestReconcilerValidateRufioMachinesFail(t *testing.T) {
 	tt.cleanup()
 }
 
+func TestReconcilerValidateRufioMachinesWithSkipLabel(t *testing.T) {
+	tt := newReconcilerTest(t)
+	logger := test.NewNullLogger()
+
+	// Machine with skip label set to "true" - should be skipped even though it's not contactable
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, &rufiov1alpha1.Machine{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "bmc-skip",
+			Namespace: constants.EksaSystemNamespace,
+			Labels: map[string]string{
+				constants.SkipBMCContactCheckLabel: "true",
+			},
+		},
+		Spec: rufiov1alpha1.MachineSpec{
+			Connection: rufiov1alpha1.Connection{
+				Host: "192.168.1.1",
+			},
+		},
+		Status: rufiov1alpha1.MachineStatus{
+			Conditions: []rufiov1alpha1.MachineCondition{
+				{
+					Type:    rufiov1alpha1.Contactable,
+					Status:  rufiov1alpha1.ConditionFalse,
+					Message: "bmc connection failure but should be skipped",
+				},
+			},
+		},
+	})
+
+	// Machine without skip label - must be contactable
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, &rufiov1alpha1.Machine{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "bmc-normal",
+			Namespace: constants.EksaSystemNamespace,
+		},
+		Spec: rufiov1alpha1.MachineSpec{
+			Connection: rufiov1alpha1.Connection{
+				Host: "192.168.1.2",
+			},
+		},
+		Status: rufiov1alpha1.MachineStatus{
+			Conditions: []rufiov1alpha1.MachineCondition{
+				{
+					Type:   rufiov1alpha1.Contactable,
+					Status: rufiov1alpha1.ConditionTrue,
+				},
+			},
+		},
+	})
+
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tinkHardware("hw1", "cp"))
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tinkHardware("hw2", "worker"))
+
+	tt.withFakeClient()
+
+	scope := tt.buildScope()
+	result, err := tt.reconciler().ValidateRufioMachines(tt.ctx, logger, scope)
+
+	// Should succeed because bmc-skip is skipped and bmc-normal is contactable
+	tt.Expect(err).To(BeNil())
+	tt.Expect(result).To(Equal(controller.Result{}))
+	tt.Expect(tt.cluster.Status.FailureMessage).To(BeNil())
+	tt.cleanup()
+}
+
 func TestReconcilerDetectOperationK8sVersionUpgrade(t *testing.T) {
 	tt := newReconcilerTest(t)
 	tt.createAllObjs()
