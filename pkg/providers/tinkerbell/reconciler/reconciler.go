@@ -469,6 +469,12 @@ func (r *Reconciler) ValidateRufioMachines(ctx context.Context, log logr.Logger,
 	}
 
 	for _, rm := range kubeReader.GetCatalogue().AllBMCs() {
+		// Skip contactability check if the machine has the skip label set to "true"
+		if skipValue, hasSkipLabel := rm.Labels[constants.SkipBMCContactCheckLabel]; hasSkipLabel && skipValue == "true" {
+			log.Info("Skipping BMC contactability check for machine with skip label", "machine", rm.Name)
+			continue
+		}
+
 		if err := r.checkContactable(rm); err != nil {
 			log.Error(err, "rufio machine check failure")
 			failureMessage := err.Error()

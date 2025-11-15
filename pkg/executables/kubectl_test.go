@@ -3179,7 +3179,7 @@ func TestWaitForRufioMachines(t *testing.T) {
 
 	kt.e.EXPECT().Execute(
 		kt.ctx,
-		"wait", "--timeout", expectedTimeout, "--for=condition=Contactable", "machines.bmc.tinkerbell.org", "--kubeconfig", kt.cluster.KubeconfigFile, "-n", "eksa-system", "--all",
+		"wait", "--timeout", expectedTimeout, "--for=condition=Contactable", "machines.bmc.tinkerbell.org", "--kubeconfig", kt.cluster.KubeconfigFile, "-n", "eksa-system", "--all", "--selector=bmc.tinkerbell.org/skip-contact-check!=true",
 	).Return(bytes.Buffer{}, nil)
 
 	kt.Expect(kt.k.WaitForRufioMachines(kt.ctx, kt.cluster, timeout, "Contactable", "eksa-system")).To(Succeed())
