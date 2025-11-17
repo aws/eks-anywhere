@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apiv1 "k8s.io/api/core/v1"
@@ -24,79 +23,65 @@ import (
 )
 
 func TestToClientObjects(t *testing.T) {
-	tests := []struct {
-		name     string
-		input    interface{}
-		expected int
-	}{
-		{
-			name: "convert ConfigMaps",
-			input: []*apiv1.ConfigMap{
-				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-cm-1",
-						Namespace: constants.EksaSystemNamespace,
-					},
-				},
-				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-cm-2",
-						Namespace: constants.EksaSystemNamespace,
-					},
+	t.Run("convert ConfigMaps", func(t *testing.T) {
+		input := []*apiv1.ConfigMap{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-cm-1",
+					Namespace: constants.EksaSystemNamespace,
 				},
 			},
-			expected: 2,
-		},
-		{
-			name: "convert Secrets",
-			input: []*apiv1.Secret{
-				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-secret-1",
-						Namespace: constants.EksaSystemNamespace,
-					},
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-cm-2",
+					Namespace: constants.EksaSystemNamespace,
 				},
 			},
-			expected: 1,
-		},
-		{
-			name: "convert ClusterResourceSets",
-			input: []*addonsv1.ClusterResourceSet{
-				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-crs-1",
-						Namespace: constants.EksaSystemNamespace,
-					},
+		}
+		result := toClientObjects(input)
+		assert.Equal(t, 2, len(result))
+		for _, obj := range result {
+			assert.NotNil(t, obj)
+		}
+	})
+
+	t.Run("convert Secrets", func(t *testing.T) {
+		input := []*apiv1.Secret{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-secret-1",
+					Namespace: constants.EksaSystemNamespace,
 				},
 			},
-			expected: 1,
-		},
-		{
-			name:     "empty slice",
-			input:    []*apiv1.ConfigMap{},
-			expected: 0,
-		},
-	}
+		}
+		result := toClientObjects(input)
+		assert.Equal(t, 1, len(result))
+		for _, obj := range result {
+			assert.NotNil(t, obj)
+		}
+	})
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var result []client.Object
+	t.Run("convert ClusterResourceSets", func(t *testing.T) {
+		input := []*addonsv1.ClusterResourceSet{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-crs-1",
+					Namespace: constants.EksaSystemNamespace,
+				},
+			},
+		}
+		result := toClientObjects(input)
+		assert.Equal(t, 1, len(result))
+		for _, obj := range result {
+			assert.NotNil(t, obj)
+		}
+	})
 
-			switch v := tt.input.(type) {
-			case []*apiv1.ConfigMap:
-				result = toClientObjects(v)
-			case []*apiv1.Secret:
-				result = toClientObjects(v)
-			case []*addonsv1.ClusterResourceSet:
-				result = toClientObjects(v)
-			}
-
-			assert.Equal(t, tt.expected, len(result))
-			for _, obj := range result {
-				assert.NotNil(t, obj)
-			}
-		})
-	}
+	t.Run("empty slice", func(t *testing.T) {
+		input := []*apiv1.ConfigMap{}
+		result := toClientObjects(input)
+		assert.Equal(t, 0, len(result))
+	})
 }
 
 func TestSetOwnerReferencesOnObjects(t *testing.T) {
@@ -370,12 +355,14 @@ func TestEnsureOwnerReferences(t *testing.T) {
 	}
 
 	tests := []struct {
-		name           string
-		clusterSpec    *cluster.Spec
-		controlPlane   *nutanix.ControlPlane
-		existingObjs   []client.Object
-		wantErr        bool
-		expectedErrMsg string
+		name                     string
+		clusterSpec              *cluster.Spec
+		controlPlane             *nutanix.ControlPlane
+		existingObjs             []client.Object
+		wantErr                  bool
+		expectedErrMsg           string
+		verifyOwnerReferences    bool
+		verifyNoDuplicateOnRetry bool
 	}{
 		{
 			name: "successfully set owner references on all resources",
@@ -439,7 +426,9 @@ func TestEnsureOwnerReferences(t *testing.T) {
 					},
 				},
 			},
-			wantErr: false,
+			wantErr:                  false,
+			verifyOwnerReferences:    true,
+			verifyNoDuplicateOnRetry: true,
 		},
 		{
 			name: "skip when CAPI cluster not found",
@@ -458,8 +447,9 @@ func TestEnsureOwnerReferences(t *testing.T) {
 				Secrets:             []*apiv1.Secret{},
 				ClusterResourceSets: []*addonsv1.ClusterResourceSet{},
 			},
-			existingObjs: []client.Object{},
-			wantErr:      false,
+			existingObjs:          []client.Object{},
+			wantErr:               false,
+			verifyOwnerReferences: false,
 		},
 		{
 			name: "handle empty control plane resources",
@@ -478,8 +468,9 @@ func TestEnsureOwnerReferences(t *testing.T) {
 				Secrets:             []*apiv1.Secret{},
 				ClusterResourceSets: []*addonsv1.ClusterResourceSet{},
 			},
-			existingObjs: []client.Object{capiCluster},
-			wantErr:      false,
+			existingObjs:          []client.Object{capiCluster},
+			wantErr:               false,
+			verifyOwnerReferences: false,
 		},
 	}
 
@@ -505,112 +496,61 @@ func TestEnsureOwnerReferences(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 			}
+
+			// Verify owner references if requested
+			if tt.verifyOwnerReferences {
+				// Verify ConfigMaps have owner references
+				for _, cm := range tt.controlPlane.ConfigMaps {
+					updatedCM := &apiv1.ConfigMap{}
+					err := fakeClient.Get(context.TODO(), client.ObjectKey{
+						Name:      cm.Name,
+						Namespace: cm.Namespace,
+					}, updatedCM)
+					require.NoError(t, err)
+					assert.Len(t, updatedCM.OwnerReferences, 1)
+					assert.Equal(t, capiCluster.UID, updatedCM.OwnerReferences[0].UID)
+				}
+
+				// Verify Secrets have owner references
+				for _, secret := range tt.controlPlane.Secrets {
+					updatedSecret := &apiv1.Secret{}
+					err := fakeClient.Get(context.TODO(), client.ObjectKey{
+						Name:      secret.Name,
+						Namespace: secret.Namespace,
+					}, updatedSecret)
+					require.NoError(t, err)
+					assert.Len(t, updatedSecret.OwnerReferences, 1)
+					assert.Equal(t, capiCluster.UID, updatedSecret.OwnerReferences[0].UID)
+				}
+			}
+
+			// Test for no duplicate owner references on retry
+			if tt.verifyNoDuplicateOnRetry {
+				err = r.ensureOwnerReferences(context.TODO(), logger, tt.clusterSpec, tt.controlPlane)
+				require.NoError(t, err)
+
+				// Verify no duplicate owner references on ConfigMaps
+				for _, cm := range tt.controlPlane.ConfigMaps {
+					updatedCM := &apiv1.ConfigMap{}
+					err := fakeClient.Get(context.TODO(), client.ObjectKey{
+						Name:      cm.Name,
+						Namespace: cm.Namespace,
+					}, updatedCM)
+					require.NoError(t, err)
+					assert.Len(t, updatedCM.OwnerReferences, 1, "Should not add duplicate owner references")
+				}
+
+				// Verify no duplicate owner references on Secrets
+				for _, secret := range tt.controlPlane.Secrets {
+					updatedSecret := &apiv1.Secret{}
+					err := fakeClient.Get(context.TODO(), client.ObjectKey{
+						Name:      secret.Name,
+						Namespace: secret.Namespace,
+					}, updatedSecret)
+					require.NoError(t, err)
+					assert.Len(t, updatedSecret.OwnerReferences, 1, "Should not add duplicate owner references")
+				}
+			}
 		})
 	}
-}
-
-func TestEnsureOwnerReferencesIntegration(t *testing.T) {
-	// This test verifies the full integration of ensureOwnerReferences
-	scheme := runtime.NewScheme()
-	require.NoError(t, apiv1.AddToScheme(scheme))
-	require.NoError(t, clusterv1.AddToScheme(scheme))
-	require.NoError(t, addonsv1.AddToScheme(scheme))
-	require.NoError(t, anywherev1.AddToScheme(scheme))
-
-	capiCluster := &clusterv1.Cluster{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "cluster.x-k8s.io/v1beta1",
-			Kind:       "Cluster",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "integration-cluster",
-			Namespace: constants.EksaSystemNamespace,
-			UID:       types.UID("integration-uid"),
-		},
-	}
-
-	configMap := &apiv1.ConfigMap{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "v1",
-			Kind:       "ConfigMap",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "integration-cm",
-			Namespace: constants.EksaSystemNamespace,
-		},
-	}
-
-	secret := &apiv1.Secret{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "v1",
-			Kind:       "Secret",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "integration-secret",
-			Namespace: constants.EksaSystemNamespace,
-		},
-	}
-
-	fakeClient := fake.NewClientBuilder().
-		WithScheme(scheme).
-		WithObjects(capiCluster, configMap, secret).
-		Build()
-
-	r := &Reconciler{
-		client: fakeClient,
-	}
-
-	clusterSpec := &cluster.Spec{
-		Config: &cluster.Config{
-			Cluster: &anywherev1.Cluster{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "integration-cluster",
-					Namespace: constants.EksaSystemNamespace,
-				},
-			},
-		},
-	}
-
-	controlPlane := &nutanix.ControlPlane{
-		ConfigMaps:          []*apiv1.ConfigMap{configMap},
-		Secrets:             []*apiv1.Secret{secret},
-		ClusterResourceSets: []*addonsv1.ClusterResourceSet{},
-	}
-
-	logger := logr.Discard()
-	err := r.ensureOwnerReferences(context.TODO(), logger, clusterSpec, controlPlane)
-	require.NoError(t, err)
-
-	// Verify ConfigMap has owner reference
-	updatedCM := &apiv1.ConfigMap{}
-	err = fakeClient.Get(context.TODO(), client.ObjectKey{
-		Name:      "integration-cm",
-		Namespace: constants.EksaSystemNamespace,
-	}, updatedCM)
-	require.NoError(t, err)
-	assert.Len(t, updatedCM.OwnerReferences, 1)
-	assert.Equal(t, capiCluster.UID, updatedCM.OwnerReferences[0].UID)
-
-	// Verify Secret has owner reference
-	updatedSecret := &apiv1.Secret{}
-	err = fakeClient.Get(context.TODO(), client.ObjectKey{
-		Name:      "integration-secret",
-		Namespace: constants.EksaSystemNamespace,
-	}, updatedSecret)
-	require.NoError(t, err)
-	assert.Len(t, updatedSecret.OwnerReferences, 1)
-	assert.Equal(t, capiCluster.UID, updatedSecret.OwnerReferences[0].UID)
-
-	// Call ensureOwnerReferences again to verify it doesn't add duplicate owner references
-	err = r.ensureOwnerReferences(context.TODO(), logger, clusterSpec, controlPlane)
-	require.NoError(t, err)
-
-	// Verify no duplicate owner references
-	updatedCM2 := &apiv1.ConfigMap{}
-	err = fakeClient.Get(context.TODO(), client.ObjectKey{
-		Name:      "integration-cm",
-		Namespace: constants.EksaSystemNamespace,
-	}, updatedCM2)
-	require.NoError(t, err)
-	assert.Len(t, updatedCM2.OwnerReferences, 1, "Should not add duplicate owner references")
 }
