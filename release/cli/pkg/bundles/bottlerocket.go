@@ -114,5 +114,5 @@ func GetBottlerocketBootstrapContainersBundle(r *releasetypes.ReleaseConfig, eks
 }
 
 func bottlerocketVsphereMultiNetworkArtifact(r *releasetypes.ReleaseConfig, eksDReleaseChannel string, imageDigests releasetypes.ImageDigestsTable) (anywherev1alpha1.Image, error) {
-	return getBottlerocketBootstrapArtifact(r, eksDReleaseChannel, imageDigests, "bottlerocket-bootstrap-vsphere-multi-network")
+	return getBottlerocketBootstrapArtifact(r, eksDReleaseChannel, imageDigests, "bottlerocket-bootstrap-multi-network")
 }
