@@ -26,8 +26,8 @@ func TestGetBottlerocketBootstrapContainersBundle(t *testing.T) {
 				"bottlerocket-bootstrap-1-28": {
 					{
 						Image: &releasetypes.ImageArtifact{
-							AssetName:       "bottlerocket-bootstrap-vsphere-multi-network",
-							ReleaseImageURI: "public.ecr.aws/release-container-registry/bottlerocket-bootstrap-vsphere-multi-network:v1-28-63-eks-a-v0.0.0-dev-build.1",
+							AssetName:       "bottlerocket-bootstrap-multi-network",
+							ReleaseImageURI: "public.ecr.aws/release-container-registry/bottlerocket-bootstrap-multi-network:v1-28-63-eks-a-v0.0.0-dev-build.1",
 							OS:              "linux",
 							Arch:            []string{"amd64", "arm64"},
 						},
@@ -35,15 +35,15 @@ func TestGetBottlerocketBootstrapContainersBundle(t *testing.T) {
 				},
 			},
 			imageDigests: map[string]string{
-				"public.ecr.aws/release-container-registry/bottlerocket-bootstrap-vsphere-multi-network:v1-28-63-eks-a-v0.0.0-dev-build.1": "sha256:abcdef123456",
+				"public.ecr.aws/release-container-registry/bottlerocket-bootstrap-multi-network:v1-28-63-eks-a-v0.0.0-dev-build.1": "sha256:abcdef123456",
 			},
 			expectedBundle: anywherev1alpha1.BottlerocketBootstrapContainersBundle{
 				VsphereMultiNetworkBootstrap: anywherev1alpha1.Image{
-					Name:        "bottlerocket-bootstrap-vsphere-multi-network",
-					Description: "Container image for bottlerocket-bootstrap-vsphere-multi-network image",
+					Name:        "bottlerocket-bootstrap-multi-network",
+					Description: "Container image for bottlerocket-bootstrap-multi-network image",
 					OS:          "linux",
 					Arch:        []string{"amd64", "arm64"},
-					URI:         "public.ecr.aws/release-container-registry/bottlerocket-bootstrap-vsphere-multi-network:v1-28-63-eks-a-v0.0.0-dev-build.1",
+					URI:         "public.ecr.aws/release-container-registry/bottlerocket-bootstrap-multi-network:v1-28-63-eks-a-v0.0.0-dev-build.1",
 					ImageDigest: "sha256:abcdef123456",
 				},
 			},
@@ -102,13 +102,13 @@ func TestGetBottlerocketBootstrapArtifact(t *testing.T) {
 		{
 			name:               "successful artifact retrieval",
 			eksDReleaseChannel: "1-28",
-			assetName:          "bottlerocket-bootstrap-vsphere-multi-network",
+			assetName:          "bottlerocket-bootstrap-multi-network",
 			artifacts: map[string][]releasetypes.Artifact{
 				"bottlerocket-bootstrap-1-28": {
 					{
 						Image: &releasetypes.ImageArtifact{
-							AssetName:       "bottlerocket-bootstrap-vsphere-multi-network",
-							ReleaseImageURI: "public.ecr.aws/release-container-registry/bottlerocket-bootstrap-vsphere-multi-network:v1-28-63-eks-a-v0.0.0-dev-build.1",
+							AssetName:       "bottlerocket-bootstrap-multi-network",
+							ReleaseImageURI: "public.ecr.aws/release-container-registry/bottlerocket-bootstrap-multi-network:v1-28-63-eks-a-v0.0.0-dev-build.1",
 							OS:              "linux",
 							Arch:            []string{"amd64", "arm64"},
 						},
@@ -116,14 +116,14 @@ func TestGetBottlerocketBootstrapArtifact(t *testing.T) {
 				},
 			},
 			imageDigests: map[string]string{
-				"public.ecr.aws/release-container-registry/bottlerocket-bootstrap-vsphere-multi-network:v1-28-63-eks-a-v0.0.0-dev-build.1": "sha256:abcdef123456",
+				"public.ecr.aws/release-container-registry/bottlerocket-bootstrap-multi-network:v1-28-63-eks-a-v0.0.0-dev-build.1": "sha256:abcdef123456",
 			},
 			expectedImage: anywherev1alpha1.Image{
-				Name:        "bottlerocket-bootstrap-vsphere-multi-network",
-				Description: "Container image for bottlerocket-bootstrap-vsphere-multi-network image",
+				Name:        "bottlerocket-bootstrap-multi-network",
+				Description: "Container image for bottlerocket-bootstrap-multi-network image",
 				OS:          "linux",
 				Arch:        []string{"amd64", "arm64"},
-				URI:         "public.ecr.aws/release-container-registry/bottlerocket-bootstrap-vsphere-multi-network:v1-28-63-eks-a-v0.0.0-dev-build.1",
+				URI:         "public.ecr.aws/release-container-registry/bottlerocket-bootstrap-multi-network:v1-28-63-eks-a-v0.0.0-dev-build.1",
 				ImageDigest: "sha256:abcdef123456",
 			},
 			expectError: false,
