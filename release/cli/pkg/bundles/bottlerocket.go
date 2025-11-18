@@ -104,8 +104,8 @@ func GetBottlerocketBootstrapContainersBundle(r *releasetypes.ReleaseConfig, eks
 	bundle := anywherev1alpha1.BottlerocketBootstrapContainersBundle{}
 
 	// VSphere multi-network bootstrap container (optional)
-	if vsphereMultiNetworkArtifact, err := bottlerocketVsphereMultiNetworkArtifact(r, eksDReleaseChannel, imageDigests); err == nil {
-		bundle.VsphereMultiNetworkBootstrap = vsphereMultiNetworkArtifact
+	if multiNetworkArtifact, err := bottlerocketMultiNetworkArtifact(r, eksDReleaseChannel, imageDigests); err == nil {
+		bundle.MultiNetworkBootstrap = multiNetworkArtifact
 	}
 	// Note: We don't return an error if the artifact is not found since bootstrap containers are optional
 	// and may not be available for all release channels or configurations.
@@ -113,6 +113,6 @@ func GetBottlerocketBootstrapContainersBundle(r *releasetypes.ReleaseConfig, eks
 	return bundle, nil
 }
 
-func bottlerocketVsphereMultiNetworkArtifact(r *releasetypes.ReleaseConfig, eksDReleaseChannel string, imageDigests releasetypes.ImageDigestsTable) (anywherev1alpha1.Image, error) {
+func bottlerocketMultiNetworkArtifact(r *releasetypes.ReleaseConfig, eksDReleaseChannel string, imageDigests releasetypes.ImageDigestsTable) (anywherev1alpha1.Image, error) {
 	return getBottlerocketBootstrapArtifact(r, eksDReleaseChannel, imageDigests, "bottlerocket-bootstrap-multi-network")
 }
