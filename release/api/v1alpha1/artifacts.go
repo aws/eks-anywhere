@@ -207,6 +207,7 @@ func (vb *VersionsBundle) SharedImages() []Image {
 		vb.PackageController.Controller,
 		vb.PackageController.TokenRefresher,
 		vb.Upgrader.Upgrader,
+		vb.BottleRocketBootstrapContainers.MultiNetworkBootstrap,
 	}
 }
 
