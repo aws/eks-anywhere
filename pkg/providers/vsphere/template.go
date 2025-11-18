@@ -550,8 +550,8 @@ func buildTemplateMapMD(
 		values["pauseVersion"] = bundle.KubeDistro.Pause.Tag()
 		values["bottlerocketBootstrapRepository"] = bundle.BottleRocketHostContainers.KubeadmBootstrap.Image()
 		values["bottlerocketBootstrapVersion"] = bundle.BottleRocketHostContainers.KubeadmBootstrap.Tag()
-		values["bottlerocketVsphereMultiNetworkRepository"] = bundle.BottleRocketBootstrapContainers.VsphereMultiNetworkBootstrap.Image()
-		values["bottlerocketVsphereMultiNetworkVersion"] = bundle.BottleRocketBootstrapContainers.VsphereMultiNetworkBootstrap.Tag()
+		values["bottlerocketVsphereMultiNetworkRepository"] = bundle.BottleRocketBootstrapContainers.MultiNetworkBootstrap.Image()
+		values["bottlerocketVsphereMultiNetworkVersion"] = bundle.BottleRocketBootstrapContainers.MultiNetworkBootstrap.Tag()
 
 		if workerNodeGroupConfiguration.KubeletConfiguration != nil {
 			br, err := common.ConvertToBottlerocketKubernetesSettings(workerNodeGroupConfiguration.KubeletConfiguration)

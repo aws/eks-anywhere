@@ -104,7 +104,6 @@ func (vb *VersionsBundle) VsphereImages() []Image {
 		vb.VSphere.KubeProxy,
 		vb.VSphere.KubeVip,
 		vb.VSphere.Manager,
-		vb.BottleRocketBootstrapContainers.VsphereMultiNetworkBootstrap,
 	}
 }
 
@@ -208,6 +207,7 @@ func (vb *VersionsBundle) SharedImages() []Image {
 		vb.PackageController.Controller,
 		vb.PackageController.TokenRefresher,
 		vb.Upgrader.Upgrader,
+		vb.BottleRocketBootstrapContainers.MultiNetworkBootstrap,
 	}
 }
 

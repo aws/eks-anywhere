@@ -311,7 +311,7 @@ spec:
                       type: object
                     bottlerocketBootstrapContainers:
                       properties:
-                        vsphereMultiNetworkBootstrap:
+                        multiNetworkBootstrap:
                           properties:
                             arch:
                               description: Architectures of the asset
