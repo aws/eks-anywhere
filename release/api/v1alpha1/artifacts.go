@@ -104,6 +104,7 @@ func (vb *VersionsBundle) VsphereImages() []Image {
 		vb.VSphere.KubeProxy,
 		vb.VSphere.KubeVip,
 		vb.VSphere.Manager,
+		vb.BottleRocketBootstrapContainers.VsphereMultiNetworkBootstrap,
 	}
 }
 
