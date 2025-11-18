@@ -19,6 +19,13 @@ spec:
           imageRepository: {{.bottlerocketBootstrapRepository}}
           imageTag: {{.bottlerocketBootstrapVersion}}
 {{- end }}
+{{- if and (eq .format "bottlerocket") (gt (len .vsphereMultiNetworks) 1) }}
+        bottlerocketCustomBootstrapContainers:
+        - name: "second-network-interface-bootstrap-container"
+          mode: "once"
+          imageRepository: "{{.bottlerocketVsphereMultiNetworkRepository}}"
+          imageTag: "{{.bottlerocketVsphereMultiNetworkVersion}}"
+{{- end }}
 {{- if and .proxyConfig (eq .format "bottlerocket") }}
         proxy:
           httpsProxy: {{.httpsProxy}}
