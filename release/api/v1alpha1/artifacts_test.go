@@ -127,6 +127,72 @@ func TestVersionsBundleSnowImages(t *testing.T) {
 	}
 }
 
+func TestVersionsBundleVsphereImages(t *testing.T) {
+	tests := []struct {
+		name           string
+		versionsBundle *v1alpha1.VersionsBundle
+		want           []v1alpha1.Image
+	}{
+		{
+			name: "all images",
+			versionsBundle: &v1alpha1.VersionsBundle{
+				VSphere: v1alpha1.VSphereBundle{
+					ClusterAPIController: v1alpha1.Image{
+						Name: "cluster-api-controller",
+						URI:  "uri1",
+					},
+					KubeProxy: v1alpha1.Image{
+						Name: "kube-proxy",
+						URI:  "uri2",
+					},
+					KubeVip: v1alpha1.Image{
+						Name: "kube-vip",
+						URI:  "uri3",
+					},
+					Manager: v1alpha1.Image{
+						Name: "manager",
+						URI:  "uri4",
+					},
+				},
+				BottleRocketBootstrapContainers: v1alpha1.BottlerocketBootstrapContainersBundle{
+					VsphereMultiNetworkBootstrap: v1alpha1.Image{
+						Name: "vsphere-multi-network-bootstrap",
+						URI:  "uri5",
+					},
+				},
+			},
+			want: []v1alpha1.Image{
+				{
+					Name: "cluster-api-controller",
+					URI:  "uri1",
+				},
+				{
+					Name: "kube-proxy",
+					URI:  "uri2",
+				},
+				{
+					Name: "kube-vip",
+					URI:  "uri3",
+				},
+				{
+					Name: "manager",
+					URI:  "uri4",
+				},
+				{
+					Name: "vsphere-multi-network-bootstrap",
+					URI:  "uri5",
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			g.Expect(tt.versionsBundle.VsphereImages()).To(Equal(tt.want))
+		})
+	}
+}
+
 func TestVersionsBundleSharedImages(t *testing.T) {
 	expectedSharedImages := make([]v1alpha1.Image, 27)
 	expectedSharedImages = append(
