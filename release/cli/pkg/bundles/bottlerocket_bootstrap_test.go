@@ -38,7 +38,7 @@ func TestGetBottlerocketBootstrapContainersBundle(t *testing.T) {
 				"public.ecr.aws/release-container-registry/bottlerocket-bootstrap-multi-network:v1-28-63-eks-a-v0.0.0-dev-build.1": "sha256:abcdef123456",
 			},
 			expectedBundle: anywherev1alpha1.BottlerocketBootstrapContainersBundle{
-				MultiNetworkBootstrap: anywherev1alpha1.Image{
+				VsphereMultiNetworkBootstrap: anywherev1alpha1.Image{
 					Name:        "bottlerocket-bootstrap-multi-network",
 					Description: "Container image for bottlerocket-bootstrap-multi-network image",
 					OS:          "linux",

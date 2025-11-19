@@ -159,7 +159,7 @@ type BottlerocketHostContainersBundle struct {
 
 // BottlerocketBootstrapContainersBundle defines the Bottlerocket bootstrap containers used by the bundle.
 type BottlerocketBootstrapContainersBundle struct {
-	MultiNetworkBootstrap Image `json:"multiNetworkBootstrap,omitempty"`
+	VsphereMultiNetworkBootstrap Image `json:"vsphereMultiNetworkBootstrap,omitempty"`
 }
 
 // CertManagerBundle defines the Cert Manager version and images for this bundle.
