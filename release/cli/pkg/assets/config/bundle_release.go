@@ -59,7 +59,7 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 				},
 			},
 			{
-				RepoName: "bottlerocket-bootstrap-multi-network",
+				RepoName: "bottlerocket-bootstrap-vsphere-multi-network",
 				ImageTagConfiguration: assettypes.ImageTagConfiguration{
 					NonProdSourceImageTagFormat: "v<eksDReleaseChannel>-<eksDReleaseNumber>",
 					ProdSourceImageTagFormat:    "v<eksDReleaseChannel>-<eksDReleaseNumber>",
