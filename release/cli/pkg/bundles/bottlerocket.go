@@ -66,53 +66,30 @@ func bottlerocketDefaultArtifact(r *releasetypes.ReleaseConfig, metadataFile, im
 	}, nil
 }
 
-// getBottlerocketBootstrapArtifact is a shared helper function that retrieves a specific
-// bottlerocket bootstrap artifact by asset name from the bundle artifacts table.
-func getBottlerocketBootstrapArtifact(r *releasetypes.ReleaseConfig, eksDReleaseChannel string, imageDigests releasetypes.ImageDigestsTable, assetName string) (anywherev1alpha1.Image, error) {
+func bottlerocketKubeadmBootstrapArtifact(r *releasetypes.ReleaseConfig, eksDReleaseChannel string, imageDigests releasetypes.ImageDigestsTable) (anywherev1alpha1.Image, error) {
 	bottlerocketBootstrapArtifacts, err := r.BundleArtifactsTable.Load(fmt.Sprintf("bottlerocket-bootstrap-%s", eksDReleaseChannel))
 	if err != nil {
 		return anywherev1alpha1.Image{}, fmt.Errorf("artifacts for project bottlerocket-bootstrap-%s not found in bundle artifacts table", eksDReleaseChannel)
 	}
 
+	bundleArtifacts := map[string]anywherev1alpha1.Image{}
+
 	for _, artifact := range bottlerocketBootstrapArtifacts {
 		imageArtifact := artifact.Image
-		if imageArtifact.AssetName == assetName {
-			imageDigest, err := imageDigests.Load(imageArtifact.ReleaseImageURI)
-			if err != nil {
-				return anywherev1alpha1.Image{}, fmt.Errorf("loading digest from image digests table: %v", err)
-			}
-
-			return anywherev1alpha1.Image{
-				Name:        imageArtifact.AssetName,
-				Description: fmt.Sprintf("Container image for %s image", imageArtifact.AssetName),
-				OS:          imageArtifact.OS,
-				Arch:        imageArtifact.Arch,
-				URI:         imageArtifact.ReleaseImageURI,
-				ImageDigest: imageDigest,
-			}, nil
+		imageDigest, err := imageDigests.Load(imageArtifact.ReleaseImageURI)
+		if err != nil {
+			return anywherev1alpha1.Image{}, fmt.Errorf("loading digest from image digests table: %v", err)
 		}
+		bottlerocketBootstrapImage := anywherev1alpha1.Image{
+			Name:        imageArtifact.AssetName,
+			Description: fmt.Sprintf("Container image for %s image", imageArtifact.AssetName),
+			OS:          imageArtifact.OS,
+			Arch:        imageArtifact.Arch,
+			URI:         imageArtifact.ReleaseImageURI,
+			ImageDigest: imageDigest,
+		}
+		bundleArtifacts[imageArtifact.AssetName] = bottlerocketBootstrapImage
 	}
 
-	return anywherev1alpha1.Image{}, fmt.Errorf("%s artifact not found", assetName)
-}
-
-func bottlerocketKubeadmBootstrapArtifact(r *releasetypes.ReleaseConfig, eksDReleaseChannel string, imageDigests releasetypes.ImageDigestsTable) (anywherev1alpha1.Image, error) {
-	return getBottlerocketBootstrapArtifact(r, eksDReleaseChannel, imageDigests, "bottlerocket-bootstrap")
-}
-
-func GetBottlerocketBootstrapContainersBundle(r *releasetypes.ReleaseConfig, eksDReleaseChannel string, imageDigests releasetypes.ImageDigestsTable) (anywherev1alpha1.BottlerocketBootstrapContainersBundle, error) {
-	bundle := anywherev1alpha1.BottlerocketBootstrapContainersBundle{}
-
-	// VSphere multi-network bootstrap container (optional)
-	if vsphereMultiNetworkArtifact, err := bottlerocketVsphereMultiNetworkArtifact(r, eksDReleaseChannel, imageDigests); err == nil {
-		bundle.VsphereMultiNetworkBootstrap = vsphereMultiNetworkArtifact
-	}
-	// Note: We don't return an error if the artifact is not found since bootstrap containers are optional
-	// and may not be available for all release channels or configurations.
-
-	return bundle, nil
-}
-
-func bottlerocketVsphereMultiNetworkArtifact(r *releasetypes.ReleaseConfig, eksDReleaseChannel string, imageDigests releasetypes.ImageDigestsTable) (anywherev1alpha1.Image, error) {
-	return getBottlerocketBootstrapArtifact(r, eksDReleaseChannel, imageDigests, "bottlerocket-bootstrap-vsphere-multi-network")
+	return bundleArtifacts["bottlerocket-bootstrap"], nil
 }
