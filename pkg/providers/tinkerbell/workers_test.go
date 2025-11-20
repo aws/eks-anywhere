@@ -317,6 +317,7 @@ func machineDeployment(opts ...func(*clusterv1.MachineDeployment)) *clusterv1.Ma
 							APIVersion: "bootstrap.cluster.x-k8s.io/v1beta1",
 						},
 					},
+					NodeDeletionTimeout: &metav1.Duration{Duration: 30 * time.Second},
 					InfrastructureRef: corev1.ObjectReference{
 						Kind:       "TinkerbellMachineTemplate",
 						Name:       "test-md-0-1",
