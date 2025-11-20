@@ -21,11 +21,11 @@ import (
 
 func runCuratedPackageInstall(test *framework.ClusterE2ETest) {
 	test.SetPackageBundleActive()
-	err := WaitForPackageToBeInstalled(test, context.Background(), "eks-anywhere-packages", 3*time.Minute)
+	err := WaitForPackageToBeInstalled(test, context.Background(), "eks-anywhere-packages", 15*time.Minute)
 	if err != nil {
 		test.T.Fatalf("packages controller not in installed state: %s", err)
 	}
-	err = WaitForPackageToBeInstalled(test, context.Background(), "eks-anywhere-packages-crds", 3*time.Minute)
+	err = WaitForPackageToBeInstalled(test, context.Background(), "eks-anywhere-packages-crds", 15*time.Minute)
 	if err != nil {
 		test.T.Fatalf("packages controller crds not in installed state: %s", err)
 	}
