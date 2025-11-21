@@ -130,7 +130,7 @@ The `$KUBEVERSION` should be set to the same as the Kubernetes version in `spec.
 
 ```bash
 eksctl anywhere copy packages \
-  ${REGISTRY_MIRROR_URL}/curated-packages \
+  ${REGISTRY_MIRROR_URL}/eks-anywhere \
   --kube-version $KUBEVERSION \
   --src-chart-registry public.ecr.aws/eks-anywhere \
   --src-image-registry ${ECR_PACKAGES_ACCOUNT}.dkr.ecr.${EKSA_AWS_REGION}.amazonaws.com
@@ -145,7 +145,7 @@ metadata:
   name: eksa-packages-bundle-controller
   namespace: eksa-packages
 spec:
-  defaultImageRegistry: ${REGISTRY_MIRROR_URL}/curated-packages
+  defaultImageRegistry: ${REGISTRY_MIRROR_URL}/eks-anywhere
   defaultRegistry: ${REGISTRY_MIRROR_URL}/eks-anywhere
 ```
 
