@@ -7,11 +7,11 @@ import (
 )
 
 const (
-	EksaPackagesRegistryMirrorAlias = "curated-packages"
-	EksaPackagesSourceRegistry      = "public.ecr.aws/x3k6m8v0"
-	EksaPackageBundleURI            = "oci://" + EksaPackagesSourceRegistry + "/eks-anywhere-packages-bundles"
-	EksaPackagesNamespace           = "eksa-packages"
-	EksaPackagesRegistry            = "067575901363.dkr.ecr.us-west-2.amazonaws.com"
+	EksaPackagesDevPublicRegistryAlias     = "x3k6m8v0"
+	EksaPackagesStagingPublicRegistryAlias = "w9m0f3l5"
+	EksaPackagesDevPrivateRegistry         = "067575901363.dkr.ecr.us-west-2.amazonaws.com"
+	EksaPackagesStagingPrivateRegistry     = "724423470321.dkr.ecr.us-west-2.amazonaws.com"
+	EksaPackagesNamespace                  = "eksa-packages"
 
 	clusterNamespace = "test-namespace"
 
