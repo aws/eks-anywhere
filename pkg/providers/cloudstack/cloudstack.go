@@ -607,31 +607,6 @@ func hasSameAvailabilityZones(old, nw []v1alpha1.CloudStackAvailabilityZone) boo
 	return true
 }
 
-func (p *cloudstackProvider) generateCAPISpecForCreate(ctx context.Context, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
-	clusterName := clusterSpec.Cluster.Name
-	cpOpt := func(values map[string]interface{}) {
-		values[cpTemplateNameKey] = common.CPMachineTemplateName(clusterName, p.templateBuilder.now)
-		values[etcdTemplateNameKey] = common.EtcdMachineTemplateName(clusterName, p.templateBuilder.now)
-	}
-	controlPlaneSpec, err = p.templateBuilder.GenerateCAPISpecControlPlane(clusterSpec, cpOpt)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	workloadTemplateNames := make(map[string]string, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
-	kubeadmconfigTemplateNames := make(map[string]string, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
-	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
-		workloadTemplateNames[workerNodeGroupConfiguration.Name] = common.WorkerMachineTemplateName(clusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name, p.templateBuilder.now)
-		kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name] = common.KubeadmConfigTemplateName(clusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name, p.templateBuilder.now)
-	}
-
-	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, workloadTemplateNames, kubeadmconfigTemplateNames)
-	if err != nil {
-		return nil, nil, err
-	}
-	return controlPlaneSpec, workersSpec, nil
-}
-
 func (p *cloudstackProvider) getControlPlaneNameForCAPISpecUpgrade(ctx context.Context, oldCluster *v1alpha1.Cluster, currentSpec, newClusterSpec *cluster.Spec, bootstrapCluster, workloadCluster *types.Cluster, csdc *v1alpha1.CloudStackDatacenterConfig, clusterName string) (string, error) {
 	controlPlaneMachineConfig := newClusterSpec.CloudStackMachineConfigs[newClusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
 	controlPlaneVmc, err := p.providerKubectlClient.GetEksaCloudStackMachineConfig(ctx, oldCluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, workloadCluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
@@ -719,66 +694,6 @@ func (p *cloudstackProvider) getEtcdTemplateNameForCAPISpecUpgrade(ctx context.C
 		}
 		return common.EtcdMachineTemplateName(clusterName, p.templateBuilder.now), nil
 	}
-}
-
-func (p *cloudstackProvider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currentSpec, newClusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
-	clusterName := newClusterSpec.Cluster.Name
-	var controlPlaneTemplateName, etcdTemplateName string
-
-	c, err := p.providerKubectlClient.GetEksaCluster(ctx, workloadCluster, clusterName)
-	if err != nil {
-		return nil, nil, err
-	}
-	csdc, err := p.providerKubectlClient.GetEksaCloudStackDatacenterConfig(ctx, newClusterSpec.CloudStackDatacenter.Name, workloadCluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	csdc.SetDefaults()
-	currentSpec.CloudStackDatacenter = csdc
-
-	controlPlaneTemplateName, err = p.getControlPlaneNameForCAPISpecUpgrade(ctx, c, currentSpec, newClusterSpec, bootstrapCluster, workloadCluster, csdc, clusterName)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	workersSpec, err = p.getWorkloadTemplateSpecForCAPISpecUpgrade(ctx, currentSpec, newClusterSpec, bootstrapCluster, workloadCluster, csdc, clusterName)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	if newClusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
-		etcdTemplateName, err = p.getEtcdTemplateNameForCAPISpecUpgrade(ctx, c, currentSpec, newClusterSpec, bootstrapCluster, workloadCluster, csdc, clusterName)
-		if err != nil {
-			return nil, nil, err
-		}
-	}
-
-	cpOpt := func(values map[string]interface{}) {
-		values[cpTemplateNameKey] = controlPlaneTemplateName
-		values[etcdTemplateNameKey] = etcdTemplateName
-	}
-	controlPlaneSpec, err = p.templateBuilder.GenerateCAPISpecControlPlane(newClusterSpec, cpOpt)
-	if err != nil {
-		return nil, nil, err
-	}
-	return controlPlaneSpec, workersSpec, nil
-}
-
-func (p *cloudstackProvider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currentSpec, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
-	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForUpgrade(ctx, bootstrapCluster, workloadCluster, currentSpec, clusterSpec)
-	if err != nil {
-		return nil, nil, fmt.Errorf("error generating cluster api spec contents: %v", err)
-	}
-	return controlPlaneSpec, workersSpec, nil
-}
-
-func (p *cloudstackProvider) GenerateCAPISpecForCreate(ctx context.Context, _ *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
-	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForCreate(ctx, clusterSpec)
-	if err != nil {
-		return nil, nil, fmt.Errorf("generating cluster api Spec contents: %v", err)
-	}
-	return controlPlaneSpec, workersSpec, nil
 }
 
 func (p *cloudstackProvider) machineConfigsSpecChanged(ctx context.Context, cc *v1alpha1.Cluster, cluster *types.Cluster, newClusterSpec *cluster.Spec) (bool, error) {
@@ -889,35 +804,6 @@ func setMachineConfigManagedBy(spec *cluster.Spec, machineConfigName string) {
 	if spec.Cluster.IsManaged() {
 		machineConfig.SetManagement(spec.Cluster.ManagedBy())
 	}
-}
-
-func (p *cloudstackProvider) UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec, cluster *types.Cluster) (bool, error) {
-	cc := currentSpec.Cluster
-	existingCsdc, err := p.providerKubectlClient.GetEksaCloudStackDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, cluster.KubeconfigFile, newSpec.Cluster.Namespace)
-	if err != nil {
-		return false, err
-	}
-	existingCsdc.SetDefaults()
-	currentSpec.CloudStackDatacenter = existingCsdc
-	if !existingCsdc.Spec.Equal(&newSpec.CloudStackDatacenter.Spec) {
-		p.log.V(3).Info("New provider spec is different from the new spec")
-		return true, nil
-	}
-
-	machineConfigsSpecChanged, err := p.machineConfigsSpecChanged(ctx, cc, cluster, newSpec)
-	if err != nil {
-		return false, err
-	}
-	return machineConfigsSpecChanged, nil
-}
-
-func (p *cloudstackProvider) DeleteResources(ctx context.Context, clusterSpec *cluster.Spec) error {
-	for _, mc := range clusterSpec.CloudStackMachineConfigs {
-		if err := p.providerKubectlClient.DeleteEksaCloudStackMachineConfig(ctx, mc.Name, clusterSpec.ManagementCluster.KubeconfigFile, mc.Namespace); err != nil {
-			return err
-		}
-	}
-	return p.providerKubectlClient.DeleteEksaCloudStackDatacenterConfig(ctx, clusterSpec.CloudStackDatacenter.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.CloudStackDatacenter.Namespace)
 }
 
 func (p *cloudstackProvider) PostClusterDeleteValidate(_ context.Context, _ *types.Cluster) error {

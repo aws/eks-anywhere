@@ -96,20 +96,6 @@ func (mr *MockProviderMockRecorder) DatacenterResourceType() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DatacenterResourceType", reflect.TypeOf((*MockProvider)(nil).DatacenterResourceType))
 }
 
-// DeleteResources mocks base method.
-func (m *MockProvider) DeleteResources(arg0 context.Context, arg1 *cluster.Spec) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteResources", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// DeleteResources indicates an expected call of DeleteResources.
-func (mr *MockProviderMockRecorder) DeleteResources(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteResources", reflect.TypeOf((*MockProvider)(nil).DeleteResources), arg0, arg1)
-}
-
 // EnvMap mocks base method.
 func (m *MockProvider) EnvMap(arg0 *cluster.ManagementComponents, arg1 *cluster.Spec) (map[string]string, error) {
 	m.ctrl.T.Helper()
@@ -123,38 +109,6 @@ func (m *MockProvider) EnvMap(arg0 *cluster.ManagementComponents, arg1 *cluster.
 func (mr *MockProviderMockRecorder) EnvMap(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnvMap", reflect.TypeOf((*MockProvider)(nil).EnvMap), arg0, arg1)
-}
-
-// GenerateCAPISpecForCreate mocks base method.
-func (m *MockProvider) GenerateCAPISpecForCreate(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec) ([]byte, []byte, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GenerateCAPISpecForCreate", arg0, arg1, arg2)
-	ret0, _ := ret[0].([]byte)
-	ret1, _ := ret[1].([]byte)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
-}
-
-// GenerateCAPISpecForCreate indicates an expected call of GenerateCAPISpecForCreate.
-func (mr *MockProviderMockRecorder) GenerateCAPISpecForCreate(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateCAPISpecForCreate", reflect.TypeOf((*MockProvider)(nil).GenerateCAPISpecForCreate), arg0, arg1, arg2)
-}
-
-// GenerateCAPISpecForUpgrade mocks base method.
-func (m *MockProvider) GenerateCAPISpecForUpgrade(arg0 context.Context, arg1, arg2 *types.Cluster, arg3, arg4 *cluster.Spec) ([]byte, []byte, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GenerateCAPISpecForUpgrade", arg0, arg1, arg2, arg3, arg4)
-	ret0, _ := ret[0].([]byte)
-	ret1, _ := ret[1].([]byte)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
-}
-
-// GenerateCAPISpecForUpgrade indicates an expected call of GenerateCAPISpecForUpgrade.
-func (mr *MockProviderMockRecorder) GenerateCAPISpecForUpgrade(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateCAPISpecForUpgrade", reflect.TypeOf((*MockProvider)(nil).GenerateCAPISpecForUpgrade), arg0, arg1, arg2, arg3, arg4)
 }
 
 // GetDeployments mocks base method.
@@ -421,21 +375,6 @@ func (m *MockProvider) UpdateSecrets(arg0 context.Context, arg1 *types.Cluster, 
 func (mr *MockProviderMockRecorder) UpdateSecrets(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateSecrets", reflect.TypeOf((*MockProvider)(nil).UpdateSecrets), arg0, arg1, arg2)
-}
-
-// UpgradeNeeded mocks base method.
-func (m *MockProvider) UpgradeNeeded(arg0 context.Context, arg1, arg2 *cluster.Spec, arg3 *types.Cluster) (bool, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpgradeNeeded", arg0, arg1, arg2, arg3)
-	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// UpgradeNeeded indicates an expected call of UpgradeNeeded.
-func (mr *MockProviderMockRecorder) UpgradeNeeded(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpgradeNeeded", reflect.TypeOf((*MockProvider)(nil).UpgradeNeeded), arg0, arg1, arg2, arg3)
 }
 
 // ValidateNewSpec mocks base method.
