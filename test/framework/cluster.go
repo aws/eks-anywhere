@@ -737,7 +737,7 @@ func (e *ClusterE2ETest) GetPackageControlleChartRepo() (string, error) {
 }
 
 // CopyPackages runs the EKS-A `copy packages` command to copy curated packages to the registry mirror.
-func (e *ClusterE2ETest) CopyPackages(packageMirrorAlias string, packageRegistry string, opts ...CommandOpt) {
+func (e *ClusterE2ETest) CopyPackages(packageMirrorAlias string, packageChartRegistry string, packageRegistry string, opts ...CommandOpt) {
 	clusterConfig := e.ClusterConfig.Cluster
 	registyMirrorEndpoint, registryMirrorPort := clusterConfig.Spec.RegistryMirrorConfiguration.Endpoint, clusterConfig.Spec.RegistryMirrorConfiguration.Port
 	registryMirrorHost := net.JoinHostPort(registyMirrorEndpoint, registryMirrorPort)
@@ -750,7 +750,7 @@ func (e *ClusterE2ETest) CopyPackages(packageMirrorAlias string, packageRegistry
 		"copy", "packages",
 		registryMirrorHost + "/" + packageMirrorAlias,
 		"--kube-version", kubeVersion,
-		"--src-chart-registry", packageRegistry,
+		"--src-chart-registry", packageChartRegistry,
 		"--src-image-registry", packageRegistry,
 		"--dst-insecure",
 	}

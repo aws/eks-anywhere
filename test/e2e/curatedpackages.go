@@ -102,7 +102,7 @@ func runCuratedPackageInstallSimpleFlowRegistryMirror(test *framework.ClusterE2E
 
 	test.DownloadImages()
 	test.ImportImages()
-	test.CopyPackages(alias, pkgRegistry)
+	test.CopyPackages(alias, "public.ecr.aws/"+alias, pkgRegistry)
 
 	bundlePath := "./eks-anywhere-downloads/bundle-release.yaml"
 	test.CreateCluster(framework.WithBundlesOverride(bundlePath))
