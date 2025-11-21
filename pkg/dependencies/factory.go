@@ -52,7 +52,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/version"
-	"github.com/aws/eks-anywhere/pkg/workflow/task/workload"
 	"github.com/aws/eks-anywhere/pkg/workflows/interfaces"
 )
 
@@ -73,7 +72,6 @@ type Dependencies struct {
 	Troubleshoot                *executables.Troubleshoot
 	Helm                        *executables.Helm
 	UnAuthKubeClient            *kubernetes.UnAuthClient
-	CNIInstaller                workload.CNIInstaller
 	CiliumTemplater             *cilium.Templater
 	AwsIamAuth                  *awsiamauth.Installer
 	ClusterManager              *clustermanager.ClusterManager
