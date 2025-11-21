@@ -195,13 +195,6 @@ skipped_tests:
 - TestTinkerbellKubernetes131ThreeReplicasTwoWorkersConformanceFlow
 - TestTinkerbellKubernetes132ThreeReplicasTwoWorkersConformanceFlow
 
-# Tinkerbell 134 RTOS tests
-# These tests need to be skipped until the 1.34 RTOS image from cannonical is available
-- TestTinkerbellKubernetes134Ubuntu2204To2404GenericUpgrade
-- TestTinkerbellKubernetes134Ubuntu2404RTOSSimpleFlow
-- TestTinkerbellKubernetes134Ubuntu2404GenericSimpleFlow
-- TestTinkerbellKubernetes134Ubuntu2204To2404RTOSUpgrade
-
 # Vsphere 
 # Auto import tests fail from time to time if the underlying template doesn't go well with the content library.
 # Currently there's no fix for this and issue has been brought up with the BR team multiple times.
