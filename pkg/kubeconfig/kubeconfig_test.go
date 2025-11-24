@@ -185,3 +185,9 @@ func TestResolveAndValidateFilename(t *testing.T) {
 		assert.Error(t, err)
 	})
 }
+
+func TestValidateKubeconfigPath(t *testing.T) {
+	t.Run("returns nil when valid", func(t *testing.T) {
+		assert.NoError(t, kubeconfig.ValidateKubeconfigPath("test-cluster"))
+	})
+}
