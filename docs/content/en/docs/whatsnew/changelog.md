@@ -57,7 +57,7 @@ description: >
 
 ### Added
 - Enable second network interface configuration for VSphere (Bottlerocket) ([#4972](https://github.com/aws/eks-anywhere-build-tooling/pull/4972),[#4998](https://github.com/aws/eks-anywhere-build-tooling/pull/4998),[#10373](https://github.com/aws/eks-anywhere/pull/10373))
-- Add support for skipping BMC contact checks for specific Rufio Machines ([#10366](https://github.com/aws/eks-anywhere/pull/10366))
+- Add support for skipping BMC contact checks for specific Rufio Machines ([#10362](https://github.com/aws/eks-anywhere/pull/10362),[#10366](https://github.com/aws/eks-anywhere/pull/10366))
 -  Allow user to specify ssh_timeout and ssh_handshake_attempts in image-builder CLI ([#4975](https://github.com/aws/eks-anywhere-build-tooling/pull/4975))
 - Support Ubuntu24.04 on Nutanix
 
