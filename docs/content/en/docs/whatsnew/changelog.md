@@ -72,6 +72,7 @@ description: >
   - [`v1-28-eks-65`](https://distro.eks.amazonaws.com/releases/1-28/65/)
 
 - Troubleshoot: `v0.122.0` to `v0.123.12`
+- Image builder: `v0.6.0` to `0.7.0`
 
 ### Fixed
 - Fix Bottlerocket cert renewal: Add 30s sleep and duplicate container ([#10360](https://github.com/aws/eks-anywhere/pull/10360))
