@@ -41,6 +41,43 @@ description: >
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
 
+## [v0.24.1](https://github.com/aws/eks-anywhere/releases/tag/v0.24.1)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+|    Ubuntu 24.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.51.0 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+
+\* RHEL 8's kernel version (4.18) is not supported by kubeadm for Kubernetes versions 1.32 and above (see Kubernetes GitHub issue [#129462](https://github.com/kubernetes/kubernetes/issues/129462)). As a result, EKS Anywhere does not support using RHEL 8 as the node operating system for Kubernetes versions 1.32 and above.
+
+### Added
+- Enable second network interface configuration for VSphere (Bottlerocket) ([#4972](https://github.com/aws/eks-anywhere-build-tooling/pull/4972),[#4998](https://github.com/aws/eks-anywhere-build-tooling/pull/4998),[#10373](https://github.com/aws/eks-anywhere/pull/10373))
+- Add support for skipping BMC contact checks for specific Rufio Machines ([#10366](https://github.com/aws/eks-anywhere/pull/10366))
+-  Allow user to specify ssh_timeout and ssh_handshake_attempts in image-builder CLI ([#4975](https://github.com/aws/eks-anywhere-build-tooling/pull/4975))
+- Support Ubuntu24.04 on Nutanix
+
+### Changed
+- EKS Distro:
+  - [`v1-34-eks-10`](https://distro.eks.amazonaws.com/releases/1-34/10/)
+  - [`v1-33-eks-19`](https://distro.eks.amazonaws.com/releases/1-33/19/)
+  - [`v1-32-eks-29`](https://distro.eks.amazonaws.com/releases/1-32/29/)
+  - [`v1-31-eks-36`](https://distro.eks.amazonaws.com/releases/1-31/36/)
+  - [`v1-30-eks-47`](https://distro.eks.amazonaws.com/releases/1-30/47/)
+  - [`v1-29-eks-54`](https://distro.eks.amazonaws.com/releases/1-29/54/)
+  - [`v1-28-eks-65`](https://distro.eks.amazonaws.com/releases/1-28/65/)
+
+- Troubleshoot: `v0.122.0` to `v0.123.12`
+
+### Fixed
+- Fix Bottlerocket cert renewal: Add 30s sleep and duplicate container ([#10360](https://github.com/aws/eks-anywhere/pull/10360))
+
+
+
 ## [v0.24.0](https://github.com/aws/eks-anywhere/releases/tag/v0.24.0)
 
 ### Supported OS version details
