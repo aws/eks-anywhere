@@ -177,19 +177,9 @@ ${IMAGE_ID} tmp-cert-renew \
 
    - **For Bottlerocket**: re-enable the static pods:
    ```
-   # Disable static pods
    apiclient get | apiclient exec admin jq -r '.settings.kubernetes["static-pods"] | keys[]' | xargs -n 1 -I {} apiclient set settings.kubernetes.static-pods.{}.enabled=false 
-   
-   # IMPORTANT: Wait 30 seconds to ensure all containers are fully stopped
-   sleep 30
-   
-   # Re-enable static pods
    apiclient get | apiclient exec admin jq -r '.settings.kubernetes["static-pods"] | keys[]' | xargs -n 1 -I {} apiclient set settings.kubernetes.static-pods.{}.enabled=true
    ```
-
-   {{% alert title="Important" color="warning" %}}
-   The 30-second sleep between disabling and re-enabling static pods is critical to prevent duplicate containers from being scheduled. Without this sleep, multiple instances of kube-apiserver, kube-scheduler, kube-controller-manager, and etcd may run simultaneously, causing cluster instability and preventing proper certificate rotation.
-   {{% /alert %}}
 
    You can verify Pods restarting by running `kubectl` from your Admin machine.
 

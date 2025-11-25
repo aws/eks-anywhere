@@ -74,25 +74,16 @@ spec:
                         properties:
                           cniExclusive:
                             description: |-
-                              DEPRECATED: Use HelmValues instead. This field will be ignored when HelmValues is set.
                               CNIExclusive controls whether Cilium should remove other CNI configuration files.
                               When true (default), Cilium removes other CNI configs; when false, it leaves them alone.
                             type: boolean
                           egressMasqueradeInterfaces:
-                            description: |-
-                              DEPRECATED: Use HelmValues instead. This field will be ignored when HelmValues is set.
-                              EgressMasquaradeInterfaces determines which network interfaces are used for masquerading. Accepted values are a valid interface name or interface prefix.
+                            description: EgressMasquaradeInterfaces determines which
+                              network interfaces are used for masquerading. Accepted
+                              values are a valid interface name or interface prefix.
                             type: string
-                          helmValues:
-                            description: |-
-                              HelmValues specifies the complete Helm values configuration for Cilium in YAML format.
-                              When set, this parameter takes precedence over all other Cilium-specific fields in this configuration.
-                              All other Cilium properties (CNIExclusive, EgressMasqueradeInterfaces, IPv4NativeRoutingCIDR, etc.)
-                              will be ignored when HelmValues is specified.
-                            x-kubernetes-preserve-unknown-fields: true
                           ipv4NativeRoutingCIDR:
                             description: |-
-                              DEPRECATED: Use HelmValues instead. This field will be ignored when HelmValues is set.
                               IPv4NativeRoutingCIDR specifies the CIDR to use when RoutingMode is set to direct.
                               When specified, Cilium assumes networking for this CIDR is preconfigured and
                               hands traffic destined for that range to the Linux network stack without
@@ -101,7 +92,6 @@ spec:
                             type: string
                           ipv6NativeRoutingCIDR:
                             description: |-
-                              DEPRECATED: Use HelmValues instead. This field will be ignored when HelmValues is set.
                               IPv6NativeRoutingCIDR specifies the IPv6 CIDR to use when RoutingMode is set to direct.
                               When specified, Cilium assumes networking for this CIDR is preconfigured and
                               hands traffic destined for that range to the Linux network stack without
@@ -109,20 +99,18 @@ spec:
                               If this is not set autoDirectNodeRoutes will be set to true
                             type: string
                           policyEnforcementMode:
-                            description: |-
-                              DEPRECATED: Use HelmValues instead. This field will be ignored when HelmValues is set.
-                              PolicyEnforcementMode determines communication allowed between pods. Accepted values are default, always, never.
+                            description: PolicyEnforcementMode determines communication
+                              allowed between pods. Accepted values are default, always,
+                              never.
                             type: string
                           routingMode:
                             description: |-
-                              DEPRECATED: Use HelmValues instead. This field will be ignored when HelmValues is set.
                               RoutingMode indicates the routing tunnel mode to use for Cilium. Accepted values are overlay (geneve tunnel with overlay)
                               or direct (tunneling disabled with direct routing)
                               Defaults to overlay.
                             type: string
                           skipUpgrade:
                             description: |-
-                              DEPRECATED: Use HelmValues instead. This field will be ignored when HelmValues is set.
                               SkipUpgrade indicicates that Cilium maintenance should be skipped during upgrades. This can
                               be used when operators wish to self manage the Cilium installation.
                             type: boolean
@@ -177,11 +165,6 @@ spec:
                     description: APIServerExtraArgs defines the flags to configure
                       for the API server.
                     type: object
-                  auditPolicyContent:
-                    description: |-
-                      AuditPolicyContent defines the audit policy configuration as a string.
-                      If not specified, the default audit policy will be used.
-                    type: string
                   certSans:
                     description: |-
                       CertSANs is a slice of domain names or IPs to be added as Subject Name Alternatives of the
@@ -259,13 +242,6 @@ spec:
                           minutes).
                         type: string
                     type: object
-                  skipAdmissionForSystemResources:
-                    description: |-
-                      SkipAdmissionForSystemResources skips admission plugin checks for system-level Kubernetes resources
-                      When enabled, operations on system resources (such as kube-system ns resources Pods,
-                      RBAC, API service registrations, flow control, etc. and system user operations) will bypass admission plugins
-                      will bypass admission plugins to prevent potential deadlocks or failures for cluster operations.
-                    type: boolean
                   skipLoadBalancerDeployment:
                     description: |-
                       SkipLoadBalancerDeployment skip deploying control plane load balancer.
@@ -780,32 +756,27 @@ spec:
                   properties:
                     lastTransitionTime:
                       description: |-
-                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        Last time the condition transitioned from one status to another.
                         This should be when the underlying condition changed. If that is not known, then using the time when
                         the API field changed is acceptable.
                       format: date-time
                       type: string
                     message:
                       description: |-
-                        message is a human readable message indicating details about the transition.
+                        A human readable message indicating details about the transition.
                         This field may be empty.
-                      maxLength: 10240
-                      minLength: 1
                       type: string
                     reason:
                       description: |-
-                        reason is the reason for the condition's last transition in CamelCase.
+                        The reason for the condition's last transition in CamelCase.
                         The specific API may choose whether or not this field is considered a guaranteed API.
                         This field may be empty.
-                      maxLength: 256
-                      minLength: 1
                       type: string
                     severity:
                       description: |-
                         severity provides an explicit classification of Reason code, so the users or machines can immediately
                         understand the current situation and act accordingly.
                         The Severity field MUST be set only when Status=False.
-                      maxLength: 32
                       type: string
                     status:
                       description: status of the condition, one of True, False, Unknown.
@@ -815,8 +786,6 @@ spec:
                         type of condition in CamelCase or in foo.example.com/CamelCase.
                         Many .condition.type values are consistent across resources like Available, but because arbitrary conditions
                         can be useful (see .node.status.conditions), the ability to deconflict is important.
-                      maxLength: 256
-                      minLength: 1
                       type: string
                   required:
                   - lastTransitionTime

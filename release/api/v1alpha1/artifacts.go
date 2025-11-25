@@ -60,6 +60,9 @@ func (vb *VersionsBundle) Manifests() map[string][]*string {
 			&vb.Nutanix.ClusterTemplate.URI,
 			&vb.Nutanix.Metadata.URI,
 		},
+		"cilium": {
+			&vb.Cilium.Manifest.URI,
+		},
 		"kindnetd": {
 			&vb.Kindnetd.Manifest.URI,
 		},
@@ -207,7 +210,6 @@ func (vb *VersionsBundle) SharedImages() []Image {
 		vb.PackageController.Controller,
 		vb.PackageController.TokenRefresher,
 		vb.Upgrader.Upgrader,
-		vb.BottleRocketBootstrapContainers.MultiNetworkBootstrap,
 	}
 }
 

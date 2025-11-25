@@ -8,10 +8,6 @@ description: >
   How to validate the setup of Cilium CNI and deploy network policies to secure workload connectivity.
 ---
 
-{{% alert title="Announcements" color="warning" %}}
-* EKS Anywhere release `v0.24.0` introduces the First-Party Supported Cilium as the default Cilium CNI in an EKS Anywhere cluster. The image for First-Party Supported Cilium is available in AWS public ECR gallery https://gallery.ecr.aws/eks/cilium/cilium. It is recommended to use this first-party supported Cilium which has been tested by AWS as the CNI in your cluster. 
-{{% /alert %}}
-
 <!-- overview -->
 
 EKS Anywhere uses [Cilium](https://cilium.io) for pod networking and security.
@@ -35,14 +31,9 @@ The following table lists Cilium features and notes which of those features are 
 <details><summary>Expand to see Cilium Features</summary>
 
 | Headline/Feature   | &nbsp;&nbsp;EKS Anywhere Default Cilium | &nbsp;&nbsp;Cilium OSS |  &nbsp;&nbsp;Isovalent Cilium Enterprise |
-| ---------------    | ---------- | ---------- |  --------------------        |
-| Networking Routing with tunneling mode |  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |  &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |  &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
-| Networking Routing with native routing mode |  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |  &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |  &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
-| Kubernetes Host Scope IPAM  | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |  &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
-| Kubernetes Network Policy  | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |  &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
-| Egress Masquerade  | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |  &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
-| CNI Exclusive Configuration  | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |  &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
-| Policy Enforcement Modes  | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |  &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
+| ---------------    | ----------       | ---------- |  --------------------        |
+| Networking Routing (CNI) |  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |  &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |  &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
+| Identity-Based Network Policy (Labels, CIDR)  | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |  &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
 | Load-Balancing (L3/L4) | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |  &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
 | Advanced Network Policy & Encryption (DNS, L7, TLS/SNI, ...) | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**&mdash;** | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |  &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
 | Ingress, Gateway API, & Service Mesh | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**&mdash;** | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |  &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |

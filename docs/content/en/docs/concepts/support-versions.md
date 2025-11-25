@@ -52,17 +52,15 @@ Bottlerocket, Ubuntu, and Red Hat Enterprise Linux (RHEL) can be used as operati
 
 | OS         | OS Versions                  | EKS Anywhere version  |
 |------------|------------------------------|-----------------------|
-| Ubuntu        | 24.04     | 0.24
-                | 22.04     | 0.17
-|               | 20.04     | 0.5
-| Bottlerocket  | 1.50.0    | 0.24
-                | 1.48.0    | 0.23
+| Ubuntu        | 22.04     | 0.17+
+|               | 20.04     | 0.5+
+| Bottlerocket  | 1.33.0    | 0.23
 |               | 1.26.1    | 0.21
 |               | 1.20.0    | 0.20
 |               | 1.19.1    | 0.19
 |               | 1.15.1    | 0.18
-| RHEL          | 9.x<sup>*</sup>	      | 0.18
-|               | 8.x	      | 0.12
+| RHEL          | 9.x<sup>*</sup>	      | 0.18+
+|               | 8.x	      | 0.12+
 
 <sup>*</sup>Bare Metal, CloudStack and Nutanix only
 

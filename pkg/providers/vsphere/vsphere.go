@@ -13,8 +13,8 @@ import (
 	"github.com/Masterminds/sprig"
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	corev1 "k8s.io/api/core/v1"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
@@ -330,11 +330,6 @@ func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 		return err
 	}
 
-	// Validate machine config networks right after basic vCenter validation
-	if err := p.validator.validateNetworksFieldUsage(ctx, vSphereClusterSpec); err != nil {
-		return err
-	}
-
 	if err := p.validator.ValidateFailureDomains(ctx, vSphereClusterSpec); err != nil {
 		return err
 	}
@@ -414,11 +409,6 @@ func (p *vsphereProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cl
 	}
 
 	if err := p.validator.ValidateVCenterConfig(ctx, vSphereClusterSpec.VSphereDatacenter); err != nil {
-		return err
-	}
-
-	// Validate machine config networks right after basic vCenter validation
-	if err := p.validator.validateNetworksFieldUsage(ctx, vSphereClusterSpec); err != nil {
 		return err
 	}
 

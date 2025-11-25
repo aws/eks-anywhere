@@ -5,7 +5,7 @@ import (
 
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
+	"sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 
 	snowv1 "github.com/aws/eks-anywhere/pkg/providers/snow/api/v1beta1"
 )

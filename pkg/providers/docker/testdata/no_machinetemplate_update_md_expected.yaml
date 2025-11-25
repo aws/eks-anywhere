@@ -35,13 +35,13 @@ spec:
           namespace: eksa-system
       clusterName: fluxTestCluster
       infrastructureRef:
-        apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
         kind: DockerMachineTemplate
         name: test-md-0-original
         namespace: eksa-system
       version: 
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: DockerMachineTemplate
 metadata:
   name: test-md-0-original

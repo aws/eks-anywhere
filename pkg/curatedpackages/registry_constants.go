@@ -48,12 +48,3 @@ var prodRegionalPrivateRegistryURIByRegion = map[string]string{
 	"us-west-1":      "440460740297.dkr.ecr.us-west-1.amazonaws.com",
 	"us-west-2":      "346438352937.dkr.ecr.us-west-2.amazonaws.com",
 }
-
-func getAllEnvRegionalPrivateRegistryURIs() []string {
-	var regionalPrivateRegistryURIs []string
-	for _, uri := range prodRegionalPrivateRegistryURIByRegion {
-		regionalPrivateRegistryURIs = append(regionalPrivateRegistryURIs, uri)
-	}
-	regionalPrivateRegistryURIs = append(regionalPrivateRegistryURIs, devRegionalPrivateRegistryURI, stagingRegionalPrivateRegistryURI)
-	return regionalPrivateRegistryURIs
-}

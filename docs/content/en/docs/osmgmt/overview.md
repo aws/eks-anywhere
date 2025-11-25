@@ -18,8 +18,8 @@ Reference the table below for the operating systems supported per deployment opt
 
 | OS | Supported Versions |
 | :---: | :---: |
-| Bottlerocket | 1.50.x |
-| Ubuntu | 20.04.x, 22.04.x, 24.04.x |
+| Bottlerocket | 1.19.x |
+| Ubuntu | 20.04.x, 22.04.x |
 | RHEL | 8.x, 9.x |
 
 With the vSphere, Bare Metal, Snow, CloudStack and Nutanix deployment options, EKS Anywhere provisions the operating system when new machines are deployed during cluster creation, upgrade, and scaling operations. You can configure the operating system to use through the EKS Anywhere cluster spec, which varies by deployment option. See the deployment option sections below for an overview of how the operating system configuration works per deployment option.

@@ -19,17 +19,12 @@ spec:
       containers:
       - args:
         - --leader-elect
-        - --diagnostics-address=:8443
-        - --insecure-diagnostics=false
         image: controller:latest
         imagePullPolicy: Always
         name: manager
         ports:
         - containerPort: 8081
           name: healthz
-          protocol: TCP
-        - containerPort: 8443
-          name: metrics
           protocol: TCP
         readinessProbe:
           httpGet:

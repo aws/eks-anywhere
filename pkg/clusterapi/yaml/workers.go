@@ -3,8 +3,8 @@ package yaml
 import (
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
-	kubeadmv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	kubeadmv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/yamlutil"
