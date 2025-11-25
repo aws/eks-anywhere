@@ -10,7 +10,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/cluster-api/api/core/v1beta1"
+	"sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
@@ -146,7 +146,7 @@ func TestValidateClusterReady(t *testing.T) {
 				},
 			},
 			cluster: testCluster(),
-			wantErr: fmt.Sprintf("capi cluster %s not ready yet", clusterName),
+			wantErr: fmt.Sprintf("CAPI cluster %s not ready yet.", clusterName),
 		},
 		{
 			name:       "CAPI cluster does not exist",

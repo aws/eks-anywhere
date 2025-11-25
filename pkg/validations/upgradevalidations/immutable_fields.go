@@ -57,6 +57,15 @@ func ValidateImmutableFields(ctx context.Context, k validations.KubectlClient, c
 		return fmt.Errorf("spec.clusterNetwork.CNI/CNIConfig is immutable")
 	}
 
+	// We don't want users to be able to toggle  off SkipUpgrade until we've understood the
+	// implications so we are temporarily disallowing it.
+
+	oCNI := prevSpec.Spec.ClusterNetwork.CNIConfig
+	nCNI := spec.Cluster.Spec.ClusterNetwork.CNIConfig
+	if oCNI != nil && oCNI.Cilium != nil && !oCNI.Cilium.IsManaged() && nCNI.Cilium.IsManaged() {
+		return fmt.Errorf("spec.clusterNetwork.cniConfig.cilium.skipUpgrade cannot be toggled off")
+	}
+
 	if !nSpec.ProxyConfiguration.Equal(oSpec.ProxyConfiguration) {
 		return fmt.Errorf("spec.proxyConfiguration is immutable")
 	}
@@ -70,24 +79,23 @@ func ValidateImmutableFields(ctx context.Context, k validations.KubectlClient, c
 	oldAWSIamConfigRef := &v1alpha1.Ref{}
 
 	for _, oIdentityProvider := range oSpec.IdentityProviderRefs {
-		if oIdentityProvider.Kind == v1alpha1.AWSIamConfigKind {
+		switch oIdentityProvider.Kind {
+		case v1alpha1.AWSIamConfigKind:
+			oIdentityProvider := oIdentityProvider // new variable scoped to the for loop Ref: https://github.com/golang/go/wiki/CommonMistakes#using-reference-to-loop-iterator-variable
 			oldAWSIamConfigRef = &oIdentityProvider
-			break
 		}
 	}
 	for _, nIdentityProvider := range nSpec.IdentityProviderRefs {
-		if nIdentityProvider.Kind == v1alpha1.AWSIamConfigKind {
+		switch nIdentityProvider.Kind {
+		case v1alpha1.AWSIamConfigKind:
 			newAWSIamConfigRef := &nIdentityProvider
-			if !oldAWSIamConfigRef.IsEmpty() {
-				prevAwsIam, err := k.GetEksaAWSIamConfig(ctx, nIdentityProvider.Name, cluster.KubeconfigFile, spec.Cluster.Namespace)
-				if err != nil {
-					return err
-				}
-				if !prevAwsIam.Spec.Equal(&spec.AWSIamConfig.Spec) || !oldAWSIamConfigRef.Equal(newAWSIamConfigRef) {
-					return fmt.Errorf("aws iam identity provider is immutable")
-				}
+			prevAwsIam, err := k.GetEksaAWSIamConfig(ctx, nIdentityProvider.Name, cluster.KubeconfigFile, spec.Cluster.Namespace)
+			if err != nil {
+				return err
 			}
-			break
+			if !prevAwsIam.Spec.Equal(&spec.AWSIamConfig.Spec) || !oldAWSIamConfigRef.Equal(newAWSIamConfigRef) {
+				return fmt.Errorf("aws iam identity provider is immutable")
+			}
 		}
 	}
 

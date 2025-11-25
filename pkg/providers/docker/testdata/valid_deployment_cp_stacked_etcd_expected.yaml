@@ -16,12 +16,12 @@ spec:
     name: test-cluster
     namespace: eksa-system
   infrastructureRef:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
     kind: DockerCluster
     name: test-cluster
     namespace: eksa-system
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: DockerCluster
 metadata:
   name: test-cluster
@@ -31,7 +31,7 @@ spec:
     imageRepository: public.ecr.aws/l0g8r8j6/kubernetes-sigs/kind
     imageTag: v0.11.1-eks-a-v0.0.0-dev-build.1464
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: DockerMachineTemplate
 metadata:
   name: test-cluster-control-plane-template-1234567890000
@@ -52,7 +52,7 @@ metadata:
 spec:
   machineTemplate:
     infrastructureRef:
-      apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
       kind: DockerMachineTemplate
       name: test-cluster-control-plane-template-1234567890000
       namespace: eksa-system
@@ -274,8 +274,4 @@ spec:
           cgroup-driver: cgroupfs
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
   replicas: 1
-  rolloutStrategy:
-    rollingUpdate:
-      maxSurge: 1
-    type: RollingUpdate
   version: v1.19.6-eks-1-19-2

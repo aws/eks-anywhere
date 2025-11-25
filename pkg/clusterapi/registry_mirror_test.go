@@ -5,7 +5,7 @@ import (
 
 	etcdbootstrapv1 "github.com/aws/etcdadm-bootstrap-provider/api/v1beta1"
 	. "github.com/onsi/gomega"
-	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
+	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
@@ -45,7 +45,7 @@ var registryMirrorTests = []struct {
 				Path:  "/etc/containerd/config_append.toml",
 				Owner: "root:root",
 				Content: `[plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."783794618700.dkr.ecr.us-west-2.amazonaws.com"]
+  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."783794618700.dkr.ecr.*.amazonaws.com"]
     endpoint = ["https://1.2.3.4:443/v2/curated-packages"]
   [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
     endpoint = ["https://1.2.3.4:443/v2/eks-anywhere"]

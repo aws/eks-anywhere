@@ -6,8 +6,8 @@ import (
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 )
@@ -64,15 +64,11 @@ func (cp *ControlPlane[C, M]) UpdateImmutableObjectNames(
 		return errors.Wrap(err, "reading current kubeadm control plane from API")
 	}
 
-	// Ensure we don't set an empty name which would cause "resource name may not be empty" errors
-	if currentKCP.Spec.MachineTemplate.InfrastructureRef.Name != "" {
-		cp.ControlPlaneMachineTemplate.SetName(currentKCP.Spec.MachineTemplate.InfrastructureRef.Name)
-		if err = EnsureNewNameIfChanged(ctx, client, machineTemplateRetriever, machineTemplateComparator, cp.ControlPlaneMachineTemplate); err != nil {
-			return err
-		}
-		cp.KubeadmControlPlane.Spec.MachineTemplate.InfrastructureRef.Name = cp.ControlPlaneMachineTemplate.GetName()
+	cp.ControlPlaneMachineTemplate.SetName(currentKCP.Spec.MachineTemplate.InfrastructureRef.Name)
+	if err = EnsureNewNameIfChanged(ctx, client, machineTemplateRetriever, machineTemplateComparator, cp.ControlPlaneMachineTemplate); err != nil {
+		return err
 	}
-	// If the name is empty, we keep the default name that was set during template generation
+	cp.KubeadmControlPlane.Spec.MachineTemplate.InfrastructureRef.Name = cp.ControlPlaneMachineTemplate.GetName()
 
 	if cp.EtcdCluster == nil {
 		return nil
@@ -88,15 +84,11 @@ func (cp *ControlPlane[C, M]) UpdateImmutableObjectNames(
 		return errors.Wrap(err, "reading current etcdadm cluster from API")
 	}
 
-	// Ensure we don't set an empty name which would cause "resource name may not be empty" errors
-	if currentEtcdCluster.Spec.InfrastructureTemplate.Name != "" {
-		cp.EtcdMachineTemplate.SetName(currentEtcdCluster.Spec.InfrastructureTemplate.Name)
-		if err = EnsureNewNameIfChanged(ctx, client, machineTemplateRetriever, machineTemplateComparator, cp.EtcdMachineTemplate); err != nil {
-			return err
-		}
-		cp.EtcdCluster.Spec.InfrastructureTemplate.Name = cp.EtcdMachineTemplate.GetName()
+	cp.EtcdMachineTemplate.SetName(currentEtcdCluster.Spec.InfrastructureTemplate.Name)
+	if err = EnsureNewNameIfChanged(ctx, client, machineTemplateRetriever, machineTemplateComparator, cp.EtcdMachineTemplate); err != nil {
+		return err
 	}
-	// If the name is empty, we keep the default name that was set during template generation
+	cp.EtcdCluster.Spec.InfrastructureTemplate.Name = cp.EtcdMachineTemplate.GetName()
 
 	return nil
 }

@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"context"
 	_ "embed"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"os"
@@ -27,9 +26,6 @@ const kindPath = "kind"
 //go:embed config/kind.yaml
 var kindConfigTemplate string
 
-//go:embed config/hosts.toml
-var hostsTomlTemplate string
-
 const configFileName = "kind_tmp.yaml"
 
 type Kind struct {
@@ -51,7 +47,12 @@ type kindExecConfig struct {
 	CorednsRepository    string
 	CorednsVersion       string
 	KubernetesVersion    string
-	RegistryConfigDir    string
+	RegistryMirrorMap    map[string]string
+	MirrorBase           string
+	RegistryCACertPath   string
+	RegistryAuth         bool
+	RegistryUsername     string
+	RegistryPassword     string
 	ExtraPortMappings    []int
 	DockerExtraMounts    bool
 	DisableDefaultCNI    bool
@@ -211,36 +212,6 @@ func (k *Kind) DeleteBootstrapCluster(ctx context.Context, cluster *types.Cluste
 	return err
 }
 
-// RegistryConfig contains configuration for setting up a registry with containerd.
-type RegistryConfig struct {
-	Server     string // The server URL for the registry
-	Host       string // The host URL to redirect to
-	CACertPath string // CA certificate path
-	AuthHeader string
-	OutputDir  string // Directory where to write hosts.toml
-}
-
-// setupRegistryConfig creates a registry configuration hosts.toml file.
-func setupRegistryConfig(config RegistryConfig) error {
-	if err := os.MkdirAll(config.OutputDir, os.ModePerm); err != nil {
-		return fmt.Errorf("creating directory %s: %w", config.OutputDir, err)
-	}
-
-	// Generate hosts.toml content using template
-	content, err := templater.Execute(hostsTomlTemplate, config)
-	if err != nil {
-		return fmt.Errorf("executing hosts.toml template: %w", err)
-	}
-
-	// Write hosts.toml file
-	hostsPath := filepath.Join(config.OutputDir, "hosts.toml")
-	if err := os.WriteFile(hostsPath, content, 0o644); err != nil {
-		return fmt.Errorf("writing hosts.toml: %w", err)
-	}
-
-	return nil
-}
-
 func (k *Kind) setupExecConfig(clusterSpec *cluster.Spec) error {
 	versionsBundle := clusterSpec.RootVersionsBundle()
 	registryMirror := registrymirror.FromCluster(clusterSpec.Cluster)
@@ -254,86 +225,32 @@ func (k *Kind) setupExecConfig(clusterSpec *cluster.Spec) error {
 		CorednsVersion:       versionsBundle.KubeDistro.CoreDNS.Tag,
 		env:                  make(map[string]string),
 	}
-
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
-		if err := k.setupRegistryMirror(clusterSpec, registryMirror); err != nil {
-			return err
+		k.execConfig.MirrorBase = registryMirror.BaseRegistry
+		k.execConfig.RegistryMirrorMap = containerd.ToAPIEndpoints(registryMirror.NamespacedRegistryMap)
+		if registryMirror.CACertContent != "" {
+			path := filepath.Join(clusterSpec.Cluster.Name, "generated", "certs.d", registryMirror.BaseRegistry)
+			if err := os.MkdirAll(path, os.ModePerm); err != nil {
+				return err
+			}
+			if err := os.WriteFile(filepath.Join(path, "ca.crt"), []byte(registryMirror.CACertContent), 0o644); err != nil {
+				return errors.New("error writing the registry certification file")
+			}
+			k.execConfig.RegistryCACertPath = filepath.Join(clusterSpec.Cluster.Name, "generated", "certs.d")
+		}
+		if registryMirror.Auth {
+			k.execConfig.RegistryAuth = registryMirror.Auth
+			username, password, err := config.ReadCredentials()
+			if err != nil {
+				return err
+			}
+			k.execConfig.RegistryUsername = username
+			k.execConfig.RegistryPassword = password
 		}
 	}
-
 	if err := k.CreateAuditPolicy(clusterSpec); err != nil {
 		return err
 	}
-	return nil
-}
-
-// setupRegistryMirror handles the complete setup of registry mirror configuration.
-func (k *Kind) setupRegistryMirror(clusterSpec *cluster.Spec, registryMirror *registrymirror.RegistryMirror) error {
-	mirrorBase := registryMirror.BaseRegistry
-	registryMirrorMap := containerd.ToAPIEndpoints(registryMirror.NamespacedRegistryMap)
-
-	// Create the base certs.d directory
-	certsBasePath := filepath.Join(clusterSpec.Cluster.Name, "generated", "certs.d")
-	k.execConfig.RegistryConfigDir = certsBasePath
-
-	// Generate authorization header if authentication is required
-	var authHeader string
-	if registryMirror.Auth {
-		username, password, err := config.ReadCredentials()
-		if err != nil {
-			return err
-		}
-		if username != "" {
-			credentials := fmt.Sprintf("%s:%s", username, password)
-			encoded := base64.StdEncoding.EncodeToString([]byte(credentials))
-			authHeader = fmt.Sprintf("Basic %s", encoded)
-		}
-	}
-
-	// Create CA certificate only once for the base registry and determine shared CA path
-	var mountedCACertPath string
-	if registryMirror.CACertContent != "" {
-		// Create the base registry directory and CA certificate file
-		mirrorBaseDir := filepath.Join(certsBasePath, mirrorBase)
-		if err := os.MkdirAll(mirrorBaseDir, os.ModePerm); err != nil {
-			return fmt.Errorf("creating directory %s: %w", mirrorBaseDir, err)
-		}
-
-		// Write the CA certificate file
-		caPath := filepath.Join(mirrorBaseDir, "ca.crt")
-		if err := os.WriteFile(caPath, []byte(registryMirror.CACertContent), 0o644); err != nil {
-			return fmt.Errorf("writing CA certificate: %w", err)
-		}
-
-		mountedCACertPath = fmt.Sprintf("/etc/containerd/certs.d/%s/ca.crt", mirrorBase)
-	}
-
-	// Setup configuration for the mirror registry
-	err := setupRegistryConfig(RegistryConfig{
-		Server:     mirrorBase,
-		Host:       mirrorBase,
-		CACertPath: mountedCACertPath,
-		AuthHeader: authHeader,
-		OutputDir:  filepath.Join(certsBasePath, mirrorBase),
-	})
-	if err != nil {
-		return fmt.Errorf("setting up configuration for local registry %s: %w", mirrorBase, err)
-	}
-
-	// Setup configuration for each original registry that should be mirrored
-	for originalRegistry, mirrorEndpoint := range registryMirrorMap {
-		err := setupRegistryConfig(RegistryConfig{
-			Server:     originalRegistry,
-			Host:       mirrorEndpoint,
-			CACertPath: mountedCACertPath,
-			AuthHeader: authHeader,
-			OutputDir:  filepath.Join(certsBasePath, originalRegistry),
-		})
-		if err != nil {
-			return fmt.Errorf("setting up mirror configuration for registry %s: %w", originalRegistry, err)
-		}
-	}
-
 	return nil
 }
 

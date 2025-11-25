@@ -21,11 +21,11 @@ import (
 
 func runCuratedPackageInstall(test *framework.ClusterE2ETest) {
 	test.SetPackageBundleActive()
-	err := WaitForPackageToBeInstalled(test, context.Background(), "eks-anywhere-packages", 15*time.Minute)
+	err := WaitForPackageToBeInstalled(test, context.Background(), "eks-anywhere-packages", 3*time.Minute)
 	if err != nil {
 		test.T.Fatalf("packages controller not in installed state: %s", err)
 	}
-	err = WaitForPackageToBeInstalled(test, context.Background(), "eks-anywhere-packages-crds", 15*time.Minute)
+	err = WaitForPackageToBeInstalled(test, context.Background(), "eks-anywhere-packages-crds", 3*time.Minute)
 	if err != nil {
 		test.T.Fatalf("packages controller crds not in installed state: %s", err)
 	}
@@ -51,66 +51,8 @@ func runDisabledCuratedPackageInstallSimpleFlow(test *framework.ClusterE2ETest) 
 	test.WithCluster(runDisabledCuratedPackage)
 }
 
-// addDefaultOCINamespacesFromEnv adds default OCI namespaces from environment variables if they're not already set.
-func addDefaultOCINamespacesFromEnv(test *framework.ClusterE2ETest) {
-	if test.ClusterConfig.Cluster.Spec.RegistryMirrorConfiguration == nil {
-		return
-	}
-
-	if len(test.ClusterConfig.Cluster.Spec.RegistryMirrorConfiguration.OCINamespaces) > 0 {
-		return
-	}
-
-	test.T.Log("Adding default OCI namespaces from environment variables")
-	test.ClusterConfig.Cluster.Spec.RegistryMirrorConfiguration.OCINamespaces = framework.DefaultOciNamespaces(test)
-}
-
 func runCuratedPackageInstallSimpleFlowRegistryMirror(test *framework.ClusterE2ETest) {
-	test.GenerateClusterConfig()
-	test.DownloadArtifacts()
-	test.ExtractDownloadedArtifacts()
-
-	// Determine the correct alias from the bundle after download
-	packageControllerChartRepo, err := test.GetPackageControlleChartRepo()
-	if err != nil {
-		test.T.Fatalf("Failed to determine package controller repo: %v", err)
-	}
-
-	var pkgRegistry, alias string
-	if strings.Contains(packageControllerChartRepo, EksaPackagesDevPublicRegistryAlias) {
-		pkgRegistry = EksaPackagesDevPrivateRegistry
-		alias = EksaPackagesDevPublicRegistryAlias
-	}
-	if strings.Contains(packageControllerChartRepo, EksaPackagesStagingPublicRegistryAlias) {
-		pkgRegistry = EksaPackagesStagingPrivateRegistry
-		alias = EksaPackagesStagingPublicRegistryAlias
-	}
-
-	// Add default OCI namespaces from env vars, then append the curated packages one
-	if test.ClusterConfig.Cluster.Spec.RegistryMirrorConfiguration != nil {
-		addDefaultOCINamespacesFromEnv(test)
-
-		test.ClusterConfig.Cluster.Spec.RegistryMirrorConfiguration.OCINamespaces = append(
-			test.ClusterConfig.Cluster.Spec.RegistryMirrorConfiguration.OCINamespaces,
-			v1alpha1.OCINamespace{
-				Registry:  pkgRegistry,
-				Namespace: alias,
-			},
-		)
-	}
-	test.UpdateClusterConfig()
-
-	test.DownloadImages()
-	test.ImportImages()
-	test.CopyPackages(alias, "public.ecr.aws/"+alias, pkgRegistry)
-
-	bundlePath := "./eks-anywhere-downloads/bundle-release.yaml"
-	test.CreateCluster(framework.WithBundlesOverride(bundlePath))
-	defer func() {
-		test.GenerateSupportBundleIfTestFailed()
-		test.DeleteCluster(framework.WithBundlesOverride(bundlePath))
-	}()
-	runCuratedPackageInstall(test)
+	test.WithClusterRegistryMirror(EksaPackagesRegistryMirrorAlias, EksaPackagesSourceRegistry, EksaPackagesRegistry, runCuratedPackageInstall)
 }
 
 func runCuratedPackageRemoteClusterInstallSimpleFlow(test *framework.MulticlusterE2ETest) {
@@ -271,6 +213,13 @@ func GetLatestBundleFromCluster(test *framework.ClusterE2ETest) (string, error) 
 	}
 	bundle := bundleBytes.String()
 	return strings.Trim(bundle, "'"), nil
+}
+
+// packageBundleURI uses a KubernetesVersion argument to complete a package
+// bundle URI by adding the approprate tag.
+func packageBundleURI(version v1alpha1.KubernetesVersion) string {
+	tag := "v" + strings.Replace(string(version), ".", "-", 1) + "-latest"
+	return fmt.Sprintf("%s:%s", EksaPackageBundleURI, tag)
 }
 
 func withCluster(cluster *framework.ClusterE2ETest) *types.Cluster {

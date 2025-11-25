@@ -3,7 +3,6 @@ package cilium
 import (
 	"context"
 	_ "embed"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -151,23 +150,7 @@ func (t *Templater) GenerateManifest(ctx context.Context, spec *cluster.Spec, op
 		return nil, fmt.Errorf("failed generating cilium manifest: %v", err)
 	}
 
-	// Check if policy enforcement mode is "always" to append network policy
-	shouldAppendNetworkPolicy := false
-
-	// Check helmValues first (takes precedence)
-	if spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.HelmValues != nil {
-		var helmValues map[string]interface{}
-		if err := json.Unmarshal(spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.HelmValues.Raw, &helmValues); err == nil {
-			if policyMode, exists := helmValues["policyEnforcementMode"]; exists {
-				shouldAppendNetworkPolicy = policyMode == "always"
-			}
-		}
-	} else {
-		// Fall back to deprecated field if helmValues not provided or empty
-		shouldAppendNetworkPolicy = spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode == anywherev1.CiliumPolicyModeAlways
-	}
-
-	if shouldAppendNetworkPolicy {
+	if spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode == anywherev1.CiliumPolicyModeAlways {
 		networkPolicyManifest, err := t.GenerateNetworkPolicyManifest(spec, c.namespaces)
 		if err != nil {
 			return nil, err
@@ -209,48 +192,7 @@ func (c values) set(value interface{}, path ...string) {
 	element[path[len(path)-1]] = value
 }
 
-// convertToValues recursively converts map[string]interface{} to values type.
-func convertToValues(input map[string]interface{}) values {
-	result := make(values)
-	for k, v := range input {
-		switch val := v.(type) {
-		case map[string]interface{}:
-			result[k] = convertToValues(val)
-		case []interface{}:
-			result[k] = convertSliceToValues(val)
-		default:
-			result[k] = val
-		}
-	}
-	return result
-}
-
-// convertSliceToValues converts slices that may contain maps to use values type.
-func convertSliceToValues(input []interface{}) []interface{} {
-	result := make([]interface{}, len(input))
-	for i, v := range input {
-		switch val := v.(type) {
-		case map[string]interface{}:
-			result[i] = convertToValues(val)
-		case []interface{}:
-			result[i] = convertSliceToValues(val)
-		default:
-			result[i] = val
-		}
-	}
-	return result
-}
-
 func templateValues(spec *cluster.Spec, versionsBundle *cluster.VersionsBundle) values {
-	// If HelmValues are configured, use them instead of templated values
-	if spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.HelmValues != nil {
-		// Unmarshal JSON to map
-		var helmValues map[string]interface{}
-		if err := json.Unmarshal(spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.HelmValues.Raw, &helmValues); err == nil && helmValues != nil {
-			return convertToValues(helmValues)
-		}
-	}
-
 	val := values{
 		"cni": values{
 			"chainingMode": "portmap",
@@ -293,9 +235,6 @@ func templateValues(spec *cluster.Spec, versionsBundle *cluster.VersionsBundle) 
 					"operator": "Exists",
 				},
 			},
-		},
-		"envoy": values{
-			"enabled": false,
 		},
 	}
 

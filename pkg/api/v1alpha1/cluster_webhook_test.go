@@ -753,7 +753,7 @@ func TestClusterValidateUpdateAWSIamNameImmutableUpdateName(t *testing.T) {
 	g.Expect(c.ValidateUpdate(context.TODO(), cOld, c)).Error().To(MatchError(ContainSubstring("spec.identityProviderRefs.AWSIamConfig: Forbidden: field is immutable")))
 }
 
-func TestClusterValidateUpdateAWSIamConfigRemoveSuccess(t *testing.T) {
+func TestClusterValidateUpdateAWSIamNameImmutableEmpty(t *testing.T) {
 	cOld := baseCluster()
 	cOld.Spec.IdentityProviderRefs = []v1alpha1.Ref{
 		{
@@ -765,10 +765,10 @@ func TestClusterValidateUpdateAWSIamConfigRemoveSuccess(t *testing.T) {
 	c.Spec.IdentityProviderRefs = []v1alpha1.Ref{}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), cOld, c)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), cOld, c)).Error().To(MatchError(ContainSubstring("spec.identityProviderRefs.AWSIamConfig: Forbidden: field is immutable")))
 }
 
-func TestClusterValidateUpdateAWSIamConfigAddSuccess(t *testing.T) {
+func TestClusterValidateUpdateAWSIamNameImmutableAddConfig(t *testing.T) {
 	cOld := baseCluster()
 	cOld.Spec.IdentityProviderRefs = []v1alpha1.Ref{}
 	c := cOld.DeepCopy()
@@ -780,7 +780,7 @@ func TestClusterValidateUpdateAWSIamConfigAddSuccess(t *testing.T) {
 	}
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), cOld, c)).Error().To(Succeed())
+	g.Expect(c.ValidateUpdate(context.TODO(), cOld, c)).Error().To(MatchError(ContainSubstring("spec.identityProviderRefs.AWSIamConfig: Forbidden: field is immutable")))
 }
 
 func TestClusterValidateUpdateUnsetBundlesRefImmutable(t *testing.T) {
@@ -1921,9 +1921,10 @@ func TestClusterValidateUpdateLabelTaintsMultiWNTinkerbellRequest(t *testing.T) 
 
 func TestClusterValidateUpdateSkipUpgradeImmutability(t *testing.T) {
 	tests := []struct {
-		Name string
-		Old  *v1alpha1.Cluster
-		New  *v1alpha1.Cluster
+		Name  string
+		Old   *v1alpha1.Cluster
+		New   *v1alpha1.Cluster
+		Error bool
 	}{
 		{
 			Name: "NilToFalse",
@@ -1969,6 +1970,7 @@ func TestClusterValidateUpdateSkipUpgradeImmutability(t *testing.T) {
 			New: baseCluster(func(c *v1alpha1.Cluster) {
 				c.Spec.ClusterNetwork.CNIConfig.Cilium.SkipUpgrade = nil
 			}),
+			Error: true,
 		},
 		{
 			Name: "TrueToFalse",
@@ -1978,6 +1980,7 @@ func TestClusterValidateUpdateSkipUpgradeImmutability(t *testing.T) {
 			New: baseCluster(func(c *v1alpha1.Cluster) {
 				c.Spec.ClusterNetwork.CNIConfig.Cilium.SkipUpgrade = ptr.Bool(false)
 			}),
+			Error: true,
 		},
 	}
 
@@ -1987,7 +1990,14 @@ func TestClusterValidateUpdateSkipUpgradeImmutability(t *testing.T) {
 
 			warnings, err := tc.New.ValidateUpdate(context.TODO(), tc.Old, tc.New)
 			g.Expect(warnings).To(BeEmpty())
-			g.Expect(err).To(Succeed())
+			if !tc.Error {
+				g.Expect(err).To(Succeed())
+			} else {
+				g.Expect(err).To(MatchError(ContainSubstring(
+					"spec.clusterNetwork.cniConfig.cilium.skipUpgrade: Forbidden: cannot toggle " +
+						"off skipUpgrade once enabled",
+				)))
+			}
 		})
 	}
 }

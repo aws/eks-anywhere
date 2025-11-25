@@ -195,20 +195,6 @@ func (mr *MockAWSIamConfigReconcilerMockRecorder) ReconcileDelete(ctx, logger, c
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReconcileDelete", reflect.TypeOf((*MockAWSIamConfigReconciler)(nil).ReconcileDelete), ctx, logger, cluster)
 }
 
-// ReconcileWorkloadClusterDelete mocks base method.
-func (m *MockAWSIamConfigReconciler) ReconcileWorkloadClusterDelete(ctx context.Context, logger logr.Logger, cluster *v1alpha1.Cluster, awsIamConfig *v1alpha1.AWSIamConfig) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ReconcileWorkloadClusterDelete", ctx, logger, cluster, awsIamConfig)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// ReconcileWorkloadClusterDelete indicates an expected call of ReconcileWorkloadClusterDelete.
-func (mr *MockAWSIamConfigReconcilerMockRecorder) ReconcileWorkloadClusterDelete(ctx, logger, cluster, awsIamConfig interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReconcileWorkloadClusterDelete", reflect.TypeOf((*MockAWSIamConfigReconciler)(nil).ReconcileWorkloadClusterDelete), ctx, logger, cluster, awsIamConfig)
-}
-
 // MockMachineHealthCheckReconciler is a mock of MachineHealthCheckReconciler interface.
 type MockMachineHealthCheckReconciler struct {
 	ctrl     *gomock.Controller

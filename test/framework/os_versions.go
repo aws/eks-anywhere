@@ -10,8 +10,6 @@ type OS string
 const (
 	// DockerOS corresponds to a dummy Docker OS that will be ignored when creating the cluster config.
 	DockerOS OS = "docker"
-	// Ubuntu2404 corresponds to Ubuntu 24.04 OS.
-	Ubuntu2404 OS = "ubuntu-2404"
 	// Ubuntu2204 corresponds to Ubuntu 22.04 OS.
 	Ubuntu2204 OS = "ubuntu-2204"
 	// Ubuntu2004 corresponds to Ubuntu 20.04 OS. We don't add the version number in the string to facilitate backwards compatibility.
@@ -25,7 +23,6 @@ const (
 )
 
 var osFamiliesForOS = map[OS]anywherev1.OSFamily{
-	Ubuntu2404:    anywherev1.Ubuntu,
 	Ubuntu2204:    anywherev1.Ubuntu,
 	Ubuntu2004:    anywherev1.Ubuntu,
 	Bottlerocket1: anywherev1.Bottlerocket,

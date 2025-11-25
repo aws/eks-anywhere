@@ -67,13 +67,12 @@ func WithRegistryMirrorEndpointAndCert(providerName string) ClusterE2ETestOpt {
 // WithRegistryMirrorOciNamespaces sets up e2e for registry mirrors with ocinamespaces.
 func WithRegistryMirrorOciNamespaces(providerName string) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
-		ociNamespaces := DefaultOciNamespaces(e)
+		ociNamespaces := defaultOciNamespaces(e)
 		setupRegistryMirrorEndpointAndCert(e, providerName, false, ociNamespaces...)
 	}
 }
 
-// DefaultOciNamespaces returns the default OCI namespaces from environment variables.
-func DefaultOciNamespaces(e *ClusterE2ETest) []v1alpha1.OCINamespace {
+func defaultOciNamespaces(e *ClusterE2ETest) []v1alpha1.OCINamespace {
 	var ociNamespaces []v1alpha1.OCINamespace
 
 	checkRequiredEnvVars(e.T, registryMirrorOciNamespacesRequiredEnvVars)
@@ -140,7 +139,7 @@ func WithAuthenticatedRegistryMirror(providerName string, optNamespaces ...v1alp
 
 		var ociNamespaces []v1alpha1.OCINamespace
 		if len(optNamespaces) > 0 {
-			ociNamespaces = append(DefaultOciNamespaces(e), optNamespaces...)
+			ociNamespaces = append(defaultOciNamespaces(e), optNamespaces...)
 		}
 
 		certificate, err := base64.StdEncoding.DecodeString(registryCert)

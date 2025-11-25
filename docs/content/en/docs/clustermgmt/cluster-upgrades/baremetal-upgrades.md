@@ -84,28 +84,6 @@ eksa-worker2                    type=worker-group-1
 
 If you don't have any available hardware that match this requirement in the cluster, you can [setup a new hardware CSV]({{< relref "../../getting-started/baremetal/bare-preparation/#prepare-hardware-inventory" >}}). You can feed this hardware inventory file during the [upgrade cluster command]({{< relref "baremetal-upgrades/#upgrade-cluster-command" >}}).
 
-#### Skip BMC connectivity checks for faulty machines
-
-EKS Anywhere validates that all BMC machines are contactable before performing cluster upgrades. If you have faulty BMC machines with connectivity issues or hardware faults, you can skip validation for those specific machines so they don't block your cluster upgrade.
-
-To skip BMC validation for a machine:
-
-```
-kubectl label machine.bmc.tinkerbell.org <machine-name> \
-  -n eksa-system \
-  bmc.tinkerbell.org/skip-contact-check=true
-```
-
-After you have repaired or replaced the faulty hardware and verified that BMC connectivity is restored, remove the skip label to re-enable normal BMC validation for future upgrades:
-
-```
-kubectl label machine.bmc.tinkerbell.org <machine-name> \
-  -n eksa-system \
-  bmc.tinkerbell.org/skip-contact-check-
-```
-
->**_NOTE:_** The skip label should only be used temporarily during upgrades when a machine has known issues. Once the machine is healthy, remove the label to ensure proper BMC validation in subsequent operations.
-
 ### Performing a cluster upgrade
 
 To perform a cluster upgrade you can modify your cluster specification `kubernetesVersion` field to the desired version.
