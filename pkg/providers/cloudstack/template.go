@@ -3,7 +3,6 @@ package cloudstack
 import (
 	"fmt"
 	"net"
-	"strings"
 
 	"sigs.k8s.io/yaml"
 
@@ -195,24 +194,11 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 		"eksaSystemNamespace":                        constants.EksaSystemNamespace,
 	}
 
-	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.AuditPolicyContent != "" {
-		values["auditPolicy"] = strings.TrimSpace(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.AuditPolicyContent)
-	} else {
-		auditPolicy, err := common.GetAuditPolicy(clusterSpec.Cluster.Spec.KubernetesVersion)
-		if err != nil {
-			return nil, err
-		}
-		values["auditPolicy"] = auditPolicy
+	auditPolicy, err := common.GetAuditPolicy(clusterSpec.Cluster.Spec.KubernetesVersion)
+	if err != nil {
+		return nil, err
 	}
-
-	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.SkipAdmissionForSystemResources != nil &&
-		*clusterSpec.Cluster.Spec.ControlPlaneConfiguration.SkipAdmissionForSystemResources {
-		admissionExclusionPolicy, err := common.GetAdmissionPluginExclusionPolicy()
-		if err != nil {
-			return nil, err
-		}
-		values["admissionExclusionPolicy"] = admissionExclusionPolicy
-	}
+	values["auditPolicy"] = auditPolicy
 
 	fillDiskOffering(values, controlPlaneMachineSpec.DiskOffering, "ControlPlane")
 	fillDiskOffering(values, etcdMachineSpec.DiskOffering, "Etcd")
@@ -238,7 +224,6 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
 		values["externalEtcd"] = true
 		values["externalEtcdReplicas"] = clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.Count
-		values["placeholderExternalEtcdEndpoint"] = constants.PlaceholderExternalEtcdEndpoint
 		values["etcdSshUsername"] = etcdMachineSpec.Users[0].Name
 		etcdURL, _ := common.GetExternalEtcdReleaseURL(clusterSpec.Cluster.Spec.EksaVersion, versionsBundle)
 		if etcdURL != "" {

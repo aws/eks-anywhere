@@ -11,10 +11,10 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
-	dockerv1beta2 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta2"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
+	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -176,8 +176,8 @@ func TestControlPlaneSpecNoChangesMachineTemplates(t *testing.T) {
 
 	// This is testing defaults. It's possible that some default logic will set items that are not set in our machine templates.
 	// We need to take this into consideration when checking for equality.
-	originalCPMachineTemplate.Spec.Template.Spec.ProviderID = "default-id"
-	originalEtcdMachineTemplate.Spec.Template.Spec.ProviderID = "default-id"
+	originalCPMachineTemplate.Spec.Template.Spec.ProviderID = ptr.String("default-id")
+	originalEtcdMachineTemplate.Spec.Template.Spec.ProviderID = ptr.String("default-id")
 
 	client := test.NewFakeKubeClient(
 		originalKubeadmControlPlane,
@@ -404,17 +404,17 @@ func capiCluster() *clusterv1.Cluster {
 				Kind:       "DockerCluster",
 				Name:       "test",
 				Namespace:  constants.EksaSystemNamespace,
-				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
+				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
 			},
 		},
 	}
 }
 
-func dockerCluster() *dockerv1beta2.DockerCluster {
-	return &dockerv1beta2.DockerCluster{
+func dockerCluster() *dockerv1.DockerCluster {
+	return &dockerv1.DockerCluster{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "DockerCluster",
-			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
+			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test",
@@ -423,21 +423,21 @@ func dockerCluster() *dockerv1beta2.DockerCluster {
 	}
 }
 
-func dockerMachineTemplate(name string) *dockerv1beta2.DockerMachineTemplate {
-	return &dockerv1beta2.DockerMachineTemplate{
+func dockerMachineTemplate(name string) *dockerv1.DockerMachineTemplate {
+	return &dockerv1.DockerMachineTemplate{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "DockerMachineTemplate",
-			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
+			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: constants.EksaSystemNamespace,
 		},
-		Spec: dockerv1beta2.DockerMachineTemplateSpec{
-			Template: dockerv1beta2.DockerMachineTemplateResource{
-				Spec: dockerv1beta2.DockerMachineSpec{
+		Spec: dockerv1.DockerMachineTemplateSpec{
+			Template: dockerv1.DockerMachineTemplateResource{
+				Spec: dockerv1.DockerMachineSpec{
 					CustomImage: "public.ecr.aws/eks-anywhere/kubernetes-sigs/kind/node:v1.23.12-eks-d-1-23-6-eks-a-19",
-					ExtraMounts: []dockerv1beta2.Mount{
+					ExtraMounts: []dockerv1.Mount{
 						{
 							ContainerPath: "/var/run/docker.sock",
 							HostPath:      "/var/run/docker.sock",
@@ -452,7 +452,6 @@ func dockerMachineTemplate(name string) *dockerv1beta2.DockerMachineTemplate {
 }
 
 func kubeadmControlPlane(opts ...func(*controlplanev1.KubeadmControlPlane)) *controlplanev1.KubeadmControlPlane {
-	maxSurge := intstr.FromInt(1)
 	kcp := &controlplanev1.KubeadmControlPlane{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "KubeadmControlPlane",
@@ -465,7 +464,7 @@ func kubeadmControlPlane(opts ...func(*controlplanev1.KubeadmControlPlane)) *con
 		Spec: controlplanev1.KubeadmControlPlaneSpec{
 			MachineTemplate: controlplanev1.KubeadmControlPlaneMachineTemplate{
 				InfrastructureRef: corev1.ObjectReference{
-					APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
+					APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
 					Kind:       "DockerMachineTemplate",
 					Name:       "test-control-plane-1",
 					Namespace:  constants.EksaSystemNamespace,
@@ -476,7 +475,7 @@ func kubeadmControlPlane(opts ...func(*controlplanev1.KubeadmControlPlane)) *con
 					ImageRepository: "public.ecr.aws/eks-distro/kubernetes",
 					Etcd: bootstrapv1.Etcd{
 						External: &bootstrapv1.ExternalEtcd{
-							Endpoints: []string{constants.PlaceholderExternalEtcdEndpoint},
+							Endpoints: []string{},
 							CAFile:    "/etc/kubernetes/pki/etcd/ca.crt",
 							CertFile:  "/etc/kubernetes/pki/apiserver-etcd-client.crt",
 							KeyFile:   "/etc/kubernetes/pki/apiserver-etcd-client.key",
@@ -716,13 +715,7 @@ rules:
 				},
 			},
 			Replicas: ptr.Int32(3),
-			RolloutStrategy: &controlplanev1.RolloutStrategy{
-				RollingUpdate: &controlplanev1.RollingUpdate{
-					MaxSurge: &maxSurge,
-				},
-				Type: controlplanev1.RollingUpdateStrategyType,
-			},
-			Version: "v1.23.12-eks-1-23-6",
+			Version:  "v1.23.12-eks-1-23-6",
 		},
 	}
 	for _, opt := range opts {
@@ -750,7 +743,7 @@ func etcdCluster(opts ...func(*etcdv1.EtcdadmCluster)) *etcdv1.EtcdadmCluster {
 				CipherSuites: "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
 			},
 			InfrastructureTemplate: corev1.ObjectReference{
-				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
+				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
 				Kind:       "DockerMachineTemplate",
 				Name:       "test-etcd-1",
 				Namespace:  constants.EksaSystemNamespace,

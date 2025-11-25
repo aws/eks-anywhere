@@ -7,7 +7,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/task"
 	"github.com/aws/eks-anywhere/pkg/validations"
-	"github.com/aws/eks-anywhere/pkg/workflows"
 )
 
 type setupAndValidateCreate struct{}
@@ -71,7 +70,7 @@ func (s *setupAndValidateUpgrade) Run(ctx context.Context, commandContext *task.
 	err = runner.Run()
 	if err != nil {
 		commandContext.SetError(err)
-		return &workflows.CollectMgmtClusterDiagnosticsTask{}
+		return nil
 	}
 
 	return &updateSecrets{}

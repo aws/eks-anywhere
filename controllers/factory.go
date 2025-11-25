@@ -7,9 +7,7 @@ import (
 	"github.com/google/uuid"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	clusterctlv1 "sigs.k8s.io/cluster-api/cmd/clusterctl/api/v1alpha3"
-	"sigs.k8s.io/cluster-api/controllers/clustercache"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/cluster-api/controllers/remote"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -45,7 +43,7 @@ type Factory struct {
 	manager                      Manager
 	registryBuilder              *clusters.ProviderClusterReconcilerRegistryBuilder
 	reconcilers                  Reconcilers
-	tracker                      clustercache.ClusterCache
+	tracker                      *remote.ClusterCacheTracker
 	registry                     *clusters.ProviderClusterReconcilerRegistry
 	dockerClusterReconciler      *dockerreconciler.Reconciler
 	vsphereClusterReconciler     *vspherereconciler.Reconciler
@@ -279,29 +277,14 @@ func (f *Factory) withTracker() *Factory {
 		if f.tracker != nil {
 			return nil
 		}
-		logger := f.logger.WithName("clustercache")
 
-		secretCachingClient, err := client.New(f.manager.GetConfig(), client.Options{
-			HTTPClient: f.manager.GetHTTPClient(),
-			Cache: &client.CacheOptions{
-				Reader: f.manager.GetCache(),
-			},
-		})
-		if err != nil {
-			return err
-		}
-
-		tracker, err := clustercache.SetupWithManager(
-			ctx,
+		logger := f.logger.WithName("remote").WithName("ClusterCacheTracker")
+		tracker, err := remote.NewClusterCacheTracker(
 			f.manager,
-			clustercache.Options{
-				SecretClient: secretCachingClient,
-				Client:       clustercache.ClientOptions{UserAgent: "eksa-controller"},
-				Cache: clustercache.CacheOptions{
-					Indexes: []clustercache.CacheOptionsIndex{clustercache.NodeProviderIDIndex},
-				},
+			remote.ClusterCacheTrackerOptions{
+				Log:     &logger,
+				Indexes: []remote.Index{remote.NodeProviderIDIndex},
 			},
-			controller.Options{Logger: logger, SkipNameValidation: &[]bool{true}[0]},
 		)
 		if err != nil {
 			return err

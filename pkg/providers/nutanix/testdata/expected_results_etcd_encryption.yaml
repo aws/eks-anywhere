@@ -52,11 +52,6 @@ spec:
       apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
       kind: NutanixMachineTemplate
       name: "<no value>"
-      namespace: eksa-system
-  rolloutStrategy:
-    rollingUpdate:
-      maxSurge: 1
-    type: RollingUpdate
   kubeadmConfigSpec:
     clusterConfiguration:
       imageRepository: "public.ecr.aws/eks-distro/kubernetes"
@@ -394,6 +389,7 @@ spec:
       - echo "127.0.0.1   {{ ds.meta_data.hostname }}" >> /etc/hosts
     postKubeadmCommands:
       - echo export KUBECONFIG=/etc/kubernetes/admin.conf >> /root/.bashrc
+    useExperimentalRetryJoin: true
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: NutanixMachineTemplate

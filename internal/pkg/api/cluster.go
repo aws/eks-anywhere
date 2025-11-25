@@ -1,12 +1,10 @@
 package api
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
-	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -100,24 +98,6 @@ func WithCiliumRoutingMode(mode anywherev1.CiliumRoutingMode) ClusterFiller {
 			c.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{Cilium: &anywherev1.CiliumConfig{}}
 		}
 		c.Spec.ClusterNetwork.CNIConfig.Cilium.RoutingMode = mode
-	}
-}
-
-// WithCiliumHelmValues sets the Helm values configuration for Cilium.
-func WithCiliumHelmValues(helmValues map[string]interface{}) ClusterFiller {
-	return func(c *anywherev1.Cluster) {
-		if c.Spec.ClusterNetwork.CNIConfig == nil {
-			c.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{Cilium: &anywherev1.CiliumConfig{}}
-		}
-		if c.Spec.ClusterNetwork.CNIConfig.Cilium == nil {
-			c.Spec.ClusterNetwork.CNIConfig.Cilium = &anywherev1.CiliumConfig{}
-		}
-		// Marshal to JSON
-		raw, err := json.Marshal(helmValues)
-		if err != nil {
-			return
-		}
-		c.Spec.ClusterNetwork.CNIConfig.Cilium.HelmValues = &apiextensionsv1.JSON{Raw: raw}
 	}
 }
 
@@ -430,13 +410,6 @@ func WithInPlaceUpgradeStrategy() ClusterFiller {
 			}
 			c.Spec.WorkerNodeGroupConfigurations[idx] = wng
 		}
-	}
-}
-
-// WithSkipAdmissionForSystemResources enables or disables skipping admission plugins for system resources.
-func WithSkipAdmissionForSystemResources(skip bool) ClusterFiller {
-	return func(c *anywherev1.Cluster) {
-		c.Spec.ControlPlaneConfiguration.SkipAdmissionForSystemResources = &skip
 	}
 }
 

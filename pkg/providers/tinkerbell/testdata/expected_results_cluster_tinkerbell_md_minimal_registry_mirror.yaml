@@ -164,24 +164,11 @@ spec:
             tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
       files:
         - content: |
-            [plugins."io.containerd.grpc.v1.cri".registry]
-              config_path = "/etc/containerd/certs.d"
+            [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+              [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
+                endpoint = ["https://1.2.3.4:1234/v2/eks-anywhere"]
           owner: root:root
           path: "/etc/containerd/config_append.toml"
-        - content: |
-            server = "https://1.2.3.4:1234"
-            
-            [host."https://1.2.3.4:1234"]
-              capabilities = ["pull", "resolve"]
-          owner: root:root
-          path: "/etc/containerd/certs.d/1.2.3.4:1234/hosts.toml"
-        - content: |
-            server = "https://public.ecr.aws"
-            
-            [host."https://1.2.3.4:1234/v2/eks-anywhere"]
-              capabilities = ["pull", "resolve"]
-          owner: root:root
-          path: "/etc/containerd/certs.d/public.ecr.aws/hosts.toml"
       preKubeadmCommands:
       - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
       - sudo systemctl daemon-reload

@@ -60,55 +60,7 @@ Starting with release 0.8, the plugin should be specified using the new `cniConf
 > NOTE: EKS Anywhere allows specifying only 1 plugin for a cluster and does not allow switching the plugins
 after the cluster is created.
 
-### Helm Values Configuration for Cilium plugin
-
-Starting with recent releases, Cilium can be configured using Helm values directly through the `helmValues` field. This provides full flexibility to configure any Cilium Helm chart parameter.
-
-When `helmValues` is specified, it takes precedence over all other Cilium-specific fields in the configuration. The `helmValues` field accepts standard Cilium Helm chart values in YAML format.
-
-Example configuration using `helmValues`:
-
-```yaml
-apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-kind: Cluster
-metadata:
-  name: my-cluster-name
-spec:
-  clusterNetwork:
-    pods:
-      cidrBlocks:
-      - 192.168.0.0/16
-    services:
-      cidrBlocks:
-      - 10.96.0.0/12
-    cniConfig:
-      cilium:
-        helmValues:
-          policyEnforcementMode: always
-          egressMasqueradeInterfaces: eth0
-          routingMode: native
-          ipv4NativeRoutingCIDR: 192.168.0.0/16
-          cni:
-            exclusive: false
-          hubble:
-            enabled: true
-            relay:
-              enabled: true
-            ui:
-              enabled: true
-```
-
-For a complete list of available Helm values, refer to the official [Cilium Helm chart documentation](https://docs.cilium.io/en/stable/helm-reference/).
-
-{{% alert title="Note" color="primary" %}}
-When using `helmValues`, all legacy Cilium configuration fields (such as `policyEnforcementMode`, `egressMasqueradeInterfaces`, `routingMode`, `ipv4NativeRoutingCIDR`, `ipv6NativeRoutingCIDR`, and `cniExclusive`) are ignored. Configure these parameters within the `helmValues` field instead.
-{{% /alert %}}
-
 ### Policy Configuration options for Cilium plugin
-
-{{% alert title="Deprecated" color="warning" %}}
-The `policyEnforcementMode` field is deprecated. Please use `helmValues` instead. See the [Helm Values Configuration](#helm-values-configuration-for-cilium-plugin) section for details..
-{{% /alert %}}
 
 Cilium accepts policy enforcement modes from the users to determine the allowed traffic between pods.
 The allowed values for this mode are: `default`, `always` and `never`.
@@ -192,10 +144,6 @@ will not delete any of the existing NetworkPolicy objects, including the ones re
 
 ### EgressMasqueradeInterfaces option for Cilium plugin
 
-{{% alert title="Deprecated" color="warning" %}}
-The `egressMasqueradeInterfaces` field is deprecated. Please use `helmValues` instead. See the [Helm Values Configuration](#helm-values-configuration-for-cilium-plugin) section for details.
-{{% /alert %}}
-
 Cilium accepts the `EgressMasqueradeInterfaces` option from users to limit which interfaces masquerading is performed on.
 The allowed values for this mode are an `interface name` such as `eth0` or an `interface prefix` such as `eth+`.
 Please refer to the official [Cilium documentation](https://docs.cilium.io/en/v1.13/network/concepts/masquerading/#iptables-based) for more details on how this option affects masquerading traffic.
@@ -223,10 +171,6 @@ spec:
 
 ### RoutingMode option for Cilium plugin
 
-{{% alert title="Deprecated" color="warning" %}}
-The `routingMode`, `ipv4NativeRoutingCIDR`, and `ipv6NativeRoutingCIDR` fields are deprecated. Please use `helmValues` instead. See the [Helm Values Configuration](#helm-values-configuration-for-cilium-plugin) section for details.
-{{% /alert %}}
-
 By default all traffic is sent by Cilium over Geneve tunneling on the network. The `routingMode` option allows users to switch to [native routing](https://docs.cilium.io/en/v1.15/network/concepts/routing/#native-routing) instead.
 
 The `ipv4NativeRoutingCIDR` is required to set the CIDR in which native routing can be performed.
@@ -252,10 +196,6 @@ spec:
 ```
 
 ### CNI Exclusive Mode configuration
-
-{{% alert title="Deprecated" color="warning" %}}
-The `cniExclusive` field is deprecated. Please use `helmValues` with the `cni.exclusive` parameter instead. See the [Helm Values Configuration](#helm-values-configuration-for-cilium-plugin) section for details.
-{{% /alert %}}
 
 The `cniExclusive` option controls whether Cilium should remove other CNI configuration files from the nodes.
 By default, Cilium operates in exclusive mode (`cniExclusive: true`), which means it will remove any other CNI configuration files to prevent conflicts.
@@ -285,10 +225,6 @@ Setting `cniExclusive: false` is primarily useful for advanced networking scenar
 {{% /alert %}}
 
 ### Use a custom CNI
-
-{{% alert title="Deprecated" color="warning" %}}
-The `skipUpgrade` field is deprecated. Please use `helmValues` instead. See the [Helm Values Configuration](#helm-values-configuration-for-cilium-plugin) section for details.
-{{% /alert %}}
 
 EKS Anywhere can be configured to skip EKS Anywhere's default Cilium CNI upgrades via the `skipUpgrade` field.
 `skipUpgrade` can be `true` or `false`. When not set, it defaults to `false`.

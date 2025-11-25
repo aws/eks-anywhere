@@ -2,7 +2,6 @@ package cloudstack_test
 
 import (
 	"path"
-	"regexp"
 	"testing"
 	"time"
 
@@ -13,7 +12,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack"
-	"github.com/aws/eks-anywhere/pkg/providers/common"
 )
 
 const (
@@ -214,54 +212,4 @@ func TestVsphereTemplateBuilderGenerateCAPISpecControlPlaneValidKubeletConfigCP(
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(data).To(ContainSubstring("maxPods"))
 	test.AssertContentToFile(t, string(data), "testdata/expected_kcp.yaml")
-}
-
-func TestCloudStackTemplateBuilderGenerateCAPISpecControlPlaneWithCustomAuditPolicy(t *testing.T) {
-	g := NewWithT(t)
-	spec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
-
-	customAuditPolicy := `apiVersion: audit.k8s.io/v1
-kind: Policy
-rules:
-- level: Metadata
-  omitStages:
-  - RequestReceived`
-
-	spec.Cluster.Spec.ControlPlaneConfiguration.AuditPolicyContent = customAuditPolicy
-
-	builder := cloudstack.NewTemplateBuilder(time.Now)
-	data, err := builder.GenerateCAPISpecControlPlane(spec, func(values map[string]interface{}) {
-		values["controlPlaneTemplateName"] = clusterapi.ControlPlaneMachineTemplateName(spec.Cluster)
-		values["etcdTemplateName"] = clusterapi.EtcdMachineTemplateName(spec.Cluster)
-	})
-
-	g.Expect(err).ToNot(HaveOccurred())
-	str := collapseWhitespace(string(data))
-	g.Expect(str).To(ContainSubstring(collapseWhitespace(customAuditPolicy)))
-
-	defaultAuditPolicy, err := common.GetAuditPolicy(spec.Cluster.Spec.KubernetesVersion)
-	g.Expect(err).ToNot(HaveOccurred())
-	g.Expect(str).ToNot(ContainSubstring(collapseWhitespace(defaultAuditPolicy)))
-}
-
-func TestCloudStackTemplateBuilderGenerateCAPISpecControlPlaneWithDefaultAuditPolicy(t *testing.T) {
-	g := NewWithT(t)
-	spec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
-
-	builder := cloudstack.NewTemplateBuilder(time.Now)
-	data, err := builder.GenerateCAPISpecControlPlane(spec, func(values map[string]interface{}) {
-		values["controlPlaneTemplateName"] = clusterapi.ControlPlaneMachineTemplateName(spec.Cluster)
-		values["etcdTemplateName"] = clusterapi.EtcdMachineTemplateName(spec.Cluster)
-	})
-
-	g.Expect(err).ToNot(HaveOccurred())
-	str := collapseWhitespace(string(data))
-
-	defaultAuditPolicy, err := common.GetAuditPolicy(spec.Cluster.Spec.KubernetesVersion)
-	g.Expect(err).ToNot(HaveOccurred())
-	g.Expect(str).To(ContainSubstring(collapseWhitespace(defaultAuditPolicy)))
-}
-
-func collapseWhitespace(s string) string {
-	return regexp.MustCompile(`\s+`).ReplaceAllString(s, " ")
 }

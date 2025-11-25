@@ -1,6 +1,6 @@
 package v1alpha1
 
-import "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
+import "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 
 // HostOSConfiguration defines the configuration settings on the host OS.
 type HostOSConfiguration struct {

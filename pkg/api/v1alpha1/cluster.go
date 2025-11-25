@@ -196,7 +196,6 @@ var clusterConfigValidations = []func(*Cluster) error{
 	validateControlPlaneAPIServerOIDCExtraArgs,
 	validateControlPlaneKubeletConfiguration,
 	validateWorkerNodeKubeletConfiguration,
-	validateAuditPolicyContent,
 }
 
 // GetClusterConfig parses a Cluster object from a multiobject yaml file in disk
@@ -230,7 +229,7 @@ func GetAndValidateClusterConfig(fileName string) (*Cluster, error) {
 
 // GetClusterDefaultKubernetesVersion returns the default kubernetes version for a Cluster.
 func GetClusterDefaultKubernetesVersion() KubernetesVersion {
-	return Kube134
+	return Kube133
 }
 
 // ValidateClusterConfigContent validates a Cluster object without modifying it
@@ -565,17 +564,6 @@ func validateWorkerNodeKubeletConfiguration(clusterConfig *Cluster) error {
 		}
 	}
 
-	return nil
-}
-
-func validateAuditPolicyContent(c *Cluster) error {
-	if c.Spec.ControlPlaneConfiguration.AuditPolicyContent != "" {
-		var yamlObj interface{}
-		err := yaml.Unmarshal([]byte(c.Spec.ControlPlaneConfiguration.AuditPolicyContent), &yamlObj)
-		if err != nil {
-			return fmt.Errorf("invalid YAML in auditPolicyContent: %v", err)
-		}
-	}
 	return nil
 }
 

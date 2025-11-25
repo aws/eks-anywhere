@@ -1,7 +1,7 @@
 package test
 
 import (
-	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
+	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
@@ -42,31 +42,14 @@ xTAY4N4C2s/wIybZxaJ8iQ39OzDpyN2Ym40Q58GVOHt16XCjFVVorVcZsI3y2B9Q
 func RegistryMirrorConfigFilesInsecureSkipVerify() []bootstrapv1.File {
 	return []bootstrapv1.File{
 		{
-			Content: `[plugins."io.containerd.grpc.v1.cri".registry]
-  config_path = "/etc/containerd/certs.d"
+			Content: `[plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
+    endpoint = ["https://0.0.0.0:5000"]
+  [plugins."io.containerd.grpc.v1.cri".registry.configs."0.0.0.0:5000".tls]
+    insecure_skip_verify = true
 `,
 			Owner: "root:root",
 			Path:  "/etc/containerd/config_append.toml",
-		},
-		{
-			Content: `server = "https://0.0.0.0:5000"
-
-[host."https://0.0.0.0:5000"]
-  capabilities = ["pull", "resolve"]
-  skip_verify = true
-`,
-			Owner: "root:root",
-			Path:  "/etc/containerd/certs.d/0.0.0.0:5000/hosts.toml",
-		},
-		{
-			Content: `server = "https://public.ecr.aws"
-
-[host."https://0.0.0.0:5000"]
-  capabilities = ["pull", "resolve"]
-  skip_verify = true
-`,
-			Owner: "root:root",
-			Path:  "/etc/containerd/certs.d/public.ecr.aws/hosts.toml",
 		},
 	}
 }
@@ -81,33 +64,15 @@ func RegistryMirrorConfigFilesInsecureSkipVerifyAndCACert() []bootstrapv1.File {
 			Path:    "/etc/containerd/certs.d/0.0.0.0:5000/ca.crt",
 		},
 		{
-			Content: `[plugins."io.containerd.grpc.v1.cri".registry]
-  config_path = "/etc/containerd/certs.d"
+			Content: `[plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
+    endpoint = ["https://0.0.0.0:5000"]
+  [plugins."io.containerd.grpc.v1.cri".registry.configs."0.0.0.0:5000".tls]
+    ca_file = "/etc/containerd/certs.d/0.0.0.0:5000/ca.crt"
+    insecure_skip_verify = true
 `,
 			Owner: "root:root",
 			Path:  "/etc/containerd/config_append.toml",
-		},
-		{
-			Content: `server = "https://0.0.0.0:5000"
-
-[host."https://0.0.0.0:5000"]
-  capabilities = ["pull", "resolve"]
-  ca = "/etc/containerd/certs.d/0.0.0.0:5000/ca.crt"
-  skip_verify = true
-`,
-			Owner: "root:root",
-			Path:  "/etc/containerd/certs.d/0.0.0.0:5000/hosts.toml",
-		},
-		{
-			Content: `server = "https://public.ecr.aws"
-
-[host."https://0.0.0.0:5000"]
-  capabilities = ["pull", "resolve"]
-  ca = "/etc/containerd/certs.d/0.0.0.0:5000/ca.crt"
-  skip_verify = true
-`,
-			Owner: "root:root",
-			Path:  "/etc/containerd/certs.d/public.ecr.aws/hosts.toml",
 		},
 	}
 }

@@ -128,13 +128,35 @@ func TestVersionsBundleSnowImages(t *testing.T) {
 }
 
 func TestVersionsBundleSharedImages(t *testing.T) {
-	expectedSharedImages := make([]v1alpha1.Image, 33)
-	// Set cert-manager images at positions 5-9 (indices match SharedImages function order)
-	expectedSharedImages[5] = v1alpha1.Image{Name: "acmesolver", URI: "uri1"}
-	expectedSharedImages[6] = v1alpha1.Image{Name: "cainjector", URI: "uri2"}
-	expectedSharedImages[7] = v1alpha1.Image{Name: "controller", URI: "uri3"}
-	expectedSharedImages[8] = v1alpha1.Image{Name: "startupapicheck", URI: "uri4"}
-	expectedSharedImages[9] = v1alpha1.Image{Name: "webhook", URI: "uri5"}
+	expectedSharedImages := make([]v1alpha1.Image, 27)
+	expectedSharedImages = append(
+		expectedSharedImages[:5],
+		append(
+			[]v1alpha1.Image{
+				{
+					Name: "acmesolver",
+					URI:  "uri1",
+				},
+				{
+					Name: "cainjector",
+					URI:  "uri2",
+				},
+				{
+					Name: "controller",
+					URI:  "uri3",
+				},
+				{
+					Name: "startupapicheck",
+					URI:  "uri4",
+				},
+				{
+					Name: "webhook",
+					URI:  "uri5",
+				},
+			},
+			expectedSharedImages[5:]...,
+		)...,
+	)
 	tests := []struct {
 		name           string
 		versionsBundle *v1alpha1.VersionsBundle
@@ -143,7 +165,7 @@ func TestVersionsBundleSharedImages(t *testing.T) {
 		{
 			name:           "no images",
 			versionsBundle: &v1alpha1.VersionsBundle{},
-			want:           make([]v1alpha1.Image, 33),
+			want:           make([]v1alpha1.Image, 32),
 		},
 		{
 			name: "cert-manager images",

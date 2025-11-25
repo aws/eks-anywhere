@@ -68,10 +68,6 @@ const (
 	// ClusterctlMoveLabelName adds the clusterctl move label.
 	ClusterctlMoveLabelName = "clusterctl.cluster.x-k8s.io/move"
 
-	// SkipBMCContactCheckLabel is the label to skip BMC contact check for RufioMachines.
-	// When set to "true", the machine will be excluded from BMC contactable validation.
-	SkipBMCContactCheckLabel = "bmc.tinkerbell.org/skip-contact-check"
-
 	// CloudstackFailureDomainPlaceholder Provider specific keywork placeholder.
 	CloudstackFailureDomainPlaceholder = "ds.meta_data.failuredomain"
 
@@ -81,8 +77,8 @@ const (
 	// DefaultCuratedPackagesRegistry matches the default registry for curated packages in all regions.
 	DefaultCuratedPackagesRegistryRegex = `783794618700\.dkr\.ecr\..*\.amazonaws\.com`
 
-	// DefaultcuratedPackagesRegistry is the default registry used by earlier customers using non-regional registry.
-	DefaultCuratedPackagesRegistry = "783794618700.dkr.ecr.us-west-2.amazonaws.com"
+	// DefaultcuratedPackagesRegistry is a containerd compatible registry format that matches all AWS regions.
+	DefaultCuratedPackagesRegistry = "783794618700.dkr.ecr.*.amazonaws.com"
 
 	// Provider specific env vars.
 	VSphereUsernameKey     = "VSPHERE_USERNAME"
@@ -118,9 +114,6 @@ const (
 	// DefaultWorkerMaxUnhealthy is the default maxUnhealthy value for worker node machine health checks.
 	DefaultWorkerMaxUnhealthy = "40%"
 
-	// PlaceholderExternalEtcdEndpoint is the default placeholder endpoint for external etcd configuration.
-	PlaceholderExternalEtcdEndpoint = "https://placeholder:2379"
-
 	// SignatureAnnotation applied to the bundle during bundle manifest signing.
 	SignatureAnnotation = "anywhere.eks.amazonaws.com/signature"
 	// ExcludesAnnotation applied to the bundle during bundle manifest signing.
@@ -134,7 +127,7 @@ const (
 	// fields depending on your signing requirements.
 	// We are excluding some fields from the versionbundle object from signing/verifying the signature to allow users to override images.
 	// To check the fields we are excluding for signing/verifying the signature base64 decode the Excludes field.
-	Excludes = "LnNwZWMudmVyc2lvbnNCdW5kbGVzW10uYm9vdHN0cmFwCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLmJvdHRsZXJvY2tldEJvb3RzdHJhcENvbnRhaW5lcnMKLnNwZWMudmVyc2lvbnNCdW5kbGVzW10uYm90dGxlcm9ja2V0SG9zdENvbnRhaW5lcnMKLnNwZWMudmVyc2lvbnNCdW5kbGVzW10uY2VydE1hbmFnZXIKLnNwZWMudmVyc2lvbnNCdW5kbGVzW10uY2lsaXVtCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLmNsb3VkU3RhY2sKLnNwZWMudmVyc2lvbnNCdW5kbGVzW10uY2x1c3RlckFQSQouc3BlYy52ZXJzaW9uc0J1bmRsZXNbXS5jb250cm9sUGxhbmUKLnNwZWMudmVyc2lvbnNCdW5kbGVzW10uZG9ja2VyCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLmVrc2EKLnNwZWMudmVyc2lvbnNCdW5kbGVzW10uZWtzRC5jb21wb25lbnRzCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLmVrc0QubWFuaWZlc3RVcmwKLnNwZWMudmVyc2lvbnNCdW5kbGVzW10uZXRjZGFkbUJvb3RzdHJhcAouc3BlYy52ZXJzaW9uc0J1bmRsZXNbXS5ldGNkYWRtQ29udHJvbGxlcgouc3BlYy52ZXJzaW9uc0J1bmRsZXNbXS5mbHV4Ci5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLmhhcHJveHkKLnNwZWMudmVyc2lvbnNCdW5kbGVzW10ua2luZG5ldGQKLnNwZWMudmVyc2lvbnNCdW5kbGVzW10ubnV0YW5peAouc3BlYy52ZXJzaW9uc0J1bmRsZXNbXS5wYWNrYWdlQ29udHJvbGxlcgouc3BlYy52ZXJzaW9uc0J1bmRsZXNbXS5zbm93Ci5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLnRpbmtlcmJlbGwKLnNwZWMudmVyc2lvbnNCdW5kbGVzW10udXBncmFkZXIKLnNwZWMudmVyc2lvbnNCdW5kbGVzW10udlNwaGVyZQ=="
+	Excludes = "LnNwZWMudmVyc2lvbnNCdW5kbGVzW10uYm9vdHN0cmFwCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLmJvdHRsZXJvY2tldEhvc3RDb250YWluZXJzCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLmNlcnRNYW5hZ2VyCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLmNpbGl1bQouc3BlYy52ZXJzaW9uc0J1bmRsZXNbXS5jbG91ZFN0YWNrCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLmNsdXN0ZXJBUEkKLnNwZWMudmVyc2lvbnNCdW5kbGVzW10uY29udHJvbFBsYW5lCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLmRvY2tlcgouc3BlYy52ZXJzaW9uc0J1bmRsZXNbXS5la3NhCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLmVrc0QuY29tcG9uZW50cwouc3BlYy52ZXJzaW9uc0J1bmRsZXNbXS5la3NELm1hbmlmZXN0VXJsCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLmV0Y2RhZG1Cb290c3RyYXAKLnNwZWMudmVyc2lvbnNCdW5kbGVzW10uZXRjZGFkbUNvbnRyb2xsZXIKLnNwZWMudmVyc2lvbnNCdW5kbGVzW10uZmx1eAouc3BlYy52ZXJzaW9uc0J1bmRsZXNbXS5oYXByb3h5Ci5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLmtpbmRuZXRkCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLm51dGFuaXgKLnNwZWMudmVyc2lvbnNCdW5kbGVzW10ucGFja2FnZUNvbnRyb2xsZXIKLnNwZWMudmVyc2lvbnNCdW5kbGVzW10uc25vdwouc3BlYy52ZXJzaW9uc0J1bmRsZXNbXS50aW5rZXJiZWxsCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLnVwZ3JhZGVyCi5zcGVjLnZlcnNpb25zQnVuZGxlc1tdLnZTcGhlcmU="
 	// EKSDistroExcludes is a base64-encoded, newline-delimited list of JSON/YAML paths to remove
 	// from the EKS Distro manifest prior to computing the digest. You can add or remove
 	// fields depending on your signing requirements.
