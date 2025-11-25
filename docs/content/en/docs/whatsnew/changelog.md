@@ -72,7 +72,6 @@ description: >
   - [`v1-28-eks-65`](https://distro.eks.amazonaws.com/releases/1-28/65/)
 
 - Troubleshoot: `v0.122.0` to `v0.123.12`
-- Image builder: `v0.6.0` to `0.7.0`
 
 ### Fixed
 - Fix Bottlerocket cert renewal: Add 30s sleep and duplicate container ([#10360](https://github.com/aws/eks-anywhere/pull/10360))
@@ -86,7 +85,7 @@ description: >
 |:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
 |    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
 |    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
-|    Ubuntu 24.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+|    Ubuntu 24.04     |    ✔    |     ✔      |    —    |     —      |  —   |
 | Bottlerocket 1.50.0 |    ✔    |     —      |    —    |     —      |  —   |
 |      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
 |      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
@@ -130,7 +129,7 @@ description: >
   - Kustomize Controller: `v1.6.1` to `v1.7.0`
   - Notification Controller: `v1.6.0` to `v1.7.1`
 - Troubleshoot: `v0.121.2` to `v0.122.0`
-- Image builder: `v0.1.44` to `v0.6.0`
+- Image builder CLI: `v0.6.0` to `0.7.0`
 - Kube-vip: `v0.9.2` to `v1.0.0`
 - etcdadm-controller: `v1.0.24` to `v1.0.26`
 - etcdadm-bootstrap-provider: `v1.0.16` to `v1.0.18`
