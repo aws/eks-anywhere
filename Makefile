@@ -29,7 +29,7 @@ UNIT_TEST_PACKAGE_EXCLUSION_REGEX ?=mocks$
 UNIT_TEST_PACKAGES ?= $$($(GO) list ./... | grep -vE "$(UNIT_TEST_PACKAGE_EXCLUSION_REGEX)")
 
 ## ensure local execution uses the 'main' branch bundle
-BRANCH_NAME?=main
+BRANCH_NAME?=release-0.23
 # DEV_GIT_VERSION should be something like v0.19.0-dev+latest, depending on the base branch
 # https://github.com/aws/eks-anywhere/blob/main/docs/developer/manifests.md#locally-building-the-cli
 ifneq ($(PULL_BASE_REF),) # PULL_BASE_REF originates from prow
@@ -174,7 +174,7 @@ EKS_A_CROSS_PLATFORMS := $(foreach platform,$(EKS_A_PLATFORMS),eks-a-cross-platf
 E2E_CROSS_PLATFORMS := $(foreach platform,$(EKS_A_PLATFORMS),e2e-cross-platform-$(platform))
 EKS_A_RELEASE_CROSS_PLATFORMS := $(foreach platform,$(EKS_A_PLATFORMS),eks-a-release-cross-platform-$(platform))
 
-DOCKER_E2E_TEST := TestDockerKubernetes134SimpleFlow
+DOCKER_E2E_TEST := TestDockerKubernetes133SimpleFlow
 LOCAL_E2E_TESTS ?= $(DOCKER_E2E_TEST)
 
 EMBED_CONFIG_FOLDER = pkg/files/config
@@ -459,8 +459,7 @@ generate: export PATH := $(GO_PATH):$(PATH)
 generate: $(CONTROLLER_GEN)  ## Generate zz_generated.deepcopy.go
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" \
 		paths=./pkg/api/... \
-		paths="./release/api/..." \
-		paths="./pkg/providers/snow/api/..."
+		paths="./release/api/..."
 	
 .PHONY: verify-generate
 verify-generate: generate ## Verify if generated zz_generated.deepcopy.go files need to be updated

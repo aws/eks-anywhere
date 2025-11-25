@@ -12,8 +12,8 @@ import (
 	"github.com/tinkerbell/tink/api/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	eksav1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -1118,6 +1118,23 @@ func TestAssertUpgradeRolloutStrategyValid_InPlaceSucceedsWithRedHat(t *testing.
 	}
 
 	g.Expect(tinkerbell.AssertUpgradeRolloutStrategyValid(clusterSpec)).To(gomega.Succeed())
+}
+
+func TestAssertUpgradeRolloutStrategyValid_InPlaceFailsWithBottlerocketWorkerNode(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy = &eksav1alpha1.ControlPlaneUpgradeRolloutStrategy{
+		Type: "InPlace",
+	}
+	clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].UpgradeRolloutStrategy = &eksav1alpha1.WorkerNodesUpgradeRolloutStrategy{
+		Type: "InPlace",
+	}
+
+	// Set only worker node to Bottlerocket
+	clusterSpec.MachineConfigs[clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name].Spec.OSFamily = eksav1alpha1.Bottlerocket
+
+	g.Expect(tinkerbell.AssertUpgradeRolloutStrategyValid(clusterSpec)).ToNot(gomega.Succeed())
 }
 
 func TestAssertUpgradeRolloutStrategyValid_UpgradeStrategyNotEqual(t *testing.T) {

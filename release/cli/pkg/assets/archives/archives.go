@@ -125,32 +125,6 @@ func TarballArtifactPathGetter(rc *releasetypes.ReleaseConfig, archive *assettyp
 	return sourceS3Key, sourceS3Prefix, releaseName, releaseS3Path, nil
 }
 
-func ReleaseBranchedTarballArtifactPathGetter(rc *releasetypes.ReleaseConfig, archive *assettypes.Archive, projectPath, gitTag, eksDReleaseChannel, eksDReleaseNumber, kubeVersion, latestPath, arch string) (string, string, string, string, error) {
-	os := "linux"
-	var sourceS3Key string
-	var sourceS3Prefix string
-	var releaseS3Path string
-	var releaseName string
-
-	if rc.DevRelease || rc.ReleaseEnvironment == "development" {
-		sourceS3Key = fmt.Sprintf("%s-%s-%s-%s.tar.gz", archive.Name, os, arch, gitTag)
-		sourceS3Prefix = fmt.Sprintf("%s/%s", projectPath, latestPath)
-	} else {
-		sourceS3Key = fmt.Sprintf("%s-%s-%s.tar.gz", archive.Name, os, arch)
-		sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/%s/%s/%s", rc.BundleNumber, eksDReleaseChannel, archive.Name, gitTag)
-	}
-
-	if rc.DevRelease {
-		releaseName = fmt.Sprintf("%s-%s-%s-%s.tar.gz", archive.Name, rc.DevReleaseUriVersion, os, arch)
-		releaseS3Path = fmt.Sprintf("artifacts/%s/%s/%s/%s", rc.DevReleaseUriVersion, eksDReleaseChannel, archive.Name, gitTag)
-	} else {
-		releaseName = fmt.Sprintf("%s-%s-%s.tar.gz", archive.Name, os, arch)
-		releaseS3Path = fmt.Sprintf("releases/bundles/%d/artifacts/%s/%s/%s", rc.BundleNumber, eksDReleaseChannel, archive.Name, gitTag)
-	}
-
-	return sourceS3Key, sourceS3Prefix, releaseName, releaseS3Path, nil
-}
-
 func KernelArtifactPathGetter(rc *releasetypes.ReleaseConfig, archive *assettypes.Archive, projectPath, gitTag, eksDReleaseChannel, eksDReleaseNumber, kubeVersion, latestPath, arch string) (string, string, string, string, error) {
 	var sourceS3Prefix string
 	var releaseS3Path string

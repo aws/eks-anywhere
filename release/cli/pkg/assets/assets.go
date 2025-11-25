@@ -88,12 +88,7 @@ func getAssetsFromConfig(_ context.Context, ac *assettypes.AssetConfig, rc *rele
 
 	// Add archives to artifacts list
 	for _, archive := range ac.Archives {
-		// Use the same path logic as git tags for release-branched projects
-		archiveProjectPath := projectPath
-		if ac.HasSeparateTagPerReleaseBranch {
-			archiveProjectPath = gitTagPath
-		}
-		archiveArtifact, err := archives.GetArchiveAssets(rc, archive, archiveProjectPath, gitTag, eksDReleaseChannel, eksDReleaseNumber, kubeVersion)
+		archiveArtifact, err := archives.GetArchiveAssets(rc, archive, projectPath, gitTag, eksDReleaseChannel, eksDReleaseNumber, kubeVersion)
 		if err != nil {
 			return nil, fmt.Errorf("error getting archive artifact: %v", err)
 		}

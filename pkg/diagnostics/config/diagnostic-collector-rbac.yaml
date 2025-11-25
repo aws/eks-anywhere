@@ -10,7 +10,6 @@ rules:
     - anywhere.eks.amazonaws.com
     - packages.eks.amazonaws.com
     - tinkerbell.org
-    - admissionregistration.k8s.io
     resources:
     - '*'
     verbs:

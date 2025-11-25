@@ -13,7 +13,6 @@ type FileWriter interface {
 	Dir() string
 	TempDir() string
 	Create(name string, f ...FileOptionsFunc) (_ io.WriteCloser, path string, _ error)
-	Delete(fileName string) error
 }
 
 type FileOptions struct {

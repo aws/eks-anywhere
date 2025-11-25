@@ -9,8 +9,8 @@ import (
 	"github.com/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
-	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	"sigs.k8s.io/cluster-api/util/conditions"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -106,13 +106,13 @@ func (r *Reconciler) Reconcile(ctx context.Context, logger logr.Logger, client c
 		))
 
 		markCiliumInstalled(ctx, spec.Cluster)
-		v1beta1conditions.MarkTrue(spec.Cluster, anywherev1.DefaultCNIConfiguredCondition)
+		conditions.MarkTrue(spec.Cluster, anywherev1.DefaultCNIConfiguredCondition)
 		return controller.Result{}, nil
 	}
 
 	if !ciliumCfg.IsManaged() {
 		logger.Info("Cilium configured as unmanaged, skipping upgrade")
-		v1beta1conditions.MarkFalse(spec.Cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.SkipUpgradesForDefaultCNIConfiguredReason, clusterv1.ConditionSeverityWarning, "Configured to skip default Cilium CNI upgrades")
+		conditions.MarkFalse(spec.Cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.SkipUpgradesForDefaultCNIConfiguredReason, clusterv1.ConditionSeverityWarning, "Configured to skip default Cilium CNI upgrades")
 		return controller.Result{}, nil
 	}
 
@@ -124,7 +124,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, logger logr.Logger, client c
 		if result, err := r.upgrade(ctx, logger, client, installation, spec); err != nil {
 			return controller.Result{}, err
 		} else if result.Return() {
-			v1beta1conditions.MarkFalse(spec.Cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.DefaultCNIUpgradeInProgressReason, clusterv1.ConditionSeverityInfo, "Cilium version upgrade needed")
+			conditions.MarkFalse(spec.Cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.DefaultCNIUpgradeInProgressReason, clusterv1.ConditionSeverityInfo, "Cilium version upgrade needed")
 			return result, nil
 		}
 
@@ -138,7 +138,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, logger logr.Logger, client c
 	}
 
 	// Upgrade process has run its course, and so we can now mark that the default cni has been configured.
-	v1beta1conditions.MarkTrue(spec.Cluster, anywherev1.DefaultCNIConfiguredCondition)
+	conditions.MarkTrue(spec.Cluster, anywherev1.DefaultCNIConfiguredCondition)
 
 	return r.deletePreflightIfExists(ctx, client, spec)
 }

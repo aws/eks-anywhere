@@ -58,14 +58,6 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 					ReleaseImageTagFormat:       "v<eksDReleaseChannel>-<eksDReleaseNumber>",
 				},
 			},
-			{
-				RepoName: "bottlerocket-bootstrap-multi-network",
-				ImageTagConfiguration: assettypes.ImageTagConfiguration{
-					NonProdSourceImageTagFormat: "v<eksDReleaseChannel>-<eksDReleaseNumber>",
-					ProdSourceImageTagFormat:    "v<eksDReleaseChannel>-<eksDReleaseNumber>",
-					ReleaseImageTagFormat:       "v<eksDReleaseChannel>-<eksDReleaseNumber>",
-				},
-			},
 		},
 		ImageTagOptions: []string{
 			"eksDReleaseChannel",
@@ -103,6 +95,17 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 		Manifests: []*assettypes.ManifestComponent{
 			{
 				ManifestFiles: []string{"cert-manager.yaml"},
+			},
+		},
+	},
+	// Cilium artifacts
+	{
+		ProjectName: "cilium",
+		ProjectPath: "projects/cilium/cilium",
+		Manifests: []*assettypes.ManifestComponent{
+			{
+				Name:          "cilium",
+				ManifestFiles: []string{"cilium.yaml"},
 			},
 		},
 	},
@@ -316,15 +319,12 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 	},
 	// Containerd artifacts
 	{
-		ProjectName:                    "containerd",
-		ProjectPath:                    "projects/containerd/containerd",
-		HasReleaseBranches:             true,
-		HasSeparateTagPerReleaseBranch: true,
+		ProjectName: "containerd",
+		ProjectPath: "projects/containerd/containerd",
 		Archives: []*assettypes.Archive{
 			{
-				Name:                "containerd",
-				Format:              "tarball",
-				ArchiveS3PathGetter: archives.ReleaseBranchedTarballArtifactPathGetter,
+				Name:   "containerd",
+				Format: "tarball",
 			},
 		},
 	},

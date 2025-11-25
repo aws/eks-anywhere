@@ -29,28 +29,14 @@ spec:
         owner: root:root
         path: "/etc/containerd/certs.d/0.0.0.0:5000/ca.crt"
       - content: |
-          [plugins."io.containerd.grpc.v1.cri".registry]
-            config_path = "/etc/containerd/certs.d"
+          [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+            [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
+              endpoint = ["https://0.0.0.0:5000"]
+            [plugins."io.containerd.grpc.v1.cri".registry.configs."0.0.0.0:5000".tls]
+              ca_file = "/etc/containerd/certs.d/0.0.0.0:5000/ca.crt"
+              insecure_skip_verify = true
         owner: root:root
         path: "/etc/containerd/config_append.toml"
-      - content: |
-          server = "https://0.0.0.0:5000"
-          
-          [host."https://0.0.0.0:5000"]
-            capabilities = ["pull", "resolve"]
-            ca = "/etc/containerd/certs.d/0.0.0.0:5000/ca.crt"
-            skip_verify = true
-        owner: root:root
-        path: "/etc/containerd/certs.d/0.0.0.0:5000/hosts.toml"
-      - content: |
-          server = "https://public.ecr.aws"
-          
-          [host."https://0.0.0.0:5000"]
-            capabilities = ["pull", "resolve"]
-            ca = "/etc/containerd/certs.d/0.0.0.0:5000/ca.crt"
-            skip_verify = true
-        owner: root:root
-        path: "/etc/containerd/certs.d/public.ecr.aws/hosts.toml"
       preKubeadmCommands:
       - swapoff -a
       - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml

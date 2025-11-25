@@ -170,15 +170,9 @@ func buildTemplateMapCP(
 		Append(clusterapi.EtcdEncryptionExtraArgs(clusterSpec.Cluster.Spec.EtcdEncryption))
 	clusterapi.SetPodIAMAuthExtraArgs(clusterSpec.Cluster.Spec.PodIAMConfig, apiServerExtraArgs)
 
-	var auditPolicy string
-	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.AuditPolicyContent != "" {
-		auditPolicy = strings.TrimSpace(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.AuditPolicyContent)
-	} else {
-		var err error
-		auditPolicy, err = common.GetAuditPolicy(clusterSpec.Cluster.Spec.KubernetesVersion)
-		if err != nil {
-			return nil, err
-		}
+	auditPolicy, err := common.GetAuditPolicy(clusterSpec.Cluster.Spec.KubernetesVersion)
+	if err != nil {
+		return nil, err
 	}
 
 	failureDomains := generateNutanixFailureDomains(datacenterSpec.FailureDomains)
@@ -235,15 +229,6 @@ func buildTemplateMapCP(
 		"nutanixPCPassword":            creds.PrismCentral.BasicAuth.Password,
 	}
 
-	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.SkipAdmissionForSystemResources != nil &&
-		*clusterSpec.Cluster.Spec.ControlPlaneConfiguration.SkipAdmissionForSystemResources {
-		admissionExclusionPolicy, err := common.GetAdmissionPluginExclusionPolicy()
-		if err != nil {
-			return nil, err
-		}
-		values["admissionExclusionPolicy"] = admissionExclusionPolicy
-	}
-
 	if controlPlaneMachineSpec.Project != nil {
 		values["projectIDType"] = controlPlaneMachineSpec.Project.Type
 		values["projectName"] = controlPlaneMachineSpec.Project.Name
@@ -282,7 +267,6 @@ func buildTemplateMapCP(
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
 		values["externalEtcd"] = true
 		values["externalEtcdReplicas"] = clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.Count
-		values["placeholderExternalEtcdEndpoint"] = constants.PlaceholderExternalEtcdEndpoint
 		values["etcdSshUsername"] = etcdMachineSpec.Users[0].Name
 		values["etcdSshAuthorizedKey"] = etcdMachineSpec.Users[0].SshAuthorizedKeys[0]
 		values["etcdVCPUsPerSocket"] = etcdMachineSpec.VCPUsPerSocket

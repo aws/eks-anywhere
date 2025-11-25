@@ -20,17 +20,15 @@ import (
 	"k8s.io/klog/v2"
 	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta3"
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
-	addonsv1 "sigs.k8s.io/cluster-api/api/addons/v1beta1"
-	kubeadmv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
-	clusterv2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	kubeadmv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	clusterctlv1 "sigs.k8s.io/cluster-api/cmd/clusterctl/api/v1alpha3"
+	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
+	addonsv1 "sigs.k8s.io/cluster-api/exp/addons/api/v1beta1"
 	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1"
-	dockerv1beta2 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta2"
-	capiflags "sigs.k8s.io/cluster-api/util/flags"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
+	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	"github.com/aws/eks-anywhere/controllers"
@@ -53,13 +51,11 @@ func init() {
 	utilruntime.Must(anywherev1.AddToScheme(scheme))
 	utilruntime.Must(releasev1.AddToScheme(scheme))
 	utilruntime.Must(clusterv1.AddToScheme(scheme))
-	utilruntime.Must(clusterv2.AddToScheme(scheme))
 	utilruntime.Must(clusterctlv1.AddToScheme(scheme))
 	utilruntime.Must(controlplanev1.AddToScheme(scheme))
 	utilruntime.Must(vspherev1.AddToScheme(scheme))
 	utilruntime.Must(cloudstackv1.AddToScheme(scheme))
 	utilruntime.Must(dockerv1.AddToScheme(scheme))
-	utilruntime.Must(dockerv1beta2.AddToScheme(scheme))
 	utilruntime.Must(etcdv1.AddToScheme(scheme))
 	utilruntime.Must(kubeadmv1.AddToScheme(scheme))
 	utilruntime.Must(eksdv1alpha1.AddToScheme(scheme))
@@ -73,11 +69,11 @@ func init() {
 }
 
 type config struct {
+	metricsAddr          string
 	enableLeaderElection bool
 	probeAddr            string
 	gates                []string
 	logging              *logsv1.LoggingConfiguration
-	managerOptions       capiflags.ManagerOptions
 }
 
 func newConfig() *config {
@@ -93,16 +89,14 @@ func newConfig() *config {
 func initFlags(fs *pflag.FlagSet, config *config) {
 	logsv1.AddFlags(config.logging, fs)
 
+	fs.StringVar(&config.metricsAddr, "metrics-bind-address", "localhost:8080", "The address the metric endpoint binds to.")
 	fs.StringVar(&config.probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	fs.BoolVar(&config.enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
 	fs.StringSliceVar(&config.gates, "feature-gates", []string{}, "A set of key=value pairs that describe feature gates for alpha/experimental features. ")
-	capiflags.AddManagerOptions(fs, &config.managerOptions)
 }
 
-// +kubebuilder:rbac:groups=authentication.k8s.io,resources=tokenreviews,verbs=create
-// +kubebuilder:rbac:groups=authorization.k8s.io,resources=subjectaccessreviews,verbs=create
 func main() {
 	config := newConfig()
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
@@ -124,15 +118,11 @@ func main() {
 
 	features.FeedGates(config.gates)
 
-	_, metricsServerOpts, err := capiflags.GetManagerOptions(config.managerOptions)
-	if err != nil {
-		setupLog.Error(err, "Unable to start manager: invalid metrics server flags")
-		os.Exit(1)
-	}
-
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:  scheme,
-		Metrics: *metricsServerOpts,
+		Scheme: scheme,
+		Metrics: server.Options{
+			BindAddress: config.metricsAddr,
+		},
 		WebhookServer: webhook.NewServer(webhook.Options{
 			Port: 9443,
 		}),

@@ -10,8 +10,8 @@ import (
 	"regexp"
 
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -308,7 +308,6 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
 		values["externalEtcd"] = true
 		values["externalEtcdReplicas"] = clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.Count
-		values["placeholderExternalEtcdEndpoint"] = constants.PlaceholderExternalEtcdEndpoint
 		etcdURL, _ := common.GetExternalEtcdReleaseURL(clusterSpec.Cluster.Spec.EksaVersion, versionsBundle)
 		if etcdURL != "" {
 			values["externalEtcdReleaseUrl"] = etcdURL
@@ -325,15 +324,6 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 		return nil, err
 	}
 	values["auditPolicy"] = auditPolicy
-
-	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.SkipAdmissionForSystemResources != nil &&
-		*clusterSpec.Cluster.Spec.ControlPlaneConfiguration.SkipAdmissionForSystemResources {
-		admissionExclusionPolicy, err := common.GetAdmissionPluginExclusionPolicy()
-		if err != nil {
-			return nil, err
-		}
-		values["admissionExclusionPolicy"] = admissionExclusionPolicy
-	}
 
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
 		values, err := populateRegistryMirrorValues(clusterSpec, values)

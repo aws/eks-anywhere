@@ -1,7 +1,6 @@
 package tinkerbell
 
 import (
-	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -12,7 +11,6 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
-	"github.com/aws/eks-anywhere/pkg/providers/common"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
@@ -363,66 +361,4 @@ func TestTemplateBuilderMDHookIso(t *testing.T) {
 		g.Expect(err).ToNot(HaveOccurred())
 		test.AssertContentToFile(t, string(data), tc.Output)
 	}
-}
-
-func TestTinkerbellTemplateBuilderGenerateCAPISpecControlPlaneWithCustomAuditPolicy(t *testing.T) {
-	g := NewWithT(t)
-	clusterSpec := test.NewFullClusterSpec(t, testClusterConfigFilename)
-
-	customAuditPolicy := `apiVersion: audit.k8s.io/v1
-kind: Policy
-rules:
-- level: Metadata
-  omitStages:
-  - RequestReceived`
-
-	clusterSpec.Cluster.Spec.ControlPlaneConfiguration.AuditPolicyContent = customAuditPolicy
-
-	cpMachineCfg, err := getControlPlaneMachineSpec(clusterSpec)
-	g.Expect(err).ToNot(HaveOccurred())
-
-	wngMachineCfgs, err := getWorkerNodeGroupMachineSpec(clusterSpec)
-	g.Expect(err).ToNot(HaveOccurred())
-
-	tinkIPBefore := "0.0.0.0"
-	bldr := NewTemplateBuilder(&clusterSpec.TinkerbellDatacenter.Spec, cpMachineCfg, nil, wngMachineCfgs, tinkIPBefore, time.Now)
-
-	data, err := bldr.GenerateCAPISpecControlPlane(clusterSpec)
-	g.Expect(err).ToNot(HaveOccurred())
-
-	str := collapseWhitespace(string(data))
-	g.Expect(str).To(ContainSubstring(collapseWhitespace(customAuditPolicy)))
-
-	defaultAuditPolicy, err := common.GetAuditPolicy(clusterSpec.Cluster.Spec.KubernetesVersion)
-	g.Expect(err).ToNot(HaveOccurred())
-	g.Expect(str).ToNot(ContainSubstring(collapseWhitespace(defaultAuditPolicy)))
-}
-
-func TestTinkerbellTemplateBuilderGenerateCAPISpecControlPlaneWithDefaultAuditPolicy(t *testing.T) {
-	g := NewWithT(t)
-	clusterSpec := test.NewFullClusterSpec(t, testClusterConfigFilename)
-
-	clusterSpec.Cluster.Spec.ControlPlaneConfiguration.AuditPolicyContent = ""
-
-	cpMachineCfg, err := getControlPlaneMachineSpec(clusterSpec)
-	g.Expect(err).ToNot(HaveOccurred())
-
-	wngMachineCfgs, err := getWorkerNodeGroupMachineSpec(clusterSpec)
-	g.Expect(err).ToNot(HaveOccurred())
-
-	tinkIPBefore := "0.0.0.0"
-	bldr := NewTemplateBuilder(&clusterSpec.TinkerbellDatacenter.Spec, cpMachineCfg, nil, wngMachineCfgs, tinkIPBefore, time.Now)
-
-	data, err := bldr.GenerateCAPISpecControlPlane(clusterSpec)
-	g.Expect(err).ToNot(HaveOccurred())
-
-	str := collapseWhitespace(string(data))
-
-	defaultAuditPolicy, err := common.GetAuditPolicy(clusterSpec.Cluster.Spec.KubernetesVersion)
-	g.Expect(err).ToNot(HaveOccurred())
-	g.Expect(str).To(ContainSubstring(collapseWhitespace(defaultAuditPolicy)))
-}
-
-func collapseWhitespace(s string) string {
-	return regexp.MustCompile(`\s+`).ReplaceAllString(s, " ")
 }

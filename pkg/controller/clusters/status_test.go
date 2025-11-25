@@ -10,9 +10,9 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
-	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
+	"sigs.k8s.io/cluster-api/util/conditions"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
@@ -670,7 +670,7 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 			err := clusters.UpdateClusterStatusForControlPlane(ctx, client, cluster)
 			g.Expect(err).To(BeNil())
 
-			condition := v1beta1conditions.Get(cluster, tt.wantCondition.Type)
+			condition := conditions.Get(cluster, tt.wantCondition.Type)
 			g.Expect(condition).ToNot(BeNil())
 			g.Expect(condition.Type).To(Equal(tt.wantCondition.Type))
 			g.Expect(condition.Severity).To(Equal(tt.wantCondition.Severity))
@@ -1394,7 +1394,7 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 			err := clusters.UpdateClusterStatusForWorkers(ctx, client, cluster)
 			g.Expect(err).To(BeNil())
 
-			condition := v1beta1conditions.Get(cluster, tt.wantCondition.Type)
+			condition := conditions.Get(cluster, tt.wantCondition.Type)
 			fmt.Println(condition)
 			g.Expect(condition).ToNot(BeNil())
 
@@ -1474,7 +1474,7 @@ func TestUpdateClusterStatusForCNI(t *testing.T) {
 			clusters.UpdateClusterStatusForCNI(ctx, spec.Cluster)
 
 			if tt.wantCondition != nil {
-				condition := v1beta1conditions.Get(spec.Cluster, tt.wantCondition.Type)
+				condition := conditions.Get(spec.Cluster, tt.wantCondition.Type)
 				g.Expect(condition).ToNot(BeNil())
 				g.Expect(condition.Type).To(Equal(tt.wantCondition.Type))
 				g.Expect(condition.Severity).To(Equal(tt.wantCondition.Severity))

@@ -274,14 +274,6 @@ spec:
                 type: object
               memoryMiB:
                 type: integer
-              networks:
-                description: The field Networks is for configuring custom networks
-                  for worker nodes. This can be used to configure upto 2 networks
-                  for a worker node group.
-                items:
-                  type: string
-                maxItems: 2
-                type: array
               numCPUs:
                 type: integer
               osFamily:

@@ -4037,7 +4037,7 @@ func TestValidateEksaVersion(t *testing.T) {
 
 func TestGetClusterDefaultKubernetesVersion(t *testing.T) {
 	g := NewWithT(t)
-	g.Expect(GetClusterDefaultKubernetesVersion()).To(Equal(Kube134))
+	g.Expect(GetClusterDefaultKubernetesVersion()).To(Equal(Kube133))
 }
 
 func TestClusterWorkerNodeConfigCount(t *testing.T) {
@@ -4206,66 +4206,4 @@ func TestClusterCPUpgradeInPlace(t *testing.T) {
 	expected, err := os.ReadFile("testdata/cluster_in_place_upgrade.yaml")
 	g.Expect(err).To(BeNil())
 	g.Expect(string(clusterSpec)).To(BeEquivalentTo(string(expected)))
-}
-
-func TestValidateAuditPolicyContent(t *testing.T) {
-	tests := []struct {
-		name        string
-		auditPolicy string
-		wantErr     bool
-	}{
-		{
-			name:        "empty audit policy content",
-			auditPolicy: "",
-			wantErr:     false,
-		},
-		{
-			name: "valid audit policy content",
-			auditPolicy: `apiVersion: audit.k8s.io/v1
-kind: Policy
-rules:
-- level: Metadata
-  omitStages:
-  - RequestReceived`,
-			wantErr: false,
-		},
-		{
-			name: "invalid audit policy content - not valid YAML",
-			auditPolicy: `apiVersion: audit.k8s.io/v1
-kind: Policy
-rules:
-- level: Metadata
-  omitStages:
-  - RequestReceived
-  invalid yaml content`,
-			wantErr: true,
-		},
-		{
-			name: "invalid audit policy content - malformed YAML",
-			auditPolicy: `apiVersion: audit.k8s.io/v1
-kind: Policy
-rules:
-- level: Metadata
-  omitStages:
-  - RequestReceived
- badIndentation: value`,
-			wantErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := &Cluster{
-				Spec: ClusterSpec{
-					ControlPlaneConfiguration: ControlPlaneConfiguration{
-						AuditPolicyContent: tt.auditPolicy,
-					},
-				},
-			}
-			err := validateAuditPolicyContent(c)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("validateAuditPolicyContent() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
 }

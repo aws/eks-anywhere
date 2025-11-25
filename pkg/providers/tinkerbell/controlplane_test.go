@@ -7,9 +7,9 @@ import (
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/internal/test"
@@ -543,7 +543,6 @@ spec:
       apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
       kind: TinkerbellMachineTemplate
       name: test-control-plane-1
-      namespace: eksa-system
   replicas: 1
   version: v1.21.2-eks-1-21-4`)
 	if err := yaml.UnmarshalStrict(b, &kcp); err != nil {
@@ -857,28 +856,14 @@ spec:
       path: /var/lib/kubeadm/aws-iam-authenticator/pki/key.pem
       permissions: "0640"
     - content: |
-        [plugins."io.containerd.grpc.v1.cri".registry]
-          config_path = "/etc/containerd/certs.d"
+        [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+          [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
+            endpoint = ["https://:"]
+          [plugins."io.containerd.grpc.v1.cri".registry.configs.":".auth]
+            username = "username"
+            password = "password"
       owner: root:root
       path: /etc/containerd/config_append.toml
-    - content: |
-        server = "https://:"
-        
-        [host."https://:"]
-          capabilities = ["pull", "resolve"]
-          [host."https://:".header]
-            authorization = "Basic dXNlcm5hbWU6cGFzc3dvcmQ="
-      owner: root:root
-      path: /etc/containerd/certs.d/:/hosts.toml
-    - content: |
-        server = "https://public.ecr.aws"
-        
-        [host."https://:"]
-          capabilities = ["pull", "resolve"]
-          [host."https://:".header]
-            authorization = "Basic dXNlcm5hbWU6cGFzc3dvcmQ="
-      owner: root:root
-      path: /etc/containerd/certs.d/public.ecr.aws/hosts.toml
     format: cloud-config
     initConfiguration:
       localAPIEndpoint: {}
@@ -918,7 +903,6 @@ spec:
       apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
       kind: TinkerbellMachineTemplate
       name: test-control-plane-1
-      namespace: eksa-system
     metadata: {}
   replicas: 1
   rolloutStrategy:

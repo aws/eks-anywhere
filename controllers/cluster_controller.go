@@ -11,9 +11,9 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
-	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
-	v1beta1patch "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/patch"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	"sigs.k8s.io/cluster-api/util/conditions"
+	"sigs.k8s.io/cluster-api/util/patch"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -72,7 +72,6 @@ type AWSIamConfigReconciler interface {
 	EnsureCASecret(ctx context.Context, logger logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error)
 	Reconcile(ctx context.Context, logger logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error)
 	ReconcileDelete(ctx context.Context, logger logr.Logger, cluster *anywherev1.Cluster) error
-	ReconcileWorkloadClusterDelete(ctx context.Context, logger logr.Logger, cluster *anywherev1.Cluster, awsIamConfig *anywherev1.AWSIamConfig) error
 }
 
 // MachineHealthCheckReconciler manages machine health checks for an eks-a cluster.
@@ -259,8 +258,7 @@ func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager, log logr.Logger) 
 // +kubebuilder:rbac:groups="",resources=namespaces,verbs=get;list;create;delete
 // +kubebuilder:rbac:groups="",resources=nodes,verbs=list
 // +kubebuilder:rbac:groups=addons.cluster.x-k8s.io,resources=clusterresourcesets,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=clusters;gitopsconfigs;snowmachineconfigs;snowdatacenterconfigs;snowippools;vspheredatacenterconfigs;vspheremachineconfigs;dockerdatacenterconfigs;tinkerbellmachineconfigs;tinkerbelltemplateconfigs;tinkerbelldatacenterconfigs;cloudstackdatacenterconfigs;cloudstackmachineconfigs;nutanixdatacenterconfigs;nutanixmachineconfigs;oidcconfigs;fluxconfigs,verbs=get;list;watch;update;patch
-// +kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=awsiamconfigs,verbs=get;list;watch;update;patch;delete
+// +kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=clusters;gitopsconfigs;snowmachineconfigs;snowdatacenterconfigs;snowippools;vspheredatacenterconfigs;vspheremachineconfigs;dockerdatacenterconfigs;tinkerbellmachineconfigs;tinkerbelltemplateconfigs;tinkerbelldatacenterconfigs;cloudstackdatacenterconfigs;cloudstackmachineconfigs;nutanixdatacenterconfigs;nutanixmachineconfigs;awsiamconfigs;oidcconfigs;awsiamconfigs;fluxconfigs,verbs=get;list;watch;update;patch
 // +kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=clusters/status;snowmachineconfigs/status;snowippools/status;vspheredatacenterconfigs/status;vspheremachineconfigs/status;dockerdatacenterconfigs/status;tinkerbelldatacenterconfigs/status;tinkerbellmachineconfigs/status;tinkerbelltemplateconfigs/status;cloudstackdatacenterconfigs/status;cloudstackmachineconfigs/status;awsiamconfigs/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=bundles,verbs=get;list;watch
 // +kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=clusters/finalizers;snowmachineconfigs/finalizers;snowippools/finalizers;vspheredatacenterconfigs/finalizers;vspheremachineconfigs/finalizers;cloudstackdatacenterconfigs/finalizers;cloudstackmachineconfigs/finalizers;dockerdatacenterconfigs/finalizers;bundles/finalizers;awsiamconfigs/finalizers;tinkerbelldatacenterconfigs/finalizers;tinkerbellmachineconfigs/finalizers;tinkerbelltemplateconfigs/finalizers,verbs=update
@@ -299,7 +297,7 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (re
 	}
 
 	// Initialize the patch helper
-	patchHelper, err := v1beta1patch.NewHelper(cluster, r.client)
+	patchHelper, err := patch.NewHelper(cluster, r.client)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -311,7 +309,7 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (re
 		}
 
 		// Always attempt to patch the object and status after each reconciliation.
-		patchOpts := []v1beta1patch.Option{}
+		patchOpts := []patch.Option{}
 
 		// We want the observedGeneration to indicate, that the status shown is up-to-date given the desired spec of the same generation.
 		// However, if there is an error while updating the status, we may get a partial status update, In this case,
@@ -319,7 +317,7 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (re
 
 		// Patch ObservedGeneration only if the reconciliation completed without error
 		if reterr == nil {
-			patchOpts = append(patchOpts, v1beta1patch.WithStatusObservedGeneration{})
+			patchOpts = append(patchOpts, patch.WithStatusObservedGeneration{})
 		}
 		if err := patchCluster(ctx, patchHelper, cluster, patchOpts...); err != nil {
 			reterr = kerrors.NewAggregate([]error{reterr, err})
@@ -329,7 +327,7 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (re
 		// We do this to be able to update the status continuously until the cluster becomes ready,
 		// since there might be changes in state of the world that don't trigger reconciliation requests
 
-		if reterr == nil && !result.Requeue && result.RequeueAfter <= 0 && v1beta1conditions.IsFalse(cluster, anywherev1.ReadyCondition) {
+		if reterr == nil && !result.Requeue && result.RequeueAfter <= 0 && conditions.IsFalse(cluster, anywherev1.ReadyCondition) {
 			result = ctrl.Result{RequeueAfter: 10 * time.Second}
 		}
 	}()
@@ -499,11 +497,6 @@ func (r *ClusterReconciler) postClusterProviderReconcile(ctx context.Context, lo
 		} else if result.Return() {
 			return result, nil
 		}
-	} else {
-		// Check for orphaned AWS IAM config objects and clean up if needed
-		if err := r.cleanupOrphanedAWSIamConfig(ctx, log, cluster); err != nil {
-			return controller.Result{}, err
-		}
 	}
 
 	if err := r.machineHealthCheck.Reconcile(ctx, log, cluster); err != nil {
@@ -534,6 +527,7 @@ func (r *ClusterReconciler) updateStatus(ctx context.Context, log logr.Logger, c
 	}
 
 	log.Info("Updating cluster status")
+
 	if err := clusters.UpdateClusterStatusForControlPlane(ctx, r.client, cluster); err != nil {
 		return errors.Wrap(err, "updating status for control plane")
 	}
@@ -554,7 +548,7 @@ func (r *ClusterReconciler) updateStatus(ctx context.Context, log logr.Logger, c
 		anywherev1.WorkersReadyCondition,
 	}
 
-	defaultCNIConfiguredCondition := v1beta1conditions.Get(cluster, anywherev1.DefaultCNIConfiguredCondition)
+	defaultCNIConfiguredCondition := conditions.Get(cluster, anywherev1.DefaultCNIConfiguredCondition)
 	if defaultCNIConfiguredCondition == nil ||
 		(defaultCNIConfiguredCondition.Status == "False" &&
 			defaultCNIConfiguredCondition.Reason != anywherev1.SkipUpgradesForDefaultCNIConfiguredReason) {
@@ -562,55 +556,11 @@ func (r *ClusterReconciler) updateStatus(ctx context.Context, log logr.Logger, c
 	}
 
 	// Always update the readyCondition by summarizing the state of other conditions.
-	v1beta1conditions.SetSummary(cluster,
-		v1beta1conditions.WithConditions(summarizedConditionTypes...),
+	conditions.SetSummary(cluster,
+		conditions.WithConditions(summarizedConditionTypes...),
 	)
 
 	return nil
-}
-
-// cleanupOrphanedAWSIamConfig checks for orphaned AWSIamConfig objects and cleans up resources.
-func (r *ClusterReconciler) cleanupOrphanedAWSIamConfig(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) error {
-	// Look for orphaned AWSIamConfig objects owned by this cluster
-	awsIamConfigs := &anywherev1.AWSIamConfigList{}
-	if err := r.client.List(ctx, awsIamConfigs, client.InNamespace(cluster.Namespace)); err != nil {
-		return errors.Wrap(err, "listing AWSIamConfig objects")
-	}
-
-	for _, config := range awsIamConfigs.Items {
-		if r.isOwnedByCluster(&config, cluster) {
-			log.Info("Found orphaned AWS IAM config, triggering cleanup", "config", config.Name)
-
-			// Clean up workload cluster resources
-			if err := r.awsIamAuth.ReconcileWorkloadClusterDelete(ctx, log, cluster, &config); err != nil {
-				return errors.Wrap(err, "cleaning up workload cluster AWS IAM resources")
-			}
-
-			// Clean up management cluster resources (CA secrets, kubeconfig secrets)
-			if err := r.awsIamAuth.ReconcileDelete(ctx, log, cluster); err != nil {
-				return errors.Wrap(err, "cleaning up management cluster AWS IAM resources")
-			}
-
-			// Delete the orphaned AWSIamConfig object itself
-			if err := r.client.Delete(ctx, &config); err != nil && !apierrors.IsNotFound(err) {
-				return errors.Wrapf(err, "deleting orphaned AWSIamConfig %s", config.Name)
-			}
-
-			log.Info("Successfully cleaned up orphaned AWS IAM config", "config", config.Name)
-		}
-	}
-
-	return nil
-}
-
-// isOwnedByCluster checks if an object is owned by the given cluster.
-func (r *ClusterReconciler) isOwnedByCluster(obj client.Object, cluster *anywherev1.Cluster) bool {
-	for _, ownerRef := range obj.GetOwnerReferences() {
-		if ownerRef.UID == cluster.UID {
-			return true
-		}
-	}
-	return false
 }
 
 func (r *ClusterReconciler) reconcileDelete(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (ctrl.Result, error) {
@@ -730,10 +680,10 @@ func (r *ClusterReconciler) ensureClusterOwnerReferences(ctx context.Context, cl
 	return nil
 }
 
-func patchCluster(ctx context.Context, patchHelper *v1beta1patch.Helper, cluster *anywherev1.Cluster, patchOpts ...v1beta1patch.Option) error {
+func patchCluster(ctx context.Context, patchHelper *patch.Helper, cluster *anywherev1.Cluster, patchOpts ...patch.Option) error {
 	// Patch the object, ignoring conflicts on the conditions owned by this controller.
-	options := append([]v1beta1patch.Option{
-		v1beta1patch.WithOwnedConditions{Conditions: []clusterv1.ConditionType{
+	options := append([]patch.Option{
+		patch.WithOwnedConditions{Conditions: []clusterv1.ConditionType{
 			// Add each condition her that the controller should ignored conflicts for.
 			anywherev1.ReadyCondition,
 			anywherev1.ControlPlaneInitializedCondition,

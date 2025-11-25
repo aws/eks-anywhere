@@ -35,9 +35,9 @@ spec:
   prismCentral:
 {{- if .nutanixAdditionalTrustBundle }}
     additionalTrustBundle:
-      kind: ConfigMap
-      name: "{{.clusterName}}-trust-bundle"
-      namespace: {{.eksaSystemNamespace}}
+      kind: String
+      data: |
+{{ .nutanixAdditionalTrustBundle | indent 8 }}
 {{- end }}
     address: "{{.nutanixEndpoint}}"
     port: {{.nutanixPort}}
@@ -49,17 +49,6 @@ spec:
     host: "{{.controlPlaneEndpointIp}}"
     port: 6443
 ---
-{{- if .nutanixAdditionalTrustBundle }}
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: {{ .clusterName }}-trust-bundle
-  namespace: {{ .eksaSystemNamespace }}
-data:
-  ca.crt: |
-{{ .nutanixAdditionalTrustBundle | indent 4 }}
----
-{{- end }}
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: Cluster
 metadata:
@@ -103,16 +92,10 @@ spec:
       apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
       kind: NutanixMachineTemplate
       name: "{{.controlPlaneTemplateName}}"
-      namespace: {{.eksaSystemNamespace}}
 {{- if .upgradeRolloutStrategy }}
   rolloutStrategy:
     rollingUpdate:
       maxSurge: {{.maxSurge}} 
-  {{- else }}
-  rolloutStrategy:
-    rollingUpdate:
-      maxSurge: 1
-    type: RollingUpdate
 {{- end }}
   kubeadmConfigSpec:
     clusterConfiguration:
@@ -125,11 +108,6 @@ spec:
           {{- with .apiServerCertSANs }}
           {{- toYaml . | nindent 10 }}
           {{- end }}
-{{- if .admissionExclusionPolicy }}
-        extraEnvs:
-        - name: EKS_PATCH_EXCLUSION_RULES_FILE
-          value: /etc/kubernetes/admission-plugin-exclusion-rules.json
-{{- end }}
         extraArgs:
 {{- if (lt (atoi $kube_minor_version) 33) }}
           cloud-provider: external
@@ -156,13 +134,6 @@ spec:
           name: audit-log-dir
           pathType: DirectoryOrCreate
           readOnly: false
-{{- if .admissionExclusionPolicy }}
-        - hostPath: /etc/kubernetes/admission-plugin-exclusion-rules.json
-          mountPath: /etc/kubernetes/admission-plugin-exclusion-rules.json
-          name: admission-exclusion-rules
-          pathType: File
-          readOnly: true
-{{- end }}
 {{- if .awsIamAuth}}
         - hostPath: /var/lib/kubeadm/aws-iam-authenticator/
           mountPath: /etc/kubernetes/aws-iam-authenticator/
@@ -194,7 +165,7 @@ spec:
       etcd:
 {{- if .externalEtcd }}
         external:
-          endpoints: ["{{.placeholderExternalEtcdEndpoint}}"]
+          endpoints: []
           caFile: "/etc/kubernetes/pki/etcd/ca.crt"
           certFile: "/etc/kubernetes/pki/apiserver-etcd-client.crt"
           keyFile: "/etc/kubernetes/pki/apiserver-etcd-client.key"
@@ -294,50 +265,27 @@ spec:
 {{- end }}
 {{- if .registryMirrorMap }}
     - content: |
-        [plugins."io.containerd.grpc.v1.cri".registry]
-          config_path = "/etc/containerd/certs.d"
+        [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+          {{- range $orig, $mirror := .registryMirrorMap }}
+          [plugins."io.containerd.grpc.v1.cri".registry.mirrors."{{ $orig }}"]
+            endpoint = ["https://{{ $mirror }}"]
+          {{- end }}
+{{- if or .registryCACert .insecureSkip }}
+          [plugins."io.containerd.grpc.v1.cri".registry.configs."{{ .mirrorBase }}".tls]
+{{- if .registryCACert }}
+            ca_file = "/etc/containerd/certs.d/{{ .mirrorBase }}/ca.crt"
+{{- end }}
+{{- if .insecureSkip }}
+            insecure_skip_verify = {{ .insecureSkip }}
+{{- end }}
+{{- end }}
+{{- if .registryAuth }}
+          [plugins."io.containerd.grpc.v1.cri".registry.configs."{{ .mirrorBase }}".auth]
+            username = "{{.registryUsername}}"
+            password = "{{.registryPassword}}"
+{{- end }}
       owner: root:root
       path: "/etc/containerd/config_append.toml"
-    - content: |
-        server = "https://{{ .mirrorBase }}"
-        
-        [host."https://{{ .mirrorBase }}"]
-          capabilities = ["pull", "resolve"]
-        {{- if or .registryCACert .insecureSkip }}
-        {{- if .registryCACert }}
-          ca = "/etc/containerd/certs.d/{{ .mirrorBase }}/ca.crt"
-        {{- end }}
-        {{- if .insecureSkip }}
-          skip_verify = true
-        {{- end }}
-        {{- end }}
-        {{- if .registryAuth }}
-          [host."https://{{ .mirrorBase }}".header]
-            authorization = "Basic {{ printf "%s:%s" .registryUsername .registryPassword | b64enc }}"
-        {{- end }}
-      owner: root:root
-      path: "/etc/containerd/certs.d/{{ .mirrorBase }}/hosts.toml"
-    {{- range $orig, $mirror := .registryMirrorMap }}
-    - content: |
-        server = "https://{{ $orig }}"
-        
-        [host."https://{{ $mirror }}"]
-          capabilities = ["pull", "resolve"]
-        {{- if or $.registryCACert $.insecureSkip }}
-        {{- if $.registryCACert }}
-          ca = "/etc/containerd/certs.d/{{ $.mirrorBase }}/ca.crt"
-        {{- end }}
-        {{- if $.insecureSkip }}
-          skip_verify = true
-        {{- end }}
-        {{- end }}
-        {{- if $.registryAuth }}
-          [host."https://{{ $mirror }}".header]
-            authorization = "Basic {{ printf "%s:%s" $.registryUsername $.registryPassword | b64enc }}"
-        {{- end }}
-      owner: root:root
-      path: "/etc/containerd/certs.d/{{ $orig }}/hosts.toml"
-    {{- end }}
 {{- end }}
 {{- if .awsIamAuth}}
     - content: |
@@ -376,12 +324,6 @@ spec:
       owner: root:root
       path: /var/lib/kubeadm/aws-iam-authenticator/pki/key.pem
 {{- end}}
-{{- if .admissionExclusionPolicy }}
-    - content: |
-{{ .admissionExclusionPolicy | indent 8 }}
-      owner: root:root
-      path: /etc/kubernetes/admission-plugin-exclusion-rules.json
-{{- end }}
     - content: |
 {{ .auditPolicy | indent 8 }}
       owner: root:root
@@ -471,6 +413,7 @@ spec:
 {{- end }}
     postKubeadmCommands:
       - echo export KUBECONFIG=/etc/kubernetes/admin.conf >> /root/.bashrc
+    useExperimentalRetryJoin: true
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: NutanixMachineTemplate

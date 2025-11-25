@@ -5,14 +5,6 @@ weight: 7
 description: >
   Changelog for Curated packages release
 ---
-## Package Bundle Release (11-08-2025)
-#### Changed
-- Fix Critical CVEs in all curated packages
-- Credential-Provider-Package `0.4.8` to `0.4.9`
-  - Cleanup pkg controller private registry field [#1226](https://github.com/aws/eks-anywhere-packages/pull/1226)
-- Cert-Manager `1.16.4` to `1.18.2`
-- Metallb `0.14.9` to `0.15.2`
-
 ## Package Bundle Release (08-19-2025)
 #### Changed
 - Upgrade helm version `3.14.3` to `3.18.4`

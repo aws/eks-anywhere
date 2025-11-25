@@ -386,15 +386,9 @@ func buildTemplateMapCP(
 	etcdTemplateOverride string,
 	datacenterSpec v1alpha1.TinkerbellDatacenterConfigSpec,
 ) (map[string]interface{}, error) {
-	var auditPolicy string
-	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.AuditPolicyContent != "" {
-		auditPolicy = strings.TrimSpace(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.AuditPolicyContent)
-	} else {
-		var err error
-		auditPolicy, err = common.GetAuditPolicy(clusterSpec.Cluster.Spec.KubernetesVersion)
-		if err != nil {
-			return nil, err
-		}
+	auditPolicy, err := common.GetAuditPolicy(clusterSpec.Cluster.Spec.KubernetesVersion)
+	if err != nil {
+		return nil, err
 	}
 
 	versionsBundle := clusterSpec.RootVersionsBundle()
@@ -472,7 +466,6 @@ func buildTemplateMapCP(
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
 		values["externalEtcd"] = true
 		values["externalEtcdReplicas"] = clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.Count
-		values["placeholderExternalEtcdEndpoint"] = constants.PlaceholderExternalEtcdEndpoint
 		values["etcdSshUsername"] = etcdMachineSpec.Users[0].Name
 		values["etcdTemplateOverride"] = etcdTemplateOverride
 		values["etcdHardwareSelector"] = etcdMachineSpec.HardwareSelector
@@ -559,15 +552,6 @@ func buildTemplateMapCP(
 			Path: "/iso/hook.iso",
 		}
 		values["isoUrl"] = isoURL.String()
-	}
-
-	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.SkipAdmissionForSystemResources != nil &&
-		*clusterSpec.Cluster.Spec.ControlPlaneConfiguration.SkipAdmissionForSystemResources {
-		admissionExclusionPolicy, err := common.GetAdmissionPluginExclusionPolicy()
-		if err != nil {
-			return nil, err
-		}
-		values["admissionExclusionPolicy"] = admissionExclusionPolicy
 	}
 
 	return values, nil

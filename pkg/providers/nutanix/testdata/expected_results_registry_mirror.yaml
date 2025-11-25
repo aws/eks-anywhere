@@ -52,11 +52,6 @@ spec:
       apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
       kind: NutanixMachineTemplate
       name: "<no value>"
-      namespace: eksa-system
-  rolloutStrategy:
-    rollingUpdate:
-      maxSurge: 1
-    type: RollingUpdate
   kubeadmConfigSpec:
     clusterConfiguration:
       imageRepository: "public.ecr.aws/eks-distro/kubernetes"
@@ -180,32 +175,17 @@ spec:
       owner: root:root
       path: "/etc/containerd/certs.d/1.2.3.4:1234/ca.crt"
     - content: |
-        [plugins."io.containerd.grpc.v1.cri".registry]
-          config_path = "/etc/containerd/certs.d"
+        [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+          [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
+            endpoint = ["https://1.2.3.4:1234/v2/eks-anywhere"]
+          [plugins."io.containerd.grpc.v1.cri".registry.configs."1.2.3.4:1234".tls]
+            ca_file = "/etc/containerd/certs.d/1.2.3.4:1234/ca.crt"
+            insecure_skip_verify = true
+          [plugins."io.containerd.grpc.v1.cri".registry.configs."1.2.3.4:1234".auth]
+            username = "username"
+            password = "password"
       owner: root:root
       path: "/etc/containerd/config_append.toml"
-    - content: |
-        server = "https://1.2.3.4:1234"
-        
-        [host."https://1.2.3.4:1234"]
-          capabilities = ["pull", "resolve"]
-          ca = "/etc/containerd/certs.d/1.2.3.4:1234/ca.crt"
-          skip_verify = true
-          [host."https://1.2.3.4:1234".header]
-            authorization = "Basic dXNlcm5hbWU6cGFzc3dvcmQ="
-      owner: root:root
-      path: "/etc/containerd/certs.d/1.2.3.4:1234/hosts.toml"
-    - content: |
-        server = "https://public.ecr.aws"
-        
-        [host."https://1.2.3.4:1234/v2/eks-anywhere"]
-          capabilities = ["pull", "resolve"]
-          ca = "/etc/containerd/certs.d/1.2.3.4:1234/ca.crt"
-          skip_verify = true
-          [host."https://1.2.3.4:1234/v2/eks-anywhere".header]
-            authorization = "Basic dXNlcm5hbWU6cGFzc3dvcmQ="
-      owner: root:root
-      path: "/etc/containerd/certs.d/public.ecr.aws/hosts.toml"
     - content: |
         apiVersion: audit.k8s.io/v1beta1
         kind: Policy
@@ -398,6 +378,7 @@ spec:
       - echo "127.0.0.1   {{ ds.meta_data.hostname }}" >> /etc/hosts
     postKubeadmCommands:
       - echo export KUBECONFIG=/etc/kubernetes/admin.conf >> /root/.bashrc
+    useExperimentalRetryJoin: true
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: NutanixMachineTemplate

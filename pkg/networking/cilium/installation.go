@@ -47,7 +47,7 @@ func (i Installation) Installed() bool {
 	var isEKSACilium bool
 	if i.DaemonSet != nil {
 		for _, c := range i.DaemonSet.Spec.Template.Spec.Containers {
-			isEKSACilium = isEKSACilium || strings.Contains(c.Image, "eks")
+			isEKSACilium = isEKSACilium || strings.Contains(c.Image, "eksa")
 		}
 	}
 	return i.DaemonSet != nil && i.Operator != nil && isEKSACilium

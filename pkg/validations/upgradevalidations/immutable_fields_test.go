@@ -299,43 +299,7 @@ func TestValidateImmutableFields(t *testing.T) {
 					},
 				}
 			},
-		},
-		{
-			Name: "Add AWS IAM identity provider when none existed",
-			ConfigureCurrent: func(current *v1alpha1.Cluster) {
-				current.Spec.IdentityProviderRefs = []v1alpha1.Ref{}
-			},
-			ConfigureDesired: func(desired *v1alpha1.Cluster) {
-				desired.Spec.IdentityProviderRefs = []v1alpha1.Ref{
-					{
-						Kind: v1alpha1.AWSIamConfigKind,
-						Name: "aws-iam",
-					},
-				}
-			},
-		},
-		{
-			Name: "Remove AWS IAM identity provider when one existed",
-			ConfigureCurrent: func(current *v1alpha1.Cluster) {
-				current.Spec.IdentityProviderRefs = []v1alpha1.Ref{
-					{
-						Kind: v1alpha1.AWSIamConfigKind,
-						Name: "aws-iam",
-					},
-				}
-			},
-			ConfigureDesired: func(desired *v1alpha1.Cluster) {
-				desired.Spec.IdentityProviderRefs = []v1alpha1.Ref{}
-			},
-		},
-		{
-			Name: "Both old and new clusters have no AWS IAM config",
-			ConfigureCurrent: func(current *v1alpha1.Cluster) {
-				current.Spec.IdentityProviderRefs = []v1alpha1.Ref{}
-			},
-			ConfigureDesired: func(desired *v1alpha1.Cluster) {
-				desired.Spec.IdentityProviderRefs = []v1alpha1.Ref{}
-			},
+			ExpectedError: "spec.clusterNetwork.cniConfig.cilium.skipUpgrade cannot be toggled off",
 		},
 	}
 

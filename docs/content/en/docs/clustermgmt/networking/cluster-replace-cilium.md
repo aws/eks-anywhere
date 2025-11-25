@@ -10,7 +10,7 @@ This page provides walkthroughs on replacing the EKS Anywhere Cilium with a cust
 For more information on CNI customization see [Use a custom CNI]({{< ref "../../getting-started/optional/cni#use-a-custom-cni"  >}}).
 
 {{% alert title="Note" color="primary" %}}
-* Starting from EKS Anywhere `v0.24.0` release, the EKS Anywhere default Cilium will change from the Isovalent Cilium to the open-source AWS First-Party Supported Cilium. It is recommended to use this first-party supported Cilium which has been tested by AWS as the CNI in your cluster. When replacing EKS Anywhere Cilium with a custom CNI, it is your responsibility to manage the CNI, including version upgrades and support.
+When replacing EKS Anywhere Cilium with a custom CNI, it is your responsibility to manage the custom CNI, including version upgrades and support.
 {{% /alert %}}
 
 ## Prerequisites

@@ -343,16 +343,13 @@ spec:
     - echo "127.0.0.1   localhost" >>/etc/hosts
     - echo "127.0.0.1   {{ ds.meta_data.hostname }}" >>/etc/hosts
     - echo "{{ ds.meta_data.hostname }}" >/etc/hostname
+    useExperimentalRetryJoin: true
     users:
     - name: capv
       sshAuthorizedKeys:
       - ssh-rsa
       sudo: ALL=(ALL) NOPASSWD:ALL
   replicas: 1
-  rolloutStrategy:
-    rollingUpdate:
-      maxSurge: 1
-    type: RollingUpdate
   version: v1.19.6
 ---
 apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3

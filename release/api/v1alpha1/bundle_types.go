@@ -62,30 +62,29 @@ func init() {
 
 // VersionsBundle defines the versions of each component for a specific Kubernetes version in the Bundles CRD.
 type VersionsBundle struct {
-	KubeVersion                     string                                `json:"kubeVersion"`
-	EndOfStandardSupport            string                                `json:"endOfStandardSupport,omitempty"`
-	EksD                            EksDRelease                           `json:"eksD"`
-	CertManager                     CertManagerBundle                     `json:"certManager"`
-	ClusterAPI                      CoreClusterAPI                        `json:"clusterAPI"`
-	Bootstrap                       KubeadmBootstrapBundle                `json:"bootstrap"`
-	ControlPlane                    KubeadmControlPlaneBundle             `json:"controlPlane"`
-	VSphere                         VSphereBundle                         `json:"vSphere"`
-	CloudStack                      CloudStackBundle                      `json:"cloudStack,omitempty"`
-	Docker                          DockerBundle                          `json:"docker"`
-	Eksa                            EksaBundle                            `json:"eksa"`
-	Cilium                          CiliumBundle                          `json:"cilium"`
-	Kindnetd                        KindnetdBundle                        `json:"kindnetd"`
-	Flux                            FluxBundle                            `json:"flux"`
-	PackageController               PackageBundle                         `json:"packageController"`
-	BottleRocketHostContainers      BottlerocketHostContainersBundle      `json:"bottlerocketHostContainers"`
-	BottleRocketBootstrapContainers BottlerocketBootstrapContainersBundle `json:"bottlerocketBootstrapContainers,omitempty"`
-	ExternalEtcdBootstrap           EtcdadmBootstrapBundle                `json:"etcdadmBootstrap"`
-	ExternalEtcdController          EtcdadmControllerBundle               `json:"etcdadmController"`
-	Tinkerbell                      TinkerbellBundle                      `json:"tinkerbell,omitempty"`
-	Haproxy                         HaproxyBundle                         `json:"haproxy,omitempty"`
-	Snow                            SnowBundle                            `json:"snow,omitempty"`
-	Nutanix                         NutanixBundle                         `json:"nutanix,omitempty"`
-	Upgrader                        UpgraderBundle                        `json:"upgrader,omitempty"`
+	KubeVersion                string                           `json:"kubeVersion"`
+	EndOfStandardSupport       string                           `json:"endOfStandardSupport,omitempty"`
+	EksD                       EksDRelease                      `json:"eksD"`
+	CertManager                CertManagerBundle                `json:"certManager"`
+	ClusterAPI                 CoreClusterAPI                   `json:"clusterAPI"`
+	Bootstrap                  KubeadmBootstrapBundle           `json:"bootstrap"`
+	ControlPlane               KubeadmControlPlaneBundle        `json:"controlPlane"`
+	VSphere                    VSphereBundle                    `json:"vSphere"`
+	CloudStack                 CloudStackBundle                 `json:"cloudStack,omitempty"`
+	Docker                     DockerBundle                     `json:"docker"`
+	Eksa                       EksaBundle                       `json:"eksa"`
+	Cilium                     CiliumBundle                     `json:"cilium"`
+	Kindnetd                   KindnetdBundle                   `json:"kindnetd"`
+	Flux                       FluxBundle                       `json:"flux"`
+	PackageController          PackageBundle                    `json:"packageController"`
+	BottleRocketHostContainers BottlerocketHostContainersBundle `json:"bottlerocketHostContainers"`
+	ExternalEtcdBootstrap      EtcdadmBootstrapBundle           `json:"etcdadmBootstrap"`
+	ExternalEtcdController     EtcdadmControllerBundle          `json:"etcdadmController"`
+	Tinkerbell                 TinkerbellBundle                 `json:"tinkerbell,omitempty"`
+	Haproxy                    HaproxyBundle                    `json:"haproxy,omitempty"`
+	Snow                       SnowBundle                       `json:"snow,omitempty"`
+	Nutanix                    NutanixBundle                    `json:"nutanix,omitempty"`
+	Upgrader                   UpgraderBundle                   `json:"upgrader,omitempty"`
 	// This field has been deprecated
 	Aws *AwsBundle `json:"aws,omitempty"`
 }
@@ -155,11 +154,6 @@ type BottlerocketHostContainersBundle struct {
 	Admin            Image `json:"admin"`
 	Control          Image `json:"control"`
 	KubeadmBootstrap Image `json:"kubeadmBootstrap"`
-}
-
-// BottlerocketBootstrapContainersBundle defines the Bottlerocket bootstrap containers used by the bundle.
-type BottlerocketBootstrapContainersBundle struct {
-	MultiNetworkBootstrap Image `json:"multiNetworkBootstrap,omitempty"`
 }
 
 // CertManagerBundle defines the Cert Manager version and images for this bundle.
@@ -250,12 +244,11 @@ type CloudStackBundle struct {
 
 // CiliumBundle defines the Cilium version and images used for CNI in this bundle.
 type CiliumBundle struct {
-	Version  string `json:"version,omitempty"`
-	Cilium   Image  `json:"cilium"`
-	Operator Image  `json:"operator"`
-	// This field has been deprecated
-	Manifest  *Manifest `json:"manifest,omitempty"`
-	HelmChart Image     `json:"helmChart,omitempty"`
+	Version   string   `json:"version,omitempty"`
+	Cilium    Image    `json:"cilium"`
+	Operator  Image    `json:"operator"`
+	Manifest  Manifest `json:"manifest"`
+	HelmChart Image    `json:"helmChart,omitempty"`
 }
 
 // KindnetdBundle defines the Kindnetd version and manifest for this bundle.
