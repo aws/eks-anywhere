@@ -218,7 +218,7 @@ func (b *BottlerocketRenewer) copyExternalEtcdCerts() string {
 func (b *BottlerocketRenewer) restartControlPlaneStaticPods() string {
 	restartPods := `
 apiclient get | apiclient exec admin jq -r '.settings.kubernetes["static-pods"] | keys[]' | xargs -n 1 -I {} apiclient set settings.kubernetes.static-pods.{}.enabled=false
-sleep 30
+sleep 10
 apiclient get | apiclient exec admin jq -r '.settings.kubernetes["static-pods"] | keys[]' | xargs -n 1 -I {} apiclient set settings.kubernetes.static-pods.{}.enabled=true
 `
 	return restartPods

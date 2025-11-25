@@ -12,8 +12,8 @@ import (
 	"k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/klog/v2"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -211,7 +211,7 @@ func reconcileControlPlaneNodeChanges(ctx context.Context, log logr.Logger, c cl
 	// We do not want to update the field with an empty slice again, so here we check if the endpoints for the
 	// external etcd have already been populated on the KubeadmControlPlane object and override ours before applying it.
 	externalEndpoints := currentKCP.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External.Endpoints
-	if len(externalEndpoints) != 0 && !isPlaceholderEndpoint(externalEndpoints) {
+	if len(externalEndpoints) != 0 {
 		desiredCP.KubeadmControlPlane.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External.Endpoints = externalEndpoints
 	}
 
@@ -235,14 +235,6 @@ func reconcileControlPlaneNodeChanges(ctx context.Context, log logr.Logger, c cl
 	}
 
 	return controller.Result{}, nil
-}
-
-// isPlaceholderEndpoint checks if endpoints are placeholder values that we set by default.
-func isPlaceholderEndpoint(endpoints []string) bool {
-	if len(endpoints) == 1 && endpoints[0] == "https://placeholder:2379" {
-		return true
-	}
-	return false
 }
 
 func getEtcdadmCluster(ctx context.Context, c client.Client, cluster *clusterv1.Cluster) (*etcdv1.EtcdadmCluster, error) {

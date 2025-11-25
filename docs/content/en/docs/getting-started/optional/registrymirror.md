@@ -70,7 +70,7 @@ Note while using `ociNamespaces`, you need to specify __all__ the registries tha
     - registry: "public.ecr.aws"
       namespace: ""
     - registry: "783794618700.dkr.ecr.us-west-2.amazonaws.com"
-      namespace: "eks-anywhere"
+      namespace: "curated-packages"
   ```
 {{% alert title="Warning" color="warning" %}}
 Currently only `public.ecr.aws` registry is supported for mirroring with Bottlerocket OS.
@@ -120,8 +120,9 @@ The following projects must be created in your registry before importing the EKS
 bottlerocket
 eks-anywhere
 eks-distro
-eks
+isovalent
 cilium-chart
+curated-packages
 ```
 
 For example, if a registry is available at `private-registry.local`, then the following projects must be created.
@@ -130,8 +131,9 @@ For example, if a registry is available at `private-registry.local`, then the fo
 https://private-registry.local/bottlerocket
 https://private-registry.local/eks-anywhere
 https://private-registry.local/eks-distro
-https://private-registry.local/eks
+https://private-registry.local/isovalent
 https://private-registry.local/cilium-chart
+https://private-registry.local/curated-packages
 ```
 
 ### Admin machine configuration

@@ -40,6 +40,9 @@ func (suite *MetalLBSuite) SetupSuite() {
 	suite.cluster = framework.NewClusterE2ETest(t,
 		suite.provider,
 		framework.WithClusterFiller(api.WithKubernetesVersion(suite.kubernetesVersion)),
+		framework.WithPackageConfig(t, packageBundleURI(suite.kubernetesVersion),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
 		kubeVersionNameDiscriminator(suite.kubernetesVersion),
 	)
 }

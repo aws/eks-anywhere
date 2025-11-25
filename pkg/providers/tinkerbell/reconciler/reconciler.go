@@ -9,7 +9,7 @@ import (
 	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -469,12 +469,6 @@ func (r *Reconciler) ValidateRufioMachines(ctx context.Context, log logr.Logger,
 	}
 
 	for _, rm := range kubeReader.GetCatalogue().AllBMCs() {
-		// Skip contactability check if the machine has the skip label set to "true"
-		if skipValue, hasSkipLabel := rm.Labels[constants.SkipBMCContactCheckLabel]; hasSkipLabel && skipValue == "true" {
-			log.Info("Skipping BMC contactability check for machine with skip label", "machine", rm.Name)
-			continue
-		}
-
 		if err := r.checkContactable(rm); err != nil {
 			log.Error(err, "rufio machine check failure")
 			failureMessage := err.Error()

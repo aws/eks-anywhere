@@ -106,31 +106,16 @@ spec:
         owner: root:root
         path: "/etc/containerd/certs.d/1.2.3.4:1234/ca.crt"
       - content: |
-          [plugins."io.containerd.grpc.v1.cri".registry]
-            config_path = "/etc/containerd/certs.d"
+          [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+            [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
+              endpoint = ["https://1.2.3.4:1234/v2/eks-anywhere"]
+            [plugins."io.containerd.grpc.v1.cri".registry.configs."1.2.3.4:1234".tls]
+              ca_file = "/etc/containerd/certs.d/1.2.3.4:1234/ca.crt"
+              insecure_skip_verify = true
+            [plugins."io.containerd.grpc.v1.cri".registry.configs."1.2.3.4:1234".auth]
+              username = "username"
+              password = "password"
         owner: root:root
         path: "/etc/containerd/config_append.toml"
-      - content: |
-          server = "https://1.2.3.4:1234"
-          
-          [host."https://1.2.3.4:1234"]
-            capabilities = ["pull", "resolve"]
-            ca = "/etc/containerd/certs.d/1.2.3.4:1234/ca.crt"
-            skip_verify = true
-            [host."https://1.2.3.4:1234".header]
-              authorization = "Basic dXNlcm5hbWU6cGFzc3dvcmQ="
-        owner: root:root
-        path: "/etc/containerd/certs.d/1.2.3.4:1234/hosts.toml"
-      - content: |
-          server = "https://public.ecr.aws"
-          
-          [host."https://1.2.3.4:1234/v2/eks-anywhere"]
-            capabilities = ["pull", "resolve"]
-            ca = "/etc/containerd/certs.d/1.2.3.4:1234/ca.crt"
-            skip_verify = true
-            [host."https://1.2.3.4:1234/v2/eks-anywhere".header]
-              authorization = "Basic dXNlcm5hbWU6cGFzc3dvcmQ="
-        owner: root:root
-        path: "/etc/containerd/certs.d/public.ecr.aws/hosts.toml"
 
 ---

@@ -1,7 +1,0 @@
-server = "https://783794618700.dkr.ecr.us-west-2.amazonaws.com"
-
-[host."https://registry-mirror.test:443/v2/curated-packages"]
-  capabilities = ["pull", "resolve"]
-  skip_verify = true
-  [host."https://registry-mirror.test:443/v2/curated-packages".header]
-    authorization = "Basic dXNlcm5hbWU6cGFzc3dvcmQ="

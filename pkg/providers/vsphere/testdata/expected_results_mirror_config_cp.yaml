@@ -76,13 +76,12 @@ spec:
       apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
       kind: VSphereMachineTemplate
       name: test-control-plane-template-1234567890000
-      namespace: eksa-system
   kubeadmConfigSpec:
     clusterConfiguration:
       imageRepository: public.ecr.aws/eks-distro/kubernetes
       etcd:
         external:
-          endpoints: ["https://placeholder:2379"]
+          endpoints: []
           caFile: "/etc/kubernetes/pki/etcd/ca.crt"
           certFile: "/etc/kubernetes/pki/apiserver-etcd-client.crt"
           keyFile: "/etc/kubernetes/pki/apiserver-etcd-client.key"
@@ -333,24 +332,11 @@ spec:
       owner: root:root
       path: /etc/kubernetes/audit-policy.yaml
     - content: |
-        [plugins."io.containerd.grpc.v1.cri".registry]
-          config_path = "/etc/containerd/certs.d"
+        [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+          [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
+            endpoint = ["https://1.2.3.4:1234/v2/eks-anywhere"]
       owner: root:root
       path: "/etc/containerd/config_append.toml"
-    - content: |
-        server = "https://1.2.3.4:1234"
-        
-        [host."https://1.2.3.4:1234"]
-          capabilities = ["pull", "resolve"]
-      owner: root:root
-      path: "/etc/containerd/certs.d/1.2.3.4:1234/hosts.toml"
-    - content: |
-        server = "https://public.ecr.aws"
-        
-        [host."https://1.2.3.4:1234/v2/eks-anywhere"]
-          capabilities = ["pull", "resolve"]
-      owner: root:root
-      path: "/etc/containerd/certs.d/public.ecr.aws/hosts.toml"
     initConfiguration:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
@@ -378,6 +364,7 @@ spec:
     - echo "127.0.0.1   localhost" >>/etc/hosts
     - echo "127.0.0.1   {{ ds.meta_data.hostname }}" >>/etc/hosts
     - echo "{{ ds.meta_data.hostname }}" >/etc/hostname
+    useExperimentalRetryJoin: true
     users:
     - name: capv
       sshAuthorizedKeys:
@@ -385,10 +372,6 @@ spec:
       sudo: ALL=(ALL) NOPASSWD:ALL
     format: cloud-config
   replicas: 3
-  rolloutStrategy:
-    rollingUpdate:
-      maxSurge: 1
-    type: RollingUpdate
   version: v1.21.2-eks-1-21-4
 ---
 apiVersion: addons.cluster.x-k8s.io/v1beta1

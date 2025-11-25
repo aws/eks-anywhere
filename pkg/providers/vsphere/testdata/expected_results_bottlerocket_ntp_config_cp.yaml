@@ -76,13 +76,12 @@ spec:
       apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
       kind: VSphereMachineTemplate
       name: test-control-plane-template-1234567890000
-      namespace: eksa-system
   kubeadmConfigSpec:
     clusterConfiguration:
       imageRepository: public.ecr.aws/eks-distro/kubernetes
       etcd:
         external:
-          endpoints: ["https://placeholder:2379"]
+          endpoints: []
           caFile: "/var/lib/kubeadm/pki/etcd/ca.crt"
           certFile: "/var/lib/kubeadm/pki/server-etcd-client.crt"
           keyFile: "/var/lib/kubeadm/pki/apiserver-etcd-client.key"
@@ -387,6 +386,7 @@ spec:
     - echo "127.0.0.1   localhost" >>/etc/hosts
     - echo "127.0.0.1   {{ ds.meta_data.hostname }}" >>/etc/hosts
     - echo "{{ ds.meta_data.hostname }}" >/etc/hostname
+    useExperimentalRetryJoin: true
     users:
     - name: ec2-user
       sshAuthorizedKeys:
@@ -394,10 +394,6 @@ spec:
       sudo: ALL=(ALL) NOPASSWD:ALL
     format: bottlerocket
   replicas: 3
-  rolloutStrategy:
-    rollingUpdate:
-      maxSurge: 1
-    type: RollingUpdate
   version: v1.21.2-eks-1-21-4
 ---
 apiVersion: addons.cluster.x-k8s.io/v1beta1

@@ -111,5 +111,4 @@ type ClusterMover interface {
 type AwsIamAuth interface {
 	GenerateWorkloadKubeconfig(ctx context.Context, management, workload *types.Cluster, spec *cluster.Spec) error
 	GenerateManagementKubeconfig(ctx context.Context, cluster *types.Cluster) error
-	CleanupKubeconfig(clusterName string) error
 }

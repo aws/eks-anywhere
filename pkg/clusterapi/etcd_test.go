@@ -6,11 +6,10 @@ import (
 	etcdbootstrapv1 "github.com/aws/etcdadm-bootstrap-provider/api/v1beta1"
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
-	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
+	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
-	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
 func TestSetUbuntuConfigInEtcdCluster(t *testing.T) {
@@ -69,7 +68,7 @@ func TestSetUnstackedEtcdConfigInKubeadmControlPlaneForBottlerocket(t *testing.T
 	}
 	got := wantKubeadmControlPlane()
 	got.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External = &bootstrapv1.ExternalEtcd{
-		Endpoints: []string{constants.PlaceholderExternalEtcdEndpoint},
+		Endpoints: []string{},
 		CAFile:    "/var/lib/kubeadm/pki/etcd/ca.crt",
 		CertFile:  "/var/lib/kubeadm/pki/server-etcd-client.crt",
 		KeyFile:   "/var/lib/kubeadm/pki/apiserver-etcd-client.key",
@@ -86,7 +85,7 @@ func TestSetUnstackedEtcdConfigInKubeadmControlPlaneForUbuntu(t *testing.T) {
 	}
 	got := wantKubeadmControlPlane()
 	got.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External = &bootstrapv1.ExternalEtcd{
-		Endpoints: []string{constants.PlaceholderExternalEtcdEndpoint},
+		Endpoints: []string{},
 		CAFile:    "/etc/kubernetes/pki/etcd/ca.crt",
 		CertFile:  "/etc/kubernetes/pki/apiserver-etcd-client.crt",
 		KeyFile:   "/etc/kubernetes/pki/apiserver-etcd-client.key",

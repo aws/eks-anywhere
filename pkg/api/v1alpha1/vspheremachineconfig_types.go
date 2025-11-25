@@ -21,10 +21,6 @@ type VSphereMachineConfigSpec struct {
 	OSFamily          OSFamily `json:"osFamily"`
 	ResourcePool      string   `json:"resourcePool"`
 	StoragePolicyName string   `json:"storagePolicyName,omitempty"`
-	// The field Networks is for configuring custom networks for worker nodes. This can be used to configure upto 2 networks for a worker node group.
-	// +kubebuilder:validation:Optional
-	// +kubebuilder:validation:MaxItems=2
-	Networks []string `json:"networks,omitempty"`
 	// Template field is the template to use for provisioning the VM. It must include the Kubernetes
 	// version(s). For example, a template used for Kubernetes 1.27 could be ubuntu-2204-1.27.
 	Template            string               `json:"template,omitempty"`

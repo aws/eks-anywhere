@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
-	dockerv1beta2 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta2"
+	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -16,9 +16,9 @@ import (
 )
 
 // ControlPlane represents a CAPI Docker control plane.
-type ControlPlane = clusterapi.ControlPlane[*dockerv1beta2.DockerCluster, *dockerv1beta2.DockerMachineTemplate]
+type ControlPlane = clusterapi.ControlPlane[*dockerv1.DockerCluster, *dockerv1.DockerMachineTemplate]
 
-type controlPlaneBuilder = yamlcapi.ControlPlaneBuilder[*dockerv1beta2.DockerCluster, *dockerv1beta2.DockerMachineTemplate]
+type controlPlaneBuilder = yamlcapi.ControlPlaneBuilder[*dockerv1.DockerCluster, *dockerv1.DockerMachineTemplate]
 
 // ControlPlaneSpec builds a docker ControlPlane definition based on an eks-a cluster spec.
 func ControlPlaneSpec(ctx context.Context, logger logr.Logger, client kubernetes.Client, spec *cluster.Spec) (*ControlPlane, error) {
@@ -58,14 +58,14 @@ func newControlPlaneParser(logger logr.Logger) (*yamlutil.Parser, *controlPlaneB
 		logger,
 		yamlutil.NewMapping(
 			"DockerCluster",
-			func() *dockerv1beta2.DockerCluster {
-				return &dockerv1beta2.DockerCluster{}
+			func() *dockerv1.DockerCluster {
+				return &dockerv1.DockerCluster{}
 			},
 		),
 		yamlutil.NewMapping(
 			"DockerMachineTemplate",
-			func() *dockerv1beta2.DockerMachineTemplate {
-				return &dockerv1beta2.DockerMachineTemplate{}
+			func() *dockerv1.DockerMachineTemplate {
+				return &dockerv1.DockerMachineTemplate{}
 			},
 		),
 	)
