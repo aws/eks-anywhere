@@ -102,6 +102,8 @@ type ClusterE2ETest struct {
 	KubectlClient        *executables.Kubectl
 	GitProvider          git.ProviderClient
 	GitClient            git.Client
+	HelmInstallConfig    *HelmInstallConfig
+	PackageConfig        *PackageConfig
 	GitWriter            filewriter.FileWriter
 	eksaBinaryLocation   string
 	OSFamily             v1alpha1.OSFamily
@@ -651,18 +653,17 @@ func (e *ClusterE2ETest) CleanupDownloadedArtifactsAndImages(opts ...CommandOpt)
 	e.Run("rm", "-rf", defaultDownloadArtifactsOutputLocation, defaultDownloadImagesOutputLocation)
 }
 
-func getBundleManifestLocation() string {
-	if _, err := os.Stat(defaultDownloadArtifactsOutputLocation); err == nil {
-		return bundleReleasePathFromArtifacts
-	}
-	return defaultBundleReleaseManifestFile
-}
-
 // DownloadImages runs the EKS-A `download images` command with appropriate args.
 func (e *ClusterE2ETest) DownloadImages(opts ...CommandOpt) {
 	downloadImagesArgs := []string{"download", "images", "-o", defaultDownloadImagesOutputLocation}
 	if getBundlesOverride() == "true" {
-		downloadImagesArgs = append(downloadImagesArgs, "--bundles-override", getBundleManifestLocation())
+		var bundleManifestLocation string
+		if _, err := os.Stat(defaultDownloadArtifactsOutputLocation); err == nil {
+			bundleManifestLocation = bundleReleasePathFromArtifacts
+		} else {
+			bundleManifestLocation = defaultBundleReleaseManifestFile
+		}
+		downloadImagesArgs = append(downloadImagesArgs, "--bundles-override", bundleManifestLocation)
 	}
 	e.RunEKSA(downloadImagesArgs, opts...)
 	if _, err := os.Stat(defaultDownloadImagesOutputLocation); err != nil {
@@ -677,63 +678,14 @@ func (e *ClusterE2ETest) ImportImages(opts ...CommandOpt) {
 	clusterConfig := e.ClusterConfig.Cluster
 	registyMirrorEndpoint, registryMirrorPort := clusterConfig.Spec.RegistryMirrorConfiguration.Endpoint, clusterConfig.Spec.RegistryMirrorConfiguration.Port
 	registryMirrorHost := net.JoinHostPort(registyMirrorEndpoint, registryMirrorPort)
-	bundleManifestLocation := getBundleManifestLocation()
+	var bundleManifestLocation string
+	if _, err := os.Stat(defaultDownloadArtifactsOutputLocation); err == nil {
+		bundleManifestLocation = bundleReleasePathFromArtifacts
+	} else {
+		bundleManifestLocation = defaultBundleReleaseManifestFile
+	}
 	importImagesArgs := []string{"import images", "--input", defaultDownloadImagesOutputLocation, "--bundles", bundleManifestLocation, "--registry", registryMirrorHost, "--insecure"}
 	e.RunEKSA(importImagesArgs, opts...)
-}
-
-// GetDiagnosticCollectorImage returns the diagnostic collector image from the bundle file,
-// or falls back to a hardcoded URI if reading from disk fails.
-func (e *ClusterE2ETest) GetDiagnosticCollectorImage() string {
-	const fallbackImage = "public.ecr.aws/eks-anywhere/diagnostic-collector:v0.16.2-eks-a-41"
-
-	bundleManifestLocation := getBundleManifestLocation()
-
-	// Try to read the bundle file
-	bundleData, err := os.ReadFile(bundleManifestLocation)
-	if err != nil {
-		e.T.Logf("Could not read bundle file, using fallback image: %v", err)
-		return fallbackImage
-	}
-
-	// Try to parse the bundle
-	var bundles releasev1.Bundles
-	if err := yaml.Unmarshal(bundleData, &bundles); err != nil {
-		e.T.Logf("Could not parse bundle file, using fallback image: %v", err)
-		return fallbackImage
-	}
-
-	// Check if version bundles exist
-	if len(bundles.Spec.VersionsBundles) == 0 {
-		e.T.Log("No version bundles found in bundle file, using fallback image")
-		return fallbackImage
-	}
-
-	return bundles.Spec.VersionsBundles[0].Eksa.DiagnosticCollector.VersionedImage()
-}
-
-// GetPackageControllerRepo returns the bundle's package controller chart image.
-func (e *ClusterE2ETest) GetPackageControlleChartRepo() (string, error) {
-	bundleManifestLocation := getBundleManifestLocation()
-
-	// Read the bundle file
-	bundleData, err := os.ReadFile(bundleManifestLocation)
-	if err != nil {
-		return "", fmt.Errorf("failed to read bundle file %s: %w", bundleManifestLocation, err)
-	}
-
-	// Parse the bundle
-	var bundles releasev1.Bundles
-	if err := yaml.Unmarshal(bundleData, &bundles); err != nil {
-		return "", fmt.Errorf("failed to parse bundle file: %w", err)
-	}
-
-	// Get the package controller chart image from the first version bundle
-	if len(bundles.Spec.VersionsBundles) == 0 {
-		return "", fmt.Errorf("no version bundles found in bundle file")
-	}
-
-	return bundles.Spec.VersionsBundles[0].PackageController.HelmChart.Image(), nil
 }
 
 // CopyPackages runs the EKS-A `copy packages` command to copy curated packages to the registry mirror.
@@ -755,7 +707,7 @@ func (e *ClusterE2ETest) CopyPackages(packageMirrorAlias string, packageChartReg
 		"--dst-insecure",
 	}
 
-	e.T.Logf("Copying curated packages to registry mirror: %s/%s", registryMirrorHost, packageMirrorAlias)
+	e.T.Logf("Copying curated packages to registry mirror: %s", registryMirrorHost)
 	e.RunEKSA(copyPackagesArgs, opts...)
 }
 
@@ -919,6 +871,10 @@ func (e *ClusterE2ETest) UpgradeCluster(commandOpts ...CommandOpt) {
 func (e *ClusterE2ETest) generateClusterConfigYaml() []byte {
 	childObjs := e.ClusterConfig.ChildObjects()
 	yamlB := make([][]byte, 0, len(childObjs)+1)
+
+	if e.PackageConfig != nil {
+		e.ClusterConfig.Cluster.Spec.Packages = e.PackageConfig.packageConfiguration
+	}
 
 	// This is required because Flux requires a namespace be specified for objects
 	// to be able to reconcile right.
@@ -1211,6 +1167,16 @@ func setEksctlVersionEnvVar() error {
 	return nil
 }
 
+func (e *ClusterE2ETest) InstallHelmChart() {
+	kubeconfig := e.KubeconfigFilePath()
+	ctx := context.Background()
+
+	err := e.HelmInstallConfig.HelmClient.InstallChart(ctx, e.HelmInstallConfig.chartName, e.HelmInstallConfig.chartURI, e.HelmInstallConfig.chartVersion, kubeconfig, "", "", false, e.HelmInstallConfig.chartValues)
+	if err != nil {
+		e.T.Fatalf("Error installing %s helm chart on the cluster: %v", e.HelmInstallConfig.chartName, err)
+	}
+}
+
 // CreateNamespace creates a namespace.
 func (e *ClusterE2ETest) CreateNamespace(namespace string) {
 	kubeconfig := e.KubeconfigFilePath()
@@ -1373,6 +1339,22 @@ func (e *ClusterE2ETest) WithCluster(f func(e *ClusterE2ETest)) {
 	defer func() {
 		e.GenerateSupportBundleIfTestFailed()
 		e.DeleteCluster()
+	}()
+	f(e)
+}
+
+// WithClusterRegistryMirror helps with bringing up and tearing down E2E test clusters when using registry mirror.
+func (e *ClusterE2ETest) WithClusterRegistryMirror(packageMirrorAlias string, packageChartRegistry string, packageRegistry string, f func(e *ClusterE2ETest)) {
+	e.GenerateClusterConfig()
+	e.DownloadArtifacts()
+	e.ExtractDownloadedArtifacts()
+	e.DownloadImages()
+	e.ImportImages()
+	e.CopyPackages(packageMirrorAlias, packageChartRegistry, packageRegistry)
+	e.CreateCluster(WithBundlesOverride(bundleReleasePathFromArtifacts))
+	defer func() {
+		e.GenerateSupportBundleIfTestFailed()
+		e.DeleteCluster(WithBundlesOverride(bundleReleasePathFromArtifacts))
 	}()
 	f(e)
 }
@@ -2222,13 +2204,10 @@ func (e *ClusterE2ETest) ApplyPackageFile(packageName, targetNamespace string, P
 func (e *ClusterE2ETest) CurlEndpoint(endpoint, namespace string, extraCurlArgs ...string) string {
 	ctx := context.Background()
 
-	diagnosticCollectorImage := e.GetDiagnosticCollectorImage()
-
 	e.T.Log("Launching pod to curl endpoint", endpoint)
 	randomname := fmt.Sprintf("%s-%s", "curl-test", utilrand.String(7))
 	curlPodName, err := e.KubectlClient.RunCurlPod(context.TODO(),
-		namespace, randomname, e.KubeconfigFilePath(), diagnosticCollectorImage,
-		append([]string{"curl", endpoint}, extraCurlArgs...))
+		namespace, randomname, e.KubeconfigFilePath(), append([]string{"curl", endpoint}, extraCurlArgs...))
 	if err != nil {
 		e.T.Fatalf("error launching pod: %s", err)
 	}

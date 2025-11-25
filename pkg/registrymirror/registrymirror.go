@@ -4,6 +4,7 @@ import (
 	"net"
 	urllib "net/url"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -25,6 +26,8 @@ type RegistryMirror struct {
 	InsecureSkipVerify bool
 }
 
+var re = regexp.MustCompile(constants.DefaultCuratedPackagesRegistryRegex)
+
 // FromCluster is a constructor for RegistryMirror from a cluster schema.
 func FromCluster(cluster *v1alpha1.Cluster) *RegistryMirror {
 	return FromClusterRegistryMirrorConfiguration(cluster.Spec.RegistryMirrorConfiguration)
@@ -41,7 +44,13 @@ func FromClusterRegistryMirrorConfiguration(config *v1alpha1.RegistryMirrorConfi
 	// for each namespace, add corresponding endpoint
 	for _, ociNamespace := range config.OCINamespaces {
 		mirror := filepath.Join(base, ociNamespace.Namespace)
-		registryMap[ociNamespace.Registry] = mirror
+		if re.MatchString(ociNamespace.Registry) {
+			// handle curated packages in all regions
+			// static key makes it easier for mirror lookup
+			registryMap[constants.DefaultCuratedPackagesRegistry] = mirror
+		} else {
+			registryMap[ociNamespace.Registry] = mirror
+		}
 	}
 	if len(registryMap) == 0 {
 		// for backward compatibility, default mapping for public.ecr.aws is added
@@ -62,6 +71,11 @@ func (r *RegistryMirror) CoreEKSAMirror() string {
 	return r.NamespacedRegistryMap[constants.DefaultCoreEKSARegistry]
 }
 
+// CuratedPackagesMirror returns the mirror for curated packages.
+func (r *RegistryMirror) CuratedPackagesMirror() string {
+	return r.NamespacedRegistryMap[constants.DefaultCuratedPackagesRegistry]
+}
+
 // ReplaceRegistry replaces the host in a url with corresponding registry mirror
 // It supports full URLs and container image URLs
 // If the provided original url is malformed, there are no guarantees
@@ -78,6 +92,9 @@ func (r *RegistryMirror) ReplaceRegistry(url string) string {
 		u.Scheme = ""
 	}
 	key := u.Host
+	if re.MatchString(key) {
+		key = constants.DefaultCuratedPackagesRegistry
+	}
 	if v, ok := r.NamespacedRegistryMap[key]; ok {
 		return strings.Replace(url, u.Host, v, 1)
 	}

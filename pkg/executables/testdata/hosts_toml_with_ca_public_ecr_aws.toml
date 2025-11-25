@@ -1,5 +1,0 @@
-server = "https://public.ecr.aws"
-
-[host."https://registry-mirror.test:443"]
-  capabilities = ["pull", "resolve"]
-  ca = "/etc/containerd/certs.d/registry-mirror.test:443/ca.crt"

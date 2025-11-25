@@ -254,6 +254,41 @@ func TestCoreEKSAMirror(t *testing.T) {
 	}
 }
 
+func TestCuratedPackagesMirror(t *testing.T) {
+	testCases := []struct {
+		testName       string
+		registryMirror *registrymirror.RegistryMirror
+		want           string
+	}{
+		{
+			testName: "with namespace",
+			registryMirror: &registrymirror.RegistryMirror{
+				BaseRegistry: "1.2.3.4:443",
+				NamespacedRegistryMap: map[string]string{
+					constants.DefaultCuratedPackagesRegistry: "1.2.3.4:443/curated-packages",
+				},
+			},
+			want: "1.2.3.4:443/curated-packages",
+		},
+		{
+			testName: "no required namespace",
+			registryMirror: &registrymirror.RegistryMirror{
+				BaseRegistry: "1.2.3.4:443",
+				NamespacedRegistryMap: map[string]string{
+					constants.DefaultCoreEKSARegistry: "1.2.3.4:443/eks-anywhere",
+				},
+			},
+			want: "",
+		},
+	}
+	for _, tt := range testCases {
+		t.Run(tt.testName, func(t *testing.T) {
+			g := NewWithT(t)
+			g.Expect(tt.registryMirror.CuratedPackagesMirror()).To(Equal(tt.want))
+		})
+	}
+}
+
 func TestReplaceRegistry(t *testing.T) {
 	tests := []struct {
 		name           string

@@ -297,70 +297,7 @@ kubectl logs <podname> -n <namespace> --kubeconfig=<kubeconfig>
 
 ### Kubectl commands return dial tcp: i/o timeout
 
-If you are unable to run kubectl commands on a cluster due to timeout errors, then it is possible that the server endpoint in the kubeconfig does not match the control plane's endpoint in the infrastructure provider due to kube-vip failing to allocate a virtual IP address to the cluster. If the endpoints do not match, you can ssh into the control plane node to gather logs instead. The kubelet logs can be obtained by running `journalctl -u kubelet.service --no-pager`. It may also be helpful to look at kube-vip logs, which can be found in the `/var/log/pods/kube-system_kube-vip-*` directory.
-
-#### Bottlerocket: Duplicate containers causing kube-vip and API server issues
-
-On Bottlerocket nodes, timeout errors when accessing the cluster API endpoint (e.g., `dial tcp <cluster-ip>:6443: i/o timeout` or connection timeouts) can be caused by duplicate static pod containers running in the container runtime. This commonly occurs after certificate renewal operations if static pods are not properly stopped before being re-enabled.
-
-**Symptoms**:
-- kubectl commands timeout when trying to reach the cluster API: `Error: Get "https://<cluster-ip>:6443": dial tcp: i/o timeout`
-- Multiple kube-vip containers running, preventing the virtual IP from being properly assigned
-- Multiple instances of kube-apiserver, kube-scheduler, kube-controller-manager, or etcd containers
-
-**Diagnosis**:
-
-SSH into the Bottlerocket control plane node and check for duplicate containers:
-
-```bash
-# Check for duplicate kube-apiserver containers
-ctr -n k8s.io c ls | grep -i 'kube-apiserver'
-
-# Check for duplicate kube-scheduler containers
-ctr -n k8s.io c ls | grep -i 'kube-scheduler'
-
-# Check for duplicate kube-controller-manager containers
-ctr -n k8s.io c ls | grep -i 'kube-controller'
-
-# Check for duplicate etcd containers
-ctr -n k8s.io c ls | grep -i 'etcd'
-
-# Check for duplicate kube-vip containers
-ctr -n k8s.io c ls | grep -i 'kube-vip'
-```
-
-If you see multiple containers for any component (especially kube-vip), you have duplicate containers that need to be removed.
-
-**Resolution**:
-
-1. For each duplicate container, first kill the task:
-   ```bash
-   # Get the container ID from the list command above
-   ctr -n k8s.io task kill <container-id>
-   ```
-
-2. Then remove the container:
-   ```bash
-   ctr -n k8s.io c rm <container-id>
-   ```
-
-3. Identify and remove stale containers (typically the older ones based on creation time). Keep only the most recent container for each component.
-
-4. After removing duplicates, verify the cluster API is accessible:
-   ```bash
-   # From your admin machine
-   kubectl get nodes --kubeconfig <cluster-kubeconfig>
-   ```
-
-5. If kube-vip was affected, verify the virtual IP is now properly assigned to one of the control plane nodes:
-   ```bash
-   # From control plane node
-   ip addr show | grep <control-plane-vip>
-   ```
-
-**Prevention**:
-
-To prevent duplicate containers during certificate renewal or static pod operations, always include a 30-second sleep between disabling and re-enabling static pods. See the [manual certificate renewal steps]({{< relref "../clustermgmt/certificate-management/manual-steps-renew-certs.md" >}}) for the correct procedure.
+If you are unable to run kubectl commands on a cluster due to timeout errors, then it is possible that the server endpoint in the kubeconfig does not match the control plane's endpoint in the infrastructure provider due to kube-vip failing to allocate a virtual IP address to the cluster. If the endpoints do not match, you can ssh into the control plane node to gather logs instead. The kubelet logs can be obtained by running `journalctl -u kubelet.service --no-pager`. It may also be helpful to look at kube-vip logs, which can be found in the `/var/log/pods/kube-system_kube-vip-*` directory. 
 
 #### Verify Cluster Certificates are valid
 

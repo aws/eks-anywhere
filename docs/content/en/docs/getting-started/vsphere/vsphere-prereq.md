@@ -56,7 +56,8 @@ You will need one IP address for the management cluster control plane endpoint, 
 For those, you would need three IP addresses, one for each cluster.
 All of those addresses will be configured the same way in the configuration file you will generate for each cluster.
 
-  All EKS Anywhere clusters require a static IP for the control plane endpoint. The IP should be excluded from your DHCP range.
+  A static IP address will be used for each control plane VM in your EKS Anywhere cluster.
+Choose IP addresses in your network range that do not conflict with other VMs and make sure they are excluded from your DHCP offering.
 
   An IP address will be the value of the property `controlPlaneConfiguration.endpoint.host` in the config file of the management cluster.
 A separate IP address must be assigned for each workload cluster.

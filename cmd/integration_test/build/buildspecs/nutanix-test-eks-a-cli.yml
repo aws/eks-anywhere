@@ -2,7 +2,7 @@ version: 0.2
 
 env:
   variables:
-    INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT: 30
+    INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT: 50
     EKSA_GIT_KNOWN_HOSTS: "/tmp/known_hosts"
     EKSA_GIT_PRIVATE_KEY: "/tmp/private-key"
     INTEGRATION_TEST_INFRA_CONFIG: "/tmp/test-infra.yml"
@@ -36,21 +36,6 @@ env:
     T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_31: "nutanix_ci:nutanix_template_ubuntu_1_31"
     T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_32: "nutanix_ci:nutanix_template_ubuntu_1_32"
     T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_33: "nutanix_ci:nutanix_template_ubuntu_1_33"
-    T_NUTANIX_TEMPLATE_NAME_UBUNTU_1_34: "nutanix_ci:nutanix_template_ubuntu_1_34"
-    T_NUTANIX_TEMPLATE_NAME_UBUNTU_2204_1_28: "nutanix_ci:nutanix_template_ubuntu_2204_1_28"
-    T_NUTANIX_TEMPLATE_NAME_UBUNTU_2204_1_29: "nutanix_ci:nutanix_template_ubuntu_2204_1_29"
-    T_NUTANIX_TEMPLATE_NAME_UBUNTU_2204_1_30: "nutanix_ci:nutanix_template_ubuntu_2204_1_30"
-    T_NUTANIX_TEMPLATE_NAME_UBUNTU_2204_1_31: "nutanix_ci:nutanix_template_ubuntu_2204_1_31"
-    T_NUTANIX_TEMPLATE_NAME_UBUNTU_2204_1_32: "nutanix_ci:nutanix_template_ubuntu_2204_1_32"
-    T_NUTANIX_TEMPLATE_NAME_UBUNTU_2204_1_33: "nutanix_ci:nutanix_template_ubuntu_2204_1_33"
-    T_NUTANIX_TEMPLATE_NAME_UBUNTU_2204_1_34: "nutanix_ci:nutanix_template_ubuntu_2204_1_34"
-    T_NUTANIX_TEMPLATE_NAME_UBUNTU_2404_1_28: "nutanix_ci:nutanix_template_ubuntu_2404_1_28"
-    T_NUTANIX_TEMPLATE_NAME_UBUNTU_2404_1_29: "nutanix_ci:nutanix_template_ubuntu_2404_1_29"
-    T_NUTANIX_TEMPLATE_NAME_UBUNTU_2404_1_30: "nutanix_ci:nutanix_template_ubuntu_2404_1_30"
-    T_NUTANIX_TEMPLATE_NAME_UBUNTU_2404_1_31: "nutanix_ci:nutanix_template_ubuntu_2404_1_31"
-    T_NUTANIX_TEMPLATE_NAME_UBUNTU_2404_1_32: "nutanix_ci:nutanix_template_ubuntu_2404_1_32"
-    T_NUTANIX_TEMPLATE_NAME_UBUNTU_2404_1_33: "nutanix_ci:nutanix_template_ubuntu_2404_1_33"
-    T_NUTANIX_TEMPLATE_NAME_UBUNTU_2404_1_34: "nutanix_ci:nutanix_template_ubuntu_2404_1_34"
     T_NUTANIX_TEMPLATE_NAME_REDHAT_1_28: "nutanix_ci:nutanix_template_rhel_8_1_28"
     T_NUTANIX_TEMPLATE_NAME_REDHAT_1_29: "nutanix_ci:nutanix_template_rhel_8_1_29"
     T_NUTANIX_TEMPLATE_NAME_REDHAT_1_30: "nutanix_ci:nutanix_template_rhel_8_1_30"
@@ -61,7 +46,6 @@ env:
     T_NUTANIX_TEMPLATE_NAME_REDHAT_9_1_31: "nutanix_ci:nutanix_template_rhel_9_1_31"
     T_NUTANIX_TEMPLATE_NAME_REDHAT_9_1_32: "nutanix_ci:nutanix_template_rhel_9_1_32"
     T_NUTANIX_TEMPLATE_NAME_REDHAT_9_1_33: "nutanix_ci:nutanix_template_rhel_9_1_33"
-    T_NUTANIX_TEMPLATE_NAME_REDHAT_9_1_34: "nutanix_ci:nutanix_template_rhel_9_1_34"
     LICENSE_TOKEN: "extended_support:license_token"
     LICENSE_TOKEN2: "extended_support:license_token2"
     STAGING_LICENSE_TOKEN: "extended_support:staging_license_token"

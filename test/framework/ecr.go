@@ -36,12 +36,12 @@ func loginToECRWithCredentials(e *ClusterE2ETest, registry, accessKey, secretKey
 	ecrClient := ecr.NewFromConfig(cfg)
 	authTokenOutput, err := ecrClient.GetAuthorizationToken(context.Background(), &ecr.GetAuthorizationTokenInput{})
 	if err != nil {
-		e.T.Fatalf("failed to fetch authorization token from ECR for registry %s : %v", registry, err)
+		e.T.Fatalf("failed to fetch authorization token from ECR for registry %s : %w", registry, err)
 	}
 
 	decoded, err := base64.StdEncoding.DecodeString(*authTokenOutput.AuthorizationData[0].AuthorizationToken)
 	if err != nil {
-		e.T.Fatalf("failed to decode authorization token from ECR for registry %s: %v", registry, err)
+		e.T.Fatalf("failed to decode authorization token from ECR for registry %s: %w", registry, err)
 	}
 
 	parts := strings.SplitN(string(decoded), ":", 2)

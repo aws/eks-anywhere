@@ -5,7 +5,6 @@ import (
 	_ "embed"
 	"encoding/base64"
 	"fmt"
-	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -245,40 +244,26 @@ func (pc *PackageControllerClient) Enable(ctx context.Context) error {
 func (pc *PackageControllerClient) GetCuratedPackagesRegistries(ctx context.Context) (sourceRegistry, defaultRegistry, defaultImageRegistry string) {
 	sourceRegistry = prodPublicRegistryURI
 	defaultImageRegistry = prodNonRegionalPrivateRegistryURI
-	eksaPackagesPublicAlias := prodPublicRegistryAlias
+	registry := prodPublicRegistryAlias
 	if strings.Contains(pc.chart.Image(), devRegionalPublicRegistryAlias) {
-		eksaPackagesPublicAlias = devRegionalPublicRegistryAlias
+		registry = devRegionalPublicRegistryAlias
 		defaultImageRegistry = devRegionalPrivateRegistryURI
 		sourceRegistry = devRegionalPublicRegistryURI
 	}
 	if strings.Contains(pc.chart.Image(), stagingPublicRegistryAlias) {
-		eksaPackagesPublicAlias = stagingPublicRegistryAlias
+		registry = stagingPublicRegistryAlias
 		defaultImageRegistry = devRegionalPrivateRegistryURI
 		sourceRegistry = stagingPublicRegistryURI
 	}
 	defaultRegistry = sourceRegistry
 
-	// If registry mirror is configured, admin machine may be airgapped.
-	// We will use registry mirror configuration as source of truth to decide package registries
 	if pc.registryMirror != nil {
-		sourceRegistry = fmt.Sprintf("%s/%s", pc.registryMirror.CoreEKSAMirror(), eksaPackagesPublicAlias)
-
-		nonRegionalRegistryMatcher := regexp.MustCompile(constants.DefaultCuratedPackagesRegistryRegex)
-		for registry, mirrorURI := range pc.registryMirror.NamespacedRegistryMap {
-			if nonRegionalRegistryMatcher.MatchString(registry) {
-				// registry name is added as part of sourceRegistry field in package controller helm chart
-				// https://github.com/aws/eks-anywhere-packages/blob/main/charts/eks-anywhere-packages/values.yaml#L15-L18
-				defaultRegistry = fmt.Sprintf("%s/%s", pc.registryMirror.CoreEKSAMirror(), eksaPackagesPublicAlias)
-				defaultImageRegistry = mirrorURI
-				break
-			}
-		}
-		for _, regionalRegistry := range getAllEnvRegionalPrivateRegistryURIs() {
-			if mirrorURI := pc.registryMirror.NamespacedRegistryMap[regionalRegistry]; mirrorURI != "" {
-				defaultRegistry = mirrorURI
-				defaultImageRegistry = mirrorURI
-				break
-			}
+		// registry name is added as part of sourceRegistry field in package controller helm chart
+		// https://github.com/aws/eks-anywhere-packages/blob/main/charts/eks-anywhere-packages/values.yaml#L15-L18
+		sourceRegistry = fmt.Sprintf("%s/%s", pc.registryMirror.CoreEKSAMirror(), registry)
+		defaultRegistry = fmt.Sprintf("%s/%s", pc.registryMirror.CoreEKSAMirror(), registry)
+		if gatedOCINamespace := pc.registryMirror.CuratedPackagesMirror(); gatedOCINamespace != "" {
+			defaultImageRegistry = gatedOCINamespace
 		}
 	} else {
 		if pc.eksaRegion != eksaDefaultRegion {
