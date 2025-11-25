@@ -317,12 +317,15 @@ Operating System on virtual machines. Permitted values: bottlerocket, ubuntu, re
 Size of disk on virtual machines if snapshots aren't included (Default: 25)
 
 ### networks (optional)
-The path to the VM network to deploy your EKS Anywhere cluster on. For example, `/<DATACENTER>/network/<NETWORK_NAME>`. Use the array to specify the networks you want to use, the first one will be your primary interface and is highly recommended 
-Use `govc find -type n` to see a list of networks
+The path to the VM network to deploy your EKS Anywhere cluster on. For example, `/<DATACENTER>/network/<NETWORK_NAME>`. Use the array to specify the networks you want to use, the first network in the array will serve as the primary interface and is highly recommended to use the same <a href="#network-required">network </a> configured in datacenter section.Use `govc find -type n` to see a list of networks
 
->**_NOTE:_** 
-1. Multiple network interfaces are only supported on **worker nodes** with Ubuntu and RHEL operating systems. This feature is not available with Bottlerocket or on control plane nodes.
-2. Supports a maximum of 2 network interfaces.
+>**_Important Limitations_**
+- **Multi-Network Interface Support:**
+  - Multiple network interfaces are **only supported on worker nodes** and NOT supported on controlplane node
+  - Maximum of 2 network interfaces per worker node.
+- **Operating System Compatibility:**
+  - **EKSA CLI v0.24.0+**: Ubuntu and RHEL operating systems supported
+  - **EKSA CLI v0.24.1+**: Bottlerocket operating system supported
 
 ### users (optional)
 The users you want to configure to access your virtual machines. Only one is permitted at this time
