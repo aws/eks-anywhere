@@ -44,15 +44,17 @@ An AMP workspace is created to receive metrics from the ADOT package, and respon
 For additional options (i.e. through CLI) and configurations (i.e. add a tag) to create an AMP workspace, refer to [AWS AMP create a workspace guide.](https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-onboard-create-workspace.html)
 
 ## Create a cluster with IRSA
-To enable ADOT pods that run in EKS Anywhere clusters to authenticate with AWS services, a user needs to set up IRSA at cluster creation. [EKS Anywhere cluster spec for Pod IAM]({{< relref "../../getting-started/optional/irsa/" >}}) gives step-by-step guidance on how to do so. There are a few things to keep in mind while working through the guide:
+To enable ADOT pods that run in EKS Anywhere clusters to authenticate with AWS services, you need to set up IRSA at cluster creation. [EKS Anywhere cluster spec for Pod IAM]({{< relref "../../getting-started/optional/irsa/" >}}) gives step-by-step guidance on how to do so. 
 
-1. While completing step [Create an OIDC provider]({{< relref "../../getting-started/optional/irsa/#create-an-oidc-provider-and-make-its-discovery-document-publicly-accessible" >}}), a user should: 
+When setting up IRSA for ADOT, keep the following in mind:
+
+1. While completing step [Create an OIDC provider]({{< relref "../../getting-started/optional/irsa/#create-an-oidc-provider-and-make-its-discovery-document-publicly-accessible" >}}), you should: 
     - create the S3 bucket in the `us-west-2` region, and 
     - attach an IAM policy with proper AMP access to the IAM role. 
       
       Below is an example that gives full access to AMP actions and resources. Refer to [AMP IAM permissions and policies guide](https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-and-IAM.html) for more customized options.
 
-      ```
+      ```json
       {
           "Version": "2012-10-17",
           "Statement": [
@@ -67,12 +69,9 @@ To enable ADOT pods that run in EKS Anywhere clusters to authenticate with AWS s
       }
       ```
 
-1. While completing step [deploy pod identity webhook]({{< relref "../../getting-started/optional/irsa/#deploy-pod-identity-webhook" >}}), a user should:
-    - make sure the service account is created in the same namespace as the ADOT package (which is controlled by the `package` definition file with field `spec.targetNamespace`);
-    - take a note of the service account that gets created in this step as it will be used in ADOT package installation;
-    - add an annotation `eks.amazonaws.com/role-arn: <role-arn>` to the created service account.
+1. Complete the step [deploy pod identity webhook]({{< relref "../../getting-started/optional/irsa/#deploy-pod-identity-webhook" >}}) to set up the pod identity webhook in your cluster.
 
-    By default, the service account is installed in the `default` namespace with name `pod-identity-webhook`, and the annotation `eks.amazonaws.com/role-arn: <role-arn>` is not added automatically.
+1. Make note of the IAM role ARN you created, as you'll need to reference it in the ADOT package configuration below. The ADOT package will create its own dedicated ServiceAccount with this IAM role annotation, following security best practices of having a dedicated ServiceAccount for each package.
 
 ### IRSA Set Up Test
 To ensure IRSA is set up properly in the cluster, a user can create an `awscli` pod for testing.
@@ -124,12 +123,16 @@ The ADOT package will be created with three components:
 
 1. the Sigv4 Authentication Extension, which enables ADOT pods to authenticate to AWS services.
 
-Follow steps below to complete the ADOT package installation:
+Follow steps below to complete the ADOT package installation.
 
-1. Update the following config file. Review comments carefully and replace everything that is wrapped with a `<>` tag. Note this configuration aims to mimic the Prometheus community helm chart. A user can tailor the scrape targets further by modifying the receiver section below. Refer to [ADOT package spec]({{< relref "../adot/" >}}) for additional explanations of each section.
+### Recommended Approach: Using Presets (Simplified Configuration)
+
+This approach uses the ADOT helm chart's preset feature to automatically configure RBAC permissions. This is recommended for most users as it simplifies configuration and ensures proper permissions are automatically managed.
+
+1. Create an ADOT package configuration file. Review comments carefully and replace everything wrapped with `<>` tags.
 
     <details>
-      <summary>Click to expand ADOT package config</summary>
+      <summary>Click to expand ADOT package config with presets</summary>
       
       ```yaml
       apiVersion: packages.eks.amazonaws.com/v1alpha1
@@ -139,17 +142,33 @@ Follow steps below to complete the ADOT package installation:
         namespace: eksa-packages
       spec:
         packageName: adot
-        targetNamespace: default # this needs to match the namespace of the serviceAccount below
+        targetNamespace: observability
         config: |
           mode: deployment
 
+          # ServiceAccount configuration with IRSA
           serviceAccount:
-            # Specifies whether a service account should be created
-            create: false
-            # Annotations to add to the service account
-            annotations: {}
-            # Specifies the serviceAccount annotated with eks.amazonaws.com/role-arn.
-            name: "pod-identity-webhook" # name of the service account created at step Create a cluster with IRSA
+            # Create a dedicated service account for ADOT
+            create: true
+            # Add IAM role annotation for IRSA authentication
+            annotations:
+              eks.amazonaws.com/role-arn: "<IAM-ROLE-ARN>"  # Replace with your IAM role ARN from IRSA setup
+            # Optional: specify a custom name, otherwise auto-generated
+            name: "adot-collector"
+
+          # Enable presets to automatically configure RBAC and collector features
+          presets:
+            # Adds Kubernetes metadata to metrics and auto-creates necessary RBAC rules
+            kubernetesAttributes:
+              enabled: true
+            # Collects metrics from kubelet and auto-adds required permissions
+            kubeletMetrics:
+              enabled: true
+
+          # ClusterRole will be automatically created by presets above
+          # No need to manually specify rules!
+          clusterRole:
+            create: true
 
           config:
             extensions:
@@ -160,7 +179,173 @@ Follow steps below to complete the ADOT package installation:
                   sts_region: "us-west-2"
             
             receivers:
-              # Scrape configuration for the Prometheus Receiver
+              prometheus:
+                config:
+                  global:
+                    scrape_interval: 15s
+                    scrape_timeout: 10s
+                  scrape_configs:
+                  - job_name: kubernetes-apiservers
+                    bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+                    kubernetes_sd_configs:
+                    - role: endpoints
+                    relabel_configs:
+                    - action: keep
+                      regex: default;kubernetes;https
+                      source_labels:
+                      - __meta_kubernetes_namespace
+                      - __meta_kubernetes_service_name
+                      - __meta_kubernetes_endpoint_port_name
+                    scheme: https
+                    tls_config:
+                      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                      insecure_skip_verify: false
+                  - job_name: kubernetes-nodes
+                    bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+                    kubernetes_sd_configs:
+                    - role: node
+                    relabel_configs:
+                    - action: labelmap
+                      regex: __meta_kubernetes_node_label_(.+)
+                    - replacement: kubernetes.default.svc:443
+                      target_label: __address__
+                    - regex: (.+)
+                      replacement: /api/v1/nodes/$$1/proxy/metrics
+                      source_labels:
+                      - __meta_kubernetes_node_name
+                      target_label: __metrics_path__
+                    scheme: https
+                    tls_config:
+                      ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                      insecure_skip_verify: false
+                  - job_name: kubernetes-service-endpoints
+                    kubernetes_sd_configs:
+                    - role: endpoints
+                    relabel_configs:
+                    - action: keep
+                      regex: true
+                      source_labels:
+                      - __meta_kubernetes_service_annotation_prometheus_io_scrape
+                    - action: replace
+                      regex: (https?)
+                      source_labels:
+                      - __meta_kubernetes_service_annotation_prometheus_io_scheme
+                      target_label: __scheme__
+                    - action: replace
+                      regex: (.+)
+                      source_labels:
+                      - __meta_kubernetes_service_annotation_prometheus_io_path
+                      target_label: __metrics_path__
+                    - action: replace
+                      regex: ([^:]+)(?::\d+)?;(\d+)
+                      replacement: $$1:$$2
+                      source_labels:
+                      - __address__
+                      - __meta_kubernetes_service_annotation_prometheus_io_port
+                      target_label: __address__
+                    - action: labelmap
+                      regex: __meta_kubernetes_service_label_(.+)
+                    - action: replace
+                      source_labels:
+                      - __meta_kubernetes_namespace
+                      target_label: kubernetes_namespace
+                    - action: replace
+                      source_labels:
+                      - __meta_kubernetes_service_name
+                      target_label: kubernetes_name
+
+            processors:
+              batch/metrics:
+                timeout: 60s
+
+            exporters:
+              debug:
+                verbosity: detailed
+              prometheusremotewrite:
+                endpoint: "<AMP-WORKSPACE-ENDPOINT>/api/v1/remote_write"  # Replace with your AMP endpoint
+                auth:
+                  authenticator: sigv4auth
+            
+            service:
+              extensions:
+                - health_check
+                - sigv4auth
+              pipelines:
+                metrics:
+                  receivers: [prometheus]
+                  processors: [batch/metrics]
+                  exporters: [debug, prometheusremotewrite]
+      ```
+    </details>
+
+### Advanced Approach: Explicit RBAC Rules (Custom Configuration)
+
+For users who need custom Prometheus scrape configurations or specific RBAC permissions beyond what presets provide, you can explicitly define ClusterRole rules in your package configuration. This gives you full control over the exact permissions granted.
+
+1. Create an ADOT package configuration file with explicit RBAC rules. Review comments carefully and replace everything wrapped with `<>` tags.
+
+    <details>
+      <summary>Click to expand ADOT package config with explicit rules</summary>
+      
+      ```yaml
+      apiVersion: packages.eks.amazonaws.com/v1alpha1
+      kind: Package
+      metadata:
+        name: my-adot
+        namespace: eksa-packages
+      spec:
+        packageName: adot
+        targetNamespace: observability
+        config: |
+          mode: deployment
+
+          # ServiceAccount configuration with IRSA
+          serviceAccount:
+            # Create a dedicated service account for ADOT
+            create: true
+            # Add IAM role annotation for IRSA authentication
+            annotations:
+              eks.amazonaws.com/role-arn: "<IAM-ROLE-ARN>"  # Replace with your IAM role ARN from IRSA setup
+            name: "adot-collector"
+
+          # Explicitly define ClusterRole with custom rules
+          clusterRole:
+            create: true
+            rules:
+              # Core Kubernetes resources
+              - apiGroups: [""]
+                resources:
+                  - nodes
+                  - nodes/proxy
+                  - services
+                  - endpoints
+                  - pods
+                verbs: ["get", "list", "watch"]
+              # Extensions API group
+              - apiGroups: ["extensions"]
+                resources:
+                  - ingresses
+                verbs: ["get", "list", "watch"]
+              # Discovery API group for modern Kubernetes
+              - apiGroups: ["discovery.k8s.io"]
+                resources:
+                  - endpointslices
+                verbs: ["get", "list", "watch"]
+              # Non-resource URLs for metrics scraping
+              - nonResourceURLs:
+                  - /metrics
+                verbs: ["get"]
+
+          config:
+            extensions:
+              sigv4auth:
+                region: "us-west-2"
+                service: "aps"
+                assume_role:
+                  sts_region: "us-west-2"
+            
+            receivers:
+              # Comprehensive Prometheus scrape configuration
               prometheus:
                 config:
                   global:
@@ -304,7 +489,6 @@ Follow steps below to complete the ADOT package installation:
                       target_label: kubernetes_node
                     scrape_interval: 5m
                     scrape_timeout: 30s
-                    
                   - job_name: prometheus-pushgateway
                     kubernetes_sd_configs:
                     - role: service
@@ -433,82 +617,63 @@ Follow steps below to complete the ADOT package installation:
                 timeout: 60s
 
             exporters:
-              logging:
-                logLevel: info
+              debug:
+                verbosity: detailed
               prometheusremotewrite:
-                endpoint: "<AMP-WORKSPACE>/api/v1/remote_write" # Replace with your AMP workspace
+                endpoint: "<AMP-WORKSPACE-ENDPOINT>/api/v1/remote_write"  # Replace with your AMP endpoint
                 auth:
                   authenticator: sigv4auth
             
             service:
               extensions:
                 - health_check
-                - memory_ballast
                 - sigv4auth
               pipelines:
                 metrics:
                   receivers: [prometheus]
                   processors: [batch/metrics]
-                  exporters: [logging, prometheusremotewrite]
-
+                  exporters: [debug, prometheusremotewrite]
       ```
     </details>
 
-1. Bind additional roles to the service account `pod-identity-webhook` (created at step [Create a cluster with IRSA](#create-a-cluster-with-irsa)) by applying the following file in the cluster (using `kubectl apply -f <file-name>`). This is because `pod-identity-webhook` by design does not have sufficient permissions to scrape all Kubernetes targets listed in the ADOT config file above. If modifications are made to the Prometheus Receiver, make updates to the file below to add / remove additional permissions before applying the file.
+{{% alert title="When to Use Explicit Rules" color="info" %}}
+Use explicit RBAC rules when:
+- You have custom Prometheus scrape configurations with specific resource requirements
+- You need permissions beyond what the standard presets provide
+- You want explicit control over granted permissions for security auditing
+- You need to combine custom rules with preset-generated rules
+{{% /alert %}}
 
-    <details>
-      <summary>Click to expand clusterrole and clusterrolebinding config</summary>
+1. Install the ADOT package using the configuration file you created (same command for both approaches):
+    ```bash
+    eksctl anywhere create packages -f adot-package.yaml
+    ```
 
-      ```yaml
-      ---
-      apiVersion: rbac.authorization.k8s.io/v1
-      kind: ClusterRole
-      metadata:
-        name: otel-prometheus-role
-      rules:
-        - apiGroups:
-            - ""
-          resources:
-            - nodes
-            - nodes/proxy
-            - services
-            - endpoints
-            - pods
-          verbs:
-            - get
-            - list
-            - watch
-        - apiGroups:
-            - extensions
-          resources:
-            - ingresses
-          verbs:
-            - get
-            - list
-            - watch
-        - nonResourceURLs:
-            - /metrics
-          verbs:
-            - get
+{{% alert title="Benefits of These Approaches" color="success" %}}
+- **Automated RBAC Management**: ClusterRole and ClusterRoleBinding are automatically created and managed as part of the package lifecycle
+- **Better Security**: Each package has its own dedicated ServiceAccount following the principle of least privilege
+- **Simplified Maintenance**: No manual kubectl apply steps or orphaned resources
+- **Flexible Configuration**: Choose between simplified presets or explicit control based on your needs
+{{% /alert %}}
 
-      ---
-      apiVersion: rbac.authorization.k8s.io/v1
-      kind: ClusterRoleBinding
-      metadata:
-        name: otel-prometheus-role-binding
-      roleRef:
-        apiGroup: rbac.authorization.k8s.io
-        kind: ClusterRole
-        name: otel-prometheus-role
-      subjects:
-        - kind: ServiceAccount
-          name: pod-identity-webhook  # replace with name of the service account created at step Create a cluster with IRSA
-          namespace: default  # replace with namespace where the service account was created at step Create a cluster with IRSA
-      ```
+{{% alert title="Note for Existing Deployments" color="warning" %}}
+If you previously configured ADOT using the `pod-identity-webhook` ServiceAccount with manual ClusterRole/ClusterRoleBinding resources, you should migrate to one of the approaches above for better security and lifecycle management. The new configuration using `serviceAccount.create: true` and `clusterRole.create: true` (with presets or explicit rules) automates RBAC management and follows Kubernetes best practices.
+{{% /alert %}}
 
-    </details>
+### Available Presets
 
-1. Use the ADOT package config file defined above to complete the ADOT installation. Refer to [ADOT installation guide]({{< relref "./addadot" >}}) for details.
+The ADOT helm chart provides several presets that automatically configure both collector features and RBAC permissions:
+
+| Preset | Description | Auto-Added RBAC Rules |
+|--------|-------------|----------------------|
+| `kubernetesAttributes` | Adds Kubernetes metadata (pod, namespace, etc.) to metrics | pods, namespaces, replicasets (apps & extensions) |
+| `kubeletMetrics` | Collects metrics from kubelet | nodes/stats |
+| `clusterMetrics` | Collects cluster-level metrics | events, namespaces, nodes, pods, services, daemonsets, deployments, replicasets, statefulsets, jobs, cronjobs, horizontalpodautoscalers |
+| `kubernetesEvents` | Collects Kubernetes events | events (events.k8s.io apiGroup) |
+| `logsCollection` | Collects logs from nodes (best with daemonset mode) | None (requires host access) |
+| `hostMetrics` | Collects host-level metrics (best with daemonset mode) | None (requires host access) |
+
+For more details on presets, refer to the [OpenTelemetry Collector Kubernetes Components documentation](https://opentelemetry.io/docs/kubernetes/collector/components/).
 
 ### ADOT Package Test
 To ensure the ADOT package is installed correctly in the cluster, a user can perform the following tests.
