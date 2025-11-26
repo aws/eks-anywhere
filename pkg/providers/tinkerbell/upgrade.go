@@ -414,11 +414,6 @@ func validateRefsUnchanged(current, desired []v1alpha1.WorkerNodeGroupConfigurat
 	return kerrors.NewAggregate(errs)
 }
 
-func (p *Provider) UpgradeNeeded(_ context.Context, _, _ *cluster.Spec, _ *types.Cluster) (bool, error) {
-	// TODO: Figure out if something is needed here
-	return false, nil
-}
-
 func (p *Provider) hardwareCSVIsProvided() bool {
 	return p.hardwareCSVFile != ""
 }
