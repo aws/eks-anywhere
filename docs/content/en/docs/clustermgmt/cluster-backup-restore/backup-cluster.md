@@ -46,6 +46,9 @@ MGMT_CLUSTER="mgmt"
 MGMT_CLUSTER_KUBECONFIG=${MGMT_CLUSTER}/${MGMT_CLUSTER}-eks-a-cluster.kubeconfig
 BACKUP_DIRECTORY=backup-mgmt
 
+# Create the backup directory
+mkdir -p ${BACKUP_DIRECTORY}
+
 # Substitute the EKS Anywhere release version with whatever CLI version you are using
 EKSA_RELEASE_VERSION=v0.23.0
 BUNDLE_MANIFEST_URL=$(curl -s https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$EKSA_RELEASE_VERSION\").bundleManifestUrl")
