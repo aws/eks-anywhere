@@ -26,7 +26,7 @@ Create a hardware configuration file (`hardware.csv`) as described in [Prepare h
 
 #### 3. Launch the cluster creation
 
-Run the `eksctl anywhere cluster create` command, providing the cluster config and hardware CSV files.
+Run the `eksctl anywhere create cluster` command, providing the cluster config and hardware CSV files.
 To see details on the cluster creation process, increase verbosity (`-v=9` provides maximum verbosity).
 
 #### 4. Create bootstrap cluster and provision hardware
