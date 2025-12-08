@@ -143,19 +143,6 @@ func kubernetesToRuntimeObjects(objs []kubernetes.Object) []runtime.Object {
 	return runtimeObjs
 }
 
-func (p *SnowProvider) generateCAPISpec(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
-	kubeconfigClient := p.kubeUnAuthClient.KubeconfigClient(cluster.KubeconfigFile)
-	return CAPIObjects(ctx, p.log, clusterSpec, kubeconfigClient)
-}
-
-func (p *SnowProvider) GenerateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
-	return p.generateCAPISpec(ctx, cluster, clusterSpec)
-}
-
-func (p *SnowProvider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, _ *types.Cluster, _ *cluster.Spec, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
-	return p.generateCAPISpec(ctx, bootstrapCluster, clusterSpec)
-}
-
 // PreCAPIInstallOnBootstrap runs the steps that are provider specific before CAPI is installed on the bootstrap cluster.
 func (p *SnowProvider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	return p.UpdateSecrets(ctx, cluster, clusterSpec)
@@ -302,45 +289,6 @@ func namespaceOrDefault(obj client.Object) string {
 	}
 
 	return ns
-}
-
-// UpgradeNeeded compares the new snow version bundle and objects with the existing ones in the cluster and decides whether
-// to trigger a cluster upgrade or not.
-// TODO: revert the change once cluster.BuildSpec is used in cluster_manager to replace the deprecated cluster.BuildSpecForCluster
-func (p *SnowProvider) UpgradeNeeded(ctx context.Context, newSpec, oldSpec *cluster.Spec, c *types.Cluster) (bool, error) {
-	oldVersionBundle := oldSpec.RootVersionsBundle()
-	newVersionsBundle := newSpec.RootVersionsBundle()
-	if !bundleImagesEqual(newVersionsBundle.Snow, oldVersionBundle.Snow) {
-		return true, nil
-	}
-
-	datacenterChanged, err := p.datacenterChanged(ctx, c, newSpec)
-	if err != nil {
-		return false, err
-	}
-	if datacenterChanged {
-		return true, nil
-	}
-
-	return p.machineConfigsChanged(ctx, c, newSpec)
-}
-
-func (p *SnowProvider) DeleteResources(ctx context.Context, clusterSpec *cluster.Spec) error {
-	client := p.kubeUnAuthClient.KubeconfigClient(clusterSpec.ManagementCluster.KubeconfigFile)
-
-	for _, mc := range clusterSpec.SnowMachineConfigs {
-		mc.Namespace = namespaceOrDefault(mc)
-		if err := client.Delete(ctx, mc); err != nil && !apierrors.IsNotFound(err) {
-			return err
-		}
-	}
-
-	clusterSpec.SnowDatacenter.Namespace = namespaceOrDefault(clusterSpec.SnowDatacenter)
-	if err := client.Delete(ctx, clusterSpec.SnowDatacenter); err != nil && !apierrors.IsNotFound(err) {
-		return fmt.Errorf("deleting snow datacenter: %v", err)
-	}
-
-	return nil
 }
 
 func (p *SnowProvider) PostClusterDeleteValidate(_ context.Context, _ *types.Cluster) error {
