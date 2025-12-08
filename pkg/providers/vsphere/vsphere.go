@@ -6,7 +6,6 @@ import (
 	_ "embed"
 	"fmt"
 	"os"
-	"reflect"
 	"text/template"
 	"time"
 
@@ -229,26 +228,6 @@ func (p *vsphereProvider) UpdateKubeConfig(_ *[]byte, _ string) error {
 	return nil
 }
 
-func (p *vsphereProvider) machineConfigsSpecChanged(ctx context.Context, cc *v1alpha1.Cluster, cluster *types.Cluster, newClusterSpec *cluster.Spec) (bool, error) {
-	for _, oldMcRef := range cc.MachineConfigRefs() {
-		existingVmc, err := p.providerKubectlClient.GetEksaVSphereMachineConfig(ctx, oldMcRef.Name, cluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
-		if err != nil {
-			return false, err
-		}
-		csmc, ok := newClusterSpec.VSphereMachineConfigs[oldMcRef.Name]
-		if !ok {
-			logger.V(3).Info(fmt.Sprintf("Old machine config spec %s not found in the existing spec", oldMcRef.Name))
-			return true, nil
-		}
-		if !reflect.DeepEqual(existingVmc.Spec, csmc.Spec) {
-			logger.V(3).Info(fmt.Sprintf("New machine config spec %s is different from the existing spec", oldMcRef.Name))
-			return true, nil
-		}
-	}
-
-	return false, nil
-}
-
 func (p *vsphereProvider) BootstrapClusterOpts(spec *cluster.Spec) ([]bootstrapper.BootstrapClusterOption, error) {
 	return common.BootstrapClusterOpts(p.clusterConfig, spec.VSphereDatacenter.Spec.Server)
 }
@@ -285,20 +264,6 @@ func (p *vsphereProvider) generateSSHKeysIfNotSet(machineConfigs map[string]*v1a
 	}
 
 	return nil
-}
-
-func (p *vsphereProvider) DeleteResources(ctx context.Context, clusterSpec *cluster.Spec) error {
-	for _, mc := range clusterSpec.VSphereMachineConfigs {
-		if err := p.providerKubectlClient.DeleteEksaMachineConfig(ctx, eksaVSphereMachineResourceType, mc.Name, clusterSpec.ManagementCluster.KubeconfigFile, mc.Namespace); err != nil {
-			return err
-		}
-	}
-	return p.providerKubectlClient.DeleteEksaDatacenterConfig(ctx,
-		eksaVSphereDatacenterResourceType,
-		clusterSpec.VSphereDatacenter.Name,
-		clusterSpec.ManagementCluster.KubeconfigFile,
-		clusterSpec.VSphereDatacenter.Namespace,
-	)
 }
 
 func (p *vsphereProvider) PostClusterDeleteValidate(_ context.Context, _ *types.Cluster) error {
@@ -746,241 +711,6 @@ func (p *vsphereProvider) SetupAndValidateDeleteCluster(ctx context.Context, _ *
 	return nil
 }
 
-func NeedsNewControlPlaneTemplate(oldSpec, newSpec *cluster.Spec, oldVdc, newVdc *v1alpha1.VSphereDatacenterConfig, oldVmc, newVmc *v1alpha1.VSphereMachineConfig) bool {
-	// Another option is to generate MachineTemplates based on the old and new eksa spec,
-	// remove the name field and compare them with DeepEqual
-	// We plan to approach this way since it's more flexible to add/remove fields and test out for validation
-	if oldSpec.Cluster.Spec.KubernetesVersion != newSpec.Cluster.Spec.KubernetesVersion {
-		return true
-	}
-	if oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number {
-		return true
-	}
-	return AnyImmutableFieldChanged(oldVdc, newVdc, oldVmc, newVmc)
-}
-
-// NeedsNewWorkloadTemplate determines if a new workload template is needed.
-func NeedsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec, oldVdc, newVdc *v1alpha1.VSphereDatacenterConfig, oldVmc, newVmc *v1alpha1.VSphereMachineConfig, oldWorker, newWorker v1alpha1.WorkerNodeGroupConfiguration) bool {
-	if oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number {
-		return true
-	}
-	if !v1alpha1.TaintsSliceEqual(oldWorker.Taints, newWorker.Taints) ||
-		!v1alpha1.MapEqual(oldWorker.Labels, newWorker.Labels) ||
-		!v1alpha1.WorkerNodeGroupConfigurationKubeVersionUnchanged(&oldWorker, &newWorker, oldSpec.Cluster, newSpec.Cluster) {
-		return true
-	}
-	return AnyImmutableFieldChanged(oldVdc, newVdc, oldVmc, newVmc)
-}
-
-func NeedsNewKubeadmConfigTemplate(newWorkerNodeGroup, oldWorkerNodeGroup *v1alpha1.WorkerNodeGroupConfiguration, oldWorkerNodeVmc, newWorkerNodeVmc *v1alpha1.VSphereMachineConfig) bool {
-	return !v1alpha1.TaintsSliceEqual(newWorkerNodeGroup.Taints, oldWorkerNodeGroup.Taints) || !v1alpha1.MapEqual(newWorkerNodeGroup.Labels, oldWorkerNodeGroup.Labels) ||
-		!v1alpha1.UsersSliceEqual(oldWorkerNodeVmc.Spec.Users, newWorkerNodeVmc.Spec.Users)
-}
-
-func NeedsNewEtcdTemplate(oldSpec, newSpec *cluster.Spec, oldVdc, newVdc *v1alpha1.VSphereDatacenterConfig, oldVmc, newVmc *v1alpha1.VSphereMachineConfig) bool {
-	if oldSpec.Cluster.Spec.KubernetesVersion != newSpec.Cluster.Spec.KubernetesVersion {
-		return true
-	}
-	if oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number {
-		return true
-	}
-	return AnyImmutableFieldChanged(oldVdc, newVdc, oldVmc, newVmc)
-}
-
-func AnyImmutableFieldChanged(oldVdc, newVdc *v1alpha1.VSphereDatacenterConfig, oldVmc, newVmc *v1alpha1.VSphereMachineConfig) bool {
-	if oldVmc.Spec.NumCPUs != newVmc.Spec.NumCPUs {
-		return true
-	}
-	if oldVmc.Spec.MemoryMiB != newVmc.Spec.MemoryMiB {
-		return true
-	}
-	if oldVmc.Spec.DiskGiB != newVmc.Spec.DiskGiB {
-		return true
-	}
-	if oldVmc.Spec.Datastore != newVmc.Spec.Datastore {
-		return true
-	}
-	if oldVmc.Spec.Folder != newVmc.Spec.Folder {
-		return true
-	}
-	if oldVdc.Spec.Network != newVdc.Spec.Network {
-		return true
-	}
-	if oldVmc.Spec.ResourcePool != newVmc.Spec.ResourcePool {
-		return true
-	}
-	if oldVdc.Spec.Thumbprint != newVdc.Spec.Thumbprint {
-		return true
-	}
-	if oldVmc.Spec.Template != newVmc.Spec.Template {
-		return true
-	}
-	return false
-}
-
-func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currentSpec, newClusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
-	clusterName := newClusterSpec.Cluster.Name
-	var controlPlaneTemplateName, workloadTemplateName, kubeadmconfigTemplateName, etcdTemplateName string
-	var needsNewEtcdTemplate bool
-
-	c, err := p.providerKubectlClient.GetEksaCluster(ctx, workloadCluster, newClusterSpec.Cluster.Name)
-	if err != nil {
-		return nil, nil, err
-	}
-	vdc, err := p.providerKubectlClient.GetEksaVSphereDatacenterConfig(ctx, newClusterSpec.VSphereDatacenter.Name, workloadCluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
-	if err != nil {
-		return nil, nil, err
-	}
-	controlPlaneMachineConfig := newClusterSpec.VSphereMachineConfigs[newClusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
-	controlPlaneVmc, err := p.providerKubectlClient.GetEksaVSphereMachineConfig(ctx, c.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, workloadCluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
-	if err != nil {
-		return nil, nil, err
-	}
-	needsNewControlPlaneTemplate := NeedsNewControlPlaneTemplate(currentSpec, newClusterSpec, vdc, newClusterSpec.VSphereDatacenter, controlPlaneVmc, controlPlaneMachineConfig)
-	if !needsNewControlPlaneTemplate {
-		cp, err := p.providerKubectlClient.GetKubeadmControlPlane(ctx, workloadCluster, c.Name, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
-		if err != nil {
-			return nil, nil, err
-		}
-		controlPlaneTemplateName = cp.Spec.MachineTemplate.InfrastructureRef.Name
-	} else {
-		controlPlaneTemplateName = common.CPMachineTemplateName(clusterName, p.templateBuilder.now)
-	}
-
-	previousWorkerNodeGroupConfigs := cluster.BuildMapForWorkerNodeGroupsByName(currentSpec.Cluster.Spec.WorkerNodeGroupConfigurations)
-
-	workloadTemplateNames := make(map[string]string, len(newClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
-	kubeadmconfigTemplateNames := make(map[string]string, len(newClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
-	for _, workerNodeGroupConfiguration := range newClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
-
-		oldWorkerNodeVmc, newWorkerNodeVmc, err := p.getWorkerNodeMachineConfigs(ctx, workloadCluster, newClusterSpec, workerNodeGroupConfiguration, previousWorkerNodeGroupConfigs)
-		if err != nil {
-			return nil, nil, err
-		}
-		needsNewWorkloadTemplate, err := p.needsNewMachineTemplate(currentSpec, newClusterSpec, workerNodeGroupConfiguration, vdc, previousWorkerNodeGroupConfigs, oldWorkerNodeVmc, newWorkerNodeVmc)
-		if err != nil {
-			return nil, nil, err
-		}
-		needsNewKubeadmConfigTemplate, err := p.needsNewKubeadmConfigTemplate(workerNodeGroupConfiguration, previousWorkerNodeGroupConfigs, oldWorkerNodeVmc, newWorkerNodeVmc)
-		if err != nil {
-			return nil, nil, err
-		}
-		if !needsNewKubeadmConfigTemplate {
-			mdName := machineDeploymentName(newClusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name)
-			md, err := p.providerKubectlClient.GetMachineDeployment(ctx, mdName, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
-			if err != nil {
-				return nil, nil, err
-			}
-			kubeadmconfigTemplateName = md.Spec.Template.Spec.Bootstrap.ConfigRef.Name
-			kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name] = kubeadmconfigTemplateName
-		} else {
-			kubeadmconfigTemplateName = common.KubeadmConfigTemplateName(clusterName, workerNodeGroupConfiguration.Name, p.templateBuilder.now)
-			kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name] = kubeadmconfigTemplateName
-		}
-
-		if !needsNewWorkloadTemplate {
-			mdName := machineDeploymentName(newClusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name)
-			md, err := p.providerKubectlClient.GetMachineDeployment(ctx, mdName, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
-			if err != nil {
-				return nil, nil, err
-			}
-			workloadTemplateName = md.Spec.Template.Spec.InfrastructureRef.Name
-			workloadTemplateNames[workerNodeGroupConfiguration.Name] = workloadTemplateName
-		} else {
-			workloadTemplateName = common.WorkerMachineTemplateName(clusterName, workerNodeGroupConfiguration.Name, p.templateBuilder.now)
-			workloadTemplateNames[workerNodeGroupConfiguration.Name] = workloadTemplateName
-		}
-	}
-
-	if newClusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
-		etcdMachineConfig := newClusterSpec.VSphereMachineConfigs[newClusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name]
-		etcdMachineVmc, err := p.providerKubectlClient.GetEksaVSphereMachineConfig(ctx, c.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, workloadCluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
-		if err != nil {
-			return nil, nil, err
-		}
-		needsNewEtcdTemplate = NeedsNewEtcdTemplate(currentSpec, newClusterSpec, vdc, newClusterSpec.VSphereDatacenter, etcdMachineVmc, etcdMachineConfig)
-		if !needsNewEtcdTemplate {
-			etcdadmCluster, err := p.providerKubectlClient.GetEtcdadmCluster(ctx, workloadCluster, clusterName, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
-			if err != nil {
-				return nil, nil, err
-			}
-			etcdTemplateName = etcdadmCluster.Spec.InfrastructureTemplate.Name
-		} else {
-			/* During a cluster upgrade, etcd machines need to be upgraded first, so that the etcd machines with new spec get created and can be used by controlplane machines
-			as etcd endpoints. KCP rollout should not start until then. As a temporary solution in the absence of static etcd endpoints, we annotate the etcd cluster as "upgrading",
-			so that KCP checks this annotation and does not proceed if etcd cluster is upgrading. The etcdadm controller removes this annotation once the etcd upgrade is complete.
-			*/
-			err = p.providerKubectlClient.UpdateAnnotation(ctx, "etcdadmcluster", fmt.Sprintf("%s-etcd", clusterName),
-				map[string]string{etcdv1.UpgradeInProgressAnnotation: "true"},
-				executables.WithCluster(bootstrapCluster),
-				executables.WithNamespace(constants.EksaSystemNamespace))
-			if err != nil {
-				return nil, nil, err
-			}
-			etcdTemplateName = common.EtcdMachineTemplateName(clusterName, p.templateBuilder.now)
-		}
-	}
-
-	cpOpt := func(values map[string]interface{}) {
-		values["controlPlaneTemplateName"] = controlPlaneTemplateName
-		values["etcdTemplateName"] = etcdTemplateName
-	}
-	controlPlaneSpec, err = p.templateBuilder.GenerateCAPISpecControlPlane(newClusterSpec, cpOpt)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(newClusterSpec, workloadTemplateNames, kubeadmconfigTemplateNames)
-	if err != nil {
-		return nil, nil, err
-	}
-	return controlPlaneSpec, workersSpec, nil
-}
-
-func (p *vsphereProvider) generateCAPISpecForCreate(ctx context.Context, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
-	clusterName := clusterSpec.Cluster.Name
-
-	cpOpt := func(values map[string]interface{}) {
-		values["controlPlaneTemplateName"] = common.CPMachineTemplateName(clusterName, p.templateBuilder.now)
-		values["etcdTemplateName"] = common.EtcdMachineTemplateName(clusterName, p.templateBuilder.now)
-	}
-	controlPlaneSpec, err = p.templateBuilder.GenerateCAPISpecControlPlane(clusterSpec, cpOpt)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// TODO(g-gaston): update this to use the new method CAPIWorkersSpecWithInitialNames.
-	// That implies moving to monotonically increasing names instead of based on timestamp.
-	// Upgrades should also be moved to that naming scheme for consistency. That requires bigger changes.
-	workloadTemplateNames := make(map[string]string, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
-	kubeadmconfigTemplateNames := make(map[string]string, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
-	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
-		workloadTemplateNames[workerNodeGroupConfiguration.Name] = common.WorkerMachineTemplateName(clusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name, p.templateBuilder.now)
-		kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name] = common.KubeadmConfigTemplateName(clusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name, p.templateBuilder.now)
-	}
-	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, workloadTemplateNames, kubeadmconfigTemplateNames)
-	if err != nil {
-		return nil, nil, err
-	}
-	return controlPlaneSpec, workersSpec, nil
-}
-
-func (p *vsphereProvider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currentSpec, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
-	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForUpgrade(ctx, bootstrapCluster, workloadCluster, currentSpec, clusterSpec)
-	if err != nil {
-		return nil, nil, fmt.Errorf("generating cluster api spec contents: %v", err)
-	}
-	return controlPlaneSpec, workersSpec, nil
-}
-
-func (p *vsphereProvider) GenerateCAPISpecForCreate(ctx context.Context, _ *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
-	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForCreate(ctx, clusterSpec)
-	if err != nil {
-		return nil, nil, fmt.Errorf("generating cluster api spec contents: %v", err)
-	}
-	return controlPlaneSpec, workersSpec, nil
-}
-
 func (p *vsphereProvider) createSecret(ctx context.Context, cluster *types.Cluster, contents *bytes.Buffer) error {
 	t, err := template.New("tmpl").Funcs(sprig.TxtFuncMap()).Parse(defaultSecretObject)
 	if err != nil {
@@ -1144,34 +874,6 @@ func (p *vsphereProvider) ValidateNewSpec(ctx context.Context, cluster *types.Cl
 	return nil
 }
 
-func (p *vsphereProvider) getWorkerNodeMachineConfigs(ctx context.Context, workloadCluster *types.Cluster, newClusterSpec *cluster.Spec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, prevWorkerNodeGroupConfigs map[string]v1alpha1.WorkerNodeGroupConfiguration) (*v1alpha1.VSphereMachineConfig, *v1alpha1.VSphereMachineConfig, error) {
-	if oldWorkerNodeGroup, ok := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok {
-		newWorkerMachineConfig := newClusterSpec.VSphereMachineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name]
-		oldWorkerMachineConfig, err := p.providerKubectlClient.GetEksaVSphereMachineConfig(ctx, oldWorkerNodeGroup.MachineGroupRef.Name, workloadCluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
-		if err != nil {
-			return nil, newWorkerMachineConfig, err
-		}
-		return oldWorkerMachineConfig, newWorkerMachineConfig, nil
-	}
-	return nil, nil, nil
-}
-
-func (p *vsphereProvider) needsNewMachineTemplate(currentSpec, newClusterSpec *cluster.Spec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, vdc *v1alpha1.VSphereDatacenterConfig, prevWorkerNodeGroupConfigs map[string]v1alpha1.WorkerNodeGroupConfiguration, oldWorkerMachineConfig, newWorkerMachineConfig *v1alpha1.VSphereMachineConfig) (bool, error) {
-	if prevWorkerNode, ok := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok {
-		needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(currentSpec, newClusterSpec, vdc, newClusterSpec.VSphereDatacenter, oldWorkerMachineConfig, newWorkerMachineConfig, prevWorkerNode, workerNodeGroupConfiguration)
-		return needsNewWorkloadTemplate, nil
-	}
-	return true, nil
-}
-
-func (p *vsphereProvider) needsNewKubeadmConfigTemplate(workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, prevWorkerNodeGroupConfigs map[string]v1alpha1.WorkerNodeGroupConfiguration, oldWorkerNodeVmc, newWorkerNodeVmc *v1alpha1.VSphereMachineConfig) (bool, error) {
-	if _, ok := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok {
-		existingWorkerNodeGroupConfig := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]
-		return NeedsNewKubeadmConfigTemplate(&workerNodeGroupConfiguration, &existingWorkerNodeGroupConfig, oldWorkerNodeVmc, newWorkerNodeVmc), nil
-	}
-	return true, nil
-}
-
 func (p *vsphereProvider) validateMachineConfigImmutability(ctx context.Context, cluster *types.Cluster, newConfig *v1alpha1.VSphereMachineConfig, clusterSpec *cluster.Spec) error {
 	prevMachineConfig, err := p.providerKubectlClient.GetEksaVSphereMachineConfig(ctx, newConfig.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace)
 	if err != nil {
@@ -1249,42 +951,12 @@ func cpiResourceSetName(clusterSpec *cluster.Spec) string {
 	return fmt.Sprintf("%s-cpi", clusterSpec.Cluster.Name)
 }
 
-func (p *vsphereProvider) UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec, c *types.Cluster) (bool, error) {
-	currentVersionsBundle := currentSpec.RootVersionsBundle()
-	newVersionsBundle := newSpec.RootVersionsBundle()
-	newV, oldV := newVersionsBundle.VSphere, currentVersionsBundle.VSphere
-
-	if newV.Manager.ImageDigest != oldV.Manager.ImageDigest ||
-		newV.KubeVip.ImageDigest != oldV.KubeVip.ImageDigest {
-		return true, nil
-	}
-	cc := currentSpec.Cluster
-	existingVdc, err := p.providerKubectlClient.GetEksaVSphereDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, c.KubeconfigFile, newSpec.Cluster.Namespace)
-	if err != nil {
-		return false, err
-	}
-	if !reflect.DeepEqual(existingVdc.Spec, newSpec.VSphereDatacenter.Spec) {
-		logger.V(3).Info("New provider spec is different from the new spec")
-		return true, nil
-	}
-
-	machineConfigsSpecChanged, err := p.machineConfigsSpecChanged(ctx, cc, c, newSpec)
-	if err != nil {
-		return false, err
-	}
-	return machineConfigsSpecChanged, nil
-}
-
 func machineRefSliceToMap(machineRefs []v1alpha1.Ref) map[string]v1alpha1.Ref {
 	refMap := make(map[string]v1alpha1.Ref, len(machineRefs))
 	for _, ref := range machineRefs {
 		refMap[ref.Name] = ref
 	}
 	return refMap
-}
-
-func machineDeploymentName(clusterName, nodeGroupName string) string {
-	return fmt.Sprintf("%s-%s", clusterName, nodeGroupName)
 }
 
 func (p *vsphereProvider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {

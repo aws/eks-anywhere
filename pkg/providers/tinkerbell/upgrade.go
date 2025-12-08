@@ -23,39 +23,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/utils/yaml"
 )
 
-func needsNewControlPlaneTemplate(oldSpec, newSpec *cluster.Spec) bool {
-	// Another option is to generate MachineTemplates based on the old and new eksa spec,
-	// remove the name field and compare them with DeepEqual
-	// We plan to approach this way since it's more flexible to add/remove fields and test out for validation
-	if oldSpec.Cluster.Spec.KubernetesVersion != newSpec.Cluster.Spec.KubernetesVersion {
-		return true
-	}
-
-	if oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number {
-		return true
-	}
-
-	return false
-}
-
-func needsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec, oldWorker, newWorker v1alpha1.WorkerNodeGroupConfiguration) bool {
-	if oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number {
-		return true
-	}
-
-	if !v1alpha1.TaintsSliceEqual(oldWorker.Taints, newWorker.Taints) ||
-		!v1alpha1.MapEqual(oldWorker.Labels, newWorker.Labels) ||
-		!v1alpha1.WorkerNodeGroupConfigurationKubeVersionUnchanged(&oldWorker, &newWorker, oldSpec.Cluster, newSpec.Cluster) {
-		return true
-	}
-
-	return false
-}
-
-func needsNewKubeadmConfigTemplate(newWorkerNodeGroup, oldWorkerNodeGroup *v1alpha1.WorkerNodeGroupConfiguration) bool {
-	return !v1alpha1.TaintsSliceEqual(newWorkerNodeGroup.Taints, oldWorkerNodeGroup.Taints) || !v1alpha1.MapEqual(newWorkerNodeGroup.Labels, oldWorkerNodeGroup.Labels)
-}
-
 func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, currentClusterSpec *cluster.Spec) error {
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
 		return errExternalEtcdUnsupported
@@ -412,11 +379,6 @@ func validateRefsUnchanged(current, desired []v1alpha1.WorkerNodeGroupConfigurat
 	}
 
 	return kerrors.NewAggregate(errs)
-}
-
-func (p *Provider) UpgradeNeeded(_ context.Context, _, _ *cluster.Spec, _ *types.Cluster) (bool, error) {
-	// TODO: Figure out if something is needed here
-	return false, nil
 }
 
 func (p *Provider) hardwareCSVIsProvided() bool {
