@@ -25,6 +25,7 @@ spec:
           kind: KubeadmConfigTemplate
           name: test-md-0-template-1234567890000
       clusterName: test
+      nodeDeletionTimeout: 30s
       infrastructureRef:
         apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
         kind: TinkerbellMachineTemplate

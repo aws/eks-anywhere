@@ -306,6 +306,7 @@ spec:
       kind: TinkerbellMachineTemplate
       name: single-node-control-plane-template-1234567890000
       namespace: eksa-system
+    nodeDeletionTimeout: 30s
   replicas: 1
   rolloutStrategy:
     type: InPlace

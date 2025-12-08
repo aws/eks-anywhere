@@ -31,6 +31,7 @@ spec:
         apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
         kind: TinkerbellMachineTemplate
         name: test-md-0-1234567890000
+      nodeDeletionTimeout: 30s
       version: v1.21.2-eks-1-21-4
 ---
 apiVersion: bootstrap.cluster.x-k8s.io/v1beta1

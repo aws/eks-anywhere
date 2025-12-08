@@ -1386,6 +1386,7 @@ func tinkerbellCP(clusterName string, opts ...cpOpt) *tinkerbell.ControlPlane {
 					},
 					Version: "v1.19.8",
 					MachineTemplate: controlplanev1.KubeadmControlPlaneMachineTemplate{
+						NodeDeletionTimeout: &metav1.Duration{Duration: 30 * time.Second},
 						InfrastructureRef: corev1.ObjectReference{
 							Kind:       "TinkerbellMachineTemplate",
 							Name:       "workload-cluster-control-plane-1",
@@ -1814,6 +1815,7 @@ func tinkWorker(clusterName string, opts ...workerOpt) *tinkerbell.Workers {
 										APIVersion: "bootstrap.cluster.x-k8s.io/v1beta1",
 									},
 								},
+								NodeDeletionTimeout: &metav1.Duration{Duration: 30 * time.Second},
 								InfrastructureRef: corev1.ObjectReference{
 									Kind:       "TinkerbellMachineTemplate",
 									Name:       clusterName + "-md-0-1",
