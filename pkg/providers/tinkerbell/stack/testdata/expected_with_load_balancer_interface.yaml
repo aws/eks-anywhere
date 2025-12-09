@@ -57,6 +57,7 @@ stack:
     enabled: false
     image: public.ecr.aws/eks-anywhere/tink-relay:latest
     initImage: public.ecr.aws/eks-anywhere/tink-relay-init:latest
+    sourceInterface: test-interface
   service:
     enabled: false
   singleNodeClusterConfig:
