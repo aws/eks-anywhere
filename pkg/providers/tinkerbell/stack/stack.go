@@ -670,6 +670,7 @@ func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle
 
 	if loadBalancerInterface != "" {
 		valuesMap[stack].(map[string]interface{})[kubevip].(map[string]interface{})[kubevipInterface] = loadBalancerInterface
+		valuesMap[stack].(map[string]interface{})[relay].(map[string]interface{})["sourceInterface"] = loadBalancerInterface
 	}
 
 	return valuesMap
