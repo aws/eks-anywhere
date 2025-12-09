@@ -524,8 +524,8 @@ func TestClusterValidateUpdateClusterNetworkNodesImmutable(t *testing.T) {
 func TestClusterValidateUpdateProxyConfigurationEqualOrder(t *testing.T) {
 	cOld := baseCluster()
 	cOld.Spec.ProxyConfiguration = &v1alpha1.ProxyConfiguration{
-		HttpProxy:  "http://test.com:1",
-		HttpsProxy: "https://test.com:1",
+		HttpProxy:  "http://0.0.0.0:1",
+		HttpsProxy: "https://0.0.0.0:1",
 		NoProxy: []string{
 			"noproxy1",
 			"noproxy2",
@@ -534,8 +534,8 @@ func TestClusterValidateUpdateProxyConfigurationEqualOrder(t *testing.T) {
 
 	c := cOld.DeepCopy()
 	c.Spec.ProxyConfiguration = &v1alpha1.ProxyConfiguration{
-		HttpProxy:  "http://test.com:1",
-		HttpsProxy: "https://test.com:1",
+		HttpProxy:  "http://0.0.0.0:1",
+		HttpsProxy: "https://0.0.0.0:1",
 		NoProxy: []string{
 			"noproxy2",
 			"noproxy1",
