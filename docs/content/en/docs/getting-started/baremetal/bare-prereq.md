@@ -45,7 +45,7 @@ When upgrading without an extra machine, keep in mind that your control plane an
 
 Each machine should include the following features:
 
-* Network Interface Cards: at least one NIC is required. It must be capable of network booting.
+* Network Interface Cards: at least one NIC is required. For network/PXE boot mode, it must be capable of network booting. See [Boot Modes]({{< relref "customize/bare-metal-boot-modes" >}}) for boot configuration options.
 
 * BMC integration (recommended): an IPMI or Redfish implementation (such a Dell iDRAC, RedFish-compatible, legacy or HP iLO) on the computer's motherboard or on a separate expansion card. This feature is used to allow remote management of the machine, such as turning the machine on and off.
 
@@ -53,9 +53,11 @@ Each machine should include the following features:
 
 Here are other network requirements:
 
-* All EKS Anywhere machines, including the Admin, control plane and worker machines, must be on the same layer 2 network and have network connectivity to the BMC (IPMI, Redfish, and so on).
+* **For network/PXE boot mode** (default): All EKS Anywhere machines, including the Admin, control plane and worker machines, must be on the same layer 2 network and have network connectivity to the BMC (IPMI, Redfish, and so on).
 
-* You must be able to run DHCP on the control plane/worker machine network.
+  **For ISO boot mode**: Layer 2 network connectivity is not required. Machines only need Layer 3 (routable) connectivity to the management cluster and BMC access for virtual media mounting. See [Boot Modes]({{< relref "customize/bare-metal-boot-modes" >}}) for details on boot mode options.
+
+* **For network/PXE boot mode**: You must be able to run DHCP on the control plane/worker machine network. DHCP is not required for ISO boot mode.
 
 > **_NOTE:_** If you have another DHCP service running on the network, you need to prevent it from interfering with the EKS Anywhere DHCP service. You can do that by configuring the other DHCP service to explicitly block all MAC addresses and exclude all IP addresses that you plan to use with your EKS Anywhere clusters.
 
@@ -77,13 +79,32 @@ Here are other network requirements:
 
   * `sts.amazonaws.com`: only if AWS IAM Authenticator is enabled
 
-* Two IP addresses routable from the cluster, but excluded from DHCP offering. One IP address is to be used as the Control Plane Endpoint IP. The other is for the Tinkerbell IP address on the target cluster. Below are some suggestions to ensure that these IP addresses are never handed out by your DHCP server. You may need to contact your network engineer to manage these addresses.
+* Two IP addresses routable from the cluster, but excluded from DHCP offering:
+
+  {{% alert title="Understanding the Two Required IPs" color="primary" %}}
+  **Control Plane Endpoint IP** (`controlPlaneConfiguration.endpoint.host`):
+  - Virtual IP for the Kubernetes API server
+  - Managed by kube-vip on control plane nodes
+  - Used by kubectl and all Kubernetes clients
+  - Must be reachable from admin machine and all cluster nodes
+
+  **Tinkerbell IP** (`tinkerbellIP`):
+  - Virtual IP for Tinkerbell stack services (Smee, Tink-server, Hegel)
+  - Used during node provisioning and lifecycle operations
+  - Must be reachable from all machines being provisioned
+  - On workload clusters, should be the same as the management cluster's Tinkerbell IP
+  
+  **Both IPs must be**:
+  - Outside the DHCP range
+  - Routable from the cluster subnet
+  - Not assigned to any physical interface
+  {{% /alert %}}
+
+  Below are some suggestions to ensure that these IP addresses are never handed out by your DHCP server. You may need to contact your network engineer to manage these addresses:
 
   * Pick IP addresses reachable from the cluster subnet that are excluded from the DHCP range or
 
   * Create an IP reservation for these addresses on your DHCP server. This is usually accomplished by adding a dummy mapping of this IP address to a non-existent mac address.
-
-> **_NOTE:_** When you set up your cluster configuration YAML file, the endpoint and Tinkerbell addresses are set in the `controlPlaneConfiguration.endpoint.host` and `tinkerbellIP` fields, respectively.
 
 * Ports must be open to the Admin machine and cluster machines as described in the [Cluster Networking documentation]({{< relref "../ports" >}}).
 
