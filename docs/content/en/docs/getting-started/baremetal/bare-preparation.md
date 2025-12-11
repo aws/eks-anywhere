@@ -25,12 +25,30 @@ Once the hardware is in place, you need to:
 
 ## Prepare hardware inventory
 Create a CSV file to provide information about all physical machines that you are ready to add to your target Bare Metal cluster.
-This file will be used:
 
-* When you generate the hardware file to be included in the cluster creation process described in the Create Bare Metal production cluster Getting Started guide.
-* To provide information that is passed to each machine from the Tinkerbell DHCP server when the machine is initially network booted.
+{{% alert title="Hardware CSV vs kubectl: When to Use Each" color="primary" %}}
+**Hardware CSV** creates the initial hardware catalog (Hardware objects, BMC Machines, credentials).
 
-**NOTE**:While using kubectl, GitOps and Terraform for workload cluster creation, please make sure to refer [this]({{< relref "./baremetal-getstarted/#create-separate-workload-clusters" >}}) section.
+**Use hardware CSV for**:
+- Initial cluster creation
+- Adding new hardware when insufficient hardware available for scaling/upgrades
+
+**Use kubectl for hardware management**:
+- Adding hardware after initial creation: `eksctl anywhere generate hardware -z hardware.csv > hardware.yaml && kubectl apply -f hardware.yaml`
+
+**For cluster operations (scaling, upgrades)**:
+- Update `count` in cluster specification
+- System automatically selects from available hardware (those without `ownerName` label)
+- If insufficient hardware: Add more via hardware CSV with `--hardware-csv` flag or kubectl apply, then perform operation
+
+**Do NOT use CSV for**:
+- Removing hardware from cluster (use CAPI machine delete annotations)
+- Trying to force specific hardware selection during operations (system auto-selects based on availability)
+
+See [Scale Bare Metal Cluster]({{< relref "../../clustermgmt/cluster-scale/baremetal-scale" >}}) for operational examples.
+{{% /alert %}}
+
+**NOTE**: While using kubectl, GitOps and Terraform for workload cluster creation, please make sure to refer to [this section]({{< relref "./baremetal-getstarted/#create-separate-workload-clusters" >}}).
 
 The following is an example of an EKS Anywhere Bare Metal hardware CSV file:
 

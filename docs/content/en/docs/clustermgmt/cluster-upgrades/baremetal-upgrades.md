@@ -136,9 +136,9 @@ and then you will run the [upgrade cluster command]({{< relref "baremetal-upgrad
 
 
 #### Upgrade cluster command
-* **kubectl CLI**: The cluster lifecycle feature lets you use kubectl to talk to the Kubernetes API to upgrade a workload cluster. To use kubectl, run:
+* **kubectl CLI**: The cluster lifecycle feature lets you use kubectl to talk to the Kubernetes API to upgrade a workload cluster. kubectl can also be used for management cluster upgrades (Kubernetes version, scaling, configuration changes), except when upgrading the EKS Anywhere CLI version which requires `eksctl anywhere upgrade`. To use kubectl, run:
    ```bash
-   kubectl apply -f eksa-w01-cluster.yaml 
+   kubectl apply -f eksa-w01-cluster.yaml
   --kubeconfig mgmt/mgmt-eks-a-cluster.kubeconfig
    ```
  
