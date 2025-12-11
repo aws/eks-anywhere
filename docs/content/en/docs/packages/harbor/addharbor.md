@@ -25,6 +25,12 @@ Be sure to refer to the [troubleshooting guide]({{< relref "../troubleshoot" >}}
    export KUBECONFIG=<path to management cluster kubeconfig>
    ```
 
+1. Create the `harbor` namespace on the workload cluster (or management cluster if installing there)
+
+   ```bash
+   kubectl create namespace harbor
+   ```
+
 1. Generate the package configuration
    ```bash
    eksctl anywhere generate package harbor --cluster <cluster-name> > harbor.yaml
@@ -42,6 +48,7 @@ Be sure to refer to the [troubleshooting guide]({{< relref "../troubleshoot" >}}
       kubectl create secret tls harbor-tls-secret --cert=[path to certificate file] --key=[path to key file] -n eksa-packages
       ```
    * `secretKey` has to be set as a string of 16 characters for encryption.
+   * Harbor requires persistent storage by default. Ensure your cluster has a StorageClass configured (e.g., vSphere CSI driver for vSphere clusters). If no StorageClass is available, you can disable persistence for testing purposes by adding `persistence.enabled: false` to the config, but this is not recommended for production use.
    {{% /alert %}}
 
    TLS example with auto certificate generation
