@@ -401,13 +401,22 @@ func (pc *PackageControllerClient) waitForActiveBundle(ctx context.Context) erro
 					"clusterName", pc.clusterName)
 			}
 
-			found, _ := pc.kubectl.HasResource(timeoutCtx, "namespace", targetNs, pc.kubeConfig, "default")
+			// Check if eks-anywhere-packages Package is installed
+			pkg := &packagesv1.Package{}
+			err = pc.kubectl.GetObject(timeoutCtx, "package", "eks-anywhere-packages",
+				targetNs, pc.kubeConfig, pkg)
+			if err != nil && !apierrors.IsNotFound(err) {
+				done <- fmt.Errorf("getting eks-anywhere-packages package: %w", err)
+				return
+			}
 
-			if found {
-				logger.V(6).Info("found namespace", "namespace", targetNs)
+			if err == nil && pkg.Status.State == "installed" {
+				logger.V(6).Info("found eks-anywhere-packages package in installed state",
+					"namespace", targetNs)
 				readyCnt++
 			} else {
-				logger.V(6).Info("waiting for namespace", "namespace", targetNs)
+				logger.V(6).Info("waiting for eks-anywhere-packages package to be installed",
+					"namespace", targetNs)
 			}
 
 			if readyCnt == 2 {
@@ -422,10 +431,10 @@ func (pc *PackageControllerClient) waitForActiveBundle(ctx context.Context) erro
 
 	select {
 	case <-timeoutCtx.Done():
-		return fmt.Errorf("timed out finding an active package bundle / %s namespace for the current cluster: %v", targetNs, timeoutCtx.Err())
+		return fmt.Errorf("timed out finding an active package bundle and installed eks-anywhere-packages for the current cluster: %v", timeoutCtx.Err())
 	case err := <-done:
 		if err != nil {
-			return fmt.Errorf("couldn't find an active package bundle for the current cluster: %v", err)
+			return fmt.Errorf("couldn't find an active package bundle and installed eks-anywhere-packages for the current cluster: %v", err)
 		}
 
 		return nil
