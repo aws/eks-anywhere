@@ -41,6 +41,45 @@ description: >
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
 
+## [v0.24.2](https://github.com/aws/eks-anywhere/releases/tag/v0.24.2)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+|    Ubuntu 24.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.51.0 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+
+\* RHEL 8's kernel version (4.18) is not supported by kubeadm for Kubernetes versions 1.32 and above (see Kubernetes GitHub issue [#129462](https://github.com/kubernetes/kubernetes/issues/129462)). As a result, EKS Anywhere does not support using RHEL 8 as the node operating system for Kubernetes versions 1.32 and above.
+
+### Changed
+- EKS Distro:
+  - [`v1-34-eks-12`](https://distro.eks.amazonaws.com/releases/1-34/12/)
+  - [`v1-33-eks-21`](https://distro.eks.amazonaws.com/releases/1-33/21/)
+  - [`v1-32-eks-31`](https://distro.eks.amazonaws.com/releases/1-32/31/)
+  - [`v1-31-eks-38`](https://distro.eks.amazonaws.com/releases/1-31/38/)
+  - [`v1-30-eks-49`](https://distro.eks.amazonaws.com/releases/1-30/49/)
+  - [`v1-29-eks-56`](https://distro.eks.amazonaws.com/releases/1-29/56/)
+  - [`v1-28-eks-66`](https://distro.eks.amazonaws.com/releases/1-28/66/)
+- New EKS-Distro base images with CVE fixes for Amazon Linux 2 and Amazon Linux 2023
+- Cilium: `v1.17.8-0` to `v1.17.10-0`
+- Kube-vip: `v1.0.0` to `v1.0.2`
+- cloud-provider-nutanix: `v0.5.2` to `v0.5.5`
+- cloud-provider-vsphere 1-33: `v1.33.0` to `v1.33.1`
+- cloud-provider-vsphere 1-32: `v1.32.2` to `v1.32.3`
+- cluster-api-provider-aws-snow `v0.2.7` to `v0.2.8`
+- Cert-manager: `v1.18.2` to `v1.18.3`
+- cluster-api-provider-nutanix: `v1.6.1` to `v1.6.2`
+- Rufio: `55a6a8c` to `126069b950a57d571df90dfec7cd98e6d64692be`
+
+### Fixed
+- Update custom TinkerbellTemplateConfig to use new static IPAM logic ([#10340](https://github.com/aws/eks-anywhere/pull/10340))
+- Set DHCP relay sourceInterface from LoadBalancerInterface config ([#10424](https://github.com/aws/eks-anywhere/pull/10424))
+- Eliminate race condition in package ctlr installation ([#10433](https://github.com/aws/eks-anywhere/pull/10433))
+
 ## [v0.24.1](https://github.com/aws/eks-anywhere/releases/tag/v0.24.1)
 
 ### Supported OS version details
@@ -70,13 +109,10 @@ description: >
   - [`v1-30-eks-47`](https://distro.eks.amazonaws.com/releases/1-30/47/)
   - [`v1-29-eks-54`](https://distro.eks.amazonaws.com/releases/1-29/54/)
   - [`v1-28-eks-65`](https://distro.eks.amazonaws.com/releases/1-28/65/)
-
 - Troubleshoot: `v0.122.0` to `v0.123.12`
 
 ### Fixed
 - Fix Bottlerocket cert renewal: Add 30s sleep and duplicate container ([#10360](https://github.com/aws/eks-anywhere/pull/10360))
-
-
 
 ## [v0.24.0](https://github.com/aws/eks-anywhere/releases/tag/v0.24.0)
 
