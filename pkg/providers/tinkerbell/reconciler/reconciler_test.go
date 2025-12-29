@@ -1849,3 +1849,51 @@ func tinkWorker(clusterName string, opts ...workerOpt) *tinkerbell.Workers {
 	}
 	return w
 }
+
+func TestReconcilerValidateHardwareWorkerRollingUpdateMaxSurgeRespected(t *testing.T) {
+	tt := newReconcilerTest(t)
+
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tt.kcp)
+
+	// Create existing MachineDeployment with a DIFFERENT InfrastructureRef name
+	// to simulate a template change (e.g., from a previous version)
+	worker := tinkWorker(tt.cluster.Name, func(w *tinkerbell.Workers) {
+		w.Groups[0].MachineDeployment.Name = "workload-cluster-md-0"
+		w.Groups[0].MachineDeployment.Spec.Template.Spec.InfrastructureRef.Name = "workload-cluster-md-0-0"
+		w.Groups[0].ProviderMachineTemplate.Name = "workload-cluster-md-0-0"
+	})
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, worker.Groups[0].MachineDeployment)
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, worker.Groups[0].ProviderMachineTemplate)
+
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tinkHardware("hw1", "worker"))
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tinkHardware("hw-cp", "cp"))
+
+	tt.withFakeClient()
+
+	logger := test.NewNullLogger()
+	scope := tt.buildScope()
+
+	scope.ClusterSpec.Config.Cluster.Spec.WorkerNodeGroupConfigurations[0].UpgradeRolloutStrategy = &anywherev1.WorkerNodesUpgradeRolloutStrategy{
+		Type: anywherev1.RollingUpdateStrategyType,
+		RollingUpdate: &anywherev1.WorkerNodesRollingUpdateParams{
+			MaxSurge:       3,
+			MaxUnavailable: 0,
+		},
+	}
+
+	wngRef := scope.ClusterSpec.Config.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
+	scope.ClusterSpec.Config.TinkerbellMachineConfigs[wngRef].Spec.OSImageURL = "new-os-image"
+
+	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+
+	_, err = tt.reconciler().DetectOperation(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+
+	result, err := tt.reconciler().ValidateHardware(tt.ctx, logger, scope)
+
+	tt.Expect(err).ToNot(BeNil())
+	tt.Expect(result).To(Equal(controller.Result{}))
+	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("minimum hardware count not met for selector"))
+	tt.Expect(tt.cluster.Status.FailureReason).To(HaveValue(Equal(anywherev1.HardwareInvalidReason)))
+}
