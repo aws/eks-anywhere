@@ -161,7 +161,7 @@ So you have to add this user to groups with the required permissions, or assign 
 
 Three roles are needed to be able to create the EKS Anywhere cluster:
 
-1. **Create a global custom role**: For example, you could name this EKS Anywhere Global.
+1. **Create a global custom role**: For example, you could name this: EKSAGlobalRole.
    Define it for the user on the vCenter domain level and its children objects.
    Create this role with the following privileges:
    ```
