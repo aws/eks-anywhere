@@ -441,9 +441,9 @@ func (r *Reconciler) validateHardwareReqForMachineDeployments(ctx context.Contex
 			}
 		}
 		if currentMachineDeployment != nil && currentMachineDeployment.Spec.Template.Spec.InfrastructureRef.Name != wg.MachineDeployment.Spec.Template.Spec.InfrastructureRef.Name {
-			upgradeStrategy := wg.MachineDeployment.Spec.Strategy
-			if upgradeStrategy != nil && upgradeStrategy.Type == clusterv1.RollingUpdateMachineDeploymentStrategyType {
-				maxSurge = int(upgradeStrategy.RollingUpdate.MaxSurge.IntVal)
+			upgradeStrategy := workerNodeGroup.UpgradeRolloutStrategy
+			if upgradeStrategy != nil && upgradeStrategy.Type == anywherev1.RollingUpdateStrategyType {
+				maxSurge = upgradeStrategy.RollingUpdate.MaxSurge
 			}
 			if err := requirements.Add(tinkerbellClusterSpec.WorkerNodeGroupMachineConfig(workerNodeGroup).Spec.HardwareSelector, maxSurge); err != nil {
 				return nil, err
