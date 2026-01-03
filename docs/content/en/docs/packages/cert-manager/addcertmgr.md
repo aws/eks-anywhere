@@ -42,6 +42,18 @@ Be sure to refer to the [troubleshooting guide]({{< relref "../troubleshoot" >}}
       targetNamespace: <namespace-to-install-component>
     ```
 
+1. Create the target namespace on the workload cluster
+
+   If you specified a custom `targetNamespace` (anything other than the default), you must create that namespace on the workload cluster before installing the package. The target namespace is **not** automatically created.
+
+   ```bash
+   # Switch kubeconfig to workload cluster
+   kubectl create namespace <namespace-to-install-component> --kubeconfig <workload-cluster-kubeconfig>
+   ```
+
+   {{% alert title="Note" color="primary" %}}
+   If you are using the default `eksa-packages` namespace as your target namespace, you can skip this step as it already exists on the cluster.
+   {{% /alert %}}
 
 1. Install Cert-Manager
 
