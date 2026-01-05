@@ -453,7 +453,7 @@ func getPBCFail(t *testing.T) func(context.Context, string, string, string, stri
 	}
 }
 
-func getPackageSuccess(t *testing.T) func(context.Context, string, string, string, string, *packagesv1.Package) error {
+func getPackageSuccess(_ *testing.T) func(context.Context, string, string, string, string, *packagesv1.Package) error {
 	return func(_ context.Context, _, _, _, _ string, obj *packagesv1.Package) error {
 		pkg := &packagesv1.Package{
 			Status: packagesv1.PackageStatus{
@@ -465,7 +465,7 @@ func getPackageSuccess(t *testing.T) func(context.Context, string, string, strin
 	}
 }
 
-func getPackageNotInstalled(t *testing.T) func(context.Context, string, string, string, string, *packagesv1.Package) error {
+func getPackageNotInstalled(_ *testing.T) func(context.Context, string, string, string, string, *packagesv1.Package) error {
 	return func(_ context.Context, _, _, _, _ string, obj *packagesv1.Package) error {
 		pkg := &packagesv1.Package{
 			Status: packagesv1.PackageStatus{
@@ -477,8 +477,8 @@ func getPackageNotInstalled(t *testing.T) func(context.Context, string, string, 
 	}
 }
 
-func getPackageFail(t *testing.T) func(context.Context, string, string, string, string, *packagesv1.Package) error {
-	return func(_ context.Context, _, _, _, _ string, obj *packagesv1.Package) error {
+func getPackageFail(_ *testing.T) func(context.Context, string, string, string, string, *packagesv1.Package) error {
+	return func(_ context.Context, _, _, _, _ string, _ *packagesv1.Package) error {
 		return fmt.Errorf("test error getting package")
 	}
 }
@@ -895,9 +895,9 @@ func TestEnableActiveBundleWaitLoops(t *testing.T) {
 					return getPBCLoops(t, 3)(ctx, resourceType, name, namespace, kubeconfig, v)
 				case *packagesv1.Package:
 					// Package gradually becomes ready
-					static_calls := [3]int{0}
-					static_calls[0]++
-					if static_calls[0] <= 2 {
+					staticCalls := [3]int{0}
+					staticCalls[0]++
+					if staticCalls[0] <= 2 {
 						return getPackageNotInstalled(t)(ctx, resourceType, name, namespace, kubeconfig, v)
 					}
 					return getPackageSuccess(t)(ctx, resourceType, name, namespace, kubeconfig, v)

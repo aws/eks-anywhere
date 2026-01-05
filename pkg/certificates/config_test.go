@@ -130,6 +130,8 @@ func TestParseConfig_EnvPasswordsInjected(t *testing.T) {
 }
 
 // TestParseConfig tests the ParseConfig function.
+//
+//nolint:gocyclo // Table-driven test with comprehensive test cases
 func TestParseConfig(t *testing.T) {
 	// Setup SSH key once for all tests
 	keyFile := "/tmp/test-key"

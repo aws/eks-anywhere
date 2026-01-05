@@ -99,8 +99,8 @@ func (e *E2ESession) setupCertManagerEnv(testRegex string) error {
 	if region, ok := os.LookupEnv("ROUTE53_REGION"); ok {
 		e.testEnvVars["ROUTE53_REGION"] = region
 	}
-	if zoneId, ok := os.LookupEnv("ROUTE53_ZONEID"); ok {
-		e.testEnvVars["ROUTE53_ZONEID"] = zoneId
+	if zoneID, ok := os.LookupEnv("ROUTE53_ZONEID"); ok {
+		e.testEnvVars["ROUTE53_ZONEID"] = zoneID
 	}
 
 	return nil
