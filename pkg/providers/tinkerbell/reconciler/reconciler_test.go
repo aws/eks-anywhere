@@ -1881,8 +1881,8 @@ func TestReconcilerValidateHardwareWorkerRollingUpdateMaxSurgeRespected(t *testi
 		},
 	}
 
-	wngRef := scope.ClusterSpec.Config.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
-	scope.ClusterSpec.Config.TinkerbellMachineConfigs[wngRef].Spec.OSImageURL = "new-os-image"
+	wngRef := scope.ClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
+	scope.ClusterSpec.TinkerbellMachineConfigs[wngRef].Spec.OSImageURL = "new-os-image"
 
 	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
 	tt.Expect(err).NotTo(HaveOccurred())
