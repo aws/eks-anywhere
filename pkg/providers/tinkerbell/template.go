@@ -239,6 +239,7 @@ func buildTemplateMapCP(
 		"externalEtcdVersion":           versionsBundle.KubeDistro.EtcdVersion,
 		"etcdCipherSuites":              crypto.SecureCipherSuitesString(),
 		"hardwareSelector":              controlPlaneMachineSpec.HardwareSelector,
+		"hardwareAffinity":              controlPlaneMachineSpec.HardwareAffinity,
 		"controlPlaneTaints":            clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints,
 		"workerNodeGroupConfigurations": clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations,
 		"skipLoadBalancerDeployment":    datacenterSpec.SkipLoadBalancerDeployment,
@@ -284,6 +285,7 @@ func buildTemplateMapCP(
 		values["etcdSshUsername"] = etcdMachineSpec.Users[0].Name
 		values["etcdTemplateOverride"] = etcdTemplateOverride
 		values["etcdHardwareSelector"] = etcdMachineSpec.HardwareSelector
+		values["etcdHardwareAffinity"] = etcdMachineSpec.HardwareAffinity
 		etcdURL, _ := common.GetExternalEtcdReleaseURL(clusterSpec.Cluster.Spec.EksaVersion, versionsBundle)
 		if etcdURL != "" {
 			values["externalEtcdReleaseUrl"] = etcdURL
@@ -400,6 +402,7 @@ func buildTemplateMapMD(
 		"workerSshAuthorizedKey": workerNodeGroupMachineSpec.Users[0].SshAuthorizedKeys[0],
 		"workerSshUsername":      workerNodeGroupMachineSpec.Users[0].Name,
 		"hardwareSelector":       workerNodeGroupMachineSpec.HardwareSelector,
+		"hardwareAffinity":       workerNodeGroupMachineSpec.HardwareAffinity,
 		"workerNodeGroupTaints":  workerNodeGroupConfiguration.Taints,
 	}
 
