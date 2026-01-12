@@ -113,7 +113,7 @@ aws sts get-caller-identity
 Login to docker
 
 ```bash
-aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin $ECR_PACKAGES_ACCOUNT.dkr.ecr.$EKSA_AWS_REGION.amazonaws.com
+aws ecr get-login-password --region $EKSA_AWS_REGION | docker login --username AWS --password-stdin $ECR_PACKAGES_ACCOUNT.dkr.ecr.$EKSA_AWS_REGION.amazonaws.com
 ```
 
 Verify you can pull an image
