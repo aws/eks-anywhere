@@ -17,12 +17,15 @@ toc_hide: true
 | ap-southeast-2   | 299286866837              |
 | ap-southeast-3   | 703305448174              |
 | ap-southeast-4   | 106475008004              |
+| ap-southeast-5   | 396913739932              |
 | af-south-1       | 783635962247              |
 | ca-central-1     | 064352486547              |
+| ca-west-1        | 571600859530              |
 | eu-central-1     | 364992945014              |
 | eu-central-2     | 551422459769              |
 | eu-north-1       | 826441621985              |
 | eu-south-1       | 787863792200              |
+| eu-south-2       | 127214161500              |
 | eu-west-1        | 090204409458              |
 | eu-west-2        | 371148654473              |
 | eu-west-3        | 282646289008              |
