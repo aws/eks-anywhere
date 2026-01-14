@@ -1232,3 +1232,219 @@ func workerGroups() []*clusterapi.WorkerGroup[*tinkerbellv1.TinkerbellMachineTem
 		},
 	}
 }
+
+func TestAssertMachineConfigsValid_WithHardwareAffinitySucceeds(t *testing.T) {
+	g := gomega.NewWithT(t)
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	// Replace HardwareSelector with HardwareAffinity
+	clusterSpec.ControlPlaneMachineConfig().Spec.HardwareSelector = nil
+	clusterSpec.ControlPlaneMachineConfig().Spec.HardwareAffinity = &eksav1alpha1.HardwareAffinity{
+		Required: []eksav1alpha1.HardwareAffinityTerm{
+			{
+				LabelSelector: metav1.LabelSelector{
+					MatchLabels: map[string]string{"type": "cp"},
+				},
+			},
+		},
+	}
+	g.Expect(tinkerbell.AssertMachineConfigsValid(clusterSpec)).To(gomega.Succeed())
+}
+
+func TestGetSelectorsFromMachineConfig_WithHardwareSelector(t *testing.T) {
+	g := gomega.NewWithT(t)
+	config := &eksav1alpha1.TinkerbellMachineConfig{
+		Spec: eksav1alpha1.TinkerbellMachineConfigSpec{
+			HardwareSelector: map[string]string{"type": "cp"},
+		},
+	}
+	selectors := tinkerbell.GetSelectorsFromMachineConfig(config)
+	g.Expect(selectors).To(gomega.HaveLen(1))
+	g.Expect(selectors[0]).To(gomega.Equal(eksav1alpha1.HardwareSelector{"type": "cp"}))
+}
+
+func TestGetSelectorsFromMachineConfig_WithHardwareAffinity(t *testing.T) {
+	g := gomega.NewWithT(t)
+	config := &eksav1alpha1.TinkerbellMachineConfig{
+		Spec: eksav1alpha1.TinkerbellMachineConfigSpec{
+			HardwareAffinity: &eksav1alpha1.HardwareAffinity{
+				Required: []eksav1alpha1.HardwareAffinityTerm{
+					{
+						LabelSelector: metav1.LabelSelector{
+							MatchLabels: map[string]string{"type": "cp"},
+						},
+					},
+					{
+						LabelSelector: metav1.LabelSelector{
+							MatchLabels: map[string]string{"rack": "rack1"},
+						},
+					},
+				},
+			},
+		},
+	}
+	selectors := tinkerbell.GetSelectorsFromMachineConfig(config)
+	g.Expect(selectors).To(gomega.HaveLen(2))
+}
+
+func TestGetSelectorsFromMachineConfig_WithEmptyMatchLabels(t *testing.T) {
+	g := gomega.NewWithT(t)
+	config := &eksav1alpha1.TinkerbellMachineConfig{
+		Spec: eksav1alpha1.TinkerbellMachineConfigSpec{
+			HardwareAffinity: &eksav1alpha1.HardwareAffinity{
+				Required: []eksav1alpha1.HardwareAffinityTerm{
+					{
+						LabelSelector: metav1.LabelSelector{
+							// Only matchExpressions, no matchLabels
+							MatchExpressions: []metav1.LabelSelectorRequirement{
+								{
+									Key:      "type",
+									Operator: metav1.LabelSelectorOpIn,
+									Values:   []string{"cp"},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	selectors := tinkerbell.GetSelectorsFromMachineConfig(config)
+	// Should return empty since matchLabels is empty
+	g.Expect(selectors).To(gomega.BeEmpty())
+}
+
+func TestGetSelectorsFromMachineConfig_WithNoSelection(t *testing.T) {
+	g := gomega.NewWithT(t)
+	config := &eksav1alpha1.TinkerbellMachineConfig{
+		Spec: eksav1alpha1.TinkerbellMachineConfigSpec{},
+	}
+	selectors := tinkerbell.GetSelectorsFromMachineConfig(config)
+	g.Expect(selectors).To(gomega.BeNil())
+}
+
+func TestHardwareSatisfiesOnlyOneSelectorAssertion_WithHardwareAffinity(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	catalogue := hardware.NewCatalogue()
+	g.Expect(catalogue.InsertHardware(&v1alpha1.Hardware{
+		ObjectMeta: v1.ObjectMeta{Name: "hw1"},
+		Spec: v1alpha1.HardwareSpec{
+			Metadata: &v1alpha1.HardwareMetadata{
+				Instance: &v1alpha1.MetadataInstance{
+					ID: "hw1",
+				},
+			},
+		},
+	})).To(gomega.Succeed())
+
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	// Use HardwareAffinity instead of HardwareSelector
+	clusterSpec.ControlPlaneMachineConfig().Spec.HardwareSelector = nil
+	clusterSpec.ControlPlaneMachineConfig().Spec.HardwareAffinity = &eksav1alpha1.HardwareAffinity{
+		Required: []eksav1alpha1.HardwareAffinityTerm{
+			{
+				LabelSelector: metav1.LabelSelector{
+					MatchLabels: map[string]string{"type": "cp"},
+				},
+			},
+		},
+	}
+
+	assertion := tinkerbell.HardwareSatisfiesOnlyOneSelectorAssertion(catalogue)
+	g.Expect(assertion(clusterSpec)).To(gomega.Succeed())
+}
+
+func TestMinimumHardwareAvailableAssertionForCreate_WithHardwareAffinity(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	catalogue := hardware.NewCatalogue()
+	g.Expect(catalogue.InsertHardware(&v1alpha1.Hardware{
+		ObjectMeta: v1.ObjectMeta{
+			Name:   "hw1",
+			Labels: map[string]string{"type": "cp"},
+		},
+		Spec: v1alpha1.HardwareSpec{
+			Metadata: &v1alpha1.HardwareMetadata{
+				Instance: &v1alpha1.MetadataInstance{
+					ID: "hw1",
+				},
+			},
+		},
+	})).To(gomega.Succeed())
+	g.Expect(catalogue.InsertHardware(&v1alpha1.Hardware{
+		ObjectMeta: v1.ObjectMeta{
+			Name:   "hw2",
+			Labels: map[string]string{"type": "worker"},
+		},
+		Spec: v1alpha1.HardwareSpec{
+			Metadata: &v1alpha1.HardwareMetadata{
+				Instance: &v1alpha1.MetadataInstance{
+					ID: "hw2",
+				},
+			},
+		},
+	})).To(gomega.Succeed())
+
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	clusterSpec.Spec.Cluster.Spec.ExternalEtcdConfiguration = nil
+
+	// Use HardwareAffinity for control plane
+	clusterSpec.ControlPlaneMachineConfig().Spec.HardwareSelector = nil
+	clusterSpec.ControlPlaneMachineConfig().Spec.HardwareAffinity = &eksav1alpha1.HardwareAffinity{
+		Required: []eksav1alpha1.HardwareAffinityTerm{
+			{
+				LabelSelector: metav1.LabelSelector{
+					MatchLabels: map[string]string{"type": "cp"},
+				},
+			},
+		},
+	}
+
+	assertion := tinkerbell.MinimumHardwareAvailableAssertionForCreate(catalogue)
+	g.Expect(assertion(clusterSpec)).To(gomega.Succeed())
+}
+
+func TestSelectorsFromClusterSpec_WithExternalEtcd(t *testing.T) {
+	g := gomega.NewWithT(t)
+	builder := NewDefaultValidClusterSpecBuilder()
+	clusterSpec := builder.Build()
+
+	// Use HardwareAffinity for external etcd
+	clusterSpec.MachineConfigs[builder.ExternalEtcdMachineName].Spec.HardwareSelector = nil
+	clusterSpec.MachineConfigs[builder.ExternalEtcdMachineName].Spec.HardwareAffinity = &eksav1alpha1.HardwareAffinity{
+		Required: []eksav1alpha1.HardwareAffinityTerm{
+			{
+				LabelSelector: metav1.LabelSelector{
+					MatchLabels: map[string]string{"type": "etcd"},
+				},
+			},
+		},
+	}
+
+	catalogue := hardware.NewCatalogue()
+	assertion := tinkerbell.HardwareSatisfiesOnlyOneSelectorAssertion(catalogue)
+	// This should succeed even with no hardware since we're just testing selector extraction
+	g.Expect(assertion(clusterSpec)).To(gomega.Succeed())
+}
+
+func TestSelectorsFromClusterSpec_WithWorkerHardwareAffinity(t *testing.T) {
+	g := gomega.NewWithT(t)
+	builder := NewDefaultValidClusterSpecBuilder()
+	clusterSpec := builder.Build()
+
+	// Use HardwareAffinity for worker node group
+	clusterSpec.MachineConfigs[builder.WorkerNodeGroupMachineName].Spec.HardwareSelector = nil
+	clusterSpec.MachineConfigs[builder.WorkerNodeGroupMachineName].Spec.HardwareAffinity = &eksav1alpha1.HardwareAffinity{
+		Required: []eksav1alpha1.HardwareAffinityTerm{
+			{
+				LabelSelector: metav1.LabelSelector{
+					MatchLabels: map[string]string{"type": "worker"},
+				},
+			},
+		},
+	}
+
+	catalogue := hardware.NewCatalogue()
+	assertion := tinkerbell.HardwareSatisfiesOnlyOneSelectorAssertion(catalogue)
+	g.Expect(assertion(clusterSpec)).To(gomega.Succeed())
+}
