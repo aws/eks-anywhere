@@ -96,6 +96,9 @@ For example, a `TinkerbellMachineConfig` with a `hardwareSelector` containing `t
 The device name of the disk on which the operating system will be installed.
 For example, it could be `/dev/sda` for the first SCSI disk or `/dev/nvme0n1` for the first NVME storage device.
 
+### vlan_id (optional)
+The VLAN ID to assign to the machine's network interface. Use this field when machines need to be provisioned on a specific VLAN.
+
 ## Hardware Management 
 
 ### Hardware Objects and Spare Nodes
