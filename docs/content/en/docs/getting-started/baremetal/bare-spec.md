@@ -292,6 +292,21 @@ Optional field (string URL) to override the default AWS hosted location for the 
 Use this field to host the HookOS ISO locally.
 See [Boot Modes]({{< relref "customize/bare-metal-boot-modes/#iso-boot" >}}) for details.
 
+{{% alert title="Important: HTTP Server Requirements for Hosting HookOS" color="warning" %}}
+When hosting HookOS images locally, your HTTP server **must support HTTP Range requests** (RFC 7233). BMC virtual media uses Range requests to stream the ISO in chunks.
+
+**Servers that work:** Apache, nginx, or any server that returns `206 Partial Content` for Range requests.
+
+**Servers that do NOT work:** Python's built-in `python3 -m http.server` (returns `200 OK` for Range requests, ignoring the Range header).
+
+If ISO boot fails with no clear error, verify your server supports Range requests:
+```bash
+curl -I -H "Range: bytes=0-1000" http://your-server/hook.iso
+# Should return: HTTP/1.1 206 Partial Content
+# NOT: HTTP/1.1 200 OK
+```
+{{% /alert %}}
+
 #### Example `TinkerbellDatacenterConfig.spec`
 ```yaml
 spec:
