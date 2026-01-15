@@ -1,0 +1,10 @@
+server = "https://{{ .server }}"
+
+[host."https://{{ .host }}"]
+  capabilities = ["pull", "resolve"]
+{{- if .registryCACert }}
+  ca = "/etc/containerd/certs.d/{{ .mirrorBase }}/ca.crt"
+{{- end }}
+{{- if .insecureSkip }}
+  skip_verify = true
+{{- end }}
