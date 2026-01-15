@@ -18,6 +18,9 @@ import (
 //go:embed config/containerd_config_append.toml
 var containerdConfig string
 
+//go:embed config/hosts.toml
+var hostsTemplate string
+
 // SetRegistryMirrorInKubeadmControlPlaneForBottlerocket sets up registry mirror configuration in kubeadmControlPlane for bottlerocket.
 func SetRegistryMirrorInKubeadmControlPlaneForBottlerocket(kcp *controlplanev1.KubeadmControlPlane, mirrorConfig *v1alpha1.RegistryMirrorConfiguration) {
 	if mirrorConfig == nil {
@@ -77,18 +80,27 @@ func registryMirror(mirrorConfig *v1alpha1.RegistryMirrorConfiguration) bootstra
 type values map[string]interface{}
 
 func registryMirrorConfigContent(registryMirror *registrymirror.RegistryMirror) (string, error) {
-	val := values{
-		"registryMirrorMap": containerd.ToAPIEndpoints(registryMirror.NamespacedRegistryMap),
-		"mirrorBase":        registryMirror.BaseRegistry,
-		"registryCACert":    registryMirror.CACertContent,
-		"insecureSkip":      registryMirror.InsecureSkipVerify,
-	}
-
-	config, err := templater.Execute(containerdConfig, val)
+	config, err := templater.Execute(containerdConfig, nil)
 	if err != nil {
 		return "", fmt.Errorf("building containerd config file: %v", err)
 	}
 	return string(config), nil
+}
+
+func hostsFileContent(registryMirror *registrymirror.RegistryMirror, server, host string) (string, error) {
+	val := values{
+		"server":         server,
+		"host":           host,
+		"mirrorBase":     registryMirror.BaseRegistry,
+		"registryCACert": registryMirror.CACertContent,
+		"insecureSkip":   registryMirror.InsecureSkipVerify,
+	}
+
+	content, err := templater.Execute(hostsTemplate, val)
+	if err != nil {
+		return "", fmt.Errorf("building hosts.toml file: %v", err)
+	}
+	return string(content), nil
 }
 
 func registryMirrorConfig(registryMirrorConfig *v1alpha1.RegistryMirrorConfiguration) (files []bootstrapv1.File, err error) {
@@ -97,6 +109,8 @@ func registryMirrorConfig(registryMirrorConfig *v1alpha1.RegistryMirrorConfigura
 	if err != nil {
 		return nil, err
 	}
+
+	// Main config file
 	files = []bootstrapv1.File{
 		{
 			Path:    "/etc/containerd/config_append.toml",
@@ -105,11 +119,36 @@ func registryMirrorConfig(registryMirrorConfig *v1alpha1.RegistryMirrorConfigura
 		},
 	}
 
+	// CA certificate if present
 	if registryMirrorConfig.CACertContent != "" {
 		files = append(files, bootstrapv1.File{
 			Path:    fmt.Sprintf("/etc/containerd/certs.d/%s/ca.crt", registryMirror.BaseRegistry),
 			Owner:   "root:root",
 			Content: registryMirrorConfig.CACertContent,
+		})
+	}
+
+	// Mirror base hosts.toml
+	mirrorBaseContent, err := hostsFileContent(registryMirror, registryMirror.BaseRegistry, registryMirror.BaseRegistry)
+	if err != nil {
+		return nil, err
+	}
+	files = append(files, bootstrapv1.File{
+		Path:    fmt.Sprintf("/etc/containerd/certs.d/%s/hosts.toml", registryMirror.BaseRegistry),
+		Owner:   "root:root",
+		Content: mirrorBaseContent,
+	})
+
+	// Individual registry hosts.toml files
+	for originalRegistry, mirrorEndpoint := range containerd.ToAPIEndpoints(registryMirror.NamespacedRegistryMap) {
+		registryContent, err := hostsFileContent(registryMirror, originalRegistry, mirrorEndpoint)
+		if err != nil {
+			return nil, err
+		}
+		files = append(files, bootstrapv1.File{
+			Path:    fmt.Sprintf("/etc/containerd/certs.d/%s/hosts.toml", originalRegistry),
+			Owner:   "root:root",
+			Content: registryContent,
 		})
 	}
 
