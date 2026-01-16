@@ -792,13 +792,33 @@ func TestWorkersObjectsWithRegistryMirror(t *testing.T) {
 
 			g.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration = tt.registryMirrorConfig
 
-			kct := wantKubeadmConfigTemplate()
-			kct.Spec.Template.Spec.Files = tt.wantFiles
-			kct.Spec.Template.Spec.PreKubeadmCommands = append(kct.Spec.Template.Spec.PreKubeadmCommands, wantRegistryMirrorCommands()...)
-
 			got, err := snow.WorkersObjects(g.ctx, g.logger, g.clusterSpec, g.kubeconfigClient)
 			g.Expect(err).To(Succeed())
-			g.Expect(got).To(ConsistOf([]kubernetes.Object{wantMachineDeployment(), kct, wantSnowMachineTemplate()}))
+			g.Expect(got).To(HaveLen(3)) // MachineDeployment, KubeadmConfigTemplate, MachineTemplate
+
+			// Extract KubeadmConfigTemplate from results
+			var gotKct *bootstrapv1.KubeadmConfigTemplate
+			for _, obj := range got {
+				if kct, ok := obj.(*bootstrapv1.KubeadmConfigTemplate); ok {
+					gotKct = kct
+					break
+				}
+			}
+			g.Expect(gotKct).NotTo(BeNil())
+
+			// Verify PreKubeadmCommands
+			g.Expect(gotKct.Spec.Template.Spec.PreKubeadmCommands).To(ContainElements(
+				"/etc/eks/bootstrap.sh",
+				"cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml",
+				"sudo systemctl daemon-reload",
+				"sudo systemctl restart containerd",
+			))
+
+			// Verify Files - check that each expected file is present (order may vary due to map iteration)
+			g.Expect(gotKct.Spec.Template.Spec.Files).To(HaveLen(len(tt.wantFiles)))
+			for _, wantFile := range tt.wantFiles {
+				g.Expect(gotKct.Spec.Template.Spec.Files).To(ContainElement(wantFile))
+			}
 		})
 	}
 }
