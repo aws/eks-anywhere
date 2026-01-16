@@ -59,6 +59,16 @@ Here are other network requirements:
 
 > **_NOTE:_** If you have another DHCP service running on the network, you need to prevent it from interfering with the EKS Anywhere DHCP service. You can do that by configuring the other DHCP service to explicitly block all MAC addresses and exclude all IP addresses that you plan to use with your EKS Anywhere clusters.
 
+{{% alert title="Verifying Layer 2 Connectivity (PXE boot mode)" color="primary" %}}
+If machines are not PXE booting, verify layer 2 connectivity between the Admin machine and the machines being provisioned. DHCP requests from the machines should appear in the Boots (Smee) logs.
+
+To verify DHCP traffic is reaching the Admin machine, run on the Admin machine:
+```bash
+sudo tcpdump -i any port 67 or port 68
+```
+When a machine attempts to PXE boot, you should see DHCP DISCOVER/REQUEST packets. If no packets appear, there is a layer 2 network connectivity issue (VLAN misconfiguration, switch port settings, etc.).
+{{% /alert %}}
+
 * If you have not followed the [steps for airgapped environments]({{< relref "../airgapped" >}}), then the administrative machine and the target workload environment need network access (TCP/443) to:
 
   * `public.ecr.aws`
