@@ -30,37 +30,45 @@ This section provides information about:
 
 
 ## Cilium Features
-The following table lists Cilium features and notes which of those features are built into EKS Anywhere's default Cilium version , upstream Open Source, and Cilium Enterprise.
+The following table lists Open Source Cilium features and indicates which ones are supported in EKS Anywhere's default Cilium version.
 
 <details><summary>Expand to see Cilium Features</summary>
 
-| Headline/Feature   | &nbsp;&nbsp;EKS Anywhere Default Cilium | &nbsp;&nbsp;Cilium OSS |  &nbsp;&nbsp;Isovalent Cilium Enterprise |
-| ---------------    | ---------- | ---------- |  --------------------        |
-| Networking Routing with tunneling mode |  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |  &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |  &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
-| Networking Routing with native routing mode |  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |  &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |  &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
-| Kubernetes Host Scope IPAM  | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |  &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
-| Kubernetes Network Policy  | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |  &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
-| Egress Masquerade  | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |  &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
-| CNI Exclusive Configuration  | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |  &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
-| Policy Enforcement Modes  | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |  &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
-| Load-Balancing (L3/L4) | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |  &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
-| Advanced Network Policy & Encryption (DNS, L7, TLS/SNI, ...) | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**&mdash;** | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |  &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
-| Ingress, Gateway API, & Service Mesh | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**&mdash;** | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |  &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
-| Multi-Cluster, Egress Gateway, BGP | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**&mdash;** | &nbsp;&nbsp;&nbsp;&nbsp;**&mdash;** | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
-| Hubble Network Observability (Metrics, Logs, Prometheus, Grafana, OpenTelemetry) | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**&mdash;** | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
-| SIEM Integration & Timescape Observability Storage | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**&mdash;** | &nbsp;&nbsp;&nbsp;&nbsp;**&mdash;** | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
-| Tetragon Runtime Security | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**&mdash;** | &nbsp;&nbsp;&nbsp;&nbsp;**&mdash;** | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
-| Enterprise-hardened Cilium Distribution, Training, 24x7 Enterprise Grade Support | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**&mdash;** | &nbsp;&nbsp;&nbsp;&nbsp;**&mdash;** | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
+| Open Source Cilium Feature | &nbsp;&nbsp;EKS Anywhere Support |
+| --------------------------- | --------------------------------- |
+| Networking Routing with tunneling mode | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
+| Networking Routing with native routing mode | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
+| Kubernetes Host Scope IPAM | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
+| Kubernetes Network Policy | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
+| Cilium Network Policy (L3/L4/L7, Clusterwide Policy) | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
+| Egress Masquerade | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
+| CNI Exclusive Configuration | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
+| Policy Enforcement Modes | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
+| Load-Balancing (L3/L4) | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
+| Border Gateway Protocol | &nbsp;&nbsp;&nbsp;&nbsp;**&#10004;** |
+| Ingress, Gateway API, Service Mesh | &nbsp;&nbsp;&nbsp;&nbsp;**&mdash;** |
+| Multi-Cluster, Egress Gateway | &nbsp;&nbsp;&nbsp;&nbsp;**&mdash;** |
+| Hubble Network Observability (Metrics, Logs, Prometheus, Grafana, OpenTelemetry) | &nbsp;&nbsp;&nbsp;&nbsp;**&mdash;** |
+
+{{% alert title="Note" color="info" %}}
+Features marked with **&mdash;** are not officially supported by the EKS Anywhere team, but can still be manually enabled on EKS Anywhere Cilium. Use these features at your own discretion and without official support.
+{{% /alert %}}
 
 </details>
+
+### Isovalent Cilium Enterprise Features
+Isovalent Cilium Enterprise includes all Open Source Cilium features plus these additional enterprise-only capabilities:
+- **SIEM Integration & Timescape Observability Storage**
+- **Tetragon Runtime Security**
+- **Enterprise-hardened Cilium Distribution, Training, 24x7 Enterprise Grade Support**
 
 ## Cilium Components
 
 The primary Cilium Agent runs as a DaemonSet on each Kubernetes node.  Each cluster also includes a Cilium Operator Deployment to handle certain cluster-wide operations.  For EKS Anywhere, Cilium is configured to use the Kubernetes API server as the identity store, so no etcd cluster connectivity is required.
 
-In a properly working environment, each Kubernetes node should have a Cilium Agent pod (`cilium-WXYZ`) in “Running” and ready (1/1) state.
+In a properly working environment, each Kubernetes node should have a Cilium Agent pod (`cilium-WXYZ`) in "Running" and ready (1/1) state.
 By default there will be two
-Cilium Operator pods (`cilium-operator-123456-WXYZ`) in “Running” and ready (1/1) state on different Kubernetes nodes for high-availability.
+Cilium Operator pods (`cilium-operator-123456-WXYZ`) in "Running" and ready (1/1) state on different Kubernetes nodes for high-availability.
 
 Run the following command to ensure all cilium related pods are in a healthy state.
 
@@ -113,7 +121,7 @@ kubectl delete ns cilium-test-1
 
 By default, all Kubernetes workloads within a cluster can talk to any other workloads in the cluster, as well as any workloads outside the cluster.  To enable a stronger security posture, Cilium implements the Kubernetes Network Policy specification to provide identity-aware firewalling / segmentation of Kubernetes workloads.
 
-Network policies are defined as Kubernetes YAML specifications that are applied to a particular namespaces to describe that connections should be allowed to or from a given set of pods.  These network policies are “identity-aware” in that they describe workloads within the cluster using Kubernetes metadata like namespace and labels, rather than by IP Address.
+Network policies are defined as Kubernetes YAML specifications that are applied to a particular namespaces to describe that connections should be allowed to or from a given set of pods.  These network policies are "identity-aware" in that they describe workloads within the cluster using Kubernetes metadata like namespace and labels, rather than by IP Address.
 
 Basic network policies are validated as part of the above Cilium connectivity check test.
 
@@ -132,9 +140,6 @@ For next steps on leveraging Network Policy, we encourage you to explore:
 
 Some advanced features of Cilium are not enabled as part of EKS Anywhere, including:
 
-* [Hubble observability](https://docs.isovalent.com/operations-guide/features/network-visibility/index.html)
-* [DNS-aware and HTTP-Aware Network Policy](https://docs.isovalent.com/quick-start/policy_lifecycle.html)
-* [Multi-cluster Routing](https://docs.isovalent.com/operations-guide/features/cluster-mesh/index.html)
 * [Transparent Encryption](https://docs.cilium.io/en/v1.13/security/network/encryption/)
 * [Advanced Load-balancing](https://docs.isovalent.com/operations-guide/features/cilium-standalone-gateway.html)
 
