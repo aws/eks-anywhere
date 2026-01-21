@@ -10,9 +10,18 @@ import (
 
 // TinkerbellMachineConfigSpec defines the desired state of TinkerbellMachineConfig.
 type TinkerbellMachineConfigSpec struct {
-	HardwareSelector HardwareSelector `json:"hardwareSelector"`
-	TemplateRef      Ref              `json:"templateRef,omitempty"`
-	OSFamily         OSFamily         `json:"osFamily"`
+	// HardwareSelector is a simple key-value selector for hardware.
+	// Use this for straightforward single-label hardware selection.
+	// Mutually exclusive with HardwareAffinity.
+	// +optional
+	HardwareSelector HardwareSelector `json:"hardwareSelector,omitempty"`
+
+	// HardwareAffinity allows advanced hardware selection using required
+	// and preferred affinity terms. Mutually exclusive with HardwareSelector.
+	// +optional
+	HardwareAffinity *HardwareAffinity `json:"hardwareAffinity,omitempty"`
+	TemplateRef      Ref               `json:"templateRef,omitempty"`
+	OSFamily         OSFamily          `json:"osFamily"`
 	//+optional
 	// OSImageURL can be used to override the default OS image path to pull from a local server.
 	// OSImageURL is a URL to the OS image used during provisioning. It must include
@@ -37,6 +46,36 @@ func (s HardwareSelector) ToString() (string, error) {
 		return "", err
 	}
 	return string(encoded), nil
+}
+
+// HardwareAffinity defines required and preferred hardware affinities.
+type HardwareAffinity struct {
+	// Required are the required hardware affinity terms. The terms are OR'd
+	// together - hardware must match at least one term to be considered.
+	// At least one required term must be specified.
+	Required []HardwareAffinityTerm `json:"required"`
+
+	// Preferred are the preferred hardware affinity terms. Hardware matching
+	// these terms are preferred according to the weights provided.
+	// +optional
+	Preferred []WeightedHardwareAffinityTerm `json:"preferred,omitempty"`
+}
+
+// HardwareAffinityTerm defines a single hardware affinity term.
+type HardwareAffinityTerm struct {
+	// LabelSelector is used to select hardware by labels.
+	LabelSelector metav1.LabelSelector `json:"labelSelector"`
+}
+
+// WeightedHardwareAffinityTerm is a HardwareAffinityTerm with an associated weight.
+type WeightedHardwareAffinityTerm struct {
+	// Weight associated with matching the corresponding term, in range 1-100.
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=100
+	Weight int32 `json:"weight"`
+
+	// HardwareAffinityTerm is the term associated with the weight.
+	HardwareAffinityTerm HardwareAffinityTerm `json:"hardwareAffinityTerm"`
 }
 
 func (c *TinkerbellMachineConfig) PauseReconcile() {
