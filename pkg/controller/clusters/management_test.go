@@ -86,10 +86,6 @@ func newFetchManagementTest(t *testing.T) *fetchManagementTest {
 
 func createClustersForTest() (managementCluster *anywherev1.Cluster, workloadCluster *anywherev1.Cluster) {
 	managementCluster = &anywherev1.Cluster{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Cluster",
-			APIVersion: "anywhere.eks.amazonaws.com/v1alpha1",
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-management-cluster",
 			Namespace: "my-namespace",
@@ -97,10 +93,6 @@ func createClustersForTest() (managementCluster *anywherev1.Cluster, workloadClu
 	}
 
 	workloadCluster = &anywherev1.Cluster{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Cluster",
-			APIVersion: "anywhere.eks.amazonaws.com/v1alpha1",
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-cluster",
 			Namespace: "my-namespace",
