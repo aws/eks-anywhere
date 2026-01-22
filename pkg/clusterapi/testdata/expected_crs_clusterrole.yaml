@@ -27,7 +27,6 @@ data:
         - watch
 kind: ConfigMap
 metadata:
-  creationTimestamp: null
   name: coredns-role
   namespace: default
 
@@ -35,7 +34,6 @@ metadata:
 apiVersion: addons.cluster.x-k8s.io/v1beta1
 kind: ClusterResourceSet
 metadata:
-  creationTimestamp: null
   labels:
     cluster.x-k8s.io/cluster-name: cluster-name
   name: cluster-name-crs
