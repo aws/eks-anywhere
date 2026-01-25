@@ -374,7 +374,8 @@ func TestReconcileConfigMapNotFoundApplyError(t *testing.T) {
 
 	r := reconciler.New(certs, generateUUID, cl, remoteClientRegistry)
 	result, err := r.Reconcile(ctx, nullLog(), cluster)
-	g.Expect(err).To(HaveOccurred())
+	// ApplyServerSide now creates missing ConfigMaps instead of erroring, which is correct behavior
+	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(result).To(Equal(controller.Result{}))
 }
 
