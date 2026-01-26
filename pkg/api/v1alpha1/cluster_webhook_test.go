@@ -791,7 +791,7 @@ func TestClusterValidateUpdateUnsetBundlesRefImmutable(t *testing.T) {
 	c.Spec.EksaVersion = nil
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(context.TODO(), cOld, c)).Error().To(MatchError(ContainSubstring("spec.BundlesRef: Invalid value: \"null\": field cannot be removed after setting")))
+	g.Expect(c.ValidateUpdate(context.TODO(), cOld, c)).Error().To(MatchError(ContainSubstring("spec.BundlesRef: Invalid value: null: field cannot be removed after setting")))
 }
 
 func TestClusterValidateUpdateEksaVersionSkew(t *testing.T) {

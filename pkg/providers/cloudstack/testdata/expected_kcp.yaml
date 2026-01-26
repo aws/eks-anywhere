@@ -391,7 +391,6 @@ metadata:
     label.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: data_disk
     mountpath.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /data-small
     symlinks.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /var/log/kubernetes:/data-small/var/log/kubernetes
-  creationTimestamp: null
   name: test-control-plane-1
   namespace: eksa-system
 spec:

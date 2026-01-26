@@ -301,10 +301,6 @@ func TestCloudstackDatacenterConfigAccountNotPresentFailure(t *testing.T) {
 
 func createCloudstackDatacenterConfig() *anywherev1.CloudStackDatacenterConfig {
 	return &anywherev1.CloudStackDatacenterConfig{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       anywherev1.CloudStackDatacenterKind,
-			APIVersion: "anywhere.eks.amazonaws.com/v1alpha1",
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,

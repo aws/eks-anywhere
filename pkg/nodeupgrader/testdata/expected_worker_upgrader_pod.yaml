@@ -1,5 +1,4 @@
 metadata:
-  creationTimestamp: null
   labels:
     eks-d-upgrader: "true"
   name: my-node-node-upgrader

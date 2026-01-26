@@ -139,6 +139,12 @@ func TestWorkerGroupUpdateImmutableObjectNamesErrorUpdatingKubeadmConfigTemplate
 		KubeadmConfigTemplate:   kubeadmConfigTemplate(),
 	}
 	group.MachineDeployment.Spec.Template.Spec.InfrastructureRef = *objectReference(group.ProviderMachineTemplate)
+
+	// Set TypeMeta on the object being tested to get proper error message with Kind
+	group.KubeadmConfigTemplate.TypeMeta = metav1.TypeMeta{
+		Kind:       "KubeadmConfigTemplate",
+		APIVersion: "bootstrap.cluster.x-k8s.io/v1beta1",
+	}
 	group.KubeadmConfigTemplate.Name = "invalid-name"
 	group.MachineDeployment.Spec.Template.Spec.Bootstrap.ConfigRef = objectReference(group.KubeadmConfigTemplate)
 	client := test.NewFakeKubeClient(group.MachineDeployment, group.KubeadmConfigTemplate, group.ProviderMachineTemplate)
@@ -528,13 +534,10 @@ func TestWorkerGroupDeepCopy(t *testing.T) {
 
 func kubeadmConfigTemplate() *kubeadmv1.KubeadmConfigTemplate {
 	return &kubeadmv1.KubeadmConfigTemplate{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "KubeadmConfigTemplate",
-			APIVersion: "bootstrap.cluster.x-k8s.io/v1beta1",
-		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "template-1",
-			Namespace: constants.EksaSystemNamespace,
+			Name:            "template-1",
+			Namespace:       constants.EksaSystemNamespace,
+			ResourceVersion: "1",
 		},
 		Spec: kubeadmv1.KubeadmConfigTemplateSpec{
 			Template: kubeadmv1.KubeadmConfigTemplateResource{

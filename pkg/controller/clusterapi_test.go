@@ -172,10 +172,6 @@ func TestGetCapiClusterObjectKey(t *testing.T) {
 
 func eksaCluster() *anywherev1.Cluster {
 	return &anywherev1.Cluster{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       anywherev1.ClusterKind,
-			APIVersion: anywherev1.GroupVersion.String(),
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "my-cluster",
 		},
@@ -184,10 +180,6 @@ func eksaCluster() *anywherev1.Cluster {
 
 func capiCluster() *clusterv1.Cluster {
 	return &clusterv1.Cluster{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Cluster",
-			APIVersion: clusterv1.GroupVersion.String(),
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-cluster",
 			Namespace: "eksa-system",
@@ -197,10 +189,6 @@ func capiCluster() *clusterv1.Cluster {
 
 func kubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
 	return &controlplanev1.KubeadmControlPlane{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "KubeadmControlPlane",
-			APIVersion: controlplanev1.GroupVersion.String(),
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-cluster",
 			Namespace: "eksa-system",
@@ -210,10 +198,6 @@ func kubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
 
 func machineDeployment() *clusterv1.MachineDeployment {
 	return &clusterv1.MachineDeployment{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "MachineDeployment",
-			APIVersion: clusterv1.GroupVersion.String(),
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-cluster",
 			Namespace: "eksa-system",

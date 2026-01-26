@@ -92,9 +92,14 @@ func (tt *clusterValidationTest) createManagementClusterObjects(ctx context.Cont
 
 func createClientObjects(ctx context.Context, clusterClient client.Client, objs ...client.Object) error {
 	for _, obj := range objs {
+		// Ensure TypeMeta is preserved by setting it before create if it's empty
+		// The fake client strip TypeMeta during operations
+		gvk := obj.GetObjectKind().GroupVersionKind()
 		if err := clusterClient.Create(ctx, obj); err != nil {
 			return err
 		}
+		// Restore TypeMeta after create since fake client strips it
+		obj.GetObjectKind().SetGroupVersionKind(gvk)
 	}
 	return nil
 }
