@@ -128,7 +128,7 @@ A list of taints to apply to the control plane nodes of the cluster.
 
 Replaces the default control plane taint (For k8s versions prior to 1.24, `node-role.kubernetes.io/master`. For k8s versions 1.24+, `node-role.kubernetes.io/control-plane`). The default control plane components will tolerate the provided taints.
 
-Modifying the taints associated with the control plane configuration will cause new nodes to be rolled-out, replacing the existing nodes.
+>**NOTE:** Taints are immutable for bare metal clusters and cannot be modified after cluster creation.
 
 >**_NOTE:_** The taints provided will be used instead of the default control plane taint.
 Any pods that you run on the control plane nodes must tolerate the taints you provide in the control plane configuration.
@@ -138,8 +138,7 @@ Any pods that you run on the control plane nodes must tolerate the taints you pr
 A list of labels to apply to the control plane nodes of the cluster. This is in addition to the labels that
 EKS Anywhere will add by default.
 
-Modifying the labels associated with the control plane configuration will cause new nodes to be rolled out, replacing
-the existing nodes.
+>**NOTE:** Labels are immutable for bare metal clusters and cannot be modified after cluster creation.
 
 #### controlPlaneConfiguration.upgradeRolloutStrategy (optional)
 Configuration parameters for upgrade strategy.
@@ -212,7 +211,7 @@ Maximum number of nodes for this node group's autoscaling configuration.
 ### workerNodeGroupConfigurations[*].taints (optional)
 A list of taints to apply to the nodes in the worker node group.
 
-Modifying the taints associated with a worker node group configuration will cause new nodes to be rolled-out, replacing the existing nodes associated with the configuration.
+>**NOTE:** Taints are immutable for bare metal clusters and cannot be modified after cluster creation.
 
 At least one node group must not have `NoSchedule` or `NoExecute` taints applied to it.
 
@@ -220,8 +219,7 @@ At least one node group must not have `NoSchedule` or `NoExecute` taints applied
 A list of labels to apply to the nodes in the worker node group. This is in addition to the labels that
 EKS Anywhere will add by default.
 
-Modifying the labels associated with a worker node group configuration will cause new nodes to be rolled out, replacing
-the existing nodes associated with the configuration.
+>**NOTE:** Labels are immutable for bare metal clusters and cannot be modified after cluster creation.
 
 ### workerNodeGroupConfigurations[*].kubernetesVersion (optional)
 The Kubernetes version you want to use for this worker node group. The Kubernetes versions supported by your EKS Anywhere version are tabulated in [this]({{< relref "../../concepts/support-versions/#kubernetes-versions" >}}) section.
