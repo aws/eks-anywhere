@@ -257,10 +257,6 @@ func createSnowMachineConfig() *anywherev1.SnowMachineConfig {
 			Name:      name,
 			Namespace: namespace,
 		},
-		TypeMeta: metav1.TypeMeta{
-			Kind:       anywherev1.SnowMachineConfigKind,
-			APIVersion: "anywhere.eks.amazonaws.com/v1alpha1",
-		},
 		Spec: anywherev1.SnowMachineConfigSpec{
 			Devices:    []string{"test-ip-1", "test-ip-2"},
 			AMIID:      "test-ami",

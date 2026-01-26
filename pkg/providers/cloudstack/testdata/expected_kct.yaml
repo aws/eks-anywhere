@@ -109,7 +109,6 @@ metadata:
     label.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: data_disk
     mountpath.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /data-small
     symlinks.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /var/log/containers:/data-small/var/log/containers,/var/log/pods:/data-small/var/log/pods
-  creationTimestamp: null
   namespace: eksa-system
 spec:
   template:

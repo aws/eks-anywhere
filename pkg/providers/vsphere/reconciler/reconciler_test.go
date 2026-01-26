@@ -59,10 +59,18 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 	logger := test.NewNullLogger()
 	remoteClient := env.Client()
 
+	// Clone objects without TypeMeta for mock expectations (fake client doesn't populate it)
+	dcConfigNoType := tt.datacenterConfig.DeepCopy()
+	dcConfigNoType.TypeMeta = metav1.TypeMeta{}
+	machineConfigCPNoType := tt.machineConfigControlPlane.DeepCopy()
+	machineConfigCPNoType.TypeMeta = metav1.TypeMeta{}
+	machineConfigWNNoType := tt.machineConfigWorker.DeepCopy()
+	machineConfigWNNoType.TypeMeta = metav1.TypeMeta{}
+
 	tt.ipValidator.EXPECT().ValidateControlPlaneIP(tt.ctx, logger, tt.buildSpec()).Return(controller.Result{}, nil)
-	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(tt.ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
-	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(tt.ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
-	tt.govcClient.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, gomock.Any()).Return("test", nil)
+	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(tt.ctx, dcConfigNoType, machineConfigCPNoType, gomock.Any()).Return(nil)
+	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(tt.ctx, dcConfigNoType, machineConfigWNNoType, gomock.Any()).Return(nil)
+	tt.govcClient.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, machineConfigCPNoType).Return("test", nil)
 	tt.govcClient.EXPECT().GetTags(tt.ctx, tt.machineConfigControlPlane.Spec.Template).Return([]string{"os:ubuntu", fmt.Sprintf("eksdRelease:%s", tt.bundle.Spec.VersionsBundles[0].EksD.Name)}, nil)
 	tt.govcClient.EXPECT().ListTags(tt.ctx).Return([]executables.Tag{}, nil)
 
@@ -87,9 +95,17 @@ func TestReconcilerFailToSetUpMachineConfigCP(t *testing.T) {
 	logger := test.NewNullLogger()
 	tt.withFakeClient()
 
-	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(tt.ctx, tt.datacenterConfig, tt.machineConfigControlPlane, gomock.Any()).Return(fmt.Errorf("error"))
-	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(tt.ctx, tt.datacenterConfig, tt.machineConfigWorker, gomock.Any()).Return(nil).MaxTimes(1)
-	tt.govcClient.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, tt.machineConfigControlPlane).Return("test", nil).Times(0)
+	// Clone objects without TypeMeta for mock expectations (fake client doesn't populate it)
+	dcConfigNoType := tt.datacenterConfig.DeepCopy()
+	dcConfigNoType.TypeMeta = metav1.TypeMeta{}
+	machineConfigCPNoType := tt.machineConfigControlPlane.DeepCopy()
+	machineConfigCPNoType.TypeMeta = metav1.TypeMeta{}
+	machineConfigWNNoType := tt.machineConfigWorker.DeepCopy()
+	machineConfigWNNoType.TypeMeta = metav1.TypeMeta{}
+
+	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(tt.ctx, dcConfigNoType, machineConfigCPNoType, gomock.Any()).Return(fmt.Errorf("error"))
+	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(tt.ctx, dcConfigNoType, machineConfigWNNoType, gomock.Any()).Return(nil).MaxTimes(1)
+	tt.govcClient.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, machineConfigCPNoType).Return("test", nil).Times(0)
 	tt.govcClient.EXPECT().GetTags(tt.ctx, tt.machineConfigControlPlane.Spec.Template).Return([]string{"os:ubuntu", fmt.Sprintf("eksdRelease:%s", tt.bundle.Spec.VersionsBundles[0].EksD.Name)}, nil).Times(0)
 
 	result, err := tt.reconciler().ValidateMachineConfigs(tt.ctx, logger, tt.buildSpec())
@@ -133,10 +149,18 @@ func TestReconcilerControlPlaneIsNotReady(t *testing.T) {
 
 	logger := test.NewNullLogger()
 
+	// Clone objects without TypeMeta for mock expectations (fake client doesn't populate it)
+	dcConfigNoType := tt.datacenterConfig.DeepCopy()
+	dcConfigNoType.TypeMeta = metav1.TypeMeta{}
+	machineConfigCPNoType := tt.machineConfigControlPlane.DeepCopy()
+	machineConfigCPNoType.TypeMeta = metav1.TypeMeta{}
+	machineConfigWNNoType := tt.machineConfigWorker.DeepCopy()
+	machineConfigWNNoType.TypeMeta = metav1.TypeMeta{}
+
 	tt.ipValidator.EXPECT().ValidateControlPlaneIP(tt.ctx, logger, tt.buildSpec()).Return(controller.Result{}, nil)
-	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(tt.ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
-	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(tt.ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
-	tt.govcClient.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, gomock.Any()).Return("test", nil)
+	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(tt.ctx, dcConfigNoType, machineConfigCPNoType, gomock.Any()).Return(nil)
+	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(tt.ctx, dcConfigNoType, machineConfigWNNoType, gomock.Any()).Return(nil)
+	tt.govcClient.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, machineConfigCPNoType).Return("test", nil)
 	tt.govcClient.EXPECT().GetTags(tt.ctx, tt.machineConfigControlPlane.Spec.Template).Return([]string{"os:ubuntu", fmt.Sprintf("eksdRelease:%s", tt.bundle.Spec.VersionsBundles[0].EksD.Name)}, nil)
 	tt.govcClient.EXPECT().ListTags(tt.ctx).Return([]executables.Tag{}, nil)
 

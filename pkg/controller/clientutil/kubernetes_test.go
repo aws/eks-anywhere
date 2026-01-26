@@ -23,10 +23,6 @@ func TestKubeClientGet(t *testing.T) {
 			Name:      "my-cluster",
 			Namespace: "default",
 		},
-		TypeMeta: metav1.TypeMeta{
-			Kind:       anywherev1.ClusterKind,
-			APIVersion: anywherev1.GroupVersion.String(),
-		},
 	}
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(cluster).Build()
@@ -56,19 +52,11 @@ func TestKubeClientList(t *testing.T) {
 			Name:      "my-cluster",
 			Namespace: "default",
 		},
-		TypeMeta: metav1.TypeMeta{
-			Kind:       anywherev1.ClusterKind,
-			APIVersion: anywherev1.GroupVersion.String(),
-		},
 	}
 	cluster2 := &anywherev1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-cluster-2",
 			Namespace: "default",
-		},
-		TypeMeta: metav1.TypeMeta{
-			Kind:       anywherev1.ClusterKind,
-			APIVersion: anywherev1.GroupVersion.String(),
 		},
 	}
 	cb := fake.NewClientBuilder()
@@ -88,19 +76,11 @@ func TestKubeClientListOpts(t *testing.T) {
 			Name:      "my-cluster",
 			Namespace: "default",
 		},
-		TypeMeta: metav1.TypeMeta{
-			Kind:       anywherev1.ClusterKind,
-			APIVersion: anywherev1.GroupVersion.String(),
-		},
 	}
 	cluster2 := &anywherev1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-cluster-2",
 			Namespace: "eksa-system",
-		},
-		TypeMeta: metav1.TypeMeta{
-			Kind:       anywherev1.ClusterKind,
-			APIVersion: anywherev1.GroupVersion.String(),
 		},
 	}
 	cb := fake.NewClientBuilder()
@@ -121,19 +101,11 @@ func TestKubeClientListOptsWithNamespace(t *testing.T) {
 			Name:      "my-cluster",
 			Namespace: "default",
 		},
-		TypeMeta: metav1.TypeMeta{
-			Kind:       anywherev1.ClusterKind,
-			APIVersion: anywherev1.GroupVersion.String(),
-		},
 	}
 	cluster2 := &anywherev1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-cluster-2",
 			Namespace: "eksa-system",
-		},
-		TypeMeta: metav1.TypeMeta{
-			Kind:       anywherev1.ClusterKind,
-			APIVersion: anywherev1.GroupVersion.String(),
 		},
 	}
 	cb := fake.NewClientBuilder()
@@ -155,10 +127,6 @@ func TestKubeClientCreate(t *testing.T) {
 			Name:      "my-cluster",
 			Namespace: "default",
 		},
-		TypeMeta: metav1.TypeMeta{
-			Kind:       anywherev1.ClusterKind,
-			APIVersion: anywherev1.GroupVersion.String(),
-		},
 	}
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects().Build()
@@ -177,10 +145,6 @@ func TestKubeClientUpdate(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-cluster",
 			Namespace: "default",
-		},
-		TypeMeta: metav1.TypeMeta{
-			Kind:       anywherev1.ClusterKind,
-			APIVersion: anywherev1.GroupVersion.String(),
 		},
 	}
 	cb := fake.NewClientBuilder()
@@ -206,10 +170,6 @@ func TestKubeClientDelete(t *testing.T) {
 			Name:      "my-cluster",
 			Namespace: "default",
 		},
-		TypeMeta: metav1.TypeMeta{
-			Kind:       anywherev1.ClusterKind,
-			APIVersion: anywherev1.GroupVersion.String(),
-		},
 	}
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(cluster).Build()
@@ -230,19 +190,11 @@ func TestKubeClientDeleteAllOf(t *testing.T) {
 			Name:      "my-cluster",
 			Namespace: "default",
 		},
-		TypeMeta: metav1.TypeMeta{
-			Kind:       anywherev1.ClusterKind,
-			APIVersion: anywherev1.GroupVersion.String(),
-		},
 	}
 	cluster2 := &anywherev1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-cluster-2",
 			Namespace: "default",
-		},
-		TypeMeta: metav1.TypeMeta{
-			Kind:       anywherev1.ClusterKind,
-			APIVersion: anywherev1.GroupVersion.String(),
 		},
 	}
 	cb := fake.NewClientBuilder()
