@@ -240,7 +240,7 @@ func (r *Reconciler) ReconcileFailureDomains(ctx context.Context, log logr.Logge
 // ReconcileControlPlane applies the control plane CAPI objects to the cluster.
 func (r *Reconciler) ReconcileControlPlane(ctx context.Context, log logr.Logger, spec *c.Spec) (controller.Result, error) {
 	log = log.WithValues("phase", "reconcileControlPlane")
-	log.Info("Applying control plane CAPI objects")
+
 	cp, err := vsphere.ControlPlaneSpec(ctx, log, clientutil.NewKubeClient(r.client), spec)
 	if err != nil {
 		return controller.Result{}, err
@@ -270,7 +270,7 @@ func (r *Reconciler) ReconcileCNI(ctx context.Context, log logr.Logger, clusterS
 // ReconcileWorkers applies the worker CAPI objects to the cluster.
 func (r *Reconciler) ReconcileWorkers(ctx context.Context, log logr.Logger, spec *c.Spec) (controller.Result, error) {
 	log = log.WithValues("phase", "reconcileWorkers")
-	log.Info("Applying worker CAPI objects")
+
 	w, err := vsphere.WorkersSpec(ctx, log, clientutil.NewKubeClient(r.client), spec)
 	if err != nil {
 		return controller.Result{}, err

@@ -4269,3 +4269,182 @@ rules:
 		})
 	}
 }
+
+func TestIPPoolConfigurationEqual(t *testing.T) {
+	tests := []struct {
+		name   string
+		pool1  *IPPoolConfiguration
+		pool2  *IPPoolConfiguration
+		expect bool
+	}{
+		{
+			name:   "both nil",
+			pool1:  nil,
+			pool2:  nil,
+			expect: true,
+		},
+		{
+			name:  "first nil",
+			pool1: nil,
+			pool2: &IPPoolConfiguration{
+				Name: "test",
+			},
+			expect: false,
+		},
+		{
+			name: "second nil",
+			pool1: &IPPoolConfiguration{
+				Name: "test",
+			},
+			pool2:  nil,
+			expect: false,
+		},
+		{
+			name: "equal configs",
+			pool1: &IPPoolConfiguration{
+				Name:        "test-pool",
+				Addresses:   []string{"192.168.1.100-192.168.1.120"},
+				Prefix:      24,
+				Gateway:     "192.168.1.1",
+				Nameservers: []string{"8.8.8.8", "8.8.4.4"},
+			},
+			pool2: &IPPoolConfiguration{
+				Name:        "test-pool",
+				Addresses:   []string{"192.168.1.100-192.168.1.120"},
+				Prefix:      24,
+				Gateway:     "192.168.1.1",
+				Nameservers: []string{"8.8.8.8", "8.8.4.4"},
+			},
+			expect: true,
+		},
+		{
+			name: "different name",
+			pool1: &IPPoolConfiguration{
+				Name:      "test-pool-1",
+				Addresses: []string{"192.168.1.100-192.168.1.120"},
+				Prefix:    24,
+				Gateway:   "192.168.1.1",
+			},
+			pool2: &IPPoolConfiguration{
+				Name:      "test-pool-2",
+				Addresses: []string{"192.168.1.100-192.168.1.120"},
+				Prefix:    24,
+				Gateway:   "192.168.1.1",
+			},
+			expect: false,
+		},
+		{
+			name: "different addresses",
+			pool1: &IPPoolConfiguration{
+				Name:      "test-pool",
+				Addresses: []string{"192.168.1.100-192.168.1.120"},
+				Prefix:    24,
+				Gateway:   "192.168.1.1",
+			},
+			pool2: &IPPoolConfiguration{
+				Name:      "test-pool",
+				Addresses: []string{"192.168.1.100-192.168.1.110"},
+				Prefix:    24,
+				Gateway:   "192.168.1.1",
+			},
+			expect: false,
+		},
+		{
+			name: "different prefix",
+			pool1: &IPPoolConfiguration{
+				Name:      "test-pool",
+				Addresses: []string{"192.168.1.100-192.168.1.120"},
+				Prefix:    24,
+				Gateway:   "192.168.1.1",
+			},
+			pool2: &IPPoolConfiguration{
+				Name:      "test-pool",
+				Addresses: []string{"192.168.1.100-192.168.1.120"},
+				Prefix:    16,
+				Gateway:   "192.168.1.1",
+			},
+			expect: false,
+		},
+		{
+			name: "different gateway",
+			pool1: &IPPoolConfiguration{
+				Name:      "test-pool",
+				Addresses: []string{"192.168.1.100-192.168.1.120"},
+				Prefix:    24,
+				Gateway:   "192.168.1.1",
+			},
+			pool2: &IPPoolConfiguration{
+				Name:      "test-pool",
+				Addresses: []string{"192.168.1.100-192.168.1.120"},
+				Prefix:    24,
+				Gateway:   "192.168.1.254",
+			},
+			expect: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.pool1.Equal(tt.pool2)
+			assert.Equal(t, tt.expect, result)
+		})
+	}
+}
+
+func TestCalculateIPPoolSize(t *testing.T) {
+	tests := []struct {
+		name      string
+		addresses []string
+		expected  int
+		wantErr   bool
+	}{
+		{
+			name:      "single IP",
+			addresses: []string{"192.168.1.100"},
+			expected:  1,
+			wantErr:   false,
+		},
+		{
+			name:      "multiple single IPs",
+			addresses: []string{"192.168.1.100", "192.168.1.101", "192.168.1.102"},
+			expected:  3,
+			wantErr:   false,
+		},
+		{
+			name:      "IP range",
+			addresses: []string{"192.168.1.100-192.168.1.110"},
+			expected:  11,
+			wantErr:   false,
+		},
+		{
+			name:      "CIDR /24",
+			addresses: []string{"192.168.1.0/24"},
+			expected:  256,
+			wantErr:   false,
+		},
+		{
+			name:      "CIDR /28",
+			addresses: []string{"192.168.1.0/28"},
+			expected:  16,
+			wantErr:   false,
+		},
+		{
+			name:      "mixed addresses",
+			addresses: []string{"192.168.1.100", "192.168.1.110-192.168.1.120", "192.168.2.0/28"},
+			expected:  1 + 11 + 16,
+			wantErr:   false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := CalculateIPPoolSize(tt.addresses)
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expected, result)
+			}
+		})
+	}
+}

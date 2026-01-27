@@ -1,0 +1,310 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: caip-in-cluster-controller-manager
+  namespace: capi-ipam-provider
+  labels:
+    cluster.x-k8s.io/provider: ipam-in-cluster
+---
+# RBAC for eksa-controller-manager to manage IPAM resources
+# This allows the EKS-A controller to create/update InClusterIPPool resources
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: eksa-ipam-manager-role
+  labels:
+    cluster.x-k8s.io/provider: ipam-in-cluster
+rules:
+- apiGroups:
+  - ipam.cluster.x-k8s.io
+  resources:
+  - inclusterippools
+  - globalinclusterippools
+  - ipaddressclaims
+  - ipaddresses
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: eksa-ipam-manager-rolebinding
+  labels:
+    cluster.x-k8s.io/provider: ipam-in-cluster
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: eksa-ipam-manager-role
+subjects:
+- kind: ServiceAccount
+  name: eksa-controller-manager
+  namespace: eksa-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: caip-in-cluster-manager-role
+  labels:
+    cluster.x-k8s.io/provider: ipam-in-cluster
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+- apiGroups:
+  - cluster.x-k8s.io
+  resources:
+  - clusters
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ipam.cluster.x-k8s.io
+  resources:
+  - globalinclusterippools
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ipam.cluster.x-k8s.io
+  resources:
+  - globalinclusterippools/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - ipam.cluster.x-k8s.io
+  resources:
+  - globalinclusterippools/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - ipam.cluster.x-k8s.io
+  resources:
+  - inclusterippools
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ipam.cluster.x-k8s.io
+  resources:
+  - inclusterippools/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - ipam.cluster.x-k8s.io
+  resources:
+  - inclusterippools/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - ipam.cluster.x-k8s.io
+  resources:
+  - ipaddressclaims
+  verbs:
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ipam.cluster.x-k8s.io
+  resources:
+  - ipaddressclaims/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - ipam.cluster.x-k8s.io
+  resources:
+  - ipaddressclaims/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - ipam.cluster.x-k8s.io
+  resources:
+  - ipaddresses
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ipam.cluster.x-k8s.io
+  resources:
+  - ipaddresses/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - ipam.cluster.x-k8s.io
+  resources:
+  - ipaddresses/status
+  verbs:
+  - get
+  - patch
+  - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: caip-in-cluster-manager-rolebinding
+  labels:
+    cluster.x-k8s.io/provider: ipam-in-cluster
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: caip-in-cluster-manager-role
+subjects:
+- kind: ServiceAccount
+  name: caip-in-cluster-controller-manager
+  namespace: capi-ipam-provider
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: caip-in-cluster-leader-election-role
+  namespace: capi-ipam-provider
+  labels:
+    cluster.x-k8s.io/provider: ipam-in-cluster
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: caip-in-cluster-leader-election-rolebinding
+  namespace: capi-ipam-provider
+  labels:
+    cluster.x-k8s.io/provider: ipam-in-cluster
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: caip-in-cluster-leader-election-role
+subjects:
+- kind: ServiceAccount
+  name: caip-in-cluster-controller-manager
+  namespace: capi-ipam-provider
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: caip-in-cluster-controller-manager
+  namespace: capi-ipam-provider
+  labels:
+    cluster.x-k8s.io/provider: ipam-in-cluster
+    control-plane: controller-manager
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      cluster.x-k8s.io/provider: ipam-in-cluster
+      control-plane: controller-manager
+  template:
+    metadata:
+      labels:
+        cluster.x-k8s.io/provider: ipam-in-cluster
+        control-plane: controller-manager
+    spec:
+      containers:
+      - name: manager
+        image: registry.k8s.io/capi-ipam-ic/cluster-api-ipam-in-cluster-controller:v1.0.3
+        args:
+        - --leader-elect
+        - --metrics-bind-address=:8080
+        - --health-probe-bind-address=:8081
+        - --webhook-port=0
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8081
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        ports:
+        - containerPort: 8080
+          name: metrics
+          protocol: TCP
+        - containerPort: 8081
+          name: healthz
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources:
+          limits:
+            cpu: 500m
+            memory: 128Mi
+          requests:
+            cpu: 10m
+            memory: 64Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          privileged: false
+          runAsGroup: 65532
+          runAsUser: 65532
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: caip-in-cluster-controller-manager
+      terminationGracePeriodSeconds: 10
+      tolerations:
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/master
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/control-plane
