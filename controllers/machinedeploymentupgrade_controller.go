@@ -64,6 +64,7 @@ func NewMachineDeploymentUpgradeReconciler(client client.Client) *MachineDeploym
 //+kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=machinedeploymentupgrades/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=machinedeploymentupgrades/finalizers,verbs=update
 //+kubebuilder:rbac:groups=cluster.x-k8s.io,resources=machinesets,verbs=get;list;watch;update;patch
+//+kubebuilder:rbac:groups=cluster.x-k8s.io,resources=machines,verbs=get;list;watch;update;patch
 
 // Reconcile reconciles a MachineDeploymentUpgrade object.
 // nolint:gocyclo
@@ -216,6 +217,9 @@ func (r *MachineDeploymentUpgradeReconciler) updateStatus(ctx context.Context, l
 			return fmt.Errorf("getting node upgrader for machine %s: %v", machine.Name, err)
 		}
 		if nodeUpgrade.Status.Completed {
+			if err := r.updateMachineVersion(ctx, log, machine, mdUpgrade.Spec.KubernetesVersion); err != nil {
+				return fmt.Errorf("updating machine version for %s: %v", machine.Name, err)
+			}
 			nodesUpgradeCompleted++
 			nodesUpgradeRequired--
 
@@ -277,6 +281,32 @@ func (r *MachineDeploymentUpgradeReconciler) updateMachineSet(ctx context.Contex
 	if err := patchHelper.Patch(ctx, ms); err != nil {
 		return fmt.Errorf("updating spec for machineset %s: %v", ms.Name, err)
 	}
+	return nil
+}
+
+func (r *MachineDeploymentUpgradeReconciler) updateMachineVersion(ctx context.Context, log logr.Logger, machineRef corev1.ObjectReference, kubernetesVersion string) error {
+	machine := &clusterv1.Machine{}
+	if err := r.client.Get(ctx, types.NamespacedName{Name: machineRef.Name, Namespace: machineRef.Namespace}, machine); err != nil {
+		return fmt.Errorf("getting machine %s: %v", machineRef.Name, err)
+	}
+
+	// Check if update is needed
+	if machine.Spec.Version != nil && *machine.Spec.Version == kubernetesVersion {
+		return nil
+	}
+
+	patchHelper, err := patch.NewHelper(machine, r.client)
+	if err != nil {
+		return err
+	}
+
+	machine.Spec.Version = &kubernetesVersion
+	log.Info("Updating Machine version", "Machine", machine.Name, "version", kubernetesVersion)
+
+	if err := patchHelper.Patch(ctx, machine); err != nil {
+		return fmt.Errorf("patching machine %s: %v", machine.Name, err)
+	}
+
 	return nil
 }
 
