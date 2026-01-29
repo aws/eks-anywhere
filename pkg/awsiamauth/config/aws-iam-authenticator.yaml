@@ -133,6 +133,7 @@ spec:
         - --kubeconfig-pregenerated=true
 
         securityContext:
+          runAsUser: 65532
           allowPrivilegeEscalation: false
           capabilities:
             drop:
@@ -160,7 +161,7 @@ spec:
       initContainers:
       - name: chown
         image: {{.initContainerImage}}
-        command: ['sh', '-c', 'chown 10000:10000 /var/aws-iam-authenticator/cert.pem; chown 10000:10000 /var/aws-iam-authenticator/key.pem; chown 10000:10000 /etc/kubernetes/aws-iam-authenticator/kubeconfig.yaml']
+        command: ['sh', '-c', 'chown 65532:65532 /var/aws-iam-authenticator/cert.pem; chown 65532:65532 /var/aws-iam-authenticator/key.pem; chown 65532:65532 /etc/kubernetes/aws-iam-authenticator/kubeconfig.yaml']
         volumeMounts:
         - name: cert
           mountPath: /var/aws-iam-authenticator/cert.pem
