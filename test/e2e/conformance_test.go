@@ -13,6 +13,7 @@ import (
 
 func runConformanceFlow(test *framework.ClusterE2ETest) {
 	test.GenerateClusterConfig()
+	test.GenerateSupportBundleOnCleanupIfTestFailed()
 	test.CreateCluster()
 	test.RunConformanceTests()
 	test.StopIfFailed()
@@ -22,6 +23,7 @@ func runConformanceFlow(test *framework.ClusterE2ETest) {
 func runTinkerbellConformanceFlow(test *framework.ClusterE2ETest) {
 	test.GenerateClusterConfig()
 	test.GenerateHardwareConfig()
+	test.GenerateSupportBundleOnCleanupIfTestFailed()
 	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
 	test.RunConformanceTests()
 	test.StopIfFailed()
