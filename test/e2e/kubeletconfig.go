@@ -9,6 +9,7 @@ import (
 
 func runKubeletConfigurationFlow(test *framework.ClusterE2ETest) {
 	test.GenerateClusterConfig()
+	test.GenerateSupportBundleOnCleanupIfTestFailed()
 	test.CreateCluster()
 	test.ValidateKubeletConfig()
 	test.StopIfFailed()
@@ -18,6 +19,7 @@ func runKubeletConfigurationFlow(test *framework.ClusterE2ETest) {
 func runKubeletConfigurationTinkerbellFlow(test *framework.ClusterE2ETest) {
 	test.GenerateClusterConfig()
 	test.GenerateHardwareConfig()
+	test.GenerateSupportBundleOnCleanupIfTestFailed()
 	test.CreateCluster()
 	test.ValidateKubeletConfig()
 	test.StopIfFailed()
