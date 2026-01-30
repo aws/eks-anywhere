@@ -17,6 +17,7 @@ func runWorkloadClusterFlow(test *framework.MulticlusterE2ETest) {
 	licenseToken2 := framework.GetLicenseToken2()
 	test.RunInWorkloadClusters(func(w *framework.WorkloadCluster) {
 		w.GenerateClusterConfigWithLicenseToken(licenseToken2)
+		w.GenerateSupportBundleOnCleanupIfTestFailed()
 		w.CreateCluster()
 		w.DeleteCluster()
 	})
@@ -27,6 +28,7 @@ func runWorkloadClusterFlow(test *framework.MulticlusterE2ETest) {
 func runWorkloadClusterExistingConfigFlow(test *framework.MulticlusterE2ETest) {
 	test.CreateManagementCluster()
 	test.RunInWorkloadClusters(func(w *framework.WorkloadCluster) {
+		w.GenerateSupportBundleOnCleanupIfTestFailed()
 		w.CreateCluster()
 		w.DeleteCluster()
 	})
@@ -38,6 +40,7 @@ func runWorkloadClusterPrevVersionCreateFlow(test *framework.MulticlusterE2ETest
 	test.CreateManagementClusterWithConfig()
 	test.RunInWorkloadClusters(func(w *framework.WorkloadCluster) {
 		w.GenerateClusterConfigForVersion(latestMinorRelease.Version, "", framework.ExecuteWithEksaRelease(latestMinorRelease))
+		w.GenerateSupportBundleOnCleanupIfTestFailed()
 		w.CreateCluster(framework.ExecuteWithEksaRelease(latestMinorRelease))
 		w.DeleteCluster()
 	})
@@ -49,6 +52,7 @@ func runWorkloadClusterFlowWithGitOps(test *framework.MulticlusterE2ETest, clust
 	licenseToken := framework.GetLicenseToken2()
 	test.RunInWorkloadClusters(func(w *framework.WorkloadCluster) {
 		w.GenerateClusterConfigWithLicenseToken(licenseToken)
+		w.GenerateSupportBundleOnCleanupIfTestFailed()
 		w.CreateCluster()
 		w.UpgradeWithGitOps(clusterOpts...)
 		time.Sleep(5 * time.Minute)
@@ -94,6 +98,7 @@ func runTinkerbellWorkloadClusterFlow(test *framework.MulticlusterE2ETest) {
 	licenseToken2 := framework.GetLicenseToken2()
 	test.RunInWorkloadClusters(func(w *framework.WorkloadCluster) {
 		w.GenerateClusterConfigWithLicenseToken(licenseToken2)
+		w.GenerateSupportBundleOnCleanupIfTestFailed()
 		w.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
 		w.StopIfFailed()
 		w.DeleteCluster()
@@ -121,6 +126,7 @@ func runSimpleWorkloadUpgradeFlowForBareMetal(test *framework.MulticlusterE2ETes
 	test.CreateTinkerbellManagementCluster()
 	test.RunInWorkloadClusters(func(w *framework.WorkloadCluster) {
 		w.GenerateClusterConfig()
+		w.GenerateSupportBundleOnCleanupIfTestFailed()
 		w.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
 		time.Sleep(2 * time.Minute)
 		w.UpgradeCluster(clusterOpts)
@@ -154,6 +160,7 @@ func runWorkloadClusterUpgradeFlowWithAPIForBareMetal(test *framework.Multiclust
 func runInPlaceWorkloadUpgradeFlow(test *framework.MulticlusterE2ETest, clusterOpts ...framework.ClusterE2ETestOpt) {
 	test.CreateManagementCluster()
 	test.RunInWorkloadClusters(func(w *framework.WorkloadCluster) {
+		w.GenerateSupportBundleOnCleanupIfTestFailed()
 		w.CreateCluster()
 		w.UpgradeClusterWithNewConfig(clusterOpts)
 		w.ValidateClusterState()
