@@ -43,6 +43,7 @@ func WorkersSpec(ctx context.Context, logger logr.Logger, client kubernetes.Clie
 	}
 
 	workers := builder.Workers
+
 	if err = workers.UpdateImmutableObjectNames(ctx, client, getMachineTemplate, machineTemplateEqual); err != nil {
 		return nil, errors.Wrap(err, "updating vSphere worker immutable object names")
 	}

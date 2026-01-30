@@ -83,6 +83,46 @@ spec:
                 type: array
               insecure:
                 type: boolean
+              ipPool:
+                description: |-
+                  IPPool defines the IP pool configuration for static IP assignment to cluster nodes.
+                  When specified, nodes will be assigned static IPs from this pool instead of using DHCP.
+                  The CLI creates an InClusterIPPool resource from this configuration.
+                properties:
+                  addresses:
+                    description: |-
+                      Addresses defines the IP addresses to include in the pool.
+                      Supports ranges (e.g., "192.168.1.100-192.168.1.120"),
+                      CIDR blocks (e.g., "192.168.1.0/24"), or individual IPs.
+                    items:
+                      type: string
+                    minItems: 1
+                    type: array
+                  gateway:
+                    description: Gateway is the default gateway IP address for the
+                      subnet.
+                    type: string
+                  name:
+                    description: Name is the name for the generated InClusterIPPool
+                      resource.
+                    type: string
+                  nameservers:
+                    description: Nameservers is a list of DNS server IP addresses.
+                    items:
+                      type: string
+                    type: array
+                  prefix:
+                    description: Prefix is the subnet prefix length (e.g., 24 for
+                      /24 subnet).
+                    maximum: 32
+                    minimum: 1
+                    type: integer
+                required:
+                - addresses
+                - gateway
+                - name
+                - prefix
+                type: object
               network:
                 type: string
               server:

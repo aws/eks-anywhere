@@ -43,6 +43,7 @@ func (vs *VsphereTemplateBuilder) GenerateCAPISpecControlPlane(
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
 		etcdMachineSpec = etcdMachineConfig(clusterSpec).Spec
 	}
+
 	values, err := buildTemplateMapCP(
 		clusterSpec,
 		clusterSpec.VSphereDatacenter.Spec,
@@ -445,6 +446,14 @@ func buildTemplateMapCP(
 		}
 	}
 
+	// Add IP pool configuration for static IP support via CAPI IPAM
+	if clusterSpec.VSphereDatacenter.Spec.IPPool != nil {
+		values["ipPoolName"] = clusterSpec.VSphereDatacenter.Spec.IPPool.Name
+		if len(clusterSpec.VSphereDatacenter.Spec.IPPool.Nameservers) > 0 {
+			values["ipPoolNameservers"] = clusterSpec.VSphereDatacenter.Spec.IPPool.Nameservers
+		}
+	}
+
 	return values, nil
 }
 
@@ -611,6 +620,14 @@ func buildTemplateMapMD(
 	nodeLabelArgs := clusterapi.WorkerNodeLabelsExtraArgs(workerNodeGroupConfiguration)
 	if len(nodeLabelArgs) != 0 {
 		values["nodeLabelArgs"] = nodeLabelArgs.ToPartialYaml()
+	}
+
+	// Add IP pool configuration for static IP support via CAPI IPAM
+	if clusterSpec.VSphereDatacenter.Spec.IPPool != nil {
+		values["ipPoolName"] = clusterSpec.VSphereDatacenter.Spec.IPPool.Name
+		if len(clusterSpec.VSphereDatacenter.Spec.IPPool.Nameservers) > 0 {
+			values["ipPoolNameservers"] = clusterSpec.VSphereDatacenter.Spec.IPPool.Nameservers
+		}
 	}
 
 	return values, nil
