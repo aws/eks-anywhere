@@ -10,6 +10,7 @@ import (
 func runTinkerbellSingleNodeFlow(test *framework.ClusterE2ETest) {
 	test.GenerateClusterConfig()
 	test.GenerateHardwareConfig()
+	test.GenerateSupportBundleOnCleanupIfTestFailed()
 	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
 	test.ValidateControlPlaneNodes(framework.ValidateControlPlaneNoTaints, framework.ValidateControlPlaneLabels)
 	test.DeleteCluster()
