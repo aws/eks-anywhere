@@ -1005,6 +1005,44 @@ If there are no IPv4 IPs assigned to VMs, this is most likely because you don't 
 
 To confirm this is a DHCP issue, you could create a new VM in the same network to validate if an IPv4 IP is assigned correctly.
 
+#### Static IP: IP pool has insufficient addresses
+
+If you are using static IP assignment (via `ipPool` in VSphereDatacenterConfig) and cluster creation fails, you may see an error like:
+
+```
+ipPool 'my-pool' has 10 addresses but cluster requires at least 12 (control plane: 3, workers: 5, etcd: 3, rolling upgrade buffer: 1)
+```
+
+**Resolution**: Increase the number of IP addresses in your `ipPool.addresses` configuration. The pool must have enough addresses for all nodes plus one additional address for rolling upgrades.
+
+**Calculating required IPs**:
+- Control plane nodes + Worker nodes + External etcd nodes (if any) + 1
+
+For clusters with autoscaling, use `maxCount` instead of `count` for worker nodes to ensure enough IPs are available when scaling up.
+
+#### Static IP: InClusterIPPool resource not found
+
+If VMs are created but don't receive IP addresses when using static IP configuration, verify the IPAM resources exist:
+
+```bash
+kubectl get inclusterippool -n eksa-system --kubeconfig <cluster-kubeconfig>
+```
+
+If the `InClusterIPPool` resource is missing, check the `capv-controller-manager` logs for errors related to IPAM:
+
+```bash
+kubectl logs -n capv-system -l control-plane=controller-manager --kubeconfig <cluster-kubeconfig>
+```
+
+#### Static IP: VMs have no network connectivity after IP assignment
+
+If VMs receive static IPs but have no network connectivity:
+
+1. Verify the `gateway` in your `ipPool` configuration is correct and reachable from the VM network.
+2. Verify the `prefix` (subnet mask) is correct for your network.
+3. Check that the assigned IP addresses are in the correct subnet for the configured gateway.
+4. If using `nameservers`, verify the DNS servers are reachable from the VM network.
+
 #### Control Plane IP in clusterconfig is not present on any Control Plane VM
 
 If there are any IPv4 IPs assigned, check if one of the VMs have the controlPlane IP specified in `Cluster.spec.controlPlaneConfiguration.endpoint.host` in the clusterconfig yaml.
