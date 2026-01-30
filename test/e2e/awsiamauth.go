@@ -13,6 +13,7 @@ import (
 
 func runAWSIamAuthFlow(test *framework.ClusterE2ETest) {
 	test.GenerateClusterConfig()
+	test.GenerateSupportBundleOnCleanupIfTestFailed()
 	test.CreateCluster()
 	test.ValidateAWSIamAuth()
 	test.StopIfFailed()
@@ -21,6 +22,7 @@ func runAWSIamAuthFlow(test *framework.ClusterE2ETest) {
 
 func runUpgradeFlowWithAWSIamAuth(test *framework.ClusterE2ETest, updateVersion v1alpha1.KubernetesVersion, clusterOpts ...framework.ClusterE2ETestOpt) {
 	test.GenerateClusterConfig()
+	test.GenerateSupportBundleOnCleanupIfTestFailed()
 	test.CreateCluster()
 	test.ValidateAWSIamAuth()
 	test.UpgradeClusterWithNewConfig(clusterOpts)
@@ -33,6 +35,7 @@ func runUpgradeFlowWithAWSIamAuth(test *framework.ClusterE2ETest, updateVersion 
 func runTinkerbellAWSIamAuthFlow(test *framework.ClusterE2ETest) {
 	test.GenerateClusterConfig()
 	test.GenerateHardwareConfig()
+	test.GenerateSupportBundleOnCleanupIfTestFailed()
 	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
 	test.ValidateAWSIamAuth()
 	test.StopIfFailed()
@@ -45,6 +48,7 @@ func runAWSIamAuthFlowWorkload(test *framework.MulticlusterE2ETest) {
 	test.RunInWorkloadClusters(func(w *framework.WorkloadCluster) {
 		licenseToken := framework.GetLicenseToken2()
 		w.GenerateClusterConfigWithLicenseToken(licenseToken)
+		w.GenerateSupportBundleOnCleanupIfTestFailed()
 		w.CreateCluster()
 		w.ValidateAWSIamAuth()
 		w.StopIfFailed()
@@ -56,6 +60,7 @@ func runAWSIamAuthFlowWorkload(test *framework.MulticlusterE2ETest) {
 
 func runUpgradeFlowAddAWSIamAuth(test *framework.ClusterE2ETest, updateVersion v1alpha1.KubernetesVersion) {
 	test.GenerateClusterConfig()
+	test.GenerateSupportBundleOnCleanupIfTestFailed()
 	test.CreateCluster()
 	test.ValidateCluster(updateVersion)
 	test.UpgradeClusterWithNewConfig([]framework.ClusterE2ETestOpt{

@@ -12,6 +12,7 @@ import (
 
 func runAutoImportFlow(test *framework.ClusterE2ETest, provider *framework.VSphere) {
 	test.GenerateClusterConfig()
+	test.GenerateSupportBundleOnCleanupIfTestFailed()
 	test.CreateCluster()
 	templates := getMachineConfigs(test)
 	test.DeleteCluster()

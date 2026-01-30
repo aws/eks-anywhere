@@ -10,6 +10,7 @@ import (
 
 func runLabelsUpgradeFlow(test *framework.ClusterE2ETest, updateVersion v1alpha1.KubernetesVersion, clusterOpts ...framework.ClusterE2ETestOpt) {
 	test.GenerateClusterConfig()
+	test.GenerateSupportBundleOnCleanupIfTestFailed()
 	test.CreateCluster()
 	test.ValidateWorkerNodes(framework.ValidateWorkerNodeLabels)
 	test.ValidateControlPlaneNodes(framework.ValidateControlPlaneLabels)
