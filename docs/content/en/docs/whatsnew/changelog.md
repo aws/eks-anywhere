@@ -171,6 +171,30 @@ description: >
 - etcdadm-bootstrap-provider: `v1.0.16` to `v1.0.18`
 - controller-runtime: `v0.20.4` to `v0.21.0`
 
+## [v0.23.7](https://github.com/aws/eks-anywhere/releases/tag/v0.23.7)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.50.0 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+
+### Changed
+- EKS Distro:
+  - [`v1-33-eks-22`](https://distro.eks.amazonaws.com/releases/1-33/22/)
+  - [`v1-32-eks-32`](https://distro.eks.amazonaws.com/releases/1-32/32/)
+  - [`v1-31-eks-39`](https://distro.eks.amazonaws.com/releases/1-31/39/)
+  - [`v1-30-eks-50`](https://distro.eks.amazonaws.com/releases/1-30/50/)
+  - [`v1-29-eks-57`](https://distro.eks.amazonaws.com/releases/1-29/57/)
+- containerd `v1.7.28` to `v1.7.30`
+- rancher/local-path-provisioner `v0.0.32` to `v0.0.34`
+
+### Fixed
+- Ensure maxSurge value updates in Tinkerbell machine configurations are properly applied during ongoing cluster upgrades instead of using stale values ([#10466](https://github.com/aws/eks-anywhere/pull/10466))
+
 ## [v0.23.6](https://github.com/aws/eks-anywhere/releases/tag/v0.23.6)
 
 ### Supported OS version details
