@@ -17,8 +17,11 @@ Set up an Administrative machine as described in [Install EKS Anywhere ]({{< rel
 To prepare a VMware vSphere environment to run EKS Anywhere, you need the following:
 * A vSphere 7 or 8 environment running vCenter.
 * Capacity to deploy 6-10 VMs.
-* DHCP service running in vSphere environment in the primary VM network for your workload cluster.
-  * [Prepare DHCP IP addresses pool]({{< relref "../../clustermgmt/cluster-upgrades/vsphere-and-cloudstack-upgrades.md/#prepare-dhcp-ip-addresses-pool" >}})
+* **IP assignment for cluster nodes** - Choose one of the following:
+  * **DHCP** (default): DHCP service running in vSphere environment in the primary VM network for your workload cluster.
+    * [Prepare DHCP IP addresses pool]({{< relref "../../clustermgmt/cluster-upgrades/vsphere-and-cloudstack-upgrades.md/#prepare-dhcp-ip-addresses-pool" >}})
+  * **Static IP**: Configure an [IP pool]({{< relref "./vsphere-spec/#ippool-optional" >}}) in VSphereDatacenterConfig to assign static IPs to cluster nodes via CAPI IPAM.
+    * See [Static IP Planning](#static-ip-planning) below for requirements.
 * One network in vSphere to use for the cluster. EKS Anywhere clusters need access to vCenter through the network to enable self-managing and storage capabilities.
 * An [OVA]({{< relref "customize/vsphere-ovas/" >}}) imported into vSphere and converted into a template for the workload VMs
 * It's critical that you set up your [vSphere user credentials properly.]({{< relref "./vsphere-preparation#configuring-vsphere-user-group-and-roles" >}})
@@ -45,6 +48,42 @@ The administrative machine and the target workload environment will need network
 
 {{% content "./domains.md" %}}
 
+
+## Static IP Planning
+
+If you choose to use static IP assignment instead of DHCP, you need to plan your IP pool carefully:
+
+### IP Pool Size Requirements
+
+Your IP pool must have enough addresses for:
+* **Control plane nodes**: Number specified in `controlPlaneConfiguration.count`
+* **Worker nodes**: Total count across all worker node groups. For autoscaling, use the `maxCount` value.
+* **External etcd nodes** (if configured): Number specified in `externalEtcdConfiguration.count`
+* **Rolling upgrade buffer**: 1 additional IP for node replacements during upgrades
+
+**Formula**: `Required IPs = CP nodes + Worker nodes + Etcd nodes + 1`
+
+**Example**: A cluster with 3 control plane nodes, 5 workers, and 3 external etcd nodes needs at least **12 IP addresses** (3 + 5 + 3 + 1).
+
+### Static IP Configuration
+
+Configure the following in your `VSphereDatacenterConfig`:
+
+```yaml
+spec:
+  ipPool:
+    name: "my-cluster-pool"
+    addresses:
+    - "192.168.1.100-192.168.1.120"  # 21 IPs
+    prefix: 24
+    gateway: "192.168.1.1"
+    nameservers:
+    - "8.8.8.8"
+```
+
+For detailed field descriptions, see [ipPool configuration]({{< relref "./vsphere-spec/#ippool-optional" >}}).
+
+>**_NOTE:_** The control plane endpoint IP (`controlPlaneConfiguration.endpoint.host`) is separate from the IP pool and must still be a static IP excluded from both DHCP and your IP pool.
 
 ## vSphere information needed before creating the cluster
 You need to get the following information before creating the cluster:
