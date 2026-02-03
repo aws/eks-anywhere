@@ -1,48 +1,68 @@
-hegel:
-  image: public.ecr.aws/eks-anywhere/hegel:latest
-  singleNodeClusterConfig:
-    controlPlaneTolerationsEnabled: true
-    nodeAffinityWeight: 1
-  trustedProxies:
-  - 192.168.0.0/16
-rufio:
-  additionalArgs:
-  - -metrics-bind-address=127.0.0.1:8080
-  - -max-concurrent-reconciles=10
-  image: public.ecr.aws/eks-anywhere/rufio:latest
-  singleNodeClusterConfig:
-    controlPlaneTolerationsEnabled: true
-    nodeAffinityWeight: 1
-smee:
-  deploy: true
-  http:
-    additionalKernelArgs: []
-    osieUrl:
-      host: anywhere-assests.eks.amazonaws.com
-      path: /tinkerbell/hook
-      port: ""
-      scheme: https
+deployment:
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - preference:
+          matchExpressions:
+          - key: node-role.kubernetes.io/control-plane
+            operator: DoesNotExist
+        weight: 1
+  agentImage: 127.0.0.1/embedded/tink-worker
+  agentImageTag: ""
+  envs:
+    globals:
+      backend: kube
+      backendKubeNamespace: eksa-system
+      enableCRDMigrations: false
+      enableRufioController: true
+      enableSecondstar: false
+      enableSmee: true
+      enableTinkController: true
+      enableTinkServer: true
+      enableTootles: true
+    rufio:
+      enableLeaderElection: true
+    smee:
+      dhcpEnabled: true
+      dhcpIPForPacket: 1.2.3.4
+      dhcpIpxeHttpBinaryHost: 1.2.3.4
+      dhcpIpxeHttpBinaryPort: 7171
+      dhcpIpxeHttpScriptHost: 1.2.3.4
+      dhcpIpxeHttpScriptPort: 7171
+      dhcpMode: reservation
+      dhcpSyslogIP: 1.2.3.4
+      dhcpTftpIP: 1.2.3.4
+      ipxeHttpScriptBindPort: 7171
+      ipxeHttpScriptExtraKernelArgs: []
+      ipxeHttpScriptOsieURL: https://anywhere-assests.eks.amazonaws.com/tinkerbell/hook
+      ipxeScriptTinkServerAddrPort: 1.2.3.4:42113
+      ipxeScriptTinkServerInsecureTLS: true
+      isoEnabled: true
+      isoStaticIPAMEnabled: true
+      isoUpstreamURL: https://anywhere-assests.eks.amazonaws.com/tinkerbell/hook/hook-x86_64-efi-initrd.iso
+      syslogEnabled: true
+      tftpServerEnabled: true
+    tinkController:
+      enableLeaderElection: true
     tinkServer:
-      insecureTLS: true
-      ip: 1.2.3.4
-      port: "42113"
-  image: public.ecr.aws/eks-anywhere/boots:latest
-  iso:
-    enabled: true
-    staticIPAMEnabled: true
-    url: https://anywhere-assests.eks.amazonaws.com/tinkerbell/hook/hook-x86_64-efi-initrd.iso
-  publicIP: 1.2.3.4
-  singleNodeClusterConfig:
-    controlPlaneTolerationsEnabled: true
-    nodeAffinityWeight: 1
-  tinkWorkerImage: 127.0.0.1/embedded/tink-worker
-  trustedProxies:
-  - 192.168.0.0/16
-stack:
-  hook:
-    enabled: false
+      bindPort: 42113
+    tootles:
+      bindPort: 7172
   hostNetwork: false
-  image: public.ecr.aws/eks-anywhere/nginx:latest
+  image: public.ecr.aws/eks-anywhere/tinkerbell
+  imageTag: latest
+  init:
+    enabled: false
+    image: public.ecr.aws/eks-anywhere/tink-relay-init:latest
+    interfaceMode: macvlan
+  tolerations:
+  - effect: NoSchedule
+    key: node-role.kubernetes.io/control-plane
+    operator: Exists
+name: tinkerbell
+optional:
+  hookos:
+    enabled: false
   kubevip:
     additionalEnv:
     - name: prometheus_server
@@ -51,24 +71,12 @@ stack:
       value: "true"
     enabled: true
     image: public.ecr.aws/eks-anywhere/kube-vip:latest
+publicIP: 1.2.3.4
+rbac:
+  type: Role
+service:
+  lbClass: kube-vip.io/kube-vip-class
   loadBalancerIP: 1.2.3.4
-  relay:
-    enabled: false
-    image: public.ecr.aws/eks-anywhere/tink-relay:latest
-    initImage: public.ecr.aws/eks-anywhere/tink-relay-init:latest
-  service:
-    enabled: false
-  singleNodeClusterConfig:
-    controlPlaneTolerationsEnabled: true
-    nodeAffinityWeight: 1
-tink:
-  controller:
-    image: public.ecr.aws/eks-anywhere/tink-controller:latest
-    singleNodeClusterConfig:
-      controlPlaneTolerationsEnabled: true
-      nodeAffinityWeight: 1
-  server:
-    image: public.ecr.aws/eks-anywhere/tink-server:latest
-    singleNodeClusterConfig:
-      controlPlaneTolerationsEnabled: true
-      nodeAffinityWeight: 1
+  type: LoadBalancer
+trustedProxies:
+- 192.168.0.0/16
