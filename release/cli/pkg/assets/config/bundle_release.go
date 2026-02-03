@@ -838,6 +838,24 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 			"projectPath",
 		},
 	},
+	// Tinkerbell mono-repo artifacts (unified binary)
+	{
+		ProjectName: "tinkerbell",
+		ProjectPath: "projects/tinkerbell/tinkerbell",
+		Images: []*assettypes.Image{
+			{
+				RepoName: "tinkerbell",
+			},
+			{
+				RepoName: "tink-agent",
+			},
+		},
+		ImageRepoPrefix: "tinkerbell/tinkerbell",
+		ImageTagOptions: []string{
+			"gitTag",
+			"projectPath",
+		},
+	},
 	// Tinkerbell chart artifacts
 	{
 		ProjectName: "tinkerbell-chart",

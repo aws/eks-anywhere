@@ -28,7 +28,7 @@ import (
 )
 
 func GetTinkerbellBundle(r *releasetypes.ReleaseConfig, imageDigests releasetypes.ImageDigestsTable) (anywherev1alpha1.TinkerbellBundle, error) {
-	projectsInBundle := []string{"cluster-api-provider-tinkerbell", "kube-vip", "envoy", "tink", "hegel", "boots", "hub", "hook", "rufio", "stack", "tinkerbell-chart", "tinkerbell-crds"}
+	projectsInBundle := []string{"cluster-api-provider-tinkerbell", "kube-vip", "envoy", "tinkerbell", "tink", "hub", "hook", "stack", "tinkerbell-chart", "tinkerbell-crds"}
 	tinkerbellBundleArtifacts := map[string][]releasetypes.Artifact{}
 	for _, project := range projectsInBundle {
 		projectArtifacts, err := r.BundleArtifactsTable.Load(project)
@@ -140,8 +140,8 @@ func GetTinkerbellBundle(r *releasetypes.ReleaseConfig, imageDigests releasetype
 				Reboot:      bundleImageArtifacts["reboot"],
 				WriteFile:   bundleImageArtifacts["writefile"],
 			},
-			Boots: bundleImageArtifacts["boots"],
-			Hegel: bundleImageArtifacts["hegel"],
+			Boots: bundleImageArtifacts["tinkerbell"],
+			Hegel: bundleImageArtifacts["tinkerbell"],
 			Hook: anywherev1alpha1.HookBundle{
 				Bootkit: bundleImageArtifacts["hook-bootkit"],
 				Docker:  bundleImageArtifacts["hook-docker"],
@@ -159,15 +159,15 @@ func GetTinkerbellBundle(r *releasetypes.ReleaseConfig, imageDigests releasetype
 					Amd: bundleArchiveArtifacts["vmlinuz-x86_64"],
 				},
 			},
-			Rufio: bundleImageArtifacts["rufio"],
+			Rufio: bundleImageArtifacts["tinkerbell"],
 			Stack: bundleImageArtifacts["stack-helm"],
 			Tink: anywherev1alpha1.TinkBundle{
 				Nginx:          bundleImageArtifacts["nginx"],
 				TinkRelay:      bundleImageArtifacts["tink-relay"],
 				TinkRelayInit:  bundleImageArtifacts["tink-relay-init"],
-				TinkController: bundleImageArtifacts["tink-controller"],
-				TinkServer:     bundleImageArtifacts["tink-server"],
-				TinkWorker:     bundleImageArtifacts["tink-worker"],
+				TinkController: bundleImageArtifacts["tinkerbell"],
+				TinkServer:     bundleImageArtifacts["tinkerbell"],
+				TinkWorker:     bundleImageArtifacts["tink-agent"],
 			},
 			TinkebellChart: bundleImageArtifacts["tinkerbell-chart"],
 			TinkerbellCrds: bundleImageArtifacts["tinkerbell-crds-helm"],
