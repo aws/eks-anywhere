@@ -20,6 +20,7 @@ import (
 	internalmocks "github.com/aws/eks-anywhere/internal/test/mocks"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/manifests"
 	"github.com/aws/eks-anywhere/pkg/manifests/releases"
 	"github.com/aws/eks-anywhere/pkg/providers"
@@ -1468,4 +1469,19 @@ spec:
 	err := validations.ValidateExtendedKubernetesVersionSupport(ctx, *cluster, reader, fakeClient, "bundles-override.yaml")
 	g.Expect(err).To(HaveOccurred())
 	g.Expect(err.Error()).To(ContainSubstring("unmarshalling eksd release manifest from URL"))
+}
+
+func TestValidateK8s135Support(t *testing.T) {
+	tt := newTest(t)
+	tt.clusterSpec.Cluster.Spec.KubernetesVersion = anywherev1.Kube135
+	tt.Expect(validations.ValidateK8s135Support(tt.clusterSpec)).To(
+		MatchError(ContainSubstring("kubernetes version 1.35 is not enabled. Please set the env variable K8S_1_35_SUPPORT")))
+}
+
+func TestValidateK8s135SupportActive(t *testing.T) {
+	tt := newTest(t)
+	tt.clusterSpec.Cluster.Spec.KubernetesVersion = anywherev1.Kube135
+	features.ClearCache()
+	os.Setenv(features.K8s135SupportEnvVar, "true")
+	tt.Expect(validations.ValidateK8s135Support(tt.clusterSpec)).To(Succeed())
 }
