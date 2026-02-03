@@ -43,14 +43,14 @@ func getTinkBundle() releasev1alpha1.TinkerbellBundle {
 		TinkerbellStack: releasev1alpha1.TinkerbellStackBundle{
 			Tink: releasev1alpha1.TinkBundle{
 				Nginx:          releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/nginx:latest"},
-				TinkController: releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/tink-controller:latest"},
-				TinkServer:     releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/tink-server:latest"},
-				TinkWorker:     releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/tink-worker:latest"},
+				TinkController: releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/tinkerbell:latest"},
+				TinkServer:     releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/tinkerbell:latest"},
+				TinkWorker:     releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/tink-agent:latest"},
 				TinkRelay:      releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/tink-relay:latest"},
 				TinkRelayInit:  releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/tink-relay-init:latest"},
 			},
-			Boots: releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/boots:latest"},
-			Hegel: releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/hegel:latest"},
+			Boots: releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/tinkerbell:latest"},
+			Hegel: releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/tinkerbell:latest"},
 			Hook: releasev1alpha1.HookBundle{
 				Initramfs: releasev1alpha1.HookArch{
 					Amd: releasev1alpha1.Archive{
@@ -64,7 +64,7 @@ func getTinkBundle() releasev1alpha1.TinkerbellBundle {
 				},
 			},
 			Rufio: releasev1alpha1.Image{
-				URI: "public.ecr.aws/eks-anywhere/rufio:latest",
+				URI: "public.ecr.aws/eks-anywhere/tinkerbell:latest",
 			},
 			Stack: releasev1alpha1.Image{
 				Name: "stack",
@@ -239,33 +239,49 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 			}
 
 			if stackTest.installOnDocker {
-				docker.EXPECT().Run(ctx, "public.ecr.aws/eks-anywhere/boots:latest",
+				docker.EXPECT().Run(ctx, "public.ecr.aws/eks-anywhere/tinkerbell:latest",
 					boots,
-					[]string{
-						"-backend-kube-config",
-						"/kubeconfig",
-						"-dhcp-addr", "0.0.0.0:67",
-						"-osie-url", "https://anywhere-assests.eks.amazonaws.com/tinkerbell/hook",
-						"-tink-server", "1.2.3.4:42113",
-						"-syslog-addr", testIP,
-						"-tftp-addr", testIP,
-						"-http-addr", testIP,
-					},
+					[]string{}, // Mono-repo binary uses env vars, not command line args
 					"-v", gomock.Any(),
 					"--network", "host",
-					"-e", gomock.Any(),
-					"-e", gomock.Any(),
-					"-e", gomock.Any(),
-					"-e", gomock.Any(),
-					"-e", gomock.Any(),
-					"-e", gomock.Any(),
-					"-e", gomock.Any(),
-					"-e", gomock.Any(),
-					"-e", gomock.Any(),
-					"-e", gomock.Any(),
-					"-e", gomock.Any(),
-					"-e", gomock.Any(),
-					"-e", gomock.Any(),
+					// Global settings
+					"-e", "TINKERBELL_BACKEND=kube",
+					"-e", "TINKERBELL_BACKEND_KUBE_CONFIG=/kubeconfig",
+					"-e", gomock.Any(), // TINKERBELL_BACKEND_KUBE_NAMESPACE
+					"-e", gomock.Any(), // TINKERBELL_PUBLIC_IPV4
+					"-e", gomock.Any(), // TINKERBELL_TRUSTED_PROXIES
+					// Enable flags
+					"-e", "TINKERBELL_ENABLE_SMEE=true",
+					"-e", "TINKERBELL_ENABLE_TOOTLES=false",
+					"-e", "TINKERBELL_ENABLE_TINK_SERVER=false",
+					"-e", "TINKERBELL_ENABLE_TINK_CONTROLLER=false",
+					"-e", "TINKERBELL_ENABLE_RUFIO_CONTROLLER=false",
+					"-e", "TINKERBELL_ENABLE_SECONDSTAR=false",
+					"-e", "TINKERBELL_ENABLE_CRD_MIGRATIONS=false",
+					// DHCP settings
+					"-e", "TINKERBELL_DHCP_ENABLED=true",
+					"-e", "TINKERBELL_DHCP_MODE=reservation",
+					"-e", gomock.Any(), // TINKERBELL_DHCP_IP_FOR_PACKET
+					"-e", gomock.Any(), // TINKERBELL_DHCP_SYSLOG_IP
+					"-e", gomock.Any(), // TINKERBELL_DHCP_TFTP_IP
+					"-e", gomock.Any(), // TINKERBELL_DHCP_IPXE_HTTP_BINARY_HOST
+					"-e", gomock.Any(), // TINKERBELL_DHCP_IPXE_HTTP_BINARY_PORT
+					"-e", gomock.Any(), // TINKERBELL_DHCP_IPXE_HTTP_SCRIPT_HOST
+					"-e", gomock.Any(), // TINKERBELL_DHCP_IPXE_HTTP_SCRIPT_PORT
+					// HTTP/iPXE settings
+					"-e", gomock.Any(), // TINKERBELL_IPXE_HTTP_SCRIPT_BIND_PORT
+					"-e", gomock.Any(), // TINKERBELL_IPXE_HTTP_SCRIPT_OSIE_URL
+					"-e", gomock.Any(), // TINKERBELL_IPXE_HTTP_SCRIPT_EXTRA_KERNEL_ARGS
+					"-e", gomock.Any(), // TINKERBELL_IPXE_SCRIPT_TINK_SERVER_ADDR_PORT
+					"-e", "TINKERBELL_IPXE_SCRIPT_TINK_SERVER_INSECURE_TLS=true",
+					// ISO settings
+					"-e", "TINKERBELL_ISO_ENABLED=true",
+					"-e", "TINKERBELL_ISO_STATIC_IPAM_ENABLED=true",
+					"-e", gomock.Any(), // TINKERBELL_ISO_UPSTREAM_URL
+					// TFTP settings
+					"-e", "TINKERBELL_TFTP_SERVER_ENABLED=true",
+					// Syslog settings
+					"-e", "TINKERBELL_SYSLOG_ENABLED=true",
 				)
 
 			}

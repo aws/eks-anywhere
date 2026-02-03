@@ -20,35 +20,13 @@ import (
 )
 
 const (
-	args              = "args"
-	deploy            = "deploy"
-	additionalEnv     = "additionalEnv"
-	hostPortEnabled   = "hostPortEnabled"
-	image             = "image"
-	namespace         = "namespace"
 	overridesFileName = "tinkerbell-chart-overrides.yaml"
-	port              = "port"
-	addr              = "addr"
-	enabled           = "enabled"
-	kubevipInterface  = "interface"
 
-	boots                        = "boots"
-	smee                         = "smee"
-	hegel                        = "hegel"
-	tink                         = "tink"
-	controller                   = "controller"
-	server                       = "server"
-	rufio                        = "rufio"
-	rufioMaxConcurrentReconciles = 10
-	grpcPort                     = "42113"
-	kubevip                      = "kubevip"
-	stack                        = "stack"
-	hook                         = "hook"
-	service                      = "service"
-	relay                        = "relay"
-	smeeHTTPPort                 = "7171"
+	boots        = "boots"
+	smeeHTTPPort = "7171"
+	grpcPort     = "42113"
 
-	// localTinkWorkerImage is the path to the tink-worker image in the hook-OS.
+	// localTinkWorkerImage is the path to the tink-worker image embedded in HookOS.
 	localTinkWorkerImage = "127.0.0.1/embedded/tink-worker"
 )
 
@@ -251,27 +229,6 @@ func (s *Installer) installBootsOnDocker(ctx context.Context, bundle releasev1al
 		return fmt.Errorf("getting absolute path for kubeconfig: %v", err)
 	}
 
-	flags := []string{
-		"-v", fmt.Sprintf("%s:/kubeconfig", kubeconfig),
-		"--network", "host",
-		"-e", fmt.Sprintf("SMEE_DHCP_SYSLOG_IP=%s", tinkServerIP),
-		"-e", fmt.Sprintf("SMEE_DHCP_IP_FOR_PACKET=%s", tinkServerIP),
-		"-e", fmt.Sprintf("SMEE_DHCP_TFTP_IP=%s", tinkServerIP),
-		"-e", fmt.Sprintf("SMEE_DHCP_HTTP_IPXE_BINARY_HOST=%s", tinkServerIP),
-		"-e", fmt.Sprintf("SMEE_DHCP_HTTP_IPXE_BINARY_PORT=%s", smeeHTTPPort),
-		"-e", fmt.Sprintf("SMEE_DHCP_HTTP_IPXE_SCRIPT_HOST=%s", tinkServerIP),
-		"-e", fmt.Sprintf("SMEE_DHCP_HTTP_IPXE_SCRIPT_PORT=%s", smeeHTTPPort),
-		"-e", fmt.Sprintf("SMEE_HTTP_PORT=%s", smeeHTTPPort),
-		"-e", fmt.Sprintf("SMEE_BACKEND_KUBE_NAMESPACE=%v", s.namespace),
-		"-e", fmt.Sprintf("SMEE_ISO_ENABLED=%v", true),
-		"-e", fmt.Sprintf("SMEE_ISO_STATIC_IPAM_ENABLED=%v", true),
-		"-e", fmt.Sprintf("SMEE_ISO_URL=%v", isoOverride),
-	}
-
-	extraKernelArgList := s.getSmeeKernelArgs(bundle)
-	extraKernelArgs := strings.Join(extraKernelArgList, " ")
-	flags = append(flags, "-e", fmt.Sprintf("%s=%s", "SMEE_EXTRA_KERNEL_ARGS", extraKernelArgs))
-
 	osiePath, err := getURIDir(bundle.Hook.Initramfs.Amd.URI)
 	if err != nil {
 		return fmt.Errorf("getting directory path from hook uri: %v", err)
@@ -281,15 +238,49 @@ func (s *Installer) installBootsOnDocker(ctx context.Context, bundle releasev1al
 		osiePath = hookOverride
 	}
 
-	cmd := []string{
-		"-backend-kube-config", "/kubeconfig",
-		"-dhcp-addr", "0.0.0.0:67",
-		"-osie-url", osiePath,
-		"-tink-server", fmt.Sprintf("%s:%s", tinkServerIP, grpcPort),
-		"-syslog-addr", tinkServerIP,
-		"-tftp-addr", tinkServerIP,
-		"-http-addr", tinkServerIP,
+	extraKernelArgList := s.getSmeeKernelArgs(bundle)
+	extraKernelArgList = append(extraKernelArgList, fmt.Sprintf("tink_worker_image=%s", localTinkWorkerImage))
+	extraKernelArgs := strings.Join(extraKernelArgList, " ")
+
+	// Mono-repo tinkerbell binary uses TINKERBELL_ prefix for env vars
+	flags := []string{
+		"-v", fmt.Sprintf("%s:/kubeconfig", kubeconfig),
+		"--network", "host",
+		"-e", "TINKERBELL_BACKEND=kube",
+		"-e", "TINKERBELL_BACKEND_KUBE_CONFIG=/kubeconfig",
+		"-e", fmt.Sprintf("TINKERBELL_BACKEND_KUBE_NAMESPACE=%s", s.namespace),
+		"-e", fmt.Sprintf("TINKERBELL_PUBLIC_IPV4=%s", tinkServerIP),
+		"-e", fmt.Sprintf("TINKERBELL_TRUSTED_PROXIES=%s", s.podCidrRange),
+		"-e", "TINKERBELL_ENABLE_SMEE=true",
+		"-e", "TINKERBELL_ENABLE_TOOTLES=false",
+		"-e", "TINKERBELL_ENABLE_TINK_SERVER=false",
+		"-e", "TINKERBELL_ENABLE_TINK_CONTROLLER=false",
+		"-e", "TINKERBELL_ENABLE_RUFIO_CONTROLLER=false",
+		"-e", "TINKERBELL_ENABLE_SECONDSTAR=false",
+		"-e", "TINKERBELL_ENABLE_CRD_MIGRATIONS=false",
+		"-e", "TINKERBELL_DHCP_ENABLED=true",
+		"-e", "TINKERBELL_DHCP_MODE=reservation",
+		"-e", fmt.Sprintf("TINKERBELL_DHCP_IP_FOR_PACKET=%s", tinkServerIP),
+		"-e", fmt.Sprintf("TINKERBELL_DHCP_SYSLOG_IP=%s", tinkServerIP),
+		"-e", fmt.Sprintf("TINKERBELL_DHCP_TFTP_IP=%s", tinkServerIP),
+		"-e", fmt.Sprintf("TINKERBELL_DHCP_IPXE_HTTP_BINARY_HOST=%s", tinkServerIP),
+		"-e", fmt.Sprintf("TINKERBELL_DHCP_IPXE_HTTP_BINARY_PORT=%s", smeeHTTPPort),
+		"-e", fmt.Sprintf("TINKERBELL_DHCP_IPXE_HTTP_SCRIPT_HOST=%s", tinkServerIP),
+		"-e", fmt.Sprintf("TINKERBELL_DHCP_IPXE_HTTP_SCRIPT_PORT=%s", smeeHTTPPort),
+		"-e", fmt.Sprintf("TINKERBELL_IPXE_HTTP_SCRIPT_BIND_PORT=%s", smeeHTTPPort),
+		"-e", fmt.Sprintf("TINKERBELL_IPXE_HTTP_SCRIPT_OSIE_URL=%s", osiePath),
+		"-e", fmt.Sprintf("TINKERBELL_IPXE_HTTP_SCRIPT_EXTRA_KERNEL_ARGS=%s", extraKernelArgs),
+		"-e", fmt.Sprintf("TINKERBELL_IPXE_SCRIPT_TINK_SERVER_ADDR_PORT=%s:%s", tinkServerIP, grpcPort),
+		"-e", "TINKERBELL_IPXE_SCRIPT_TINK_SERVER_INSECURE_TLS=true",
+		"-e", "TINKERBELL_ISO_ENABLED=true",
+		"-e", "TINKERBELL_ISO_STATIC_IPAM_ENABLED=true",
+		"-e", fmt.Sprintf("TINKERBELL_ISO_UPSTREAM_URL=%s", isoOverride),
+		"-e", "TINKERBELL_TFTP_SERVER_ENABLED=true",
+		"-e", "TINKERBELL_SYSLOG_ENABLED=true",
 	}
+
+	// Mono-repo binary uses env vars only, no command line args
+	cmd := []string{}
 	if err := s.docker.Run(ctx, s.localRegistryURL(bundle.Boots.URI), boots, cmd, flags...); err != nil {
 		return fmt.Errorf("running boots with docker: %v", err)
 	}
@@ -297,11 +288,8 @@ func (s *Installer) installBootsOnDocker(ctx context.Context, bundle releasev1al
 	return nil
 }
 
-func (s *Installer) getSmeeKernelArgs(bundle releasev1alpha1.TinkerbellStackBundle) []string {
+func (s *Installer) getSmeeKernelArgs(_ releasev1alpha1.TinkerbellStackBundle) []string {
 	extraKernelArgs := []string{}
-	if s.bootsOnDocker {
-		extraKernelArgs = append(extraKernelArgs, fmt.Sprintf("tink_worker_image=%s", localTinkWorkerImage))
-	}
 
 	if s.registryMirror != nil {
 		localRegistry := s.registryMirror.BaseRegistry
@@ -550,128 +538,162 @@ func (s *Installer) HasLegacyChart(ctx context.Context, bundle releasev1alpha1.T
 	return false, nil
 }
 
-// createValuesOverride generates the values override file to send to helm.
-func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle, bootEnv []string, tinkerbellIP, loadBalancerInterface, isoURL string, osiePath *url.URL) map[string]interface{} {
-	valuesMap := map[string]interface{}{
-		tink: map[string]interface{}{
-			controller: map[string]interface{}{
-				image: bundle.TinkerbellStack.Tink.TinkController.URI,
-				"singleNodeClusterConfig": map[string]interface{}{
-					"controlPlaneTolerationsEnabled": true,
-					"nodeAffinityWeight":             1,
+// createValuesOverride generates the values override file for the mono-repo tinkerbell helm chart.
+// The mono-repo chart uses a single deployment with all services (smee, tootles, tink-server,
+// tink-controller, rufio) running in one pod, controlled via enable flags.
+func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle, bootEnv []string, tinkerbellIP, loadBalancerInterface, isoURL string, osiePath *url.URL) map[string]any {
+	// Build OSIE URL from parsed path
+	osieURL := fmt.Sprintf("%s://%s", osiePath.Scheme, osiePath.Host)
+	if osiePath.Path != "" {
+		osieURL = osieURL + osiePath.Path
+	}
+
+	tinkerbellImageURI := bundle.TinkerbellStack.Boots.URI
+	kubevipImageURI := bundle.KubeVip.URI
+	relayInitImageURI := bundle.TinkerbellStack.Tink.TinkRelayInit.URI
+
+	tinkerbellImage, tinkerbellTag := parseImageURI(tinkerbellImageURI)
+
+	valuesMap := map[string]any{
+		"name":     "tinkerbell",
+		"publicIP": tinkerbellIP,
+		"trustedProxies": []string{
+			s.podCidrRange,
+		},
+		"deployment": map[string]any{
+			"image":         tinkerbellImage,
+			"imageTag":      tinkerbellTag,
+			"agentImage":    localTinkWorkerImage,
+			"agentImageTag": "",
+			"hostNetwork":   s.hostNetwork,
+			"tolerations": []map[string]any{
+				{
+					"key":      "node-role.kubernetes.io/control-plane",
+					"operator": "Exists",
+					"effect":   "NoSchedule",
 				},
 			},
-			server: map[string]interface{}{
-				image: bundle.TinkerbellStack.Tink.TinkServer.URI,
-				"singleNodeClusterConfig": map[string]interface{}{
-					"controlPlaneTolerationsEnabled": true,
-					"nodeAffinityWeight":             1,
+			"affinity": map[string]any{
+				"nodeAffinity": map[string]any{
+					"preferredDuringSchedulingIgnoredDuringExecution": []map[string]any{
+						{
+							"weight": 1,
+							"preference": map[string]any{
+								"matchExpressions": []map[string]any{
+									{
+										"key":      "node-role.kubernetes.io/control-plane",
+										"operator": "DoesNotExist",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			"init": map[string]any{
+				"enabled":       s.dhcpRelay,
+				"image":         relayInitImageURI,
+				"interfaceMode": "macvlan",
+			},
+			"envs": map[string]any{
+				"globals": map[string]any{
+					"backend":               "kube",
+					"backendKubeNamespace":  s.namespace,
+					"enableSmee":            !s.bootsOnDocker,
+					"enableTootles":         true,
+					"enableTinkServer":      true,
+					"enableTinkController":  true,
+					"enableRufioController": true,
+					"enableSecondstar":      false,
+					"enableCRDMigrations":   false,
+				},
+				"smee": map[string]any{
+					"dhcpEnabled":                     true,
+					"dhcpMode":                        "reservation",
+					"dhcpIPForPacket":                 tinkerbellIP,
+					"dhcpSyslogIP":                    tinkerbellIP,
+					"dhcpTftpIP":                      tinkerbellIP,
+					"dhcpIpxeHttpBinaryHost":          tinkerbellIP,
+					"dhcpIpxeHttpBinaryPort":          7171,
+					"dhcpIpxeHttpScriptHost":          tinkerbellIP,
+					"dhcpIpxeHttpScriptPort":          7171,
+					"ipxeHttpScriptBindPort":          7171,
+					"ipxeHttpScriptOsieURL":           osieURL,
+					"ipxeHttpScriptExtraKernelArgs":   bootEnv,
+					"ipxeScriptTinkServerAddrPort":    fmt.Sprintf("%s:%s", tinkerbellIP, grpcPort),
+					"ipxeScriptTinkServerInsecureTLS": true,
+					"isoEnabled":                      true,
+					"isoStaticIPAMEnabled":            true,
+					"isoUpstreamURL":                  isoURL,
+					"tftpServerEnabled":               true,
+					"syslogEnabled":                   true,
+				},
+				"tootles": map[string]any{
+					"bindPort": 7172,
+				},
+				"tinkServer": map[string]any{
+					"bindPort": 42113,
+				},
+				"tinkController": map[string]any{
+					"enableLeaderElection": true,
+				},
+				"rufio": map[string]any{
+					"enableLeaderElection": true,
 				},
 			},
 		},
-		hegel: map[string]interface{}{
-			image: bundle.TinkerbellStack.Hegel.URI,
-			"trustedProxies": []string{
-				s.podCidrRange,
-			},
-			"singleNodeClusterConfig": map[string]interface{}{
-				"controlPlaneTolerationsEnabled": true,
-				"nodeAffinityWeight":             1,
-			},
+		"service": map[string]any{
+			"type":           "LoadBalancer",
+			"loadBalancerIP": tinkerbellIP,
+			"lbClass":        "kube-vip.io/kube-vip-class",
 		},
-		smee: map[string]interface{}{
-			deploy:     !s.bootsOnDocker,
-			image:      bundle.TinkerbellStack.Boots.URI,
-			"publicIP": tinkerbellIP,
-			"trustedProxies": []string{
-				s.podCidrRange,
-			},
-			"http": map[string]interface{}{
-				"tinkServer": map[string]interface{}{
-					"ip":          tinkerbellIP,
-					port:          grpcPort,
-					"insecureTLS": true,
-				},
-				"osieUrl": map[string]interface{}{
-					"scheme": osiePath.Scheme,
-					"host":   osiePath.Hostname(),
-					"port":   osiePath.Port(),
-					"path":   osiePath.Path,
-				},
-				"additionalKernelArgs": bootEnv,
-			},
-			"tinkWorkerImage": localTinkWorkerImage,
-			"iso": map[string]interface{}{
-				// it's safe to populate the URL and default to true as rufio jobs for mounting and booting
-				// from iso happens only when bootmode is set to iso on tinkerbellmachinetemplate
-				enabled:             true,
-				"staticIPAMEnabled": true,
-				"url":               isoURL,
-			},
-			"singleNodeClusterConfig": map[string]interface{}{
-				"controlPlaneTolerationsEnabled": true,
-				"nodeAffinityWeight":             1,
-			},
+		"rbac": map[string]any{
+			"type": "Role",
 		},
-		rufio: map[string]interface{}{
-			image: bundle.TinkerbellStack.Rufio.URI,
-			"additionalArgs": []string{
-				"-metrics-bind-address=127.0.0.1:8080",
-				fmt.Sprintf("-max-concurrent-reconciles=%v", rufioMaxConcurrentReconciles),
+		"optional": map[string]any{
+			"hookos": map[string]any{
+				"enabled": false,
 			},
-			"singleNodeClusterConfig": map[string]interface{}{
-				"controlPlaneTolerationsEnabled": true,
-				"nodeAffinityWeight":             1,
-			},
-		},
-		stack: map[string]interface{}{
-			image: bundle.TinkerbellStack.Tink.Nginx.URI,
-			"singleNodeClusterConfig": map[string]interface{}{
-				"controlPlaneTolerationsEnabled": true,
-				"nodeAffinityWeight":             1,
-			},
-			kubevip: map[string]interface{}{
-				image:   bundle.KubeVip.URI,
-				enabled: s.loadBalancer,
-				additionalEnv: []map[string]string{
+			"kubevip": map[string]any{
+				"enabled": s.loadBalancer,
+				"image":   kubevipImageURI,
+				"additionalEnv": []map[string]string{
 					{
 						"name":  "prometheus_server",
 						"value": ":2213",
 					},
-					// The Tinkerbell stack needs a load balancer to work properly.
-					// We bundle Kube-vip in, as the load balancer, when we deploy the stack.
-					// We don't want this load balancer to be used by any other workloads.
-					// It allows us greater confidence in successful lifecycle events for the Tinkerbell stack, amongst other things.
-					// Also, the user should be free from Tinkerbell stack constraints
-					// and free to deploy a load balancer of their choosing and not be coupled to ours.
-					// setting lb_class_only=true means that k8s services must explicitly populate
-					// the kube-vip loadBalancerClass with the kube-vip value for kube-vip to serve an IP.
 					{
 						"name":  "lb_class_only",
 						"value": "true",
 					},
 				},
 			},
-			hook: map[string]interface{}{
-				enabled: false,
-			},
-			service: map[string]interface{}{
-				enabled: s.stackService,
-			},
-			relay: map[string]interface{}{
-				enabled:     s.dhcpRelay,
-				image:       bundle.TinkerbellStack.Tink.TinkRelay.URI,
-				"initImage": bundle.TinkerbellStack.Tink.TinkRelayInit.URI,
-			},
-			"loadBalancerIP": tinkerbellIP,
-			"hostNetwork":    s.hostNetwork,
 		},
 	}
 
+	// Set load balancer interface if specified
 	if loadBalancerInterface != "" {
-		valuesMap[stack].(map[string]interface{})[kubevip].(map[string]interface{})[kubevipInterface] = loadBalancerInterface
-		valuesMap[stack].(map[string]interface{})[relay].(map[string]interface{})["sourceInterface"] = loadBalancerInterface
+		valuesMap["optional"].(map[string]any)["kubevip"].(map[string]any)["interface"] = loadBalancerInterface
+		valuesMap["deployment"].(map[string]any)["init"].(map[string]any)["sourceInterface"] = loadBalancerInterface
 	}
 
 	return valuesMap
+}
+
+// parseImageURI splits an image URI into image and tag components.
+// Example: "public.ecr.aws/eks-anywhere/tinkerbell:v0.1.0" returns ("public.ecr.aws/eks-anywhere/tinkerbell", "v0.1.0").
+func parseImageURI(uri string) (string, string) {
+	// Handle both tag (:) and digest (@) separators
+	if idx := strings.LastIndex(uri, "@"); idx != -1 {
+		return uri[:idx], uri[idx+1:]
+	}
+	if idx := strings.LastIndex(uri, ":"); idx != -1 {
+		// Make sure we're not splitting on the port in the registry URL
+		// by checking if there's a / after the :
+		afterColon := uri[idx+1:]
+		if !strings.Contains(afterColon, "/") {
+			return uri[:idx], afterColon
+		}
+	}
+	return uri, "latest"
 }
