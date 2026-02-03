@@ -42,6 +42,19 @@ func TestMDUpgradeReconcile(t *testing.T) {
 	g.Expect(mdu.Status.RequireUpgrade).To(BeEquivalentTo(0))
 	g.Expect(mdu.Status.Upgraded).To(BeEquivalentTo(2))
 	g.Expect(mdu.Status.Ready).To(BeTrue())
+
+	// Verify that Machine objects were updated with the new Kubernetes version
+	machine1 := &clusterv1.Machine{}
+	err = client.Get(ctx, types.NamespacedName{Name: machines[0].Name, Namespace: machines[0].Namespace}, machine1)
+	g.Expect(err).ToNot(HaveOccurred())
+	g.Expect(machine1.Spec.Version).ToNot(BeNil())
+	g.Expect(*machine1.Spec.Version).To(Equal(k8s128))
+
+	machine2 := &clusterv1.Machine{}
+	err = client.Get(ctx, types.NamespacedName{Name: machines[1].Name, Namespace: machines[1].Namespace}, machine2)
+	g.Expect(err).ToNot(HaveOccurred())
+	g.Expect(machine2.Spec.Version).ToNot(BeNil())
+	g.Expect(*machine2.Spec.Version).To(Equal(k8s128))
 }
 
 func TestMDUpgradeReconcileNodesNotReadyYet(t *testing.T) {
@@ -67,6 +80,20 @@ func TestMDUpgradeReconcileNodesNotReadyYet(t *testing.T) {
 	g.Expect(mdu.Status.RequireUpgrade).To(BeEquivalentTo(1))
 	g.Expect(mdu.Status.Upgraded).To(BeEquivalentTo(1))
 	g.Expect(mdUpgrade.Status.Ready).To(BeFalse())
+
+	// Verify that only the completed machine was updated
+	machine1 := &clusterv1.Machine{}
+	err = client.Get(ctx, types.NamespacedName{Name: machines[0].Name, Namespace: machines[0].Namespace}, machine1)
+	g.Expect(err).ToNot(HaveOccurred())
+	g.Expect(machine1.Spec.Version).ToNot(BeNil())
+	g.Expect(*machine1.Spec.Version).To(Equal(k8s128), "First machine should be updated since its NodeUpgrade is complete")
+
+	// Second machine should not be updated yet since its NodeUpgrade is not complete
+	machine2 := &clusterv1.Machine{}
+	err = client.Get(ctx, types.NamespacedName{Name: machines[1].Name, Namespace: machines[1].Namespace}, machine2)
+	g.Expect(err).ToNot(HaveOccurred())
+	g.Expect(machine2.Spec.Version).ToNot(BeNil())
+	g.Expect(*machine2.Spec.Version).To(Equal(k8s127), "Second machine should still have old version since its NodeUpgrade is not complete")
 }
 
 func TestMDUpgradeReconcileDelete(t *testing.T) {
@@ -217,8 +244,12 @@ func getObjectsForMDUpgradeTest() (*clusterv1.Cluster, []*clusterv1.Machine, []*
 	kubeadmConfig1 := generateKubeadmConfig()
 	kubeadmConfig2 := generateKubeadmConfig()
 	machine1 := generateMachine(cluster, node1, kubeadmConfig1)
+	// Set initial version to k8s127 (pre-upgrade version)
+	machine1.Spec.Version = ptr.String(k8s127)
 	machine2 := generateMachine(cluster, node2, kubeadmConfig2)
 	machine2.ObjectMeta.Name = "machine02"
+	// Set initial version to k8s127 (pre-upgrade version)
+	machine2.Spec.Version = ptr.String(k8s127)
 	nodeUpgrade1 := generateNodeUpgrade(machine1)
 	nodeUpgrade1.Status = anywherev1.NodeUpgradeStatus{
 		Completed: true,
