@@ -877,10 +877,10 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 	},
 	{
 		ProjectName: "stack",
-		ProjectPath: "projects/tinkerbell/charts",
+		ProjectPath: "projects/tinkerbell/tinkerbell",
 		Images: []*assettypes.Image{
 			{
-				RepoName:             "stack",
+				RepoName:             "tinkerbell-chart",
 				AssetName:            "stack-helm",
 				TrimVersionSignifier: true,
 				ImageTagConfiguration: assettypes.ImageTagConfiguration{
@@ -888,7 +888,7 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 				},
 			},
 		},
-		ImageRepoPrefix: "tinkerbell",
+		ImageRepoPrefix: "tinkerbell/tinkerbell",
 		ImageTagOptions: []string{
 			"gitTag",
 			"projectPath",

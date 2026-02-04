@@ -122,24 +122,24 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:79a6d4533899656d3632ae51fe3d1ed67ebf17edc153fa2fcb098f7c7193dd74
+        imageDigest: sha256:f274a319c8eab14aff9c3f45b1688dddd60afc87bd0aeacba709cb606cbebcf3
         name: cilium
         os: linux
-        uri: public.ecr.aws/eks/cilium/cilium:v1.17.8-0
+        uri: public.ecr.aws/eks/cilium/cilium:v1.18.5-0
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:c411fbcd9146fbb67781f79c9095cc2c4be9ebfe652badb430c703df9b50c30d
+        imageDigest: sha256:39ed0137ed96527141f7b5cab9392b4c99096f5d508f53f601240dc7d46c9f87
         name: cilium-chart
-        uri: public.ecr.aws/eks/cilium/cilium:1.17.8-0
+        uri: public.ecr.aws/eks/cilium/cilium:1.18.5-0
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:f6402052d8986b487f2b9ab121f0ee0bdd57f8e61c3708bca2c81b0f42b9060e
+        imageDigest: sha256:b48284d14a8ebb3176537aae2452760fb7ef7e8ae499fbedb8b0a1d2d552a0ff
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/eks/cilium/operator-generic:v1.17.8-0
-      version: v1.17.8-0
+        uri: public.ecr.aws/eks/cilium/operator-generic:v1.18.5-0
+      version: v1.18.5-0
     cloudStack:
       clusterAPIController:
         arch:
@@ -456,11 +456,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-nutanix
         os: linux
-        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v1.6.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v1.8.3-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.6.1/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.8.3/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.6.1/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.8.3/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -471,8 +471,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v1.0.4-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.6.1/metadata.yaml
-      version: v1.6.1+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.8.3/metadata.yaml
+      version: v1.8.3+abcdef1
     packageController:
       credentialProviderPackage:
         arch:
@@ -722,7 +722,7 @@ spec:
           description: Helm chart for stack
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: stack
-          uri: public.ecr.aws/release-container-registry/tinkerbell/stack:0.6.2-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell-chart:0.22.1-eks-a-v0.0.0-dev-build.1
         tink:
           nginx:
             arch:
@@ -808,11 +808,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-vsphere
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v1.13.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v1.15.2-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.13.1/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.15.2/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.13.1/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.15.2/infrastructure-components.yaml
       kubeProxy:
         arch:
         - amd64
@@ -841,8 +841,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kubernetes/cloud-provider-vsphere/cpi/manager:v1.28.1-eks-d-1-28-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.13.1/metadata.yaml
-      version: v1.13.1+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.15.2/metadata.yaml
+      version: v1.15.2+abcdef1
   - bootstrap:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.12.2/bootstrap-components.yaml
@@ -957,24 +957,24 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:79a6d4533899656d3632ae51fe3d1ed67ebf17edc153fa2fcb098f7c7193dd74
+        imageDigest: sha256:f274a319c8eab14aff9c3f45b1688dddd60afc87bd0aeacba709cb606cbebcf3
         name: cilium
         os: linux
-        uri: public.ecr.aws/eks/cilium/cilium:v1.17.8-0
+        uri: public.ecr.aws/eks/cilium/cilium:v1.18.5-0
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:c411fbcd9146fbb67781f79c9095cc2c4be9ebfe652badb430c703df9b50c30d
+        imageDigest: sha256:39ed0137ed96527141f7b5cab9392b4c99096f5d508f53f601240dc7d46c9f87
         name: cilium-chart
-        uri: public.ecr.aws/eks/cilium/cilium:1.17.8-0
+        uri: public.ecr.aws/eks/cilium/cilium:1.18.5-0
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:f6402052d8986b487f2b9ab121f0ee0bdd57f8e61c3708bca2c81b0f42b9060e
+        imageDigest: sha256:b48284d14a8ebb3176537aae2452760fb7ef7e8ae499fbedb8b0a1d2d552a0ff
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/eks/cilium/operator-generic:v1.17.8-0
-      version: v1.17.8-0
+        uri: public.ecr.aws/eks/cilium/operator-generic:v1.18.5-0
+      version: v1.18.5-0
     cloudStack:
       clusterAPIController:
         arch:
@@ -1291,11 +1291,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-nutanix
         os: linux
-        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v1.6.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v1.8.3-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.6.1/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.8.3/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.6.1/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.8.3/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -1306,8 +1306,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v1.0.4-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.6.1/metadata.yaml
-      version: v1.6.1+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.8.3/metadata.yaml
+      version: v1.8.3+abcdef1
     packageController:
       credentialProviderPackage:
         arch:
@@ -1557,7 +1557,7 @@ spec:
           description: Helm chart for stack
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: stack
-          uri: public.ecr.aws/release-container-registry/tinkerbell/stack:0.6.2-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell-chart:0.22.1-eks-a-v0.0.0-dev-build.1
         tink:
           nginx:
             arch:
@@ -1643,11 +1643,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-vsphere
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v1.13.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v1.15.2-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.13.1/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.15.2/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.13.1/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.15.2/infrastructure-components.yaml
       kubeProxy:
         arch:
         - amd64
@@ -1676,8 +1676,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kubernetes/cloud-provider-vsphere/cpi/manager:v1.29.2-eks-d-1-29-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.13.1/metadata.yaml
-      version: v1.13.1+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.15.2/metadata.yaml
+      version: v1.15.2+abcdef1
   - bootstrap:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.12.2/bootstrap-components.yaml
@@ -1792,24 +1792,24 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:79a6d4533899656d3632ae51fe3d1ed67ebf17edc153fa2fcb098f7c7193dd74
+        imageDigest: sha256:f274a319c8eab14aff9c3f45b1688dddd60afc87bd0aeacba709cb606cbebcf3
         name: cilium
         os: linux
-        uri: public.ecr.aws/eks/cilium/cilium:v1.17.8-0
+        uri: public.ecr.aws/eks/cilium/cilium:v1.18.5-0
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:c411fbcd9146fbb67781f79c9095cc2c4be9ebfe652badb430c703df9b50c30d
+        imageDigest: sha256:39ed0137ed96527141f7b5cab9392b4c99096f5d508f53f601240dc7d46c9f87
         name: cilium-chart
-        uri: public.ecr.aws/eks/cilium/cilium:1.17.8-0
+        uri: public.ecr.aws/eks/cilium/cilium:1.18.5-0
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:f6402052d8986b487f2b9ab121f0ee0bdd57f8e61c3708bca2c81b0f42b9060e
+        imageDigest: sha256:b48284d14a8ebb3176537aae2452760fb7ef7e8ae499fbedb8b0a1d2d552a0ff
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/eks/cilium/operator-generic:v1.17.8-0
-      version: v1.17.8-0
+        uri: public.ecr.aws/eks/cilium/operator-generic:v1.18.5-0
+      version: v1.18.5-0
     cloudStack:
       clusterAPIController:
         arch:
@@ -2126,11 +2126,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-nutanix
         os: linux
-        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v1.6.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v1.8.3-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.6.1/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.8.3/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.6.1/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.8.3/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -2141,8 +2141,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v1.0.4-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.6.1/metadata.yaml
-      version: v1.6.1+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.8.3/metadata.yaml
+      version: v1.8.3+abcdef1
     packageController:
       credentialProviderPackage:
         arch:
@@ -2392,7 +2392,7 @@ spec:
           description: Helm chart for stack
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: stack
-          uri: public.ecr.aws/release-container-registry/tinkerbell/stack:0.6.2-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell-chart:0.22.1-eks-a-v0.0.0-dev-build.1
         tink:
           nginx:
             arch:
@@ -2478,11 +2478,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-vsphere
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v1.13.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v1.15.2-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.13.1/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.15.2/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.13.1/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.15.2/infrastructure-components.yaml
       kubeProxy:
         arch:
         - amd64
@@ -2511,8 +2511,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kubernetes/cloud-provider-vsphere/cpi/manager:v1.30.2-eks-d-1-30-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.13.1/metadata.yaml
-      version: v1.13.1+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.15.2/metadata.yaml
+      version: v1.15.2+abcdef1
   - bootstrap:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.12.2/bootstrap-components.yaml
@@ -2627,24 +2627,24 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:79a6d4533899656d3632ae51fe3d1ed67ebf17edc153fa2fcb098f7c7193dd74
+        imageDigest: sha256:f274a319c8eab14aff9c3f45b1688dddd60afc87bd0aeacba709cb606cbebcf3
         name: cilium
         os: linux
-        uri: public.ecr.aws/eks/cilium/cilium:v1.17.8-0
+        uri: public.ecr.aws/eks/cilium/cilium:v1.18.5-0
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:c411fbcd9146fbb67781f79c9095cc2c4be9ebfe652badb430c703df9b50c30d
+        imageDigest: sha256:39ed0137ed96527141f7b5cab9392b4c99096f5d508f53f601240dc7d46c9f87
         name: cilium-chart
-        uri: public.ecr.aws/eks/cilium/cilium:1.17.8-0
+        uri: public.ecr.aws/eks/cilium/cilium:1.18.5-0
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:f6402052d8986b487f2b9ab121f0ee0bdd57f8e61c3708bca2c81b0f42b9060e
+        imageDigest: sha256:b48284d14a8ebb3176537aae2452760fb7ef7e8ae499fbedb8b0a1d2d552a0ff
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/eks/cilium/operator-generic:v1.17.8-0
-      version: v1.17.8-0
+        uri: public.ecr.aws/eks/cilium/operator-generic:v1.18.5-0
+      version: v1.18.5-0
     cloudStack:
       clusterAPIController:
         arch:
@@ -2961,11 +2961,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-nutanix
         os: linux
-        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v1.6.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v1.8.3-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.6.1/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.8.3/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.6.1/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.8.3/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -2976,8 +2976,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v1.0.4-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.6.1/metadata.yaml
-      version: v1.6.1+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.8.3/metadata.yaml
+      version: v1.8.3+abcdef1
     packageController:
       credentialProviderPackage:
         arch:
@@ -3227,7 +3227,7 @@ spec:
           description: Helm chart for stack
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: stack
-          uri: public.ecr.aws/release-container-registry/tinkerbell/stack:0.6.2-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell-chart:0.22.1-eks-a-v0.0.0-dev-build.1
         tink:
           nginx:
             arch:
@@ -3313,11 +3313,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-vsphere
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v1.13.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v1.15.2-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.13.1/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.15.2/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.13.1/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.15.2/infrastructure-components.yaml
       kubeProxy:
         arch:
         - amd64
@@ -3346,8 +3346,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kubernetes/cloud-provider-vsphere/cpi/manager:v1.31.1-eks-d-1-31-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.13.1/metadata.yaml
-      version: v1.13.1+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.15.2/metadata.yaml
+      version: v1.15.2+abcdef1
   - bootstrap:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.12.2/bootstrap-components.yaml
@@ -3462,24 +3462,24 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:79a6d4533899656d3632ae51fe3d1ed67ebf17edc153fa2fcb098f7c7193dd74
+        imageDigest: sha256:f274a319c8eab14aff9c3f45b1688dddd60afc87bd0aeacba709cb606cbebcf3
         name: cilium
         os: linux
-        uri: public.ecr.aws/eks/cilium/cilium:v1.17.8-0
+        uri: public.ecr.aws/eks/cilium/cilium:v1.18.5-0
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:c411fbcd9146fbb67781f79c9095cc2c4be9ebfe652badb430c703df9b50c30d
+        imageDigest: sha256:39ed0137ed96527141f7b5cab9392b4c99096f5d508f53f601240dc7d46c9f87
         name: cilium-chart
-        uri: public.ecr.aws/eks/cilium/cilium:1.17.8-0
+        uri: public.ecr.aws/eks/cilium/cilium:1.18.5-0
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:f6402052d8986b487f2b9ab121f0ee0bdd57f8e61c3708bca2c81b0f42b9060e
+        imageDigest: sha256:b48284d14a8ebb3176537aae2452760fb7ef7e8ae499fbedb8b0a1d2d552a0ff
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/eks/cilium/operator-generic:v1.17.8-0
-      version: v1.17.8-0
+        uri: public.ecr.aws/eks/cilium/operator-generic:v1.18.5-0
+      version: v1.18.5-0
     cloudStack:
       clusterAPIController:
         arch:
@@ -3796,11 +3796,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-nutanix
         os: linux
-        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v1.6.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v1.8.3-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.6.1/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.8.3/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.6.1/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.8.3/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -3811,8 +3811,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v1.0.4-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.6.1/metadata.yaml
-      version: v1.6.1+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.8.3/metadata.yaml
+      version: v1.8.3+abcdef1
     packageController:
       credentialProviderPackage:
         arch:
@@ -4062,7 +4062,7 @@ spec:
           description: Helm chart for stack
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: stack
-          uri: public.ecr.aws/release-container-registry/tinkerbell/stack:0.6.2-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell-chart:0.22.1-eks-a-v0.0.0-dev-build.1
         tink:
           nginx:
             arch:
@@ -4148,11 +4148,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-vsphere
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v1.13.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v1.15.2-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.13.1/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.15.2/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.13.1/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.15.2/infrastructure-components.yaml
       kubeProxy:
         arch:
         - amd64
@@ -4181,8 +4181,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kubernetes/cloud-provider-vsphere/cpi/manager:v1.32.3-eks-d-1-32-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.13.1/metadata.yaml
-      version: v1.13.1+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.15.2/metadata.yaml
+      version: v1.15.2+abcdef1
   - bootstrap:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.12.2/bootstrap-components.yaml
@@ -4297,24 +4297,24 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:79a6d4533899656d3632ae51fe3d1ed67ebf17edc153fa2fcb098f7c7193dd74
+        imageDigest: sha256:f274a319c8eab14aff9c3f45b1688dddd60afc87bd0aeacba709cb606cbebcf3
         name: cilium
         os: linux
-        uri: public.ecr.aws/eks/cilium/cilium:v1.17.8-0
+        uri: public.ecr.aws/eks/cilium/cilium:v1.18.5-0
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:c411fbcd9146fbb67781f79c9095cc2c4be9ebfe652badb430c703df9b50c30d
+        imageDigest: sha256:39ed0137ed96527141f7b5cab9392b4c99096f5d508f53f601240dc7d46c9f87
         name: cilium-chart
-        uri: public.ecr.aws/eks/cilium/cilium:1.17.8-0
+        uri: public.ecr.aws/eks/cilium/cilium:1.18.5-0
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:f6402052d8986b487f2b9ab121f0ee0bdd57f8e61c3708bca2c81b0f42b9060e
+        imageDigest: sha256:b48284d14a8ebb3176537aae2452760fb7ef7e8ae499fbedb8b0a1d2d552a0ff
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/eks/cilium/operator-generic:v1.17.8-0
-      version: v1.17.8-0
+        uri: public.ecr.aws/eks/cilium/operator-generic:v1.18.5-0
+      version: v1.18.5-0
     cloudStack:
       clusterAPIController:
         arch:
@@ -4631,11 +4631,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-nutanix
         os: linux
-        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v1.6.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v1.8.3-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.6.1/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.8.3/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.6.1/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.8.3/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -4646,8 +4646,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v1.0.4-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.6.1/metadata.yaml
-      version: v1.6.1+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.8.3/metadata.yaml
+      version: v1.8.3+abcdef1
     packageController:
       credentialProviderPackage:
         arch:
@@ -4897,7 +4897,7 @@ spec:
           description: Helm chart for stack
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: stack
-          uri: public.ecr.aws/release-container-registry/tinkerbell/stack:0.6.2-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell-chart:0.22.1-eks-a-v0.0.0-dev-build.1
         tink:
           nginx:
             arch:
@@ -4983,11 +4983,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-vsphere
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v1.13.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v1.15.2-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.13.1/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.15.2/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.13.1/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.15.2/infrastructure-components.yaml
       kubeProxy:
         arch:
         - amd64
@@ -5016,8 +5016,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kubernetes/cloud-provider-vsphere/cpi/manager:v1.33.1-eks-d-1-33-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.13.1/metadata.yaml
-      version: v1.13.1+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.15.2/metadata.yaml
+      version: v1.15.2+abcdef1
   - bootstrap:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.12.2/bootstrap-components.yaml
@@ -5132,24 +5132,24 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:79a6d4533899656d3632ae51fe3d1ed67ebf17edc153fa2fcb098f7c7193dd74
+        imageDigest: sha256:f274a319c8eab14aff9c3f45b1688dddd60afc87bd0aeacba709cb606cbebcf3
         name: cilium
         os: linux
-        uri: public.ecr.aws/eks/cilium/cilium:v1.17.8-0
+        uri: public.ecr.aws/eks/cilium/cilium:v1.18.5-0
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:c411fbcd9146fbb67781f79c9095cc2c4be9ebfe652badb430c703df9b50c30d
+        imageDigest: sha256:39ed0137ed96527141f7b5cab9392b4c99096f5d508f53f601240dc7d46c9f87
         name: cilium-chart
-        uri: public.ecr.aws/eks/cilium/cilium:1.17.8-0
+        uri: public.ecr.aws/eks/cilium/cilium:1.18.5-0
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:f6402052d8986b487f2b9ab121f0ee0bdd57f8e61c3708bca2c81b0f42b9060e
+        imageDigest: sha256:b48284d14a8ebb3176537aae2452760fb7ef7e8ae499fbedb8b0a1d2d552a0ff
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/eks/cilium/operator-generic:v1.17.8-0
-      version: v1.17.8-0
+        uri: public.ecr.aws/eks/cilium/operator-generic:v1.18.5-0
+      version: v1.18.5-0
     cloudStack:
       clusterAPIController:
         arch:
@@ -5466,11 +5466,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-nutanix
         os: linux
-        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v1.6.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v1.8.3-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.6.1/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.8.3/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.6.1/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.8.3/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -5481,8 +5481,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v1.0.4-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.6.1/metadata.yaml
-      version: v1.6.1+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.8.3/metadata.yaml
+      version: v1.8.3+abcdef1
     packageController:
       credentialProviderPackage:
         arch:
@@ -5732,7 +5732,7 @@ spec:
           description: Helm chart for stack
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: stack
-          uri: public.ecr.aws/release-container-registry/tinkerbell/stack:0.6.2-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell-chart:0.22.1-eks-a-v0.0.0-dev-build.1
         tink:
           nginx:
             arch:
@@ -5818,11 +5818,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-vsphere
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v1.13.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v1.15.2-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.13.1/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.15.2/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.13.1/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.15.2/infrastructure-components.yaml
       kubeProxy:
         arch:
         - amd64
@@ -5851,6 +5851,6 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kubernetes/cloud-provider-vsphere/cpi/manager:v1.34.0-eks-d-1-34-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.13.1/metadata.yaml
-      version: v1.13.1+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.15.2/metadata.yaml
+      version: v1.15.2+abcdef1
 status: {}
