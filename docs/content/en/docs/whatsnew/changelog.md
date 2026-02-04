@@ -1,3 +1,14 @@
+## [v0.24.4](https://github.com/aws/eks-anywhere/releases/tag/v0.24.4)
+
+### Supported OS version details
+| Provider | Desktop | Server |
+|----------|---------|--------|
+| vSphere | Ubuntu 22.04, 24.04 | Ubuntu 22.04, 24.04, RHEL 8.x, 9.x |
+| Bare Metal | Ubuntu 22.04, 24.04 | Ubuntu 22.04, 24.04, RHEL 8.x, 9.x |
+| Nutanix | Ubuntu 22.04, 24.04 | Ubuntu 22.04, 24.04, RHEL 8.x, 9.x |
+| CloudStack | N/A | RHEL 8.x, 9.x |
+| Snow | N/A | Ubuntu 22.04, 24.04 |
+
 ---
 title: "Changelog"
 linkTitle: "Changelog"
