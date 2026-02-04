@@ -41,6 +41,33 @@ description: >
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
 
+## [v0.24.3](https://github.com/aws/eks-anywhere/releases/tag/v0.24.3)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+|    Ubuntu 24.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.51.0 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+
+\* RHEL 8's kernel version (4.18) is not supported by kubeadm for Kubernetes versions 1.32 and above (see Kubernetes GitHub issue [#129462](https://github.com/kubernetes/kubernetes/issues/129462)). As a result, EKS Anywhere does not support using RHEL 8 as the node operating system for Kubernetes versions 1.32 and above.
+
+
+### Bug Fixes
+- Use cluster spec for worker maxSurge validation instead of generated CAPI object ([#10465](https://github.com/aws/eks-anywhere/pull/10465))
+- Remove older etcd machines after new etcd machines are rolled out ([#5055](https://github.com/aws/eks-anywhere-build-tooling/pull/5055))
+- Fix containerd socket race condition in kind node image build ([#5063](https://github.com/aws/eks-anywhere-build-tooling/pull/5063))
+
+### Other Changes
+- Docs for newly released package versions ([#10454](https://github.com/aws/eks-anywhere/pull/10454))
+- Improve ADOT and IRSA docs: automate RBAC, dedicated ServiceAccounts ([#10458](https://github.com/aws/eks-anywhere/pull/10458))
+- Update documentation: CAPI cluster pause/resume behavior during management cluster upgrades ([#10470](https://github.com/aws/eks-anywhere/pull/10470))
+
+
+
 ## [v0.24.2](https://github.com/aws/eks-anywhere/releases/tag/v0.24.2)
 
 ### Supported OS version details
