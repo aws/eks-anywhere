@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	. "github.com/onsi/gomega"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
@@ -25,7 +26,44 @@ func TestTinkerbellMachineConfigValidateCreateFail(t *testing.T) {
 	})
 
 	g := NewWithT(t)
-	g.Expect(machineConfig.ValidateCreate(ctx, machineConfig)).Error().To(MatchError(ContainSubstring("TinkerbellMachineConfig: missing spec.hardwareSelector: tinkerbellmachineconfig")))
+	g.Expect(machineConfig.ValidateCreate(ctx, machineConfig)).Error().To(MatchError(ContainSubstring("TinkerbellMachineConfig: either hardwareSelector or hardwareAffinity must be specified: tinkerbellmachineconfig")))
+}
+
+func TestTinkerbellMachineConfigValidateCreateFailMutualExclusivity(t *testing.T) {
+	ctx := context.Background()
+	machineConfig := v1alpha1.CreateTinkerbellMachineConfig(func(mc *v1alpha1.TinkerbellMachineConfig) {
+		mc.Spec.HardwareAffinity = &v1alpha1.HardwareAffinity{
+			Required: []v1alpha1.HardwareAffinityTerm{
+				{
+					LabelSelector: metav1.LabelSelector{
+						MatchLabels: map[string]string{"type": "cp"},
+					},
+				},
+			},
+		}
+	})
+
+	g := NewWithT(t)
+	g.Expect(machineConfig.ValidateCreate(ctx, machineConfig)).Error().To(MatchError(ContainSubstring("TinkerbellMachineConfig: hardwareSelector and hardwareAffinity are mutually exclusive")))
+}
+
+func TestTinkerbellMachineConfigValidateCreateWithAffinitySuccess(t *testing.T) {
+	ctx := context.Background()
+	machineConfig := v1alpha1.CreateTinkerbellMachineConfig(func(mc *v1alpha1.TinkerbellMachineConfig) {
+		mc.Spec.HardwareSelector = nil
+		mc.Spec.HardwareAffinity = &v1alpha1.HardwareAffinity{
+			Required: []v1alpha1.HardwareAffinityTerm{
+				{
+					LabelSelector: metav1.LabelSelector{
+						MatchLabels: map[string]string{"type": "cp"},
+					},
+				},
+			},
+		}
+	})
+
+	g := NewWithT(t)
+	g.Expect(machineConfig.ValidateCreate(ctx, machineConfig)).Error().To(Succeed())
 }
 
 func TestTinkerbellMachineConfigValidateCreateFailNoUsers(t *testing.T) {
@@ -216,7 +254,7 @@ func TestTinkerbellMachineConfigValidateUpdateFailUsers(t *testing.T) {
 	g.Expect(HaveField("Users[0].Name", err))
 }
 
-func TestTinkerbellMachineConfigValidateUpdateFailHardwareSelector(t *testing.T) {
+func TestTinkerbellMachineConfigValidateUpdateFailHardwareSelectorChange(t *testing.T) {
 	ctx := context.Background()
 	machineConfigOld := v1alpha1.CreateTinkerbellMachineConfig()
 	machineConfigNew := v1alpha1.CreateTinkerbellMachineConfig(func(mc *v1alpha1.TinkerbellMachineConfig) {
@@ -226,9 +264,85 @@ func TestTinkerbellMachineConfigValidateUpdateFailHardwareSelector(t *testing.T)
 	})
 
 	g := NewWithT(t)
+	// HardwareSelector is now mutable - changes only affect new machine provisioning
 	_, err := machineConfigNew.ValidateUpdate(ctx, machineConfigOld, machineConfigNew)
-	g.Expect(err).NotTo(BeNil())
-	g.Expect(HaveField("HardwareSelector", err))
+	g.Expect(err).To(BeNil())
+}
+
+func TestTinkerbellMachineConfigValidateUpdateSucceedSelectorToAffinity(t *testing.T) {
+	ctx := context.Background()
+	machineConfigOld := v1alpha1.CreateTinkerbellMachineConfig()
+	machineConfigNew := v1alpha1.CreateTinkerbellMachineConfig(func(mc *v1alpha1.TinkerbellMachineConfig) {
+		mc.Spec.HardwareSelector = nil
+		mc.Spec.HardwareAffinity = &v1alpha1.HardwareAffinity{
+			Required: []v1alpha1.HardwareAffinityTerm{
+				{
+					LabelSelector: metav1.LabelSelector{
+						MatchLabels: map[string]string{"type": "cp"},
+					},
+				},
+			},
+		}
+	})
+
+	g := NewWithT(t)
+	_, err := machineConfigNew.ValidateUpdate(ctx, machineConfigOld, machineConfigNew)
+	g.Expect(err).To(BeNil())
+}
+
+func TestTinkerbellMachineConfigValidateUpdateSucceedAffinityToSelector(t *testing.T) {
+	ctx := context.Background()
+	machineConfigOld := v1alpha1.CreateTinkerbellMachineConfig(func(mc *v1alpha1.TinkerbellMachineConfig) {
+		mc.Spec.HardwareSelector = nil
+		mc.Spec.HardwareAffinity = &v1alpha1.HardwareAffinity{
+			Required: []v1alpha1.HardwareAffinityTerm{
+				{
+					LabelSelector: metav1.LabelSelector{
+						MatchLabels: map[string]string{"type": "cp"},
+					},
+				},
+			},
+		}
+	})
+	machineConfigNew := v1alpha1.CreateTinkerbellMachineConfig()
+
+	g := NewWithT(t)
+	// Hardware selection is now mutable - changes only affect new machine provisioning
+	_, err := machineConfigNew.ValidateUpdate(ctx, machineConfigOld, machineConfigNew)
+	g.Expect(err).To(BeNil())
+}
+
+func TestTinkerbellMachineConfigValidateUpdateSucceedAffinityChange(t *testing.T) {
+	ctx := context.Background()
+	machineConfigOld := v1alpha1.CreateTinkerbellMachineConfig(func(mc *v1alpha1.TinkerbellMachineConfig) {
+		mc.Spec.HardwareSelector = nil
+		mc.Spec.HardwareAffinity = &v1alpha1.HardwareAffinity{
+			Required: []v1alpha1.HardwareAffinityTerm{
+				{
+					LabelSelector: metav1.LabelSelector{
+						MatchLabels: map[string]string{"type": "cp"},
+					},
+				},
+			},
+		}
+	})
+	machineConfigNew := v1alpha1.CreateTinkerbellMachineConfig(func(mc *v1alpha1.TinkerbellMachineConfig) {
+		mc.Spec.HardwareSelector = nil
+		mc.Spec.HardwareAffinity = &v1alpha1.HardwareAffinity{
+			Required: []v1alpha1.HardwareAffinityTerm{
+				{
+					LabelSelector: metav1.LabelSelector{
+						MatchLabels: map[string]string{"type": "worker"},
+					},
+				},
+			},
+		}
+	})
+
+	g := NewWithT(t)
+	// HardwareAffinity is now mutable - changes only affect new machine provisioning
+	_, err := machineConfigNew.ValidateUpdate(ctx, machineConfigOld, machineConfigNew)
+	g.Expect(err).To(BeNil())
 }
 
 func TestTinkerbellMachineConfigDefaultCastFail(t *testing.T) {
