@@ -1,14 +1,3 @@
-## [v0.24.4](https://github.com/aws/eks-anywhere/releases/tag/v0.24.4)
-
-### Supported OS version details
-| Provider | Desktop | Server |
-|----------|---------|--------|
-| vSphere | Ubuntu 22.04, 24.04 | Ubuntu 22.04, 24.04, RHEL 8.x, 9.x |
-| Bare Metal | Ubuntu 22.04, 24.04 | Ubuntu 22.04, 24.04, RHEL 8.x, 9.x |
-| Nutanix | Ubuntu 22.04, 24.04 | Ubuntu 22.04, 24.04, RHEL 8.x, 9.x |
-| CloudStack | N/A | RHEL 8.x, 9.x |
-| Snow | N/A | Ubuntu 22.04, 24.04 |
-
 ---
 title: "Changelog"
 linkTitle: "Changelog"
@@ -51,6 +40,45 @@ description: >
 {{% alert title="General Information" color="info" %}}
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
+
+## [v0.24.4](https://github.com/aws/eks-anywhere/releases/tag/v0.24.4)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+|    Ubuntu 24.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.51.0 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+
+\* Starting with EKS-A minor release v0.25.0, the bundled Kubernetes Image Builder will no longer support Ubuntu 20.04 LTS builds, as Ubuntu 20.04 LTS Standard Support has ended, and the upstream Kubernetes Image Builder no longer supports Ubuntu 20.04 LTS.
+\* RHEL 8's kernel version (4.18) is not supported by kubeadm for Kubernetes versions 1.32 and above (see Kubernetes GitHub issue [#129462](https://github.com/kubernetes/kubernetes/issues/129462)). As a result, EKS Anywhere does not support using RHEL 8 as the node operating system for Kubernetes versions 1.32 and above.
+
+### Changed
+- EKS Distro:
+  - [`v1-33-eks-22`](https://distro.eks.amazonaws.com/releases/1-33/22/)
+  - [`v1-32-eks-32`](https://distro.eks.amazonaws.com/releases/1-32/32/)
+  - [`v1-31-eks-39`](https://distro.eks.amazonaws.com/releases/1-31/39/)
+  - [`v1-30-eks-50`](https://distro.eks.amazonaws.com/releases/1-30/50/)
+  - [`v1-29-eks-57`](https://distro.eks.amazonaws.com/releases/1-29/57/)
+
+- cilium `v1.17.10` to `v1.17.12`
+- kube-vip `v1.0.2` to `v1.0.4`
+- cert-manager `v1.18.3` to `v1.18.5`
+- fluxcd/flux2 `v2.7.0` to `v2.7.5`
+- fluxcd/notification-controller `v1.7.1` to `v1.7.5`
+- fluxcd/helm-controller `v1.4.0` to `v1.4.5`
+- fluxcd/kustomize-controller `v1.7.0` to `v1.7.3`
+- fluxcd/source-controller `v1.7.0` to `v1.7.4`
+- replicatedhq/troubleshoot `v0.123.12` to `v0.123.17`
+- rancher/local-path-provisioner `v0.0.32` to `v0.0.34`
+
+### Fixed
+- Fixed bottlerocket hostOSConfiguration values getting lost during upgrade to EKS-A v0.24 from previous minor versions ([5103](https://github.com/aws/eks-anywhere-build-tooling/pull/5103))
+- Improved garbage collection of cluster resources for Nutanix provider ([10494](https://github.com/aws/eks-anywhere/pull/10494))
+- Fixed Snow provider support for k8s 1.34 by migrating containerd configuration to v2 format ([#10491](https://github.com/aws/eks-anywhere/pull/10491))
 
 ## [v0.24.3](https://github.com/aws/eks-anywhere/releases/tag/v0.24.3)
 
