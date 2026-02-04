@@ -259,6 +259,27 @@ func getPortsUnavailable(client networkutils.NetClient, host string) []string {
 	return unavailablePorts
 }
 
+// GetSelectorsFromMachineConfig extracts hardware selectors from a machine config.
+// If HardwareAffinity is set, it extracts matchLabels from Required terms.
+// Otherwise, it returns the HardwareSelector.
+func GetSelectorsFromMachineConfig(config *v1alpha1.TinkerbellMachineConfig) []v1alpha1.HardwareSelector {
+	if config.Spec.HardwareAffinity != nil {
+		var selectors []v1alpha1.HardwareSelector
+		for _, term := range config.Spec.HardwareAffinity.Required {
+			if len(term.LabelSelector.MatchLabels) > 0 {
+				selectors = append(selectors, v1alpha1.HardwareSelector(term.LabelSelector.MatchLabels))
+			}
+		}
+		return selectors
+	}
+
+	if len(config.Spec.HardwareSelector) > 0 {
+		return []v1alpha1.HardwareSelector{config.Spec.HardwareSelector}
+	}
+
+	return nil
+}
+
 // minimumHardwareRequirement defines the minimum requirement for a hardware selector.
 type minimumHardwareRequirement struct {
 	// MinCount is the minimum number of hardware required to satisfy the requirement

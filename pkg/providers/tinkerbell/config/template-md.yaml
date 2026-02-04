@@ -56,11 +56,66 @@ spec:
     {{- if and .workertemplateOverride (ne .format "")}}
     spec:
       hardwareAffinity:
+{{- if .hardwareAffinity }}
+        {{- if .hardwareAffinity.Required }}
+        required:
+        {{- range .hardwareAffinity.Required }}
+        - labelSelector:
+            {{- if .LabelSelector.MatchLabels }}
+            matchLabels:
+              {{- range $key, $value := .LabelSelector.MatchLabels }}
+              {{ $key }}: {{ $value }}
+              {{- end }}
+            {{- end }}
+            {{- if .LabelSelector.MatchExpressions }}
+            matchExpressions:
+              {{- range .LabelSelector.MatchExpressions }}
+            - key: {{ .Key }}
+              operator: {{ .Operator }}
+              {{- if .Values }}
+              values:
+                {{- range .Values }}
+              - {{ . }}
+                {{- end }}
+              {{- end }}
+              {{- end }}
+            {{- end }}
+        {{- end }}
+        {{- end }}
+        {{- if .hardwareAffinity.Preferred }}
+        preferred:
+        {{- range .hardwareAffinity.Preferred }}
+        - weight: {{ .Weight }}
+          hardwareAffinityTerm:
+            labelSelector:
+              {{- if .HardwareAffinityTerm.LabelSelector.MatchLabels }}
+              matchLabels:
+                {{- range $key, $value := .HardwareAffinityTerm.LabelSelector.MatchLabels }}
+                {{ $key }}: {{ $value }}
+                {{- end }}
+              {{- end }}
+              {{- if .HardwareAffinityTerm.LabelSelector.MatchExpressions }}
+              matchExpressions:
+                {{- range .HardwareAffinityTerm.LabelSelector.MatchExpressions }}
+              - key: {{ .Key }}
+                operator: {{ .Operator }}
+                {{- if .Values }}
+                values:
+                  {{- range .Values }}
+                - {{ . }}
+                  {{- end }}
+                {{- end }}
+                {{- end }}
+              {{- end }}
+        {{- end }}
+        {{- end }}
+{{- else }}
         required:
         - labelSelector:
             matchLabels: {{ range $key, $value := .hardwareSelector}}
               {{ $key }}: {{ $value}}
             {{- end }}
+{{- end }}
       bootOptions:
         bootMode: {{.bootMode}}
         {{- if .isoUrl }}

@@ -406,8 +406,11 @@ func (r *Reconciler) validateHardwareReqForKCP(validatableCAPI *tinkerbell.Valid
 		if upgradeStrategy != nil && upgradeStrategy.Type == anywherev1.RollingUpdateStrategyType {
 			maxSurge = upgradeStrategy.RollingUpdate.MaxSurge
 		}
-		if err := requirements.Add(tinkerbellClusterSpec.ControlPlaneMachineConfig().Spec.HardwareSelector, maxSurge); err != nil {
-			return nil, err
+		selectors := tinkerbell.GetSelectorsFromMachineConfig(tinkerbellClusterSpec.ControlPlaneMachineConfig())
+		for _, selector := range selectors {
+			if err := requirements.Add(selector, maxSurge); err != nil {
+				return nil, err
+			}
 		}
 	}
 	return requirements, nil
@@ -445,8 +448,11 @@ func (r *Reconciler) validateHardwareReqForMachineDeployments(ctx context.Contex
 			if upgradeStrategy != nil && upgradeStrategy.Type == anywherev1.RollingUpdateStrategyType {
 				maxSurge = upgradeStrategy.RollingUpdate.MaxSurge
 			}
-			if err := requirements.Add(tinkerbellClusterSpec.WorkerNodeGroupMachineConfig(workerNodeGroup).Spec.HardwareSelector, maxSurge); err != nil {
-				return nil, err
+			selectors := tinkerbell.GetSelectorsFromMachineConfig(tinkerbellClusterSpec.WorkerNodeGroupMachineConfig(workerNodeGroup))
+			for _, selector := range selectors {
+				if err := requirements.Add(selector, maxSurge); err != nil {
+					return nil, err
+				}
 			}
 		}
 	}

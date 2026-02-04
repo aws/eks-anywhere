@@ -198,27 +198,47 @@ func HardwareSatisfiesOnlyOneSelectorAssertion(catalogue *hardware.Catalogue) Cl
 }
 
 // selectorsFromClusterSpec extracts all selectors specified on MachineConfig's from spec.
+// When HardwareAffinity is used, it extracts matchLabels from Required terms.
 func selectorsFromClusterSpec(spec *ClusterSpec) (selectorSet, error) {
 	selectors := selectorSet{}
 
-	if err := selectors.Add(spec.ControlPlaneMachineConfig().Spec.HardwareSelector); err != nil {
+	if err := addSelectorsFromMachineConfig(spec.ControlPlaneMachineConfig(), &selectors); err != nil {
 		return nil, err
 	}
 
 	for _, nodeGroup := range spec.WorkerNodeGroupConfigurations() {
-		err := selectors.Add(spec.WorkerNodeGroupMachineConfig(nodeGroup).Spec.HardwareSelector)
-		if err != nil {
+		if err := addSelectorsFromMachineConfig(spec.WorkerNodeGroupMachineConfig(nodeGroup), &selectors); err != nil {
 			return nil, err
 		}
 	}
 
 	if spec.HasExternalEtcd() {
-		if err := selectors.Add(spec.ExternalEtcdMachineConfig().Spec.HardwareSelector); err != nil {
+		if err := addSelectorsFromMachineConfig(spec.ExternalEtcdMachineConfig(), &selectors); err != nil {
 			return nil, err
 		}
 	}
 
 	return selectors, nil
+}
+
+// addSelectorsFromMachineConfig extracts selectors from a machine config.
+// If HardwareAffinity is set, it extracts matchLabels from Required terms.
+// Otherwise, it uses the HardwareSelector.
+func addSelectorsFromMachineConfig(config *v1alpha1.TinkerbellMachineConfig, selectors *selectorSet) error {
+	if config.Spec.HardwareAffinity != nil {
+		// Extract matchLabels from each Required term
+		for _, term := range config.Spec.HardwareAffinity.Required {
+			if len(term.LabelSelector.MatchLabels) > 0 {
+				selector := v1alpha1.HardwareSelector(term.LabelSelector.MatchLabels)
+				if err := selectors.Add(selector); err != nil {
+					return err
+				}
+			}
+		}
+		return nil
+	}
+
+	return selectors.Add(config.Spec.HardwareSelector)
 }
 
 // MinimumHardwareAvailableAssertionForCreate asserts that catalogue has sufficient hardware to
@@ -238,31 +258,28 @@ func MinimumHardwareAvailableAssertionForCreate(catalogue *hardware.Catalogue) C
 		// will account for the same selector being specified on different groups.
 		requirements := MinimumHardwareRequirements{}
 
-		err := requirements.Add(
-			spec.ControlPlaneMachineConfig().Spec.HardwareSelector,
-			spec.ControlPlaneConfiguration().Count,
-		)
-		if err != nil {
-			return err
-		}
-
-		for _, nodeGroup := range spec.WorkerNodeGroupConfigurations() {
-			err := requirements.Add(
-				spec.WorkerNodeGroupMachineConfig(nodeGroup).Spec.HardwareSelector,
-				*nodeGroup.Count,
-			)
-			if err != nil {
+		selectors := GetSelectorsFromMachineConfig(spec.ControlPlaneMachineConfig())
+		for _, selector := range selectors {
+			if err := requirements.Add(selector, spec.ControlPlaneConfiguration().Count); err != nil {
 				return err
 			}
 		}
 
+		for _, nodeGroup := range spec.WorkerNodeGroupConfigurations() {
+			selectors := GetSelectorsFromMachineConfig(spec.WorkerNodeGroupMachineConfig(nodeGroup))
+			for _, selector := range selectors {
+				if err := requirements.Add(selector, *nodeGroup.Count); err != nil {
+					return err
+				}
+			}
+		}
+
 		if spec.HasExternalEtcd() {
-			err := requirements.Add(
-				spec.ExternalEtcdMachineConfig().Spec.HardwareSelector,
-				spec.ExternalEtcdConfiguration().Count,
-			)
-			if err != nil {
-				return err
+			selectors := GetSelectorsFromMachineConfig(spec.ExternalEtcdMachineConfig())
+			for _, selector := range selectors {
+				if err := requirements.Add(selector, spec.ExternalEtcdConfiguration().Count); err != nil {
+					return err
+				}
 			}
 		}
 
@@ -392,12 +409,11 @@ func AssertionsForScaleUpDown(catalogue *hardware.Catalogue, current Validatable
 				return fmt.Errorf("cannot perform scale up or down during rolling upgrades")
 			}
 			if current.ControlPlaneReplicaCount() < spec.Cluster.Spec.ControlPlaneConfiguration.Count {
-				err := requirements.Add(
-					spec.ControlPlaneMachineConfig().Spec.HardwareSelector,
-					spec.Cluster.Spec.ControlPlaneConfiguration.Count-current.ControlPlaneReplicaCount(),
-				)
-				if err != nil {
-					return fmt.Errorf("error during scale up: %v", err)
+				selectors := GetSelectorsFromMachineConfig(spec.ControlPlaneMachineConfig())
+				for _, selector := range selectors {
+					if err := requirements.Add(selector, spec.Cluster.Spec.ControlPlaneConfiguration.Count-current.ControlPlaneReplicaCount()); err != nil {
+						return fmt.Errorf("error during scale up: %v", err)
+					}
 				}
 			}
 		}
@@ -415,12 +431,11 @@ func AssertionsForScaleUpDown(catalogue *hardware.Catalogue, current Validatable
 						return fmt.Errorf("cannot perform scale up or down during rolling upgrades")
 					}
 					if *nodeGroupNewSpec.Count > workerNodeGroupOldSpec.Replicas {
-						err := requirements.Add(
-							spec.WorkerNodeGroupMachineConfig(nodeGroupNewSpec).Spec.HardwareSelector,
-							*nodeGroupNewSpec.Count-workerNodeGroupOldSpec.Replicas,
-						)
-						if err != nil {
-							return fmt.Errorf("error during scale up: %v", err)
+						selectors := GetSelectorsFromMachineConfig(spec.WorkerNodeGroupMachineConfig(nodeGroupNewSpec))
+						for _, selector := range selectors {
+							if err := requirements.Add(selector, *nodeGroupNewSpec.Count-workerNodeGroupOldSpec.Replicas); err != nil {
+								return fmt.Errorf("error during scale up: %v", err)
+							}
 						}
 					}
 				}
@@ -428,12 +443,11 @@ func AssertionsForScaleUpDown(catalogue *hardware.Catalogue, current Validatable
 				if rollingUpgrade {
 					return fmt.Errorf("cannot perform scale up or down during rolling upgrades")
 				}
-				err := requirements.Add(
-					spec.WorkerNodeGroupMachineConfig(nodeGroupNewSpec).Spec.HardwareSelector,
-					*nodeGroupNewSpec.Count,
-				)
-				if err != nil {
-					return fmt.Errorf("error during scale up: %v", err)
+				selectors := GetSelectorsFromMachineConfig(spec.WorkerNodeGroupMachineConfig(nodeGroupNewSpec))
+				for _, selector := range selectors {
+					if err := requirements.Add(selector, *nodeGroupNewSpec.Count); err != nil {
+						return fmt.Errorf("error during scale up: %v", err)
+					}
 				}
 			}
 		}
@@ -487,12 +501,11 @@ func ensureCPHardwareAvailability(spec *ClusterSpec, hwReq MinimumHardwareRequir
 	if rolloutStrategy != nil && rolloutStrategy.Type == "RollingUpdate" {
 		maxSurge = spec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy.RollingUpdate.MaxSurge
 	}
-	err := hwReq.Add(
-		spec.ControlPlaneMachineConfig().Spec.HardwareSelector,
-		maxSurge,
-	)
-	if err != nil {
-		return fmt.Errorf("for rolling upgrade, %v", err)
+	selectors := GetSelectorsFromMachineConfig(spec.ControlPlaneMachineConfig())
+	for _, selector := range selectors {
+		if err := hwReq.Add(selector, maxSurge); err != nil {
+			return fmt.Errorf("for rolling upgrade, %v", err)
+		}
 	}
 	return nil
 }
@@ -508,12 +521,11 @@ func ensureWorkerHardwareAvailability(spec *ClusterSpec, current ValidatableClus
 			if nodeGroup.UpgradeRolloutStrategy != nil && nodeGroup.UpgradeRolloutStrategy.Type == "RollingUpdate" {
 				maxSurge = nodeGroup.UpgradeRolloutStrategy.RollingUpdate.MaxSurge
 			}
-			err := hwReq.Add(
-				spec.WorkerNodeGroupMachineConfig(nodeGroup).Spec.HardwareSelector,
-				maxSurge,
-			)
-			if err != nil {
-				return fmt.Errorf("for rolling upgrade, %v", err)
+			selectors := GetSelectorsFromMachineConfig(spec.WorkerNodeGroupMachineConfig(nodeGroup))
+			for _, selector := range selectors {
+				if err := hwReq.Add(selector, maxSurge); err != nil {
+					return fmt.Errorf("for rolling upgrade, %v", err)
+				}
 			}
 		}
 	}
@@ -521,16 +533,16 @@ func ensureWorkerHardwareAvailability(spec *ClusterSpec, current ValidatableClus
 }
 
 // ensureHardwareSelectorsSpecified ensures each machine config present in spec has a hardware
-// selector.
+// selector or hardware affinity.
 func ensureHardwareSelectorsSpecified(spec *ClusterSpec) error {
-	if len(spec.ControlPlaneMachineConfig().Spec.HardwareSelector) == 0 {
+	if !hasHardwareSelection(spec.ControlPlaneMachineConfig()) {
 		return missingHardwareSelectorErr{
 			Name: spec.ControlPlaneMachineConfig().Name,
 		}
 	}
 
 	for _, nodeGroup := range spec.WorkerNodeGroupConfigurations() {
-		if len(spec.WorkerNodeGroupMachineConfig(nodeGroup).Spec.HardwareSelector) == 0 {
+		if !hasHardwareSelection(spec.WorkerNodeGroupMachineConfig(nodeGroup)) {
 			return missingHardwareSelectorErr{
 				Name: spec.WorkerNodeGroupMachineConfig(nodeGroup).Name,
 			}
@@ -538,7 +550,7 @@ func ensureHardwareSelectorsSpecified(spec *ClusterSpec) error {
 	}
 
 	if spec.HasExternalEtcd() {
-		if len(spec.ExternalEtcdMachineConfig().Spec.HardwareSelector) == 0 {
+		if !hasHardwareSelection(spec.ExternalEtcdMachineConfig()) {
 			return missingHardwareSelectorErr{
 				Name: spec.ExternalEtcdMachineConfig().Name,
 			}
@@ -546,6 +558,11 @@ func ensureHardwareSelectorsSpecified(spec *ClusterSpec) error {
 	}
 
 	return nil
+}
+
+// hasHardwareSelection returns true if the machine config has either HardwareSelector or HardwareAffinity set.
+func hasHardwareSelection(config *v1alpha1.TinkerbellMachineConfig) bool {
+	return len(config.Spec.HardwareSelector) > 0 || config.Spec.HardwareAffinity != nil
 }
 
 // ExtraHardwareAvailableAssertionForNodeRollOut asserts catalogue has sufficient hardware to meet minimum requirement

@@ -340,8 +340,8 @@ In the example, there are `TinkerbellMachineConfig` sections for control plane (
 The following fields identify information needed to configure the nodes in each of those groups.
 >**_NOTE:_** Currently, you can only have one machine group for all machines in the control plane, although you can have multiple machine groups for the workers.
 >
-### hardwareSelector (required)
-Use fields under `hardwareSelector` to add key/value pair labels to match particular machines that you identified in the CSV file where you defined the machines in your cluster.
+### hardwareSelector (optional)
+Use `hardwareSelector` to add key/value pair labels to match particular machines that you identified in the CSV file where you defined the machines in your cluster.
 Choose any label name you like.
 For example, if you had added the label `node=cp-machine` to the machines listed in your CSV file that you want to be control plane nodes, the following `hardwareSelector` field would cause those machines to be added to the control plane:
 ```yaml
@@ -354,6 +354,110 @@ spec:
   hardwareSelector:
     node: "cp-machine"
 ```
+
+>**_NOTE:_** Either `hardwareSelector` or `hardwareAffinity` must be specified, but not both. Use `hardwareSelector` for simple single-label matching, or `hardwareAffinity` for advanced selection with multiple terms and weighted preferences.
+
+### hardwareAffinity (optional)
+Use `hardwareAffinity` for advanced hardware selection when you need more control than `hardwareSelector` provides. This field allows you to specify required and preferred affinity terms using Kubernetes-style label selectors.
+
+The `hardwareAffinity` field has two sub-fields:
+- `required`: A list of hardware affinity terms that are OR'd together. Hardware must match at least one term to be considered. At least one required term must be specified.
+- `preferred`: A list of weighted hardware affinity terms. Hardware matching these terms are preferred according to the weights provided (1-100), but are not required.
+
+#### hardwareAffinity.required
+Required hardware affinity terms. Each term contains a `labelSelector` with `matchLabels` and/or `matchExpressions`. Multiple terms in the `required` array are implicitly OR'd together - hardware must match at least one term to be eligible for selection.
+
+#### hardwareAffinity.preferred
+Preferred hardware affinity terms with weights. Each term contains:
+- `weight`: A value from 1-100 indicating preference strength
+- `hardwareAffinityTerm`: The affinity term with a `labelSelector`
+
+#### Example: Simple required affinity
+```yaml
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: TinkerbellMachineConfig
+metadata:
+  name: my-cluster-name-cp
+spec:
+  hardwareAffinity:
+    required:
+    - labelSelector:
+        matchLabels:
+          node: "cp-machine"
+  osFamily: ubuntu
+```
+
+#### Example: Multiple required terms (OR'd together)
+When you specify multiple items in the `required` array, they are implicitly OR'd together. Hardware must match at least one of the terms to be eligible. In this example, hardware in either `rack-1` OR `rack-2` will be selected:
+```yaml
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: TinkerbellMachineConfig
+metadata:
+  name: my-cluster-name-cp
+spec:
+  hardwareAffinity:
+    required:
+    - labelSelector:
+        matchLabels:
+          rack: "rack-1"
+    - labelSelector:
+        matchLabels:
+          rack: "rack-2"
+  osFamily: ubuntu
+```
+
+#### Example: Required with preferred terms
+```yaml
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: TinkerbellMachineConfig
+metadata:
+  name: my-cluster-name-workers
+spec:
+  hardwareAffinity:
+    required:
+    - labelSelector:
+        matchLabels:
+          role: "worker"
+    preferred:
+    - weight: 100
+      hardwareAffinityTerm:
+        labelSelector:
+          matchLabels:
+            gpu: "true"
+    - weight: 50
+      hardwareAffinityTerm:
+        labelSelector:
+          matchLabels:
+            ssd: "true"
+  osFamily: ubuntu
+```
+
+#### Example: Using matchExpressions for complex selection
+```yaml
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: TinkerbellMachineConfig
+metadata:
+  name: my-cluster-name-cp
+spec:
+  hardwareAffinity:
+    required:
+    - labelSelector:
+        matchExpressions:
+        - key: rack
+          operator: In
+          values:
+          - rack-1
+          - rack-2
+          - rack-3
+  osFamily: ubuntu
+```
+
+>**_NOTE:_** Either `hardwareSelector` or `hardwareAffinity` must be specified, but not both. Use `hardwareSelector` for simple single-label matching, or `hardwareAffinity` for advanced selection with multiple terms and weighted preferences.
+
 ### osFamily (required)
 Operating system on the machine. Permitted values: `ubuntu` and `redhat` (Default: `ubuntu`).
 

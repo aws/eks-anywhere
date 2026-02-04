@@ -17,7 +17,6 @@ package v1alpha1
 import (
 	"context"
 	"fmt"
-	"reflect"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -165,10 +164,6 @@ func validateImmutableFieldsTinkerbellMachineConfig(new, old *TinkerbellMachineC
 
 	if len(new.Spec.Users[0].SshAuthorizedKeys) > 0 && (new.Spec.Users[0].SshAuthorizedKeys[0] != old.Spec.Users[0].SshAuthorizedKeys[0]) {
 		allErrs = append(allErrs, field.Forbidden(specPath.Child("Users[0].SshAuthorizedKeys[0]"), "field is immutable"))
-	}
-
-	if !reflect.DeepEqual(new.Spec.HardwareSelector, old.Spec.HardwareSelector) {
-		allErrs = append(allErrs, field.Forbidden(specPath.Child("HardwareSelector"), "field is immutable"))
 	}
 
 	return allErrs

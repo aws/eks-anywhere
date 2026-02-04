@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"reflect"
 
 	tinkv1alpha1 "github.com/tinkerbell/tink/api/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -183,8 +182,11 @@ func (p *Provider) validateHardwareReqForControlPlaneRollOut(currentSpec, newClu
 		maxSurge = newClusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy.RollingUpdate.MaxSurge
 	}
 	if oldCP.Spec.OSImageURL != newCP.Spec.OSImageURL {
-		if err := requirements.Add(newCP.Spec.HardwareSelector, maxSurge); err != nil {
-			return nil, fmt.Errorf("validating hardware requirements for control-plane nodes roll out: %v", err)
+		selectors := GetSelectorsFromMachineConfig(newCP)
+		for _, selector := range selectors {
+			if err := requirements.Add(selector, maxSurge); err != nil {
+				return nil, fmt.Errorf("validating hardware requirements for control-plane nodes roll out: %v", err)
+			}
 		}
 	}
 	return requirements, nil
@@ -205,8 +207,11 @@ func (p *Provider) validateHardwareReqForWorkerNodeGroupsRollOut(currentSpec, ne
 			if rolloutStrategy != nil && rolloutStrategy.Type == "RollingUpdate" {
 				maxSurge = rolloutStrategy.RollingUpdate.MaxSurge
 			}
-			if err := requirements.Add(newWng.Spec.HardwareSelector, maxSurge); err != nil {
-				return nil, fmt.Errorf("validating hardware requirements for worker node groups roll out: %v", err)
+			selectors := GetSelectorsFromMachineConfig(newWng)
+			for _, selector := range selectors {
+				if err := requirements.Add(selector, maxSurge); err != nil {
+					return nil, fmt.Errorf("validating hardware requirements for worker node groups roll out: %v", err)
+				}
 			}
 		}
 	}
@@ -452,10 +457,6 @@ func (p *Provider) validateMachineCfg(ctx context.Context, cluster *types.Cluste
 
 	if newConfig.Spec.Users[0].Name != prevMachineConfig.Spec.Users[0].Name {
 		return fmt.Errorf("spec.Users[0].Name is immutable. Previous value %s,   New value %s", prevMachineConfig.Spec.Users[0].Name, newConfig.Spec.Users[0].Name)
-	}
-
-	if !reflect.DeepEqual(newConfig.Spec.HardwareSelector, prevMachineConfig.Spec.HardwareSelector) {
-		return fmt.Errorf("spec.HardwareSelector is immutable. Previous value %v,   New value %v", prevMachineConfig.Spec.HardwareSelector, newConfig.Spec.HardwareSelector)
 	}
 
 	return nil
