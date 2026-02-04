@@ -722,7 +722,7 @@ spec:
           description: Helm chart for stack
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: stack
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell-chart:0.22.1-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell:0.22.1-eks-a-v0.0.0-dev-build.1
         tink:
           nginx:
             arch:
@@ -1557,7 +1557,7 @@ spec:
           description: Helm chart for stack
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: stack
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell-chart:0.22.1-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell:0.22.1-eks-a-v0.0.0-dev-build.1
         tink:
           nginx:
             arch:
@@ -2392,7 +2392,7 @@ spec:
           description: Helm chart for stack
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: stack
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell-chart:0.22.1-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell:0.22.1-eks-a-v0.0.0-dev-build.1
         tink:
           nginx:
             arch:
@@ -3227,7 +3227,7 @@ spec:
           description: Helm chart for stack
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: stack
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell-chart:0.22.1-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell:0.22.1-eks-a-v0.0.0-dev-build.1
         tink:
           nginx:
             arch:
@@ -4062,7 +4062,7 @@ spec:
           description: Helm chart for stack
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: stack
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell-chart:0.22.1-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell:0.22.1-eks-a-v0.0.0-dev-build.1
         tink:
           nginx:
             arch:
@@ -4897,7 +4897,7 @@ spec:
           description: Helm chart for stack
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: stack
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell-chart:0.22.1-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell:0.22.1-eks-a-v0.0.0-dev-build.1
         tink:
           nginx:
             arch:
@@ -5732,7 +5732,7 @@ spec:
           description: Helm chart for stack
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: stack
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell-chart:0.22.1-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell:0.22.1-eks-a-v0.0.0-dev-build.1
         tink:
           nginx:
             arch:
