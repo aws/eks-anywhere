@@ -185,17 +185,6 @@ Starting in EKS Anywhere v0.18.0, when upgrading management cluster the CLI depe
 
 During the workload cluster upgrade process, EKS Anywhere pauses the cluster controller reconciliation by adding the paused annotation `anywhere.eks.amazonaws.com/paused: true` to the EKS Anywhere cluster, provider datacenterconfig and machineconfig resources, before the components upgrade. After upgrade completes, the annotations are removed so that the cluster controller resumes reconciling the cluster. If the CLI execution is interrupted or times out, the controller won't reconcile changes to the EKS-A objects until these annotations are removed. You can re-run the CLI to restart the upgrade process or remove the annotations manually with `kubectl`.
 
-#### Management cluster upgrade behavior
-
-During management cluster upgrades, the CLI temporarily pauses all workload cluster CAPI resources (`clusters.cluster.x-k8s.io`) by setting `spec.paused: true` to prevent CAPI controllers from interfering with the upgrade process. After the management cluster upgrade completes, the CLI resumes all workload clusters by removing the `spec.paused` field.
-
->**_NOTE:_** If you have manually paused workload clusters (for example, to prevent automatic reprovisioning during maintenance), the management cluster upgrade will unpause the CAPI cluster resource (`clusters.cluster.x-k8s.io`) even though the EKS Anywhere cluster annotation (`anywhere.eks.amazonaws.com/paused`) remains unchanged. After the management cluster upgrade completes, you should re-pause any workload clusters that need to remain paused:
->
->```bash
->kubectl patch clusters.cluster.x-k8s.io ${CLUSTER_NAME} -n eksa-system \
->  --type merge -p '{"spec":{"paused": true}}' --kubeconfig ${MGMT_KUBECONFIG}
->```
-
 Though not recommended, you can manually pause the EKS Anywhere cluster controller reconciliation to perform extended maintenance work or interact with Cluster API objects directly. To do it, you can add the paused annotation to the cluster resource:
 
 ```bash
@@ -207,6 +196,13 @@ After finishing the task, make sure you resume the cluster reconciliation by rem
 ```bash
 kubectl annotate clusters.anywhere.eks.amazonaws.com ${CLUSTER_NAME} -n ${CLUSTER_NAMESPACE} anywhere.eks.amazonaws.com/paused-
 ```
+
+>**_NOTE:_** During management cluster upgrades, the CLI temporarily pauses all workload cluster CAPI resources (`clusters.cluster.x-k8s.io`) and resumes them after the upgrade completes. If you have manually paused workload clusters, the management cluster upgrade will unpause the CAPI cluster resource even though the EKS Anywhere cluster annotation (`anywhere.eks.amazonaws.com/paused`) remains unchanged. After the management cluster upgrade completes, re-pause any workload clusters that need to remain paused:
+>
+>```bash
+>kubectl patch clusters.cluster.x-k8s.io ${CLUSTER_NAME} -n eksa-system \
+>  --type merge -p '{"spec":{"paused": true}}' --kubeconfig ${MGMT_KUBECONFIG}
+>```
 
 >**_NOTE (vSphere only):_** If you are upgrading a vSphere cluster created using EKS Anywhere version prior to `v0.16.0` that has the vSphere CSI Driver installed in it, please refer to the additional steps listed [here]({{< relref "../storage/vsphere-storage#vsphere-csi-driver-cleanup-for-upgrades" >}}) before attempting an upgrade.
 
