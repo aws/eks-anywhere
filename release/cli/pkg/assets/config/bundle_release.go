@@ -880,8 +880,8 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 		ProjectPath: "projects/tinkerbell/tinkerbell",
 		Images: []*assettypes.Image{
 			{
-				RepoName:             "tinkerbell",
-				AssetName:            "stack-helm",
+				RepoName:             "tinkerbell-helm",
+				AssetName:            "tinkerbell-helm",
 				TrimVersionSignifier: true,
 				ImageTagConfiguration: assettypes.ImageTagConfiguration{
 					NonProdSourceImageTagFormat: "<gitTag>",

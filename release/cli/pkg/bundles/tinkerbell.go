@@ -160,7 +160,7 @@ func GetTinkerbellBundle(r *releasetypes.ReleaseConfig, imageDigests releasetype
 				},
 			},
 			Rufio: bundleImageArtifacts["tinkerbell"],
-			Stack: bundleImageArtifacts["stack-helm"],
+			Stack: bundleImageArtifacts["tinkerbell-helm"],
 			Tink: anywherev1alpha1.TinkBundle{
 				Nginx:          bundleImageArtifacts["nginx"],
 				TinkRelay:      bundleImageArtifacts["tink-relay"],
