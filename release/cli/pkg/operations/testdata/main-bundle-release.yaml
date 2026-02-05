@@ -432,11 +432,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: haproxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/haproxy:v0.29.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/haproxy:v0.31.0-eks-a-v0.0.0-dev-build.1
     kindnetd:
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.29.0/kindnetd.yaml
-      version: v0.29.0+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.31.0/kindnetd.yaml
+      version: v0.31.0+abcdef1
     kubeVersion: "1.28"
     nutanix:
       cloudProvider:
@@ -1267,11 +1267,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: haproxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/haproxy:v0.29.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/haproxy:v0.31.0-eks-a-v0.0.0-dev-build.1
     kindnetd:
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.29.0/kindnetd.yaml
-      version: v0.29.0+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.31.0/kindnetd.yaml
+      version: v0.31.0+abcdef1
     kubeVersion: "1.29"
     nutanix:
       cloudProvider:
@@ -2102,11 +2102,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: haproxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/haproxy:v0.29.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/haproxy:v0.31.0-eks-a-v0.0.0-dev-build.1
     kindnetd:
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.29.0/kindnetd.yaml
-      version: v0.29.0+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.31.0/kindnetd.yaml
+      version: v0.31.0+abcdef1
     kubeVersion: "1.30"
     nutanix:
       cloudProvider:
@@ -2937,11 +2937,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: haproxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/haproxy:v0.29.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/haproxy:v0.31.0-eks-a-v0.0.0-dev-build.1
     kindnetd:
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.29.0/kindnetd.yaml
-      version: v0.29.0+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.31.0/kindnetd.yaml
+      version: v0.31.0+abcdef1
     kubeVersion: "1.31"
     nutanix:
       cloudProvider:
@@ -3772,11 +3772,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: haproxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/haproxy:v0.29.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/haproxy:v0.31.0-eks-a-v0.0.0-dev-build.1
     kindnetd:
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.29.0/kindnetd.yaml
-      version: v0.29.0+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.31.0/kindnetd.yaml
+      version: v0.31.0+abcdef1
     kubeVersion: "1.32"
     nutanix:
       cloudProvider:
@@ -4607,11 +4607,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: haproxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/haproxy:v0.29.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/haproxy:v0.31.0-eks-a-v0.0.0-dev-build.1
     kindnetd:
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.29.0/kindnetd.yaml
-      version: v0.29.0+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.31.0/kindnetd.yaml
+      version: v0.31.0+abcdef1
     kubeVersion: "1.33"
     nutanix:
       cloudProvider:
@@ -5442,11 +5442,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: haproxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/haproxy:v0.29.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/haproxy:v0.31.0-eks-a-v0.0.0-dev-build.1
     kindnetd:
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.29.0/kindnetd.yaml
-      version: v0.29.0+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.31.0/kindnetd.yaml
+      version: v0.31.0+abcdef1
     kubeVersion: "1.34"
     nutanix:
       cloudProvider:
@@ -6277,11 +6277,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: haproxy
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/haproxy:v0.29.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/haproxy:v0.31.0-eks-a-v0.0.0-dev-build.1
     kindnetd:
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.29.0/kindnetd.yaml
-      version: v0.29.0+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.31.0/kindnetd.yaml
+      version: v0.31.0+abcdef1
     kubeVersion: "1.35"
     nutanix:
       cloudProvider:
