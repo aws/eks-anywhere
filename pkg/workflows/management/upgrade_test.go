@@ -259,6 +259,7 @@ func (c *upgradeManagementTestSetup) expectApplyReleases(err error) {
 
 func (c *upgradeManagementTestSetup) expectUpgradeManagementCluster() {
 	gomock.InOrder(
+		c.provider.EXPECT().InstallCustomProviderComponents(c.ctx, c.managementCluster.KubeconfigFile).Return(nil),
 		c.clusterUpgrader.EXPECT().Run(c.ctx, c.newClusterSpec, *c.managementCluster).Return(nil),
 		c.clientFactory.EXPECT().BuildClientFromKubeconfig(c.managementCluster.KubeconfigFile).Return(c.client, nil),
 	)
@@ -587,6 +588,7 @@ func TestUpgradeManagementRunFailedUpgrade(t *testing.T) {
 	test.expectInstallEksdManifest(nil)
 	test.expectApplyBundles(nil)
 	test.expectApplyReleases(nil)
+	test.provider.EXPECT().InstallCustomProviderComponents(test.ctx, test.managementCluster.KubeconfigFile).Return(nil)
 	test.clusterUpgrader.EXPECT().Run(test.ctx, test.newClusterSpec, *test.managementCluster).Return(errors.New("failed upgrading"))
 	test.expectSaveLogs()
 	test.expectWriteCheckpointFile()
@@ -614,6 +616,7 @@ func TestUpgradeManagementRunFailedUpgradeClusterBuildClientFromKubeconfig(t *te
 	test.expectInstallEksdManifest(nil)
 	test.expectApplyBundles(nil)
 	test.expectApplyReleases(nil)
+	test.provider.EXPECT().InstallCustomProviderComponents(test.ctx, test.managementCluster.KubeconfigFile).Return(nil)
 	test.clusterUpgrader.EXPECT().Run(test.ctx, test.newClusterSpec, *test.managementCluster).Return(errors.New("failed upgrading"))
 	test.expectSaveLogs()
 	test.expectWriteCheckpointFile()

@@ -1,0 +1,12 @@
+apiVersion: ipam.cluster.x-k8s.io/v1alpha2
+kind: InClusterIPPool
+metadata:
+  name: {{.ipPoolName}}
+  namespace: {{.ipPoolNamespace}}
+spec:
+  addresses:
+{{- range .ipPoolAddresses}}
+  - {{.}}
+{{- end}}
+  prefix: {{.ipPoolPrefix}}
+  gateway: {{.ipPoolGateway}}
