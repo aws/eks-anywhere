@@ -40,7 +40,7 @@ type Helm interface {
 	RegistryLogin(ctx context.Context, endpoint, username, password string) error
 	UpgradeInstallChartWithValuesFile(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, namespace, valuesFilePath string, opts ...helm.Opt) error
 	Uninstall(ctx context.Context, chart, kubeconfigFilePath, namespace string, opts ...helm.Opt) error
-	ListCharts(ctx context.Context, kubeconfigFilePath, filter string) ([]string, error)
+	ListCharts(ctx context.Context, kubeconfigFilePath, filter, namespace string) ([]string, error)
 }
 
 // StackInstaller deploys a Tinkerbell stack.
@@ -50,13 +50,13 @@ type StackInstaller interface {
 	CleanupLocalBoots(ctx context.Context, forceCleanup bool) error
 	Install(ctx context.Context, bundle releasev1alpha1.TinkerbellBundle, tinkerbellIP, kubeconfig, hookOverride string, opts ...InstallOption) error
 	UninstallLocal(ctx context.Context) error
-	Uninstall(ctx context.Context, bundle releasev1alpha1.TinkerbellBundle, kubeconfig string) error
+	UninstallChart(ctx context.Context, chartName, kubeconfig, namespace string) error
 	Upgrade(_ context.Context, _ releasev1alpha1.TinkerbellBundle, tinkerbellIP, kubeconfig, hookOverride string, opts ...InstallOption) error
 	UpgradeInstallCRDs(ctx context.Context, bundle releasev1alpha1.TinkerbellBundle, kubeconfig string, opts ...InstallOption) error
 	UpgradeLegacy(ctx context.Context, bundle releasev1alpha1.TinkerbellBundle, kubeconfig string, opts ...InstallOption) error
 	AddNoProxyIP(IP string)
 	GetNamespace() string
-	HasLegacyChart(ctx context.Context, bundle releasev1alpha1.TinkerbellBundle, kubeconfig string) (bool, error)
+	HasChart(ctx context.Context, chartName, kubeconfig, namespace string) (bool, error)
 }
 
 type Installer struct {
@@ -471,9 +471,9 @@ func (s *Installer) UpgradeInstallCRDs(ctx context.Context, bundle releasev1alph
 	)
 }
 
-// Uninstall uninstalls a tinkerbell chart of a certain name.
-func (s *Installer) Uninstall(ctx context.Context, bundle releasev1alpha1.TinkerbellBundle, kubeconfig string) error {
-	logger.V(6).Info("Uninstalling old Tinkerbell helm chart")
+// UninstallChart uninstalls a tinkerbell helm chart by name.
+func (s *Installer) UninstallChart(ctx context.Context, chartName, kubeconfig, namespace string) error {
+	logger.V(6).Info("Uninstalling Tinkerbell helm chart", "chart", chartName)
 
 	additionalArgs := []string{
 		"--ignore-not-found",
@@ -481,9 +481,9 @@ func (s *Installer) Uninstall(ctx context.Context, bundle releasev1alpha1.Tinker
 
 	return s.helm.Uninstall(
 		ctx,
-		bundle.TinkerbellStack.TinkebellChart.Name,
+		chartName,
 		kubeconfig,
-		"",
+		namespace,
 		helm.WithExtraFlags(additionalArgs),
 	)
 }
@@ -522,20 +522,16 @@ func (s *Installer) UpgradeLegacy(ctx context.Context, bundle releasev1alpha1.Ti
 	)
 }
 
-// HasLegacyChart returns whether or not the legacy tinkerbell-chart exists on the cluster.
-func (s *Installer) HasLegacyChart(ctx context.Context, bundle releasev1alpha1.TinkerbellBundle, kubeconfig string) (bool, error) {
-	logger.V(6).Info("Checking if legacy chart exists")
+// HasChart returns whether or not a helm chart with the given name exists on the cluster.
+func (s *Installer) HasChart(ctx context.Context, chartName, kubeconfig, namespace string) (bool, error) {
+	logger.V(6).Info("Checking if chart exists", "chart", chartName)
 
-	charts, err := s.helm.ListCharts(ctx, kubeconfig, bundle.TinkerbellStack.TinkebellChart.Name)
+	charts, err := s.helm.ListCharts(ctx, kubeconfig, chartName, namespace)
 	if err != nil {
 		return false, err
 	}
 
-	if len(charts) > 0 {
-		return true, nil
-	}
-
-	return false, nil
+	return len(charts) > 0, nil
 }
 
 // createValuesOverride generates the values override file for the mono-repo tinkerbell helm chart.
@@ -564,7 +560,7 @@ func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle
 			"image":         tinkerbellImage,
 			"imageTag":      tinkerbellTag,
 			"agentImage":    localTinkWorkerImage,
-			"agentImageTag": "",
+			"agentImageTag": "latest",
 			"hostNetwork":   s.hostNetwork,
 			"tolerations": []map[string]any{
 				{
@@ -646,9 +642,6 @@ func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle
 			"type":           "LoadBalancer",
 			"loadBalancerIP": tinkerbellIP,
 			"lbClass":        "kube-vip.io/kube-vip-class",
-		},
-		"rbac": map[string]any{
-			"type": "Role",
 		},
 		"optional": map[string]any{
 			"hookos": map[string]any{

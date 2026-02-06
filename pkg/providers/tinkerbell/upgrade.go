@@ -488,8 +488,10 @@ func (p *Provider) PreCoreComponentsUpgrade(
 	// Attempt the upgrade. This should upgrade the stack in the management cluster by updating
 	// images, installing new CRDs and possibly removing old ones.
 
+	legacyChartName := managementComponents.Tinkerbell.TinkerbellStack.TinkebellChart.Name
+
 	// Check if cluster has legacy chart installed
-	hasLegacy, err := p.stackInstaller.HasLegacyChart(ctx, managementComponents.Tinkerbell, cluster.KubeconfigFile)
+	hasLegacy, err := p.stackInstaller.HasChart(ctx, legacyChartName, cluster.KubeconfigFile, "")
 	if err != nil {
 		return fmt.Errorf("getting legacy chart: %v", err)
 	}
@@ -509,11 +511,7 @@ func (p *Provider) PreCoreComponentsUpgrade(
 		}
 
 		// Uninstall legacy chart
-		err = p.stackInstaller.Uninstall(
-			ctx,
-			managementComponents.Tinkerbell,
-			cluster.KubeconfigFile,
-		)
+		err = p.stackInstaller.UninstallChart(ctx, legacyChartName, cluster.KubeconfigFile, "")
 		if err != nil {
 			return fmt.Errorf("uninstalling legacy chart: %v", err)
 		}
@@ -522,6 +520,20 @@ func (p *Provider) PreCoreComponentsUpgrade(
 		err = p.annotateCRDs(ctx, cluster)
 		if err != nil {
 			return fmt.Errorf("annotating crds: %v", err)
+		}
+	}
+
+	// Check if cluster has stack chart installed (current production, pre-mono-repo)
+	hasStack, err := p.stackInstaller.HasChart(ctx, "stack", cluster.KubeconfigFile, p.stackInstaller.GetNamespace())
+	if err != nil {
+		return fmt.Errorf("getting stack chart: %v", err)
+	}
+
+	if hasStack {
+		// Uninstall stack chart before installing new mono-repo chart
+		err = p.stackInstaller.UninstallChart(ctx, "stack", cluster.KubeconfigFile, p.stackInstaller.GetNamespace())
+		if err != nil {
+			return fmt.Errorf("uninstalling stack chart: %v", err)
 		}
 	}
 

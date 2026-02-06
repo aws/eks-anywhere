@@ -400,7 +400,7 @@ spec:
               CONTENTS: |
                 datasource:
                   Ec2:
-                    metadata_urls: [http://0.0.0.0:50061,http://5.6.7.8:50061]
+                    metadata_urls: [http://0.0.0.0:7172,http://5.6.7.8:7172]
                     strict_id: false
                 manage_etc_hosts: localhost
                 warnings:

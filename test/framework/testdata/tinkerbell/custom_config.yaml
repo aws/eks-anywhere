@@ -91,7 +91,7 @@ spec:
           CONTENTS: |
             datasource:
               Ec2:
-                metadata_urls: [http://__TINKERBELL_LOCAL_IP__:50061, http://__TINKERBELL_LB_IP__:50061]
+                metadata_urls: [http://__TINKERBELL_LOCAL_IP__:7172, http://__TINKERBELL_LB_IP__:7172]
                 strict_id: false
             manage_etc_hosts: localhost
             warnings:

@@ -75,11 +75,13 @@ func TestProviderPreCoreComponentsUpgrade_StackUpgradeError(t *testing.T) {
 	tconfig := NewPreCoreComponentsUpgradeTestConfig(t)
 
 	expect := "foobar"
-	tconfig.Installer.EXPECT().HasLegacyChart(
+	tconfig.Installer.EXPECT().HasChart(
 		gomock.Any(),
-		tconfig.managementComponents.Tinkerbell,
+		gomock.Any(),
 		tconfig.Management.KubeconfigFile,
-	)
+		gomock.Any(),
+	).Times(2)
+	tconfig.Installer.EXPECT().GetNamespace().Return("eksa-system")
 	tconfig.Installer.EXPECT().
 		UpgradeInstallCRDs(
 			gomock.Any(),
@@ -112,11 +114,13 @@ func TestProviderPreCoreComponentsUpgrade_StackUpgradeError(t *testing.T) {
 func TestProviderPreCoreComponentsUpgrade_HasBaseboardManagementCRDError(t *testing.T) {
 	tconfig := NewPreCoreComponentsUpgradeTestConfig(t)
 
-	tconfig.Installer.EXPECT().HasLegacyChart(
+	tconfig.Installer.EXPECT().HasChart(
 		gomock.Any(),
-		tconfig.managementComponents.Tinkerbell,
+		gomock.Any(),
 		tconfig.Management.KubeconfigFile,
-	)
+		gomock.Any(),
+	).Times(2)
+	tconfig.Installer.EXPECT().GetNamespace().Return("eksa-system")
 	tconfig.Installer.EXPECT().
 		UpgradeInstallCRDs(
 			gomock.Any(),
@@ -158,11 +162,13 @@ func TestProviderPreCoreComponentsUpgrade_HasBaseboardManagementCRDError(t *test
 func TestProviderPreCoreComponentsUpgrade_NoBaseboardManagementCRD(t *testing.T) {
 	tconfig := NewPreCoreComponentsUpgradeTestConfig(t)
 
-	tconfig.Installer.EXPECT().HasLegacyChart(
+	tconfig.Installer.EXPECT().HasChart(
 		gomock.Any(),
-		tconfig.managementComponents.Tinkerbell,
+		gomock.Any(),
 		tconfig.Management.KubeconfigFile,
-	)
+		gomock.Any(),
+	).Times(2)
+	tconfig.Installer.EXPECT().GetNamespace().Return("eksa-system")
 	tconfig.Installer.EXPECT().
 		UpgradeInstallCRDs(
 			gomock.Any(),
@@ -199,10 +205,12 @@ func TestProviderPreCoreComponentsUpgrade_NoBaseboardManagementCRD(t *testing.T)
 func TestProviderPreCoreComponentsUpgrade_HasLegacyChart(t *testing.T) {
 	tconfig := NewPreCoreComponentsUpgradeTestConfig(t)
 
-	tconfig.Installer.EXPECT().HasLegacyChart(
+	legacyChartName := tconfig.managementComponents.Tinkerbell.TinkerbellStack.TinkebellChart.Name
+	tconfig.Installer.EXPECT().HasChart(
 		gomock.Any(),
-		tconfig.managementComponents.Tinkerbell,
+		legacyChartName,
 		tconfig.Management.KubeconfigFile,
+		gomock.Any(),
 	).Return(true, nil)
 	tconfig.Installer.EXPECT().
 		UpgradeLegacy(
@@ -212,10 +220,11 @@ func TestProviderPreCoreComponentsUpgrade_HasLegacyChart(t *testing.T) {
 			gomock.Any(),
 		)
 	tconfig.Installer.EXPECT().
-		Uninstall(
+		UninstallChart(
 			gomock.Any(),
-			tconfig.managementComponents.Tinkerbell,
+			legacyChartName,
 			tconfig.Management.KubeconfigFile,
+			"",
 		)
 	tconfig.KubeClient.EXPECT().
 		UpdateAnnotation(
@@ -226,6 +235,13 @@ func TestProviderPreCoreComponentsUpgrade_HasLegacyChart(t *testing.T) {
 			gomock.Any(),
 			gomock.Any(),
 		).Times(6)
+	tconfig.Installer.EXPECT().HasChart(
+		gomock.Any(),
+		"stack",
+		tconfig.Management.KubeconfigFile,
+		gomock.Any(),
+	)
+	tconfig.Installer.EXPECT().GetNamespace().Return("eksa-system")
 	tconfig.Installer.EXPECT().
 		UpgradeInstallCRDs(
 			gomock.Any(),
@@ -255,6 +271,135 @@ func TestProviderPreCoreComponentsUpgrade_HasLegacyChart(t *testing.T) {
 	err = provider.PreCoreComponentsUpgrade(context.Background(), tconfig.Management, tconfig.managementComponents, tconfig.ClusterSpec)
 	if err != nil {
 		t.Fatalf("Received unexpected error: %v", err)
+	}
+}
+
+func TestProviderPreCoreComponentsUpgrade_HasStackChart(t *testing.T) {
+	tconfig := NewPreCoreComponentsUpgradeTestConfig(t)
+
+	legacyChartName := tconfig.managementComponents.Tinkerbell.TinkerbellStack.TinkebellChart.Name
+	// No legacy chart
+	tconfig.Installer.EXPECT().HasChart(
+		gomock.Any(),
+		legacyChartName,
+		tconfig.Management.KubeconfigFile,
+		gomock.Any(),
+	).Return(false, nil)
+	// Has stack chart
+	tconfig.Installer.EXPECT().HasChart(
+		gomock.Any(),
+		"stack",
+		tconfig.Management.KubeconfigFile,
+		gomock.Any(),
+	).Return(true, nil)
+	tconfig.Installer.EXPECT().GetNamespace().Return("eksa-system").Times(2)
+	tconfig.Installer.EXPECT().
+		UninstallChart(
+			gomock.Any(),
+			"stack",
+			tconfig.Management.KubeconfigFile,
+			"eksa-system",
+		)
+	tconfig.Installer.EXPECT().
+		UpgradeInstallCRDs(
+			gomock.Any(),
+			tconfig.managementComponents.Tinkerbell,
+			tconfig.Management.KubeconfigFile,
+			gomock.Any(),
+		)
+	tconfig.Installer.EXPECT().
+		Upgrade(
+			gomock.Any(),
+			tconfig.managementComponents.Tinkerbell,
+			tconfig.TinkerbellIP,
+			tconfig.Management.KubeconfigFile,
+			tconfig.DatacenterConfig.Spec.HookImagesURLPath,
+			gomock.Any(),
+		).
+		Return(nil)
+	tconfig.KubeClient.EXPECT().
+		HasCRD(gomock.Any(), rufiounreleased.BaseboardManagementResourceName, tconfig.Management.KubeconfigFile).
+		Return(false, nil)
+
+	provider, err := tconfig.GetProvider()
+	if err != nil {
+		t.Fatalf("Couldn't create the provider: %v", err)
+	}
+
+	err = provider.PreCoreComponentsUpgrade(context.Background(), tconfig.Management, tconfig.managementComponents, tconfig.ClusterSpec)
+	if err != nil {
+		t.Fatalf("Received unexpected error: %v", err)
+	}
+}
+
+func TestProviderPreCoreComponentsUpgrade_HasStackChartError(t *testing.T) {
+	tconfig := NewPreCoreComponentsUpgradeTestConfig(t)
+
+	legacyChartName := tconfig.managementComponents.Tinkerbell.TinkerbellStack.TinkebellChart.Name
+	// No legacy chart
+	tconfig.Installer.EXPECT().HasChart(
+		gomock.Any(),
+		legacyChartName,
+		tconfig.Management.KubeconfigFile,
+		gomock.Any(),
+	).Return(false, nil)
+	tconfig.Installer.EXPECT().GetNamespace().Return("eksa-system")
+	// Error checking stack chart
+	expect := "error checking stack chart"
+	tconfig.Installer.EXPECT().HasChart(
+		gomock.Any(),
+		"stack",
+		tconfig.Management.KubeconfigFile,
+		gomock.Any(),
+	).Return(false, errors.New(expect))
+
+	provider, err := tconfig.GetProvider()
+	if err != nil {
+		t.Fatalf("Couldn't create the provider: %v", err)
+	}
+
+	err = provider.PreCoreComponentsUpgrade(context.Background(), tconfig.Management, tconfig.managementComponents, tconfig.ClusterSpec)
+	if err == nil || !strings.Contains(err.Error(), expect) {
+		t.Fatalf("Expected error containing '%v'; Received '%v'", expect, err)
+	}
+}
+
+func TestProviderPreCoreComponentsUpgrade_UninstallStackChartError(t *testing.T) {
+	tconfig := NewPreCoreComponentsUpgradeTestConfig(t)
+
+	legacyChartName := tconfig.managementComponents.Tinkerbell.TinkerbellStack.TinkebellChart.Name
+	// No legacy chart
+	tconfig.Installer.EXPECT().HasChart(
+		gomock.Any(),
+		legacyChartName,
+		tconfig.Management.KubeconfigFile,
+		gomock.Any(),
+	).Return(false, nil)
+	// Has stack chart
+	tconfig.Installer.EXPECT().HasChart(
+		gomock.Any(),
+		"stack",
+		tconfig.Management.KubeconfigFile,
+		gomock.Any(),
+	).Return(true, nil)
+	tconfig.Installer.EXPECT().GetNamespace().Return("eksa-system").Times(2)
+	expect := "error uninstalling stack chart"
+	tconfig.Installer.EXPECT().
+		UninstallChart(
+			gomock.Any(),
+			"stack",
+			tconfig.Management.KubeconfigFile,
+			"eksa-system",
+		).Return(errors.New(expect))
+
+	provider, err := tconfig.GetProvider()
+	if err != nil {
+		t.Fatalf("Couldn't create the provider: %v", err)
+	}
+
+	err = provider.PreCoreComponentsUpgrade(context.Background(), tconfig.Management, tconfig.managementComponents, tconfig.ClusterSpec)
+	if err == nil || !strings.Contains(err.Error(), expect) {
+		t.Fatalf("Expected error containing '%v'; Received '%v'", expect, err)
 	}
 }
 
@@ -542,11 +687,13 @@ func TestProviderPreCoreComponentsUpgrade_RufioConversions(t *testing.T) {
 
 			// Configure the mocks to successfully upgrade the Tinkerbell stack using the installer
 			// and identify the need to convert deprecated Rufio custom resources.
-			tconfig.Installer.EXPECT().HasLegacyChart(
+			tconfig.Installer.EXPECT().HasChart(
 				gomock.Any(),
-				tconfig.managementComponents.Tinkerbell,
+				gomock.Any(),
 				tconfig.Management.KubeconfigFile,
-			).Return(false, nil)
+				gomock.Any(),
+			).Return(false, nil).Times(2)
+			tconfig.Installer.EXPECT().GetNamespace().Return(stackNamespace).AnyTimes()
 			tconfig.Installer.EXPECT().
 				UpgradeInstallCRDs(
 					gomock.Any(),
@@ -582,10 +729,6 @@ func TestProviderPreCoreComponentsUpgrade_RufioConversions(t *testing.T) {
 				Return(tc.Hardware, nil)
 
 			if len(tc.ExpectMachines) > 0 {
-				tconfig.Installer.EXPECT().
-					GetNamespace().
-					Return(stackNamespace)
-
 				// Serialize the expected rufiov1#Machine objects into YAML so we can use gomock
 				// to expect that value.
 				serialized, err := yaml.Serialize(tc.ExpectMachines...)
@@ -674,11 +817,13 @@ func TestProviderPreCoreComponentsUpgrade_ApplyHardware(t *testing.T) {
 	}
 	_ = catalogue.InsertHardware(hw)
 
-	tconfig.Installer.EXPECT().HasLegacyChart(
+	tconfig.Installer.EXPECT().HasChart(
 		gomock.Any(),
-		tconfig.managementComponents.Tinkerbell,
+		gomock.Any(),
 		tconfig.Management.KubeconfigFile,
-	).Return(false, nil)
+		gomock.Any(),
+	).Return(false, nil).Times(2)
+	tconfig.Installer.EXPECT().GetNamespace().Return("eksa-system")
 	tconfig.Installer.EXPECT().
 		UpgradeInstallCRDs(
 			gomock.Any(),
@@ -751,11 +896,13 @@ func TestProviderPreCoreComponentsUpgrade_ApplyHardwareError(t *testing.T) {
 	}
 	_ = catalogue.InsertHardware(hw)
 
-	tconfig.Installer.EXPECT().HasLegacyChart(
+	tconfig.Installer.EXPECT().HasChart(
 		gomock.Any(),
-		tconfig.managementComponents.Tinkerbell,
+		gomock.Any(),
 		tconfig.Management.KubeconfigFile,
-	).Return(false, nil)
+		gomock.Any(),
+	).Return(false, nil).Times(2)
+	tconfig.Installer.EXPECT().GetNamespace().Return("eksa-system")
 	tconfig.Installer.EXPECT().
 		UpgradeInstallCRDs(
 			gomock.Any(),
