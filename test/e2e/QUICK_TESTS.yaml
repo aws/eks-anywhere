@@ -1,6 +1,6 @@
 quick_tests:
 # Docker
-- TestDocker.*134
+- TestDocker.*135
 # vSphere
 - ^TestVSphereKubernetes130To131RedHatUpgrade$
 - TestVSphereKubernetes130To131StackedEtcdRedHatUpgrade
@@ -10,7 +10,6 @@ quick_tests:
 - TestVSphereKubernetes131UbuntuTo132StackedEtcdUpgrade
 - TestVSphereKubernetes131To132Ubuntu2204Upgrade
 - TestVSphereKubernetes131To132Ubuntu2204StackedEtcdUpgrade
-- TestVSphereKubernetes132Ubuntu2004To2204Upgrade
 - TestVSphereKubernetes131BottlerocketTo132Upgrade
 - TestVSphereKubernetes131BottlerocketTo132StackedEtcdUpgrade
 - ^TestVSphereKubernetes132To133RedHatUpgrade$
@@ -19,7 +18,6 @@ quick_tests:
 - TestVSphereKubernetes132UbuntuTo133StackedEtcdUpgrade
 - TestVSphereKubernetes132To133Ubuntu2204Upgrade
 - TestVSphereKubernetes132To133Ubuntu2204StackedEtcdUpgrade
-- TestVSphereKubernetes133Ubuntu2004To2204Upgrade
 - TestVSphereKubernetes132BottlerocketTo133Upgrade
 - TestVSphereKubernetes132BottlerocketTo133StackedEtcdUpgrade
 - ^TestVSphereKubernetes133To134RedHatUpgrade$
@@ -28,9 +26,18 @@ quick_tests:
 - TestVSphereKubernetes133UbuntuTo134StackedEtcdUpgrade
 - TestVSphereKubernetes133To134Ubuntu2204Upgrade
 - TestVSphereKubernetes133To134Ubuntu2204StackedEtcdUpgrade
-- TestVSphereKubernetes134Ubuntu2004To2204Upgrade
+- TestVSphereKubernetes134Ubuntu2204To2404Upgrade
 - TestVSphereKubernetes133BottlerocketTo134Upgrade
 - TestVSphereKubernetes133BottlerocketTo134StackedEtcdUpgrade
+- ^TestVSphereKubernetes134To135RedHatUpgrade$
+- TestVSphereKubernetes134To135StackedEtcdRedHatUpgrade
+- ^TestVSphereKubernetes134UbuntuTo135Upgrade$
+- TestVSphereKubernetes134UbuntuTo135StackedEtcdUpgrade
+- TestVSphereKubernetes134To135Ubuntu2204Upgrade
+- TestVSphereKubernetes134To135Ubuntu2204StackedEtcdUpgrade
+- TestVSphereKubernetes135Ubuntu2204To2404Upgrade
+- TestVSphereKubernetes134BottlerocketTo135Upgrade
+- TestVSphereKubernetes134BottlerocketTo135StackedEtcdUpgrade
 # CloudStack
 - TestCloudStackKubernetes131To132RedhatMultipleFieldsUpgrade
 - TestCloudStackKubernetes131To132StackedEtcdRedhatMultipleFieldsUpgrade
@@ -38,15 +45,21 @@ quick_tests:
 - TestCloudStackKubernetes132To133StackedEtcdRedhatMultipleFieldsUpgrade
 - TestCloudStackKubernetes133To134RedhatMultipleFieldsUpgrade
 - TestCloudStackKubernetes133To134StackedEtcdRedhatMultipleFieldsUpgrade
+- TestCloudStackKubernetes134To135RedhatMultipleFieldsUpgrade
+- TestCloudStackKubernetes134To135StackedEtcdRedhatMultipleFieldsUpgrade
 # Nutanix
 - TestNutanixKubernetes133to134RedHat9Upgrade
 - TestNutanixKubernetes133to134StackedEtcdRedHat9Upgrade
 - TestNutanixKubernetes133To134UbuntuUpgrade
 - TestNutanixKubernetes133To134StackedEtcdUbuntuUpgrade
+- TestNutanixKubernetes134to135RedHat9Upgrade
+- TestNutanixKubernetes134to135StackedEtcdRedHat9Upgrade
+- TestNutanixKubernetes134To135UbuntuUpgrade
+- TestNutanixKubernetes134To135StackedEtcdUbuntuUpgrade
 # Snow
 # - TestSnowKubernetes128SimpleFlow
 # - TestSnowKubernetes128StackedEtcdSimpleFlow
 # Tinkerbell
-- ^TestTinkerbellKubernetes133UbuntuTo134Upgrade$
-- TestTinkerbellKubernetes134Ubuntu2004To2204Upgrade
 - TestTinkerbellKubernetes133To134Ubuntu2204Upgrade
+- TestTinkerbellKubernetes134To135Ubuntu2204Upgrade
+- TestTinkerbellKubernetes135Ubuntu2204To2404Upgrade
