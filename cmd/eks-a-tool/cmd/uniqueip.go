@@ -48,5 +48,5 @@ func preRunUniqueIp(cmd *cobra.Command, args []string) {
 func generateUniqueIP(ctx context.Context) (string, error) {
 	cidr := viper.GetString("cidr")
 	ipgen := networkutils.NewIPGenerator(&networkutils.DefaultNetClient{})
-	return ipgen.GenerateUniqueIP(cidr)
+	return ipgen.GenerateUniqueIP(cidr, nil)
 }

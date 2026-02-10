@@ -19,32 +19,57 @@ func NewIPGenerator(netClient NetClient) IPGenerator {
 	}
 }
 
-func (ipgen IPGenerator) GenerateUniqueIP(cidrBlock string) (string, error) {
+func (ipgen IPGenerator) GenerateUniqueIP(cidrBlock string, usedIPs map[string]bool) (string, error) {
 	_, cidr, err := net.ParseCIDR(cidrBlock)
 	if err != nil {
 		return "", err
 	}
-	uniqueIp, err := ipgen.randIp(cidr)
-	if err != nil {
-		return "", err
-	}
-	for IsIPInUse(ipgen.netClient, uniqueIp.String()) {
-		uniqueIp, err = ipgen.randIp(cidr)
-		if err != nil {
-			return "", err
+
+	// Start from the first IP in the CIDR range
+	ip := incrementIP(copyIP(cidr.IP))
+	checked := 0
+
+	// Iterate sequentially through all IPs in the range
+	for cidr.Contains(ip) {
+		ipStr := ip.String()
+		checked++
+
+		if usedIPs != nil && usedIPs[ipStr] {
+			ip = incrementIP(ip)
+			continue
 		}
+
+		if IsIPInUse(ipgen.netClient, ipStr) {
+			ip = incrementIP(ip)
+			continue
+		}
+
+		return ipStr, nil
 	}
-	return uniqueIp.String(), nil
+
+	return "", fmt.Errorf("no available IPs in CIDR %s (checked %d IPs)", cidrBlock, checked)
 }
 
-// generates a random ip within the specified cidr block.
-func (ipgen IPGenerator) randIp(cidr *net.IPNet) (net.IP, error) {
-	newIp := *new(net.IP)
-	for i := 0; i < 4; i++ {
-		newIp = append(newIp, byte(ipgen.rand.Intn(255))&^cidr.Mask[i]|cidr.IP[i])
+// incrementIP returns a new IP address incremented by 1.
+func incrementIP(ip net.IP) net.IP {
+	// Make a copy to avoid modifying the original
+	newIP := copyIP(ip)
+
+	// Increment from the last byte
+	for i := len(newIP) - 1; i >= 0; i-- {
+		newIP[i]++
+		if newIP[i] != 0 {
+			// No overflow, we're done
+			break
+		}
+		// Overflow occurred, continue to next byte
 	}
-	if !cidr.Contains(newIp) {
-		return nil, fmt.Errorf("random IP generation failed")
-	}
-	return newIp, nil
+	return newIP
+}
+
+// copyIP creates a copy of the IP address.
+func copyIP(ip net.IP) net.IP {
+	dup := make(net.IP, len(ip))
+	copy(dup, ip)
+	return dup
 }
