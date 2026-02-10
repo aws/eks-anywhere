@@ -20,29 +20,28 @@ func newE2EIPManager(logger logr.Logger, networkCidr string) *E2EIPManager {
 	}
 }
 
-func (ipman *E2EIPManager) reserveIP() string {
+func (ipman *E2EIPManager) reserveIP() (string, error) {
 	return ipman.getUniqueIP(ipman.networkCidr, ipman.networkIPs)
 }
 
-func (ipman *E2EIPManager) reserveIPPool(count int) networkutils.IPPool {
+func (ipman *E2EIPManager) reserveIPPool(count int) (networkutils.IPPool, error) {
 	pool := networkutils.NewIPPool()
 	for i := 0; i < count; i++ {
-		pool.AddIP(ipman.reserveIP())
+		ip, err := ipman.reserveIP()
+		if err != nil {
+			return networkutils.IPPool{}, err
+		}
+		pool.AddIP(ip)
 	}
-	return pool
+	return pool, nil
 }
 
-func (ipman *E2EIPManager) getUniqueIP(cidr string, usedIPs map[string]bool) string {
+func (ipman *E2EIPManager) getUniqueIP(cidr string, usedIPs map[string]bool) (string, error) {
 	ipgen := networkutils.NewIPGenerator(&networkutils.DefaultNetClient{})
-	ip, err := ipgen.GenerateUniqueIP(cidr)
-	for ; err != nil || usedIPs[ip]; ip, err = ipgen.GenerateUniqueIP(cidr) {
-		if err != nil {
-			ipman.logger.V(2).Info("Warning: getting unique IP failed", "error", err)
-		}
-		if usedIPs[ip] {
-			ipman.logger.V(2).Info("Warning: generated IP is already taken", "IP", ip)
-		}
+	ip, err := ipgen.GenerateUniqueIP(cidr, usedIPs)
+	if err != nil {
+		return "", err
 	}
 	usedIPs[ip] = true
-	return ip
+	return ip, nil
 }
