@@ -26,7 +26,7 @@ const (
 	testResultError      = "error"
 	nonAirgappedHardware = "nonAirgappedHardware"
 	airgappedHardware    = "AirgappedHardware"
-	maxIPPoolSize        = 10
+	maxIPPoolSize        = 7
 	minIPPoolSize        = 1
 	tinkerbellIPPoolSize = 2
 
@@ -388,24 +388,33 @@ func splitTests(testsList []string, conf ParallelRunConf) ([]instanceRunConf, er
 		if vsphereTestsRe.MatchString(testName) {
 			if privateNetworkTestsRe.MatchString(testName) {
 				if multiClusterTest {
-					ips = vspherePrivateIPMan.reserveIPPool(maxIPPoolSize)
+					ips, err = vspherePrivateIPMan.reserveIPPool(maxIPPoolSize)
 				} else {
-					ips = vspherePrivateIPMan.reserveIPPool(minIPPoolSize)
+					ips, err = vspherePrivateIPMan.reserveIPPool(minIPPoolSize)
 				}
 			} else {
 				if multiClusterTest {
-					ips = vsphereIPMan.reserveIPPool(maxIPPoolSize)
+					ips, err = vsphereIPMan.reserveIPPool(maxIPPoolSize)
 				} else {
-					ips = vsphereIPMan.reserveIPPool(minIPPoolSize)
+					ips, err = vsphereIPMan.reserveIPPool(minIPPoolSize)
 				}
 			}
+			if err != nil {
+				return nil, fmt.Errorf("failed to reserve IP pool for test %s: %v", testName, err)
+			}
 		} else if nutanixTestsRe.MatchString(testName) {
-			ips = nutanixIPMan.reserveIPPool(minIPPoolSize)
+			ips, err = nutanixIPMan.reserveIPPool(minIPPoolSize)
+			if err != nil {
+				return nil, fmt.Errorf("failed to reserve IP pool for test %s: %v", testName, err)
+			}
 		} else if cloudstackTestRe.MatchString(testName) {
 			if multiClusterTest {
-				ips = cloudstackIPMan.reserveIPPool(maxIPPoolSize)
+				ips, err = cloudstackIPMan.reserveIPPool(maxIPPoolSize)
 			} else {
-				ips = cloudstackIPMan.reserveIPPool(minIPPoolSize)
+				ips, err = cloudstackIPMan.reserveIPPool(minIPPoolSize)
+			}
+			if err != nil {
+				return nil, fmt.Errorf("failed to reserve IP pool for test %s: %v", testName, err)
 			}
 		}
 
@@ -442,13 +451,19 @@ func appendNonAirgappedTinkerbellRunConfs(awsSession *session.Session, testsList
 		if start > end/2 {
 			break
 		}
-		ipPool := ipManager.reserveIPPool(tinkerbellIPPoolSize)
+		ipPool, err := ipManager.reserveIPPool(tinkerbellIPPoolSize)
+		if err != nil {
+			return nil, fmt.Errorf("failed to reserve IP pool for tinkerbell test %s: %v", nonAirgappedTinkerbellTestsWithCount[start].Name, err)
+		}
 		runConfs = append(runConfs, newInstanceRunConf(awsSession, conf, len(runConfs), nonAirgappedTinkerbellTestsWithCount[start].Name, ipPool, []*api.Hardware{}, nonAirgappedTinkerbellTestsWithCount[start].Count, false, VSphereTestRunnerType, testRunnerConfig))
 
 		// Pop from both ends to run a longer count tests and shorter count tests together
 		// to efficiently use the available hardware.
 		if end-start > start {
-			ipPool := ipManager.reserveIPPool(tinkerbellIPPoolSize)
+			ipPool, err := ipManager.reserveIPPool(tinkerbellIPPoolSize)
+			if err != nil {
+				return nil, fmt.Errorf("failed to reserve IP pool for tinkerbell test %s: %v", nonAirgappedTinkerbellTestsWithCount[end-start].Name, err)
+			}
 			runConfs = append(runConfs, newInstanceRunConf(awsSession, conf, len(runConfs), nonAirgappedTinkerbellTestsWithCount[end-start].Name, ipPool, []*api.Hardware{}, nonAirgappedTinkerbellTestsWithCount[end-start].Count, false, VSphereTestRunnerType, testRunnerConfig))
 		}
 	}
@@ -469,7 +484,10 @@ func appendAirgappedTinkerbellRunConfs(awsSession *session.Session, testsList []
 		return nil, err
 	}
 	for _, test := range airgappedTinkerbellTestsWithCount {
-		ipPool := ipManager.reserveIPPool(tinkerbellIPPoolSize)
+		ipPool, err := ipManager.reserveIPPool(tinkerbellIPPoolSize)
+		if err != nil {
+			return nil, fmt.Errorf("failed to reserve IP pool for airgapped tinkerbell test %s: %v", test.Name, err)
+		}
 		runConfs = append(runConfs, newInstanceRunConf(awsSession, conf, len(runConfs), test.Name, ipPool, []*api.Hardware{}, test.Count, true, VSphereTestRunnerType, testRunnerConfig))
 	}
 
