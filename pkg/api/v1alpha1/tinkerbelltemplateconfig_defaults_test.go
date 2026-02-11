@@ -12,8 +12,8 @@ import (
 func TestWithDefaultActionsFromBundle(t *testing.T) {
 	tinkerbellLocalIp := "127.0.0.1"
 	tinkerbellLBIP := "1.2.3.4"
-	metadataString := fmt.Sprintf("http://%s:50061,http://%s:50061", tinkerbellLocalIp, tinkerbellLBIP)
-	rhelMetadataString := fmt.Sprintf("'http://%s:50061','http://%s:50061'", tinkerbellLocalIp, tinkerbellLBIP)
+	metadataString := fmt.Sprintf("http://%s:7172,http://%s:7172", tinkerbellLocalIp, tinkerbellLBIP)
+	rhelMetadataString := fmt.Sprintf("'http://%s:7172','http://%s:7172'", tinkerbellLocalIp, tinkerbellLBIP)
 	cloudInit := `datasource:
   Ec2:
     metadata_urls: [%s]

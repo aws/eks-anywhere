@@ -109,18 +109,18 @@ func (m *MockHelm) EXPECT() *MockHelmMockRecorder {
 }
 
 // ListCharts mocks base method.
-func (m *MockHelm) ListCharts(ctx context.Context, kubeconfigFilePath, filter string) ([]string, error) {
+func (m *MockHelm) ListCharts(ctx context.Context, kubeconfigFilePath, filter, namespace string) ([]string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListCharts", ctx, kubeconfigFilePath, filter)
+	ret := m.ctrl.Call(m, "ListCharts", ctx, kubeconfigFilePath, filter, namespace)
 	ret0, _ := ret[0].([]string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ListCharts indicates an expected call of ListCharts.
-func (mr *MockHelmMockRecorder) ListCharts(ctx, kubeconfigFilePath, filter interface{}) *gomock.Call {
+func (mr *MockHelmMockRecorder) ListCharts(ctx, kubeconfigFilePath, filter, namespace interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListCharts", reflect.TypeOf((*MockHelm)(nil).ListCharts), ctx, kubeconfigFilePath, filter)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListCharts", reflect.TypeOf((*MockHelm)(nil).ListCharts), ctx, kubeconfigFilePath, filter, namespace)
 }
 
 // RegistryLogin mocks base method.
@@ -238,19 +238,19 @@ func (mr *MockStackInstallerMockRecorder) GetNamespace() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNamespace", reflect.TypeOf((*MockStackInstaller)(nil).GetNamespace))
 }
 
-// HasLegacyChart mocks base method.
-func (m *MockStackInstaller) HasLegacyChart(ctx context.Context, bundle v1alpha1.TinkerbellBundle, kubeconfig string) (bool, error) {
+// HasChart mocks base method.
+func (m *MockStackInstaller) HasChart(ctx context.Context, chartName, kubeconfig, namespace string) (bool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "HasLegacyChart", ctx, bundle, kubeconfig)
+	ret := m.ctrl.Call(m, "HasChart", ctx, chartName, kubeconfig, namespace)
 	ret0, _ := ret[0].(bool)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// HasLegacyChart indicates an expected call of HasLegacyChart.
-func (mr *MockStackInstallerMockRecorder) HasLegacyChart(ctx, bundle, kubeconfig interface{}) *gomock.Call {
+// HasChart indicates an expected call of HasChart.
+func (mr *MockStackInstallerMockRecorder) HasChart(ctx, chartName, kubeconfig, namespace interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasLegacyChart", reflect.TypeOf((*MockStackInstaller)(nil).HasLegacyChart), ctx, bundle, kubeconfig)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasChart", reflect.TypeOf((*MockStackInstaller)(nil).HasChart), ctx, chartName, kubeconfig, namespace)
 }
 
 // Install mocks base method.
@@ -272,18 +272,18 @@ func (mr *MockStackInstallerMockRecorder) Install(ctx, bundle, tinkerbellIP, kub
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Install", reflect.TypeOf((*MockStackInstaller)(nil).Install), varargs...)
 }
 
-// Uninstall mocks base method.
-func (m *MockStackInstaller) Uninstall(ctx context.Context, bundle v1alpha1.TinkerbellBundle, kubeconfig string) error {
+// UninstallChart mocks base method.
+func (m *MockStackInstaller) UninstallChart(ctx context.Context, chartName, kubeconfig, namespace string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Uninstall", ctx, bundle, kubeconfig)
+	ret := m.ctrl.Call(m, "UninstallChart", ctx, chartName, kubeconfig, namespace)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// Uninstall indicates an expected call of Uninstall.
-func (mr *MockStackInstallerMockRecorder) Uninstall(ctx, bundle, kubeconfig interface{}) *gomock.Call {
+// UninstallChart indicates an expected call of UninstallChart.
+func (mr *MockStackInstallerMockRecorder) UninstallChart(ctx, chartName, kubeconfig, namespace interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Uninstall", reflect.TypeOf((*MockStackInstaller)(nil).Uninstall), ctx, bundle, kubeconfig)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UninstallChart", reflect.TypeOf((*MockStackInstaller)(nil).UninstallChart), ctx, chartName, kubeconfig, namespace)
 }
 
 // UninstallLocal mocks base method.

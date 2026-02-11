@@ -173,8 +173,13 @@ func (h *Helm) Delete(ctx context.Context, kubeconfigFilePath, installName, name
 }
 
 // ListCharts lists helm charts filtered on the given regex filter.
-func (h *Helm) ListCharts(ctx context.Context, kubeconfigFilePath, filter string) ([]string, error) {
+// If namespace is provided, it lists charts in that namespace; otherwise uses helm's default behavior.
+func (h *Helm) ListCharts(ctx context.Context, kubeconfigFilePath, filter, namespace string) ([]string, error) {
 	params := []string{"list", "-q", "--kubeconfig", kubeconfigFilePath}
+
+	if namespace != "" {
+		params = append(params, "--namespace", namespace)
+	}
 
 	if len(filter) > 0 {
 		params = append(params, "--filter", filter)

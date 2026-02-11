@@ -173,7 +173,7 @@ spec:
               GID: "0"
               MODE: "0644"
               UID: "0"
-              HEGEL_URLS: http://1.2.3.4:50061
+              HEGEL_URLS: http://1.2.3.4:7172
             image: writefile:v1.0.0
             name: write-user-data
             timeout: 90

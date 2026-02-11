@@ -6,7 +6,7 @@ import "context"
 type Client interface {
 	PushChart(ctx context.Context, chart, registry string) error
 	PullChart(ctx context.Context, ociURI, version string) error
-	ListCharts(ctx context.Context, kubeconfigFilePath, filter string) ([]string, error)
+	ListCharts(ctx context.Context, kubeconfigFilePath, filter, namespace string) ([]string, error)
 	SaveChart(ctx context.Context, ociURI, version, folder string) error
 	Delete(ctx context.Context, kubeconfigFilePath, installName, namespace string) error
 	UpgradeInstallChartWithValuesFile(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, namespace, valuesFilePath string, opts ...Opt) error

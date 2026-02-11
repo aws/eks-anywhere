@@ -8,7 +8,7 @@ deployment:
             operator: DoesNotExist
         weight: 1
   agentImage: 127.0.0.1/embedded/tink-worker
-  agentImageTag: ""
+  agentImageTag: "latest"
   envs:
     globals:
       backend: kube
@@ -75,8 +75,6 @@ optional:
     enabled: false
     image: public.ecr.aws/eks-anywhere/kube-vip:latest
 publicIP: 1.2.3.4
-rbac:
-  type: Role
 service:
   lbClass: kube-vip.io/kube-vip-class
   loadBalancerIP: 1.2.3.4

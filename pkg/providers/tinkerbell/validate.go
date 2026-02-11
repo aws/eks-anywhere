@@ -249,7 +249,7 @@ func validatePortsAvailable(client networkutils.NetClient, host string) error {
 }
 
 func getPortsUnavailable(client networkutils.NetClient, host string) []string {
-	ports := []string{"80", "42113", "50061"}
+	ports := []string{"80", "42113", "7172"}
 	var unavailablePorts []string
 	for _, port := range ports {
 		if networkutils.IsPortInUse(client, host, port) {
