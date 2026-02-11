@@ -173,7 +173,7 @@ func AssertHookRetrievableWithoutProxy(spec *ClusterSpec) error {
 	return nil
 }
 
-// AssertPortsNotInUse ensures that ports 80, 42113, and 50061 are available.
+// AssertPortsNotInUse ensures that ports 80, 42113, and 7172 are available.
 func AssertPortsNotInUse(client networkutils.NetClient) ClusterSpecAssertion {
 	return func(spec *ClusterSpec) error {
 		host := "0.0.0.0"

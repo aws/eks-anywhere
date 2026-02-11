@@ -542,11 +542,11 @@ func TestUninstall(t *testing.T) {
 	err := s.Upgrade(ctx, getTinkBundle(), testIP, cluster.KubeconfigFile, "")
 	assert.NoError(t, err)
 
-	err = s.Uninstall(ctx, getTinkBundle(), cluster.KubeconfigFile)
+	err = s.UninstallChart(ctx, getTinkBundle().TinkerbellStack.TinkebellChart.Name, cluster.KubeconfigFile, "")
 	assert.NoError(t, err)
 }
 
-func TestHasLegacyChart(t *testing.T) {
+func TestHasChart(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	docker := mocks.NewMockDocker(mockCtrl)
 	helm := mocks.NewMockHelm(mockCtrl)
@@ -556,8 +556,8 @@ func TestHasLegacyChart(t *testing.T) {
 	ctx := context.Background()
 
 	s := stack.NewInstaller(docker, writer, helm, "", constants.EksaSystemNamespace, "192.168.0.0/16", nil, nil)
-	helm.EXPECT().ListCharts(ctx, cluster.KubeconfigFile, "tinkerbell-chart")
+	helm.EXPECT().ListCharts(ctx, cluster.KubeconfigFile, "tinkerbell-chart", constants.EksaSystemNamespace)
 
-	_, err := s.HasLegacyChart(ctx, getTinkBundle(), cluster.KubeconfigFile)
+	_, err := s.HasChart(ctx, "tinkerbell-chart", cluster.KubeconfigFile, constants.EksaSystemNamespace)
 	assert.NoError(t, err)
 }

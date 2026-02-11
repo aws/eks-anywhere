@@ -286,11 +286,18 @@ func TestHelmInstallChartWithValuesFileSuccessWithNamespace(t *testing.T) {
 func TestHelmListCharts(t *testing.T) {
 	tt := newHelmTest(t, helm.WithInsecure())
 	kubeconfig := "/root/.kube/config"
-	t.Run("Normal functionality", func(t *testing.T) {
+	t.Run("Normal functionality default namespace", func(t *testing.T) {
 		output := []byte("eks-anywhere-packages\n")
 		expected := []string{"eks-anywhere-packages"}
 		expectCommand(tt.e, tt.ctx, "list", "-q", "--kubeconfig", kubeconfig).withEnvVars(tt.envVars).to().Return(*bytes.NewBuffer(output), nil)
-		tt.Expect(tt.h.ListCharts(tt.ctx, kubeconfig, "")).To(Equal(expected))
+		tt.Expect(tt.h.ListCharts(tt.ctx, kubeconfig, "", "")).To(Equal(expected))
+	})
+
+	t.Run("With namespace", func(_ *testing.T) {
+		output := []byte("eks-anywhere-packages\n")
+		expected := []string{"eks-anywhere-packages"}
+		expectCommand(tt.e, tt.ctx, "list", "-q", "--kubeconfig", kubeconfig, "--namespace", "test-ns").withEnvVars(tt.envVars).to().Return(*bytes.NewBuffer(output), nil)
+		tt.Expect(tt.h.ListCharts(tt.ctx, kubeconfig, "", "test-ns")).To(Equal(expected))
 	})
 
 	t.Run("With selectors", func(_ *testing.T) {
@@ -298,20 +305,20 @@ func TestHelmListCharts(t *testing.T) {
 		output := []byte("eks-anywhere-packages\n")
 		expected := []string{"eks-anywhere-packages"}
 		expectCommand(tt.e, tt.ctx, "list", "-q", "--kubeconfig", kubeconfig, "--filter", "--test=123").withEnvVars(tt.envVars).to().Return(*bytes.NewBuffer(output), nil)
-		tt.Expect(tt.h.ListCharts(tt.ctx, kubeconfig, filter)).To(Equal(expected))
+		tt.Expect(tt.h.ListCharts(tt.ctx, kubeconfig, filter, "")).To(Equal(expected))
 	})
 
 	t.Run("Empty output", func(t *testing.T) {
 		expected := []string{}
 		expectCommand(tt.e, tt.ctx, "list", "-q", "--kubeconfig", kubeconfig).withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
-		tt.Expect(tt.h.ListCharts(tt.ctx, kubeconfig, "")).To(Equal(expected))
+		tt.Expect(tt.h.ListCharts(tt.ctx, kubeconfig, "", "")).To(Equal(expected))
 	})
 
 	t.Run("Errored out", func(t *testing.T) {
 		output := errors.New("Error")
 		var expected []string
 		expectCommand(tt.e, tt.ctx, "list", "-q", "--kubeconfig", kubeconfig).withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, output)
-		result, err := tt.h.ListCharts(tt.ctx, kubeconfig, "")
+		result, err := tt.h.ListCharts(tt.ctx, kubeconfig, "", "")
 		tt.Expect(err).To(HaveOccurred())
 		tt.Expect(result).To(Equal(expected))
 	})

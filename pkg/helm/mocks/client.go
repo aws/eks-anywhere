@@ -64,18 +64,18 @@ func (mr *MockClientMockRecorder) InstallChart(ctx, chart, ociURI, version, kube
 }
 
 // ListCharts mocks base method.
-func (m *MockClient) ListCharts(ctx context.Context, kubeconfigFilePath, filter string) ([]string, error) {
+func (m *MockClient) ListCharts(ctx context.Context, kubeconfigFilePath, filter, namespace string) ([]string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListCharts", ctx, kubeconfigFilePath, filter)
+	ret := m.ctrl.Call(m, "ListCharts", ctx, kubeconfigFilePath, filter, namespace)
 	ret0, _ := ret[0].([]string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ListCharts indicates an expected call of ListCharts.
-func (mr *MockClientMockRecorder) ListCharts(ctx, kubeconfigFilePath, filter interface{}) *gomock.Call {
+func (mr *MockClientMockRecorder) ListCharts(ctx, kubeconfigFilePath, filter, namespace interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListCharts", reflect.TypeOf((*MockClient)(nil).ListCharts), ctx, kubeconfigFilePath, filter)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListCharts", reflect.TypeOf((*MockClient)(nil).ListCharts), ctx, kubeconfigFilePath, filter, namespace)
 }
 
 // PullChart mocks base method.

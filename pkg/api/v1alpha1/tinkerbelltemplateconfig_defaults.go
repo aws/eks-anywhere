@@ -29,12 +29,13 @@ warnings:
 // DefaultActions constructs a set of default actions for the given osFamily.
 func DefaultActions(clusterSpec *Cluster, osImageOverride, tinkerbellLocalIP, tinkerbellLBIP string, osFamily OSFamily) []ActionOpt {
 	// The metadata string will have two URLs:
-	// 1. one that will be used initially for bootstrap and will point to hegel running on kind.
-	// 2. one that will be used when the workload cluster is up and will point to hegel running on
+	// 1. one that will be used initially for bootstrap and will point to tootles running on kind.
+	// 2. one that will be used when the workload cluster is up and will point to tootles running on
 	//    the workload cluster.
+	// Port 7172 is the tootles (metadata service) port in the mono-repo tinkerbell chart.
 	metadataURLs := []string{
-		fmt.Sprintf("http://%s:50061", tinkerbellLocalIP),
-		fmt.Sprintf("http://%s:50061", tinkerbellLBIP),
+		fmt.Sprintf("http://%s:7172", tinkerbellLocalIP),
+		fmt.Sprintf("http://%s:7172", tinkerbellLBIP),
 	}
 
 	additionalEnvVar := make(map[string]string)
