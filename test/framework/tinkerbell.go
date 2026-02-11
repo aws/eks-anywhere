@@ -17,12 +17,6 @@ const (
 	tinkerbellProviderName                              = "tinkerbell"
 	tinkerbellBootstrapIPEnvVar                         = "T_TINKERBELL_BOOTSTRAP_IP"
 	tinkerbellControlPlaneNetworkCidrEnvVar             = "T_TINKERBELL_CP_NETWORK_CIDR"
-	tinkerbellImageUbuntu128EnvVar                      = "T_TINKERBELL_IMAGE_UBUNTU_1_28"
-	tinkerbellImageUbuntu129EnvVar                      = "T_TINKERBELL_IMAGE_UBUNTU_1_29"
-	tinkerbellImageUbuntu130EnvVar                      = "T_TINKERBELL_IMAGE_UBUNTU_1_30"
-	tinkerbellImageUbuntu131EnvVar                      = "T_TINKERBELL_IMAGE_UBUNTU_1_31"
-	tinkerbellImageUbuntu132EnvVar                      = "T_TINKERBELL_IMAGE_UBUNTU_1_32"
-	tinkerbellImageUbuntu133EnvVar                      = "T_TINKERBELL_IMAGE_UBUNTU_1_33"
 	tinkerbellImageUbuntu2204Kubernetes129EnvVar        = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_29"
 	tinkerbellImageUbuntu2204Kubernetes129RTOSEnvVar    = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_29_RTOS"
 	tinkerbellImageUbuntu2204Kubernetes130RTOSEnvVar    = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_30_RTOS"
@@ -53,7 +47,6 @@ const (
 	tinkerbellImageRedHat9131EnvVar                     = "T_TINKERBELL_IMAGE_REDHAT_9_1_31"
 	tinkerbellImageRedHat9132EnvVar                     = "T_TINKERBELL_IMAGE_REDHAT_9_1_32"
 	tinkerbellImageRedHat9133EnvVar                     = "T_TINKERBELL_IMAGE_REDHAT_9_1_33"
-	tinkerbellImageUbuntu134EnvVar                      = "T_TINKERBELL_IMAGE_UBUNTU_1_34"
 	tinkerbellImageUbuntu2204Kubernetes134EnvVar        = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_34"
 	tinkerbellImageUbuntu2204Kubernetes134RTOSEnvVar    = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_34_RTOS"
 	tinkerbellImageUbuntu2404Kubernetes134RTOSEnvVar    = "T_TINKERBELL_IMAGE_UBUNTU_2404_1_34_RTOS"
@@ -71,11 +64,6 @@ const (
 
 var requiredTinkerbellEnvVars = []string{
 	tinkerbellControlPlaneNetworkCidrEnvVar,
-	tinkerbellImageUbuntu129EnvVar,
-	tinkerbellImageUbuntu130EnvVar,
-	tinkerbellImageUbuntu131EnvVar,
-	tinkerbellImageUbuntu132EnvVar,
-	tinkerbellImageUbuntu133EnvVar,
 	tinkerbellImageUbuntu2204Kubernetes129EnvVar,
 	tinkerbellImageUbuntu2204Kubernetes129RTOSEnvVar,
 	tinkerbellImageUbuntu2204Kubernetes130RTOSEnvVar,
@@ -106,7 +94,6 @@ var requiredTinkerbellEnvVars = []string{
 	tinkerbellImageRedHat9131EnvVar,
 	tinkerbellImageRedHat9132EnvVar,
 	tinkerbellImageRedHat9133EnvVar,
-	tinkerbellImageUbuntu134EnvVar,
 	tinkerbellImageUbuntu2204Kubernetes134EnvVar,
 	tinkerbellImageUbuntu2204Kubernetes134RTOSEnvVar,
 	tinkerbellImageUbuntu2404Kubernetes134RTOSEnvVar,
