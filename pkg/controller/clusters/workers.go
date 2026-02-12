@@ -10,6 +10,7 @@ import (
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	kubeadmv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -95,7 +96,7 @@ func ReconcileWorkersForEKSA(ctx context.Context, log logr.Logger, c client.Clie
 // ReconcileWorkers orchestrates the worker node reconciliation logic.
 // It takes care of applying all desired objects in the Workers spec and deleting the
 // old MachineDeployments that are not in it.
-func ReconcileWorkers(ctx context.Context, c client.Client, cluster *clusterv1.Cluster, w *Workers) (controller.Result, error) {
+func ReconcileWorkers(ctx context.Context, c client.Client, cluster *clusterv1beta2.Cluster, w *Workers) (controller.Result, error) {
 	if err := serverside.ReconcileObjects(ctx, c, w.objects()); err != nil {
 		return controller.Result{}, errors.Wrap(err, "applying worker nodes CAPI objects")
 	}

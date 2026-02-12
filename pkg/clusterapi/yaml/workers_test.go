@@ -232,8 +232,8 @@ func group(baseName string) *dockerWorkerGroup {
 	kct.Name = baseName
 	dmt := dockerMachineTemplate(baseName)
 
-	md.Spec.Template.Spec.Bootstrap.ConfigRef = objectReference(kct)
-	md.Spec.Template.Spec.InfrastructureRef = *objectReference(dmt)
+	md.Spec.Template.Spec.Bootstrap.ConfigRef = objectReferenceV1(kct)
+	md.Spec.Template.Spec.InfrastructureRef = *objectReferenceV1(dmt)
 
 	return &dockerWorkerGroup{
 		MachineDeployment:       md,

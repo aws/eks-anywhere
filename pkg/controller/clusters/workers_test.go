@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -30,14 +31,29 @@ func TestReconcileWorkersSuccess(t *testing.T) {
 	ctx := context.Background()
 	ns := env.CreateNamespaceForTest(ctx, t)
 	w := workers(ns)
-	cluster := &clusterv1.Cluster{
+	cluster := &clusterv1beta2.Cluster{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "cluster.x-k8s.io/v1beta1",
+			APIVersion: "cluster.x-k8s.io/v1beta2",
 			Kind:       "Cluster",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-cluster",
 			Namespace: ns,
+		},
+		Spec: clusterv1beta2.ClusterSpec{
+			ClusterNetwork: clusterv1beta2.ClusterNetwork{
+				Pods: clusterv1beta2.NetworkRanges{
+					CIDRBlocks: []string{"192.168.0.0/16"},
+				},
+				Services: clusterv1beta2.NetworkRanges{
+					CIDRBlocks: []string{"10.96.0.0/12"},
+				},
+			},
+			InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
+				APIGroup: "infrastructure.cluster.x-k8s.io",
+				Kind:     "DockerCluster",
+				Name:     "my-cluster",
+			},
 		},
 	}
 
@@ -72,9 +88,9 @@ func TestReconcileWorkersErrorApplyingObjects(t *testing.T) {
 	ns := "fake-ns"
 	// ns doesn't exist, it will fail
 	w := workers(ns)
-	cluster := &clusterv1.Cluster{
+	cluster := &clusterv1beta2.Cluster{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "cluster.x-k8s.io/v1beta1",
+			APIVersion: "cluster.x-k8s.io/v1beta2",
 			Kind:       "Cluster",
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -234,14 +250,29 @@ func TestReconcileWorkersForEKSASuccess(t *testing.T) {
 	ctx := context.Background()
 	ns := env.CreateNamespaceForTest(ctx, t)
 	w := workers(ns)
-	capiCluster := &clusterv1.Cluster{
+	capiCluster := &clusterv1beta2.Cluster{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "cluster.x-k8s.io/v1beta1",
+			APIVersion: "cluster.x-k8s.io/v1beta2",
 			Kind:       "Cluster",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-cluster",
 			Namespace: constants.EksaSystemNamespace,
+		},
+		Spec: clusterv1beta2.ClusterSpec{
+			ClusterNetwork: clusterv1beta2.ClusterNetwork{
+				Pods: clusterv1beta2.NetworkRanges{
+					CIDRBlocks: []string{"192.168.0.0/16"},
+				},
+				Services: clusterv1beta2.NetworkRanges{
+					CIDRBlocks: []string{"10.96.0.0/12"},
+				},
+			},
+			InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
+				APIGroup: "infrastructure.cluster.x-k8s.io",
+				Kind:     "DockerCluster",
+				Name:     "my-cluster",
+			},
 		},
 	}
 	cluster := &anywherev1.Cluster{

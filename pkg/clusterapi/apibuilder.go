@@ -11,6 +11,7 @@ import (
 	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -29,7 +30,8 @@ const (
 )
 
 var (
-	clusterAPIVersion             = clusterv1.GroupVersion.String()
+	clusterAPIVersion             = clusterv1beta2.GroupVersion.String() // v1beta2 for Cluster only
+	machineDeploymentAPIVersion   = clusterv1.GroupVersion.String()      // v1beta1 for MachineDeployment (D1)
 	kubeadmControlPlaneAPIVersion = controlplanev1.GroupVersion.String()
 	bootstrapAPIVersion           = bootstrapv1.GroupVersion.String()
 	etcdAPIVersion                = etcdv1.GroupVersion.String()
@@ -83,9 +85,9 @@ func ClusterName(cluster *anywherev1.Cluster) string {
 }
 
 // Cluster builds a CAPI Cluster based on an eks-a cluster spec, infrastructureObject, controlPlaneObject and unstackedEtcdObject.
-func Cluster(clusterSpec *cluster.Spec, infrastructureObject, controlPlaneObject, unstackedEtcdObject APIObject) *clusterv1.Cluster {
+func Cluster(clusterSpec *cluster.Spec, infrastructureObject, controlPlaneObject, unstackedEtcdObject APIObject) *clusterv1beta2.Cluster {
 	clusterName := clusterSpec.Cluster.GetName()
-	cluster := &clusterv1.Cluster{
+	cluster := &clusterv1beta2.Cluster{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: clusterAPIVersion,
 			Kind:       clusterKind,
@@ -95,24 +97,24 @@ func Cluster(clusterSpec *cluster.Spec, infrastructureObject, controlPlaneObject
 			Namespace: constants.EksaSystemNamespace,
 			Labels:    capiObjectLabels(clusterSpec),
 		},
-		Spec: clusterv1.ClusterSpec{
-			ClusterNetwork: &clusterv1.ClusterNetwork{
-				Pods: &clusterv1.NetworkRanges{
+		Spec: clusterv1beta2.ClusterSpec{
+			ClusterNetwork: clusterv1beta2.ClusterNetwork{
+				Pods: clusterv1beta2.NetworkRanges{
 					CIDRBlocks: clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks,
 				},
-				Services: &clusterv1.NetworkRanges{
+				Services: clusterv1beta2.NetworkRanges{
 					CIDRBlocks: clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks,
 				},
 			},
-			ControlPlaneRef: &v1.ObjectReference{
-				APIVersion: controlPlaneObject.GetObjectKind().GroupVersionKind().GroupVersion().String(),
-				Name:       controlPlaneObject.GetName(),
-				Kind:       controlPlaneObject.GetObjectKind().GroupVersionKind().Kind,
+			ControlPlaneRef: clusterv1beta2.ContractVersionedObjectReference{
+				APIGroup: controlPlaneObject.GetObjectKind().GroupVersionKind().Group,
+				Kind:     controlPlaneObject.GetObjectKind().GroupVersionKind().Kind,
+				Name:     controlPlaneObject.GetName(),
 			},
-			InfrastructureRef: &v1.ObjectReference{
-				APIVersion: infrastructureObject.GetObjectKind().GroupVersionKind().GroupVersion().String(),
-				Name:       infrastructureObject.GetName(),
-				Kind:       infrastructureObject.GetObjectKind().GroupVersionKind().Kind,
+			InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
+				APIGroup: infrastructureObject.GetObjectKind().GroupVersionKind().Group,
+				Kind:     infrastructureObject.GetObjectKind().GroupVersionKind().Kind,
+				Name:     infrastructureObject.GetName(),
 			},
 		},
 	}
@@ -254,7 +256,7 @@ func MachineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig anywhere
 
 	md := &clusterv1.MachineDeployment{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: clusterAPIVersion,
+			APIVersion: machineDeploymentAPIVersion,
 			Kind:       machineDeploymentKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{

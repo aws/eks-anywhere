@@ -13,6 +13,7 @@ import (
 	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -40,10 +41,10 @@ func newApiBuilerTest(t *testing.T) apiBuilerTest {
 	}
 }
 
-func wantCAPICluster() *clusterv1.Cluster {
-	return &clusterv1.Cluster{
+func wantCAPICluster() *clusterv1beta2.Cluster {
+	return &clusterv1beta2.Cluster{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "cluster.x-k8s.io/v1beta1",
+			APIVersion: "cluster.x-k8s.io/v1beta2",
 			Kind:       "Cluster",
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -55,40 +56,39 @@ func wantCAPICluster() *clusterv1.Cluster {
 				"cluster.anywhere.eks.amazonaws.com/cluster-namespace": "test-namespace",
 			},
 		},
-		Spec: clusterv1.ClusterSpec{
-			ClusterNetwork: &clusterv1.ClusterNetwork{
-				Pods: &clusterv1.NetworkRanges{
+		Spec: clusterv1beta2.ClusterSpec{
+			ClusterNetwork: clusterv1beta2.ClusterNetwork{
+				Pods: clusterv1beta2.NetworkRanges{
 					CIDRBlocks: []string{
 						"10.1.0.0/16",
 					},
 				},
-				Services: &clusterv1.NetworkRanges{
+				Services: clusterv1beta2.NetworkRanges{
 					CIDRBlocks: []string{
 						"10.96.0.0/12",
 					},
 				},
 			},
-			ControlPlaneRef: &v1.ObjectReference{
-				APIVersion: "controlplane.cluster.x-k8s.io/v1beta1",
-				Kind:       "KubeadmControlPlane",
-				Name:       "snow-test",
+			ControlPlaneRef: clusterv1beta2.ContractVersionedObjectReference{
+				APIGroup: "controlplane.cluster.x-k8s.io",
+				Kind:     "KubeadmControlPlane",
+				Name:     "snow-test",
 			},
-			InfrastructureRef: &v1.ObjectReference{
-				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
-				Kind:       "AWSSnowCluster",
-				Name:       "snow-test",
+			InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
+				APIGroup: "infrastructure.cluster.x-k8s.io",
+				Kind:     "AWSSnowCluster",
+				Name:     "snow-test",
 			},
 		},
 	}
 }
 
-func wantCAPIClusterUnstackedEtcd() *clusterv1.Cluster {
+func wantCAPIClusterUnstackedEtcd() *clusterv1beta2.Cluster {
 	cluster := wantCAPICluster()
-	cluster.Spec.ManagedExternalEtcdRef = &v1.ObjectReference{
-		Kind:       "EtcdadmCluster",
-		APIVersion: "etcdcluster.cluster.x-k8s.io/v1beta1",
-		Namespace:  "eksa-system",
-		Name:       "snow-test-etcd",
+	cluster.Spec.ManagedExternalEtcdRef = &clusterv1beta2.ContractVersionedObjectReference{
+		APIGroup: "etcdcluster.cluster.x-k8s.io",
+		Kind:     "EtcdadmCluster",
+		Name:     "snow-test-etcd",
 	}
 	return cluster
 }

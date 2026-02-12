@@ -8,10 +8,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -241,25 +241,42 @@ func Bundle() *releasev1.Bundles {
 	}
 }
 
-// CAPIClusterOpt represents an function where a capi cluster is passed as an argument.
-type CAPIClusterOpt func(*clusterv1.Cluster)
+// CAPIClusterOpt represents a function where a capi cluster (v1beta2) is passed as an argument.
+type CAPIClusterOpt func(*clusterv1beta2.Cluster)
 
-// CAPICluster returns a capi cluster which can be configured by passing in opts arguments.
-func CAPICluster(opts ...CAPIClusterOpt) *clusterv1.Cluster {
-	c := &clusterv1.Cluster{
+// CAPICluster returns a capi v1beta2 cluster which can be configured by passing in opts arguments.
+func CAPICluster(opts ...CAPIClusterOpt) *clusterv1beta2.Cluster {
+	c := &clusterv1beta2.Cluster{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       anywherev1.ClusterKind,
-			APIVersion: clusterv1.GroupVersion.String(),
+			APIVersion: clusterv1beta2.GroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: constants.EksaSystemNamespace,
 		},
-		Status: clusterv1.ClusterStatus{
-			Conditions: clusterv1.Conditions{
+		Spec: clusterv1beta2.ClusterSpec{
+			ClusterNetwork: clusterv1beta2.ClusterNetwork{
+				Pods: clusterv1beta2.NetworkRanges{
+					CIDRBlocks: []string{"192.168.0.0/16"},
+				},
+				Services: clusterv1beta2.NetworkRanges{
+					CIDRBlocks: []string{"10.96.0.0/12"},
+				},
+			},
+			InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
+				APIGroup: "infrastructure.cluster.x-k8s.io",
+				Kind:     "GenericInfraCluster",
+				Name:     "test-cluster",
+			},
+		},
+		Status: clusterv1beta2.ClusterStatus{
+			Conditions: []metav1.Condition{
 				{
-					Type:               clusterapi.ControlPlaneReadyCondition,
-					Status:             corev1.ConditionTrue,
+					Type:               string(clusterv1beta2.ReadyCondition),
+					Status:             metav1.ConditionTrue,
 					LastTransitionTime: metav1.NewTime(time.Now()),
+					Reason:             "AllComponentsReady",
+					Message:            "Cluster is ready",
 				},
 			},
 		},

@@ -13,6 +13,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -236,7 +237,7 @@ func TestMDObjectDoesNotExistError(t *testing.T) {
 	g.Expect(err).To(MatchError("getting MachineDeployment my-cluster-md: machinedeployments.cluster.x-k8s.io \"my-cluster-md\" not found"))
 }
 
-func getObjectsForMDUpgradeTest() (*clusterv1.Cluster, []*clusterv1.Machine, []*corev1.Node, *anywherev1.MachineDeploymentUpgrade, []*anywherev1.NodeUpgrade, *clusterv1.MachineDeployment, *clusterv1.MachineSet) {
+func getObjectsForMDUpgradeTest() (*clusterv1beta2.Cluster, []*clusterv1.Machine, []*corev1.Node, *anywherev1.MachineDeploymentUpgrade, []*anywherev1.NodeUpgrade, *clusterv1.MachineDeployment, *clusterv1.MachineSet) {
 	cluster := generateCluster()
 	node1 := generateNode()
 	node2 := node1.DeepCopy()
@@ -275,7 +276,7 @@ func mdUpgradeRequest(mdUpgrade *anywherev1.MachineDeploymentUpgrade) reconcile.
 	}
 }
 
-func generateMDUpgrade(cluster *clusterv1.Cluster, machines ...*clusterv1.Machine) *anywherev1.MachineDeploymentUpgrade {
+func generateMDUpgrade(cluster *clusterv1beta2.Cluster, machines ...*clusterv1.Machine) *anywherev1.MachineDeploymentUpgrade {
 	machineSpec := getMachineSpec(cluster)
 	machineSpecJSON, _ := json.Marshal(machineSpec)
 	machineSpecB64Encoded := base64.StdEncoding.EncodeToString(machineSpecJSON)
@@ -307,7 +308,7 @@ func generateMDUpgrade(cluster *clusterv1.Cluster, machines ...*clusterv1.Machin
 	}
 }
 
-func generateMachineset(cluster *clusterv1.Cluster) *clusterv1.MachineSet {
+func generateMachineset(cluster *clusterv1beta2.Cluster) *clusterv1.MachineSet {
 	ms := getMachineSpec(cluster)
 	ms.Version = ptr.String(k8s127)
 	return &clusterv1.MachineSet{
@@ -327,7 +328,7 @@ func generateMachineset(cluster *clusterv1.Cluster) *clusterv1.MachineSet {
 	}
 }
 
-func generateMachineDeployment(cluster *clusterv1.Cluster) *clusterv1.MachineDeployment {
+func generateMachineDeployment(cluster *clusterv1beta2.Cluster) *clusterv1.MachineDeployment {
 	ms := getMachineSpec(cluster)
 	return &clusterv1.MachineDeployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -351,7 +352,7 @@ func generateMachineDeployment(cluster *clusterv1.Cluster) *clusterv1.MachineDep
 	}
 }
 
-func getMachineSpec(cluster *clusterv1.Cluster) *clusterv1.MachineSpec {
+func getMachineSpec(cluster *clusterv1beta2.Cluster) *clusterv1.MachineSpec {
 	return &clusterv1.MachineSpec{
 		ClusterName: cluster.Name,
 		Version:     ptr.String(k8s128),

@@ -12,6 +12,7 @@ import (
 	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -221,10 +222,10 @@ func newApiBuilerTest(t *testing.T) apiBuilerTest {
 	}
 }
 
-func wantCluster() *clusterv1.Cluster {
-	return &clusterv1.Cluster{
+func wantCluster() *clusterv1beta2.Cluster {
+	return &clusterv1beta2.Cluster{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "cluster.x-k8s.io/v1beta1",
+			APIVersion: "cluster.x-k8s.io/v1beta2",
 			Kind:       "Cluster",
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -236,28 +237,28 @@ func wantCluster() *clusterv1.Cluster {
 				"cluster.anywhere.eks.amazonaws.com/cluster-namespace": "my-namespace",
 			},
 		},
-		Spec: clusterv1.ClusterSpec{
-			ClusterNetwork: &clusterv1.ClusterNetwork{
-				Pods: &clusterv1.NetworkRanges{
+		Spec: clusterv1beta2.ClusterSpec{
+			ClusterNetwork: clusterv1beta2.ClusterNetwork{
+				Pods: clusterv1beta2.NetworkRanges{
 					CIDRBlocks: []string{
 						"1.2.3.4/5",
 					},
 				},
-				Services: &clusterv1.NetworkRanges{
+				Services: clusterv1beta2.NetworkRanges{
 					CIDRBlocks: []string{
 						"1.2.3.4/5",
 					},
 				},
 			},
-			ControlPlaneRef: &v1.ObjectReference{
-				APIVersion: "controlplane.cluster.x-k8s.io/v1beta1",
-				Kind:       "KubeadmControlPlane",
-				Name:       "cp-test",
+			ControlPlaneRef: clusterv1beta2.ContractVersionedObjectReference{
+				APIGroup: "controlplane.cluster.x-k8s.io",
+				Kind:     "KubeadmControlPlane",
+				Name:     "cp-test",
 			},
-			InfrastructureRef: &v1.ObjectReference{
-				APIVersion: "providercluster.cluster.x-k8s.io/v1beta1",
-				Kind:       "ProviderCluster",
-				Name:       "provider-cluster",
+			InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
+				APIGroup: "providercluster.cluster.x-k8s.io",
+				Kind:     "ProviderCluster",
+				Name:     "provider-cluster",
 			},
 		},
 	}

@@ -9,7 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
@@ -232,8 +232,8 @@ func TestControlPlaneUpdateImmutableObjectNamesSuccessUnstackedEtcdWithChanges(t
 	g.Expect(cp.EtcdCluster.Spec.InfrastructureTemplate.Name).To(Equal(cp.EtcdMachineTemplate.Name))
 }
 
-func capiCluster() *clusterv1.Cluster {
-	return &clusterv1.Cluster{}
+func capiCluster() *clusterv1beta2.Cluster {
+	return &clusterv1beta2.Cluster{}
 }
 
 func dockerCluster() *dockerv1.DockerCluster {

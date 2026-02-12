@@ -8,10 +8,12 @@ import (
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	apierrors1 "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 	apierrors "k8s.io/apimachinery/pkg/util/errors"
 	"sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
@@ -35,8 +37,8 @@ func ValidateClusterReady(ctx context.Context, vc clusterf.StateValidationConfig
 	}
 
 	for _, condition := range capiCluster.Status.Conditions {
-		if condition.Type == v1beta1.ReadyCondition {
-			if condition.Status != corev1.ConditionTrue {
+		if condition.Type == string(clusterv1beta2.ReadyCondition) {
+			if condition.Status != metav1.ConditionTrue {
 				return fmt.Errorf("capi cluster %s not ready yet", capiCluster.GetName())
 			}
 			break

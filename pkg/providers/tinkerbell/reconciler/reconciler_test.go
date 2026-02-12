@@ -17,6 +17,7 @@ import (
 	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -60,7 +61,7 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 
 	tt := newReconcilerTest(t)
 
-	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
+	capiCluster := test.CAPICluster(func(c *clusterv1beta2.Cluster) {
 		c.Name = tt.cluster.Name
 	})
 
@@ -248,7 +249,7 @@ func TestReconcilerReconcileControlPlaneSuccess(t *testing.T) {
 		},
 	})
 
-	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
+	capiCluster := test.CAPICluster(func(c *clusterv1beta2.Cluster) {
 		c.Name = workloadClusterName
 	})
 	tt.ShouldEventuallyExist(tt.ctx, capiCluster)
@@ -292,7 +293,7 @@ func TestReconcilerReconcileControlPlaneSuccessRegistryMirrorAuthentication(t *t
 		},
 	})
 
-	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
+	capiCluster := test.CAPICluster(func(c *clusterv1beta2.Cluster) {
 		c.Name = workloadClusterName
 	})
 	tt.ShouldEventuallyExist(tt.ctx, capiCluster)
@@ -361,7 +362,7 @@ func TestReconcilerValidateClusterSpecValidationFailedOSFamily(t *testing.T) {
 func TestReconcilerReconcileWorkersScaleSuccess(t *testing.T) {
 	tt := newReconcilerTest(t)
 	tt.cluster.Name = "mgmt-cluster"
-	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
+	capiCluster := test.CAPICluster(func(c *clusterv1beta2.Cluster) {
 		c.Name = tt.cluster.Name
 	})
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
@@ -407,7 +408,7 @@ func TestReconcilerReconcileWorkersScaleSuccess(t *testing.T) {
 func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
 	tt := newReconcilerTest(t)
 	tt.cluster.Name = "mgmt-cluster"
-	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
+	capiCluster := test.CAPICluster(func(c *clusterv1beta2.Cluster) {
 		c.Name = tt.cluster.Name
 	})
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
@@ -660,7 +661,7 @@ func TestReconcilerValidateRufioMachinesFail(t *testing.T) {
 	logger := test.NewNullLogger()
 
 	tt.cluster.Name = "invalidCluster"
-	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
+	capiCluster := test.CAPICluster(func(c *clusterv1beta2.Cluster) {
 		c.Name = tt.cluster.Name
 	})
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
@@ -1109,7 +1110,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 func (tt *reconcilerTest) cleanup() {
 	tt.DeleteAndWait(tt.ctx, tt.allObjs()...)
 	tt.DeleteAllOfAndWait(tt.ctx, &bootstrapv1.KubeadmConfigTemplate{})
-	tt.DeleteAllOfAndWait(tt.ctx, &clusterv1.Cluster{})
+	tt.DeleteAllOfAndWait(tt.ctx, &clusterv1beta2.Cluster{})
 	tt.DeleteAllOfAndWait(tt.ctx, &controlplanev1.KubeadmControlPlane{})
 	tt.DeleteAllOfAndWait(tt.ctx, &tinkerbellv1.TinkerbellCluster{})
 	tt.DeleteAllOfAndWait(tt.ctx, &tinkerbellv1.TinkerbellMachineTemplate{})
@@ -1331,41 +1332,41 @@ func tinkerbellCP(clusterName string, opts ...cpOpt) *tinkerbell.ControlPlane {
 	maxSurge := intstr.FromInt(1)
 	cp := &tinkerbell.ControlPlane{
 		BaseControlPlane: tinkerbell.BaseControlPlane{
-			Cluster: &clusterv1.Cluster{
+			Cluster: &clusterv1beta2.Cluster{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "Cluster",
-					APIVersion: "cluster.x-k8s.io/v1beta1",
+					APIVersion: "cluster.x-k8s.io/v1beta2",
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      clusterName,
 					Namespace: constants.EksaSystemNamespace,
 					Labels:    map[string]string{"cluster.x-k8s.io/cluster-name": workloadClusterName},
 				},
-				Spec: clusterv1.ClusterSpec{
-					ClusterNetwork: &clusterv1.ClusterNetwork{
-						Services: &clusterv1.NetworkRanges{
+				Spec: clusterv1beta2.ClusterSpec{
+					ClusterNetwork: clusterv1beta2.ClusterNetwork{
+						Services: clusterv1beta2.NetworkRanges{
 							CIDRBlocks: []string{"0.0.0.0"},
 						},
-						Pods: &clusterv1.NetworkRanges{
+						Pods: clusterv1beta2.NetworkRanges{
 							CIDRBlocks: []string{"0.0.0.0"},
 						},
 					},
-					ControlPlaneEndpoint: clusterv1.APIEndpoint{
+					ControlPlaneEndpoint: clusterv1beta2.APIEndpoint{
 						Host: "1.1.1.1",
 						Port: 6443,
 					},
-					ControlPlaneRef: &corev1.ObjectReference{
-						Kind:       "KubeadmControlPlane",
-						Name:       clusterName,
-						APIVersion: "controlplane.cluster.x-k8s.io/v1beta1",
+					ControlPlaneRef: clusterv1beta2.ContractVersionedObjectReference{
+						APIGroup: "controlplane.cluster.x-k8s.io",
+						Kind:     "KubeadmControlPlane",
+						Name:     clusterName,
 					},
-					InfrastructureRef: &corev1.ObjectReference{
-						Kind:       "TinkerbellCluster",
-						Name:       clusterName,
-						APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+					InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
+						APIGroup: "infrastructure.cluster.x-k8s.io",
+						Kind:     "TinkerbellCluster",
+						Name:     clusterName,
 					},
 				},
-				Status: clusterv1.ClusterStatus{},
+				Status: clusterv1beta2.ClusterStatus{},
 			},
 			KubeadmControlPlane: &controlplanev1.KubeadmControlPlane{
 				TypeMeta: metav1.TypeMeta{

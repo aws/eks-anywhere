@@ -16,6 +16,7 @@ import (
 	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -122,7 +123,7 @@ func TestReconcilerReconcileWorkers(t *testing.T) {
 	t.Skip("Flaky (https://github.com/aws/eks-anywhere/issues/6999)")
 
 	tt := newReconcilerTest(t)
-	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
+	capiCluster := test.CAPICluster(func(c *clusterv1beta2.Cluster) {
 		c.Name = tt.cluster.Name
 	})
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
@@ -166,7 +167,7 @@ func TestReconcilerReconcileControlPlane(t *testing.T) {
 		},
 	)
 
-	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
+	capiCluster := test.CAPICluster(func(c *clusterv1beta2.Cluster) {
 		c.Name = tt.cluster.Name
 	})
 	tt.ShouldEventuallyExist(tt.ctx, capiCluster)

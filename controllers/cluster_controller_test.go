@@ -20,6 +20,7 @@ import (
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -1192,17 +1193,11 @@ func TestClusterReconcilerDeleteExistingCAPIClusterSuccess(t *testing.T) {
 		t.Fatalf("reconcile: (%v)", err)
 	}
 
-	apiCluster := &clusterv1.Cluster{}
+	apiCluster := &clusterv1beta2.Cluster{}
 
 	err = tt.client.Get(context.TODO(), req.NamespacedName, apiCluster)
 	if !apierrors.IsNotFound(err) {
 		t.Fatalf("expected apierrors.IsNotFound but got: (%v)", err)
-	}
-	if apiCluster.Status.FailureMessage != nil {
-		t.Errorf("Expected failure message to be nil. FailureMessage:%s", *apiCluster.Status.FailureMessage)
-	}
-	if apiCluster.Status.FailureReason != nil {
-		t.Errorf("Expected failure message to be nil. FailureReason:%s", *apiCluster.Status.FailureReason)
 	}
 }
 
@@ -2199,11 +2194,11 @@ func vsphereWorkerMachineConfig() *anywherev1.VSphereMachineConfig {
 	}
 }
 
-func newCAPICluster(name, namespace string) *clusterv1.Cluster {
-	return &clusterv1.Cluster{
+func newCAPICluster(name, namespace string) *clusterv1beta2.Cluster {
+	return &clusterv1beta2.Cluster{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Cluster",
-			APIVersion: clusterv1.GroupVersion.String(),
+			APIVersion: clusterv1beta2.GroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: namespace,
@@ -2394,6 +2389,12 @@ func vsphereCluster() *anywherev1.Cluster {
 		},
 		Spec: anywherev1.ClusterSpec{
 			ClusterNetwork: anywherev1.ClusterNetwork{
+				Pods: anywherev1.Pods{
+					CidrBlocks: []string{"192.168.0.0/16"},
+				},
+				Services: anywherev1.Services{
+					CidrBlocks: []string{"10.96.0.0/12"},
+				},
 				CNIConfig: &anywherev1.CNIConfig{
 					Cilium: &anywherev1.CiliumConfig{},
 				},
@@ -2453,6 +2454,12 @@ func vsphereClusterWithFailureDomains() *anywherev1.Cluster {
 		},
 		Spec: anywherev1.ClusterSpec{
 			ClusterNetwork: anywherev1.ClusterNetwork{
+				Pods: anywherev1.Pods{
+					CidrBlocks: []string{"192.168.0.0/16"},
+				},
+				Services: anywherev1.Services{
+					CidrBlocks: []string{"10.96.0.0/12"},
+				},
 				CNIConfig: &anywherev1.CNIConfig{
 					Cilium: &anywherev1.CiliumConfig{},
 				},

@@ -8,7 +8,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -41,22 +41,20 @@ func TestNewControlPlaneParserAndBuilderSuccessParsing(t *testing.T) {
 
 	g.Expect(err).To(Succeed())
 
-	yaml := []byte(`apiVersion: cluster.x-k8s.io/v1beta1
+	yaml := []byte(`apiVersion: cluster.x-k8s.io/v1beta2
 kind: Cluster
 metadata:
   name: cluster
   namespace: eksa-system
 spec:
   controlPlaneRef:
-    apiVersion: controlplane.clusterapi.k8s/v1beta1
+    apiGroup: controlplane.clusterapi.k8s
     kind: KubeadmControlPlane
     name: cp
-    namespace: eksa-system
   infrastructureRef:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    apiGroup: infrastructure.cluster.x-k8s.io
     kind: DockerCluster
     name: cluster
-    namespace: eksa-system
 `)
 
 	g.Expect(parser.Parse(yaml, builder)).To(Succeed())
@@ -116,7 +114,7 @@ func TestProcessControlPlaneObjects(t *testing.T) {
 	etcdCluster := etcdCluster()
 	cluster.Spec.ManagedExternalEtcdRef = objectReference(etcdCluster)
 	etcdMachineTemplate := dockerMachineTemplate("etcd-mt")
-	etcdCluster.Spec.InfrastructureTemplate = *objectReference(etcdMachineTemplate)
+	etcdCluster.Spec.InfrastructureTemplate = *objectReferenceV1(etcdMachineTemplate)
 	lookup := yamlutil.NewObjectLookupBuilder().Add(
 		cluster,
 		providerCluster,
@@ -262,7 +260,7 @@ func TestProcessEtcdClusterWithClusterAndMachineTemplate(t *testing.T) {
 	cp.Cluster = capiCluster()
 	etcdCluster := etcdCluster()
 	mt := dockerMachineTemplate("etcd-mt")
-	etcdCluster.Spec.InfrastructureTemplate = *objectReference(mt)
+	etcdCluster.Spec.InfrastructureTemplate = *objectReferenceV1(mt)
 	cp.Cluster.Spec.ManagedExternalEtcdRef = objectReference(etcdCluster)
 	lookup := yamlutil.NewObjectLookupBuilder().Add(
 		dockerCluster(),
@@ -275,28 +273,26 @@ func TestProcessEtcdClusterWithClusterAndMachineTemplate(t *testing.T) {
 	g.Expect(cp.EtcdMachineTemplate).To(Equal(mt))
 }
 
-func capiCluster() *clusterv1.Cluster {
-	return &clusterv1.Cluster{
+func capiCluster() *clusterv1beta2.Cluster {
+	return &clusterv1beta2.Cluster{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Cluster",
-			APIVersion: "cluster.x-k8s.io/v1beta1",
+			APIVersion: "cluster.x-k8s.io/v1beta2",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "cluster",
 			Namespace: constants.EksaSystemNamespace,
 		},
-		Spec: clusterv1.ClusterSpec{
-			InfrastructureRef: &corev1.ObjectReference{
-				Name:       "cluster",
-				Namespace:  constants.EksaSystemNamespace,
-				Kind:       "DockerCluster",
-				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+		Spec: clusterv1beta2.ClusterSpec{
+			InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
+				APIGroup: "infrastructure.cluster.x-k8s.io",
+				Kind:     "DockerCluster",
+				Name:     "cluster",
 			},
-			ControlPlaneRef: &corev1.ObjectReference{
-				Name:       "cp",
-				Namespace:  constants.EksaSystemNamespace,
-				Kind:       "KubeadmControlPlane",
-				APIVersion: "controlplane.clusterapi.k8s/v1beta1",
+			ControlPlaneRef: clusterv1beta2.ContractVersionedObjectReference{
+				APIGroup: "controlplane.clusterapi.k8s",
+				Kind:     "KubeadmControlPlane",
+				Name:     "cp",
 			},
 		},
 	}
@@ -364,7 +360,16 @@ func etcdCluster() *etcdv1.EtcdadmCluster {
 	}
 }
 
-func objectReference(obj client.Object) *corev1.ObjectReference {
+func objectReference(obj client.Object) *clusterv1beta2.ContractVersionedObjectReference {
+	gvk := obj.GetObjectKind().GroupVersionKind()
+	return &clusterv1beta2.ContractVersionedObjectReference{
+		APIGroup: gvk.Group,
+		Kind:     gvk.Kind,
+		Name:     obj.GetName(),
+	}
+}
+
+func objectReferenceV1(obj client.Object) *corev1.ObjectReference {
 	return &corev1.ObjectReference{
 		Kind:       obj.GetObjectKind().GroupVersionKind().Kind,
 		APIVersion: obj.GetObjectKind().GroupVersionKind().GroupVersion().String(),

@@ -18,6 +18,7 @@ import (
 	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -174,7 +175,7 @@ func TestReconcilerControlPlaneIsNotReady(t *testing.T) {
 
 func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
 	tt := newReconcilerTest(t)
-	tt.eksaSupportObjs = append(tt.eksaSupportObjs, test.CAPICluster(func(c *clusterv1.Cluster) {
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, test.CAPICluster(func(c *clusterv1beta2.Cluster) {
 		c.Name = tt.cluster.Name
 	}))
 	tt.createAllObjs()
@@ -375,7 +376,7 @@ func TestReconcilerReconcileControlPlaneSuccess(t *testing.T) {
 		},
 	)
 
-	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
+	capiCluster := test.CAPICluster(func(c *clusterv1beta2.Cluster) {
 		c.Name = tt.cluster.Name
 	})
 	tt.ShouldEventuallyExist(tt.ctx, capiCluster)

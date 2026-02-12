@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	_ "github.com/aws/eks-anywhere/internal/test/envtest"
@@ -178,11 +179,12 @@ func eksaCluster() *anywherev1.Cluster {
 	}
 }
 
-func capiCluster() *clusterv1.Cluster {
-	return &clusterv1.Cluster{
+func capiCluster() *clusterv1beta2.Cluster {
+	return &clusterv1beta2.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "my-cluster",
-			Namespace: "eksa-system",
+			Name:            "my-cluster",
+			Namespace:       "eksa-system",
+			ResourceVersion: "999",
 		},
 	}
 }

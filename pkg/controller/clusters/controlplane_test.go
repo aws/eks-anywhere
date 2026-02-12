@@ -12,6 +12,7 @@ import (
 	"sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	dockerv1beta2 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta2"
 	"sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -51,18 +52,17 @@ func TestReconcileControlPlaneUpdateAfterClusterCreation(t *testing.T) {
 	log := test.NewNullLogger()
 	cp := controlPlaneStackedEtcd(ns)
 
-	originalCPEndpoint := clusterv1.APIEndpoint{
+	originalCPEndpoint := clusterv1beta2.APIEndpoint{
 		Host: "my-server.example.com",
 		Port: 6443,
 	}
 	cp.Cluster.Spec.ControlPlaneEndpoint = originalCPEndpoint
-	cp.Cluster.Spec.ControlPlaneRef.Namespace = "" // this mimics what a lot of providers do
 
 	envtest.CreateObjs(ctx, t, c, cp.AllObjects()...)
 
 	// We never set the endpoint ourselves, so we mimic that here
 	// we want to test the original one set by capi is preserved
-	cp.Cluster.Spec.ControlPlaneEndpoint = clusterv1.APIEndpoint{}
+	cp.Cluster.Spec.ControlPlaneEndpoint = clusterv1beta2.APIEndpoint{}
 
 	g.Expect(clusters.ReconcileControlPlane(ctx, log, c, cp)).To(Equal(controller.Result{}))
 	api.ShouldEventuallyExist(ctx, cp.Cluster)
@@ -438,7 +438,6 @@ func TestReconcileControlPlaneExternalEtcdUpgradeWithNoNamespace(t *testing.T) {
 	ns := env.CreateNamespaceForTest(ctx, t)
 	log := test.NewNullLogger()
 	cp := controlPlaneExternalEtcd(ns)
-	cp.Cluster.Spec.ManagedExternalEtcdRef.Namespace = ""
 	cp.EtcdCluster.Status.Ready = true
 	cp.EtcdCluster.Status.ObservedGeneration = 1
 	envtest.CreateObjs(ctx, t, c, cp.AllObjects()...)
@@ -455,25 +454,25 @@ func TestReconcileControlPlaneExternalEtcdUpgradeWithNoNamespace(t *testing.T) {
 func controlPlaneStackedEtcd(namespace string) *clusters.ControlPlane {
 	clusterName := "my-cluster"
 	return &clusters.ControlPlane{
-		Cluster: &clusterv1.Cluster{
+		Cluster: &clusterv1beta2.Cluster{
 			TypeMeta: metav1.TypeMeta{
-				APIVersion: "cluster.x-k8s.io/v1beta1",
+				APIVersion: "cluster.x-k8s.io/v1beta2",
 				Kind:       "Cluster",
 			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      clusterName,
 				Namespace: namespace,
 			},
-			Spec: clusterv1.ClusterSpec{
-				ControlPlaneRef: &corev1.ObjectReference{
-					Name:      clusterName,
-					Namespace: namespace,
+			Spec: clusterv1beta2.ClusterSpec{
+				ControlPlaneRef: clusterv1beta2.ContractVersionedObjectReference{
+					APIGroup: "controlplane.cluster.x-k8s.io",
+					Kind:     "KubeadmControlPlane",
+					Name:     clusterName,
 				},
-				InfrastructureRef: &corev1.ObjectReference{
-					APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
-					Kind:       "DockerCluster",
-					Name:       clusterName,
-					Namespace:  namespace,
+				InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
+					APIGroup: "infrastructure.cluster.x-k8s.io",
+					Kind:     "DockerCluster",
+					Name:     clusterName,
 				},
 			},
 		},
@@ -549,9 +548,10 @@ func controlPlaneExternalEtcd(namespace string) *clusters.ControlPlane {
 			Namespace: namespace,
 		},
 	}
-	cp.Cluster.Spec.ManagedExternalEtcdRef = &corev1.ObjectReference{
-		Name:      cp.EtcdCluster.Name,
-		Namespace: cp.EtcdCluster.Namespace,
+	cp.Cluster.Spec.ManagedExternalEtcdRef = &clusterv1beta2.ContractVersionedObjectReference{
+		APIGroup: "etcdcluster.cluster.x-k8s.io",
+		Kind:     "EtcdadmCluster",
+		Name:     cp.EtcdCluster.Name,
 	}
 
 	cp.EtcdMachineTemplate = &dockerv1beta2.DockerMachineTemplate{

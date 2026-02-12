@@ -7,6 +7,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -16,10 +17,10 @@ import (
 
 // GetCAPICluster reads a cluster-api Cluster for an eks-a cluster using a kube client
 // If the CAPI cluster is not found, the method returns (nil, nil).
-func GetCAPICluster(ctx context.Context, client client.Client, cluster *anywherev1.Cluster) (*clusterv1.Cluster, error) {
+func GetCAPICluster(ctx context.Context, client client.Client, cluster *anywherev1.Cluster) (*clusterv1beta2.Cluster, error) {
 	capiClusterName := clusterapi.ClusterName(cluster)
 
-	capiCluster := &clusterv1.Cluster{}
+	capiCluster := &clusterv1beta2.Cluster{}
 	key := types.NamespacedName{Namespace: constants.EksaSystemNamespace, Name: capiClusterName}
 
 	err := client.Get(ctx, key, capiCluster)

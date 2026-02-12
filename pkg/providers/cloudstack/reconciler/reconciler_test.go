@@ -19,6 +19,7 @@ import (
 	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -284,7 +285,7 @@ func TestReconcileControlPlaneStackedEtcdSuccess(t *testing.T) {
 	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
 
-	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
+	capiCluster := test.CAPICluster(func(c *clusterv1beta2.Cluster) {
 		c.Name = tt.cluster.Name
 	})
 
@@ -374,7 +375,7 @@ func TestReconcileCNIErrorClientRegistry(t *testing.T) {
 func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
 	tt := newReconcilerTest(t)
 	tt.cluster.Name = "mgmt-cluster"
-	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
+	capiCluster := test.CAPICluster(func(c *clusterv1beta2.Cluster) {
 		c.Name = tt.cluster.Name
 	})
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster, tt.secret)
@@ -420,7 +421,7 @@ func TestReconcilerReconcileWorkersFailure(t *testing.T) {
 	tt := newReconcilerTest(t)
 	tt.cluster.Name = "mgmt-cluster"
 	tt.cluster.SetSelfManaged()
-	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
+	capiCluster := test.CAPICluster(func(c *clusterv1beta2.Cluster) {
 		c.Name = tt.cluster.Name
 	})
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster, tt.secret)
@@ -664,7 +665,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 func (tt *reconcilerTest) cleanup() {
 	tt.DeleteAndWait(tt.ctx, tt.allObjs()...)
 	tt.DeleteAllOfAndWait(tt.ctx, &bootstrapv1.KubeadmConfigTemplate{})
-	tt.DeleteAllOfAndWait(tt.ctx, &clusterv1.Cluster{})
+	tt.DeleteAllOfAndWait(tt.ctx, &clusterv1beta2.Cluster{})
 	tt.DeleteAllOfAndWait(tt.ctx, &clusterv1.MachineDeployment{})
 	tt.DeleteAllOfAndWait(tt.ctx, &cloudstackv1.CloudStackCluster{})
 	tt.DeleteAllOfAndWait(tt.ctx, &controlplanev1.KubeadmControlPlane{})

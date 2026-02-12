@@ -7,14 +7,14 @@ import (
 	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 )
 
 // ControlPlane represents the provider-specific spec for a CAPI control plane using the kubeadm CP provider.
 type ControlPlane[C Object[C], M Object[M]] struct {
-	Cluster *clusterv1.Cluster
+	Cluster *clusterv1beta2.Cluster
 
 	// ProviderCluster is the provider-specific resource that holds the details
 	// for provisioning the infrastructure, referenced in Cluster.Spec.InfrastructureRef
