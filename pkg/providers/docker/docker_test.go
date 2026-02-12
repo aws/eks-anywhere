@@ -258,9 +258,10 @@ func TestDockerTemplateBuilderGenerateCAPISpecControlPlane(t *testing.T) {
 		buildOptions []providers.BuildMapOption
 	}
 	tests := []struct {
-		name    string
-		args    args
-		wantErr error
+		name             string
+		args             args
+		wantErr          error
+		wantFailCgroupv1 bool
 	}{
 		{
 			name: "kube 119 test",
@@ -270,7 +271,23 @@ func TestDockerTemplateBuilderGenerateCAPISpecControlPlane(t *testing.T) {
 				}),
 				buildOptions: nil,
 			},
-			wantErr: nil,
+			wantErr:          nil,
+			wantFailCgroupv1: false,
+		},
+		{
+			name: "kube 131 with fail-cgroupv1",
+			args: args{
+				clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
+					s.Cluster.Name = "test-cluster"
+					s.Cluster.Spec.KubernetesVersion = "1.31"
+					s.VersionsBundles = map[v1alpha1.KubernetesVersion]*cluster.VersionsBundle{
+						"1.31": test.VersionBundle(),
+					}
+				}),
+				buildOptions: nil,
+			},
+			wantErr:          nil,
+			wantFailCgroupv1: true,
 		},
 		{
 			name: "kubelet config specified",
@@ -292,7 +309,35 @@ func TestDockerTemplateBuilderGenerateCAPISpecControlPlane(t *testing.T) {
 					}
 				}),
 			},
-			wantErr: nil,
+			wantErr:          nil,
+			wantFailCgroupv1: false,
+		},
+		{
+			name: "kube 131 with kubelet config specified",
+			args: args{
+				clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
+					s.Cluster.Name = "test-cluster"
+					s.Cluster.Spec.KubernetesVersion = "1.31"
+					s.Cluster.Spec.ControlPlaneConfiguration = v1alpha1.ControlPlaneConfiguration{
+						KubeletConfiguration: &unstructured.Unstructured{
+							Object: map[string]interface{}{
+								"maxPods":    20,
+								"apiVersion": "kubelet.config.k8s.io/v1beta1",
+								"kind":       "KubeletConfiguration",
+							},
+						},
+						Count: 1,
+						Endpoint: &v1alpha1.Endpoint{
+							Host: "1.1.1.1",
+						},
+					}
+					s.VersionsBundles = map[v1alpha1.KubernetesVersion]*cluster.VersionsBundle{
+						"1.31": test.VersionBundle(),
+					}
+				}),
+			},
+			wantErr:          nil,
+			wantFailCgroupv1: true,
 		},
 	}
 	for _, tt := range tests {
@@ -307,6 +352,14 @@ func TestDockerTemplateBuilderGenerateCAPISpecControlPlane(t *testing.T) {
 			}
 			if err == nil {
 				g.Expect(gotContent).NotTo(BeEmpty())
+				contentStr := string(gotContent)
+				if tt.wantFailCgroupv1 {
+					// Check for either format: fail-cgroupv1 (kubeletExtraArgs) or failCgroupV1 (kubeletConfiguration)
+					g.Expect(contentStr).To(Or(ContainSubstring("fail-cgroupv1"), ContainSubstring("failCgroupV1")))
+				} else {
+					g.Expect(contentStr).NotTo(ContainSubstring("fail-cgroupv1"))
+					g.Expect(contentStr).NotTo(ContainSubstring("failCgroupV1"))
+				}
 			}
 		})
 	}
@@ -317,9 +370,10 @@ func TestDockerTemplateBuilderGenerateCAPISpecWorkers(t *testing.T) {
 		clusterSpec *cluster.Spec
 	}
 	tests := []struct {
-		name    string
-		args    args
-		wantErr error
+		name             string
+		args             args
+		wantErr          error
+		wantFailCgroupv1 bool
 	}{
 		{
 			name: "kubelet config specified",
@@ -341,7 +395,55 @@ func TestDockerTemplateBuilderGenerateCAPISpecWorkers(t *testing.T) {
 					}
 				}),
 			},
-			wantErr: nil,
+			wantErr:          nil,
+			wantFailCgroupv1: false,
+		},
+		{
+			name: "kube 131 with fail-cgroupv1",
+			args: args{
+				clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
+					s.Cluster.Name = "test-cluster"
+					s.Cluster.Spec.KubernetesVersion = "1.31"
+					s.Cluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{
+						{
+							Count: ptr.Int(1),
+							Name:  "test",
+						},
+					}
+					s.VersionsBundles = map[v1alpha1.KubernetesVersion]*cluster.VersionsBundle{
+						"1.31": test.VersionBundle(),
+					}
+				}),
+			},
+			wantErr:          nil,
+			wantFailCgroupv1: true,
+		},
+		{
+			name: "kube 131 with kubelet config specified",
+			args: args{
+				clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
+					s.Cluster.Name = "test-cluster"
+					s.Cluster.Spec.KubernetesVersion = "1.31"
+					s.Cluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{
+						{
+							KubeletConfiguration: &unstructured.Unstructured{
+								Object: map[string]interface{}{
+									"maxPods":    20,
+									"apiVersion": "kubelet.config.k8s.io/v1beta1",
+									"kind":       "KubeletConfiguration",
+								},
+							},
+							Count: ptr.Int(1),
+							Name:  "test",
+						},
+					}
+					s.VersionsBundles = map[v1alpha1.KubernetesVersion]*cluster.VersionsBundle{
+						"1.31": test.VersionBundle(),
+					}
+				}),
+			},
+			wantErr:          nil,
+			wantFailCgroupv1: true,
 		},
 	}
 	for _, tt := range tests {
@@ -356,6 +458,14 @@ func TestDockerTemplateBuilderGenerateCAPISpecWorkers(t *testing.T) {
 			}
 			if err == nil {
 				g.Expect(gotContent).NotTo(BeEmpty())
+				contentStr := string(gotContent)
+				if tt.wantFailCgroupv1 {
+					// Check for either format: fail-cgroupv1 (kubeletExtraArgs) or failCgroupV1 (kubeletConfiguration)
+					g.Expect(contentStr).To(Or(ContainSubstring("fail-cgroupv1"), ContainSubstring("failCgroupV1")))
+				} else {
+					g.Expect(contentStr).NotTo(ContainSubstring("fail-cgroupv1"))
+					g.Expect(contentStr).NotTo(ContainSubstring("failCgroupV1"))
+				}
 			}
 		})
 	}
