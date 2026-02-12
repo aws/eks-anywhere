@@ -263,7 +263,7 @@ func TestTinkerbellKubernetes134UbuntuTo135InPlaceUpgrade_1CP_1Worker(t *testing
 	)
 	runInPlaceUpgradeFlowForBareMetal(
 		test,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube134), api.WithInPlaceUpgradeStrategy()),
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube135), api.WithInPlaceUpgradeStrategy()),
 		provider.WithProviderUpgrade(framework.Ubuntu135Image()),
 	)
 }
@@ -290,7 +290,7 @@ func TestTinkerbellKubernetes134UbuntuTo135SingleNodeInPlaceUpgrade(t *testing.T
 		test,
 		framework.WithUpgradeClusterConfig(
 			api.ClusterToConfigFiller(
-				api.WithKubernetesVersion(v1alpha1.Kube134),
+				api.WithKubernetesVersion(v1alpha1.Kube135),
 				api.WithInPlaceUpgradeStrategy(),
 			),
 			api.TinkerbellToConfigFiller(
@@ -323,14 +323,14 @@ func TestTinkerbellKubernetes134RedHat9To135SingleNodeInPlaceUpgrade(t *testing.
 		test,
 		framework.WithUpgradeClusterConfig(
 			api.ClusterToConfigFiller(
-				api.WithKubernetesVersion(v1alpha1.Kube134),
+				api.WithKubernetesVersion(v1alpha1.Kube135),
 				api.WithInPlaceUpgradeStrategy(),
 			),
 			api.TinkerbellToConfigFiller(
 				api.RemoveTinkerbellWorkerMachineConfig(),
 			),
 		),
-		provider.WithProviderUpgrade(framework.RedHat9Kubernetes134Image()),
+		provider.WithProviderUpgrade(framework.RedHat9Kubernetes135Image()),
 	)
 }
 
