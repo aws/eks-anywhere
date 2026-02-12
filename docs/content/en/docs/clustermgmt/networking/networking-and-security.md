@@ -30,7 +30,7 @@ This section provides information about:
 
 
 ## Cilium Features
-he following table lists features available in open source Cilium and indicates which ones are supported by AWS under the Amazon EKS Anywhere Enterprise Subscription.
+The following table lists features available in open source Cilium and indicates which ones are supported by AWS under the Amazon EKS Anywhere Enterprise Subscription.
 
 <details><summary>Expand to see Cilium Features</summary>
 
