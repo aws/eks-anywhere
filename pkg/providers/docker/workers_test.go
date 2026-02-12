@@ -146,7 +146,6 @@ func TestWorkersSpecUpgradeClusterRemoveLabels(t *testing.T) {
 		"cgroup-driver":     "cgroupfs",
 		"node-labels":       "foo=bar",
 		"eviction-hard":     "nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%",
-		"fail-cgroupv1":     "false",
 	}
 
 	currentGroup1 := clusterapi.WorkerGroup[*dockerv1.DockerMachineTemplate]{
@@ -187,7 +186,6 @@ func TestWorkersSpecUpgradeClusterRemoveLabels(t *testing.T) {
 		"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
 		"cgroup-driver":     "cgroupfs",
 		"eviction-hard":     "nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%",
-		"fail-cgroupv1":     "false",
 	}
 	expectedGroup1.KubeadmConfigTemplate.Name = "test-md-0-2"
 	expectedGroup1.MachineDeployment.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "test-md-0-2"
@@ -401,7 +399,6 @@ func kubeadmConfigTemplate(opts ...func(*bootstrapv1.KubeadmConfigTemplate)) *bo
 								"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
 								"cgroup-driver":     "cgroupfs",
 								"eviction-hard":     "nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%",
-								"fail-cgroupv1":     "false",
 							},
 							Taints: []corev1.Taint{},
 						},

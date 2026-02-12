@@ -1,3 +1,4 @@
+{{- $kube_minor_version := (index (splitList "." (trimPrefix "v" .KubernetesVersion)) 1) -}}
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 networking:
@@ -35,6 +36,18 @@ kubeadmConfigPatches:
             mountPath: /var/log/kubernetes
             readOnly: false
             pathType: DirectoryOrCreate
+{{- if (ge (atoi $kube_minor_version) 31) }}
+  - |
+    kind: InitConfiguration
+    nodeRegistration:
+      kubeletExtraArgs:
+        fail-cgroupv1: "false"
+  - |
+    kind: JoinConfiguration
+    nodeRegistration:
+      kubeletExtraArgs:
+        fail-cgroupv1: "false"
+{{- end }}
 {{- if (ne .RegistryConfigDir "") }}
 containerdConfigPatches:
   - |
