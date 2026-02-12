@@ -353,6 +353,11 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 				cpKubeletConfig["resolvConf"] = clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf.Path
 			}
 		}
+
+		if _, ok := cpKubeletConfig["failCgroupV1"]; !ok {
+			cpKubeletConfig["failCgroupV1"] = false
+		}
+
 		kcString, err := yaml.Marshal(cpKubeletConfig)
 		if err != nil {
 			return nil, fmt.Errorf("marshaling control plane node Kubelet Configuration while building CAPI template %v", err)
@@ -371,6 +376,8 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 		if cgroupDriverArgs != nil {
 			kubeletExtraArgs.Append(cgroupDriverArgs)
 		}
+
+		kubeletExtraArgs.Append(clusterapi.ExtraArgs{"fail-cgroupv1": "false"})
 
 		values["kubeletExtraArgs"] = kubeletExtraArgs.ToPartialYaml()
 	}
@@ -415,6 +422,11 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupConfiguration 
 				wnKubeletConfig["resolvConf"] = clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf.Path
 			}
 		}
+
+		if _, ok := wnKubeletConfig["failCgroupV1"]; !ok {
+			wnKubeletConfig["failCgroupV1"] = false
+		}
+
 		kcString, err := yaml.Marshal(wnKubeletConfig)
 		if err != nil {
 			return nil, fmt.Errorf("marshaling Kubelet Configuration for worker node %s: %v", workerNodeGroupConfiguration.Name, err)
@@ -436,6 +448,8 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupConfiguration 
 		if cgroupDriverArgs != nil {
 			kubeletExtraArgs.Append(cgroupDriverArgs)
 		}
+
+		kubeletExtraArgs.Append(clusterapi.ExtraArgs{"fail-cgroupv1": "false"})
 
 		values["kubeletExtraArgs"] = kubeletExtraArgs.ToPartialYaml()
 	}
