@@ -101,9 +101,9 @@ func TestTinkerbellKubernetes134To135Ubuntu2204Upgrade(t *testing.T) {
 	)
 	runSimpleUpgradeFlowForBaremetalWithoutClusterConfigGeneration(
 		test,
-		v1alpha1.Kube134,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube134)),
-		provider.WithProviderUpgrade(framework.Ubuntu2204Kubernetes134Image()),
+		v1alpha1.Kube135,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube135)),
+		provider.WithProviderUpgrade(framework.Ubuntu2204Kubernetes135Image()),
 	)
 }
 
@@ -125,9 +125,9 @@ func TestTinkerbellKubernetes134To135Ubuntu2404Upgrade(t *testing.T) {
 	)
 	runSimpleUpgradeFlowForBaremetalWithoutClusterConfigGeneration(
 		test,
-		v1alpha1.Kube134,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube134)),
-		provider.WithProviderUpgrade(framework.Ubuntu2404Kubernetes134Image()),
+		v1alpha1.Kube135,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube135)),
+		provider.WithProviderUpgrade(framework.Ubuntu2404Kubernetes135Image()),
 	)
 }
 

@@ -54,6 +54,13 @@ const (
 	tinkerbellImageUbuntu2404Kubernetes134GenericEnvVar = "T_TINKERBELL_IMAGE_UBUNTU_2404_1_34_GENERIC"
 	tinkerbellImageUbuntu2404Kubernetes134EnvVar        = "T_TINKERBELL_IMAGE_UBUNTU_2404_1_34"
 	tinkerbellImageRedHat9134EnvVar                     = "T_TINKERBELL_IMAGE_REDHAT_9_1_34"
+	tinkerbellImageUbuntu2204Kubernetes135EnvVar        = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_35"
+	tinkerbellImageUbuntu2204Kubernetes135RTOSEnvVar    = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_35_RTOS"
+	tinkerbellImageUbuntu2404Kubernetes135RTOSEnvVar    = "T_TINKERBELL_IMAGE_UBUNTU_2404_1_35_RTOS"
+	tinkerbellImageUbuntu2204Kubernetes135GenericEnvVar = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_35_GENERIC"
+	tinkerbellImageUbuntu2404Kubernetes135GenericEnvVar = "T_TINKERBELL_IMAGE_UBUNTU_2404_1_35_GENERIC"
+	tinkerbellImageUbuntu2404Kubernetes135EnvVar        = "T_TINKERBELL_IMAGE_UBUNTU_2404_1_35"
+	tinkerbellImageRedHat9135EnvVar                     = "T_TINKERBELL_IMAGE_REDHAT_9_1_35"
 	tinkerbellInventoryCsvFilePathEnvVar                = "T_TINKERBELL_INVENTORY_CSV"
 	tinkerbellSSHAuthorizedKey                          = "T_TINKERBELL_SSH_AUTHORIZED_KEY"
 	tinkerbellCIEnvironmentEnvVar                       = "T_TINKERBELL_CI_ENVIRONMENT"
@@ -101,6 +108,13 @@ var requiredTinkerbellEnvVars = []string{
 	tinkerbellImageUbuntu2404Kubernetes134GenericEnvVar,
 	tinkerbellImageUbuntu2404Kubernetes134EnvVar,
 	tinkerbellImageRedHat9134EnvVar,
+	tinkerbellImageUbuntu2204Kubernetes135EnvVar,
+	tinkerbellImageUbuntu2204Kubernetes135RTOSEnvVar,
+	tinkerbellImageUbuntu2404Kubernetes135RTOSEnvVar,
+	tinkerbellImageUbuntu2204Kubernetes135GenericEnvVar,
+	tinkerbellImageUbuntu2404Kubernetes135GenericEnvVar,
+	tinkerbellImageUbuntu2404Kubernetes135EnvVar,
+	tinkerbellImageRedHat9135EnvVar,
 	tinkerbellInventoryCsvFilePathEnvVar,
 	tinkerbellSSHAuthorizedKey,
 	tinkerbellHookIsoURLEnvVar,
@@ -535,6 +549,11 @@ func Ubuntu2204Kubernetes133Image() api.TinkerbellFiller {
 // Ubuntu2204Kubernetes134Image represents an Ubuntu 22.04 raw image corresponding to Kubernetes 1.34.
 func Ubuntu2204Kubernetes134Image() api.TinkerbellFiller {
 	return imageForKubeVersionAndOS(anywherev1.Kube134, Ubuntu2204, "")
+}
+
+// Ubuntu2204Kubernetes135Image represents an Ubuntu 22.04 raw image corresponding to Kubernetes 1.35.
+func Ubuntu2204Kubernetes135Image() api.TinkerbellFiller {
+	return imageForKubeVersionAndOS(anywherev1.Kube135, Ubuntu2204, "")
 }
 
 // Ubuntu2404Kubernetes129Image represents an Ubuntu 24.04 raw image corresponding to Kubernetes 1.29.
