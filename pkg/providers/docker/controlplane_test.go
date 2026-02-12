@@ -700,7 +700,6 @@ rules:
 						KubeletExtraArgs: map[string]string{
 							"cgroup-driver":     "cgroupfs",
 							"eviction-hard":     "nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%",
-							"fail-cgroupv1":     "false",
 							"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
 						},
 					},
@@ -711,7 +710,6 @@ rules:
 						KubeletExtraArgs: map[string]string{
 							"cgroup-driver":     "cgroupfs",
 							"eviction-hard":     "nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%",
-							"fail-cgroupv1":     "false",
 							"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
 						},
 					},

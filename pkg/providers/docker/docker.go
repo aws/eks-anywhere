@@ -354,8 +354,19 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 			}
 		}
 
-		if _, ok := cpKubeletConfig["failCgroupV1"]; !ok {
-			cpKubeletConfig["failCgroupV1"] = false
+		// fail-cgroupv1 flag was introduced in Kubernetes 1.31
+		clusterKubeVersionSemver, err := v1alpha1.KubeVersionToSemver(clusterSpec.Cluster.Spec.KubernetesVersion)
+		if err != nil {
+			return nil, fmt.Errorf("converting kubeVersion %v to semver: %v", clusterSpec.Cluster.Spec.KubernetesVersion, err)
+		}
+		kube131Semver, err := v1alpha1.KubeVersionToSemver(v1alpha1.Kube131)
+		if err != nil {
+			return nil, fmt.Errorf("converting kubeVersion %v to semver: %v", v1alpha1.Kube131, err)
+		}
+		if clusterKubeVersionSemver.Compare(kube131Semver) >= 0 {
+			if _, ok := cpKubeletConfig["failCgroupV1"]; !ok {
+				cpKubeletConfig["failCgroupV1"] = false
+			}
 		}
 
 		kcString, err := yaml.Marshal(cpKubeletConfig)
@@ -377,7 +388,18 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 			kubeletExtraArgs.Append(cgroupDriverArgs)
 		}
 
-		kubeletExtraArgs.Append(clusterapi.ExtraArgs{"fail-cgroupv1": "false"})
+		// fail-cgroupv1 flag was introduced in Kubernetes 1.31
+		clusterKubeVersionSemver, err := v1alpha1.KubeVersionToSemver(clusterSpec.Cluster.Spec.KubernetesVersion)
+		if err != nil {
+			return nil, fmt.Errorf("converting kubeVersion %v to semver: %v", clusterSpec.Cluster.Spec.KubernetesVersion, err)
+		}
+		kube131Semver, err := v1alpha1.KubeVersionToSemver(v1alpha1.Kube131)
+		if err != nil {
+			return nil, fmt.Errorf("converting kubeVersion %v to semver: %v", v1alpha1.Kube131, err)
+		}
+		if clusterKubeVersionSemver.Compare(kube131Semver) >= 0 {
+			kubeletExtraArgs.Append(clusterapi.ExtraArgs{"fail-cgroupv1": "false"})
+		}
 
 		values["kubeletExtraArgs"] = kubeletExtraArgs.ToPartialYaml()
 	}
@@ -423,8 +445,23 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupConfiguration 
 			}
 		}
 
-		if _, ok := wnKubeletConfig["failCgroupV1"]; !ok {
-			wnKubeletConfig["failCgroupV1"] = false
+		// fail-cgroupv1 flag was introduced in Kubernetes 1.31
+		kubeVersion := clusterSpec.Cluster.Spec.KubernetesVersion
+		if workerNodeGroupConfiguration.KubernetesVersion != nil {
+			kubeVersion = *workerNodeGroupConfiguration.KubernetesVersion
+		}
+		workerKubeVersionSemver, err := v1alpha1.KubeVersionToSemver(kubeVersion)
+		if err != nil {
+			return nil, fmt.Errorf("converting kubeVersion %v to semver: %v", kubeVersion, err)
+		}
+		kube131Semver, err := v1alpha1.KubeVersionToSemver(v1alpha1.Kube131)
+		if err != nil {
+			return nil, fmt.Errorf("converting kubeVersion %v to semver: %v", v1alpha1.Kube131, err)
+		}
+		if workerKubeVersionSemver.Compare(kube131Semver) >= 0 {
+			if _, ok := wnKubeletConfig["failCgroupV1"]; !ok {
+				wnKubeletConfig["failCgroupV1"] = false
+			}
 		}
 
 		kcString, err := yaml.Marshal(wnKubeletConfig)
@@ -449,7 +486,18 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupConfiguration 
 			kubeletExtraArgs.Append(cgroupDriverArgs)
 		}
 
-		kubeletExtraArgs.Append(clusterapi.ExtraArgs{"fail-cgroupv1": "false"})
+		// fail-cgroupv1 flag was introduced in Kubernetes 1.31
+		workerKubeVersionSemver, err := v1alpha1.KubeVersionToSemver(kubeVersion)
+		if err != nil {
+			return nil, fmt.Errorf("converting kubeVersion %v to semver: %v", kubeVersion, err)
+		}
+		kube131Semver, err := v1alpha1.KubeVersionToSemver(v1alpha1.Kube131)
+		if err != nil {
+			return nil, fmt.Errorf("converting kubeVersion %v to semver: %v", v1alpha1.Kube131, err)
+		}
+		if workerKubeVersionSemver.Compare(kube131Semver) >= 0 {
+			kubeletExtraArgs.Append(clusterapi.ExtraArgs{"fail-cgroupv1": "false"})
+		}
 
 		values["kubeletExtraArgs"] = kubeletExtraArgs.ToPartialYaml()
 	}
