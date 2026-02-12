@@ -1089,3 +1089,135 @@ func validateEksaVersion(clusterConfig *Cluster) error {
 
 	return nil
 }
+
+// validateIPPoolConfig validates the IP pool configuration fields.
+func validateIPPoolConfig(ipPool *IPPoolConfiguration) error {
+	if ipPool.Name == "" {
+		return errors.New("ipPool.name cannot be empty")
+	}
+
+	if len(ipPool.Addresses) == 0 {
+		return errors.New("ipPool.addresses cannot be empty")
+	}
+
+	for _, addr := range ipPool.Addresses {
+		if err := validateIPPoolAddress(addr); err != nil {
+			return fmt.Errorf("invalid ipPool.addresses entry %q: %v", addr, err)
+		}
+	}
+
+	if ipPool.Prefix < 1 || ipPool.Prefix > 32 {
+		return fmt.Errorf("ipPool.prefix must be between 1 and 32, got %d", ipPool.Prefix)
+	}
+
+	if err := validateIPPoolGatewayAndNameservers(ipPool); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// validateIPPoolGatewayAndNameservers validates gateway and nameserver IPs.
+func validateIPPoolGatewayAndNameservers(ipPool *IPPoolConfiguration) error {
+	if ipPool.Gateway == "" {
+		return errors.New("ipPool.gateway cannot be empty")
+	}
+	if net.ParseIP(ipPool.Gateway) == nil {
+		return fmt.Errorf("ipPool.gateway %q is not a valid IP address", ipPool.Gateway)
+	}
+
+	for _, ns := range ipPool.Nameservers {
+		if net.ParseIP(ns) == nil {
+			return fmt.Errorf("ipPool.nameservers entry %q is not a valid IP address", ns)
+		}
+	}
+
+	return nil
+}
+
+// validateIPPoolAddress validates a single address entry which can be:
+// - A range: "192.168.1.100-192.168.1.120"
+// - A CIDR: "192.168.1.0/24"
+// - A single IP: "192.168.1.100".
+func validateIPPoolAddress(addr string) error {
+	// Check if it's a range
+	if strings.Contains(addr, "-") {
+		parts := strings.Split(addr, "-")
+		if len(parts) != 2 {
+			return fmt.Errorf("invalid range format, expected 'start-end'")
+		}
+		startIP := net.ParseIP(strings.TrimSpace(parts[0]))
+		endIP := net.ParseIP(strings.TrimSpace(parts[1]))
+		if startIP == nil {
+			return fmt.Errorf("invalid start IP in range")
+		}
+		if endIP == nil {
+			return fmt.Errorf("invalid end IP in range")
+		}
+		// Ensure start <= end (simple byte comparison for IPv4)
+		if bytes.Compare(startIP.To4(), endIP.To4()) > 0 {
+			return fmt.Errorf("start IP must be less than or equal to end IP")
+		}
+		return nil
+	}
+
+	// Check if it's a CIDR
+	if strings.Contains(addr, "/") {
+		_, _, err := net.ParseCIDR(addr)
+		if err != nil {
+			return fmt.Errorf("invalid CIDR: %v", err)
+		}
+		return nil
+	}
+
+	// Must be a single IP
+	if net.ParseIP(addr) == nil {
+		return fmt.Errorf("invalid IP address")
+	}
+
+	return nil
+}
+
+// CalculateIPPoolSize calculates the total number of IPs in the pool.
+func CalculateIPPoolSize(addresses []string) (int, error) {
+	total := 0
+	for _, addr := range addresses {
+		// Range
+		if strings.Contains(addr, "-") {
+			parts := strings.Split(addr, "-")
+			startIP := net.ParseIP(strings.TrimSpace(parts[0])).To4()
+			endIP := net.ParseIP(strings.TrimSpace(parts[1])).To4()
+			if startIP == nil || endIP == nil {
+				return 0, fmt.Errorf("invalid IP range: %s", addr)
+			}
+			// Calculate range size
+			start := ipToUint32(startIP)
+			end := ipToUint32(endIP)
+			total += int(end - start + 1)
+			continue
+		}
+
+		// CIDR
+		if strings.Contains(addr, "/") {
+			_, ipNet, err := net.ParseCIDR(addr)
+			if err != nil {
+				return 0, fmt.Errorf("invalid CIDR: %s", addr)
+			}
+			ones, bits := ipNet.Mask.Size()
+			// Number of hosts = 2^(bits-ones) - 2 (excluding network and broadcast)
+			// But for IP pools, we typically include all addresses
+			total += 1 << (bits - ones)
+			continue
+		}
+
+		// Single IP
+		total++
+	}
+	return total, nil
+}
+
+// ipToUint32 converts an IPv4 address to uint32.
+func ipToUint32(ip net.IP) uint32 {
+	ip = ip.To4()
+	return uint32(ip[0])<<24 | uint32(ip[1])<<16 | uint32(ip[2])<<8 | uint32(ip[3])
+}

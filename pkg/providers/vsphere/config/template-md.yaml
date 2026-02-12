@@ -259,13 +259,41 @@ spec:
       network:
         devices:
 {{- if .vsphereMultiNetworks }}
-        {{range .vsphereMultiNetworks}}
+{{- range $index, $network := .vsphereMultiNetworks}}
+{{- if and (eq $index 0) $.ipPoolName }}
+        - networkName: {{$network}}
+          addressesFromPools:
+          - apiGroup: ipam.cluster.x-k8s.io
+            kind: InClusterIPPool
+            name: {{$.ipPoolName}}
+{{- if $.ipPoolNameservers }}
+          nameservers:
+{{- range $.ipPoolNameservers }}
+          - {{ . }}
+{{- end }}
+{{- end }}
+{{- else }}
         - dhcp4: true
-          networkName: {{.}}
-        {{- end }}
+          networkName: {{$network}}
+{{- end }}
+{{- end }}
 {{- else}}
+{{- if .ipPoolName }}
+        - networkName: {{.vsphereNetwork}}
+          addressesFromPools:
+          - apiGroup: ipam.cluster.x-k8s.io
+            kind: InClusterIPPool
+            name: {{.ipPoolName}}
+{{- if .ipPoolNameservers }}
+          nameservers:
+{{- range .ipPoolNameservers }}
+          - {{ . }}
+{{- end }}
+{{- end }}
+{{- else }}
         - dhcp4: true
           networkName: {{.vsphereNetwork}}
+{{- end }}
 {{- end }}
       numCPUs: {{.workloadVMsNumCPUs}}
       resourcePool: '{{.workerVsphereResourcePool}}'
