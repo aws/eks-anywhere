@@ -157,10 +157,10 @@ func workers(namespace string) *clusters.Workers {
 	}
 }
 
-func machineDeployment(name, namespace string) *clusterv1.MachineDeployment {
-	return &clusterv1.MachineDeployment{
+func machineDeployment(name, namespace string) *clusterv1beta2.MachineDeployment {
+	return &clusterv1beta2.MachineDeployment{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "cluster.x-k8s.io/v1beta1",
+			APIVersion: "cluster.x-k8s.io/v1beta2",
 			Kind:       "MachineDeployment",
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -170,11 +170,27 @@ func machineDeployment(name, namespace string) *clusterv1.MachineDeployment {
 				clusterv1.ClusterNameLabel: "my-cluster",
 			},
 		},
-		Spec: clusterv1.MachineDeploymentSpec{
+		Spec: clusterv1beta2.MachineDeploymentSpec{
 			ClusterName: "my-cluster",
-			Template: clusterv1.MachineTemplateSpec{
-				Spec: clusterv1.MachineSpec{
+			Selector: metav1.LabelSelector{
+				MatchLabels: map[string]string{},
+			},
+			Template: clusterv1beta2.MachineTemplateSpec{
+				Spec: clusterv1beta2.MachineSpec{
 					ClusterName: "my-cluster",
+					Bootstrap: clusterv1beta2.Bootstrap{
+						ConfigRef: clusterv1beta2.ContractVersionedObjectReference{
+							APIGroup: "bootstrap.cluster.x-k8s.io",
+							Kind:     "KubeadmConfigTemplate",
+							Name:     name + "-1",
+						},
+					},
+					InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
+						APIGroup: "infrastructure.cluster.x-k8s.io",
+						Kind:     "DockerMachineTemplate",
+						Name:     name + "-1",
+					},
+					Version: "v1.21.0",
 				},
 			},
 		},

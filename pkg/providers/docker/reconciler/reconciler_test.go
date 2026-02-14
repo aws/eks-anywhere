@@ -101,7 +101,7 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 	)
 
 	tt.ShouldEventuallyExist(tt.ctx,
-		&clusterv1.MachineDeployment{
+		&clusterv1beta2.MachineDeployment{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      tt.cluster.Name + "-md-0",
 				Namespace: constants.EksaSystemNamespace,
@@ -184,7 +184,7 @@ func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
 	tt.Expect(result).To(Equal(controller.Result{}))
 
 	tt.ShouldEventuallyExist(tt.ctx,
-		&clusterv1.MachineDeployment{
+		&clusterv1beta2.MachineDeployment{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      tt.cluster.Name + "-md-0",
 				Namespace: constants.EksaSystemNamespace,

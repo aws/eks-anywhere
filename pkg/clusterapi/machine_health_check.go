@@ -17,7 +17,7 @@ const (
 func machineHealthCheck(clusterName string, unhealthyTimeout, nodeStartupTimeout *metav1.Duration) *clusterv1.MachineHealthCheck {
 	return &clusterv1.MachineHealthCheck{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: machineDeploymentAPIVersion, // Use v1beta1 for MachineHealthCheck (D1)
+			APIVersion: machineHealthCheckAPIVersion,
 			Kind:       machineHealthCheckKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{

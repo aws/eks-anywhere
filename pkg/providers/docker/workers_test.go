@@ -10,7 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta2"
 
 	"github.com/aws/eks-anywhere/internal/test"
@@ -48,7 +48,7 @@ func TestWorkersSpecNewCluster(t *testing.T) {
 				},
 			),
 			MachineDeployment: machineDeployment(
-				func(md *clusterv1.MachineDeployment) {
+				func(md *clusterv1beta2.MachineDeployment) {
 					md.Name = "test-md-1"
 					md.Spec.Template.Spec.InfrastructureRef.Name = "test-md-1-1"
 					md.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "test-md-1-1"
@@ -78,7 +78,7 @@ func TestWorkersSpecUpgradeCluster(t *testing.T) {
 			},
 		),
 		MachineDeployment: machineDeployment(
-			func(md *clusterv1.MachineDeployment) {
+			func(md *clusterv1beta2.MachineDeployment) {
 				md.Name = "test-md-1"
 				md.Spec.Template.Spec.InfrastructureRef.Name = "test-md-1-1"
 				md.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "test-md-1-1"
@@ -161,7 +161,7 @@ func TestWorkersSpecUpgradeClusterRemoveLabels(t *testing.T) {
 			},
 		),
 		MachineDeployment: machineDeployment(
-			func(md *clusterv1.MachineDeployment) {
+			func(md *clusterv1beta2.MachineDeployment) {
 				md.Name = "test-md-1"
 				md.Spec.Template.Spec.InfrastructureRef.Name = "test-md-1-1"
 				md.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "test-md-1-1"
@@ -216,7 +216,7 @@ func TestWorkersSpecNoMachineTemplateChanges(t *testing.T) {
 			},
 		),
 		MachineDeployment: machineDeployment(
-			func(md *clusterv1.MachineDeployment) {
+			func(md *clusterv1beta2.MachineDeployment) {
 				md.Name = "test-md-1"
 				md.Spec.Template.Spec.InfrastructureRef.Name = "test-md-1-1"
 				md.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "test-md-1-1"
@@ -323,7 +323,7 @@ func TestWorkersSpecRegistryMirrorConfiguration(t *testing.T) {
 						},
 					),
 					MachineDeployment: machineDeployment(
-						func(md *clusterv1.MachineDeployment) {
+						func(md *clusterv1beta2.MachineDeployment) {
 							md.Name = "test-md-1"
 							md.Spec.Template.Spec.InfrastructureRef.Name = "test-md-1-1"
 							md.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "test-md-1-1"
@@ -364,11 +364,12 @@ func TestWorkersSpecUpgradeRolloutStrategy(t *testing.T) {
 	g.Expect(workers.Groups).To(ConsistOf(
 		clusterapi.WorkerGroup[*dockerv1.DockerMachineTemplate]{
 			KubeadmConfigTemplate: kubeadmConfigTemplate(),
-			MachineDeployment: machineDeployment(func(m *clusterv1.MachineDeployment) {
+			MachineDeployment: machineDeployment(func(m *clusterv1beta2.MachineDeployment) {
 				maxSurge := intstr.FromInt(1)
 				maxUnavailable := intstr.FromInt(0)
-				m.Spec.Strategy = &clusterv1.MachineDeploymentStrategy{
-					RollingUpdate: &clusterv1.MachineRollingUpdateDeployment{
+				m.Spec.Rollout.Strategy = clusterv1beta2.MachineDeploymentRolloutStrategy{
+					Type: clusterv1beta2.RollingUpdateMachineDeploymentStrategyType,
+					RollingUpdate: clusterv1beta2.MachineDeploymentRolloutStrategyRollingUpdate{
 						MaxSurge:       &maxSurge,
 						MaxUnavailable: &maxUnavailable,
 					},
@@ -415,38 +416,39 @@ func kubeadmConfigTemplate(opts ...func(*bootstrapv1.KubeadmConfigTemplate)) *bo
 	return o
 }
 
-func machineDeployment(opts ...func(*clusterv1.MachineDeployment)) *clusterv1.MachineDeployment {
-	o := &clusterv1.MachineDeployment{
+func machineDeployment(opts ...func(*clusterv1beta2.MachineDeployment)) *clusterv1beta2.MachineDeployment {
+	o := &clusterv1beta2.MachineDeployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "MachineDeployment",
-			APIVersion: "cluster.x-k8s.io/v1beta1",
+			APIVersion: "cluster.x-k8s.io/v1beta2",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-md-0",
 			Namespace: "eksa-system",
 		},
-		Spec: clusterv1.MachineDeploymentSpec{
+		Spec: clusterv1beta2.MachineDeploymentSpec{
 			ClusterName: "test",
 			Replicas:    ptr.Int32(3),
-			Template: clusterv1.MachineTemplateSpec{
-				ObjectMeta: clusterv1.ObjectMeta{},
-				Spec: clusterv1.MachineSpec{
+			Selector: metav1.LabelSelector{
+				MatchLabels: map[string]string{},
+			},
+			Template: clusterv1beta2.MachineTemplateSpec{
+				ObjectMeta: clusterv1beta2.ObjectMeta{},
+				Spec: clusterv1beta2.MachineSpec{
 					ClusterName: "test",
-					Bootstrap: clusterv1.Bootstrap{
-						ConfigRef: &corev1.ObjectReference{
-							Kind:       "KubeadmConfigTemplate",
-							Name:       "test-md-0-1",
-							APIVersion: "bootstrap.cluster.x-k8s.io/v1beta1",
-							Namespace:  "eksa-system",
+					Bootstrap: clusterv1beta2.Bootstrap{
+						ConfigRef: clusterv1beta2.ContractVersionedObjectReference{
+							Kind:     "KubeadmConfigTemplate",
+							Name:     "test-md-0-1",
+							APIGroup: "bootstrap.cluster.x-k8s.io",
 						},
 					},
-					InfrastructureRef: corev1.ObjectReference{
-						Kind:       "DockerMachineTemplate",
-						Name:       "test-md-0-1",
-						APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
-						Namespace:  "eksa-system",
+					InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
+						Kind:     "DockerMachineTemplate",
+						Name:     "test-md-0-1",
+						APIGroup: "infrastructure.cluster.x-k8s.io",
 					},
-					Version: ptr.String("v1.23.12-eks-1-23-6"),
+					Version: "v1.23.12-eks-1-23-6",
 				},
 			},
 		},

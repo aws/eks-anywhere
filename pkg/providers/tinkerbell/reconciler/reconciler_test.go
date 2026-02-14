@@ -389,12 +389,12 @@ func TestReconcilerReconcileWorkersScaleSuccess(t *testing.T) {
 	tt.Expect(result).To(Equal(controller.Result{}))
 
 	tt.ShouldEventuallyExist(tt.ctx, mt)
-	md := &clusterv1.MachineDeployment{
+	md := &clusterv1beta2.MachineDeployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      tt.cluster.Name + "-md-0",
 			Namespace: constants.EksaSystemNamespace,
 		},
-		Spec: clusterv1.MachineDeploymentSpec{
+		Spec: clusterv1beta2.MachineDeploymentSpec{
 			Replicas: ptr.Int32(2),
 		},
 	}
@@ -428,7 +428,7 @@ func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
 	tt.Expect(result).To(Equal(controller.Result{}))
 
 	tt.ShouldEventuallyExist(tt.ctx,
-		&clusterv1.MachineDeployment{
+		&clusterv1beta2.MachineDeployment{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      tt.cluster.Name + "-md-0",
 				Namespace: constants.EksaSystemNamespace,
@@ -825,7 +825,7 @@ func TestReconcilerDetectOperationK8sVersionUpgradeWorkerOnly(t *testing.T) {
 	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
 	kube123 := "v1.23.8"
 	scope.Workers = tinkWorker(tt.cluster.Name, func(w *tinkerbell.Workers) {
-		w.Groups[0].MachineDeployment.Spec.Template.Spec.Version = &kube123
+		w.Groups[0].MachineDeployment.Spec.Template.Spec.Version = kube123
 	})
 
 	tt.Expect(err).NotTo(HaveOccurred())
@@ -1114,7 +1114,7 @@ func (tt *reconcilerTest) cleanup() {
 	tt.DeleteAllOfAndWait(tt.ctx, &controlplanev1.KubeadmControlPlane{})
 	tt.DeleteAllOfAndWait(tt.ctx, &tinkerbellv1.TinkerbellCluster{})
 	tt.DeleteAllOfAndWait(tt.ctx, &tinkerbellv1.TinkerbellMachineTemplate{})
-	tt.DeleteAllOfAndWait(tt.ctx, &clusterv1.MachineDeployment{})
+	tt.DeleteAllOfAndWait(tt.ctx, &clusterv1beta2.MachineDeployment{})
 }
 
 type clusterOpt func(*anywherev1.Cluster)
@@ -1780,10 +1780,10 @@ func tinkWorker(clusterName string, opts ...workerOpt) *tinkerbell.Workers {
 						},
 					},
 				},
-				MachineDeployment: &clusterv1.MachineDeployment{
+				MachineDeployment: &clusterv1beta2.MachineDeployment{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "MachineDeployment",
-						APIVersion: "cluster.x-k8s.io/v1beta1",
+						APIVersion: "cluster.x-k8s.io/v1beta2",
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      clusterName + "-md-0",
@@ -1793,34 +1793,34 @@ func tinkWorker(clusterName string, opts ...workerOpt) *tinkerbell.Workers {
 							"cluster.x-k8s.io/cluster-name": clusterName,
 						},
 					},
-					Spec: clusterv1.MachineDeploymentSpec{
+					Spec: clusterv1beta2.MachineDeploymentSpec{
 						ClusterName: workloadClusterName,
 						Replicas:    ptr.Int32(1),
 						Selector: metav1.LabelSelector{
 							MatchLabels: map[string]string{},
 						},
-						Template: clusterv1.MachineTemplateSpec{
-							ObjectMeta: clusterv1.ObjectMeta{
+						Template: clusterv1beta2.MachineTemplateSpec{
+							ObjectMeta: clusterv1beta2.ObjectMeta{
 								Labels: map[string]string{
 									"pool":                          "md-0",
 									"cluster.x-k8s.io/cluster-name": clusterName,
 								},
 							},
-							Spec: clusterv1.MachineSpec{
+							Spec: clusterv1beta2.MachineSpec{
 								ClusterName: clusterName,
-								Bootstrap: clusterv1.Bootstrap{
-									ConfigRef: &corev1.ObjectReference{
-										Kind:       "KubeadmConfigTemplate",
-										Name:       clusterName + "-md-0-1",
-										APIVersion: "bootstrap.cluster.x-k8s.io/v1beta1",
+								Bootstrap: clusterv1beta2.Bootstrap{
+									ConfigRef: clusterv1beta2.ContractVersionedObjectReference{
+										Kind:     "KubeadmConfigTemplate",
+										Name:     clusterName + "-md-0-1",
+										APIGroup: "bootstrap.cluster.x-k8s.io",
 									},
 								},
-								InfrastructureRef: corev1.ObjectReference{
-									Kind:       "TinkerbellMachineTemplate",
-									Name:       clusterName + "-md-0-1",
-									APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+								InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
+									Kind:     "TinkerbellMachineTemplate",
+									Name:     clusterName + "-md-0-1",
+									APIGroup: "infrastructure.cluster.x-k8s.io",
 								},
-								Version: ptr.String("v1.19.8"),
+								Version: "v1.19.8",
 							},
 						},
 					},

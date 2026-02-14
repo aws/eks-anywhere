@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -25,7 +26,7 @@ const mdInPlaceAnnotation = "machinedeployment.clusters.x-k8s.io/in-place-upgrad
 type mdObjects struct {
 	machine   *clusterv1.Machine
 	mdUpgrade *anywherev1.MachineDeploymentUpgrade
-	md        *clusterv1.MachineDeployment
+	md        *clusterv1beta2.MachineDeployment
 	mhc       *clusterv1.MachineHealthCheck
 }
 
@@ -124,7 +125,7 @@ func TestMDReconcileMDAndMachineDeploymentUpgradeReady(t *testing.T) {
 	g.Expect(err).To(HaveOccurred())
 	g.Expect(err).To(MatchError("machinedeploymentupgrades.anywhere.eks.amazonaws.com \"my-cluster-md-upgrade\" not found"))
 
-	md := &clusterv1.MachineDeployment{}
+	md := &clusterv1beta2.MachineDeployment{}
 	err = client.Get(ctx, types.NamespacedName{Name: mdObjs.md.Name, Namespace: constants.EksaSystemNamespace}, md)
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(md.Annotations).ToNot(HaveKey(mdInPlaceAnnotation))
@@ -154,7 +155,7 @@ func TestMDReconcileFullFlow(t *testing.T) {
 	g.Expect(mdu.Status.Ready).To(BeFalse())
 
 	// Expect KCP to still have in-place annotation
-	md := &clusterv1.MachineDeployment{}
+	md := &clusterv1beta2.MachineDeployment{}
 	err = client.Get(ctx, types.NamespacedName{Name: mdObjs.md.Name, Namespace: constants.EksaSystemNamespace}, md)
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(md.Annotations).To(HaveKey(mdInPlaceAnnotation))
@@ -228,7 +229,7 @@ func TestMDReconcileVersionMissing(t *testing.T) {
 	ctx := context.Background()
 	mdObjs := getObjectsForMD()
 
-	mdObjs.md.Spec.Template.Spec.Version = nil
+	mdObjs.md.Spec.Template.Spec.Version = ""
 
 	runtimeObjs := []runtime.Object{mdObjs.md}
 	client := fake.NewClientBuilder().WithRuntimeObjects(runtimeObjs...).Build()
@@ -270,7 +271,7 @@ func getObjectsForMD() mdObjects {
 	}
 }
 
-func mdRequest(md *clusterv1.MachineDeployment) reconcile.Request {
+func mdRequest(md *clusterv1beta2.MachineDeployment) reconcile.Request {
 	return reconcile.Request{
 		NamespacedName: types.NamespacedName{
 			Name:      md.Name,

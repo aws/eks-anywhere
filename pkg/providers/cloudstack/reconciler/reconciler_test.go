@@ -390,7 +390,7 @@ func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
 	tt.Expect(result).To(Equal(controller.Result{}))
 
 	tt.ShouldEventuallyExist(tt.ctx,
-		&clusterv1.MachineDeployment{
+		&clusterv1beta2.MachineDeployment{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      tt.cluster.Name + "-md-0",
 				Namespace: constants.EksaSystemNamespace,
@@ -666,7 +666,7 @@ func (tt *reconcilerTest) cleanup() {
 	tt.DeleteAndWait(tt.ctx, tt.allObjs()...)
 	tt.DeleteAllOfAndWait(tt.ctx, &bootstrapv1.KubeadmConfigTemplate{})
 	tt.DeleteAllOfAndWait(tt.ctx, &clusterv1beta2.Cluster{})
-	tt.DeleteAllOfAndWait(tt.ctx, &clusterv1.MachineDeployment{})
+	tt.DeleteAllOfAndWait(tt.ctx, &clusterv1beta2.MachineDeployment{})
 	tt.DeleteAllOfAndWait(tt.ctx, &cloudstackv1.CloudStackCluster{})
 	tt.DeleteAllOfAndWait(tt.ctx, &controlplanev1.KubeadmControlPlane{})
 	tt.DeleteAndWait(tt.ctx, &cloudstackv1.CloudStackMachineTemplate{

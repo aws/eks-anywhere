@@ -18,7 +18,7 @@ import (
 	v1alpha10 "github.com/tinkerbell/tink/api/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 	v1beta10 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
-	v1beta11 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	v1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 )
 
 // MockProviderKubectlClient is a mock of ProviderKubectlClient interface.
@@ -230,14 +230,14 @@ func (mr *MockProviderKubectlClientMockRecorder) GetKubeadmControlPlane(arg0, ar
 }
 
 // GetMachineDeployment mocks base method.
-func (m *MockProviderKubectlClient) GetMachineDeployment(arg0 context.Context, arg1 string, arg2 ...executables.KubectlOpt) (*v1beta11.MachineDeployment, error) {
+func (m *MockProviderKubectlClient) GetMachineDeployment(arg0 context.Context, arg1 string, arg2 ...executables.KubectlOpt) (*v1beta2.MachineDeployment, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0, arg1}
 	for _, a := range arg2 {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetMachineDeployment", varargs...)
-	ret0, _ := ret[0].(*v1beta11.MachineDeployment)
+	ret0, _ := ret[0].(*v1beta2.MachineDeployment)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

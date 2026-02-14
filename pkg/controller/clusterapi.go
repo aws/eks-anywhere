@@ -78,8 +78,8 @@ func CAPIKubeadmControlPlaneKey(cluster *anywherev1.Cluster) client.ObjectKey {
 
 // GetMachineDeployment reads a cluster-api MachineDeployment for an eks-a cluster using a kube client.
 // If the MachineDeployment is not found, the method returns (nil, nil).
-func GetMachineDeployment(ctx context.Context, client client.Client, machineDeploymentName string) (*clusterv1.MachineDeployment, error) {
-	machineDeployment := &clusterv1.MachineDeployment{}
+func GetMachineDeployment(ctx context.Context, client client.Client, machineDeploymentName string) (*clusterv1beta2.MachineDeployment, error) {
+	machineDeployment := &clusterv1beta2.MachineDeployment{}
 	key := types.NamespacedName{Namespace: constants.EksaSystemNamespace, Name: machineDeploymentName}
 
 	err := client.Get(ctx, key, machineDeployment)
@@ -94,8 +94,8 @@ func GetMachineDeployment(ctx context.Context, client client.Client, machineDepl
 }
 
 // GetMachineDeployments reads all of cluster-api MachineDeployment for an eks-a cluster using a kube client.
-func GetMachineDeployments(ctx context.Context, c client.Client, cluster *anywherev1.Cluster) ([]clusterv1.MachineDeployment, error) {
-	machineDeployments := &clusterv1.MachineDeploymentList{}
+func GetMachineDeployments(ctx context.Context, c client.Client, cluster *anywherev1.Cluster) ([]clusterv1beta2.MachineDeployment, error) {
+	machineDeployments := &clusterv1beta2.MachineDeploymentList{}
 
 	err := c.List(ctx, machineDeployments, client.MatchingLabels{clusterv1.ClusterNameLabel: cluster.Name}, client.InNamespace(constants.EksaSystemNamespace))
 	if err != nil {

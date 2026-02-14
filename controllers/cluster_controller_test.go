@@ -88,16 +88,16 @@ func testKubeadmControlPlaneFromCluster(cluster *anywherev1.Cluster) *controlpla
 	})
 }
 
-func machineDeploymentsFromCluster(cluster *anywherev1.Cluster) []clusterv1.MachineDeployment {
-	return []clusterv1.MachineDeployment{
-		*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+func machineDeploymentsFromCluster(cluster *anywherev1.Cluster) []clusterv1beta2.MachineDeployment {
+	return []clusterv1beta2.MachineDeployment{
+		*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 			md.ObjectMeta.Name = "md-0"
 			md.ObjectMeta.Labels = map[string]string{
 				clusterv1.ClusterNameLabel: cluster.Name,
 			}
-			md.Status.Replicas = 1
-			md.Status.ReadyReplicas = 1
-			md.Status.UpdatedReplicas = 1
+			md.Status.Replicas = ptr.Int32(1)
+			md.Status.ReadyReplicas = ptr.Int32(1)
+			md.Status.UpToDateReplicas = ptr.Int32(1)
 		}),
 	}
 }
@@ -303,7 +303,7 @@ func TestClusterReconcilerReconcileConditions(t *testing.T) {
 		skipCNIUpgrade          bool
 		cniUpgradeInProgress    bool
 		kcpStatus               controlplanev1.KubeadmControlPlaneStatus
-		machineDeploymentStatus clusterv1.MachineDeploymentStatus
+		machineDeploymentStatus clusterv1beta2.MachineDeploymentStatus
 		result                  ctrl.Result
 		wantConditions          []anywherev1.Condition
 	}{
@@ -319,7 +319,7 @@ func TestClusterReconcilerReconcileConditions(t *testing.T) {
 					},
 				},
 			},
-			machineDeploymentStatus: clusterv1.MachineDeploymentStatus{},
+			machineDeploymentStatus: clusterv1beta2.MachineDeploymentStatus{},
 			wantConditions: []anywherev1.Condition{
 				*v1beta1conditions.FalseCondition(anywherev1.ControlPlaneInitializedCondition, anywherev1.ControlPlaneInitializationInProgressReason, clusterv1.ConditionSeverityInfo, "%s", controlPlaneInitalizationInProgressReason),
 				*v1beta1conditions.FalseCondition(anywherev1.ControlPlaneReadyCondition, anywherev1.ControlPlaneInitializationInProgressReason, clusterv1.ConditionSeverityInfo, "%s", controlPlaneInitalizationInProgressReason),
@@ -345,7 +345,7 @@ func TestClusterReconcilerReconcileConditions(t *testing.T) {
 					},
 				},
 			},
-			machineDeploymentStatus: clusterv1.MachineDeploymentStatus{},
+			machineDeploymentStatus: clusterv1beta2.MachineDeploymentStatus{},
 			wantConditions: []anywherev1.Condition{
 				*v1beta1conditions.TrueCondition(anywherev1.ControlPlaneInitializedCondition),
 				*v1beta1conditions.FalseCondition(anywherev1.ControlPlaneReadyCondition, anywherev1.ScalingUpReason, clusterv1.ConditionSeverityInfo, "Scaling up control plane nodes, 1 expected (0 actual)"),
@@ -378,7 +378,7 @@ func TestClusterReconcilerReconcileConditions(t *testing.T) {
 					},
 				},
 			},
-			machineDeploymentStatus: clusterv1.MachineDeploymentStatus{},
+			machineDeploymentStatus: clusterv1beta2.MachineDeploymentStatus{},
 			wantConditions: []anywherev1.Condition{
 				*v1beta1conditions.FalseCondition(anywherev1.ReadyCondition, anywherev1.ScalingUpReason, clusterv1.ConditionSeverityInfo, "Scaling up worker nodes, 1 expected (0 actual)"),
 				*v1beta1conditions.TrueCondition(anywherev1.ControlPlaneReadyCondition),
@@ -411,10 +411,10 @@ func TestClusterReconcilerReconcileConditions(t *testing.T) {
 					},
 				},
 			},
-			machineDeploymentStatus: clusterv1.MachineDeploymentStatus{
-				ReadyReplicas:   1,
-				Replicas:        1,
-				UpdatedReplicas: 1,
+			machineDeploymentStatus: clusterv1beta2.MachineDeploymentStatus{
+				ReadyReplicas:    ptr.Int32(1),
+				Replicas:         ptr.Int32(1),
+				UpToDateReplicas: ptr.Int32(1),
 			},
 			wantConditions: []anywherev1.Condition{
 				*v1beta1conditions.TrueCondition(anywherev1.ReadyCondition),
@@ -448,10 +448,10 @@ func TestClusterReconcilerReconcileConditions(t *testing.T) {
 					},
 				},
 			},
-			machineDeploymentStatus: clusterv1.MachineDeploymentStatus{
-				ReadyReplicas:   1,
-				Replicas:        1,
-				UpdatedReplicas: 1,
+			machineDeploymentStatus: clusterv1beta2.MachineDeploymentStatus{
+				ReadyReplicas:    ptr.Int32(1),
+				Replicas:         ptr.Int32(1),
+				UpToDateReplicas: ptr.Int32(1),
 			},
 			wantConditions: []anywherev1.Condition{
 				*v1beta1conditions.TrueCondition(anywherev1.ReadyCondition),
@@ -485,10 +485,10 @@ func TestClusterReconcilerReconcileConditions(t *testing.T) {
 					},
 				},
 			},
-			machineDeploymentStatus: clusterv1.MachineDeploymentStatus{
-				ReadyReplicas:   1,
-				Replicas:        1,
-				UpdatedReplicas: 1,
+			machineDeploymentStatus: clusterv1beta2.MachineDeploymentStatus{
+				ReadyReplicas:    ptr.Int32(1),
+				Replicas:         ptr.Int32(1),
+				UpToDateReplicas: ptr.Int32(1),
 			},
 			wantConditions: []anywherev1.Condition{
 				*v1beta1conditions.FalseCondition(anywherev1.ReadyCondition, anywherev1.DefaultCNIUpgradeInProgressReason, clusterv1.ConditionSeverityInfo, "Cilium version upgrade needed"),
@@ -531,7 +531,7 @@ func TestClusterReconcilerReconcileConditions(t *testing.T) {
 				kcp.Status = tt.kcpStatus
 			})
 
-			md1 := test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+			md1 := test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 				md.ObjectMeta.Labels = map[string]string{
 					clusterv1.ClusterNameLabel: config.Cluster.Name,
 				}
@@ -621,7 +621,7 @@ func TestClusterReconcilerReconcileSelfManagedClusterConditions(t *testing.T) {
 		testName                string
 		skipCNIUpgrade          bool
 		kcpStatus               controlplanev1.KubeadmControlPlaneStatus
-		machineDeploymentStatus clusterv1.MachineDeploymentStatus
+		machineDeploymentStatus clusterv1beta2.MachineDeploymentStatus
 		result                  ctrl.Result
 		wantConditions          []anywherev1.Condition
 	}{
@@ -639,7 +639,7 @@ func TestClusterReconcilerReconcileSelfManagedClusterConditions(t *testing.T) {
 					},
 				},
 			},
-			machineDeploymentStatus: clusterv1.MachineDeploymentStatus{},
+			machineDeploymentStatus: clusterv1beta2.MachineDeploymentStatus{},
 			skipCNIUpgrade:          false,
 			wantConditions: []anywherev1.Condition{
 				*v1beta1conditions.TrueCondition(anywherev1.ControlPlaneInitializedCondition),
@@ -671,7 +671,7 @@ func TestClusterReconcilerReconcileSelfManagedClusterConditions(t *testing.T) {
 					},
 				},
 			},
-			machineDeploymentStatus: clusterv1.MachineDeploymentStatus{},
+			machineDeploymentStatus: clusterv1beta2.MachineDeploymentStatus{},
 			skipCNIUpgrade:          false,
 			wantConditions: []anywherev1.Condition{
 				*v1beta1conditions.FalseCondition(anywherev1.ReadyCondition, anywherev1.ScalingUpReason, clusterv1.ConditionSeverityInfo, "Scaling up worker nodes, 1 expected (0 actual)"),
@@ -703,7 +703,7 @@ func TestClusterReconcilerReconcileSelfManagedClusterConditions(t *testing.T) {
 					},
 				},
 			},
-			machineDeploymentStatus: clusterv1.MachineDeploymentStatus{},
+			machineDeploymentStatus: clusterv1beta2.MachineDeploymentStatus{},
 			skipCNIUpgrade:          true,
 			wantConditions: []anywherev1.Condition{
 				*v1beta1conditions.FalseCondition(anywherev1.ReadyCondition, anywherev1.ScalingUpReason, clusterv1.ConditionSeverityInfo, "Scaling up worker nodes, 1 expected (0 actual)"),
@@ -735,10 +735,10 @@ func TestClusterReconcilerReconcileSelfManagedClusterConditions(t *testing.T) {
 					},
 				},
 			},
-			machineDeploymentStatus: clusterv1.MachineDeploymentStatus{
-				ReadyReplicas:   1,
-				Replicas:        1,
-				UpdatedReplicas: 1,
+			machineDeploymentStatus: clusterv1beta2.MachineDeploymentStatus{
+				ReadyReplicas:    ptr.Int32(1),
+				Replicas:         ptr.Int32(1),
+				UpToDateReplicas: ptr.Int32(1),
 			},
 			skipCNIUpgrade: true,
 			wantConditions: []anywherev1.Condition{
@@ -771,10 +771,10 @@ func TestClusterReconcilerReconcileSelfManagedClusterConditions(t *testing.T) {
 					},
 				},
 			},
-			machineDeploymentStatus: clusterv1.MachineDeploymentStatus{
-				ReadyReplicas:   1,
-				Replicas:        1,
-				UpdatedReplicas: 1,
+			machineDeploymentStatus: clusterv1beta2.MachineDeploymentStatus{
+				ReadyReplicas:    ptr.Int32(1),
+				Replicas:         ptr.Int32(1),
+				UpToDateReplicas: ptr.Int32(1),
 			},
 			skipCNIUpgrade: false,
 			wantConditions: []anywherev1.Condition{
@@ -808,7 +808,7 @@ func TestClusterReconcilerReconcileSelfManagedClusterConditions(t *testing.T) {
 				kcp.Status = tt.kcpStatus
 			})
 
-			md1 := test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+			md1 := test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 				md.ObjectMeta.Labels = map[string]string{
 					clusterv1.ClusterNameLabel: config.Cluster.Name,
 				}

@@ -30,8 +30,9 @@ const (
 )
 
 var (
-	clusterAPIVersion             = clusterv1beta2.GroupVersion.String() // v1beta2 for Cluster only
-	machineDeploymentAPIVersion   = clusterv1.GroupVersion.String()      // v1beta1 for MachineDeployment (D1)
+	clusterAPIVersion             = clusterv1beta2.GroupVersion.String()
+	machineDeploymentAPIVersion   = clusterv1beta2.GroupVersion.String()
+	machineHealthCheckAPIVersion  = clusterv1.GroupVersion.String()
 	kubeadmControlPlaneAPIVersion = controlplanev1.GroupVersion.String()
 	bootstrapAPIVersion           = bootstrapv1.GroupVersion.String()
 	etcdAPIVersion                = etcdv1.GroupVersion.String()
@@ -248,13 +249,13 @@ func KubeadmConfigTemplate(clusterSpec *cluster.Spec, workerNodeGroupConfig anyw
 }
 
 // MachineDeployment builds a machineDeployment based on an eks-a cluster spec, workerNodeGroupConfig, bootstrapObject and infrastructureObject.
-func MachineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig anywherev1.WorkerNodeGroupConfiguration, bootstrapObject, infrastructureObject APIObject) *clusterv1.MachineDeployment {
+func MachineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig anywherev1.WorkerNodeGroupConfiguration, bootstrapObject, infrastructureObject APIObject) *clusterv1beta2.MachineDeployment {
 	clusterName := clusterSpec.Cluster.GetName()
 	replicas := int32(*workerNodeGroupConfig.Count)
 	bundle := clusterSpec.WorkerNodeGroupVersionsBundle(workerNodeGroupConfig)
 	version := bundle.KubeDistro.Kubernetes.Tag
 
-	md := &clusterv1.MachineDeployment{
+	md := &clusterv1beta2.MachineDeployment{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: machineDeploymentAPIVersion,
 			Kind:       machineDeploymentKind,
@@ -265,30 +266,30 @@ func MachineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig anywhere
 			Labels:      capiObjectLabels(clusterSpec),
 			Annotations: map[string]string{},
 		},
-		Spec: clusterv1.MachineDeploymentSpec{
+		Spec: clusterv1beta2.MachineDeploymentSpec{
 			ClusterName: clusterName,
 			Selector: metav1.LabelSelector{
 				MatchLabels: map[string]string{},
 			},
-			Template: clusterv1.MachineTemplateSpec{
-				ObjectMeta: clusterv1.ObjectMeta{
+			Template: clusterv1beta2.MachineTemplateSpec{
+				ObjectMeta: clusterv1beta2.ObjectMeta{
 					Labels: capiClusterLabel(clusterSpec),
 				},
-				Spec: clusterv1.MachineSpec{
-					Bootstrap: clusterv1.Bootstrap{
-						ConfigRef: &v1.ObjectReference{
-							APIVersion: bootstrapObject.GetObjectKind().GroupVersionKind().GroupVersion().String(),
-							Kind:       bootstrapObject.GetObjectKind().GroupVersionKind().Kind,
-							Name:       bootstrapObject.GetName(),
+				Spec: clusterv1beta2.MachineSpec{
+					Bootstrap: clusterv1beta2.Bootstrap{
+						ConfigRef: clusterv1beta2.ContractVersionedObjectReference{
+							APIGroup: bootstrapObject.GetObjectKind().GroupVersionKind().Group,
+							Kind:     bootstrapObject.GetObjectKind().GroupVersionKind().Kind,
+							Name:     bootstrapObject.GetName(),
 						},
 					},
 					ClusterName: clusterName,
-					InfrastructureRef: v1.ObjectReference{
-						APIVersion: infrastructureObject.GetObjectKind().GroupVersionKind().GroupVersion().String(),
-						Kind:       infrastructureObject.GetObjectKind().GroupVersionKind().Kind,
-						Name:       infrastructureObject.GetName(),
+					InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
+						APIGroup: infrastructureObject.GetObjectKind().GroupVersionKind().Group,
+						Kind:     infrastructureObject.GetObjectKind().GroupVersionKind().Kind,
+						Name:     infrastructureObject.GetName(),
 					},
-					Version: &version,
+					Version: version,
 				},
 			},
 			Replicas: &replicas,

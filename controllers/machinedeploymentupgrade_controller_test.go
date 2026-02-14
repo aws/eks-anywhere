@@ -237,7 +237,7 @@ func TestMDObjectDoesNotExistError(t *testing.T) {
 	g.Expect(err).To(MatchError("getting MachineDeployment my-cluster-md: machinedeployments.cluster.x-k8s.io \"my-cluster-md\" not found"))
 }
 
-func getObjectsForMDUpgradeTest() (*clusterv1beta2.Cluster, []*clusterv1.Machine, []*corev1.Node, *anywherev1.MachineDeploymentUpgrade, []*anywherev1.NodeUpgrade, *clusterv1.MachineDeployment, *clusterv1.MachineSet) {
+func getObjectsForMDUpgradeTest() (*clusterv1beta2.Cluster, []*clusterv1.Machine, []*corev1.Node, *anywherev1.MachineDeploymentUpgrade, []*anywherev1.NodeUpgrade, *clusterv1beta2.MachineDeployment, *clusterv1.MachineSet) {
 	cluster := generateCluster()
 	node1 := generateNode()
 	node2 := node1.DeepCopy()
@@ -310,7 +310,7 @@ func generateMDUpgrade(cluster *clusterv1beta2.Cluster, machines ...*clusterv1.M
 
 func generateMachineset(cluster *clusterv1beta2.Cluster) *clusterv1.MachineSet {
 	ms := getMachineSpec(cluster)
-	ms.Version = ptr.String(k8s127)
+	ms.Version = k8s127
 	return &clusterv1.MachineSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        "my-md-ms",
@@ -322,15 +322,18 @@ func generateMachineset(cluster *clusterv1beta2.Cluster) *clusterv1.MachineSet {
 			ClusterName: cluster.Name,
 			Replicas:    new(int32),
 			Template: clusterv1.MachineTemplateSpec{
-				Spec: *ms,
+				Spec: clusterv1.MachineSpec{
+					ClusterName: ms.ClusterName,
+					Version:     &ms.Version,
+				},
 			},
 		},
 	}
 }
 
-func generateMachineDeployment(cluster *clusterv1beta2.Cluster) *clusterv1.MachineDeployment {
+func generateMachineDeployment(cluster *clusterv1beta2.Cluster) *clusterv1beta2.MachineDeployment {
 	ms := getMachineSpec(cluster)
-	return &clusterv1.MachineDeployment{
+	return &clusterv1beta2.MachineDeployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-md", cluster.Name),
 			Namespace: constants.EksaSystemNamespace,
@@ -339,22 +342,22 @@ func generateMachineDeployment(cluster *clusterv1beta2.Cluster) *clusterv1.Machi
 				"machinedeployment.clusters.x-k8s.io/in-place-upgrade-needed": "true",
 			},
 		},
-		Spec: clusterv1.MachineDeploymentSpec{
+		Spec: clusterv1beta2.MachineDeploymentSpec{
 			ClusterName: cluster.Name,
 			Replicas:    ptr.Int32(1),
 			Selector: metav1.LabelSelector{
 				MatchLabels: map[string]string{"cluster.x-k8s.io/deployment-name": cluster.Name},
 			},
-			Template: clusterv1.MachineTemplateSpec{
+			Template: clusterv1beta2.MachineTemplateSpec{
 				Spec: *ms,
 			},
 		},
 	}
 }
 
-func getMachineSpec(cluster *clusterv1beta2.Cluster) *clusterv1.MachineSpec {
-	return &clusterv1.MachineSpec{
+func getMachineSpec(cluster *clusterv1beta2.Cluster) *clusterv1beta2.MachineSpec {
+	return &clusterv1beta2.MachineSpec{
 		ClusterName: cluster.Name,
-		Version:     ptr.String(k8s128),
+		Version:     k8s128,
 	}
 }

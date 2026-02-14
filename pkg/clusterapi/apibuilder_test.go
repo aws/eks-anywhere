@@ -11,7 +11,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	"github.com/aws/eks-anywhere/internal/test"
@@ -440,14 +439,14 @@ func TestKubeadmConfigTemplate(t *testing.T) {
 	tt.Expect(got).To(Equal(want))
 }
 
-type machineDeploymentOpt func(m *clusterv1.MachineDeployment)
+type machineDeploymentOpt func(m *clusterv1beta2.MachineDeployment)
 
-func wantMachineDeployment(opts ...machineDeploymentOpt) *clusterv1.MachineDeployment {
+func wantMachineDeployment(opts ...machineDeploymentOpt) *clusterv1beta2.MachineDeployment {
 	replicas := int32(3)
 	version := "v1.21.5-eks-1-21-9"
-	md := &clusterv1.MachineDeployment{
+	md := &clusterv1beta2.MachineDeployment{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "cluster.x-k8s.io/v1beta1",
+			APIVersion: "cluster.x-k8s.io/v1beta2",
 			Kind:       "MachineDeployment",
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -460,32 +459,32 @@ func wantMachineDeployment(opts ...machineDeploymentOpt) *clusterv1.MachineDeplo
 			},
 			Annotations: map[string]string{},
 		},
-		Spec: clusterv1.MachineDeploymentSpec{
+		Spec: clusterv1beta2.MachineDeploymentSpec{
 			ClusterName: "test-cluster",
 			Selector: metav1.LabelSelector{
 				MatchLabels: map[string]string{},
 			},
-			Template: clusterv1.MachineTemplateSpec{
-				ObjectMeta: clusterv1.ObjectMeta{
+			Template: clusterv1beta2.MachineTemplateSpec{
+				ObjectMeta: clusterv1beta2.ObjectMeta{
 					Labels: map[string]string{
 						"cluster.x-k8s.io/cluster-name": "test-cluster",
 					},
 				},
-				Spec: clusterv1.MachineSpec{
-					Bootstrap: clusterv1.Bootstrap{
-						ConfigRef: &v1.ObjectReference{
-							APIVersion: "bootstrap.cluster.x-k8s.io/v1beta1",
+				Spec: clusterv1beta2.MachineSpec{
+					Bootstrap: clusterv1beta2.Bootstrap{
+						ConfigRef: clusterv1beta2.ContractVersionedObjectReference{
+							APIGroup: "bootstrap.cluster.x-k8s.io",
 							Kind:       "KubeadmConfigTemplate",
 							Name:       "md-0",
 						},
 					},
 					ClusterName: "test-cluster",
-					InfrastructureRef: v1.ObjectReference{
-						APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+					InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
+						APIGroup: "infrastructure.cluster.x-k8s.io",
 						Kind:       "ProviderMachineTemplate",
 						Name:       "provider-template",
 					},
-					Version: &version,
+					Version: version,
 				},
 			},
 			Replicas: &replicas,

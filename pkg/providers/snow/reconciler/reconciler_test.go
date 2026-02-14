@@ -400,7 +400,7 @@ func (tt *reconcilerTest) cleanup() {
 	tt.DeleteAndWait(tt.ctx, tt.allObjs()...)
 	tt.DeleteAllOfAndWait(tt.ctx, &bootstrapv1.KubeadmConfigTemplate{})
 	tt.DeleteAllOfAndWait(tt.ctx, &snowv1.AWSSnowMachineTemplate{})
-	tt.DeleteAllOfAndWait(tt.ctx, &clusterv1.MachineDeployment{})
+	tt.DeleteAllOfAndWait(tt.ctx, &clusterv1beta2.MachineDeployment{})
 }
 
 func (tt *reconcilerTest) buildSpec() *clusterspec.Spec {

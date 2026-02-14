@@ -4,9 +4,8 @@ import (
 	"testing"
 
 	. "github.com/onsi/gomega"
-	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
@@ -18,7 +17,7 @@ func TestConfigureAutoscalingInMachineDeployment(t *testing.T) {
 	tests := []struct {
 		name              string
 		autoscalingConfig *v1alpha1.AutoScalingConfiguration
-		want              *clusterv1.MachineDeployment
+		want              *clusterv1beta2.MachineDeployment
 	}{
 		{
 			name:              "no autoscaling config",
@@ -31,9 +30,9 @@ func TestConfigureAutoscalingInMachineDeployment(t *testing.T) {
 				MinCount: 1,
 				MaxCount: 3,
 			},
-			want: &clusterv1.MachineDeployment{
+			want: &clusterv1beta2.MachineDeployment{
 				TypeMeta: metav1.TypeMeta{
-					APIVersion: "cluster.x-k8s.io/v1beta1",
+					APIVersion: "cluster.x-k8s.io/v1beta2",
 					Kind:       "MachineDeployment",
 				},
 				ObjectMeta: metav1.ObjectMeta{
@@ -49,32 +48,32 @@ func TestConfigureAutoscalingInMachineDeployment(t *testing.T) {
 						"cluster.x-k8s.io/cluster-api-autoscaler-node-group-max-size": "3",
 					},
 				},
-				Spec: clusterv1.MachineDeploymentSpec{
+				Spec: clusterv1beta2.MachineDeploymentSpec{
 					ClusterName: "test-cluster",
 					Selector: metav1.LabelSelector{
 						MatchLabels: map[string]string{},
 					},
-					Template: clusterv1.MachineTemplateSpec{
-						ObjectMeta: clusterv1.ObjectMeta{
+					Template: clusterv1beta2.MachineTemplateSpec{
+						ObjectMeta: clusterv1beta2.ObjectMeta{
 							Labels: map[string]string{
 								"cluster.x-k8s.io/cluster-name": "test-cluster",
 							},
 						},
-						Spec: clusterv1.MachineSpec{
-							Bootstrap: clusterv1.Bootstrap{
-								ConfigRef: &v1.ObjectReference{
-									APIVersion: "bootstrap.cluster.x-k8s.io/v1beta1",
-									Kind:       "KubeadmConfigTemplate",
-									Name:       "md-0",
+						Spec: clusterv1beta2.MachineSpec{
+							Bootstrap: clusterv1beta2.Bootstrap{
+								ConfigRef: clusterv1beta2.ContractVersionedObjectReference{
+									APIGroup: "bootstrap.cluster.x-k8s.io",
+									Kind:     "KubeadmConfigTemplate",
+									Name:     "md-0",
 								},
 							},
 							ClusterName: "test-cluster",
-							InfrastructureRef: v1.ObjectReference{
-								APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
-								Kind:       "ProviderMachineTemplate",
-								Name:       "provider-template",
+							InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
+								APIGroup: "infrastructure.cluster.x-k8s.io",
+								Kind:     "ProviderMachineTemplate",
+								Name:     "provider-template",
 							},
-							Version: &version,
+							Version: version,
 						},
 					},
 					Replicas: &replicas,

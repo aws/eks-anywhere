@@ -9,7 +9,7 @@ import (
 	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -182,7 +182,7 @@ func (r *Reconciler) DetectOperation(ctx context.Context, log logr.Logger, tinke
 		if err != nil {
 			return "", errors.Wrap(err, "failed to get workernode group machinedeployment")
 		}
-		if machineDeployment != nil && (*machineDeployment.Spec.Template.Spec.Version != *wg.MachineDeployment.Spec.Template.Spec.Version) {
+		if machineDeployment != nil && (machineDeployment.Spec.Template.Spec.Version != wg.MachineDeployment.Spec.Template.Spec.Version) {
 			log.Info("Operation detected", "operation", K8sVersionUpgradeOperation)
 			return K8sVersionUpgradeOperation, nil
 		}
@@ -373,7 +373,7 @@ func (r *Reconciler) getValidatableCAPI(ctx context.Context, cluster *anywherev1
 	}
 	var wgs []*clusterapi.WorkerGroup[*tinkerbellv1.TinkerbellMachineTemplate]
 	for _, wnc := range cluster.Spec.WorkerNodeGroupConfigurations {
-		md := &clusterv1.MachineDeployment{}
+		md := &clusterv1beta2.MachineDeployment{}
 		mdName := clusterapi.MachineDeploymentName(cluster, wnc)
 		key := types.NamespacedName{Namespace: constants.EksaSystemNamespace, Name: mdName}
 		err := r.client.Get(ctx, key, md)

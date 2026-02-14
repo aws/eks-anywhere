@@ -312,7 +312,6 @@ func kubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
 			MachineTemplate: controlplanev1.KubeadmControlPlaneMachineTemplate{
 				InfrastructureRef: corev1.ObjectReference{
 					Name:       "cp-mt",
-					Namespace:  constants.EksaSystemNamespace,
 					Kind:       "DockerMachineTemplate",
 					APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
 				},

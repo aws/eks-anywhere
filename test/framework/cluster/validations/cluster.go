@@ -121,15 +121,22 @@ func validateMDs(ctx context.Context, vc clusterf.StateValidationConfig) error {
 	}
 	for _, md := range mds {
 		for _, condition := range md.Status.Conditions {
-			if condition.Type == v1beta1.ReadyCondition {
-				if condition.Status != corev1.ConditionTrue {
+			if condition.Type == string(clusterv1beta2.ReadyCondition) {
+				if condition.Status != metav1.ConditionTrue {
 					return fmt.Errorf("md ready condition is not true for md %s", md.Name)
 				}
 				break
 			}
 		}
-		if md.Status.UpdatedReplicas != md.Status.ReadyReplicas || *md.Spec.Replicas != md.Status.UpdatedReplicas {
-			return fmt.Errorf("md replicas count %d, updated replicas count %d and ready replicas count %d for md %s are not in sync", *md.Spec.Replicas, md.Status.UpdatedReplicas, md.Status.ReadyReplicas, md.Name)
+		var upToDateReplicas, readyReplicas int32
+		if md.Status.UpToDateReplicas != nil {
+			upToDateReplicas = *md.Status.UpToDateReplicas
+		}
+		if md.Status.ReadyReplicas != nil {
+			readyReplicas = *md.Status.ReadyReplicas
+		}
+		if upToDateReplicas != readyReplicas || *md.Spec.Replicas != upToDateReplicas {
+			return fmt.Errorf("md replicas count %d, updated replicas count %d and ready replicas count %d for md %s are not in sync", *md.Spec.Replicas, upToDateReplicas, readyReplicas, md.Name)
 		}
 	}
 

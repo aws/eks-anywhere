@@ -558,7 +558,7 @@ func (tt *reconcilerTest) cleanup() {
 
 	tt.DeleteAllOfAndWait(tt.ctx, &bootstrapv1.KubeadmConfigTemplate{})
 	tt.DeleteAllOfAndWait(tt.ctx, &vspherev1.VSphereMachineTemplate{})
-	tt.DeleteAllOfAndWait(tt.ctx, &clusterv1.MachineDeployment{})
+	tt.DeleteAllOfAndWait(tt.ctx, &clusterv1beta2.MachineDeployment{})
 }
 
 func (tt *reconcilerTest) buildSpec() *clusterspec.Spec {

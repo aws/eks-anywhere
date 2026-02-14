@@ -113,7 +113,7 @@ func TestGetMachineDeploymentsSuccess(t *testing.T) {
 
 	client := fake.NewClientBuilder().WithObjects(eksaCluster, md1, md2).Build()
 
-	g.Expect(controller.GetMachineDeployments(ctx, client, eksaCluster)).To(Equal([]clusterv1.MachineDeployment{*md1, *md2}))
+	g.Expect(controller.GetMachineDeployments(ctx, client, eksaCluster)).To(Equal([]clusterv1beta2.MachineDeployment{*md1, *md2}))
 }
 
 func TestGetMachineDeploymentsMachineDeploymentsInDifferentClusters(t *testing.T) {
@@ -134,7 +134,7 @@ func TestGetMachineDeploymentsMachineDeploymentsInDifferentClusters(t *testing.T
 
 	client := fake.NewClientBuilder().WithObjects(eksaCluster, machineDeployment1, machineDeployment2).Build()
 
-	g.Expect(controller.GetMachineDeployments(ctx, client, eksaCluster)).To(Equal([]clusterv1.MachineDeployment{*machineDeployment1}))
+	g.Expect(controller.GetMachineDeployments(ctx, client, eksaCluster)).To(Equal([]clusterv1beta2.MachineDeployment{*machineDeployment1}))
 }
 
 func TestGetMachineDeploymentsError(t *testing.T) {
@@ -198,8 +198,8 @@ func kubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
 	}
 }
 
-func machineDeployment() *clusterv1.MachineDeployment {
-	return &clusterv1.MachineDeployment{
+func machineDeployment() *clusterv1beta2.MachineDeployment {
+	return &clusterv1beta2.MachineDeployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-cluster",
 			Namespace: "eksa-system",

@@ -7,7 +7,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -311,15 +310,15 @@ func KubeadmControlPlane(opts ...KubeadmControlPlaneOpt) *controlplanev1.Kubeadm
 	return kcp
 }
 
-// MachineDeploymentOpt represents an function where a kubeadmcontrolplane is passed as an argument.
-type MachineDeploymentOpt func(md *clusterv1.MachineDeployment)
+// MachineDeploymentOpt represents a function where a MachineDeployment is passed as an argument.
+type MachineDeploymentOpt func(md *clusterv1beta2.MachineDeployment)
 
 // MachineDeployment returns a machinedeployment which can be configured by passing in opts arguments.
-func MachineDeployment(opts ...MachineDeploymentOpt) *clusterv1.MachineDeployment {
-	md := &clusterv1.MachineDeployment{
+func MachineDeployment(opts ...MachineDeploymentOpt) *clusterv1beta2.MachineDeployment {
+	md := &clusterv1beta2.MachineDeployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "MachineDeployment",
-			APIVersion: clusterv1.GroupVersion.String(),
+			APIVersion: clusterv1beta2.GroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: constants.EksaSystemNamespace,

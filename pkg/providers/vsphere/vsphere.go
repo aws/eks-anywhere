@@ -13,7 +13,7 @@ import (
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
@@ -137,7 +137,7 @@ type ProviderKubectlClient interface {
 	GetEksaCluster(ctx context.Context, cluster *types.Cluster, clusterName string) (*v1alpha1.Cluster, error)
 	GetEksaVSphereDatacenterConfig(ctx context.Context, vsphereDatacenterConfigName, kubeconfigFile, namespace string) (*v1alpha1.VSphereDatacenterConfig, error)
 	GetEksaVSphereMachineConfig(ctx context.Context, vsphereMachineConfigName, kubeconfigFile, namespace string) (*v1alpha1.VSphereMachineConfig, error)
-	GetMachineDeployment(ctx context.Context, machineDeploymentName string, opts ...executables.KubectlOpt) (*clusterv1.MachineDeployment, error)
+	GetMachineDeployment(ctx context.Context, machineDeploymentName string, opts ...executables.KubectlOpt) (*clusterv1beta2.MachineDeployment, error)
 	GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*controlplanev1.KubeadmControlPlane, error)
 	GetEtcdadmCluster(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*etcdv1.EtcdadmCluster, error)
 	GetSecretFromNamespace(ctx context.Context, kubeconfigFile, name, namespace string) (*corev1.Secret, error)
