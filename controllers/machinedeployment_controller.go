@@ -120,7 +120,7 @@ func (r *MachineDeploymentReconciler) reconcile(ctx context.Context, log logr.Lo
 		return ctrl.Result{}, fmt.Errorf("unable to retrieve kubernetes version from MachineDeployment \"%s\"", md.ObjectMeta.Name)
 	}
 
-	mhc := &clusterv1.MachineHealthCheck{}
+	mhc := &clusterv1beta2.MachineHealthCheck{}
 	if err := r.client.Get(ctx, GetNamespacedNameType(mdMachineHealthCheckName(md.ObjectMeta.Name), constants.EksaSystemNamespace), mhc); err != nil {
 		if apierrors.IsNotFound(err) {
 			return reconcile.Result{}, err

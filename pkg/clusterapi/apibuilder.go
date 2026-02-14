@@ -32,7 +32,7 @@ const (
 var (
 	clusterAPIVersion             = clusterv1beta2.GroupVersion.String()
 	machineDeploymentAPIVersion   = clusterv1beta2.GroupVersion.String()
-	machineHealthCheckAPIVersion  = clusterv1.GroupVersion.String()
+	machineHealthCheckAPIVersion  = clusterv1beta2.GroupVersion.String()
 	kubeadmControlPlaneAPIVersion = controlplanev1.GroupVersion.String()
 	bootstrapAPIVersion           = bootstrapv1.GroupVersion.String()
 	etcdAPIVersion                = etcdv1.GroupVersion.String()

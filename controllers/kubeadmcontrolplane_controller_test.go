@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"testing"
-	"time"
 
 	. "github.com/onsi/gomega"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -17,6 +16,7 @@ import (
 	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -34,7 +34,7 @@ type kcpObjects struct {
 	machines  []*clusterv1.Machine
 	cpUpgrade *anywherev1.ControlPlaneUpgrade
 	kcp       *controlplanev1.KubeadmControlPlane
-	mhc       *clusterv1.MachineHealthCheck
+	mhc       *clusterv1beta2.MachineHealthCheck
 }
 
 func TestKCPSetupWithManager(t *testing.T) {
@@ -59,7 +59,7 @@ func TestKCPReconcileNotNeeded(t *testing.T) {
 	_, err := r.Reconcile(ctx, req)
 	g.Expect(err).ToNot(HaveOccurred())
 
-	mhc := &clusterv1.MachineHealthCheck{}
+	mhc := &clusterv1beta2.MachineHealthCheck{}
 	err = client.Get(ctx, types.NamespacedName{Name: kcpObjs.mhc.Name, Namespace: constants.EksaSystemNamespace}, mhc)
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(mhc.Annotations).ToNot(HaveKey(capiPausedAnnotation))
@@ -105,7 +105,7 @@ func TestKCPReconcileCreateControlPlaneUpgrade(t *testing.T) {
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(cpu.Spec.ControlPlaneSpecData).To(BeEquivalentTo(base64.StdEncoding.EncodeToString(kcpSpec)))
 
-	mhc := &clusterv1.MachineHealthCheck{}
+	mhc := &clusterv1beta2.MachineHealthCheck{}
 	err = client.Get(ctx, types.NamespacedName{Name: kcpObjs.mhc.Name, Namespace: constants.EksaSystemNamespace}, mhc)
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(mhc.Annotations).To(HaveKey(capiPausedAnnotation))
@@ -136,7 +136,7 @@ func TestKCPReconcileKCPAndControlPlaneUpgradeReady(t *testing.T) {
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(kcp.Annotations).ToNot(HaveKey(kcpInPlaceAnnotation))
 
-	mhc := &clusterv1.MachineHealthCheck{}
+	mhc := &clusterv1beta2.MachineHealthCheck{}
 	err = client.Get(ctx, types.NamespacedName{Name: kcpObjs.mhc.Name, Namespace: constants.EksaSystemNamespace}, mhc)
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(mhc.Annotations).ToNot(HaveKey(capiPausedAnnotation))
@@ -167,7 +167,7 @@ func TestKCPReconcileFullFlow(t *testing.T) {
 	g.Expect(kcp.Annotations).To(HaveKey(kcpInPlaceAnnotation))
 
 	// Expect MHC for KCP to be paused
-	mhc := &clusterv1.MachineHealthCheck{}
+	mhc := &clusterv1beta2.MachineHealthCheck{}
 	err = client.Get(ctx, types.NamespacedName{Name: kcpObjs.mhc.Name, Namespace: constants.EksaSystemNamespace}, mhc)
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(mhc.Annotations).To(HaveKey(capiPausedAnnotation))
@@ -334,15 +334,15 @@ func generateKCP(name string) *controlplanev1.KubeadmControlPlane {
 	}
 }
 
-func generateMHCforKCP(kcpName string) *clusterv1.MachineHealthCheck {
-	return &clusterv1.MachineHealthCheck{
+func generateMHCforKCP(kcpName string) *clusterv1beta2.MachineHealthCheck {
+	return &clusterv1beta2.MachineHealthCheck{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-kcp-unhealthy", kcpName),
 			Namespace: "eksa-system",
 		},
-		Spec: clusterv1.MachineHealthCheckSpec{
-			NodeStartupTimeout: &metav1.Duration{
-				Duration: 20 * time.Minute,
+		Spec: clusterv1beta2.MachineHealthCheckSpec{
+			Checks: clusterv1beta2.MachineHealthCheckChecks{
+				NodeStartupTimeoutSeconds: ptr.To(int32(1200)), // 20 minutes
 			},
 		},
 	}
