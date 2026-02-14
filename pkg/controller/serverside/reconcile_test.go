@@ -8,7 +8,7 @@ import (
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/api/equality"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	clusterapiv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
@@ -20,22 +20,31 @@ func TestReconcileYaml(t *testing.T) {
 	cluster2 := newCluster("cluster-2")
 	tests := []struct {
 		name         string
-		initialObjs  []*clusterapiv1.Cluster
+		initialObjs  []*clusterv1beta2.Cluster
 		yaml         []byte
-		expectedObjs []*clusterapiv1.Cluster
+		expectedObjs []*clusterv1beta2.Cluster
 	}{
 		{
 			name: "new object",
-			yaml: []byte(`apiVersion: cluster.x-k8s.io/v1beta1
+			yaml: []byte(`apiVersion: cluster.x-k8s.io/v1beta2
 kind: Cluster
 metadata:
   name: cluster-1
   namespace: #namespace#
 spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks: ["192.168.0.0/16"]
+    services:
+      cidrBlocks: ["10.96.0.0/12"]
+  infrastructureRef:
+    apiGroup: infrastructure.cluster.x-k8s.io
+    kind: GenericInfraCluster
+    name: cluster-1
   controlPlaneEndpoint:
     host: 1.1.1.1
     port: 8080`),
-			expectedObjs: []*clusterapiv1.Cluster{
+			expectedObjs: []*clusterv1beta2.Cluster{
 				updatedCluster(cluster1, func(c capiCluster) {
 					c.Spec.ControlPlaneEndpoint.Port = 8080
 					c.Spec.ControlPlaneEndpoint.Host = "1.1.1.1"
@@ -44,43 +53,79 @@ spec:
 		},
 		{
 			name: "existing object",
-			yaml: []byte(`apiVersion: cluster.x-k8s.io/v1beta1
+			yaml: []byte(`apiVersion: cluster.x-k8s.io/v1beta2
 kind: Cluster
 metadata:
   name: cluster-1
   namespace: #namespace#
 spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks: ["192.168.0.0/16"]
+    services:
+      cidrBlocks: ["10.96.0.0/12"]
+  infrastructureRef:
+    apiGroup: infrastructure.cluster.x-k8s.io
+    kind: GenericInfraCluster
+    name: cluster-1
   paused: true`),
-			initialObjs: []*clusterapiv1.Cluster{
+			initialObjs: []*clusterv1beta2.Cluster{
 				cluster1.DeepCopy(),
 			},
-			expectedObjs: []*clusterapiv1.Cluster{
-				updatedCluster(cluster1, func(c capiCluster) { c.Spec.Paused = true }),
+			expectedObjs: []*clusterv1beta2.Cluster{
+				updatedCluster(cluster1, func(c capiCluster) {
+					paused := true
+					c.Spec.Paused = &paused
+				}),
 			},
 		},
 		{
 			name: "new and existing object",
-			yaml: []byte(`apiVersion: cluster.x-k8s.io/v1beta1
+			yaml: []byte(`apiVersion: cluster.x-k8s.io/v1beta2
 kind: Cluster
 metadata:
   name: cluster-1
   namespace: #namespace#
 spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks: ["192.168.0.0/16"]
+    services:
+      cidrBlocks: ["10.96.0.0/12"]
+  infrastructureRef:
+    apiGroup: infrastructure.cluster.x-k8s.io
+    kind: GenericInfraCluster
+    name: cluster-1
   paused: true
 ---
-apiVersion: cluster.x-k8s.io/v1beta1
+apiVersion: cluster.x-k8s.io/v1beta2
 kind: Cluster
 metadata:
   name: cluster-2
   namespace: #namespace#
 spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks: ["192.168.0.0/16"]
+    services:
+      cidrBlocks: ["10.96.0.0/12"]
+  infrastructureRef:
+    apiGroup: infrastructure.cluster.x-k8s.io
+    kind: GenericInfraCluster
+    name: cluster-2
   paused: true`),
-			initialObjs: []*clusterapiv1.Cluster{
+			initialObjs: []*clusterv1beta2.Cluster{
 				cluster1.DeepCopy(),
 			},
-			expectedObjs: []*clusterapiv1.Cluster{
-				updatedCluster(cluster1, func(c capiCluster) { c.Spec.Paused = true }),
-				updatedCluster(cluster2, func(c capiCluster) { c.Spec.Paused = true }),
+			expectedObjs: []*clusterv1beta2.Cluster{
+				updatedCluster(cluster1, func(c capiCluster) {
+					paused := true
+					c.Spec.Paused = &paused
+				}),
+				updatedCluster(cluster2, func(c capiCluster) {
+					paused := true
+					c.Spec.Paused = &paused
+				}),
 			},
 		},
 	}
@@ -112,7 +157,7 @@ spec:
 					Name:      o.GetName(),
 				}
 
-				cluster := &clusterapiv1.Cluster{}
+				cluster := &clusterv1beta2.Cluster{}
 
 				g.Expect(reader.Get(ctx, key, cluster)).To(Succeed(), "Failed getting obj from cluster")
 				g.Expect(
@@ -126,24 +171,33 @@ spec:
 func TestReconcileUpdateObject(t *testing.T) {
 	cluster1 := newCluster("cluster-1")
 
-	yaml := []byte(`apiVersion: cluster.x-k8s.io/v1beta1
+	yaml := []byte(`apiVersion: cluster.x-k8s.io/v1beta2
 kind: Cluster
 metadata:
   name: cluster-1
   namespace: #namespace#
 spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks: ["192.168.0.0/16"]
+    services:
+      cidrBlocks: ["10.96.0.0/12"]
+  infrastructureRef:
+    apiGroup: infrastructure.cluster.x-k8s.io
+    kind: GenericInfraCluster
+    name: cluster-1
   controlPlaneEndpoint:
     host: 1.1.1.1
     port: 8081`)
 
-	initial := []*clusterapiv1.Cluster{
+	initial := []*clusterv1beta2.Cluster{
 		updatedCluster(cluster1, func(c capiCluster) {
 			c.Spec.ControlPlaneEndpoint.Port = 8080
 			c.Spec.ControlPlaneEndpoint.Host = "1.1.1.1"
 		}),
 	}
 
-	expected := []*clusterapiv1.Cluster{
+	expected := []*clusterv1beta2.Cluster{
 		updatedCluster(cluster1, func(c capiCluster) {
 			c.Spec.ControlPlaneEndpoint.Port = 8081
 			c.Spec.ControlPlaneEndpoint.Host = "1.1.1.1"
@@ -183,7 +237,7 @@ spec:
 			Name:      o.GetName(),
 		}
 
-		cluster := &clusterapiv1.Cluster{}
+		cluster := &clusterv1beta2.Cluster{}
 
 		g.Expect(reader.Get(ctx, key, cluster)).To(Succeed(), "Failed getting obj from cluster")
 		g.Expect(
@@ -195,17 +249,26 @@ spec:
 func TestReconcileUpdateObjectError(t *testing.T) {
 	cluster1 := newCluster("cluster-1")
 
-	yaml := []byte(`apiVersion: cluster.x-k8s.io/v1beta1
+	yaml := []byte(`apiVersion: cluster.x-k8s.io/v1beta2
 kind: Cluster
 metadata:
   name: cluster-1
   namespace: #namespace#
 spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks: ["192.168.0.0/16"]
+    services:
+      cidrBlocks: ["10.96.0.0/12"]
+  infrastructureRef:
+    apiGroup: infrastructure.cluster.x-k8s.io
+    kind: GenericInfraCluster
+    name: cluster-1
   controlPlaneEndpoint:
     host: 1.1.1.1
     port: 8081`)
 
-	initial := []*clusterapiv1.Cluster{
+	initial := []*clusterv1beta2.Cluster{
 		updatedCluster(cluster1, func(c capiCluster) {
 			c.Spec.ControlPlaneEndpoint.Port = 8080
 			c.Spec.ControlPlaneEndpoint.Host = "1.1.1.1"
@@ -239,16 +302,31 @@ spec:
 	}
 }
 
-type capiCluster = *clusterapiv1.Cluster
+type capiCluster = *clusterv1beta2.Cluster
 
-func newCluster(name string, changes ...func(capiCluster)) *clusterapiv1.Cluster {
-	c := &clusterapiv1.Cluster{
+func newCluster(name string, changes ...func(capiCluster)) *clusterv1beta2.Cluster {
+	c := &clusterv1beta2.Cluster{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Cluster",
-			APIVersion: clusterapiv1.GroupVersion.String(),
+			APIVersion: clusterv1beta2.GroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
+		},
+		Spec: clusterv1beta2.ClusterSpec{
+			ClusterNetwork: clusterv1beta2.ClusterNetwork{
+				Pods: clusterv1beta2.NetworkRanges{
+					CIDRBlocks: []string{"192.168.0.0/16"},
+				},
+				Services: clusterv1beta2.NetworkRanges{
+					CIDRBlocks: []string{"10.96.0.0/12"},
+				},
+			},
+			InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
+				APIGroup: "infrastructure.cluster.x-k8s.io",
+				Kind:     "GenericInfraCluster",
+				Name:     name,
+			},
 		},
 	}
 
@@ -259,7 +337,7 @@ func newCluster(name string, changes ...func(capiCluster)) *clusterapiv1.Cluster
 	return c
 }
 
-func updatedCluster(cluster *clusterapiv1.Cluster, f func(*clusterapiv1.Cluster)) *clusterapiv1.Cluster {
+func updatedCluster(cluster *clusterv1beta2.Cluster, f func(*clusterv1beta2.Cluster)) *clusterv1beta2.Cluster {
 	copy := cluster.DeepCopy()
 	f(copy)
 	return copy
@@ -270,46 +348,86 @@ func TestDeleteYaml(t *testing.T) {
 	cluster2 := newCluster("cluster-2")
 	tests := []struct {
 		name          string
-		initialObjs   []*clusterapiv1.Cluster
+		initialObjs   []*clusterv1beta2.Cluster
 		yaml          []byte
 		expectError   bool
 		errorContains string
 	}{
 		{
 			name: "delete existing object",
-			yaml: []byte(`apiVersion: cluster.x-k8s.io/v1beta1
+			yaml: []byte(`apiVersion: cluster.x-k8s.io/v1beta2
 kind: Cluster
 metadata:
   name: cluster-1
-  namespace: #namespace#`),
-			initialObjs: []*clusterapiv1.Cluster{
+  namespace: #namespace#
+spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks: ["192.168.0.0/16"]
+    services:
+      cidrBlocks: ["10.96.0.0/12"]
+  infrastructureRef:
+    apiGroup: infrastructure.cluster.x-k8s.io
+    kind: GenericInfraCluster
+    name: cluster-1`),
+			initialObjs: []*clusterv1beta2.Cluster{
 				cluster1.DeepCopy(),
 			},
 			expectError: false,
 		},
 		{
 			name: "delete non-existent object idempotent",
-			yaml: []byte(`apiVersion: cluster.x-k8s.io/v1beta1
+			yaml: []byte(`apiVersion: cluster.x-k8s.io/v1beta2
 kind: Cluster
 metadata:
   name: cluster-nonexistent
-  namespace: #namespace#`),
+  namespace: #namespace#
+spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks: ["192.168.0.0/16"]
+    services:
+      cidrBlocks: ["10.96.0.0/12"]
+  infrastructureRef:
+    apiGroup: infrastructure.cluster.x-k8s.io
+    kind: GenericInfraCluster
+    name: cluster-nonexistent`),
 			expectError: false,
 		},
 		{
 			name: "delete multiple objects",
-			yaml: []byte(`apiVersion: cluster.x-k8s.io/v1beta1
+			yaml: []byte(`apiVersion: cluster.x-k8s.io/v1beta2
 kind: Cluster
 metadata:
   name: cluster-1
   namespace: #namespace#
+spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks: ["192.168.0.0/16"]
+    services:
+      cidrBlocks: ["10.96.0.0/12"]
+  infrastructureRef:
+    apiGroup: infrastructure.cluster.x-k8s.io
+    kind: GenericInfraCluster
+    name: cluster-1
 ---
-apiVersion: cluster.x-k8s.io/v1beta1
+apiVersion: cluster.x-k8s.io/v1beta2
 kind: Cluster
 metadata:
   name: cluster-2
-  namespace: #namespace#`),
-			initialObjs: []*clusterapiv1.Cluster{
+  namespace: #namespace#
+spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks: ["192.168.0.0/16"]
+    services:
+      cidrBlocks: ["10.96.0.0/12"]
+  infrastructureRef:
+    apiGroup: infrastructure.cluster.x-k8s.io
+    kind: GenericInfraCluster
+    name: cluster-2`),
+			initialObjs: []*clusterv1beta2.Cluster{
 				cluster1.DeepCopy(),
 				cluster2.DeepCopy(),
 			},
@@ -317,18 +435,38 @@ metadata:
 		},
 		{
 			name: "delete mixed existing and non-existing",
-			yaml: []byte(`apiVersion: cluster.x-k8s.io/v1beta1
+			yaml: []byte(`apiVersion: cluster.x-k8s.io/v1beta2
 kind: Cluster
 metadata:
   name: cluster-1
   namespace: #namespace#
+spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks: ["192.168.0.0/16"]
+    services:
+      cidrBlocks: ["10.96.0.0/12"]
+  infrastructureRef:
+    apiGroup: infrastructure.cluster.x-k8s.io
+    kind: GenericInfraCluster
+    name: cluster-1
 ---
-apiVersion: cluster.x-k8s.io/v1beta1
+apiVersion: cluster.x-k8s.io/v1beta2
 kind: Cluster
 metadata:
   name: cluster-nonexistent
-  namespace: #namespace#`),
-			initialObjs: []*clusterapiv1.Cluster{
+  namespace: #namespace#
+spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks: ["192.168.0.0/16"]
+    services:
+      cidrBlocks: ["10.96.0.0/12"]
+  infrastructureRef:
+    apiGroup: infrastructure.cluster.x-k8s.io
+    kind: GenericInfraCluster
+    name: cluster-nonexistent`),
+			initialObjs: []*clusterv1beta2.Cluster{
 				cluster1.DeepCopy(),
 			},
 			expectError: false,
@@ -380,7 +518,7 @@ metadata:
 					Namespace: ns,
 					Name:      o.GetName(),
 				}
-				cluster := &clusterapiv1.Cluster{}
+				cluster := &clusterv1beta2.Cluster{}
 				err := reader.Get(ctx, key, cluster)
 				g.Expect(err).To(HaveOccurred())
 				g.Expect(err.Error()).To(ContainSubstring("not found"))
@@ -394,17 +532,17 @@ func TestDeleteObjects(t *testing.T) {
 	cluster2 := newCluster("cluster-2")
 	tests := []struct {
 		name        string
-		initialObjs []*clusterapiv1.Cluster
-		deleteObjs  []*clusterapiv1.Cluster
+		initialObjs []*clusterv1beta2.Cluster
+		deleteObjs  []*clusterv1beta2.Cluster
 		expectError bool
 	}{
 		{
 			name: "delete existing objects",
-			initialObjs: []*clusterapiv1.Cluster{
+			initialObjs: []*clusterv1beta2.Cluster{
 				cluster1.DeepCopy(),
 				cluster2.DeepCopy(),
 			},
-			deleteObjs: []*clusterapiv1.Cluster{
+			deleteObjs: []*clusterv1beta2.Cluster{
 				cluster1.DeepCopy(),
 				cluster2.DeepCopy(),
 			},
@@ -412,7 +550,7 @@ func TestDeleteObjects(t *testing.T) {
 		},
 		{
 			name: "delete non-existent objects idempotent",
-			deleteObjs: []*clusterapiv1.Cluster{
+			deleteObjs: []*clusterv1beta2.Cluster{
 				newCluster("nonexistent-1"),
 				newCluster("nonexistent-2"),
 			},
@@ -420,10 +558,10 @@ func TestDeleteObjects(t *testing.T) {
 		},
 		{
 			name: "delete mixed existing and non-existing",
-			initialObjs: []*clusterapiv1.Cluster{
+			initialObjs: []*clusterv1beta2.Cluster{
 				cluster1.DeepCopy(),
 			},
-			deleteObjs: []*clusterapiv1.Cluster{
+			deleteObjs: []*clusterv1beta2.Cluster{
 				cluster1.DeepCopy(),
 				newCluster("nonexistent"),
 			},
@@ -431,15 +569,15 @@ func TestDeleteObjects(t *testing.T) {
 		},
 		{
 			name:        "delete empty object slice",
-			deleteObjs:  []*clusterapiv1.Cluster{},
+			deleteObjs:  []*clusterv1beta2.Cluster{},
 			expectError: false,
 		},
 		{
 			name: "delete single object",
-			initialObjs: []*clusterapiv1.Cluster{
+			initialObjs: []*clusterv1beta2.Cluster{
 				cluster1.DeepCopy(),
 			},
-			deleteObjs: []*clusterapiv1.Cluster{
+			deleteObjs: []*clusterv1beta2.Cluster{
 				cluster1.DeepCopy(),
 			},
 			expectError: false,
@@ -486,7 +624,7 @@ func TestDeleteObjects(t *testing.T) {
 					Namespace: ns,
 					Name:      o.GetName(),
 				}
-				cluster := &clusterapiv1.Cluster{}
+				cluster := &clusterv1beta2.Cluster{}
 				err := reader.Get(ctx, key, cluster)
 				g.Expect(err).To(HaveOccurred())
 				g.Expect(err.Error()).To(ContainSubstring("not found"))
@@ -499,14 +637,14 @@ func TestDeleteObject(t *testing.T) {
 	cluster1 := newCluster("cluster-1")
 	tests := []struct {
 		name          string
-		initialObjs   []*clusterapiv1.Cluster
-		deleteObj     *clusterapiv1.Cluster
+		initialObjs   []*clusterv1beta2.Cluster
+		deleteObj     *clusterv1beta2.Cluster
 		expectError   bool
 		errorContains string
 	}{
 		{
 			name: "delete existing object",
-			initialObjs: []*clusterapiv1.Cluster{
+			initialObjs: []*clusterv1beta2.Cluster{
 				cluster1.DeepCopy(),
 			},
 			deleteObj:   cluster1.DeepCopy(),
@@ -558,7 +696,7 @@ func TestDeleteObject(t *testing.T) {
 					Namespace: ns,
 					Name:      tt.deleteObj.GetName(),
 				}
-				cluster := &clusterapiv1.Cluster{}
+				cluster := &clusterv1beta2.Cluster{}
 				err := reader.Get(ctx, key, cluster)
 				g.Expect(err).To(HaveOccurred())
 				g.Expect(err.Error()).To(ContainSubstring("not found"))

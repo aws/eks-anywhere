@@ -8,7 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	kubeadmv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
@@ -50,7 +50,7 @@ func (w *Workers[M]) UpdateImmutableObjectNames(
 // WorkerGroup represents the provider specific CAPI spec for an eks-a worker group.
 type WorkerGroup[M Object[M]] struct {
 	KubeadmConfigTemplate   *kubeadmv1.KubeadmConfigTemplate
-	MachineDeployment       *clusterv1.MachineDeployment
+	MachineDeployment       *clusterv1beta2.MachineDeployment
 	ProviderMachineTemplate M
 }
 
@@ -74,7 +74,7 @@ func (g *WorkerGroup[M]) UpdateImmutableObjectNames(
 	machineTemplateRetriever ObjectRetriever[M],
 	machineTemplateComparator ObjectComparator[M],
 ) error {
-	currentMachineDeployment := &clusterv1.MachineDeployment{}
+	currentMachineDeployment := &clusterv1beta2.MachineDeployment{}
 	err := client.Get(ctx, g.MachineDeployment.Name, g.MachineDeployment.Namespace, currentMachineDeployment)
 	if apierrors.IsNotFound(err) {
 		// MachineDeployment doesn't exist, this is a new cluster so machine templates should use their default name

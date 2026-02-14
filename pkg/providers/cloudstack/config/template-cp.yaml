@@ -1,5 +1,5 @@
 {{- $kube_minor_version := (index (splitList "." (trimPrefix "v" .kubernetesVersion)) 1) -}}
-apiVersion: cluster.x-k8s.io/v1beta1
+apiVersion: cluster.x-k8s.io/v1beta2
 kind: Cluster
 metadata:
   labels:
@@ -16,19 +16,18 @@ spec:
     host: {{.controlPlaneEndpointHost}}
     port: {{.controlPlaneEndpointPort}}
   controlPlaneRef:
-    apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+    apiGroup: controlplane.cluster.x-k8s.io
     kind: KubeadmControlPlane
     name: {{.clusterName}}
   infrastructureRef:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1beta3
+    apiGroup: infrastructure.cluster.x-k8s.io
     kind: CloudStackCluster
     name: {{.clusterName}}
 {{- if .externalEtcd }}
   managedExternalEtcdRef:
-    apiVersion: etcdcluster.cluster.x-k8s.io/v1beta1
+    apiGroup: etcdcluster.cluster.x-k8s.io
     kind: EtcdadmCluster
     name: {{.clusterName}}-etcd
-    namespace: {{.eksaSystemNamespace}}
 {{- end }}
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta3

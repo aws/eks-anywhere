@@ -9,7 +9,7 @@ import (
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/aws/eks-anywhere/internal/test"
@@ -45,7 +45,7 @@ func TestValidateControlPlaneIPUnavailable(t *testing.T) {
 
 func TestValidateControlPlaneIPCapiClusterExists(t *testing.T) {
 	tt := newIPValidatorTest(t)
-	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
+	capiCluster := test.CAPICluster(func(c *clusterv1beta2.Cluster) {
 		c.Name = "test-cluster"
 	})
 	client := fake.NewClientBuilder().WithObjects(capiCluster).Build()

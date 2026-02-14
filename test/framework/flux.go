@@ -978,7 +978,10 @@ func (e *ClusterE2ETest) waitForWorkerScaling(name string, targetvalue int) erro
 			return err
 		}
 
-		r := int(md.Status.Replicas)
+		var r int
+		if md.Status.Replicas != nil {
+			r = int(*md.Status.Replicas)
+		}
 		if r != targetvalue {
 			e.T.Logf("Waiting for worker node MachineDeployment %s replicas to scale; target: %d, actual: %d", md.Name, targetvalue, r)
 			return fmt.Errorf(" MachineDeployment %s replicas are not at desired scale; target: %d, actual: %d", md.Name, targetvalue, r)

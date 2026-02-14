@@ -18,6 +18,7 @@ import (
 	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -37,7 +38,7 @@ const (
 )
 
 type cpUpgradeObjects struct {
-	cluster        *clusterv1.Cluster
+	cluster        *clusterv1beta2.Cluster
 	machines       []*clusterv1.Machine
 	nodes          []*corev1.Node
 	cpUpgrade      *anywherev1.ControlPlaneUpgrade

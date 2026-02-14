@@ -10,7 +10,7 @@ import (
 	"github.com/nutanix-cloud-native/prism-go-client/environment/credentials"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
@@ -258,7 +258,7 @@ func (r *Reconciler) CheckControlPlaneReady(ctx context.Context, log logr.Logger
 // to the CAPI Cluster for garbage collection.
 func (r *Reconciler) ensureOwnerReferences(ctx context.Context, log logr.Logger, clusterSpec *cluster.Spec, cp *nutanix.ControlPlane) error {
 	// Get the CAPI cluster to use as owner
-	capiCluster := &clusterv1.Cluster{}
+	capiCluster := &clusterv1beta2.Cluster{}
 	clusterKey := client.ObjectKey{
 		Name:      clusterSpec.Cluster.Name,
 		Namespace: constants.EksaSystemNamespace,
@@ -294,7 +294,7 @@ func (r *Reconciler) ensureOwnerReferences(ctx context.Context, log logr.Logger,
 }
 
 // setOwnerReferencesOnObjects sets the owner reference on a list of objects.
-func (r *Reconciler) setOwnerReferencesOnObjects(ctx context.Context, log logr.Logger, owner *clusterv1.Cluster, objects []client.Object) error {
+func (r *Reconciler) setOwnerReferencesOnObjects(ctx context.Context, log logr.Logger, owner *clusterv1beta2.Cluster, objects []client.Object) error {
 	for _, obj := range objects {
 		// Get the current object from the cluster to check if owner reference already exists
 		currentObj := obj.DeepCopyObject().(client.Object)

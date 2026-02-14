@@ -7,11 +7,11 @@ import (
 
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	. "github.com/onsi/gomega"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -39,7 +39,7 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 		wantCondition       *anywherev1.Condition
 		externalEtcdCount   int
 		externalEtcdCluster *etcdv1.EtcdadmCluster
-		capiCluster         *clusterv1.Cluster
+		capiCluster         *clusterv1beta2.Cluster
 		upgradeType         anywherev1.UpgradeRolloutStrategyType
 	}{
 		{
@@ -496,13 +496,13 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 				Type:   anywherev1.ControlPlaneReadyCondition,
 				Status: "True",
 			},
-			capiCluster: &clusterv1.Cluster{
+			capiCluster: &clusterv1beta2.Cluster{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "test-cluster",
 					Namespace: constants.EksaSystemNamespace,
 				},
-				Spec: clusterv1.ClusterSpec{
-					ManagedExternalEtcdRef: &corev1.ObjectReference{
+				Spec: clusterv1beta2.ClusterSpec{
+					ManagedExternalEtcdRef: &clusterv1beta2.ContractVersionedObjectReference{
 						Kind: "EtcdadmCluster",
 						Name: fmt.Sprintf("%s-etcd", "test-cluster"),
 					},
@@ -548,13 +548,13 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 				Message:  "Etcd is not ready",
 				Status:   "False",
 			},
-			capiCluster: &clusterv1.Cluster{
+			capiCluster: &clusterv1beta2.Cluster{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "test-cluster",
 					Namespace: constants.EksaSystemNamespace,
 				},
-				Spec: clusterv1.ClusterSpec{
-					ManagedExternalEtcdRef: &corev1.ObjectReference{
+				Spec: clusterv1beta2.ClusterSpec{
+					ManagedExternalEtcdRef: &clusterv1beta2.ContractVersionedObjectReference{
 						Kind: "EtcdadmCluster",
 						Name: fmt.Sprintf("%s-etcd", "test-cluster"),
 					},
@@ -591,7 +591,7 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 				Message:  "Etcd cluster is not available",
 				Status:   "False",
 			},
-			capiCluster: &clusterv1.Cluster{},
+			capiCluster: &clusterv1beta2.Cluster{},
 		},
 		{
 			name: "with external etcd, malformed etcd",
@@ -623,7 +623,7 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 				Message:  "Etcd cluster is not available",
 				Status:   "False",
 			},
-			capiCluster: &clusterv1.Cluster{},
+			capiCluster: &clusterv1beta2.Cluster{},
 		},
 	}
 
@@ -841,13 +841,13 @@ func TestUpdateClusterStatusForControlPlaneError(t *testing.T) {
 			},
 		},
 	}
-	capiCluster := &clusterv1.Cluster{
+	capiCluster := &clusterv1beta2.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-cluster",
 			Namespace: constants.EksaSystemNamespace,
 		},
-		Spec: clusterv1.ClusterSpec{
-			ManagedExternalEtcdRef: &corev1.ObjectReference{
+		Spec: clusterv1beta2.ClusterSpec{
+			ManagedExternalEtcdRef: &clusterv1beta2.ContractVersionedObjectReference{
 				Kind: "EtcdadmCluster",
 				Name: fmt.Sprintf("%s-etcd", "test-cluster"),
 			},
@@ -869,7 +869,7 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 
 	tests := []struct {
 		name                          string
-		machineDeployments            []clusterv1.MachineDeployment
+		machineDeployments            []clusterv1beta2.MachineDeployment
 		workerNodeGroupConfigurations []anywherev1.WorkerNodeGroupConfiguration
 		conditions                    []anywherev1.Condition
 		wantCondition                 *anywherev1.Condition
@@ -879,7 +879,7 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 		{
 			name:                          "workers not ready, control plane not initialized",
 			workerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{},
-			machineDeployments:            []clusterv1.MachineDeployment{},
+			machineDeployments:            []clusterv1beta2.MachineDeployment{},
 			conditions: []anywherev1.Condition{
 				{
 					Type:     anywherev1.ControlPlaneInitializedCondition,
@@ -903,8 +903,8 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 					Count: ptr.Int(1),
 				},
 			},
-			machineDeployments: []clusterv1.MachineDeployment{
-				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+			machineDeployments: []clusterv1beta2.MachineDeployment{
+				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-0"
 					md.ObjectMeta.Generation = 1
 					md.ObjectMeta.Labels = map[string]string{
@@ -936,8 +936,8 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 					Count: ptr.Int(1),
 				},
 			},
-			machineDeployments: []clusterv1.MachineDeployment{
-				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+			machineDeployments: []clusterv1beta2.MachineDeployment{
+				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-0"
 					md.ObjectMeta.Generation = 1
 					md.ObjectMeta.Labels = map[string]string{
@@ -945,7 +945,7 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 					}
 					md.Status.ObservedGeneration = 0
 				}),
-				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-1"
 					md.ObjectMeta.Generation = 1
 					md.Status.ObservedGeneration = 1
@@ -974,24 +974,24 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 					Count: ptr.Int(2),
 				},
 			},
-			machineDeployments: []clusterv1.MachineDeployment{
-				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+			machineDeployments: []clusterv1beta2.MachineDeployment{
+				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-0"
 					md.ObjectMeta.Labels = map[string]string{
 						clusterv1.ClusterNameLabel: clusterName,
 					}
-					md.Status.Replicas = 1
-					md.Status.ReadyReplicas = 1
-					md.Status.UpdatedReplicas = 1
+					md.Status.Replicas = ptr.Int32(1)
+					md.Status.ReadyReplicas = ptr.Int32(1)
+					md.Status.UpToDateReplicas = ptr.Int32(1)
 				}),
-				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-1"
 					md.ObjectMeta.Labels = map[string]string{
 						clusterv1.ClusterNameLabel: clusterName,
 					}
-					md.Status.Replicas = 2
-					md.Status.ReadyReplicas = 2
-					md.Status.UpdatedReplicas = 1
+					md.Status.Replicas = ptr.Int32(2)
+					md.Status.ReadyReplicas = ptr.Int32(2)
+					md.Status.UpToDateReplicas = ptr.Int32(1)
 				}),
 			},
 			conditions: []anywherev1.Condition{
@@ -1018,24 +1018,24 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 					Count: ptr.Int(2),
 				},
 			},
-			machineDeployments: []clusterv1.MachineDeployment{
-				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+			machineDeployments: []clusterv1beta2.MachineDeployment{
+				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-0"
 					md.ObjectMeta.Labels = map[string]string{
 						clusterv1.ClusterNameLabel: clusterName,
 					}
-					md.Status.Replicas = 1
-					md.Status.ReadyReplicas = 1
-					md.Status.UpdatedReplicas = 1
+					md.Status.Replicas = ptr.Int32(1)
+					md.Status.ReadyReplicas = ptr.Int32(1)
+					md.Status.UpToDateReplicas = ptr.Int32(1)
 				}),
-				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-1"
 					md.ObjectMeta.Labels = map[string]string{
 						clusterv1.ClusterNameLabel: clusterName,
 					}
-					md.Status.Replicas = 2
-					md.Status.ReadyReplicas = 2
-					md.Status.UpdatedReplicas = 1
+					md.Status.Replicas = ptr.Int32(2)
+					md.Status.ReadyReplicas = ptr.Int32(2)
+					md.Status.UpToDateReplicas = ptr.Int32(1)
 				}),
 			},
 			conditions: []anywherev1.Condition{
@@ -1063,24 +1063,24 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 					Count: ptr.Int(2),
 				},
 			},
-			machineDeployments: []clusterv1.MachineDeployment{
-				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+			machineDeployments: []clusterv1beta2.MachineDeployment{
+				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-0"
 					md.ObjectMeta.Labels = map[string]string{
 						clusterv1.ClusterNameLabel: clusterName,
 					}
-					md.Status.Replicas = 0
-					md.Status.ReadyReplicas = 0
-					md.Status.UpdatedReplicas = 0
+					md.Status.Replicas = ptr.Int32(0)
+					md.Status.ReadyReplicas = ptr.Int32(0)
+					md.Status.UpToDateReplicas = ptr.Int32(0)
 				}),
-				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-1"
 					md.ObjectMeta.Labels = map[string]string{
 						clusterv1.ClusterNameLabel: clusterName,
 					}
-					md.Status.Replicas = 2
-					md.Status.ReadyReplicas = 2
-					md.Status.UpdatedReplicas = 2
+					md.Status.Replicas = ptr.Int32(2)
+					md.Status.ReadyReplicas = ptr.Int32(2)
+					md.Status.UpToDateReplicas = ptr.Int32(2)
 				}),
 			},
 			conditions: []anywherev1.Condition{
@@ -1107,24 +1107,24 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 					Count: ptr.Int(1),
 				},
 			},
-			machineDeployments: []clusterv1.MachineDeployment{
-				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+			machineDeployments: []clusterv1beta2.MachineDeployment{
+				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-0"
 					md.ObjectMeta.Labels = map[string]string{
 						clusterv1.ClusterNameLabel: clusterName,
 					}
-					md.Status.Replicas = 2
-					md.Status.ReadyReplicas = 2
-					md.Status.UpdatedReplicas = 2
+					md.Status.Replicas = ptr.Int32(2)
+					md.Status.ReadyReplicas = ptr.Int32(2)
+					md.Status.UpToDateReplicas = ptr.Int32(2)
 				}),
-				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-1"
 					md.ObjectMeta.Labels = map[string]string{
 						clusterv1.ClusterNameLabel: clusterName,
 					}
-					md.Status.Replicas = 2
-					md.Status.ReadyReplicas = 2
-					md.Status.UpdatedReplicas = 2
+					md.Status.Replicas = ptr.Int32(2)
+					md.Status.ReadyReplicas = ptr.Int32(2)
+					md.Status.UpToDateReplicas = ptr.Int32(2)
 				}),
 			},
 			conditions: []anywherev1.Condition{
@@ -1151,24 +1151,24 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 					Count: ptr.Int(2),
 				},
 			},
-			machineDeployments: []clusterv1.MachineDeployment{
-				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+			machineDeployments: []clusterv1beta2.MachineDeployment{
+				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-0"
 					md.ObjectMeta.Labels = map[string]string{
 						clusterv1.ClusterNameLabel: clusterName,
 					}
-					md.Status.ReadyReplicas = 1
-					md.Status.Replicas = 1
-					md.Status.UpdatedReplicas = 1
+					md.Status.ReadyReplicas = ptr.Int32(1)
+					md.Status.Replicas = ptr.Int32(1)
+					md.Status.UpToDateReplicas = ptr.Int32(1)
 				}),
-				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-1"
 					md.ObjectMeta.Labels = map[string]string{
 						clusterv1.ClusterNameLabel: clusterName,
 					}
-					md.Status.ReadyReplicas = 0
-					md.Status.Replicas = 2
-					md.Status.UpdatedReplicas = 2
+					md.Status.ReadyReplicas = ptr.Int32(0)
+					md.Status.Replicas = ptr.Int32(2)
+					md.Status.UpToDateReplicas = ptr.Int32(2)
 				}),
 			},
 			conditions: []anywherev1.Condition{
@@ -1192,22 +1192,22 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 					Count: ptr.Int(1),
 				},
 			},
-			machineDeployments: []clusterv1.MachineDeployment{
-				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+			machineDeployments: []clusterv1beta2.MachineDeployment{
+				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-0"
 					md.ObjectMeta.Labels = map[string]string{
 						clusterv1.ClusterNameLabel: clusterName,
 					}
-					md.Status.ReadyReplicas = 1
-					md.Status.Replicas = 1
-					md.Status.UpdatedReplicas = 1
+					md.Status.ReadyReplicas = ptr.Int32(1)
+					md.Status.Replicas = ptr.Int32(1)
+					md.Status.UpToDateReplicas = ptr.Int32(1)
 
-					md.Status.Conditions = []clusterv1.Condition{
+					md.SetConditions([]metav1.Condition{
 						{
-							Type:   clusterv1.ReadyCondition,
-							Status: "False",
+							Type:   string(clusterv1beta2.ReadyCondition),
+							Status: metav1.ConditionFalse,
 						},
-					}
+					})
 				}),
 			},
 			conditions: []anywherev1.Condition{
@@ -1239,17 +1239,17 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 					},
 				},
 			},
-			machineDeployments: []clusterv1.MachineDeployment{
-				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+			machineDeployments: []clusterv1beta2.MachineDeployment{
+				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-0"
 					md.ObjectMeta.Labels = map[string]string{
 						clusterv1.ClusterNameLabel: clusterName,
 					}
-					md.Status.Replicas = 1
-					md.Status.ReadyReplicas = 1
-					md.Status.UpdatedReplicas = 1
+					md.Status.Replicas = ptr.Int32(1)
+					md.Status.ReadyReplicas = ptr.Int32(1)
+					md.Status.UpToDateReplicas = ptr.Int32(1)
 				}),
-				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-1"
 					md.ObjectMeta.Labels = map[string]string{
 						clusterv1.ClusterNameLabel: clusterName,
@@ -1258,9 +1258,9 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 						clusterapi.NodeGroupMinSizeAnnotation: "3",
 						clusterapi.NodeGroupMaxSizeAnnotation: "5",
 					}
-					md.Status.Replicas = 1
-					md.Status.ReadyReplicas = 1
-					md.Status.UpdatedReplicas = 1
+					md.Status.Replicas = ptr.Int32(1)
+					md.Status.ReadyReplicas = ptr.Int32(1)
+					md.Status.UpToDateReplicas = ptr.Int32(1)
 				}),
 			},
 			conditions: []anywherev1.Condition{
@@ -1290,17 +1290,17 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 					},
 				},
 			},
-			machineDeployments: []clusterv1.MachineDeployment{
-				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+			machineDeployments: []clusterv1beta2.MachineDeployment{
+				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-0"
 					md.ObjectMeta.Labels = map[string]string{
 						clusterv1.ClusterNameLabel: clusterName,
 					}
-					md.Status.Replicas = 1
-					md.Status.ReadyReplicas = 1
-					md.Status.UpdatedReplicas = 1
+					md.Status.Replicas = ptr.Int32(1)
+					md.Status.ReadyReplicas = ptr.Int32(1)
+					md.Status.UpToDateReplicas = ptr.Int32(1)
 				}),
-				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-1"
 					md.ObjectMeta.Labels = map[string]string{
 						clusterv1.ClusterNameLabel: clusterName,
@@ -1309,9 +1309,9 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 						clusterapi.NodeGroupMinSizeAnnotation: "1",
 						clusterapi.NodeGroupMaxSizeAnnotation: "5",
 					}
-					md.Status.Replicas = 1
-					md.Status.ReadyReplicas = 1
-					md.Status.UpdatedReplicas = 1
+					md.Status.Replicas = ptr.Int32(1)
+					md.Status.ReadyReplicas = ptr.Int32(1)
+					md.Status.UpToDateReplicas = ptr.Int32(1)
 				}),
 			},
 			conditions: []anywherev1.Condition{
@@ -1335,24 +1335,24 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 					Count: ptr.Int(2),
 				},
 			},
-			machineDeployments: []clusterv1.MachineDeployment{
-				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+			machineDeployments: []clusterv1beta2.MachineDeployment{
+				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-0"
 					md.ObjectMeta.Labels = map[string]string{
 						clusterv1.ClusterNameLabel: clusterName,
 					}
-					md.Status.Replicas = 1
-					md.Status.ReadyReplicas = 1
-					md.Status.UpdatedReplicas = 1
+					md.Status.Replicas = ptr.Int32(1)
+					md.Status.ReadyReplicas = ptr.Int32(1)
+					md.Status.UpToDateReplicas = ptr.Int32(1)
 				}),
-				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-1"
 					md.ObjectMeta.Labels = map[string]string{
 						clusterv1.ClusterNameLabel: clusterName,
 					}
-					md.Status.Replicas = 2
-					md.Status.ReadyReplicas = 2
-					md.Status.UpdatedReplicas = 2
+					md.Status.Replicas = ptr.Int32(2)
+					md.Status.ReadyReplicas = ptr.Int32(2)
+					md.Status.UpToDateReplicas = ptr.Int32(2)
 				}),
 			},
 			conditions: []anywherev1.Condition{

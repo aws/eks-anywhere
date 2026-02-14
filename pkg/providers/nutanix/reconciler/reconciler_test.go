@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	addonsv1 "sigs.k8s.io/cluster-api/api/addons/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
@@ -87,11 +87,11 @@ func TestToClientObjects(t *testing.T) {
 func TestSetOwnerReferencesOnObjects(t *testing.T) {
 	scheme := runtime.NewScheme()
 	require.NoError(t, apiv1.AddToScheme(scheme))
-	require.NoError(t, clusterv1.AddToScheme(scheme))
+	require.NoError(t, clusterv1beta2.AddToScheme(scheme))
 
-	owner := &clusterv1.Cluster{
+	owner := &clusterv1beta2.Cluster{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "cluster.x-k8s.io/v1beta1",
+			APIVersion: "cluster.x-k8s.io/v1beta2",
 			Kind:       "Cluster",
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -210,7 +210,7 @@ func TestSetOwnerReferencesOnObjects(t *testing.T) {
 						Namespace: constants.EksaSystemNamespace,
 						OwnerReferences: []metav1.OwnerReference{
 							{
-								APIVersion: "cluster.x-k8s.io/v1beta1",
+								APIVersion: "cluster.x-k8s.io/v1beta2",
 								Kind:       "Cluster",
 								Name:       "test-cluster",
 								UID:        types.UID("test-uid-123"),
@@ -338,13 +338,13 @@ func TestSetOwnerReferencesOnObjects(t *testing.T) {
 func TestEnsureOwnerReferences(t *testing.T) {
 	scheme := runtime.NewScheme()
 	require.NoError(t, apiv1.AddToScheme(scheme))
-	require.NoError(t, clusterv1.AddToScheme(scheme))
+	require.NoError(t, clusterv1beta2.AddToScheme(scheme))
 	require.NoError(t, addonsv1.AddToScheme(scheme))
 	require.NoError(t, anywherev1.AddToScheme(scheme))
 
-	capiCluster := &clusterv1.Cluster{
+	capiCluster := &clusterv1beta2.Cluster{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "cluster.x-k8s.io/v1beta1",
+			APIVersion: "cluster.x-k8s.io/v1beta2",
 			Kind:       "Cluster",
 		},
 		ObjectMeta: metav1.ObjectMeta{

@@ -13,7 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
@@ -363,9 +363,9 @@ func TestWorkersObjects(t *testing.T) {
 			g.ctx,
 			"snow-test-md-0",
 			constants.EksaSystemNamespace,
-			&clusterv1.MachineDeployment{},
+			&clusterv1beta2.MachineDeployment{},
 		).
-		DoAndReturn(func(_ context.Context, _, _ string, obj *clusterv1.MachineDeployment) error {
+		DoAndReturn(func(_ context.Context, _, _ string, obj *clusterv1beta2.MachineDeployment) error {
 			wantMachineDeployment().DeepCopyInto(obj)
 			obj.Spec.Template.Spec.InfrastructureRef.Name = "snow-test-md-0-1"
 			obj.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "snow-test-md-0-1"
@@ -438,9 +438,9 @@ func TestWorkersObjectsWithIPPools(t *testing.T) {
 			g.ctx,
 			"snow-test-md-0",
 			constants.EksaSystemNamespace,
-			&clusterv1.MachineDeployment{},
+			&clusterv1beta2.MachineDeployment{},
 		).
-		DoAndReturn(func(_ context.Context, _, _ string, obj *clusterv1.MachineDeployment) error {
+		DoAndReturn(func(_ context.Context, _, _ string, obj *clusterv1beta2.MachineDeployment) error {
 			wantMachineDeployment().DeepCopyInto(obj)
 			obj.Spec.Template.Spec.InfrastructureRef.Name = "snow-test-md-0-1"
 			obj.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "snow-test-md-0-1"
@@ -489,7 +489,7 @@ func TestWorkersObjectsOldMachineDeploymentNotExists(t *testing.T) {
 			g.ctx,
 			"snow-test-md-0",
 			constants.EksaSystemNamespace,
-			&clusterv1.MachineDeployment{},
+			&clusterv1beta2.MachineDeployment{},
 		).
 		Return(apierrors.NewNotFound(schema.GroupResource{Group: "", Resource: ""}, ""))
 
@@ -506,9 +506,9 @@ func TestWorkersObjectsOldKubeadmConfigTemplateNotExists(t *testing.T) {
 			g.ctx,
 			"snow-test-md-0",
 			constants.EksaSystemNamespace,
-			&clusterv1.MachineDeployment{},
+			&clusterv1beta2.MachineDeployment{},
 		).
-		DoAndReturn(func(_ context.Context, _, _ string, obj *clusterv1.MachineDeployment) error {
+		DoAndReturn(func(_ context.Context, _, _ string, obj *clusterv1beta2.MachineDeployment) error {
 			wantMachineDeployment().DeepCopyInto(obj)
 			obj.Spec.Template.Spec.InfrastructureRef.Name = "snow-test-md-0-1"
 			obj.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "snow-test-md-0-1"
@@ -544,9 +544,9 @@ func TestWorkersObjectsOldMachineTemplateNotExists(t *testing.T) {
 			g.ctx,
 			"snow-test-md-0",
 			constants.EksaSystemNamespace,
-			&clusterv1.MachineDeployment{},
+			&clusterv1beta2.MachineDeployment{},
 		).
-		DoAndReturn(func(_ context.Context, _, _ string, obj *clusterv1.MachineDeployment) error {
+		DoAndReturn(func(_ context.Context, _, _ string, obj *clusterv1beta2.MachineDeployment) error {
 			wantMachineDeployment().DeepCopyInto(obj)
 			obj.Spec.Template.Spec.InfrastructureRef.Name = "snow-test-md-0-1"
 			obj.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "snow-test-md-0-1"
@@ -585,9 +585,9 @@ func TestWorkersObjectsTaintsUpdated(t *testing.T) {
 			g.ctx,
 			"snow-test-md-0",
 			constants.EksaSystemNamespace,
-			&clusterv1.MachineDeployment{},
+			&clusterv1beta2.MachineDeployment{},
 		).
-		DoAndReturn(func(_ context.Context, _, _ string, obj *clusterv1.MachineDeployment) error {
+		DoAndReturn(func(_ context.Context, _, _ string, obj *clusterv1beta2.MachineDeployment) error {
 			wantMachineDeployment().DeepCopyInto(obj)
 			obj.Spec.Template.Spec.InfrastructureRef.Name = "snow-test-md-0-1"
 			obj.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "snow-test-md-0-1"
@@ -646,9 +646,9 @@ func TestWorkersObjectsLabelsUpdated(t *testing.T) {
 			g.ctx,
 			"snow-test-md-0",
 			constants.EksaSystemNamespace,
-			&clusterv1.MachineDeployment{},
+			&clusterv1beta2.MachineDeployment{},
 		).
-		DoAndReturn(func(_ context.Context, _, _ string, obj *clusterv1.MachineDeployment) error {
+		DoAndReturn(func(_ context.Context, _, _ string, obj *clusterv1beta2.MachineDeployment) error {
 			wantMachineDeployment().DeepCopyInto(obj)
 			obj.Spec.Template.Spec.InfrastructureRef.Name = "snow-test-md-0-1"
 			obj.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "snow-test-md-0-1"
@@ -705,7 +705,7 @@ func TestWorkersObjectsGetMachineDeploymentError(t *testing.T) {
 			g.ctx,
 			"snow-test-md-0",
 			constants.EksaSystemNamespace,
-			&clusterv1.MachineDeployment{},
+			&clusterv1beta2.MachineDeployment{},
 		).
 		Return(errors.New("get md error"))
 
@@ -720,9 +720,9 @@ func TestWorkersObjectsGetKubeadmConfigTemplateError(t *testing.T) {
 			g.ctx,
 			"snow-test-md-0",
 			constants.EksaSystemNamespace,
-			&clusterv1.MachineDeployment{},
+			&clusterv1beta2.MachineDeployment{},
 		).
-		DoAndReturn(func(_ context.Context, _, _ string, obj *clusterv1.MachineDeployment) error {
+		DoAndReturn(func(_ context.Context, _, _ string, obj *clusterv1beta2.MachineDeployment) error {
 			wantMachineDeployment().DeepCopyInto(obj)
 			obj.Spec.Template.Spec.InfrastructureRef.Name = "snow-test-md-0-1"
 			obj.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "snow-test-md-0-1"
@@ -756,9 +756,9 @@ func TestWorkersObjectsGetMachineTemplateError(t *testing.T) {
 			g.ctx,
 			"snow-test-md-0",
 			constants.EksaSystemNamespace,
-			&clusterv1.MachineDeployment{},
+			&clusterv1beta2.MachineDeployment{},
 		).
-		DoAndReturn(func(_ context.Context, _, _ string, obj *clusterv1.MachineDeployment) error {
+		DoAndReturn(func(_ context.Context, _, _ string, obj *clusterv1beta2.MachineDeployment) error {
 			wantMachineDeployment().DeepCopyInto(obj)
 			obj.Spec.Template.Spec.InfrastructureRef.Name = "snow-test-md-0-1"
 			obj.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "snow-test-md-0-1"
@@ -786,7 +786,7 @@ func TestWorkersObjectsWithRegistryMirror(t *testing.T) {
 					g.ctx,
 					"snow-test-md-0",
 					constants.EksaSystemNamespace,
-					&clusterv1.MachineDeployment{},
+					&clusterv1beta2.MachineDeployment{},
 				).
 				Return(apierrors.NewNotFound(schema.GroupResource{Group: "", Resource: ""}, ""))
 
@@ -832,7 +832,7 @@ func TestWorkersObjectsWithProxy(t *testing.T) {
 					g.ctx,
 					"snow-test-md-0",
 					constants.EksaSystemNamespace,
-					&clusterv1.MachineDeployment{},
+					&clusterv1beta2.MachineDeployment{},
 				).
 				Return(apierrors.NewNotFound(schema.GroupResource{Group: "", Resource: ""}, ""))
 

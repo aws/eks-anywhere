@@ -1,5 +1,5 @@
 {{- if $.failureDomains -}}{{ range $fd := $.failureDomains -}}
-apiVersion: cluster.x-k8s.io/v1beta1
+apiVersion: cluster.x-k8s.io/v1beta2
 kind: MachineDeployment
 metadata:
   labels:
@@ -26,20 +26,22 @@ spec:
       failureDomain: "{{$fd.Name}}"
       bootstrap:
         configRef:
-          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          apiGroup: bootstrap.cluster.x-k8s.io
           kind: KubeadmConfigTemplate
           name: "{{$.workloadkubeadmconfigTemplateName}}"
       clusterName: "{{$.clusterName}}"
       infrastructureRef:
-        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        apiGroup: infrastructure.cluster.x-k8s.io
         kind: NutanixMachineTemplate
         name: "{{$.workloadTemplateName}}-{{$fd.Name}}"
       version: "{{$.kubernetesVersion}}"
 {{- if $.upgradeRolloutStrategy }}
-  strategy:
-    rollingUpdate:
-      maxSurge: {{$.maxSurge}}
-      maxUnavailable: {{$.maxUnavailable}}
+  rollout:
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: {{$.maxSurge}}
+        maxUnavailable: {{$.maxUnavailable}}
 {{- end }}
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
@@ -104,7 +106,7 @@ spec:
 ---
 {{ end -}}
 {{- else -}}
-apiVersion: cluster.x-k8s.io/v1beta1
+apiVersion: cluster.x-k8s.io/v1beta2
 kind: MachineDeployment
 metadata:
   labels:
@@ -130,20 +132,22 @@ spec:
     spec:
       bootstrap:
         configRef:
-          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          apiGroup: bootstrap.cluster.x-k8s.io
           kind: KubeadmConfigTemplate
           name: "{{.workloadkubeadmconfigTemplateName}}"
       clusterName: "{{.clusterName}}"
       infrastructureRef:
-        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        apiGroup: infrastructure.cluster.x-k8s.io
         kind: NutanixMachineTemplate
         name: "{{.workloadTemplateName}}"
       version: "{{.kubernetesVersion}}"
 {{- if .upgradeRolloutStrategy }}
-  strategy:
-    rollingUpdate:
-      maxSurge: {{.maxSurge}}
-      maxUnavailable: {{.maxUnavailable}}
+  rollout:
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: {{.maxSurge}}
+        maxUnavailable: {{.maxUnavailable}}
 {{- end }}
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1

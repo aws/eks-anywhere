@@ -6,11 +6,10 @@ import (
 	"time"
 
 	. "github.com/onsi/gomega"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -44,19 +43,18 @@ func TestWorkersSpecNewCluster(t *testing.T) {
 				},
 			),
 			MachineDeployment: machineDeployment(
-				func(md *clusterv1.MachineDeployment) {
+				func(md *clusterv1beta2.MachineDeployment) {
 					md.Name = "test-md-1"
 					md.Spec.Template.Spec.InfrastructureRef.Name = "test-md-1-1"
 					md.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "test-md-1-1"
 					md.Spec.Replicas = ptr.Int32(1)
 					md.Labels["pool"] = "md-1"
 					md.Spec.Template.ObjectMeta.Labels["pool"] = "md-1"
-					md.Spec.Strategy = &clusterv1.MachineDeploymentStrategy{
-						Type: "",
-						RollingUpdate: &clusterv1.MachineRollingUpdateDeployment{
+					md.Spec.Rollout.Strategy = clusterv1beta2.MachineDeploymentRolloutStrategy{
+						Type: clusterv1beta2.RollingUpdateMachineDeploymentStrategyType,
+						RollingUpdate: clusterv1beta2.MachineDeploymentRolloutStrategyRollingUpdate{
 							MaxUnavailable: &intstr.IntOrString{Type: 0, IntVal: 3, StrVal: ""},
 							MaxSurge:       &intstr.IntOrString{Type: 0, IntVal: 5, StrVal: ""},
-							DeletePolicy:   nil,
 						},
 					}
 				},
@@ -91,8 +89,8 @@ func TestWorkersSpecNewClusterInPlaceRolloutStrategy(t *testing.T) {
 		clusterapi.WorkerGroup[*tinkerbellv1.TinkerbellMachineTemplate]{
 			KubeadmConfigTemplate: kubeadmConfigTemplate(),
 			MachineDeployment: machineDeployment(
-				func(md *clusterv1.MachineDeployment) {
-					md.Spec.Strategy = &clusterv1.MachineDeploymentStrategy{
+				func(md *clusterv1beta2.MachineDeployment) {
+					md.Spec.Rollout.Strategy = clusterv1beta2.MachineDeploymentRolloutStrategy{
 						Type: "InPlace",
 					}
 				},
@@ -106,14 +104,14 @@ func TestWorkersSpecNewClusterInPlaceRolloutStrategy(t *testing.T) {
 				},
 			),
 			MachineDeployment: machineDeployment(
-				func(md *clusterv1.MachineDeployment) {
+				func(md *clusterv1beta2.MachineDeployment) {
 					md.Name = "test-md-1"
 					md.Spec.Template.Spec.InfrastructureRef.Name = "test-md-1-1"
 					md.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "test-md-1-1"
 					md.Spec.Replicas = ptr.Int32(1)
 					md.Labels["pool"] = "md-1"
 					md.Spec.Template.ObjectMeta.Labels["pool"] = "md-1"
-					md.Spec.Strategy = &clusterv1.MachineDeploymentStrategy{
+					md.Spec.Rollout.Strategy = clusterv1beta2.MachineDeploymentRolloutStrategy{
 						Type: "InPlace",
 					}
 				},
@@ -144,19 +142,18 @@ func TestWorkersSpecUpgradeClusterNoMachineTemplateChanges(t *testing.T) {
 			},
 		),
 		MachineDeployment: machineDeployment(
-			func(md *clusterv1.MachineDeployment) {
+			func(md *clusterv1beta2.MachineDeployment) {
 				md.Name = "test-md-1"
 				md.Spec.Template.Spec.InfrastructureRef.Name = "test-md-1-1"
 				md.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "test-md-1-1"
 				md.Spec.Replicas = ptr.Int32(1)
 				md.Labels["pool"] = "md-1"
 				md.Spec.Template.ObjectMeta.Labels["pool"] = "md-1"
-				md.Spec.Strategy = &clusterv1.MachineDeploymentStrategy{
-					Type: "",
-					RollingUpdate: &clusterv1.MachineRollingUpdateDeployment{
+				md.Spec.Rollout.Strategy = clusterv1beta2.MachineDeploymentRolloutStrategy{
+					Type: clusterv1beta2.RollingUpdateMachineDeploymentStrategyType,
+					RollingUpdate: clusterv1beta2.MachineDeploymentRolloutStrategyRollingUpdate{
 						MaxUnavailable: &intstr.IntOrString{Type: 0, IntVal: 3, StrVal: ""},
 						MaxSurge:       &intstr.IntOrString{Type: 0, IntVal: 5, StrVal: ""},
-						DeletePolicy:   nil,
 					},
 				}
 			},
@@ -259,19 +256,18 @@ func TestWorkersSpecRegistryMirrorInsecureSkipVerify(t *testing.T) {
 						},
 					),
 					MachineDeployment: machineDeployment(
-						func(md *clusterv1.MachineDeployment) {
+						func(md *clusterv1beta2.MachineDeployment) {
 							md.Name = "test-md-1"
 							md.Spec.Template.Spec.InfrastructureRef.Name = "test-md-1-1"
 							md.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "test-md-1-1"
 							md.Spec.Replicas = ptr.Int32(1)
 							md.Labels["pool"] = "md-1"
 							md.Spec.Template.ObjectMeta.Labels["pool"] = "md-1"
-							md.Spec.Strategy = &clusterv1.MachineDeploymentStrategy{
-								Type: "",
-								RollingUpdate: &clusterv1.MachineRollingUpdateDeployment{
+							md.Spec.Rollout.Strategy = clusterv1beta2.MachineDeploymentRolloutStrategy{
+								Type: clusterv1beta2.RollingUpdateMachineDeploymentStrategyType,
+								RollingUpdate: clusterv1beta2.MachineDeploymentRolloutStrategyRollingUpdate{
 									MaxUnavailable: &intstr.IntOrString{Type: 0, IntVal: 3, StrVal: ""},
 									MaxSurge:       &intstr.IntOrString{Type: 0, IntVal: 5, StrVal: ""},
-									DeletePolicy:   nil,
 								},
 							}
 						},
@@ -287,50 +283,51 @@ func TestWorkersSpecRegistryMirrorInsecureSkipVerify(t *testing.T) {
 	}
 }
 
-func machineDeployment(opts ...func(*clusterv1.MachineDeployment)) *clusterv1.MachineDeployment {
-	o := &clusterv1.MachineDeployment{
+func machineDeployment(opts ...func(*clusterv1beta2.MachineDeployment)) *clusterv1beta2.MachineDeployment {
+	o := &clusterv1beta2.MachineDeployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "MachineDeployment",
-			APIVersion: "cluster.x-k8s.io/v1beta1",
+			APIVersion: "cluster.x-k8s.io/v1beta2",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-md-0",
 			Namespace: "eksa-system",
 			Labels:    map[string]string{"cluster.x-k8s.io/cluster-name": "test", "pool": "md-0"},
 		},
-		Spec: clusterv1.MachineDeploymentSpec{
+		Spec: clusterv1beta2.MachineDeploymentSpec{
 			ClusterName: "test",
 			Replicas:    ptr.Int32(1),
 			Selector: metav1.LabelSelector{
 				MatchLabels: map[string]string{},
 			},
-			Template: clusterv1.MachineTemplateSpec{
-				ObjectMeta: clusterv1.ObjectMeta{
+			Template: clusterv1beta2.MachineTemplateSpec{
+				ObjectMeta: clusterv1beta2.ObjectMeta{
 					Labels: map[string]string{"cluster.x-k8s.io/cluster-name": "test", "pool": "md-0"},
 				},
-				Spec: clusterv1.MachineSpec{
+				Spec: clusterv1beta2.MachineSpec{
 					ClusterName: "test",
-					Bootstrap: clusterv1.Bootstrap{
-						ConfigRef: &corev1.ObjectReference{
-							Kind:       "KubeadmConfigTemplate",
-							Name:       "test-md-0-1",
-							APIVersion: "bootstrap.cluster.x-k8s.io/v1beta1",
+					Bootstrap: clusterv1beta2.Bootstrap{
+						ConfigRef: clusterv1beta2.ContractVersionedObjectReference{
+							Kind:     "KubeadmConfigTemplate",
+							Name:     "test-md-0-1",
+							APIGroup: "bootstrap.cluster.x-k8s.io",
 						},
 					},
-					InfrastructureRef: corev1.ObjectReference{
-						Kind:       "TinkerbellMachineTemplate",
-						Name:       "test-md-0-1",
-						APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+					InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
+						Kind:     "TinkerbellMachineTemplate",
+						Name:     "test-md-0-1",
+						APIGroup: "infrastructure.cluster.x-k8s.io",
 					},
-					Version: ptr.String("v1.21.2-eks-1-21-4"),
+					Version: "v1.21.2-eks-1-21-4",
 				},
 			},
-			Strategy: &clusterv1.MachineDeploymentStrategy{
-				Type: "",
-				RollingUpdate: &clusterv1.MachineRollingUpdateDeployment{
-					MaxUnavailable: &intstr.IntOrString{Type: 0, IntVal: 0, StrVal: ""},
-					MaxSurge:       &intstr.IntOrString{Type: 0, IntVal: 1, StrVal: ""},
-					DeletePolicy:   nil,
+			Rollout: clusterv1beta2.MachineDeploymentRolloutSpec{
+				Strategy: clusterv1beta2.MachineDeploymentRolloutStrategy{
+					Type: clusterv1beta2.RollingUpdateMachineDeploymentStrategyType,
+					RollingUpdate: clusterv1beta2.MachineDeploymentRolloutStrategyRollingUpdate{
+						MaxUnavailable: &intstr.IntOrString{Type: 0, IntVal: 0, StrVal: ""},
+						MaxSurge:       &intstr.IntOrString{Type: 0, IntVal: 1, StrVal: ""},
+					},
 				},
 			},
 		},

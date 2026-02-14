@@ -31,6 +31,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	v1beta1patch "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/patch"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -71,7 +72,7 @@ func NewMachineDeploymentReconciler(client client.Client, uncachedClient client.
 func (r *MachineDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result ctrl.Result, reterr error) {
 	log := r.log.WithValues("MachineDeployment", req.NamespacedName)
 
-	md := &clusterv1.MachineDeployment{}
+	md := &clusterv1beta2.MachineDeployment{}
 	if err := r.uncachedClient.Get(ctx, req.NamespacedName, md); err != nil {
 		if apierrors.IsNotFound(err) {
 			return reconcile.Result{}, err
@@ -108,18 +109,18 @@ func (r *MachineDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Re
 // SetupWithManager sets up the controller with the Manager.
 func (r *MachineDeploymentReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&clusterv1.MachineDeployment{}).
+		For(&clusterv1beta2.MachineDeployment{}).
 		Complete(r)
 }
 
-func (r *MachineDeploymentReconciler) reconcile(ctx context.Context, log logr.Logger, md *clusterv1.MachineDeployment) (ctrl.Result, error) {
+func (r *MachineDeploymentReconciler) reconcile(ctx context.Context, log logr.Logger, md *clusterv1beta2.MachineDeployment) (ctrl.Result, error) {
 	log.Info("Reconciling in place upgrade for workers")
-	if md.Spec.Template.Spec.Version == nil {
+	if md.Spec.Template.Spec.Version == "" {
 		log.Info("Kubernetes version not present, unable to reconcile for in place upgrade")
 		return ctrl.Result{}, fmt.Errorf("unable to retrieve kubernetes version from MachineDeployment \"%s\"", md.ObjectMeta.Name)
 	}
 
-	mhc := &clusterv1.MachineHealthCheck{}
+	mhc := &clusterv1beta2.MachineHealthCheck{}
 	if err := r.client.Get(ctx, GetNamespacedNameType(mdMachineHealthCheckName(md.ObjectMeta.Name), constants.EksaSystemNamespace), mhc); err != nil {
 		if apierrors.IsNotFound(err) {
 			return reconcile.Result{}, err
@@ -185,11 +186,11 @@ func (r *MachineDeploymentReconciler) reconcile(ctx context.Context, log logr.Lo
 	return ctrl.Result{}, fmt.Errorf("getting MachineDeploymentUpgrade for MachineDeployment %s: %v", md.ObjectMeta.Name, err)
 }
 
-func (r *MachineDeploymentReconciler) inPlaceUpgradeNeeded(md *clusterv1.MachineDeployment) bool {
+func (r *MachineDeploymentReconciler) inPlaceUpgradeNeeded(md *clusterv1beta2.MachineDeployment) bool {
 	return strings.ToLower(md.Annotations[mdInPlaceUpgradeNeededAnnotation]) == "true"
 }
 
-func (r *MachineDeploymentReconciler) machinesToUpgrade(ctx context.Context, md *clusterv1.MachineDeployment) ([]*clusterv1.Machine, []corev1.ObjectReference, error) {
+func (r *MachineDeploymentReconciler) machinesToUpgrade(ctx context.Context, md *clusterv1beta2.MachineDeployment) ([]*clusterv1.Machine, []corev1.ObjectReference, error) {
 	selector, err := metav1.LabelSelectorAsSelector(&metav1.LabelSelector{MatchLabels: map[string]string{workerMachineLabel: md.ObjectMeta.Name}})
 	if err != nil {
 		return nil, nil, err
@@ -226,7 +227,7 @@ func sortMachinesByCreationTimestamp(list *clusterv1.MachineList) []*clusterv1.M
 	return machines
 }
 
-func machineDeploymentUpgrade(md *clusterv1.MachineDeployment, machines []corev1.ObjectReference) (*anywherev1.MachineDeploymentUpgrade, error) {
+func machineDeploymentUpgrade(md *clusterv1beta2.MachineDeployment, machines []corev1.ObjectReference) (*anywherev1.MachineDeploymentUpgrade, error) {
 	msSpec, err := json.Marshal(md.Spec.Template.Spec)
 	if err != nil {
 		return nil, fmt.Errorf("marshaling Machine spec: %v", err)
@@ -248,7 +249,7 @@ func machineDeploymentUpgrade(md *clusterv1.MachineDeployment, machines []corev1
 				Namespace: md.ObjectMeta.Namespace,
 				Name:      md.ObjectMeta.Name,
 			},
-			KubernetesVersion:      *md.Spec.Template.Spec.Version,
+			KubernetesVersion:      md.Spec.Template.Spec.Version,
 			MachinesRequireUpgrade: machines,
 			MachineSpecData:        base64.StdEncoding.EncodeToString(msSpec),
 		},

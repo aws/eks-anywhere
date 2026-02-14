@@ -9,7 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/internal/test"
@@ -1066,40 +1066,39 @@ func tinkerbellMachineTemplate(name string) *tinkerbellv1.TinkerbellMachineTempl
 	}
 }
 
-func capiCluster() *clusterv1.Cluster {
-	return &clusterv1.Cluster{
+func capiCluster() *clusterv1beta2.Cluster {
+	return &clusterv1beta2.Cluster{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Cluster",
-			APIVersion: "cluster.x-k8s.io/v1beta1",
+			APIVersion: "cluster.x-k8s.io/v1beta2",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test",
 			Namespace: constants.EksaSystemNamespace,
 			Labels:    map[string]string{"cluster.x-k8s.io/cluster-name": "test"},
 		},
-		Spec: clusterv1.ClusterSpec{
-			ClusterNetwork: &clusterv1.ClusterNetwork{
-				APIServerPort: nil,
-				Services: &clusterv1.NetworkRanges{
+		Spec: clusterv1beta2.ClusterSpec{
+			ClusterNetwork: clusterv1beta2.ClusterNetwork{
+				Services: clusterv1beta2.NetworkRanges{
 					CIDRBlocks: []string{"10.96.0.0/12"},
 				},
-				Pods: &clusterv1.NetworkRanges{
+				Pods: clusterv1beta2.NetworkRanges{
 					CIDRBlocks: []string{"192.168.0.0/16"},
 				},
 			},
-			ControlPlaneEndpoint: clusterv1.APIEndpoint{
+			ControlPlaneEndpoint: clusterv1beta2.APIEndpoint{
 				Host: "1.2.3.4",
 				Port: 6443,
 			},
-			ControlPlaneRef: &corev1.ObjectReference{
-				Kind:       "KubeadmControlPlane",
-				Name:       "test",
-				APIVersion: "controlplane.cluster.x-k8s.io/v1beta1",
+			ControlPlaneRef: clusterv1beta2.ContractVersionedObjectReference{
+				APIGroup: "controlplane.cluster.x-k8s.io",
+				Kind:     "KubeadmControlPlane",
+				Name:     "test",
 			},
-			InfrastructureRef: &corev1.ObjectReference{
-				Kind:       "TinkerbellCluster",
-				Name:       "test",
-				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+			InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
+				APIGroup: "infrastructure.cluster.x-k8s.io",
+				Kind:     "TinkerbellCluster",
+				Name:     "test",
 			},
 		},
 	}

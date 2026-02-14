@@ -1,31 +1,34 @@
-apiVersion: cluster.x-k8s.io/v1beta1
+apiVersion: cluster.x-k8s.io/v1beta2
 kind: MachineHealthCheck
 metadata:
   name: "{{.clusterName}}-mhc"
   namespace: "{{.eksaSystemNamespace}}"
 spec:
   clusterName: "{{.clusterName}}"
-  maxUnhealthy: 40%
-  nodeStartupTimeout: 10m
   selector:
     matchLabels:
       cluster.x-k8s.io/cluster-name: "{{.clusterName}}"
-  unhealthyConditions:
-    - type: Ready
-      status: "False"
-      timeout: 300s
-    - type: Ready
-      status: Unknown
-      timeout: 300s
-    - type: MemoryPressure
-      status: "True"
-      timeout: 300s
-    - type: DiskPressure
-      status: "True"
-      timeout: 300s
-    - type: PIDPressure
-      status: "True"
-      timeout: 300s
-    - type: NetworkUnavailable
-      status: "True"
-      timeout: 300s
+  checks:
+    nodeStartupTimeoutSeconds: 600
+    unhealthyNodeConditions:
+      - type: Ready
+        status: "False"
+        timeoutSeconds: 300
+      - type: Ready
+        status: Unknown
+        timeoutSeconds: 300
+      - type: MemoryPressure
+        status: "True"
+        timeoutSeconds: 300
+      - type: DiskPressure
+        status: "True"
+        timeoutSeconds: 300
+      - type: PIDPressure
+        status: "True"
+        timeoutSeconds: 300
+      - type: NetworkUnavailable
+        status: "True"
+        timeoutSeconds: 300
+  remediation:
+    triggerIf:
+      unhealthyLessThanOrEqualTo: 40%

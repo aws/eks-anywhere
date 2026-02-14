@@ -3,9 +3,11 @@ package reconciler
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/go-logr/logr"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -65,14 +67,20 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *an
 	return nil
 }
 
-func copyNodeStartupTimeoutToCluster(cluster *anywherev1.Cluster, capiMHC *clusterv1.MachineHealthCheck) {
-	if capiMHC.Spec.NodeStartupTimeout != nil {
-		cluster.Spec.MachineHealthCheck.NodeStartupTimeout = capiMHC.Spec.NodeStartupTimeout
+func copyNodeStartupTimeoutToCluster(cluster *anywherev1.Cluster, capiMHC *clusterv1beta2.MachineHealthCheck) {
+	if capiMHC.Spec.Checks.NodeStartupTimeoutSeconds != nil {
+		seconds := *capiMHC.Spec.Checks.NodeStartupTimeoutSeconds
+		cluster.Spec.MachineHealthCheck.NodeStartupTimeout = &metav1.Duration{
+			Duration: time.Duration(seconds) * time.Second,
+		}
 	}
 }
 
-func copyUnhealthyMachineTimeoutToCluster(cluster *anywherev1.Cluster, capiMHC *clusterv1.MachineHealthCheck) {
-	if len(capiMHC.Spec.UnhealthyConditions) > 0 {
-		cluster.Spec.MachineHealthCheck.UnhealthyMachineTimeout = &capiMHC.Spec.UnhealthyConditions[0].Timeout
+func copyUnhealthyMachineTimeoutToCluster(cluster *anywherev1.Cluster, capiMHC *clusterv1beta2.MachineHealthCheck) {
+	if len(capiMHC.Spec.Checks.UnhealthyNodeConditions) > 0 && capiMHC.Spec.Checks.UnhealthyNodeConditions[0].TimeoutSeconds != nil {
+		seconds := *capiMHC.Spec.Checks.UnhealthyNodeConditions[0].TimeoutSeconds
+		cluster.Spec.MachineHealthCheck.UnhealthyMachineTimeout = &metav1.Duration{
+			Duration: time.Duration(seconds) * time.Second,
+		}
 	}
 }
