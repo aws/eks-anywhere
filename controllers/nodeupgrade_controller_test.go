@@ -9,7 +9,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -266,7 +266,7 @@ func generateNodeUpgrade(machine *clusterv1.Machine) *anywherev1.NodeUpgrade {
 	}
 }
 
-func generateMachine(cluster *clusterv1beta2.Cluster, node *corev1.Node, bootstrapConfig *bootstrapv1.KubeadmConfig) *clusterv1.Machine {
+func generateMachine(cluster *clusterv1beta2.Cluster, node *corev1.Node, bootstrapConfig *bootstrapv1beta2.KubeadmConfig) *clusterv1.Machine {
 	return &clusterv1.Machine{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "machine01",

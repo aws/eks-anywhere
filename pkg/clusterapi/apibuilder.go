@@ -8,8 +8,8 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
@@ -33,8 +33,8 @@ var (
 	clusterAPIVersion             = clusterv1beta2.GroupVersion.String()
 	machineDeploymentAPIVersion   = clusterv1beta2.GroupVersion.String()
 	machineHealthCheckAPIVersion  = clusterv1beta2.GroupVersion.String()
-	kubeadmControlPlaneAPIVersion = controlplanev1.GroupVersion.String()
-	bootstrapAPIVersion           = bootstrapv1.GroupVersion.String()
+	kubeadmControlPlaneAPIVersion = controlplanev1beta2.GroupVersion.String()
+	bootstrapAPIVersion           = bootstrapv1beta2.GroupVersion.String()
 	etcdAPIVersion                = etcdv1.GroupVersion.String()
 )
 
@@ -127,11 +127,11 @@ func Cluster(clusterSpec *cluster.Spec, infrastructureObject, controlPlaneObject
 	return cluster
 }
 
-func KubeadmControlPlane(clusterSpec *cluster.Spec, infrastructureObject APIObject) (*controlplanev1.KubeadmControlPlane, error) {
+func KubeadmControlPlane(clusterSpec *cluster.Spec, infrastructureObject APIObject) (*controlplanev1beta2.KubeadmControlPlane, error) {
 	replicas := int32(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Count)
 	bundle := clusterSpec.RootVersionsBundle()
 
-	kcp := &controlplanev1.KubeadmControlPlane{
+	kcp := &controlplanev1beta2.KubeadmControlPlane{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: kubeadmControlPlaneAPIVersion,
 			Kind:       kubeadmControlPlaneKind,
@@ -140,56 +140,52 @@ func KubeadmControlPlane(clusterSpec *cluster.Spec, infrastructureObject APIObje
 			Name:      KubeadmControlPlaneName(clusterSpec.Cluster),
 			Namespace: constants.EksaSystemNamespace,
 		},
-		Spec: controlplanev1.KubeadmControlPlaneSpec{
-			MachineTemplate: controlplanev1.KubeadmControlPlaneMachineTemplate{
-				InfrastructureRef: v1.ObjectReference{
-					APIVersion: infrastructureObject.GetObjectKind().GroupVersionKind().GroupVersion().String(),
-					Kind:       infrastructureObject.GetObjectKind().GroupVersionKind().Kind,
-					Name:       infrastructureObject.GetName(),
+		Spec: controlplanev1beta2.KubeadmControlPlaneSpec{
+			MachineTemplate: controlplanev1beta2.KubeadmControlPlaneMachineTemplate{
+				Spec: controlplanev1beta2.KubeadmControlPlaneMachineTemplateSpec{
+					InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
+						APIGroup: infrastructureObject.GetObjectKind().GroupVersionKind().Group,
+						Kind:     infrastructureObject.GetObjectKind().GroupVersionKind().Kind,
+						Name:     infrastructureObject.GetName(),
+					},
 				},
 			},
-			KubeadmConfigSpec: bootstrapv1.KubeadmConfigSpec{
-				ClusterConfiguration: &bootstrapv1.ClusterConfiguration{
+			KubeadmConfigSpec: bootstrapv1beta2.KubeadmConfigSpec{
+				ClusterConfiguration: bootstrapv1beta2.ClusterConfiguration{
 					ImageRepository: bundle.KubeDistro.Kubernetes.Repository,
-					DNS: bootstrapv1.DNS{
-						ImageMeta: bootstrapv1.ImageMeta{
-							ImageRepository: bundle.KubeDistro.CoreDNS.Repository,
-							ImageTag:        bundle.KubeDistro.CoreDNS.Tag,
-						},
+					DNS: bootstrapv1beta2.DNS{
+						ImageRepository: bundle.KubeDistro.CoreDNS.Repository,
+						ImageTag:        bundle.KubeDistro.CoreDNS.Tag,
 					},
-					APIServer: bootstrapv1.APIServer{
-						ControlPlaneComponent: bootstrapv1.ControlPlaneComponent{
-							ExtraArgs:    map[string]string{},
-							ExtraVolumes: []bootstrapv1.HostPathMount{},
-						},
-						CertSANs: clusterSpec.Cluster.Spec.ControlPlaneConfiguration.CertSANs,
+					APIServer: bootstrapv1beta2.APIServer{
+						ExtraArgs: ExtraArgs{}.ToArgs(),
+						CertSANs:  clusterSpec.Cluster.Spec.ControlPlaneConfiguration.CertSANs,
 					},
-					ControllerManager: bootstrapv1.ControlPlaneComponent{
-						ExtraArgs:    ControllerManagerArgs(clusterSpec),
-						ExtraVolumes: []bootstrapv1.HostPathMount{},
+					ControllerManager: bootstrapv1beta2.ControllerManager{
+						ExtraArgs:    ControllerManagerArgs(clusterSpec).ToArgs(),
+						ExtraVolumes: []bootstrapv1beta2.HostPathMount{},
 					},
-					Scheduler: bootstrapv1.ControlPlaneComponent{
-						ExtraArgs:    map[string]string{},
-						ExtraVolumes: []bootstrapv1.HostPathMount{},
+					Scheduler: bootstrapv1beta2.Scheduler{
+						ExtraArgs: ExtraArgs{}.ToArgs(),
 					},
 				},
-				InitConfiguration: &bootstrapv1.InitConfiguration{
-					NodeRegistration: bootstrapv1.NodeRegistrationOptions{
+				InitConfiguration: bootstrapv1beta2.InitConfiguration{
+					NodeRegistration: bootstrapv1beta2.NodeRegistrationOptions{
 						KubeletExtraArgs: SecureTlsCipherSuitesExtraArgs().
-							Append(ControlPlaneNodeLabelsExtraArgs(clusterSpec.Cluster.Spec.ControlPlaneConfiguration)),
-						Taints: clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints,
+							Append(ControlPlaneNodeLabelsExtraArgs(clusterSpec.Cluster.Spec.ControlPlaneConfiguration)).ToArgs(),
+						Taints: taintsToPtr(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints),
 					},
 				},
-				JoinConfiguration: &bootstrapv1.JoinConfiguration{
-					NodeRegistration: bootstrapv1.NodeRegistrationOptions{
+				JoinConfiguration: bootstrapv1beta2.JoinConfiguration{
+					NodeRegistration: bootstrapv1beta2.NodeRegistrationOptions{
 						KubeletExtraArgs: SecureTlsCipherSuitesExtraArgs().
-							Append(ControlPlaneNodeLabelsExtraArgs(clusterSpec.Cluster.Spec.ControlPlaneConfiguration)),
-						Taints: clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints,
+							Append(ControlPlaneNodeLabelsExtraArgs(clusterSpec.Cluster.Spec.ControlPlaneConfiguration)).ToArgs(),
+						Taints: taintsToPtr(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints),
 					},
 				},
 				PreKubeadmCommands:  []string{},
 				PostKubeadmCommands: []string{},
-				Files:               []bootstrapv1.File{},
+				Files:               []bootstrapv1beta2.File{},
 			},
 			Replicas: &replicas,
 			Version:  bundle.KubeDistro.Kubernetes.Tag,
@@ -207,8 +203,8 @@ func KubeadmControlPlane(clusterSpec *cluster.Spec, infrastructureObject APIObje
 	return kcp, nil
 }
 
-func KubeadmConfigTemplate(clusterSpec *cluster.Spec, workerNodeGroupConfig anywherev1.WorkerNodeGroupConfiguration) (*bootstrapv1.KubeadmConfigTemplate, error) {
-	kct := &bootstrapv1.KubeadmConfigTemplate{
+func KubeadmConfigTemplate(clusterSpec *cluster.Spec, workerNodeGroupConfig anywherev1.WorkerNodeGroupConfiguration) (*bootstrapv1beta2.KubeadmConfigTemplate, error) {
+	kct := &bootstrapv1beta2.KubeadmConfigTemplate{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: bootstrapAPIVersion,
 			Kind:       kubeadmConfigTemplateKind,
@@ -217,29 +213,27 @@ func KubeadmConfigTemplate(clusterSpec *cluster.Spec, workerNodeGroupConfig anyw
 			Name:      DefaultKubeadmConfigTemplateName(clusterSpec, workerNodeGroupConfig),
 			Namespace: constants.EksaSystemNamespace,
 		},
-		Spec: bootstrapv1.KubeadmConfigTemplateSpec{
-			Template: bootstrapv1.KubeadmConfigTemplateResource{
-				Spec: bootstrapv1.KubeadmConfigSpec{
-					ClusterConfiguration: &bootstrapv1.ClusterConfiguration{
-						ControllerManager: bootstrapv1.ControlPlaneComponent{
-							ExtraArgs: map[string]string{},
+		Spec: bootstrapv1beta2.KubeadmConfigTemplateSpec{
+			Template: bootstrapv1beta2.KubeadmConfigTemplateResource{
+				Spec: bootstrapv1beta2.KubeadmConfigSpec{
+					ClusterConfiguration: bootstrapv1beta2.ClusterConfiguration{
+						ControllerManager: bootstrapv1beta2.ControllerManager{
+							ExtraArgs: ExtraArgs{}.ToArgs(),
 						},
-						APIServer: bootstrapv1.APIServer{
-							ControlPlaneComponent: bootstrapv1.ControlPlaneComponent{
-								ExtraArgs: map[string]string{},
-							},
-							CertSANs: clusterSpec.Cluster.Spec.ControlPlaneConfiguration.CertSANs,
+						APIServer: bootstrapv1beta2.APIServer{
+							ExtraArgs: ExtraArgs{}.ToArgs(),
+							CertSANs:  clusterSpec.Cluster.Spec.ControlPlaneConfiguration.CertSANs,
 						},
 					},
-					JoinConfiguration: &bootstrapv1.JoinConfiguration{
-						NodeRegistration: bootstrapv1.NodeRegistrationOptions{
-							KubeletExtraArgs: WorkerNodeLabelsExtraArgs(workerNodeGroupConfig),
-							Taints:           workerNodeGroupConfig.Taints,
+					JoinConfiguration: bootstrapv1beta2.JoinConfiguration{
+						NodeRegistration: bootstrapv1beta2.NodeRegistrationOptions{
+							KubeletExtraArgs: WorkerNodeLabelsExtraArgs(workerNodeGroupConfig).ToArgs(),
+							Taints:           taintsToPtr(workerNodeGroupConfig.Taints),
 						},
 					},
 					PreKubeadmCommands:  []string{},
 					PostKubeadmCommands: []string{},
-					Files:               []bootstrapv1.File{},
+					Files:               []bootstrapv1beta2.File{},
 				},
 			},
 		},

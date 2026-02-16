@@ -23,7 +23,7 @@ spec:
     kind: TinkerbellCluster
     name: test
 ---
-apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+apiVersion: controlplane.cluster.x-k8s.io/v1beta2
 kind: KubeadmControlPlane
 metadata:
   name: test
@@ -43,11 +43,16 @@ spec:
         certSANs:
         - 11.11.11.11
         extraArgs:
-          audit-policy-file: /etc/kubernetes/audit-policy.yaml
-          audit-log-path: /var/log/kubernetes/api-audit.log
-          audit-log-maxage: "30"
-          audit-log-maxbackup: "10"
-          audit-log-maxsize: "512"
+        - name: audit-policy-file
+          value: "/etc/kubernetes/audit-policy.yaml"
+        - name: audit-log-path
+          value: "/var/log/kubernetes/api-audit.log"
+        - name: audit-log-maxage
+          value: "30"
+        - name: audit-log-maxbackup
+          value: "10"
+        - name: audit-log-maxsize
+          value: "512"
         extraVolumes:
         - hostPath: /etc/kubernetes/audit-policy.yaml
           mountPath: /etc/kubernetes/audit-policy.yaml
@@ -64,7 +69,8 @@ spec:
         directory: /etc/kubernetes/patches
       nodeRegistration:
         kubeletExtraArgs:
-          provider-id: PROVIDER_ID
+        - name: provider-id
+          value: "PROVIDER_ID"
         taints: []
     joinConfiguration:
       patches:
@@ -73,7 +79,8 @@ spec:
         ignorePreflightErrors:
         - DirAvailable--etc-kubernetes-manifests
         kubeletExtraArgs:
-          provider-id: PROVIDER_ID
+        - name: provider-id
+          value: "PROVIDER_ID"
         taints: []
     files:
       - content: |
@@ -312,16 +319,17 @@ spec:
       sudo: ALL=(ALL) NOPASSWD:ALL
     format: cloud-config
   machineTemplate:
-    infrastructureRef:
-      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-      kind: TinkerbellMachineTemplate
-      name: <no value>
-      namespace: eksa-system
+    spec:
+      infrastructureRef:
+        apiGroup: infrastructure.cluster.x-k8s.io
+        kind: TinkerbellMachineTemplate
+        name: <no value>
   replicas: 1
-  rolloutStrategy:
-    rollingUpdate:
-      maxSurge: 1
-    type: RollingUpdate
+  rollout:
+    strategy:
+      rollingUpdate:
+        maxSurge: 1
+      type: RollingUpdate
   version: v1.21.2-eks-1-21-4
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1

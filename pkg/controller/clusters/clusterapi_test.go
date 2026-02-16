@@ -6,18 +6,15 @@ import (
 	"time"
 
 	. "github.com/onsi/gomega"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/pointer"
-	"sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	_ "github.com/aws/eks-anywhere/internal/test/envtest"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
@@ -28,15 +25,15 @@ func TestCheckControlPlaneReadyItIsReady(t *testing.T) {
 	ctx := context.Background()
 	eksaCluster := eksaCluster()
 	kcpVersion := "test"
-	kcp := kcpObject(func(k *v1beta1.KubeadmControlPlane) {
+	kcp := kcpObject(func(k *controlplanev1beta2.KubeadmControlPlane) {
 		k.Spec.Version = kcpVersion
-		k.Status.Conditions = clusterv1.Conditions{
+		k.Status.Conditions = []metav1.Condition{
 			{
-				Type:   clusterv1.ClusterAvailableV1Beta2Condition,
-				Status: corev1.ConditionTrue,
+				Type:   clusterv1beta2.AvailableCondition,
+				Status: metav1.ConditionTrue,
 			},
 		}
-		k.Status.Version = pointer.String(kcpVersion)
+		k.Status.Version = kcpVersion
 	})
 
 	client := fake.NewClientBuilder().WithObjects(eksaCluster, kcp).Build()
@@ -63,8 +60,8 @@ func TestCheckControlPlaneNotReady(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
 	eksaCluster := eksaCluster()
-	kcp := kcpObject(func(k *v1beta1.KubeadmControlPlane) {
-		k.Status = v1beta1.KubeadmControlPlaneStatus{
+	kcp := kcpObject(func(k *controlplanev1beta2.KubeadmControlPlane) {
+		k.Status = controlplanev1beta2.KubeadmControlPlaneStatus{
 			ObservedGeneration: 2,
 		}
 	})
@@ -82,11 +79,11 @@ func TestCheckControlPlaneReadyConditionStatusNotReady(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
 	eksaCluster := eksaCluster()
-	kcp := kcpObject(func(k *v1beta1.KubeadmControlPlane) {
-		k.Status.Conditions = clusterv1.Conditions{
+	kcp := kcpObject(func(k *controlplanev1beta2.KubeadmControlPlane) {
+		k.Status.Conditions = []metav1.Condition{
 			{
-				Type:   clusterapi.ReadyCondition,
-				Status: corev1.ConditionFalse,
+				Type:   clusterv1beta2.ReadyCondition,
+				Status: metav1.ConditionFalse,
 			},
 		}
 	})
@@ -104,11 +101,11 @@ func TestCheckControlPlaneVersionNilStatusNotReady(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
 	eksaCluster := eksaCluster()
-	kcp := kcpObject(func(k *v1beta1.KubeadmControlPlane) {
-		k.Status.Conditions = clusterv1.Conditions{
+	kcp := kcpObject(func(k *controlplanev1beta2.KubeadmControlPlane) {
+		k.Status.Conditions = []metav1.Condition{
 			{
-				Type:   clusterapi.ReadyCondition,
-				Status: corev1.ConditionTrue,
+				Type:   clusterv1beta2.ReadyCondition,
+				Status: metav1.ConditionTrue,
 			},
 		}
 	})
@@ -126,14 +123,14 @@ func TestCheckControlPlaneVersionMismatchStatusNotReady(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
 	eksaCluster := eksaCluster()
-	kcp := kcpObject(func(k *v1beta1.KubeadmControlPlane) {
-		k.Status.Conditions = clusterv1.Conditions{
+	kcp := kcpObject(func(k *controlplanev1beta2.KubeadmControlPlane) {
+		k.Status.Conditions = []metav1.Condition{
 			{
-				Type:   clusterapi.ReadyCondition,
-				Status: corev1.ConditionTrue,
+				Type:   clusterv1beta2.ReadyCondition,
+				Status: metav1.ConditionTrue,
 			},
 		}
-		k.Status.Version = pointer.String("test")
+		k.Status.Version = "test"
 	})
 
 	client := fake.NewClientBuilder().WithObjects(eksaCluster, kcp).Build()
@@ -157,13 +154,13 @@ func eksaCluster() *anywherev1.Cluster {
 	}
 }
 
-type kcpObjectOpt func(*v1beta1.KubeadmControlPlane)
+type kcpObjectOpt func(*controlplanev1beta2.KubeadmControlPlane)
 
-func kcpObject(opts ...kcpObjectOpt) *v1beta1.KubeadmControlPlane {
-	k := &v1beta1.KubeadmControlPlane{
+func kcpObject(opts ...kcpObjectOpt) *controlplanev1beta2.KubeadmControlPlane {
+	k := &controlplanev1beta2.KubeadmControlPlane{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "KubeadmControlPlane",
-			APIVersion: v1beta1.GroupVersion.String(),
+			APIVersion: controlplanev1beta2.GroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-cluster",

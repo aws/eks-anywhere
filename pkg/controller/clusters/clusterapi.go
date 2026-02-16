@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	"sigs.k8s.io/cluster-api/api/core/v1beta1"
-	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
+	"k8s.io/apimachinery/pkg/api/meta"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -35,8 +35,8 @@ func CheckControlPlaneReady(ctx context.Context, client client.Client, log logr.
 	}
 
 	// Checking for version as well to avoid race condition of status not being updated in time at least for Kubernetes version upgrades
-	if !v1beta1conditions.IsTrue(kcp, v1beta1.ClusterAvailableV1Beta2Condition) ||
-		kcp.Status.Version == nil || kcp.Spec.Version != *kcp.Status.Version {
+	if !meta.IsStatusConditionTrue(kcp.GetConditions(), clusterv1beta2.AvailableCondition) ||
+		kcp.Status.Version == "" || kcp.Spec.Version != kcp.Status.Version {
 		log.Info("KCP is not ready yet, requeing")
 		return controller.ResultWithRequeue(30 * time.Second), nil
 	}

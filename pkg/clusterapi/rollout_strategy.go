@@ -2,19 +2,19 @@ package clusterapi
 
 import (
 	"k8s.io/apimachinery/pkg/util/intstr"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
 
 // SetUpgradeRolloutStrategyInKubeadmControlPlane updates the kubeadm control plane with the upgrade rollout strategy defined in an eksa cluster.
-func SetUpgradeRolloutStrategyInKubeadmControlPlane(kcp *controlplanev1.KubeadmControlPlane, rolloutStrategy *anywherev1.ControlPlaneUpgradeRolloutStrategy) {
+func SetUpgradeRolloutStrategyInKubeadmControlPlane(kcp *controlplanev1beta2.KubeadmControlPlane, rolloutStrategy *anywherev1.ControlPlaneUpgradeRolloutStrategy) {
 	if rolloutStrategy != nil {
 		maxSurge := intstr.FromInt(rolloutStrategy.RollingUpdate.MaxSurge)
-		kcp.Spec.RolloutStrategy = &controlplanev1.RolloutStrategy{
-			Type: controlplanev1.RollingUpdateStrategyType,
-			RollingUpdate: &controlplanev1.RollingUpdate{
+		kcp.Spec.Rollout.Strategy = controlplanev1beta2.KubeadmControlPlaneRolloutStrategy{
+			Type: controlplanev1beta2.RollingUpdateStrategyType,
+			RollingUpdate: controlplanev1beta2.KubeadmControlPlaneRolloutStrategyRollingUpdate{
 				MaxSurge: &maxSurge,
 			},
 		}

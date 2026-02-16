@@ -130,7 +130,7 @@ spec:
     spec: {}
     {{- end }}
 ---
-apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta2
 kind: KubeadmConfigTemplate
 metadata:
   name: {{.workloadkubeadmconfigTemplateName}}
@@ -190,16 +190,19 @@ spec:
 {{- end }}
 {{- end }}
           kubeletExtraArgs:
-            provider-id: PROVIDER_ID
+          - name: provider-id
+            value: "PROVIDER_ID"
 {{- if not .kubeletConfiguration }}
-            read-only-port: "0"
-            anonymous-auth: "false"
+          - name: read-only-port
+            value: "0"
+          - name: anonymous-auth
+            value: "false"
 {{- if .kubeletExtraArgs }}
-{{ .kubeletExtraArgs.ToYaml | indent 12 }}
+{{ .kubeletExtraArgs.ToYaml | indent 10 }}
 {{- end }}
 {{- end }}
 {{- if .wnNodeLabelArgs }}
-{{ .wnNodeLabelArgs.ToYaml | indent 12 }}
+{{ .wnNodeLabelArgs.ToYaml | indent 10 }}
 {{- end }}
 {{- if or (and (ne .format "bottlerocket") (or .proxyConfig .registryMirrorMap)) .kubeletConfiguration }}
       files:

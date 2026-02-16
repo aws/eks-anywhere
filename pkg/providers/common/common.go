@@ -8,7 +8,7 @@ import (
 
 	"golang.org/x/crypto/ssh"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -107,12 +107,12 @@ func KubeadmConfigTemplateName(clusterName, workerNodeGroupName string, now type
 }
 
 // GetCAPIBottlerocketSettingsConfig returns the formatted CAPI Bottlerocket settings config as a YAML marshaled string.
-func GetCAPIBottlerocketSettingsConfig(config *v1alpha1.HostOSConfiguration, brKubeSettings *bootstrapv1.BottlerocketKubernetesSettings) (string, error) {
+func GetCAPIBottlerocketSettingsConfig(config *v1alpha1.HostOSConfiguration, brKubeSettings *bootstrapv1beta2.BottlerocketKubernetesSettings) (string, error) {
 	if (config == nil || config.BottlerocketConfiguration == nil) && brKubeSettings == nil {
 		return "", nil
 	}
 
-	b := &bootstrapv1.BottlerocketSettings{}
+	b := &bootstrapv1beta2.BottlerocketSettings{}
 	if brKubeSettings != nil {
 		b.Kubernetes = copyBottlerocketKubernetesSettings(brKubeSettings)
 	}
@@ -122,7 +122,7 @@ func GetCAPIBottlerocketSettingsConfig(config *v1alpha1.HostOSConfiguration, brK
 
 			if config.BottlerocketConfiguration.Kernel != nil {
 				if config.BottlerocketConfiguration.Kernel.SysctlSettings != nil {
-					b.Kernel = &bootstrapv1.BottlerocketKernelSettings{
+					b.Kernel = &bootstrapv1beta2.BottlerocketKernelSettings{
 						SysctlSettings: config.BottlerocketConfiguration.Kernel.SysctlSettings,
 					}
 				}
@@ -130,7 +130,7 @@ func GetCAPIBottlerocketSettingsConfig(config *v1alpha1.HostOSConfiguration, brK
 
 			if config.BottlerocketConfiguration.Boot != nil {
 				if config.BottlerocketConfiguration.Boot.BootKernelParameters != nil {
-					b.Boot = &bootstrapv1.BottlerocketBootSettings{
+					b.Boot = &bootstrapv1beta2.BottlerocketBootSettings{
 						BootKernelParameters: config.BottlerocketConfiguration.Boot.BootKernelParameters,
 					}
 				}
@@ -141,8 +141,8 @@ func GetCAPIBottlerocketSettingsConfig(config *v1alpha1.HostOSConfiguration, brK
 	return getCAPIConfig(b)
 }
 
-func getCAPIConfig(b *bootstrapv1.BottlerocketSettings) (string, error) {
-	brMap := map[string]*bootstrapv1.BottlerocketSettings{
+func getCAPIConfig(b *bootstrapv1beta2.BottlerocketSettings) (string, error) {
+	brMap := map[string]*bootstrapv1beta2.BottlerocketSettings{
 		"bottlerocket": b,
 	}
 
@@ -181,7 +181,7 @@ func GetExternalEtcdReleaseURL(clusterVersion *v1alpha1.EksaVersion, versionBund
 
 // ConvertToBottlerocketKubernetesSettings converts an unstructured object into a Bottlerocket
 // Kubernetes settings object.
-func ConvertToBottlerocketKubernetesSettings(kubeletConfig *unstructured.Unstructured) (*bootstrapv1.BottlerocketKubernetesSettings, error) {
+func ConvertToBottlerocketKubernetesSettings(kubeletConfig *unstructured.Unstructured) (*bootstrapv1beta2.BottlerocketKubernetesSettings, error) {
 	if kubeletConfig == nil {
 		return nil, nil
 	}
@@ -202,7 +202,7 @@ func ConvertToBottlerocketKubernetesSettings(kubeletConfig *unstructured.Unstruc
 		return nil, fmt.Errorf("unmarshaling the yaml, malformed yaml %v", err)
 	}
 
-	var bottlerocketKC *bootstrapv1.BottlerocketKubernetesSettings
+	var bottlerocketKC *bootstrapv1beta2.BottlerocketKubernetesSettings
 	err = yaml.UnmarshalStrict(kcString, &bottlerocketKC)
 	if err != nil {
 		return nil, fmt.Errorf("unmarshaling KubeletConfiguration for %v", err)
@@ -227,10 +227,10 @@ func copyObject(kubeletConfig *unstructured.Unstructured) (*unstructured.Unstruc
 	return kubeletConfigBackup, nil
 }
 
-func copyBottlerocketKubernetesSettings(config *bootstrapv1.BottlerocketKubernetesSettings) *bootstrapv1.BottlerocketKubernetesSettings {
-	b := &bootstrapv1.BottlerocketKubernetesSettings{}
+func copyBottlerocketKubernetesSettings(config *bootstrapv1beta2.BottlerocketKubernetesSettings) *bootstrapv1beta2.BottlerocketKubernetesSettings {
+	b := &bootstrapv1beta2.BottlerocketKubernetesSettings{}
 	if config != nil {
-		b = &bootstrapv1.BottlerocketKubernetesSettings{
+		b = &bootstrapv1beta2.BottlerocketKubernetesSettings{
 			ClusterDomain:               config.ClusterDomain,
 			ContainerLogMaxFiles:        config.ContainerLogMaxFiles,
 			ContainerLogMaxSize:         config.ContainerLogMaxSize,

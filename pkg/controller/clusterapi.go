@@ -5,7 +5,7 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -46,7 +46,7 @@ func CapiClusterObjectKey(cluster *anywherev1.Cluster) client.ObjectKey {
 
 // GetKubeadmControlPlane reads a cluster-api KubeadmControlPlane for an eks-a cluster using a kube client
 // If the KubeadmControlPlane is not found, the method returns (nil, nil).
-func GetKubeadmControlPlane(ctx context.Context, client client.Client, cluster *anywherev1.Cluster) (*controlplanev1.KubeadmControlPlane, error) {
+func GetKubeadmControlPlane(ctx context.Context, client client.Client, cluster *anywherev1.Cluster) (*controlplanev1beta2.KubeadmControlPlane, error) {
 	kubeadmControlPlane, err := KubeadmControlPlane(ctx, client, cluster)
 	if apierrors.IsNotFound(err) {
 		return nil, nil
@@ -59,8 +59,8 @@ func GetKubeadmControlPlane(ctx context.Context, client client.Client, cluster *
 }
 
 // KubeadmControlPlane reads a cluster-api KubeadmControlPlane for an eks-a cluster using a kube client.
-func KubeadmControlPlane(ctx context.Context, client client.Client, cluster *anywherev1.Cluster) (*controlplanev1.KubeadmControlPlane, error) {
-	kubeadmControlPlane := &controlplanev1.KubeadmControlPlane{}
+func KubeadmControlPlane(ctx context.Context, client client.Client, cluster *anywherev1.Cluster) (*controlplanev1beta2.KubeadmControlPlane, error) {
+	kubeadmControlPlane := &controlplanev1beta2.KubeadmControlPlane{}
 	if err := client.Get(ctx, CAPIKubeadmControlPlaneKey(cluster), kubeadmControlPlane); err != nil {
 		return nil, err
 	}

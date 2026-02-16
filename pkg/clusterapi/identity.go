@@ -1,11 +1,12 @@
 package clusterapi
 
 import (
-	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 const awsIamKubeconfig = `
@@ -28,22 +29,22 @@ contexts:
     user: apiserver
 `
 
-var awsIamMounts = []bootstrapv1.HostPathMount{
+var awsIamMounts = []bootstrapv1beta2.HostPathMount{
 	{
 		Name:      "authconfig",
 		HostPath:  "/var/lib/kubeadm/aws-iam-authenticator/",
 		MountPath: "/etc/kubernetes/aws-iam-authenticator/",
-		ReadOnly:  false,
+		ReadOnly:  ptr.Bool(false),
 	},
 	{
 		Name:      "awsiamcert",
 		HostPath:  "/var/lib/kubeadm/aws-iam-authenticator/pki/",
 		MountPath: "/var/aws-iam-authenticator/",
-		ReadOnly:  false,
+		ReadOnly:  ptr.Bool(false),
 	},
 }
 
-var awsIamFiles = []bootstrapv1.File{
+var awsIamFiles = []bootstrapv1beta2.File{
 	{
 		Path:        "/var/lib/kubeadm/aws-iam-authenticator/kubeconfig.yaml",
 		Owner:       "root:root",
@@ -54,8 +55,8 @@ var awsIamFiles = []bootstrapv1.File{
 		Path:        "/var/lib/kubeadm/aws-iam-authenticator/pki/cert.pem",
 		Owner:       "root:root",
 		Permissions: "0640",
-		ContentFrom: &bootstrapv1.FileSource{
-			Secret: bootstrapv1.SecretFileSource{
+		ContentFrom: bootstrapv1beta2.FileSource{
+			Secret: bootstrapv1beta2.SecretFileSource{
 				Name: "test-cluster-aws-iam-authenticator-ca",
 				Key:  "cert.pem",
 			},
@@ -65,8 +66,8 @@ var awsIamFiles = []bootstrapv1.File{
 		Path:        "/var/lib/kubeadm/aws-iam-authenticator/pki/key.pem",
 		Owner:       "root:root",
 		Permissions: "0640",
-		ContentFrom: &bootstrapv1.FileSource{
-			Secret: bootstrapv1.SecretFileSource{
+		ContentFrom: bootstrapv1beta2.FileSource{
+			Secret: bootstrapv1beta2.SecretFileSource{
 				Name: "test-cluster-aws-iam-authenticator-ca",
 				Key:  "key.pem",
 			},
@@ -74,15 +75,15 @@ var awsIamFiles = []bootstrapv1.File{
 	},
 }
 
-func configureAWSIAMAuthInKubeadmControlPlane(kcp *controlplanev1.KubeadmControlPlane, awsIamConfig *v1alpha1.AWSIamConfig) {
+func configureAWSIAMAuthInKubeadmControlPlane(kcp *controlplanev1beta2.KubeadmControlPlane, awsIamConfig *v1alpha1.AWSIamConfig) {
 	if awsIamConfig == nil {
 		return
 	}
 
-	apiServerExtraArgs := kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.APIServer.ExtraArgs
-	for k, v := range AwsIamAuthExtraArgs(awsIamConfig) {
-		apiServerExtraArgs[k] = v
-	}
+	kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.APIServer.ExtraArgs = append(
+		kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.APIServer.ExtraArgs,
+		AwsIamAuthExtraArgs(awsIamConfig).ToArgs()...,
+	)
 
 	kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.APIServer.ExtraVolumes = append(
 		kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.APIServer.ExtraVolumes,
@@ -92,37 +93,38 @@ func configureAWSIAMAuthInKubeadmControlPlane(kcp *controlplanev1.KubeadmControl
 	kcp.Spec.KubeadmConfigSpec.Files = append(kcp.Spec.KubeadmConfigSpec.Files, awsIamFiles...)
 }
 
-func configureOIDCInKubeadmControlPlane(kcp *controlplanev1.KubeadmControlPlane, oidcConfig *v1alpha1.OIDCConfig) {
+func configureOIDCInKubeadmControlPlane(kcp *controlplanev1beta2.KubeadmControlPlane, oidcConfig *v1alpha1.OIDCConfig) {
 	if oidcConfig == nil {
 		return
 	}
 
-	apiServerExtraArgs := kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.APIServer.ExtraArgs
-	for k, v := range OIDCToExtraArgs(oidcConfig) {
-		apiServerExtraArgs[k] = v
-	}
+	kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.APIServer.ExtraArgs = append(
+		kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.APIServer.ExtraArgs,
+		OIDCToExtraArgs(oidcConfig).ToArgs()...,
+	)
 }
 
-func configureAPIServerExtraArgsInKubeadmControlPlane(kcp *controlplanev1.KubeadmControlPlane, apiServerExtraArgs map[string]string) {
+func configureAPIServerExtraArgsInKubeadmControlPlane(kcp *controlplanev1beta2.KubeadmControlPlane, apiServerExtraArgs map[string]string) {
 	if apiServerExtraArgs == nil {
 		return
 	}
 
-	for k, v := range apiServerExtraArgs {
-		kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.APIServer.ExtraArgs[k] = v
-	}
+	kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.APIServer.ExtraArgs = append(
+		kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.APIServer.ExtraArgs,
+		ExtraArgs(apiServerExtraArgs).ToArgs()...,
+	)
 }
 
-func configurePodIamAuthInKubeadmControlPlane(kcp *controlplanev1.KubeadmControlPlane, podIamConfig *v1alpha1.PodIAMConfig) {
+func configurePodIamAuthInKubeadmControlPlane(kcp *controlplanev1beta2.KubeadmControlPlane, podIamConfig *v1alpha1.PodIAMConfig) {
 	if podIamConfig == nil {
 		return
 	}
 
-	apiServerExtraArgs := kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.APIServer.ExtraArgs
-	SetPodIAMAuthExtraArgs(podIamConfig, apiServerExtraArgs)
+	kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.APIServer.ExtraArgs = SetPodIAMAuthInArgs(
+		podIamConfig, kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.APIServer.ExtraArgs)
 }
 
-func SetIdentityAuthInKubeadmControlPlane(kcp *controlplanev1.KubeadmControlPlane, clusterSpec *cluster.Spec) {
+func SetIdentityAuthInKubeadmControlPlane(kcp *controlplanev1beta2.KubeadmControlPlane, clusterSpec *cluster.Spec) {
 	configureOIDCInKubeadmControlPlane(kcp, clusterSpec.OIDCConfig)
 	configureAWSIAMAuthInKubeadmControlPlane(kcp, clusterSpec.AWSIamConfig)
 	configureAPIServerExtraArgsInKubeadmControlPlane(kcp, clusterSpec.Cluster.Spec.ControlPlaneConfiguration.APIServerExtraArgs)

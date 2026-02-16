@@ -13,8 +13,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
-	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -33,7 +33,7 @@ const (
 type kcpObjects struct {
 	machines  []*clusterv1.Machine
 	cpUpgrade *anywherev1.ControlPlaneUpgrade
-	kcp       *controlplanev1.KubeadmControlPlane
+	kcp       *controlplanev1beta2.KubeadmControlPlane
 	mhc       *clusterv1beta2.MachineHealthCheck
 }
 
@@ -116,7 +116,7 @@ func TestKCPReconcileKCPAndControlPlaneUpgradeReady(t *testing.T) {
 	ctx := context.Background()
 	kcpObjs := getObjectsForKCP()
 
-	kcpObjs.kcp.Status.Version = &kcpObjs.kcp.Spec.Version
+	kcpObjs.kcp.Status.Version = kcpObjs.kcp.Spec.Version
 	kcpObjs.cpUpgrade.Status.Ready = true
 
 	runtimeObjs := []runtime.Object{kcpObjs.machines[0], kcpObjs.machines[1], kcpObjs.cpUpgrade, kcpObjs.kcp, kcpObjs.mhc}
@@ -131,7 +131,7 @@ func TestKCPReconcileKCPAndControlPlaneUpgradeReady(t *testing.T) {
 	g.Expect(err).To(HaveOccurred())
 	g.Expect(err).To(MatchError("controlplaneupgrades.anywhere.eks.amazonaws.com \"my-cluster-cp-upgrade\" not found"))
 
-	kcp := &controlplanev1.KubeadmControlPlane{}
+	kcp := &controlplanev1beta2.KubeadmControlPlane{}
 	err = client.Get(ctx, types.NamespacedName{Name: kcpObjs.kcp.Name, Namespace: constants.EksaSystemNamespace}, kcp)
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(kcp.Annotations).ToNot(HaveKey(kcpInPlaceAnnotation))
@@ -161,7 +161,7 @@ func TestKCPReconcileFullFlow(t *testing.T) {
 	g.Expect(cpu.Status.Ready).To(BeFalse())
 
 	// Expect KCP to still have in-place annotation
-	kcp := &controlplanev1.KubeadmControlPlane{}
+	kcp := &controlplanev1beta2.KubeadmControlPlane{}
 	err = client.Get(ctx, types.NamespacedName{Name: kcpObjs.kcp.Name, Namespace: constants.EksaSystemNamespace}, kcp)
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(kcp.Annotations).To(HaveKey(kcpInPlaceAnnotation))
@@ -176,7 +176,7 @@ func TestKCPReconcileFullFlow(t *testing.T) {
 	cpu.Status.Ready = true
 	err = client.Update(ctx, cpu)
 	g.Expect(err).ToNot(HaveOccurred())
-	kcp.Status.Version = &kcp.Spec.Version
+	kcp.Status.Version = kcp.Spec.Version
 	err = client.Update(ctx, kcp)
 	g.Expect(err).ToNot(HaveOccurred())
 
@@ -231,14 +231,14 @@ func TestKCPReconcileClusterConfigurationMissing(t *testing.T) {
 	ctx := context.Background()
 	kcpObjs := getObjectsForKCP()
 
-	kcpObjs.kcp.Spec.KubeadmConfigSpec.ClusterConfiguration = nil
+	kcpObjs.kcp.Spec.KubeadmConfigSpec.ClusterConfiguration = bootstrapv1beta2.ClusterConfiguration{}
 
 	runtimeObjs := []runtime.Object{kcpObjs.kcp}
 	client := fake.NewClientBuilder().WithRuntimeObjects(runtimeObjs...).Build()
 	r := controllers.NewKubeadmControlPlaneReconciler(client, client)
 	req := kcpRequest(kcpObjs.kcp)
 	_, err := r.Reconcile(ctx, req)
-	g.Expect(err).To(MatchError("ClusterConfiguration not set for KubeadmControlPlane \"my-cluster\", unable to retrieve etcd information"))
+	g.Expect(err).To(MatchError("local etcd configuration is missing for KubeadmControlPlane \"my-cluster\""))
 }
 
 func TestKCPReconcileStackedEtcdMissing(t *testing.T) {
@@ -246,14 +246,14 @@ func TestKCPReconcileStackedEtcdMissing(t *testing.T) {
 	ctx := context.Background()
 	kcpObjs := getObjectsForKCP()
 
-	kcpObjs.kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.Local = nil
+	kcpObjs.kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.Local = bootstrapv1beta2.LocalEtcd{}
 
 	runtimeObjs := []runtime.Object{kcpObjs.kcp}
 	client := fake.NewClientBuilder().WithRuntimeObjects(runtimeObjs...).Build()
 	r := controllers.NewKubeadmControlPlaneReconciler(client, client)
 	req := kcpRequest(kcpObjs.kcp)
 	_, err := r.Reconcile(ctx, req)
-	g.Expect(err).To(MatchError("local etcd configuration is missing"))
+	g.Expect(err).To(MatchError("local etcd configuration is missing for KubeadmControlPlane \"my-cluster\""))
 }
 
 func getObjectsForKCP() kcpObjects {
@@ -261,7 +261,7 @@ func getObjectsForKCP() kcpObjects {
 	kcp := generateKCP(cluster.Name)
 	kcp.Name = cluster.Name
 	kcp.TypeMeta = metav1.TypeMeta{
-		APIVersion: controlplanev1.GroupVersion.String(),
+		APIVersion: controlplanev1beta2.GroupVersion.String(),
 		Kind:       "KubeadmControlPlane",
 	}
 	node1 := generateNode()
@@ -297,7 +297,7 @@ func getObjectsForKCP() kcpObjects {
 	}
 }
 
-func kcpRequest(kcp *controlplanev1.KubeadmControlPlane) reconcile.Request {
+func kcpRequest(kcp *controlplanev1beta2.KubeadmControlPlane) reconcile.Request {
 	return reconcile.Request{
 		NamespacedName: types.NamespacedName{
 			Name:      kcp.Name,
@@ -306,8 +306,8 @@ func kcpRequest(kcp *controlplanev1.KubeadmControlPlane) reconcile.Request {
 	}
 }
 
-func generateKCP(name string) *controlplanev1.KubeadmControlPlane {
-	return &controlplanev1.KubeadmControlPlane{
+func generateKCP(name string) *controlplanev1beta2.KubeadmControlPlane {
+	return &controlplanev1beta2.KubeadmControlPlane{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: constants.EksaSystemNamespace,
@@ -316,14 +316,12 @@ func generateKCP(name string) *controlplanev1.KubeadmControlPlane {
 				kcpInPlaceAnnotation: "true",
 			},
 		},
-		Spec: controlplanev1.KubeadmControlPlaneSpec{
-			KubeadmConfigSpec: bootstrapv1.KubeadmConfigSpec{
-				ClusterConfiguration: &bootstrapv1.ClusterConfiguration{
-					Etcd: bootstrapv1.Etcd{
-						Local: &bootstrapv1.LocalEtcd{
-							ImageMeta: bootstrapv1.ImageMeta{
-								ImageTag: etcd129,
-							},
+		Spec: controlplanev1beta2.KubeadmControlPlaneSpec{
+			KubeadmConfigSpec: bootstrapv1beta2.KubeadmConfigSpec{
+				ClusterConfiguration: bootstrapv1beta2.ClusterConfiguration{
+					Etcd: bootstrapv1beta2.Etcd{
+						Local: bootstrapv1beta2.LocalEtcd{
+							ImageTag: etcd129,
 						},
 					},
 				},

@@ -48,18 +48,18 @@ spec:
         hostPath: /var/run/docker.sock
       customImage: {{.kindNodeImage}}
 ---
-apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+apiVersion: controlplane.cluster.x-k8s.io/v1beta2
 kind: KubeadmControlPlane
 metadata:
   name: {{.clusterName}}
   namespace: {{.eksaSystemNamespace}}
 spec:
   machineTemplate:
-    infrastructureRef:
-      apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
-      kind: DockerMachineTemplate
-      name: {{.controlPlaneTemplateName}}
-      namespace: {{.eksaSystemNamespace}}
+    spec:
+      infrastructureRef:
+        apiGroup: infrastructure.cluster.x-k8s.io
+        kind: DockerMachineTemplate
+        name: {{.controlPlaneTemplateName}}
   kubeadmConfigSpec:
     clusterConfiguration:
       imageRepository: {{.kubernetesRepository}}
@@ -76,7 +76,7 @@ spec:
           imageTag: {{.etcdVersion}}
 {{- if .etcdExtraArgs }}
           extraArgs:
-{{ .etcdExtraArgs.ToYaml | indent 12 }}
+{{ .etcdExtraArgs.ToYaml | indent 10 }}
 {{- end }}
 {{- end }}
       dns:
@@ -95,14 +95,20 @@ spec:
           value: /etc/kubernetes/admission-plugin-exclusion-rules.json
 {{- end }}
         extraArgs:
-          audit-policy-file: /etc/kubernetes/audit-policy.yaml
-          audit-log-path: /var/log/kubernetes/api-audit.log
-          audit-log-maxage: "30"
-          audit-log-maxbackup: "10"
-          audit-log-maxsize: "512"
-          profiling: "false"
+        - name: audit-policy-file
+          value: "/etc/kubernetes/audit-policy.yaml"
+        - name: audit-log-path
+          value: "/var/log/kubernetes/api-audit.log"
+        - name: audit-log-maxage
+          value: "30"
+        - name: audit-log-maxbackup
+          value: "10"
+        - name: audit-log-maxsize
+          value: "512"
+        - name: profiling
+          value: "false"
 {{- if .apiserverExtraArgs }}
-{{ .apiserverExtraArgs.ToYaml | indent 10 }}
+{{ .apiserverExtraArgs.ToYaml | indent 8 }}
 {{- end }}
         extraVolumes:
         - hostPath: /etc/kubernetes/audit-policy.yaml
@@ -134,16 +140,19 @@ spec:
 {{- end}}
       controllerManager:
         extraArgs:
-          enable-hostpath-provisioner: "true"
-          profiling: "false"
+        - name: enable-hostpath-provisioner
+          value: "true"
+        - name: profiling
+          value: "false"
 {{- if .controllermanagerExtraArgs }}
-{{ .controllermanagerExtraArgs.ToYaml | indent 10 }}
+{{ .controllermanagerExtraArgs.ToYaml | indent 8 }}
 {{- end }}
       scheduler:
         extraArgs:
-          profiling: "false"
+        - name: profiling
+          value: "false"
 {{- if .schedulerExtraArgs }}
-{{ .schedulerExtraArgs.ToYaml | indent 10 }}
+{{ .schedulerExtraArgs.ToYaml | indent 8 }}
 {{- end }}
     files:
 {{- if .kubeletConfiguration }}
@@ -262,13 +271,14 @@ spec:
         criSocket: /var/run/containerd/containerd.sock
 {{- if not .kubeletConfiguration }}
         kubeletExtraArgs:
-          eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
+        - name: eviction-hard
+          value: "nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%"
 {{- if .kubeletExtraArgs }}
-{{ .kubeletExtraArgs.ToYaml | indent 10 }}
+{{ .kubeletExtraArgs.ToYaml | indent 8 }}
 {{- end }}
 {{- end }}
 {{- if .nodeLabelArgs }}
-{{ .nodeLabelArgs.ToYaml | indent 10 }}
+{{ .nodeLabelArgs.ToYaml | indent 8 }}
 {{- end }}
 {{- if not .workerNodeGroupConfigurations }}
         taints: []
@@ -292,13 +302,14 @@ spec:
         criSocket: /var/run/containerd/containerd.sock
 {{- if not .kubeletConfiguration }}
         kubeletExtraArgs:
-          eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
+        - name: eviction-hard
+          value: "nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%"
 {{- if .kubeletExtraArgs }}
-{{ .kubeletExtraArgs.ToYaml | indent 10 }}
+{{ .kubeletExtraArgs.ToYaml | indent 8 }}
 {{- end }}
 {{- end }}
 {{- if .nodeLabelArgs }}
-{{ .nodeLabelArgs.ToYaml | indent 10 }}
+{{ .nodeLabelArgs.ToYaml | indent 8 }}
 {{- end }}
 {{- if not .workerNodeGroupConfigurations }}
         taints: []
@@ -321,14 +332,16 @@ spec:
 {{- end }}
   replicas: {{.control_plane_replicas}}
 {{- if .upgradeRolloutStrategy }}
-  rolloutStrategy:
-    rollingUpdate:
-      maxSurge: {{.maxSurge}}
+  rollout:
+    strategy:
+      rollingUpdate:
+        maxSurge: {{.maxSurge}}
 {{- else }}
-  rolloutStrategy:
-    rollingUpdate:
-      maxSurge: 1
-    type: RollingUpdate
+  rollout:
+    strategy:
+      rollingUpdate:
+        maxSurge: 1
+      type: RollingUpdate
 {{- end }}
   version: {{.kubernetesVersion}}
 {{- if .externalEtcd }}

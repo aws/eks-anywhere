@@ -6,13 +6,38 @@ import (
 	"strconv"
 	"strings"
 
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
+
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/logger"
-	"github.com/aws/eks-anywhere/pkg/templater"
 )
 
 type ExtraArgs map[string]string
+
+// ToArgs converts ExtraArgs (map[string]string) to the v1beta2 []bootstrapv1.Arg format.
+// The output is sorted by name for deterministic ordering.
+// SortArgs sorts a slice of bootstrapv1beta2.Arg by name for deterministic ordering.
+func SortArgs(args []bootstrapv1beta2.Arg) {
+	sort.Slice(args, func(i, j int) bool {
+		return args[i].Name < args[j].Name
+	})
+}
+
+func (e ExtraArgs) ToArgs() []bootstrapv1beta2.Arg {
+	if len(e) == 0 {
+		return nil
+	}
+	args := make([]bootstrapv1beta2.Arg, 0, len(e))
+	for k, v := range e {
+		v := v // copy for pointer
+		args = append(args, bootstrapv1beta2.Arg{Name: k, Value: &v})
+	}
+	sort.Slice(args, func(i, j int) bool {
+		return args[i].Name < args[j].Name
+	})
+	return args
+}
 
 func OIDCToExtraArgs(oidc *v1alpha1.OIDCConfig) ExtraArgs {
 	args := ExtraArgs{}
@@ -156,12 +181,45 @@ func SetPodIAMAuthExtraArgs(podIAMConfig *v1alpha1.PodIAMConfig, apiServerExtraA
 	}
 }
 
-func (e ExtraArgs) ToPartialYaml() templater.PartialYaml {
-	p := templater.PartialYaml{}
-	for k, v := range e {
-		p.AddIfNotZero(k, v)
+// SetPodIAMAuthInArgs merges PodIAM service-account-issuer into an existing []Arg slice.
+// If service-account-issuer already exists, it concatenates the values with a comma
+// (matching the behavior of SetPodIAMAuthExtraArgs for map[string]string).
+func SetPodIAMAuthInArgs(podIAMConfig *v1alpha1.PodIAMConfig, args []bootstrapv1beta2.Arg) []bootstrapv1beta2.Arg {
+	podIAMFlags := PodIAMAuthExtraArgs(podIAMConfig)
+	if podIAMFlags == nil {
+		return args
 	}
-	return p
+
+	issuerValue := podIAMFlags["service-account-issuer"]
+	for i, arg := range args {
+		if arg.Name == "service-account-issuer" && arg.Value != nil {
+			merged := strings.Join([]string{*arg.Value, issuerValue}, ",")
+			args[i].Value = &merged
+			return args
+		}
+	}
+	return append(args, bootstrapv1beta2.Arg{Name: "service-account-issuer", Value: &issuerValue})
+}
+
+// ToYaml outputs ExtraArgs as v1beta2 []Arg YAML format (list of name/value pairs).
+// Output is sorted by name for deterministic ordering.
+func (e ExtraArgs) ToYaml() string {
+	if len(e) == 0 {
+		return ""
+	}
+	// Sort keys for deterministic output
+	keys := make([]string, 0, len(e))
+	for k := range e {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	var b strings.Builder
+	for _, k := range keys {
+		v := e[k]
+		fmt.Fprintf(&b, "- name: %s\n  value: \"%s\"\n", k, v)
+	}
+	return strings.TrimRight(b.String(), "\n")
 }
 
 func requiredClaimToArg(r *v1alpha1.OIDCConfigRequiredClaim) string {

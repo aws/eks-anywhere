@@ -12,7 +12,7 @@ import (
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	"github.com/aws/eks-anywhere/internal/test"
@@ -40,9 +40,9 @@ var (
 	managementStatePath               = fmt.Sprintf("cluster-state-backup-%s", time.Now().Format("2006-01-02T15_04_05"))
 )
 
-func getKcpAndMdsForNodeCount(count int32) (*controlplanev1.KubeadmControlPlane, []clusterv1beta2.MachineDeployment) {
-	kcp := &controlplanev1.KubeadmControlPlane{
-		Spec: controlplanev1.KubeadmControlPlaneSpec{
+func getKcpAndMdsForNodeCount(count int32) (*controlplanev1beta2.KubeadmControlPlane, []clusterv1beta2.MachineDeployment) {
+	kcp := &controlplanev1beta2.KubeadmControlPlane{
+		Spec: controlplanev1beta2.KubeadmControlPlaneSpec{
 			Replicas: ptr.Int32(count),
 		},
 	}

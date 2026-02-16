@@ -5,9 +5,10 @@ import (
 	"reflect"
 
 	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	kubeadmv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -49,7 +50,7 @@ func (w *Workers[M]) UpdateImmutableObjectNames(
 
 // WorkerGroup represents the provider specific CAPI spec for an eks-a worker group.
 type WorkerGroup[M Object[M]] struct {
-	KubeadmConfigTemplate   *kubeadmv1.KubeadmConfigTemplate
+	KubeadmConfigTemplate   *bootstrapv1beta2.KubeadmConfigTemplate
 	MachineDeployment       *clusterv1beta2.MachineDeployment
 	ProviderMachineTemplate M
 }
@@ -110,8 +111,8 @@ func (g *WorkerGroup[M]) DeepCopy() *WorkerGroup[M] {
 
 // GetKubeadmConfigTemplate retrieves a KubeadmConfigTemplate using a client
 // Implements ObjectRetriever.
-func GetKubeadmConfigTemplate(ctx context.Context, client kubernetes.Client, name, namespace string) (*kubeadmv1.KubeadmConfigTemplate, error) {
-	k := &kubeadmv1.KubeadmConfigTemplate{}
+func GetKubeadmConfigTemplate(ctx context.Context, client kubernetes.Client, name, namespace string) (*bootstrapv1beta2.KubeadmConfigTemplate, error) {
+	k := &bootstrapv1beta2.KubeadmConfigTemplate{}
 	if err := client.Get(ctx, name, namespace, k); err != nil {
 		return nil, err
 	}
@@ -122,7 +123,7 @@ func GetKubeadmConfigTemplate(ctx context.Context, client kubernetes.Client, nam
 // KubeadmConfigTemplateEqual returns true only if the new version of a KubeadmConfigTemplate
 // involves changes with respect to the old one when applied to the cluster.
 // Implements ObjectComparator.
-func KubeadmConfigTemplateEqual(new, old *kubeadmv1.KubeadmConfigTemplate) bool {
+func KubeadmConfigTemplateEqual(new, old *bootstrapv1beta2.KubeadmConfigTemplate) bool {
 	// DeepDerivative treats empty map (length == 0) as unset field. We need to manually compare certain fields
 	// such as taints, so that setting it to empty will trigger machine recreate
 	// The file check with deep equal has been added since the introduction of kubelet configuration in case users
@@ -132,20 +133,31 @@ func KubeadmConfigTemplateEqual(new, old *kubeadmv1.KubeadmConfigTemplate) bool 
 		equality.Semantic.DeepDerivative(new.Spec, old.Spec)
 }
 
-func kubeadmConfigTemplateTaintsEqual(new, old *kubeadmv1.KubeadmConfigTemplate) bool {
-	return new.Spec.Template.Spec.JoinConfiguration == nil ||
-		old.Spec.Template.Spec.JoinConfiguration == nil ||
-		anywherev1.TaintsSliceEqual(
-			new.Spec.Template.Spec.JoinConfiguration.NodeRegistration.Taints,
-			old.Spec.Template.Spec.JoinConfiguration.NodeRegistration.Taints,
-		)
+func kubeadmConfigTemplateTaintsEqual(new, old *bootstrapv1beta2.KubeadmConfigTemplate) bool {
+	newTaints := taintsFromPtr(new.Spec.Template.Spec.JoinConfiguration.NodeRegistration.Taints)
+	oldTaints := taintsFromPtr(old.Spec.Template.Spec.JoinConfiguration.NodeRegistration.Taints)
+	return anywherev1.TaintsSliceEqual(newTaints, oldTaints)
 }
 
-func kubeadmConfigTemplateExtraArgsEqual(new, old *kubeadmv1.KubeadmConfigTemplate) bool {
-	return new.Spec.Template.Spec.JoinConfiguration == nil ||
-		old.Spec.Template.Spec.JoinConfiguration == nil ||
-		anywherev1.MapEqual(
-			new.Spec.Template.Spec.JoinConfiguration.NodeRegistration.KubeletExtraArgs,
-			old.Spec.Template.Spec.JoinConfiguration.NodeRegistration.KubeletExtraArgs,
-		)
+func kubeadmConfigTemplateExtraArgsEqual(new, old *bootstrapv1beta2.KubeadmConfigTemplate) bool {
+	return reflect.DeepEqual(
+		new.Spec.Template.Spec.JoinConfiguration.NodeRegistration.KubeletExtraArgs,
+		old.Spec.Template.Spec.JoinConfiguration.NodeRegistration.KubeletExtraArgs,
+	)
+}
+
+// taintsFromPtr dereferences a *[]Taint to []Taint, returning nil if the pointer is nil.
+func taintsFromPtr(t *[]corev1.Taint) []corev1.Taint {
+	if t == nil {
+		return nil
+	}
+	return *t
+}
+
+// taintsToPtr returns a pointer to the taints slice, or nil if the slice is nil.
+func taintsToPtr(t []corev1.Taint) *[]corev1.Taint {
+	if t == nil {
+		return nil
+	}
+	return &t
 }

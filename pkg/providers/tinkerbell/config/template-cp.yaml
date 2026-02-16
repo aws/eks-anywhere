@@ -30,7 +30,7 @@ spec:
     name: {{.clusterName}}-etcd
 {{- end }}
 ---
-apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+apiVersion: controlplane.cluster.x-k8s.io/v1beta2
 kind: KubeadmControlPlane
 metadata:
   name: {{.clusterName}}
@@ -109,13 +109,18 @@ spec:
           value: /etc/kubernetes/admission-plugin-exclusion-rules.json
 {{- end }}
         extraArgs:
-          audit-policy-file: /etc/kubernetes/audit-policy.yaml
-          audit-log-path: /var/log/kubernetes/api-audit.log
-          audit-log-maxage: "30"
-          audit-log-maxbackup: "10"
-          audit-log-maxsize: "512"
+        - name: audit-policy-file
+          value: "/etc/kubernetes/audit-policy.yaml"
+        - name: audit-log-path
+          value: "/var/log/kubernetes/api-audit.log"
+        - name: audit-log-maxage
+          value: "30"
+        - name: audit-log-maxbackup
+          value: "10"
+        - name: audit-log-maxsize
+          value: "512"
 {{- if .apiserverExtraArgs }}
-{{ .apiserverExtraArgs.ToYaml | indent 10 }}
+{{ .apiserverExtraArgs.ToYaml | indent 8 }}
 {{- end }}
         extraVolumes:
 {{- if (eq .format "bottlerocket") }}
@@ -179,16 +184,19 @@ spec:
 {{- end }}
       nodeRegistration:
         kubeletExtraArgs:
-          provider-id: PROVIDER_ID
+        - name: provider-id
+          value: "PROVIDER_ID"
 {{- if not .kubeletConfiguration }}
-          read-only-port: "0"
-          anonymous-auth: "false"
+        - name: read-only-port
+          value: "0"
+        - name: anonymous-auth
+          value: "false"
 {{- if .kubeletExtraArgs }}
-{{ .kubeletExtraArgs.ToYaml | indent 10 }}
+{{ .kubeletExtraArgs.ToYaml | indent 8 }}
 {{- end }}
 {{- end }}
 {{- if .cpNodeLabelArgs }}
-{{ .cpNodeLabelArgs.ToYaml | indent 10 }}
+{{ .cpNodeLabelArgs.ToYaml | indent 8 }}
 {{- end }}
 {{- if not .workerNodeGroupConfigurations }}
         taints: []
@@ -247,16 +255,19 @@ spec:
         ignorePreflightErrors:
         - DirAvailable--etc-kubernetes-manifests
         kubeletExtraArgs:
-          provider-id: PROVIDER_ID
+        - name: provider-id
+          value: "PROVIDER_ID"
 {{- if not .kubeletConfiguration }}
-          read-only-port: "0"
-          anonymous-auth: "false"
+        - name: read-only-port
+          value: "0"
+        - name: anonymous-auth
+          value: "false"
 {{- if .kubeletExtraArgs }}
-{{ .kubeletExtraArgs.ToYaml | indent 10 }}
+{{ .kubeletExtraArgs.ToYaml | indent 8 }}
 {{- end }}
 {{- end }}
 {{- if .cpNodeLabelArgs }}
-{{ .cpNodeLabelArgs.ToYaml | indent 10 }}
+{{ .cpNodeLabelArgs.ToYaml | indent 8 }}
 {{- end }}
 {{- if not .workerNodeGroupConfigurations }}
         taints: []
@@ -486,25 +497,27 @@ spec:
       sudo: ALL=(ALL) NOPASSWD:ALL
     format: {{.format}}
   machineTemplate:
-    infrastructureRef:
-      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-      kind: TinkerbellMachineTemplate
-      name: {{.controlPlaneTemplateName}}
-      namespace: {{.eksaSystemNamespace}}
+    spec:
+      infrastructureRef:
+        apiGroup: infrastructure.cluster.x-k8s.io
+        kind: TinkerbellMachineTemplate
+        name: {{.controlPlaneTemplateName}}
   replicas: {{.controlPlaneReplicas}}
 {{- if .upgradeRolloutStrategy }}
-  rolloutStrategy:
+  rollout:
+    strategy:
 {{- if (eq .upgradeRolloutStrategyType "InPlace") }}
-    type: {{.upgradeRolloutStrategyType}}
+      type: {{.upgradeRolloutStrategyType}}
 {{- else}}
-    rollingUpdate:
-      maxSurge: {{.maxSurge}}
+      rollingUpdate:
+        maxSurge: {{.maxSurge}}
 {{- end }}
 {{- else }}
-  rolloutStrategy:
-    rollingUpdate:
-      maxSurge: 1
-    type: RollingUpdate
+  rollout:
+    strategy:
+      rollingUpdate:
+        maxSurge: 1
+      type: RollingUpdate
 {{- end }}
   version: {{.kubernetesVersion}}
 ---

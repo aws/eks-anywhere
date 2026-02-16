@@ -8,7 +8,7 @@ import (
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -102,7 +102,7 @@ func TestControlPlaneUpdateImmutableObjectNamesErrorUpdatingName(t *testing.T) {
 	cp := controlPlaneStackedEtcd()
 	originalCPMachineTemplateName := "my-machine-template"
 	cp.ControlPlaneMachineTemplate.Name = originalCPMachineTemplateName
-	cp.KubeadmControlPlane.Spec.MachineTemplate.InfrastructureRef.Name = originalCPMachineTemplateName
+	cp.KubeadmControlPlane.Spec.MachineTemplate.Spec.InfrastructureRef.Name = originalCPMachineTemplateName
 	client := test.NewFakeKubeClient(clientutil.ObjectsToClientObjects(cp.Objects())...)
 
 	g.Expect(
@@ -118,12 +118,12 @@ func TestControlPlaneUpdateImmutableObjectNamesSuccessStackedEtcdNoChanges(t *te
 	cp := controlPlaneStackedEtcd()
 	originalCPMachineTemplateName := "my-machine-template-1"
 	cp.ControlPlaneMachineTemplate.Name = originalCPMachineTemplateName
-	cp.KubeadmControlPlane.Spec.MachineTemplate.InfrastructureRef.Name = originalCPMachineTemplateName
+	cp.KubeadmControlPlane.Spec.MachineTemplate.Spec.InfrastructureRef.Name = originalCPMachineTemplateName
 	client := test.NewFakeKubeClient(clientutil.ObjectsToClientObjects(cp.Objects())...)
 
 	g.Expect(cp.UpdateImmutableObjectNames(ctx, client, dummyRetriever, noChangesCompare)).To(Succeed())
 	g.Expect(cp.ControlPlaneMachineTemplate.Name).To(Equal(originalCPMachineTemplateName))
-	g.Expect(cp.KubeadmControlPlane.Spec.MachineTemplate.InfrastructureRef.Name).To(Equal(cp.ControlPlaneMachineTemplate.Name))
+	g.Expect(cp.KubeadmControlPlane.Spec.MachineTemplate.Spec.InfrastructureRef.Name).To(Equal(cp.ControlPlaneMachineTemplate.Name))
 }
 
 func TestControlPlaneUpdateImmutableObjectNamesSuccessStackedEtcdWithChanges(t *testing.T) {
@@ -132,12 +132,12 @@ func TestControlPlaneUpdateImmutableObjectNamesSuccessStackedEtcdWithChanges(t *
 	cp := controlPlaneStackedEtcd()
 	originalCPMachineTemplateName := "my-machine-template-1"
 	cp.ControlPlaneMachineTemplate.Name = originalCPMachineTemplateName
-	cp.KubeadmControlPlane.Spec.MachineTemplate.InfrastructureRef.Name = originalCPMachineTemplateName
+	cp.KubeadmControlPlane.Spec.MachineTemplate.Spec.InfrastructureRef.Name = originalCPMachineTemplateName
 	client := test.NewFakeKubeClient(clientutil.ObjectsToClientObjects(cp.Objects())...)
 
 	g.Expect(cp.UpdateImmutableObjectNames(ctx, client, dummyRetriever, withChangesCompare)).To(Succeed())
 	g.Expect(cp.ControlPlaneMachineTemplate.Name).To(Equal("my-machine-template-2"))
-	g.Expect(cp.KubeadmControlPlane.Spec.MachineTemplate.InfrastructureRef.Name).To(Equal(cp.ControlPlaneMachineTemplate.Name))
+	g.Expect(cp.KubeadmControlPlane.Spec.MachineTemplate.Spec.InfrastructureRef.Name).To(Equal(cp.ControlPlaneMachineTemplate.Name))
 }
 
 func TestControlPlaneUpdateImmutableObjectNamesNoEtcdCluster(t *testing.T) {
@@ -146,13 +146,13 @@ func TestControlPlaneUpdateImmutableObjectNamesNoEtcdCluster(t *testing.T) {
 	cp := controlPlaneStackedEtcd()
 	originalCPMachineTemplateName := "my-machine-template-1"
 	cp.ControlPlaneMachineTemplate.Name = originalCPMachineTemplateName
-	cp.KubeadmControlPlane.Spec.MachineTemplate.InfrastructureRef.Name = originalCPMachineTemplateName
+	cp.KubeadmControlPlane.Spec.MachineTemplate.Spec.InfrastructureRef.Name = originalCPMachineTemplateName
 	client := test.NewFakeKubeClient(clientutil.ObjectsToClientObjects(cp.Objects())...)
 	cp.EtcdCluster = etcdCluster()
 
 	g.Expect(cp.UpdateImmutableObjectNames(ctx, client, dummyRetriever, noChangesCompare)).To(Succeed())
 	g.Expect(cp.ControlPlaneMachineTemplate.Name).To(Equal(originalCPMachineTemplateName))
-	g.Expect(cp.KubeadmControlPlane.Spec.MachineTemplate.InfrastructureRef.Name).To(Equal(cp.ControlPlaneMachineTemplate.Name))
+	g.Expect(cp.KubeadmControlPlane.Spec.MachineTemplate.Spec.InfrastructureRef.Name).To(Equal(cp.ControlPlaneMachineTemplate.Name))
 }
 
 func TestControlPlaneUpdateImmutableObjectNamesErrorReadingEtcdCluster(t *testing.T) {
@@ -161,9 +161,9 @@ func TestControlPlaneUpdateImmutableObjectNamesErrorReadingEtcdCluster(t *testin
 	cp := controlPlaneUnStackedEtcd()
 	originalCPMachineTemplateName := "my-machine-template-1"
 	cp.ControlPlaneMachineTemplate.Name = originalCPMachineTemplateName
-	cp.KubeadmControlPlane.Spec.MachineTemplate.InfrastructureRef.Name = originalCPMachineTemplateName
+	cp.KubeadmControlPlane.Spec.MachineTemplate.Spec.InfrastructureRef.Name = originalCPMachineTemplateName
 	scheme := runtime.NewScheme()
-	g.Expect(controlplanev1.AddToScheme(scheme)).To(Succeed())
+	g.Expect(controlplanev1beta2.AddToScheme(scheme)).To(Succeed())
 	client := test.NewKubeClient(
 		fake.NewClientBuilder().WithScheme(scheme).WithObjects(cp.KubeadmControlPlane).Build(),
 	)
@@ -181,7 +181,7 @@ func TestControlPlaneUpdateImmutableObjectNamesErrorUpdatingEtcdName(t *testing.
 	cp := controlPlaneUnStackedEtcd()
 	originalCPMachineTemplateName := "my-machine-template-1"
 	cp.ControlPlaneMachineTemplate.Name = originalCPMachineTemplateName
-	cp.KubeadmControlPlane.Spec.MachineTemplate.InfrastructureRef.Name = originalCPMachineTemplateName
+	cp.KubeadmControlPlane.Spec.MachineTemplate.Spec.InfrastructureRef.Name = originalCPMachineTemplateName
 	originalEtcdMachineTemplateName := "my-etcd-machine-template"
 	cp.EtcdMachineTemplate.Name = originalEtcdMachineTemplateName
 	cp.EtcdCluster.Spec.InfrastructureTemplate.Name = originalEtcdMachineTemplateName
@@ -200,7 +200,7 @@ func TestControlPlaneUpdateImmutableObjectNamesSuccessUnstackedEtcd(t *testing.T
 	cp := controlPlaneUnStackedEtcd()
 	originalCPMachineTemplateName := "my-machine-template-1"
 	cp.ControlPlaneMachineTemplate.Name = originalCPMachineTemplateName
-	cp.KubeadmControlPlane.Spec.MachineTemplate.InfrastructureRef.Name = originalCPMachineTemplateName
+	cp.KubeadmControlPlane.Spec.MachineTemplate.Spec.InfrastructureRef.Name = originalCPMachineTemplateName
 	originalEtcdMachineTemplateName := "my-etcd-machine-template-2"
 	cp.EtcdMachineTemplate.Name = originalEtcdMachineTemplateName
 	cp.EtcdCluster.Spec.InfrastructureTemplate.Name = originalEtcdMachineTemplateName
@@ -209,7 +209,7 @@ func TestControlPlaneUpdateImmutableObjectNamesSuccessUnstackedEtcd(t *testing.T
 	g.Expect(cp.UpdateImmutableObjectNames(ctx, client, dummyRetriever, noChangesCompare)).To(Succeed())
 	g.Expect(cp.ControlPlaneMachineTemplate.Name).To(Equal(originalCPMachineTemplateName))
 	g.Expect(cp.EtcdMachineTemplate.Name).To(Equal(originalEtcdMachineTemplateName))
-	g.Expect(cp.KubeadmControlPlane.Spec.MachineTemplate.InfrastructureRef.Name).To(Equal(cp.ControlPlaneMachineTemplate.Name))
+	g.Expect(cp.KubeadmControlPlane.Spec.MachineTemplate.Spec.InfrastructureRef.Name).To(Equal(cp.ControlPlaneMachineTemplate.Name))
 	g.Expect(cp.EtcdCluster.Spec.InfrastructureTemplate.Name).To(Equal(cp.EtcdMachineTemplate.Name))
 }
 
@@ -219,7 +219,7 @@ func TestControlPlaneUpdateImmutableObjectNamesSuccessUnstackedEtcdWithChanges(t
 	cp := controlPlaneUnStackedEtcd()
 	originalCPMachineTemplateName := "my-machine-template-1"
 	cp.ControlPlaneMachineTemplate.Name = originalCPMachineTemplateName
-	cp.KubeadmControlPlane.Spec.MachineTemplate.InfrastructureRef.Name = originalCPMachineTemplateName
+	cp.KubeadmControlPlane.Spec.MachineTemplate.Spec.InfrastructureRef.Name = originalCPMachineTemplateName
 	originalEtcdMachineTemplateName := "my-etcd-machine-template-2"
 	cp.EtcdMachineTemplate.Name = originalEtcdMachineTemplateName
 	cp.EtcdCluster.Spec.InfrastructureTemplate.Name = originalEtcdMachineTemplateName
@@ -228,7 +228,7 @@ func TestControlPlaneUpdateImmutableObjectNamesSuccessUnstackedEtcdWithChanges(t
 	g.Expect(cp.UpdateImmutableObjectNames(ctx, client, dummyRetriever, withChangesCompare)).To(Succeed())
 	g.Expect(cp.ControlPlaneMachineTemplate.Name).To(Equal("my-machine-template-2"))
 	g.Expect(cp.EtcdMachineTemplate.Name).To(Equal("my-etcd-machine-template-3"))
-	g.Expect(cp.KubeadmControlPlane.Spec.MachineTemplate.InfrastructureRef.Name).To(Equal(cp.ControlPlaneMachineTemplate.Name))
+	g.Expect(cp.KubeadmControlPlane.Spec.MachineTemplate.Spec.InfrastructureRef.Name).To(Equal(cp.ControlPlaneMachineTemplate.Name))
 	g.Expect(cp.EtcdCluster.Spec.InfrastructureTemplate.Name).To(Equal(cp.EtcdMachineTemplate.Name))
 }
 
@@ -240,8 +240,8 @@ func dockerCluster() *dockerv1.DockerCluster {
 	return &dockerv1.DockerCluster{}
 }
 
-func kubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
-	return &controlplanev1.KubeadmControlPlane{}
+func kubeadmControlPlane() *controlplanev1beta2.KubeadmControlPlane {
+	return &controlplanev1beta2.KubeadmControlPlane{}
 }
 
 func dockerMachineTemplate() *dockerv1.DockerMachineTemplate {

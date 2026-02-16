@@ -12,10 +12,8 @@ import (
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/pointer"
-	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -25,7 +23,6 @@ import (
 	"github.com/aws/eks-anywhere/internal/test/envtest"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	clusterspec "github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
@@ -150,7 +147,7 @@ func TestReconcilerReconcileControlPlane(t *testing.T) {
 	tt.Expect(result).To(Equal(controller.Result{}))
 
 	tt.ShouldEventuallyExist(tt.ctx,
-		&controlplanev1.KubeadmControlPlane{
+		&controlplanev1beta2.KubeadmControlPlane{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      tt.cluster.Name,
 				Namespace: "eksa-system",
@@ -179,15 +176,15 @@ func TestReconcilerCheckControlPlaneReadyItIsReady(t *testing.T) {
 	tt := newReconcilerTest(t)
 	kcpVersion := "test"
 	tt.kcp.Spec.Version = kcpVersion
-	tt.kcp.Status = controlplanev1.KubeadmControlPlaneStatus{
-		Conditions: clusterv1.Conditions{
+	tt.kcp.Status = controlplanev1beta2.KubeadmControlPlaneStatus{
+		Conditions: []metav1.Condition{
 			{
-				Type:               clusterv1.AvailableV1Beta2Condition,
-				Status:             corev1.ConditionTrue,
+				Type:               clusterv1beta2.AvailableCondition,
+				Status:             metav1.ConditionTrue,
 				LastTransitionTime: metav1.NewTime(time.Now()),
 			},
 		},
-		Version: pointer.String(kcpVersion),
+		Version: kcpVersion,
 	}
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tt.kcp)
 	tt.withFakeClient()
@@ -254,7 +251,7 @@ type reconcilerTest struct {
 	eksaSupportObjs           []client.Object
 	machineConfigControlPlane *anywherev1.SnowMachineConfig
 	machineConfigWorker       *anywherev1.SnowMachineConfig
-	kcp                       *controlplanev1.KubeadmControlPlane
+	kcp                       *controlplanev1beta2.KubeadmControlPlane
 }
 
 func newReconcilerTest(t testing.TB) *reconcilerTest {
@@ -344,20 +341,22 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 		c.Spec.EksaVersion = &version
 	})
 
-	kcp := test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
+	kcp := test.KubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
 		kcp.Name = cluster.Name
-		kcp.Spec = controlplanev1.KubeadmControlPlaneSpec{
-			MachineTemplate: controlplanev1.KubeadmControlPlaneMachineTemplate{
-				InfrastructureRef: corev1.ObjectReference{
-					Name: fmt.Sprintf("%s-control-plane-1", cluster.Name),
+		kcp.Spec = controlplanev1beta2.KubeadmControlPlaneSpec{
+			MachineTemplate: controlplanev1beta2.KubeadmControlPlaneMachineTemplate{
+				Spec: controlplanev1beta2.KubeadmControlPlaneMachineTemplateSpec{
+					InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
+						Name: fmt.Sprintf("%s-control-plane-1", cluster.Name),
+					},
 				},
 			},
 		}
-		kcp.Status = controlplanev1.KubeadmControlPlaneStatus{
-			Conditions: clusterv1.Conditions{
+		kcp.Status = controlplanev1beta2.KubeadmControlPlaneStatus{
+			Conditions: []metav1.Condition{
 				{
-					Type:               clusterapi.ReadyCondition,
-					Status:             corev1.ConditionTrue,
+					Type:               clusterv1beta2.ReadyCondition,
+					Status:             metav1.ConditionTrue,
 					LastTransitionTime: metav1.NewTime(time.Now()),
 				},
 			},
@@ -398,7 +397,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 
 func (tt *reconcilerTest) cleanup() {
 	tt.DeleteAndWait(tt.ctx, tt.allObjs()...)
-	tt.DeleteAllOfAndWait(tt.ctx, &bootstrapv1.KubeadmConfigTemplate{})
+	tt.DeleteAllOfAndWait(tt.ctx, &bootstrapv1beta2.KubeadmConfigTemplate{})
 	tt.DeleteAllOfAndWait(tt.ctx, &snowv1.AWSSnowMachineTemplate{})
 	tt.DeleteAllOfAndWait(tt.ctx, &clusterv1beta2.MachineDeployment{})
 }

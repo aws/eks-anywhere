@@ -401,7 +401,7 @@ func (r *Reconciler) validateHardwareReqForKCP(validatableCAPI *tinkerbell.Valid
 	tinkerbellClusterSpec := tinkerbell.NewClusterSpec(tinkerbellScope.ClusterSpec, tinkerbellScope.ClusterSpec.TinkerbellMachineConfigs, tinkerbellScope.ClusterSpec.TinkerbellDatacenter)
 	maxSurge := 1
 	requirements := tinkerbell.MinimumHardwareRequirements{}
-	if currentKCP.Spec.MachineTemplate.InfrastructureRef.Name != newKCP.Spec.MachineTemplate.InfrastructureRef.Name {
+	if currentKCP.Spec.MachineTemplate.Spec.InfrastructureRef.Name != newKCP.Spec.MachineTemplate.Spec.InfrastructureRef.Name {
 		upgradeStrategy := tinkerbellScope.ClusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy
 		if upgradeStrategy != nil && upgradeStrategy.Type == anywherev1.RollingUpdateStrategyType {
 			maxSurge = upgradeStrategy.RollingUpdate.MaxSurge

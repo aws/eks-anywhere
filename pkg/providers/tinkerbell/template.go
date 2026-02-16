@@ -227,7 +227,7 @@ func buildTemplateMapCP(
 		"kubeVipImage":                  versionsBundle.Tinkerbell.KubeVip.VersionedImage(),
 		"podCidrs":                      clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks,
 		"serviceCidrs":                  clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks,
-		"apiserverExtraArgs":            apiServerExtraArgs.ToPartialYaml(),
+		"apiserverExtraArgs":            apiServerExtraArgs,
 		"baseRegistry":                  "", // TODO: need to get this values for creating template IMAGE_URL
 		"osDistro":                      "", // TODO: need to get this values for creating template IMAGE_URL
 		"osVersion":                     "", // TODO: need to get this values for creating template IMAGE_URL
@@ -346,12 +346,12 @@ func buildTemplateMapCP(
 		kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
 			Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf))
 
-		values["kubeletExtraArgs"] = kubeletExtraArgs.ToPartialYaml()
+		values["kubeletExtraArgs"] = kubeletExtraArgs
 	}
 
 	cpNodeLabelArgs := clusterapi.ControlPlaneNodeLabelsExtraArgs(clusterSpec.Cluster.Spec.ControlPlaneConfiguration)
 	if len(cpNodeLabelArgs) != 0 {
-		values["cpNodeLabelArgs"] = cpNodeLabelArgs.ToPartialYaml()
+		values["cpNodeLabelArgs"] = cpNodeLabelArgs
 	}
 
 	if !datacenterSpec.IsoBoot {
@@ -473,12 +473,12 @@ func buildTemplateMapMD(
 	} else {
 		kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
 			Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf))
-		values["kubeletExtraArgs"] = kubeletExtraArgs.ToPartialYaml()
+		values["kubeletExtraArgs"] = kubeletExtraArgs
 	}
 
 	wnNodeLabelArgs := clusterapi.WorkerNodeLabelsExtraArgs(workerNodeGroupConfiguration)
 	if len(wnNodeLabelArgs) != 0 {
-		values["wnNodeLabelArgs"] = wnNodeLabelArgs.ToPartialYaml()
+		values["wnNodeLabelArgs"] = wnNodeLabelArgs
 	}
 
 	if !datacenterSpec.IsoBoot {

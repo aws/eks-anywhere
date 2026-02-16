@@ -177,9 +177,12 @@
                             ]
                         },
                         "controllerManager": {
-                            "extraArgs": {
-                                "enable-hostpath-provisioner": "true"
-                            }
+                            "extraArgs": [
+                                {
+                                    "name": "enable-hostpath-provisioner",
+                                    "value": "true"
+                                }
+                            ]
                         },
                         "dns": {
                             "imageRepository": "public.ecr.aws/eks-distro/coredns",
@@ -203,18 +206,24 @@
                         },
                         "nodeRegistration": {
                             "criSocket": "/var/run/containerd/containerd.sock",
-                            "kubeletExtraArgs": {
-                                "eviction-hard": "nodefs.available\u003c0%,nodefs.inodesFree\u003c0%,imagefs.available\u003c0%"
-                            }
+                            "kubeletExtraArgs": [
+                                {
+                                    "name": "eviction-hard",
+                                    "value": "nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%"
+                                }
+                            ]
                         }
                     },
                     "joinConfiguration": {
                         "discovery": {},
                         "nodeRegistration": {
                             "criSocket": "/var/run/containerd/containerd.sock",
-                            "kubeletExtraArgs": {
-                                "eviction-hard": "nodefs.available\u003c0%,nodefs.inodesFree\u003c0%,imagefs.available\u003c0%"
-                            }
+                            "kubeletExtraArgs": [
+                                {
+                                    "name": "eviction-hard",
+                                    "value": "nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%"
+                                }
+                            ]
                         }
                     }
                 },
@@ -449,9 +458,12 @@
                             ]
                         },
                         "controllerManager": {
-                            "extraArgs": {
-                                "enable-hostpath-provisioner": "true"
-                            }
+                            "extraArgs": [
+                                {
+                                    "name": "enable-hostpath-provisioner",
+                                    "value": "true"
+                                }
+                            ]
                         },
                         "dns": {
                             "imageRepository": "public.ecr.aws/eks-distro/coredns",
@@ -475,18 +487,24 @@
                         },
                         "nodeRegistration": {
                             "criSocket": "/var/run/containerd/containerd.sock",
-                            "kubeletExtraArgs": {
-                                "eviction-hard": "nodefs.available\u003c0%,nodefs.inodesFree\u003c0%,imagefs.available\u003c0%"
-                            }
+                            "kubeletExtraArgs": [
+                                {
+                                    "name": "eviction-hard",
+                                    "value": "nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%"
+                                }
+                            ]
                         }
                     },
                     "joinConfiguration": {
                         "discovery": {},
                         "nodeRegistration": {
                             "criSocket": "/var/run/containerd/containerd.sock",
-                            "kubeletExtraArgs": {
-                                "eviction-hard": "nodefs.available\u003c0%,nodefs.inodesFree\u003c0%,imagefs.available\u003c0%"
-                            }
+                            "kubeletExtraArgs": [
+                                {
+                                    "name": "eviction-hard",
+                                    "value": "nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%"
+                                }
+                            ]
                         }
                     }
                 },

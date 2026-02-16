@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/klog/v2"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/util/annotations"
@@ -30,7 +30,7 @@ type ControlPlane struct {
 	// for provisioning the infrastructure, referenced in Cluster.Spec.InfrastructureRef
 	ProviderCluster client.Object
 
-	KubeadmControlPlane *controlplanev1.KubeadmControlPlane
+	KubeadmControlPlane *controlplanev1beta2.KubeadmControlPlane
 
 	// ControlPlaneMachineTemplate is the provider-specific machine template referenced
 	// in KubeadmControlPlane.Spec.MachineTemplate.InfrastructureRef
@@ -125,7 +125,7 @@ func ReconcileControlPlane(ctx context.Context, log logr.Logger, c client.Client
 	return reconcileControlPlaneNodeChanges(ctx, log, c, cp, kcp)
 }
 
-func readCurrentControlPlane(ctx context.Context, c client.Client, cp *ControlPlane) (*clusterv1beta2.Cluster, *controlplanev1.KubeadmControlPlane, *etcdv1.EtcdadmCluster, error) {
+func readCurrentControlPlane(ctx context.Context, c client.Client, cp *ControlPlane) (*clusterv1beta2.Cluster, *controlplanev1beta2.KubeadmControlPlane, *etcdv1.EtcdadmCluster, error) {
 	cluster := &clusterv1beta2.Cluster{}
 	err := c.Get(ctx, client.ObjectKeyFromObject(cp.Cluster), cluster)
 	if apierrors.IsNotFound(err) {
@@ -136,7 +136,7 @@ func readCurrentControlPlane(ctx context.Context, c client.Client, cp *ControlPl
 		return nil, nil, nil, errors.Wrap(err, "reading CAPI cluster")
 	}
 
-	kcp := &controlplanev1.KubeadmControlPlane{}
+	kcp := &controlplanev1beta2.KubeadmControlPlane{}
 	key := client.ObjectKey{
 		Name:      cluster.Spec.ControlPlaneRef.Name,
 		Namespace: cluster.Namespace,
@@ -165,7 +165,7 @@ func applyAllControlPlaneObjects(ctx context.Context, c client.Client, cp *Contr
 	return nil
 }
 
-func reconcileEtcdChanges(ctx context.Context, log logr.Logger, c client.Client, desiredCP *ControlPlane, currentKCP *controlplanev1.KubeadmControlPlane, currentEtcdadmCluster *etcdv1.EtcdadmCluster) (controller.Result, error) {
+func reconcileEtcdChanges(ctx context.Context, log logr.Logger, c client.Client, desiredCP *ControlPlane, currentKCP *controlplanev1beta2.KubeadmControlPlane, currentEtcdadmCluster *etcdv1.EtcdadmCluster) (controller.Result, error) {
 	// Before making any changes to etcd, pause the KCP so it doesn't rollout new nodes as the
 	// etcd endpoints change.
 	if !annotations.HasPaused(currentKCP) {
@@ -201,17 +201,18 @@ func etcdadmClusterReady(etcdadmCluster *etcdv1.EtcdadmCluster) bool {
 	return etcdadmCluster.Generation == etcdadmCluster.Status.ObservedGeneration && etcdadmCluster.Status.Ready
 }
 
-func reconcileControlPlaneNodeChanges(ctx context.Context, log logr.Logger, c client.Client, desiredCP *ControlPlane, currentKCP *controlplanev1.KubeadmControlPlane) (controller.Result, error) {
+func reconcileControlPlaneNodeChanges(ctx context.Context, log logr.Logger, c client.Client, desiredCP *ControlPlane, currentKCP *controlplanev1beta2.KubeadmControlPlane) (controller.Result, error) {
 	// When the controller reconciles the control plane for a cluster with an external etcd configuration
 	// the KubeadmControlPlane.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External.Endpoints field is
-	// defaulted to an empty slice. However, at some point that field in KubeadmControlPlane object is filled
-	// and updated by the kcp controller.
+	// defaulted to a placeholder value. At some point that field in KubeadmControlPlane object is filled
+	// and updated by the kcp controller with real etcd endpoints.
 	//
-	// We do not want to update the field with an empty slice again, so here we check if the endpoints for the
-	// external etcd have already been populated on the KubeadmControlPlane object and override ours before applying it.
-	externalEndpoints := currentKCP.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External.Endpoints
-	if len(externalEndpoints) != 0 && !isPlaceholderEndpoint(externalEndpoints) {
-		desiredCP.KubeadmControlPlane.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External.Endpoints = externalEndpoints
+	// We do not want to overwrite real endpoints with the placeholder again, so here we check if the endpoints
+	// for the external etcd have already been populated with real values on the KubeadmControlPlane object
+	// and preserve them in the desired state before applying.
+	currentEndpoints := currentKCP.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External.Endpoints
+	if len(currentEndpoints) != 0 && !isPlaceholderEndpoint(currentEndpoints) {
+		desiredCP.KubeadmControlPlane.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External.Endpoints = currentEndpoints
 	}
 
 	if err := serverside.ReconcileObjects(ctx, c, desiredCP.nonEtcdObjects()); err != nil {
@@ -221,7 +222,7 @@ func reconcileControlPlaneNodeChanges(ctx context.Context, log logr.Logger, c cl
 	// If the KCP is paused, we read the last version (in case we just updated it) and unpause it
 	// so the cp nodes are reconciled.
 	if annotations.HasPaused(currentKCP) {
-		kcp := &controlplanev1.KubeadmControlPlane{}
+		kcp := &controlplanev1beta2.KubeadmControlPlane{}
 		if err := c.Get(ctx, client.ObjectKeyFromObject(currentKCP), kcp); err != nil {
 			return controller.Result{}, errors.Wrap(err, "reading updates kubeadm control plane to unpause")
 		}

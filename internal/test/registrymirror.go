@@ -1,7 +1,7 @@
 package test
 
 import (
-	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
@@ -39,8 +39,8 @@ xTAY4N4C2s/wIybZxaJ8iQ39OzDpyN2Ym40Q58GVOHt16XCjFVVorVcZsI3y2B9Q
 
 // RegistryMirrorConfigFilesInsecureSkipVerify returns cluster-api bootstrap files that configure containerd
 // to use a registry mirror with the insecure_skip_verify flag enabled.
-func RegistryMirrorConfigFilesInsecureSkipVerify() []bootstrapv1.File {
-	return []bootstrapv1.File{
+func RegistryMirrorConfigFilesInsecureSkipVerify() []bootstrapv1beta2.File {
+	return []bootstrapv1beta2.File{
 		{
 			Content: `[plugins."io.containerd.grpc.v1.cri".registry]
   config_path = "/etc/containerd/certs.d"
@@ -73,8 +73,8 @@ func RegistryMirrorConfigFilesInsecureSkipVerify() []bootstrapv1.File {
 
 // RegistryMirrorConfigFilesInsecureSkipVerifyAndCACert returns cluster-api bootstrap files that configure containerd
 // to use a registry mirror with a cacert file and insecure_skip_verify flag enabled.
-func RegistryMirrorConfigFilesInsecureSkipVerifyAndCACert() []bootstrapv1.File {
-	return []bootstrapv1.File{
+func RegistryMirrorConfigFilesInsecureSkipVerifyAndCACert() []bootstrapv1beta2.File {
+	return []bootstrapv1beta2.File{
 		{
 			Content: CACertContent(),
 			Owner:   "root:root",

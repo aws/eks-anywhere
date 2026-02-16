@@ -10,7 +10,7 @@ import (
 	"regexp"
 
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/yaml"
 
@@ -75,7 +75,7 @@ func (p *Provider) InstallCustomProviderComponents(ctx context.Context, kubeconf
 type ProviderKubectlClient interface {
 	GetEksaCluster(ctx context.Context, cluster *types.Cluster, clusterName string) (*v1alpha1.Cluster, error)
 	GetMachineDeployment(ctx context.Context, machineDeploymentName string, opts ...executables.KubectlOpt) (*clusterv1beta2.MachineDeployment, error)
-	GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*controlplanev1.KubeadmControlPlane, error)
+	GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*controlplanev1beta2.KubeadmControlPlane, error)
 	GetEtcdadmCluster(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*etcdv1.EtcdadmCluster, error)
 	UpdateAnnotation(ctx context.Context, resourceType, objectName string, annotations map[string]string, opts ...executables.KubectlOpt) error
 }
@@ -285,11 +285,11 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 		"corednsRepository":             versionsBundle.KubeDistro.CoreDNS.Repository,
 		"corednsVersion":                versionsBundle.KubeDistro.CoreDNS.Tag,
 		"kindNodeImage":                 versionsBundle.EksD.KindNode.VersionedImage(),
-		"etcdExtraArgs":                 etcdExtraArgs.ToPartialYaml(),
+		"etcdExtraArgs":                 etcdExtraArgs,
 		"etcdCipherSuites":              crypto.SecureCipherSuitesString(),
-		"apiserverExtraArgs":            apiServerExtraArgs.ToPartialYaml(),
-		"controllermanagerExtraArgs":    controllerManagerExtraArgs.ToPartialYaml(),
-		"schedulerExtraArgs":            sharedExtraArgs.ToPartialYaml(),
+		"apiserverExtraArgs":            apiServerExtraArgs,
+		"controllermanagerExtraArgs":    controllerManagerExtraArgs,
+		"schedulerExtraArgs":            sharedExtraArgs,
 		"externalEtcdVersion":           versionsBundle.KubeDistro.EtcdVersion,
 		"eksaSystemNamespace":           constants.EksaSystemNamespace,
 		"podCidrs":                      clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks,
@@ -401,12 +401,12 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 			kubeletExtraArgs.Append(clusterapi.ExtraArgs{"fail-cgroupv1": "false"})
 		}
 
-		values["kubeletExtraArgs"] = kubeletExtraArgs.ToPartialYaml()
+		values["kubeletExtraArgs"] = kubeletExtraArgs
 	}
 
 	nodeLabelArgs := clusterapi.ControlPlaneNodeLabelsExtraArgs(clusterSpec.Cluster.Spec.ControlPlaneConfiguration)
 	if len(nodeLabelArgs) != 0 {
-		values["nodeLabelArgs"] = nodeLabelArgs.ToPartialYaml()
+		values["nodeLabelArgs"] = nodeLabelArgs
 	}
 
 	return values, nil
@@ -499,12 +499,12 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupConfiguration 
 			kubeletExtraArgs.Append(clusterapi.ExtraArgs{"fail-cgroupv1": "false"})
 		}
 
-		values["kubeletExtraArgs"] = kubeletExtraArgs.ToPartialYaml()
+		values["kubeletExtraArgs"] = kubeletExtraArgs
 	}
 
 	nodeLabelArgs := clusterapi.WorkerNodeLabelsExtraArgs(workerNodeGroupConfiguration)
 	if len(nodeLabelArgs) != 0 {
-		values["nodeLabelArgs"] = nodeLabelArgs.ToPartialYaml()
+		values["nodeLabelArgs"] = nodeLabelArgs
 	}
 
 	return values, nil

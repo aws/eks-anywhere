@@ -1,4 +1,4 @@
-apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta2
 kind: KubeadmConfigTemplate
 metadata:
   name: 
@@ -13,7 +13,8 @@ spec:
           criSocket: /var/run/containerd/containerd.sock
           taints: []
           kubeletExtraArgs:
-            cloud-provider: external
+          - name: cloud-provider
+            value: "external"
           name: '{{ ds.meta_data.hostname }}'
       files:
       - content: |

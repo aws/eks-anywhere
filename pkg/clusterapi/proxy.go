@@ -6,8 +6,8 @@ import (
 
 	etcdbootstrapv1 "github.com/aws/etcdadm-bootstrap-provider/api/v1beta1"
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
-	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/templater"
@@ -16,15 +16,15 @@ import (
 //go:embed config/http-proxy.conf
 var proxyConfig string
 
-func proxy(cluster *v1alpha1.Cluster) bootstrapv1.ProxyConfiguration {
-	return bootstrapv1.ProxyConfiguration{
+func proxy(cluster *v1alpha1.Cluster) bootstrapv1beta2.ProxyConfiguration {
+	return bootstrapv1beta2.ProxyConfiguration{
 		HTTPSProxy: cluster.Spec.ProxyConfiguration.HttpsProxy,
 		NoProxy:    noProxyList(cluster),
 	}
 }
 
 // SetProxyConfigInKubeadmControlPlaneForBottlerocket sets up proxy configuration in kubeadmControlPlane for bottlerocket.
-func SetProxyConfigInKubeadmControlPlaneForBottlerocket(kcp *controlplanev1.KubeadmControlPlane, cluster *v1alpha1.Cluster) {
+func SetProxyConfigInKubeadmControlPlaneForBottlerocket(kcp *controlplanev1beta2.KubeadmControlPlane, cluster *v1alpha1.Cluster) {
 	if cluster.Spec.ProxyConfiguration == nil {
 		return
 	}
@@ -34,7 +34,7 @@ func SetProxyConfigInKubeadmControlPlaneForBottlerocket(kcp *controlplanev1.Kube
 }
 
 // SetProxyConfigInKubeadmControlPlaneForUbuntu sets up proxy configuration in kubeadmControlPlane for ubuntu.
-func SetProxyConfigInKubeadmControlPlaneForUbuntu(kcp *controlplanev1.KubeadmControlPlane, cluster *v1alpha1.Cluster) error {
+func SetProxyConfigInKubeadmControlPlaneForUbuntu(kcp *controlplanev1beta2.KubeadmControlPlane, cluster *v1alpha1.Cluster) error {
 	if cluster.Spec.ProxyConfiguration == nil {
 		return nil
 	}
@@ -43,7 +43,7 @@ func SetProxyConfigInKubeadmControlPlaneForUbuntu(kcp *controlplanev1.KubeadmCon
 }
 
 // SetProxyConfigInKubeadmConfigTemplateForBottlerocket sets up proxy configuration in kubeadmConfigTemplate for bottlerocket.
-func SetProxyConfigInKubeadmConfigTemplateForBottlerocket(kct *bootstrapv1.KubeadmConfigTemplate, cluster *v1alpha1.Cluster) {
+func SetProxyConfigInKubeadmConfigTemplateForBottlerocket(kct *bootstrapv1beta2.KubeadmConfigTemplate, cluster *v1alpha1.Cluster) {
 	if cluster.Spec.ProxyConfiguration == nil {
 		return
 	}
@@ -52,7 +52,7 @@ func SetProxyConfigInKubeadmConfigTemplateForBottlerocket(kct *bootstrapv1.Kubea
 }
 
 // SetProxyConfigInKubeadmConfigTemplateForUbuntu sets up proxy configuration in kubeadmConfigTemplate for ubuntu.
-func SetProxyConfigInKubeadmConfigTemplateForUbuntu(kct *bootstrapv1.KubeadmConfigTemplate, cluster *v1alpha1.Cluster) error {
+func SetProxyConfigInKubeadmConfigTemplateForUbuntu(kct *bootstrapv1beta2.KubeadmConfigTemplate, cluster *v1alpha1.Cluster) error {
 	if cluster.Spec.ProxyConfiguration == nil {
 		return nil
 	}
@@ -112,20 +112,20 @@ func proxyConfigContent(cluster *v1alpha1.Cluster) (string, error) {
 	return string(config), nil
 }
 
-func proxyConfigFile(cluster *v1alpha1.Cluster) (bootstrapv1.File, error) {
+func proxyConfigFile(cluster *v1alpha1.Cluster) (bootstrapv1beta2.File, error) {
 	proxyConfig, err := proxyConfigContent(cluster)
 	if err != nil {
-		return bootstrapv1.File{}, err
+		return bootstrapv1beta2.File{}, err
 	}
 
-	return bootstrapv1.File{
+	return bootstrapv1beta2.File{
 		Path:    "/etc/systemd/system/containerd.service.d/http-proxy.conf",
 		Owner:   "root:root",
 		Content: proxyConfig,
 	}, nil
 }
 
-func addProxyConfigInKubeadmConfigSpecFiles(kcs *bootstrapv1.KubeadmConfigSpec, cluster *v1alpha1.Cluster) error {
+func addProxyConfigInKubeadmConfigSpecFiles(kcs *bootstrapv1beta2.KubeadmConfigSpec, cluster *v1alpha1.Cluster) error {
 	proxyConfigFile, err := proxyConfigFile(cluster)
 	if err != nil {
 		return err
