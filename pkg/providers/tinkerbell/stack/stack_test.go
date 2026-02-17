@@ -28,7 +28,7 @@ import (
 
 const (
 	overridesFileName = "tinkerbell-chart-overrides.yaml"
-	boots             = "boots"
+	smee              = "smee"
 	testIP            = "1.2.3.4"
 
 	helmChartPath    = "public.ecr.aws/eks-anywhere/tinkerbell/tinkerbell-chart"
@@ -133,12 +133,12 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 			name:            "with_boots_on_docker",
 			expectedFile:    "testdata/expected_with_boots_on_docker.yaml",
 			installOnDocker: true,
-			opts:            []stack.InstallOption{stack.WithBootsOnDocker()},
+			opts:            []stack.InstallOption{stack.WithSmeeOnDocker()},
 		},
 		{
 			name:         "with_boots_on_kubernetes",
 			expectedFile: "testdata/expected_with_boots_on_kubernetes.yaml",
-			opts:         []stack.InstallOption{stack.WithBootsOnKubernetes()},
+			opts:         []stack.InstallOption{stack.WithSmeeOnKubernetes()},
 		},
 		{
 			name:         "with_host_port_enabled_true",
@@ -169,7 +169,7 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 			name:         "with_kubernetes_options",
 			expectedFile: "testdata/expected_with_kubernetes_options.yaml",
 			opts: []stack.InstallOption{
-				stack.WithBootsOnKubernetes(),
+				stack.WithSmeeOnKubernetes(),
 				stack.WithLoadBalancerEnabled(true),
 			},
 		},
@@ -178,7 +178,7 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 			expectedFile:    "testdata/expected_with_docker_options.yaml",
 			installOnDocker: true,
 			opts: []stack.InstallOption{
-				stack.WithBootsOnDocker(),
+				stack.WithSmeeOnDocker(),
 				stack.WithHostNetworkEnabled(true),
 				stack.WithLoadBalancerEnabled(false),
 			},
@@ -240,7 +240,7 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 
 			if stackTest.installOnDocker {
 				docker.EXPECT().Run(ctx, "public.ecr.aws/eks-anywhere/tinkerbell:latest",
-					boots,
+					smee,
 					[]string{}, // Mono-repo binary uses env vars, not command line args
 					"-v", gomock.Any(),
 					"--network", "host",
@@ -311,7 +311,7 @@ func TestTinkerbellStackUninstallLocalSucess(t *testing.T) {
 
 	s := stack.NewInstaller(docker, writer, helm, "", constants.EksaSystemNamespace, "192.168.0.0/16", nil, nil)
 
-	docker.EXPECT().ForceRemove(ctx, boots)
+	docker.EXPECT().ForceRemove(ctx, smee)
 
 	err := s.UninstallLocal(ctx)
 	if err != nil {
@@ -330,7 +330,7 @@ func TestTinkerbellStackUninstallLocalFailure(t *testing.T) {
 
 	dockerError := "docker error"
 	expectedError := fmt.Sprintf("removing local boots container: %s", dockerError)
-	docker.EXPECT().ForceRemove(ctx, boots).Return(errors.New(dockerError))
+	docker.EXPECT().ForceRemove(ctx, smee).Return(errors.New(dockerError))
 
 	err := s.UninstallLocal(ctx)
 	assert.EqualError(t, err, expectedError, "Error should be: %v, got: %v", expectedError, err)
@@ -345,8 +345,8 @@ func TestTinkerbellStackCheckLocalBootsExistenceDoesNotExist(t *testing.T) {
 
 	s := stack.NewInstaller(docker, writer, helm, "", constants.EksaSystemNamespace, "192.168.0.0/16", nil, nil)
 
-	docker.EXPECT().CheckContainerExistence(ctx, "boots").Return(true, nil)
-	docker.EXPECT().ForceRemove(ctx, "boots")
+	docker.EXPECT().CheckContainerExistence(ctx, "smee").Return(true, nil)
+	docker.EXPECT().ForceRemove(ctx, "smee")
 
 	err := s.CleanupLocalBoots(ctx, true)
 	assert.NoError(t, err)
@@ -362,7 +362,7 @@ func TestTinkerbellStackCheckLocalBootsExistenceDoesExist(t *testing.T) {
 	s := stack.NewInstaller(docker, writer, helm, "", constants.EksaSystemNamespace, "192.168.0.0/16", nil, nil)
 	expectedErrorMsg := "boots container already exists, delete the container manually"
 
-	docker.EXPECT().CheckContainerExistence(ctx, "boots").Return(true, nil)
+	docker.EXPECT().CheckContainerExistence(ctx, "smee").Return(true, nil)
 
 	err := s.CleanupLocalBoots(ctx, false)
 	assert.EqualError(t, err, expectedErrorMsg, "Error should be: %v, got: %v", expectedErrorMsg, err)
@@ -377,7 +377,7 @@ func TestTinkerbellStackCheckLocalBootsExistenceDockerError(t *testing.T) {
 
 	s := stack.NewInstaller(docker, writer, helm, "", constants.EksaSystemNamespace, "192.168.0.0/16", nil, nil)
 
-	docker.EXPECT().CheckContainerExistence(ctx, "boots").Return(false, nil)
+	docker.EXPECT().CheckContainerExistence(ctx, "smee").Return(false, nil)
 
 	err := s.CleanupLocalBoots(ctx, true)
 	assert.NoError(t, err)

@@ -555,7 +555,7 @@ func (p *Provider) PreCoreComponentsUpgrade(
 		cluster.KubeconfigFile,
 		p.datacenterConfig.Spec.HookImagesURLPath,
 		stack.WithLoadBalancerInterface(p.datacenterConfig.Spec.LoadBalancerInterface),
-		stack.WithBootsOnKubernetes(),
+		stack.WithSmeeOnKubernetes(),
 		stack.WithStackServiceEnabled(true),
 		stack.WithDHCPRelayEnabled(true),
 		stack.WithLoadBalancerEnabled(
