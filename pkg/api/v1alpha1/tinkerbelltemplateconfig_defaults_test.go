@@ -220,7 +220,7 @@ id={{ (index .Hardware.Interfaces 0).DHCP.VLANID }}
 mac-address={{ (index .Hardware.Interfaces 0).DHCP.MAC }}
 
 [ipv4]
-address1={{ (index .Hardware.Interfaces 0).DHCP.IP.Address }}/{{ netmaskToCIDR (index .Hardware.Interfaces 0).DHCP.IP.Netmask }}
+address1={{ (index .Hardware.Interfaces 0).DHCP.IP.Address }}/{{ netmaskToPrefixLength (index .Hardware.Interfaces 0).DHCP.IP.Netmask }}
 dns={{ range $i, $ns := (index .Hardware.Interfaces 0).DHCP.NameServers }}{{if $i}};{{end}}{{$ns}}{{end}};
 gateway={{ (index .Hardware.Interfaces 0).DHCP.IP.Gateway }}
 method=manual
@@ -238,7 +238,7 @@ autoconnect-priority=10
 mac-address={{ (index .Hardware.Interfaces 0).DHCP.MAC }}
 
 [ipv4]
-address1={{ (index .Hardware.Interfaces 0).DHCP.IP.Address }}/{{ netmaskToCIDR (index .Hardware.Interfaces 0).DHCP.IP.Netmask }}
+address1={{ (index .Hardware.Interfaces 0).DHCP.IP.Address }}/{{ netmaskToPrefixLength (index .Hardware.Interfaces 0).DHCP.IP.Netmask }}
 dns={{ range $i, $ns := (index .Hardware.Interfaces 0).DHCP.NameServers }}{{if $i}};{{end}}{{$ns}}{{end}};
 gateway={{ (index .Hardware.Interfaces 0).DHCP.IP.Gateway }}
 method=manual
@@ -346,7 +346,7 @@ method=ignore
             id: {{ (index .Hardware.Interfaces 0).DHCP.VLANID }}
             link: mainif
             addresses:
-            - {{ (index .Hardware.Interfaces 0).DHCP.IP.Address }}/{{ netmaskToCIDR (index .Hardware.Interfaces 0).DHCP.IP.Netmask }}
+            - {{ (index .Hardware.Interfaces 0).DHCP.IP.Address }}/{{ netmaskToPrefixLength (index .Hardware.Interfaces 0).DHCP.IP.Netmask }}
             nameservers:
                 addresses: [{{ range $i, $ns := (index .Hardware.Interfaces 0).DHCP.NameServers }}{{if $i}}, {{end}}{{$ns}}{{end}}]
             {{- if (index .Hardware.Interfaces 0).DHCP.IP.Gateway }}
@@ -362,7 +362,7 @@ method=ignore
             match:
                 macaddress: {{ (index .Hardware.Interfaces 0).DHCP.MAC }}
             addresses:
-                - {{ (index .Hardware.Interfaces 0).DHCP.IP.Address }}/{{ netmaskToCIDR (index .Hardware.Interfaces 0).DHCP.IP.Netmask }}
+                - {{ (index .Hardware.Interfaces 0).DHCP.IP.Address }}/{{ netmaskToPrefixLength (index .Hardware.Interfaces 0).DHCP.IP.Netmask }}
             nameservers:
                 addresses: [{{ range $i, $ns := (index .Hardware.Interfaces 0).DHCP.NameServers }}{{if $i}}, {{end}}{{$ns}}{{end}}]
             routes:
@@ -468,7 +468,7 @@ method=ignore
             id: {{ (index .Hardware.Interfaces 0).DHCP.VLANID }}
             link: mainif
             addresses:
-            - {{ (index .Hardware.Interfaces 0).DHCP.IP.Address }}/{{ netmaskToCIDR (index .Hardware.Interfaces 0).DHCP.IP.Netmask }}
+            - {{ (index .Hardware.Interfaces 0).DHCP.IP.Address }}/{{ netmaskToPrefixLength (index .Hardware.Interfaces 0).DHCP.IP.Netmask }}
             nameservers:
                 addresses: [{{ range $i, $ns := (index .Hardware.Interfaces 0).DHCP.NameServers }}{{if $i}}, {{end}}{{$ns}}{{end}}]
             {{- if (index .Hardware.Interfaces 0).DHCP.IP.Gateway }}
@@ -484,7 +484,7 @@ method=ignore
             match:
                 macaddress: {{ (index .Hardware.Interfaces 0).DHCP.MAC }}
             addresses:
-                - {{ (index .Hardware.Interfaces 0).DHCP.IP.Address }}/{{ netmaskToCIDR (index .Hardware.Interfaces 0).DHCP.IP.Netmask }}
+                - {{ (index .Hardware.Interfaces 0).DHCP.IP.Address }}/{{ netmaskToPrefixLength (index .Hardware.Interfaces 0).DHCP.IP.Netmask }}
             nameservers:
                 addresses: [{{ range $i, $ns := (index .Hardware.Interfaces 0).DHCP.NameServers }}{{if $i}}, {{end}}{{$ns}}{{end}}]
             routes:
@@ -605,7 +605,7 @@ method=ignore
             id: {{ (index .Hardware.Interfaces 0).DHCP.VLANID }}
             link: mainif
             addresses:
-            - {{ (index .Hardware.Interfaces 0).DHCP.IP.Address }}/{{ netmaskToCIDR (index .Hardware.Interfaces 0).DHCP.IP.Netmask }}
+            - {{ (index .Hardware.Interfaces 0).DHCP.IP.Address }}/{{ netmaskToPrefixLength (index .Hardware.Interfaces 0).DHCP.IP.Netmask }}
             nameservers:
                 addresses: [{{ range $i, $ns := (index .Hardware.Interfaces 0).DHCP.NameServers }}{{if $i}}, {{end}}{{$ns}}{{end}}]
             {{- if (index .Hardware.Interfaces 0).DHCP.IP.Gateway }}
@@ -621,7 +621,7 @@ method=ignore
             match:
                 macaddress: {{ (index .Hardware.Interfaces 0).DHCP.MAC }}
             addresses:
-                - {{ (index .Hardware.Interfaces 0).DHCP.IP.Address }}/{{ netmaskToCIDR (index .Hardware.Interfaces 0).DHCP.IP.Netmask }}
+                - {{ (index .Hardware.Interfaces 0).DHCP.IP.Address }}/{{ netmaskToPrefixLength (index .Hardware.Interfaces 0).DHCP.IP.Netmask }}
             nameservers:
                 addresses: [{{ range $i, $ns := (index .Hardware.Interfaces 0).DHCP.NameServers }}{{if $i}}, {{end}}{{$ns}}{{end}}]
             routes:

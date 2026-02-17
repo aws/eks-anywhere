@@ -22,6 +22,7 @@ deployment:
       enableTootles: true
     rufio:
       enableLeaderElection: true
+      maxConcurrentReconciles: 10
     smee:
       dhcpEnabled: true
       dhcpIPForPacket: 1.2.3.4
@@ -47,6 +48,7 @@ deployment:
       tftpServerEnabled: true
     tinkController:
       enableLeaderElection: true
+      maxConcurrentReconciles: 5
     tinkServer:
       bindPort: 42113
     tootles:
