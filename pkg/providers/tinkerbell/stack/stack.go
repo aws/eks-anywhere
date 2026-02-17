@@ -22,12 +22,14 @@ import (
 const (
 	overridesFileName = "tinkerbell-chart-overrides.yaml"
 
-	boots        = "boots"
+	smee         = "smee"
 	smeeHTTPPort = "7171"
 	grpcPort     = "42113"
 
 	// localTinkWorkerImage is the path to the tink-worker image embedded in HookOS.
-	localTinkWorkerImage = "127.0.0.1/embedded/tink-worker"
+	localTinkWorkerImage         = "127.0.0.1/embedded/tink-worker"
+	rufioMaxConcurrentReconciles = 10
+	tinkMaxConcurrentReconciles  = 5
 )
 
 type Docker interface {
@@ -69,7 +71,7 @@ type Installer struct {
 	namespace             string
 	loadBalancerInterface string
 	hookIsoURL            string
-	bootsOnDocker         bool
+	smeeOnDocker          bool
 	hostNetwork           bool
 	loadBalancer          bool
 	stackService          bool
@@ -85,17 +87,17 @@ func WithLoadBalancerInterface(loadBalancerInterface string) InstallOption {
 	}
 }
 
-// WithBootsOnDocker is an InstallOption to run Boots as a Docker container.
-func WithBootsOnDocker() InstallOption {
+// WithSmeeOnDocker is an InstallOption to run Boots as a Docker container.
+func WithSmeeOnDocker() InstallOption {
 	return func(s *Installer) {
-		s.bootsOnDocker = true
+		s.smeeOnDocker = true
 	}
 }
 
-// WithBootsOnKubernetes is an InstallOption to run Boots as a Kubernetes deployment.
-func WithBootsOnKubernetes() InstallOption {
+// WithSmeeOnKubernetes is an InstallOption to run Boots as a Kubernetes deployment.
+func WithSmeeOnKubernetes() InstallOption {
 	return func(s *Installer) {
-		s.bootsOnDocker = false
+		s.smeeOnDocker = false
 	}
 }
 
@@ -216,11 +218,11 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 		return fmt.Errorf("installing Tinkerbell helm chart: %v", err)
 	}
 
-	return s.installBootsOnDocker(ctx, bundle.TinkerbellStack, tinkerbellIP, kubeconfig, hookOverride, s.hookIsoURL)
+	return s.installSmeeOnDocker(ctx, bundle.TinkerbellStack, tinkerbellIP, kubeconfig, hookOverride, s.hookIsoURL)
 }
 
-func (s *Installer) installBootsOnDocker(ctx context.Context, bundle releasev1alpha1.TinkerbellStackBundle, tinkServerIP, kubeconfig, hookOverride, isoOverride string) error {
-	if !s.bootsOnDocker {
+func (s *Installer) installSmeeOnDocker(ctx context.Context, bundle releasev1alpha1.TinkerbellStackBundle, tinkServerIP, kubeconfig, hookOverride, isoOverride string) error {
+	if !s.smeeOnDocker {
 		return nil
 	}
 
@@ -281,7 +283,7 @@ func (s *Installer) installBootsOnDocker(ctx context.Context, bundle releasev1al
 
 	// Mono-repo binary uses env vars only, no command line args
 	cmd := []string{}
-	if err := s.docker.Run(ctx, s.localRegistryURL(bundle.Boots.URI), boots, cmd, flags...); err != nil {
+	if err := s.docker.Run(ctx, s.localRegistryURL(bundle.Boots.URI), smee, cmd, flags...); err != nil {
 		return fmt.Errorf("running boots with docker: %v", err)
 	}
 
@@ -320,7 +322,7 @@ func (s *Installer) UninstallLocal(ctx context.Context) error {
 
 func (s *Installer) uninstallBootsFromDocker(ctx context.Context) error {
 	logger.V(4).Info("Removing local boots container")
-	if err := s.docker.ForceRemove(ctx, boots); err != nil {
+	if err := s.docker.ForceRemove(ctx, smee); err != nil {
 		return fmt.Errorf("removing local boots container: %v", err)
 	}
 
@@ -338,7 +340,7 @@ func getURIDir(uri string) (string, error) {
 // CleanupLocalBoots determines whether Boots is already running locally
 // and either cleans it up or errors out depending on the `remove` flag.
 func (s *Installer) CleanupLocalBoots(ctx context.Context, remove bool) error {
-	exists, err := s.docker.CheckContainerExistence(ctx, boots)
+	exists, err := s.docker.CheckContainerExistence(ctx, smee)
 	// return error if the docker call failed
 	if err != nil {
 		return fmt.Errorf("checking boots container existence: %v", err)
@@ -595,7 +597,7 @@ func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle
 				"globals": map[string]any{
 					"backend":               "kube",
 					"backendKubeNamespace":  s.namespace,
-					"enableSmee":            !s.bootsOnDocker,
+					"enableSmee":            !s.smeeOnDocker,
 					"enableTootles":         true,
 					"enableTinkServer":      true,
 					"enableTinkController":  true,
@@ -631,10 +633,12 @@ func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle
 					"bindPort": 42113,
 				},
 				"tinkController": map[string]any{
-					"enableLeaderElection": true,
+					"enableLeaderElection":    true,
+					"maxConcurrentReconciles": tinkMaxConcurrentReconciles,
 				},
 				"rufio": map[string]any{
-					"enableLeaderElection": true,
+					"enableLeaderElection":    true,
+					"maxConcurrentReconciles": rufioMaxConcurrentReconciles,
 				},
 			},
 		},
