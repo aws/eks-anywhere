@@ -320,6 +320,7 @@ func (r *ControlPlaneUpgradeReconciler) updateKubeadmConfig(ctx context.Context,
 	if err != nil {
 		return fmt.Errorf("initializing patch helper for KubeadmConfig %s: %v", kc.Name, err)
 	}
+	existingFeatureGates := kc.Spec.ClusterConfiguration.FeatureGates
 
 	kcSpec := kcpSpec.KubeadmConfigSpec.DeepCopy()
 	if kc.Spec.InitConfiguration == nil {
@@ -331,12 +332,31 @@ func (r *ControlPlaneUpgradeReconciler) updateKubeadmConfig(ctx context.Context,
 	}
 
 	kc.Spec = *kcSpec
+
+	// Merge back CAPI-added FeatureGates that are not present in the KCP spec.
+	mergeFeatureGates(kc, existingFeatureGates)
+
 	log.Info("Patching KubeadmConfig", "KubeadmConfig", kc.Name)
 	if err := patchHelper.Patch(ctx, kc); err != nil {
 		return fmt.Errorf("patching KubeadmConfig %s for Machine %s: %v", kc.Name, machine.Name, err)
 	}
 
 	return nil
+}
+
+// mergeFeatureGates merges previously existing FeatureGates into the KubeadmConfig's
+// ClusterConfiguration. FeatureGates already present in the KubeadmConfig take precedence,
+// preserving user/KCP intent. This ensures CAPI runtime-added FeatureGates (like
+// ControlPlaneKubeletLocalMode) are not lost when the spec is overwritten from the KCP spec.
+func mergeFeatureGates(kc *bootstrapv1.KubeadmConfig, existingFeatureGates map[string]bool) {
+	for k, v := range existingFeatureGates {
+		if kc.Spec.ClusterConfiguration.FeatureGates == nil {
+			kc.Spec.ClusterConfiguration.FeatureGates = make(map[string]bool)
+		}
+		if _, exists := kc.Spec.ClusterConfiguration.FeatureGates[k]; !exists {
+			kc.Spec.ClusterConfiguration.FeatureGates[k] = v
+		}
+	}
 }
 
 func (r *ControlPlaneUpgradeReconciler) updateInfraMachine(ctx context.Context, log logr.Logger, kcpSpec *controlplanev1.KubeadmControlPlaneSpec, machine *clusterv1.Machine) error {

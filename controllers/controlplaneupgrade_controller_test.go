@@ -443,6 +443,121 @@ func TestCPUpgradeReconcileUpdateKubeadmConfigSuccess(t *testing.T) {
 	}
 }
 
+func TestCPUpgradeReconcileUpdateKubeadmConfigPreservesFeatureGates(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	clientRegistry := mocks.NewMockRemoteClientRegistry(ctrl)
+
+	testObjs := getObjectsForCPUpgradeTest()
+	for i := range testObjs.nodeUpgrades {
+		testObjs.nodeUpgrades[i].Name = fmt.Sprintf("%s-node-upgrader", testObjs.machines[i].Name)
+		testObjs.nodeUpgrades[i].Status = anywherev1.NodeUpgradeStatus{
+			Completed: true,
+		}
+	}
+	// Simulate CAPI-added FeatureGates on existing KubeadmConfigs (e.g. ControlPlaneKubeletLocalMode).
+	// These are added by CAPI's DefaultFeatureGates() during KubeadmConfig creation but are NOT
+	// stored in the KCP spec. The controller must preserve them after updating the KubeadmConfig.
+	for _, kc := range testObjs.kubeadmConfigs {
+		kc.Spec.ClusterConfiguration.FeatureGates = map[string]bool{
+			"ControlPlaneKubeletLocalMode": true,
+		}
+	}
+
+	objs := []runtime.Object{
+		testObjs.cluster, testObjs.cpUpgrade, testObjs.machines[0], testObjs.machines[1], testObjs.nodes[0], testObjs.nodes[1],
+		testObjs.nodeUpgrades[0], testObjs.nodeUpgrades[1], testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1], testObjs.infraMachines[0], testObjs.infraMachines[1],
+	}
+	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).
+		WithStatusSubresource(testObjs.cpUpgrade).
+		Build()
+	kcp := testObjs.cpUpgrade.Spec.ControlPlane
+	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: kcp.Name, Namespace: kcp.Namespace}).Return(client, nil)
+
+	r := controllers.NewControlPlaneUpgradeReconciler(client, clientRegistry)
+
+	req := cpUpgradeRequest(testObjs.cpUpgrade)
+	_, err := r.Reconcile(ctx, req)
+	g.Expect(err).ToNot(HaveOccurred())
+
+	// Verify that the CAPI-added FeatureGates are preserved on both KubeadmConfigs
+	for i := range testObjs.kubeadmConfigs {
+		kc := testObjs.kubeadmConfigs[i]
+		kcNew := &bootstrapv1.KubeadmConfig{}
+		err = client.Get(ctx, types.NamespacedName{Name: kc.Name, Namespace: kc.Namespace}, kcNew)
+		g.Expect(err).ToNot(HaveOccurred())
+		g.Expect(kcNew.Spec.ClusterConfiguration.FeatureGates).ToNot(BeNil(),
+			"FeatureGates should be preserved after KubeadmConfig update")
+		g.Expect(kcNew.Spec.ClusterConfiguration.FeatureGates["ControlPlaneKubeletLocalMode"]).To(BeTrue(),
+			"ControlPlaneKubeletLocalMode feature gate should be preserved")
+	}
+}
+
+func TestCPUpgradeReconcileUpdateKubeadmConfigPreservesFeatureGatesWithKCPFeatureGates(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	clientRegistry := mocks.NewMockRemoteClientRegistry(ctrl)
+
+	testObjs := getObjectsForCPUpgradeTest()
+	for i := range testObjs.nodeUpgrades {
+		testObjs.nodeUpgrades[i].Name = fmt.Sprintf("%s-node-upgrader", testObjs.machines[i].Name)
+		testObjs.nodeUpgrades[i].Status = anywherev1.NodeUpgradeStatus{
+			Completed: true,
+		}
+	}
+	// Simulate CAPI-added FeatureGates on existing KubeadmConfigs
+	for _, kc := range testObjs.kubeadmConfigs {
+		kc.Spec.ClusterConfiguration.FeatureGates = map[string]bool{
+			"ControlPlaneKubeletLocalMode": true,
+			"EtcdLearnerMode":              true,
+		}
+	}
+
+	// Also set a FeatureGate in the KCP spec (user-specified). This should take precedence
+	// over the existing value on the KubeadmConfig.
+	kcpSpec := generateKcpSpec()
+	kcpSpec.KubeadmConfigSpec.ClusterConfiguration.FeatureGates = map[string]bool{
+		"EtcdLearnerMode": false, // User explicitly set to false, should override existing true
+	}
+	kcpSpecJSON, _ := json.Marshal(kcpSpec)
+	testObjs.cpUpgrade.Spec.ControlPlaneSpecData = base64.StdEncoding.EncodeToString(kcpSpecJSON)
+
+	objs := []runtime.Object{
+		testObjs.cluster, testObjs.cpUpgrade, testObjs.machines[0], testObjs.machines[1], testObjs.nodes[0], testObjs.nodes[1],
+		testObjs.nodeUpgrades[0], testObjs.nodeUpgrades[1], testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1], testObjs.infraMachines[0], testObjs.infraMachines[1],
+	}
+	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).
+		WithStatusSubresource(testObjs.cpUpgrade).
+		Build()
+	kcp := testObjs.cpUpgrade.Spec.ControlPlane
+	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: kcp.Name, Namespace: kcp.Namespace}).Return(client, nil)
+
+	r := controllers.NewControlPlaneUpgradeReconciler(client, clientRegistry)
+
+	req := cpUpgradeRequest(testObjs.cpUpgrade)
+	_, err := r.Reconcile(ctx, req)
+	g.Expect(err).ToNot(HaveOccurred())
+
+	// Verify FeatureGates merge behavior
+	for i := range testObjs.kubeadmConfigs {
+		kc := testObjs.kubeadmConfigs[i]
+		kcNew := &bootstrapv1.KubeadmConfig{}
+		err = client.Get(ctx, types.NamespacedName{Name: kc.Name, Namespace: kc.Namespace}, kcNew)
+		g.Expect(err).ToNot(HaveOccurred())
+		g.Expect(kcNew.Spec.ClusterConfiguration.FeatureGates).ToNot(BeNil())
+
+		// CAPI-added gate should be preserved
+		g.Expect(kcNew.Spec.ClusterConfiguration.FeatureGates["ControlPlaneKubeletLocalMode"]).To(BeTrue(),
+			"CAPI-added ControlPlaneKubeletLocalMode should be preserved")
+
+		// KCP spec gate should take precedence (user set to false)
+		g.Expect(kcNew.Spec.ClusterConfiguration.FeatureGates["EtcdLearnerMode"]).To(BeFalse(),
+			"KCP spec FeatureGate should take precedence over existing value")
+	}
+}
+
 func TestCPUpgradeReconcileUpdateKubeadmConfigRefNil(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
