@@ -60,7 +60,7 @@ data:
 {{ .nutanixAdditionalTrustBundle | indent 4 }}
 ---
 {{- end }}
-apiVersion: cluster.x-k8s.io/v1beta1
+apiVersion: cluster.x-k8s.io/v1beta2
 kind: Cluster
 metadata:
   labels:
@@ -75,19 +75,18 @@ spec:
       cidrBlocks: {{.podCidrs}}
     serviceDomain: "cluster.local"
   controlPlaneRef:
-    apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+    apiGroup: controlplane.cluster.x-k8s.io
     kind: KubeadmControlPlane
     name: "{{.clusterName}}"
   infrastructureRef:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    apiGroup: infrastructure.cluster.x-k8s.io
     kind: NutanixCluster
     name: "{{.clusterName}}"
 {{- if .externalEtcd }}
   managedExternalEtcdRef:
-    apiVersion: etcdcluster.cluster.x-k8s.io/v1beta1
+    apiGroup: etcdcluster.cluster.x-k8s.io
     kind: EtcdadmCluster
     name: "{{.clusterName}}-etcd"
-    namespace: "{{.eksaSystemNamespace}}"
 {{- end }}
 ---
 apiVersion: controlplane.cluster.x-k8s.io/v1beta1

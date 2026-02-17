@@ -3,7 +3,7 @@ package clusterapi
 import (
 	"strconv"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
@@ -14,7 +14,7 @@ const (
 	NodeGroupMaxSizeAnnotation = "cluster.x-k8s.io/cluster-api-autoscaler-node-group-max-size"
 )
 
-func ConfigureAutoscalingInMachineDeployment(md *clusterv1.MachineDeployment, autoscalingConfig *anywherev1.AutoScalingConfiguration) {
+func ConfigureAutoscalingInMachineDeployment(md *clusterv1beta2.MachineDeployment, autoscalingConfig *anywherev1.AutoScalingConfiguration) {
 	if autoscalingConfig == nil {
 		return
 	}

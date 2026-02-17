@@ -8,12 +8,12 @@ import (
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/klog/v2"
 	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -24,7 +24,7 @@ import (
 
 // ControlPlane represents a CAPI spec for a kubernetes cluster.
 type ControlPlane struct {
-	Cluster *clusterv1.Cluster
+	Cluster *clusterv1beta2.Cluster
 
 	// ProviderCluster is the provider-specific resource that holds the details
 	// for provisioning the infrastructure, referenced in Cluster.Spec.InfrastructureRef
@@ -125,8 +125,8 @@ func ReconcileControlPlane(ctx context.Context, log logr.Logger, c client.Client
 	return reconcileControlPlaneNodeChanges(ctx, log, c, cp, kcp)
 }
 
-func readCurrentControlPlane(ctx context.Context, c client.Client, cp *ControlPlane) (*clusterv1.Cluster, *controlplanev1.KubeadmControlPlane, *etcdv1.EtcdadmCluster, error) {
-	cluster := &clusterv1.Cluster{}
+func readCurrentControlPlane(ctx context.Context, c client.Client, cp *ControlPlane) (*clusterv1beta2.Cluster, *controlplanev1.KubeadmControlPlane, *etcdv1.EtcdadmCluster, error) {
+	cluster := &clusterv1beta2.Cluster{}
 	err := c.Get(ctx, client.ObjectKeyFromObject(cp.Cluster), cluster)
 	if apierrors.IsNotFound(err) {
 		// If the CAPI cluster doesn't exist, this is a new cluster, no need to read the rest of the objects.
@@ -137,11 +137,10 @@ func readCurrentControlPlane(ctx context.Context, c client.Client, cp *ControlPl
 	}
 
 	kcp := &controlplanev1.KubeadmControlPlane{}
-	// We default to the cluster's namespace if the reference is incomplete because some
-	// providers (at least tinkerbell) are not correctly setting it when generating the spec.
-	// After we have updated all of them and we are confident all clusters object have been updates,
-	// this fallback could be removed.
-	key := keyWithFallbackNamespace(objKeyForRef(cluster.Spec.ControlPlaneRef), cluster)
+	key := client.ObjectKey{
+		Name:      cluster.Spec.ControlPlaneRef.Name,
+		Namespace: cluster.Namespace,
+	}
 	if err = c.Get(ctx, key, kcp); err != nil {
 		return nil, nil, nil, errors.Wrap(err, "reading kubeadm control plane")
 	}
@@ -245,14 +244,10 @@ func isPlaceholderEndpoint(endpoints []string) bool {
 	return false
 }
 
-func getEtcdadmCluster(ctx context.Context, c client.Client, cluster *clusterv1.Cluster) (*etcdv1.EtcdadmCluster, error) {
-	key := objKeyForRef(cluster.Spec.ManagedExternalEtcdRef)
-	// This can happen when a user has a workload cluster that is older than the following PR, causing cluster
-	// reconcilation to fail. By inferring namespace from clusterv1.Cluster, we will be able to retrieve the object correctly.
-	// PR: https://github.com/aws/eks-anywhere/pull/4025
-	// TODO: See if it is possible to propagate the namespace field in the clusterv1.Cluster object in cluster-api like the other refs.
-	if key.Namespace == "" {
-		key.Namespace = cluster.Namespace
+func getEtcdadmCluster(ctx context.Context, c client.Client, cluster *clusterv1beta2.Cluster) (*etcdv1.EtcdadmCluster, error) {
+	key := client.ObjectKey{
+		Name:      cluster.Spec.ManagedExternalEtcdRef.Name,
+		Namespace: cluster.Namespace,
 	}
 
 	etcdadmCluster := &etcdv1.EtcdadmCluster{}
@@ -261,22 +256,4 @@ func getEtcdadmCluster(ctx context.Context, c client.Client, cluster *clusterv1.
 	}
 
 	return etcdadmCluster, nil
-}
-
-func objKeyForRef(ref *corev1.ObjectReference) client.ObjectKey {
-	return client.ObjectKey{
-		Name:      ref.Name,
-		Namespace: ref.Namespace,
-	}
-}
-
-// keyWithFallbackNamespace returns the provided key with the namespace of the provided
-// object as a fallback if the provided key's namespace is empty.
-// Useful for incomplete references that are missing the namespace but where it can be
-// inferred from another object.
-func keyWithFallbackNamespace(key client.ObjectKey, obj client.Object) client.ObjectKey {
-	if key.Namespace == "" {
-		key.Namespace = obj.GetNamespace()
-	}
-	return key
 }

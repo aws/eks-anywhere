@@ -5,10 +5,9 @@ import (
 	"time"
 
 	. "github.com/onsi/gomega"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
@@ -87,41 +86,47 @@ func TestMachineHealthCheckForControlPlaneWithMaxUnhealthyOverride(t *testing.T)
 	tt.Expect(got).To(BeComparableTo(want))
 }
 
-func expectedMachineHealthCheckForControlPlane(timeout time.Duration, maxUnhealthy intstr.IntOrString) *clusterv1.MachineHealthCheck {
-	return &clusterv1.MachineHealthCheck{
+func durationSecondsInt32(d time.Duration) *int32 {
+	s := int32(d.Seconds())
+	return &s
+}
+
+func expectedMachineHealthCheckForControlPlane(timeout time.Duration, maxUnhealthy intstr.IntOrString) *clusterv1beta2.MachineHealthCheck {
+	timeoutSeconds := durationSecondsInt32(timeout)
+	return &clusterv1beta2.MachineHealthCheck{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "cluster.x-k8s.io/v1beta1",
+			APIVersion: "cluster.x-k8s.io/v1beta2",
 			Kind:       "MachineHealthCheck",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-cluster-kcp-unhealthy",
 			Namespace: constants.EksaSystemNamespace,
 		},
-		Spec: clusterv1.MachineHealthCheckSpec{
+		Spec: clusterv1beta2.MachineHealthCheckSpec{
 			ClusterName: "test-cluster",
 			Selector: metav1.LabelSelector{
 				MatchLabels: map[string]string{
 					"cluster.x-k8s.io/control-plane": "",
 				},
 			},
-			MaxUnhealthy: &maxUnhealthy,
-			NodeStartupTimeout: &metav1.Duration{
-				Duration: timeout,
-			},
-			UnhealthyConditions: []clusterv1.UnhealthyCondition{
-				{
-					Type:   corev1.NodeReady,
-					Status: corev1.ConditionUnknown,
-					Timeout: metav1.Duration{
-						Duration: timeout,
+			Checks: clusterv1beta2.MachineHealthCheckChecks{
+				NodeStartupTimeoutSeconds: timeoutSeconds,
+				UnhealthyNodeConditions: []clusterv1beta2.UnhealthyNodeCondition{
+					{
+						Type:           "Ready",
+						Status:         "Unknown",
+						TimeoutSeconds: timeoutSeconds,
+					},
+					{
+						Type:           "Ready",
+						Status:         "False",
+						TimeoutSeconds: timeoutSeconds,
 					},
 				},
-				{
-					Type:   corev1.NodeReady,
-					Status: corev1.ConditionFalse,
-					Timeout: metav1.Duration{
-						Duration: timeout,
-					},
+			},
+			Remediation: clusterv1beta2.MachineHealthCheckRemediation{
+				TriggerIf: clusterv1beta2.MachineHealthCheckRemediationTriggerIf{
+					UnhealthyLessThanOrEqualTo: &maxUnhealthy,
 				},
 			},
 		},
@@ -202,36 +207,43 @@ func TestMachineHealthCheckForWorkersWithMaxUnhealthyOverride(t *testing.T) {
 	tt.Expect(got).To(Equal(want))
 }
 
-func expectedMachineHealthCheckForWorkers(timeout time.Duration, maxUnhealthy intstr.IntOrString) []*clusterv1.MachineHealthCheck {
-	return []*clusterv1.MachineHealthCheck{
+func expectedMachineHealthCheckForWorkers(timeout time.Duration, maxUnhealthy intstr.IntOrString) []*clusterv1beta2.MachineHealthCheck {
+	timeoutSeconds := durationSecondsInt32(timeout)
+	return []*clusterv1beta2.MachineHealthCheck{
 		{
 			TypeMeta: metav1.TypeMeta{
-				APIVersion: "cluster.x-k8s.io/v1beta1",
+				APIVersion: "cluster.x-k8s.io/v1beta2",
 				Kind:       "MachineHealthCheck",
 			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "test-cluster-wng-1-worker-unhealthy",
 				Namespace: constants.EksaSystemNamespace,
 			},
-			Spec: clusterv1.MachineHealthCheckSpec{
+			Spec: clusterv1beta2.MachineHealthCheckSpec{
 				ClusterName: "test-cluster",
 				Selector: metav1.LabelSelector{
 					MatchLabels: map[string]string{
 						"cluster.x-k8s.io/deployment-name": "test-cluster-wng-1",
 					},
 				},
-				MaxUnhealthy:       &maxUnhealthy,
-				NodeStartupTimeout: &metav1.Duration{Duration: timeout},
-				UnhealthyConditions: []clusterv1.UnhealthyCondition{
-					{
-						Type:    corev1.NodeReady,
-						Status:  corev1.ConditionUnknown,
-						Timeout: metav1.Duration{Duration: timeout},
+				Checks: clusterv1beta2.MachineHealthCheckChecks{
+					NodeStartupTimeoutSeconds: timeoutSeconds,
+					UnhealthyNodeConditions: []clusterv1beta2.UnhealthyNodeCondition{
+						{
+							Type:           "Ready",
+							Status:         "Unknown",
+							TimeoutSeconds: timeoutSeconds,
+						},
+						{
+							Type:           "Ready",
+							Status:         "False",
+							TimeoutSeconds: timeoutSeconds,
+						},
 					},
-					{
-						Type:    corev1.NodeReady,
-						Status:  corev1.ConditionFalse,
-						Timeout: metav1.Duration{Duration: timeout},
+				},
+				Remediation: clusterv1beta2.MachineHealthCheckRemediation{
+					TriggerIf: clusterv1beta2.MachineHealthCheckRemediationTriggerIf{
+						UnhealthyLessThanOrEqualTo: &maxUnhealthy,
 					},
 				},
 			},

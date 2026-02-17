@@ -193,7 +193,7 @@ spec:
         sudo: ALL=(ALL) NOPASSWD:ALL
       format: {{.format}}
 ---
-apiVersion: cluster.x-k8s.io/v1beta1
+apiVersion: cluster.x-k8s.io/v1beta2
 kind: MachineDeployment
 metadata:
   labels:
@@ -219,12 +219,12 @@ spec:
     spec:
       bootstrap:
         configRef:
-          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          apiGroup: bootstrap.cluster.x-k8s.io
           kind: KubeadmConfigTemplate
           name: {{.workloadkubeadmconfigTemplateName}}
       clusterName: {{.clusterName}}
       infrastructureRef:
-        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        apiGroup: infrastructure.cluster.x-k8s.io
         kind: VSphereMachineTemplate
         name: {{.workloadTemplateName}}
       version: {{.kubernetesVersion}}
@@ -232,13 +232,15 @@ spec:
       failureDomain: {{.failureDomain}}
 {{- end }}
 {{- if .upgradeRolloutStrategy }}
-  strategy:
+  rollout:
+    strategy:
 {{- if (eq .upgradeRolloutStrategyType "InPlace") }}
-    type: {{.upgradeRolloutStrategyType}}
+      type: {{.upgradeRolloutStrategyType}}
 {{- else}}
-    rollingUpdate:
-      maxSurge: {{.maxSurge}}
-      maxUnavailable: {{.maxUnavailable}}
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: {{.maxSurge}}
+        maxUnavailable: {{.maxUnavailable}}
 {{- end }}
 {{- end }}
 ---

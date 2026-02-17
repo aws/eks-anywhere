@@ -1,9 +1,8 @@
 package clusterapi
 
 import (
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
@@ -14,40 +13,57 @@ const (
 	machineHealthCheckKind = "MachineHealthCheck"
 )
 
-func machineHealthCheck(clusterName string, unhealthyTimeout, nodeStartupTimeout *metav1.Duration) *clusterv1.MachineHealthCheck {
-	return &clusterv1.MachineHealthCheck{
+// durationToSeconds converts a *metav1.Duration to *int32 seconds for v1beta2.
+func durationToSeconds(d *metav1.Duration) *int32 {
+	if d == nil {
+		return nil
+	}
+	s := int32(d.Duration.Seconds())
+	return &s
+}
+
+func machineHealthCheck(clusterName string, unhealthyTimeout, nodeStartupTimeout *metav1.Duration) *clusterv1beta2.MachineHealthCheck {
+	var unhealthyNodeConditions []clusterv1beta2.UnhealthyNodeCondition
+	if unhealthyTimeout != nil {
+		timeoutSeconds := durationToSeconds(unhealthyTimeout)
+		unhealthyNodeConditions = []clusterv1beta2.UnhealthyNodeCondition{
+			{
+				Type:           "Ready",
+				Status:         "Unknown",
+				TimeoutSeconds: timeoutSeconds,
+			},
+			{
+				Type:           "Ready",
+				Status:         "False",
+				TimeoutSeconds: timeoutSeconds,
+			},
+		}
+	}
+
+	return &clusterv1beta2.MachineHealthCheck{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: clusterAPIVersion,
+			APIVersion: machineHealthCheckAPIVersion,
 			Kind:       machineHealthCheckKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      clusterName,
 			Namespace: constants.EksaSystemNamespace,
 		},
-		Spec: clusterv1.MachineHealthCheckSpec{
+		Spec: clusterv1beta2.MachineHealthCheckSpec{
 			ClusterName: clusterName,
 			Selector: metav1.LabelSelector{
 				MatchLabels: map[string]string{},
 			},
-			NodeStartupTimeout: nodeStartupTimeout,
-			UnhealthyConditions: []clusterv1.UnhealthyCondition{
-				{
-					Type:    corev1.NodeReady,
-					Status:  corev1.ConditionUnknown,
-					Timeout: *unhealthyTimeout,
-				},
-				{
-					Type:    corev1.NodeReady,
-					Status:  corev1.ConditionFalse,
-					Timeout: *unhealthyTimeout,
-				},
+			Checks: clusterv1beta2.MachineHealthCheckChecks{
+				NodeStartupTimeoutSeconds: durationToSeconds(nodeStartupTimeout),
+				UnhealthyNodeConditions:   unhealthyNodeConditions,
 			},
 		},
 	}
 }
 
 // MachineHealthCheckForControlPlane creates MachineHealthCheck resources for the control plane.
-func MachineHealthCheckForControlPlane(cluster *v1alpha1.Cluster) *clusterv1.MachineHealthCheck {
+func MachineHealthCheckForControlPlane(cluster *v1alpha1.Cluster) *clusterv1beta2.MachineHealthCheck {
 	unhealthyMachineTimeout := cluster.Spec.MachineHealthCheck.UnhealthyMachineTimeout
 	if cluster.Spec.ControlPlaneConfiguration.MachineHealthCheck != nil && cluster.Spec.ControlPlaneConfiguration.MachineHealthCheck.UnhealthyMachineTimeout != nil {
 		unhealthyMachineTimeout = cluster.Spec.ControlPlaneConfiguration.MachineHealthCheck.UnhealthyMachineTimeout
@@ -58,18 +74,20 @@ func MachineHealthCheckForControlPlane(cluster *v1alpha1.Cluster) *clusterv1.Mac
 	}
 	mhc := machineHealthCheck(ClusterName(cluster), unhealthyMachineTimeout, nodeStartupTimeout)
 	mhc.SetName(ControlPlaneMachineHealthCheckName(cluster))
-	mhc.Spec.Selector.MatchLabels[clusterv1.MachineControlPlaneLabel] = ""
+	mhc.Spec.Selector.MatchLabels[clusterv1beta2.MachineControlPlaneLabel] = ""
 	maxUnhealthy := cluster.Spec.MachineHealthCheck.MaxUnhealthy
 	if cluster.Spec.ControlPlaneConfiguration.MachineHealthCheck != nil && cluster.Spec.ControlPlaneConfiguration.MachineHealthCheck.MaxUnhealthy != nil {
 		maxUnhealthy = cluster.Spec.ControlPlaneConfiguration.MachineHealthCheck.MaxUnhealthy
 	}
-	mhc.Spec.MaxUnhealthy = maxUnhealthy
+	if maxUnhealthy != nil {
+		mhc.Spec.Remediation.TriggerIf.UnhealthyLessThanOrEqualTo = maxUnhealthy
+	}
 	return mhc
 }
 
 // MachineHealthCheckForWorkers creates MachineHealthCheck resources for the workers.
-func MachineHealthCheckForWorkers(cluster *v1alpha1.Cluster) []*clusterv1.MachineHealthCheck {
-	m := make([]*clusterv1.MachineHealthCheck, 0, len(cluster.Spec.WorkerNodeGroupConfigurations))
+func MachineHealthCheckForWorkers(cluster *v1alpha1.Cluster) []*clusterv1beta2.MachineHealthCheck {
+	m := make([]*clusterv1beta2.MachineHealthCheck, 0, len(cluster.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfig := range cluster.Spec.WorkerNodeGroupConfigurations {
 		mhc := machineHealthCheckForWorker(cluster, workerNodeGroupConfig)
 		m = append(m, mhc)
@@ -77,7 +95,7 @@ func MachineHealthCheckForWorkers(cluster *v1alpha1.Cluster) []*clusterv1.Machin
 	return m
 }
 
-func machineHealthCheckForWorker(cluster *v1alpha1.Cluster, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) *clusterv1.MachineHealthCheck {
+func machineHealthCheckForWorker(cluster *v1alpha1.Cluster, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) *clusterv1beta2.MachineHealthCheck {
 	unhealthyMachineTimeout := cluster.Spec.MachineHealthCheck.UnhealthyMachineTimeout
 	if workerNodeGroupConfig.MachineHealthCheck != nil && workerNodeGroupConfig.MachineHealthCheck.UnhealthyMachineTimeout != nil {
 		unhealthyMachineTimeout = workerNodeGroupConfig.MachineHealthCheck.UnhealthyMachineTimeout
@@ -88,12 +106,14 @@ func machineHealthCheckForWorker(cluster *v1alpha1.Cluster, workerNodeGroupConfi
 	}
 	mhc := machineHealthCheck(ClusterName(cluster), unhealthyMachineTimeout, nodeStartupTimeout)
 	mhc.SetName(WorkerMachineHealthCheckName(cluster, workerNodeGroupConfig))
-	mhc.Spec.Selector.MatchLabels[clusterv1.MachineDeploymentNameLabel] = MachineDeploymentName(cluster, workerNodeGroupConfig)
+	mhc.Spec.Selector.MatchLabels[clusterv1beta2.MachineDeploymentNameLabel] = MachineDeploymentName(cluster, workerNodeGroupConfig)
 	maxUnhealthy := cluster.Spec.MachineHealthCheck.MaxUnhealthy
 	if workerNodeGroupConfig.MachineHealthCheck != nil && workerNodeGroupConfig.MachineHealthCheck.MaxUnhealthy != nil {
 		maxUnhealthy = workerNodeGroupConfig.MachineHealthCheck.MaxUnhealthy
 	}
-	mhc.Spec.MaxUnhealthy = maxUnhealthy
+	if maxUnhealthy != nil {
+		mhc.Spec.Remediation.TriggerIf.UnhealthyLessThanOrEqualTo = maxUnhealthy
+	}
 	return mhc
 }
 

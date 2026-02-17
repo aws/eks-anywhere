@@ -375,7 +375,7 @@ func (v *ValidatableTinkerbellCAPI) ClusterK8sVersion() v1alpha1.KubernetesVersi
 func (v *ValidatableTinkerbellCAPI) WorkerNodeGroupK8sVersion() map[string]v1alpha1.KubernetesVersion {
 	wngK8sversion := make(map[string]v1alpha1.KubernetesVersion)
 	for _, wng := range v.WorkerGroups {
-		k8sVersion := v.toK8sVersion(*wng.MachineDeployment.Spec.Template.Spec.Version)
+		k8sVersion := v.toK8sVersion(wng.MachineDeployment.Spec.Template.Spec.Version)
 		wngK8sversion[wng.MachineDeployment.Name] = k8sVersion
 	}
 	return wngK8sversion

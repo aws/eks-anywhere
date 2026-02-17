@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -230,7 +231,7 @@ func TestNodeUpgradeReconcilerReconcileDeleteUpgraderPodAlreadyDeleted(t *testin
 	g.Expect(err).To(MatchError("pods \"node01-node-upgrader\" not found"))
 }
 
-func getObjectsForNodeUpgradeTest() (*clusterv1.Cluster, *clusterv1.Machine, *corev1.Node, *anywherev1.NodeUpgrade, *corev1.ConfigMap) {
+func getObjectsForNodeUpgradeTest() (*clusterv1beta2.Cluster, *clusterv1.Machine, *corev1.Node, *anywherev1.NodeUpgrade, *corev1.ConfigMap) {
 	cluster := generateCluster()
 	node := generateNode()
 	bootstrapConfig := generateKubeadmConfig()
@@ -265,7 +266,7 @@ func generateNodeUpgrade(machine *clusterv1.Machine) *anywherev1.NodeUpgrade {
 	}
 }
 
-func generateMachine(cluster *clusterv1.Cluster, node *corev1.Node, bootstrapConfig *bootstrapv1.KubeadmConfig) *clusterv1.Machine {
+func generateMachine(cluster *clusterv1beta2.Cluster, node *corev1.Node, bootstrapConfig *bootstrapv1.KubeadmConfig) *clusterv1.Machine {
 	return &clusterv1.Machine{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "machine01",
@@ -297,8 +298,8 @@ func generateNode() *corev1.Node {
 	}
 }
 
-func generateCluster() *clusterv1.Cluster {
-	return &clusterv1.Cluster{
+func generateCluster() *clusterv1beta2.Cluster {
+	return &clusterv1beta2.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-cluster",
 			Namespace: "eksa-system",

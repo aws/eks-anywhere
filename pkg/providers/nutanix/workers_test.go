@@ -50,6 +50,6 @@ func TestWorkersSpecWithUpgradeRolloutStrategy(t *testing.T) {
 	workers, err := WorkersSpec(context.TODO(), logger, client, spec)
 	require.NoError(t, err)
 	assert.Len(t, workers.Groups, 1)
-	assert.Equal(t, int32(1), workers.Groups[0].MachineDeployment.Spec.Strategy.RollingUpdate.MaxSurge.IntVal)
-	assert.Equal(t, int32(0), workers.Groups[0].MachineDeployment.Spec.Strategy.RollingUpdate.MaxUnavailable.IntVal)
+	assert.Equal(t, int32(1), workers.Groups[0].MachineDeployment.Spec.Rollout.Strategy.RollingUpdate.MaxSurge.IntVal)
+	assert.Equal(t, int32(0), workers.Groups[0].MachineDeployment.Spec.Rollout.Strategy.RollingUpdate.MaxUnavailable.IntVal)
 }
