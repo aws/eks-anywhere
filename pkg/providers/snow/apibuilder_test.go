@@ -13,6 +13,7 @@ import (
 	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -40,10 +41,10 @@ func newApiBuilerTest(t *testing.T) apiBuilerTest {
 	}
 }
 
-func wantCAPICluster() *clusterv1.Cluster {
-	return &clusterv1.Cluster{
+func wantCAPICluster() *clusterv1beta2.Cluster {
+	return &clusterv1beta2.Cluster{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "cluster.x-k8s.io/v1beta1",
+			APIVersion: "cluster.x-k8s.io/v1beta2",
 			Kind:       "Cluster",
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -55,40 +56,39 @@ func wantCAPICluster() *clusterv1.Cluster {
 				"cluster.anywhere.eks.amazonaws.com/cluster-namespace": "test-namespace",
 			},
 		},
-		Spec: clusterv1.ClusterSpec{
-			ClusterNetwork: &clusterv1.ClusterNetwork{
-				Pods: &clusterv1.NetworkRanges{
+		Spec: clusterv1beta2.ClusterSpec{
+			ClusterNetwork: clusterv1beta2.ClusterNetwork{
+				Pods: clusterv1beta2.NetworkRanges{
 					CIDRBlocks: []string{
 						"10.1.0.0/16",
 					},
 				},
-				Services: &clusterv1.NetworkRanges{
+				Services: clusterv1beta2.NetworkRanges{
 					CIDRBlocks: []string{
 						"10.96.0.0/12",
 					},
 				},
 			},
-			ControlPlaneRef: &v1.ObjectReference{
-				APIVersion: "controlplane.cluster.x-k8s.io/v1beta1",
-				Kind:       "KubeadmControlPlane",
-				Name:       "snow-test",
+			ControlPlaneRef: clusterv1beta2.ContractVersionedObjectReference{
+				APIGroup: "controlplane.cluster.x-k8s.io",
+				Kind:     "KubeadmControlPlane",
+				Name:     "snow-test",
 			},
-			InfrastructureRef: &v1.ObjectReference{
-				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
-				Kind:       "AWSSnowCluster",
-				Name:       "snow-test",
+			InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
+				APIGroup: "infrastructure.cluster.x-k8s.io",
+				Kind:     "AWSSnowCluster",
+				Name:     "snow-test",
 			},
 		},
 	}
 }
 
-func wantCAPIClusterUnstackedEtcd() *clusterv1.Cluster {
+func wantCAPIClusterUnstackedEtcd() *clusterv1beta2.Cluster {
 	cluster := wantCAPICluster()
-	cluster.Spec.ManagedExternalEtcdRef = &v1.ObjectReference{
-		Kind:       "EtcdadmCluster",
-		APIVersion: "etcdcluster.cluster.x-k8s.io/v1beta1",
-		Namespace:  "eksa-system",
-		Name:       "snow-test-etcd",
+	cluster.Spec.ManagedExternalEtcdRef = &clusterv1beta2.ContractVersionedObjectReference{
+		APIGroup: "etcdcluster.cluster.x-k8s.io",
+		Kind:     "EtcdadmCluster",
+		Name:     "snow-test-etcd",
 	}
 	return cluster
 }
@@ -903,14 +903,14 @@ func TestKubeadmConfigTemplate(t *testing.T) {
 	g.Expect(got).To(Equal(want))
 }
 
-func wantMachineDeployment() *clusterv1.MachineDeployment {
+func wantMachineDeployment() *clusterv1beta2.MachineDeployment {
 	wantVersion := "v1.21.5-eks-1-21-9"
 	wantReplicas := int32(3)
 	wantMaxUnavailable := intstr.FromInt(0)
 	wantMaxSurge := intstr.FromInt(1)
-	return &clusterv1.MachineDeployment{
+	return &clusterv1beta2.MachineDeployment{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "cluster.x-k8s.io/v1beta1",
+			APIVersion: "cluster.x-k8s.io/v1beta2",
 			Kind:       "MachineDeployment",
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -923,41 +923,43 @@ func wantMachineDeployment() *clusterv1.MachineDeployment {
 			},
 			Annotations: map[string]string{},
 		},
-		Spec: clusterv1.MachineDeploymentSpec{
+		Spec: clusterv1beta2.MachineDeploymentSpec{
 			ClusterName: "snow-test",
 			Selector: metav1.LabelSelector{
 				MatchLabels: map[string]string{},
 			},
-			Template: clusterv1.MachineTemplateSpec{
-				ObjectMeta: clusterv1.ObjectMeta{
+			Template: clusterv1beta2.MachineTemplateSpec{
+				ObjectMeta: clusterv1beta2.ObjectMeta{
 					Labels: map[string]string{
 						"cluster.x-k8s.io/cluster-name": "snow-test",
 					},
 				},
-				Spec: clusterv1.MachineSpec{
-					Bootstrap: clusterv1.Bootstrap{
-						ConfigRef: &v1.ObjectReference{
-							APIVersion: "bootstrap.cluster.x-k8s.io/v1beta1",
-							Kind:       "KubeadmConfigTemplate",
-							Name:       "snow-test-md-0-1",
+				Spec: clusterv1beta2.MachineSpec{
+					Bootstrap: clusterv1beta2.Bootstrap{
+						ConfigRef: clusterv1beta2.ContractVersionedObjectReference{
+							APIGroup: "bootstrap.cluster.x-k8s.io",
+							Kind:     "KubeadmConfigTemplate",
+							Name:     "snow-test-md-0-1",
 						},
 					},
 					ClusterName: "snow-test",
-					InfrastructureRef: v1.ObjectReference{
-						APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
-						Kind:       "AWSSnowMachineTemplate",
-						Name:       "snow-test-md-0-1",
+					InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
+						APIGroup: "infrastructure.cluster.x-k8s.io",
+						Kind:     "AWSSnowMachineTemplate",
+						Name:     "snow-test-md-0-1",
 					},
-					Version: &wantVersion,
+					Version: wantVersion,
 				},
 			},
 			Replicas: &wantReplicas,
-			Strategy: &clusterv1.MachineDeploymentStrategy{
-				RollingUpdate: &clusterv1.MachineRollingUpdateDeployment{
-					MaxUnavailable: &wantMaxUnavailable,
-					MaxSurge:       &wantMaxSurge,
+			Rollout: clusterv1beta2.MachineDeploymentRolloutSpec{
+				Strategy: clusterv1beta2.MachineDeploymentRolloutStrategy{
+					Type: clusterv1beta2.RollingUpdateMachineDeploymentStrategyType,
+					RollingUpdate: clusterv1beta2.MachineDeploymentRolloutStrategyRollingUpdate{
+						MaxUnavailable: &wantMaxUnavailable,
+						MaxSurge:       &wantMaxSurge,
+					},
 				},
-				Type: clusterv1.RollingUpdateMachineDeploymentStrategyType,
 			},
 		},
 	}

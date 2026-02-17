@@ -5,8 +5,8 @@ import (
 
 	etcdbootstrapv1 "github.com/aws/etcdadm-bootstrap-provider/api/v1beta1"
 	. "github.com/onsi/gomega"
-	v1 "k8s.io/api/core/v1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
@@ -53,11 +53,10 @@ func TestClusterUnstackedEtcd(t *testing.T) {
 	}
 	got := clusterapi.Cluster(tt.clusterSpec, tt.providerCluster, tt.controlPlane, tt.unstackedEtcdCluster)
 	want := wantCluster()
-	want.Spec.ManagedExternalEtcdRef = &v1.ObjectReference{
-		APIVersion: "etcdcluster.cluster.x-k8s.io/v1beta1",
-		Kind:       "UnstackedEtcdCluster",
-		Name:       "unstacked-etcd-cluster",
-		Namespace:  "eksa-system",
+	want.Spec.ManagedExternalEtcdRef = &clusterv1beta2.ContractVersionedObjectReference{
+		APIGroup: "etcdcluster.cluster.x-k8s.io",
+		Kind:     "UnstackedEtcdCluster",
+		Name:     "unstacked-etcd-cluster",
 	}
 	tt.Expect(got).To(Equal(want))
 }

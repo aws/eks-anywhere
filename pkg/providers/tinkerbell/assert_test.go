@@ -13,7 +13,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	eksav1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -1225,7 +1225,7 @@ func validatableTinkerbellCAPI() *tinkerbell.ValidatableTinkerbellCAPI {
 func workerGroups() []*clusterapi.WorkerGroup[*tinkerbellv1.TinkerbellMachineTemplate] {
 	return []*clusterapi.WorkerGroup[*tinkerbellv1.TinkerbellMachineTemplate]{
 		{
-			MachineDeployment: machineDeployment(func(md *clusterv1.MachineDeployment) {
+			MachineDeployment: machineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 				md.Name = "cluster-worker-node-group-0"
 			}),
 			ProviderMachineTemplate: machineTemplate(),

@@ -103,7 +103,7 @@ spec:
       - systemctl restart containerd
 {{- end }}
 ---
-apiVersion: cluster.x-k8s.io/v1beta1
+apiVersion: cluster.x-k8s.io/v1beta2
 kind: MachineDeployment
 metadata:
   name: {{.workerNodeGroupName}}
@@ -119,27 +119,27 @@ spec:
   replicas: {{.workerReplicas}}
 {{- end }}
   selector:
-    matchLabels: null
+    matchLabels: {}
   template:
     spec:
       bootstrap:
         configRef:
-          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          apiGroup: bootstrap.cluster.x-k8s.io
           kind: KubeadmConfigTemplate
           name: {{.workloadkubeadmconfigTemplateName}}
-          namespace: {{.eksaSystemNamespace}}
       clusterName: {{.clusterName}}
       infrastructureRef:
-        apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+        apiGroup: infrastructure.cluster.x-k8s.io
         kind: DockerMachineTemplate
         name: {{.workloadTemplateName}}
-        namespace: {{.eksaSystemNamespace}}
       version: {{.kubernetesVersion}}
 {{- if .upgradeRolloutStrategy }}
-  strategy:
-    rollingUpdate:
-      maxSurge: {{.maxSurge}}
-      maxUnavailable: {{.maxUnavailable}}
+  rollout:
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: {{.maxSurge}}
+        maxUnavailable: {{.maxUnavailable}}
 {{- end }}
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta2

@@ -13,7 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	dockerv1beta2 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta2"
 
 	"github.com/aws/eks-anywhere/internal/test"
@@ -367,44 +367,40 @@ func testClusterSpec(opts ...test.ClusterSpecOpt) *cluster.Spec {
 	return test.NewClusterSpec(clusterOpts...)
 }
 
-func capiCluster() *clusterv1.Cluster {
-	return &clusterv1.Cluster{
+func capiCluster() *clusterv1beta2.Cluster {
+	return &clusterv1beta2.Cluster{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Cluster",
-			APIVersion: "cluster.x-k8s.io/v1beta1",
+			APIVersion: "cluster.x-k8s.io/v1beta2",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test",
 			Namespace: constants.EksaSystemNamespace,
 		},
-		Spec: clusterv1.ClusterSpec{
-			ClusterNetwork: &clusterv1.ClusterNetwork{
-				APIServerPort: nil,
+		Spec: clusterv1beta2.ClusterSpec{
+			ClusterNetwork: clusterv1beta2.ClusterNetwork{
 				ServiceDomain: "cluster.local",
-				Services: &clusterv1.NetworkRanges{
+				Services: clusterv1beta2.NetworkRanges{
 					CIDRBlocks: []string{"10.96.0.0/12"},
 				},
-				Pods: &clusterv1.NetworkRanges{
+				Pods: clusterv1beta2.NetworkRanges{
 					CIDRBlocks: []string{"192.168.0.0/16"},
 				},
 			},
-			ControlPlaneRef: &corev1.ObjectReference{
-				Kind:       "KubeadmControlPlane",
-				Name:       "test",
-				Namespace:  constants.EksaSystemNamespace,
-				APIVersion: "controlplane.cluster.x-k8s.io/v1beta1",
+			ControlPlaneRef: clusterv1beta2.ContractVersionedObjectReference{
+				APIGroup: "controlplane.cluster.x-k8s.io",
+				Kind:     "KubeadmControlPlane",
+				Name:     "test",
 			},
-			ManagedExternalEtcdRef: &corev1.ObjectReference{
-				Kind:       "EtcdadmCluster",
-				Name:       "test-etcd",
-				Namespace:  constants.EksaSystemNamespace,
-				APIVersion: "etcdcluster.cluster.x-k8s.io/v1beta1",
+			ManagedExternalEtcdRef: &clusterv1beta2.ContractVersionedObjectReference{
+				APIGroup: "etcdcluster.cluster.x-k8s.io",
+				Kind:     "EtcdadmCluster",
+				Name:     "test-etcd",
 			},
-			InfrastructureRef: &corev1.ObjectReference{
-				Kind:       "DockerCluster",
-				Name:       "test",
-				Namespace:  constants.EksaSystemNamespace,
-				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
+			InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
+				APIGroup: "infrastructure.cluster.x-k8s.io",
+				Kind:     "DockerCluster",
+				Name:     "test",
 			},
 		},
 	}

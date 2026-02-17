@@ -31,6 +31,7 @@ import (
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/util/annotations"
 	v1beta1patch "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/patch"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -120,7 +121,7 @@ func (r *KubeadmControlPlaneReconciler) reconcile(ctx context.Context, log logr.
 		return ctrl.Result{}, err
 	}
 
-	mhc := &clusterv1.MachineHealthCheck{}
+	mhc := &clusterv1beta2.MachineHealthCheck{}
 	if err := r.client.Get(ctx, GetNamespacedNameType(cpMachineHealthCheckName(kcp.ObjectMeta.Name), constants.EksaSystemNamespace), mhc); err != nil {
 		if apierrors.IsNotFound(err) {
 			return reconcile.Result{}, err
@@ -214,13 +215,13 @@ func (r *KubeadmControlPlaneReconciler) validateStackedEtcd(kcp *controlplanev1.
 	return nil
 }
 
-func pauseMachineHealthCheck(ctx context.Context, mhc *clusterv1.MachineHealthCheck, mhcPatchHelper *v1beta1patch.Helper) error {
-	annotations.AddAnnotations(mhc, map[string]string{clusterv1.PausedAnnotation: "true"})
+func pauseMachineHealthCheck(ctx context.Context, mhc *clusterv1beta2.MachineHealthCheck, mhcPatchHelper *v1beta1patch.Helper) error {
+	annotations.AddAnnotations(mhc, map[string]string{clusterv1beta2.PausedAnnotation: "true"})
 	return mhcPatchHelper.Patch(ctx, mhc)
 }
 
-func resumeMachineHealthCheck(ctx context.Context, mhc *clusterv1.MachineHealthCheck, mhcPatchHelper *v1beta1patch.Helper) error {
-	delete(mhc.Annotations, clusterv1.PausedAnnotation)
+func resumeMachineHealthCheck(ctx context.Context, mhc *clusterv1beta2.MachineHealthCheck, mhcPatchHelper *v1beta1patch.Helper) error {
+	delete(mhc.Annotations, clusterv1beta2.PausedAnnotation)
 	return mhcPatchHelper.Patch(ctx, mhc)
 }
 

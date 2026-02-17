@@ -8,7 +8,7 @@ import (
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -25,12 +25,12 @@ func TestCAPIObjectToCluster(t *testing.T) {
 	}{
 		{
 			testName:     "no eksa managed",
-			obj:          &clusterv1.Cluster{},
+			obj:          &clusterv1beta2.Cluster{},
 			wantRequests: nil,
 		},
 		{
 			testName: " missing namespace",
-			obj: &clusterv1.Cluster{
+			obj: &clusterv1beta2.Cluster{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
 						clusterapi.EKSAClusterLabelName: "my-cluster",
@@ -41,7 +41,7 @@ func TestCAPIObjectToCluster(t *testing.T) {
 		},
 		{
 			testName: "managed capi resource",
-			obj: &clusterv1.Cluster{
+			obj: &clusterv1beta2.Cluster{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
 						clusterapi.EKSAClusterLabelName:      "my-cluster",

@@ -49,7 +49,7 @@ data:
     gu45O/O1hxzezDKiKKU=
     -----END CERTIFICATE-----
 ---
-apiVersion: cluster.x-k8s.io/v1beta1
+apiVersion: cluster.x-k8s.io/v1beta2
 kind: Cluster
 metadata:
   labels:
@@ -64,11 +64,11 @@ spec:
       cidrBlocks: [192.168.0.0/16]
     serviceDomain: "cluster.local"
   controlPlaneRef:
-    apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+    apiGroup: controlplane.cluster.x-k8s.io
     kind: KubeadmControlPlane
     name: "eksa-unit-test"
   infrastructureRef:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    apiGroup: infrastructure.cluster.x-k8s.io
     kind: NutanixCluster
     name: "eksa-unit-test"
 ---

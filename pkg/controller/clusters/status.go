@@ -7,8 +7,10 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -216,7 +218,7 @@ func updateControlPlaneInitializedCondition(cluster *anywherev1.Cluster, kcp *co
 
 // updateWorkersReadyCondition updates the WorkersReadyCondition condition after checking the state of the worker node groups
 // in the cluster.
-func updateWorkersReadyCondition(cluster *anywherev1.Cluster, machineDeployments []clusterv1.MachineDeployment) {
+func updateWorkersReadyCondition(cluster *anywherev1.Cluster, machineDeployments []clusterv1beta2.MachineDeployment) {
 	initializedCondition := v1beta1conditions.Get(cluster, anywherev1.ControlPlaneInitializedCondition)
 	if initializedCondition.Status != "True" {
 		v1beta1conditions.MarkFalse(cluster, anywherev1.WorkersReadyCondition, anywherev1.ControlPlaneNotInitializedReason, clusterv1.ConditionSeverityInfo, "")
@@ -254,9 +256,15 @@ func updateWorkersReadyCondition(cluster *anywherev1.Cluster, machineDeployments
 			}
 		}
 
-		totalReadyReplicas += int(md.Status.ReadyReplicas)
-		totalUpdatedReplicas += int(md.Status.UpdatedReplicas)
-		totalReplicas += int(md.Status.Replicas)
+		if md.Status.ReadyReplicas != nil {
+			totalReadyReplicas += int(*md.Status.ReadyReplicas)
+		}
+		if md.Status.UpToDateReplicas != nil {
+			totalUpdatedReplicas += int(*md.Status.UpToDateReplicas)
+		}
+		if md.Status.Replicas != nil {
+			totalReplicas += int(*md.Status.Replicas)
+		}
 	}
 
 	// There may be worker nodes that are not up to date yet in the case of a rolling upgrade,
@@ -298,7 +306,10 @@ func updateWorkersReadyCondition(cluster *anywherev1.Cluster, machineDeployments
 		if wng, exists := wngWithAutoScalingConfigurationMap[md.ObjectMeta.Name]; exists {
 			minCount := wng.MinCount
 			maxCount := wng.MaxCount
-			replicas := int(md.Status.Replicas)
+			var replicas int
+			if md.Status.Replicas != nil {
+				replicas = int(*md.Status.Replicas)
+			}
 			if replicas < minCount || replicas > maxCount {
 				v1beta1conditions.MarkFalse(cluster, anywherev1.WorkersReadyCondition, anywherev1.AutoscalerConstraintNotMetReason, clusterv1.ConditionSeverityInfo, "Worker nodes count for %s not between %d and %d yet (%d actual)", md.Name, minCount, maxCount, replicas)
 				return
@@ -309,17 +320,17 @@ func updateWorkersReadyCondition(cluster *anywherev1.Cluster, machineDeployments
 	// We check for the Ready condition on the machine deployments as a final validation. Usually, the md objects
 	// should be ready at this point but if that is not the case, we report it as an error.
 	for _, md := range machineDeployments {
-		mdv1beta1conditions := md.GetConditions()
-		if mdv1beta1conditions == nil {
+		mdConditions := md.GetConditions()
+		if mdConditions == nil {
 			continue
 		}
-		var machineDeploymentReadyCondition *clusterv1.Condition
-		for _, condition := range mdv1beta1conditions {
-			if condition.Type == clusterv1.ReadyCondition {
-				machineDeploymentReadyCondition = &condition
+		var machineDeploymentReadyCondition *metav1.Condition
+		for i := range mdConditions {
+			if mdConditions[i].Type == string(clusterv1beta2.ReadyCondition) {
+				machineDeploymentReadyCondition = &mdConditions[i]
 			}
 		}
-		if machineDeploymentReadyCondition != nil && machineDeploymentReadyCondition.Status == v1.ConditionFalse {
+		if machineDeploymentReadyCondition != nil && machineDeploymentReadyCondition.Status == metav1.ConditionFalse {
 			v1beta1conditions.MarkFalse(cluster, anywherev1.WorkersReadyCondition, anywherev1.MachineDeploymentNotReadyReason, clusterv1.ConditionSeverityError, "Machine deployment %s not ready yet", md.ObjectMeta.Name)
 			return
 		}

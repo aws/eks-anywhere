@@ -8,7 +8,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kubeadmv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -121,8 +121,8 @@ func TestWorkerGroupUpdateImmutableObjectNamesErrorUpdatingMachineTemplateName(t
 		ProviderMachineTemplate: dockerMachineTemplate(),
 		KubeadmConfigTemplate:   kubeadmConfigTemplate(),
 	}
-	group.MachineDeployment.Spec.Template.Spec.InfrastructureRef = *objectReference(group.ProviderMachineTemplate)
-	group.MachineDeployment.Spec.Template.Spec.Bootstrap.ConfigRef = objectReference(group.KubeadmConfigTemplate)
+	group.MachineDeployment.Spec.Template.Spec.InfrastructureRef = contractReference(group.ProviderMachineTemplate)
+	group.MachineDeployment.Spec.Template.Spec.Bootstrap.ConfigRef = contractReference(group.KubeadmConfigTemplate)
 	client := test.NewFakeKubeClient(group.MachineDeployment)
 
 	g.Expect(
@@ -138,7 +138,7 @@ func TestWorkerGroupUpdateImmutableObjectNamesErrorUpdatingKubeadmConfigTemplate
 		ProviderMachineTemplate: dockerMachineTemplate(),
 		KubeadmConfigTemplate:   kubeadmConfigTemplate(),
 	}
-	group.MachineDeployment.Spec.Template.Spec.InfrastructureRef = *objectReference(group.ProviderMachineTemplate)
+	group.MachineDeployment.Spec.Template.Spec.InfrastructureRef = contractReference(group.ProviderMachineTemplate)
 
 	// Set TypeMeta on the object being tested to get proper error message with Kind
 	group.KubeadmConfigTemplate.TypeMeta = metav1.TypeMeta{
@@ -146,7 +146,7 @@ func TestWorkerGroupUpdateImmutableObjectNamesErrorUpdatingKubeadmConfigTemplate
 		APIVersion: "bootstrap.cluster.x-k8s.io/v1beta1",
 	}
 	group.KubeadmConfigTemplate.Name = "invalid-name"
-	group.MachineDeployment.Spec.Template.Spec.Bootstrap.ConfigRef = objectReference(group.KubeadmConfigTemplate)
+	group.MachineDeployment.Spec.Template.Spec.Bootstrap.ConfigRef = contractReference(group.KubeadmConfigTemplate)
 	client := test.NewFakeKubeClient(group.MachineDeployment, group.KubeadmConfigTemplate, group.ProviderMachineTemplate)
 	group.KubeadmConfigTemplate.Spec.Template.Spec.PostKubeadmCommands = []string{"ls"}
 
@@ -163,8 +163,8 @@ func TestWorkerGroupUpdateImmutableObjectNamesSuccess(t *testing.T) {
 		ProviderMachineTemplate: dockerMachineTemplate(),
 		KubeadmConfigTemplate:   kubeadmConfigTemplate(),
 	}
-	group.MachineDeployment.Spec.Template.Spec.InfrastructureRef = *objectReference(group.ProviderMachineTemplate)
-	group.MachineDeployment.Spec.Template.Spec.Bootstrap.ConfigRef = objectReference(group.KubeadmConfigTemplate)
+	group.MachineDeployment.Spec.Template.Spec.InfrastructureRef = contractReference(group.ProviderMachineTemplate)
+	group.MachineDeployment.Spec.Template.Spec.Bootstrap.ConfigRef = contractReference(group.KubeadmConfigTemplate)
 	client := test.NewFakeKubeClient(group.MachineDeployment, group.KubeadmConfigTemplate, group.ProviderMachineTemplate)
 	group.KubeadmConfigTemplate.Spec.Template.Spec.PostKubeadmCommands = []string{"ls"}
 
@@ -553,11 +553,11 @@ func kubeadmConfigTemplate() *kubeadmv1.KubeadmConfigTemplate {
 	}
 }
 
-func machineDeployment() *clusterv1.MachineDeployment {
-	return &clusterv1.MachineDeployment{
+func machineDeployment() *clusterv1beta2.MachineDeployment {
+	return &clusterv1beta2.MachineDeployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "MachineDeployment",
-			APIVersion: "cluster.x-k8s.io/v1beta1",
+			APIVersion: "cluster.x-k8s.io/v1beta2",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "deployment",
@@ -572,5 +572,13 @@ func objectReference(obj client.Object) *corev1.ObjectReference {
 		APIVersion: obj.GetObjectKind().GroupVersionKind().Version,
 		Name:       obj.GetName(),
 		Namespace:  obj.GetNamespace(),
+	}
+}
+
+func contractReference(obj client.Object) clusterv1beta2.ContractVersionedObjectReference {
+	return clusterv1beta2.ContractVersionedObjectReference{
+		Kind:     obj.GetObjectKind().GroupVersionKind().Kind,
+		APIGroup: obj.GetObjectKind().GroupVersionKind().Group,
+		Name:     obj.GetName(),
 	}
 }

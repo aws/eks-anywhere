@@ -6,7 +6,7 @@ import (
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kubeadmv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/internal/test"
@@ -41,7 +41,7 @@ metadata:
   name: workers-1
   namespace: eksa-system
 ---
-apiVersion: cluster.x-k8s.io/v1beta1
+apiVersion: cluster.x-k8s.io/v1beta2
 kind: MachineDeployment
 metadata:
   name: workers-1
@@ -51,15 +51,13 @@ spec:
     spec:
       bootstrap:
         configRef:
-          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          apiGroup: bootstrap.cluster.x-k8s.io
           kind: KubeadmConfigTemplate
           name: workers-1
-          namespace: eksa-system
       infrastructureRef:
-        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        apiGroup: infrastructure.cluster.x-k8s.io
         kind: DockerMachineTemplate
         name: workers-1
-        namespace: eksa-system
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: DockerMachineTemplate
@@ -73,7 +71,7 @@ metadata:
   name: workers-2
   namespace: eksa-system
 ---
-apiVersion: cluster.x-k8s.io/v1beta1
+apiVersion: cluster.x-k8s.io/v1beta2
 kind: MachineDeployment
 metadata:
   name: workers-2
@@ -83,15 +81,13 @@ spec:
     spec:
       bootstrap:
         configRef:
-          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          apiGroup: bootstrap.cluster.x-k8s.io
           kind: KubeadmConfigTemplate
           name: workers-2
-          namespace: eksa-system
       infrastructureRef:
-        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        apiGroup: infrastructure.cluster.x-k8s.io
         kind: DockerMachineTemplate
         name: workers-2
-        namespace: eksa-system
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: DockerMachineTemplate
@@ -212,11 +208,11 @@ func kubeadmConfigTemplate() *kubeadmv1.KubeadmConfigTemplate {
 	}
 }
 
-func machineDeployment() *clusterv1.MachineDeployment {
-	return &clusterv1.MachineDeployment{
+func machineDeployment() *clusterv1beta2.MachineDeployment {
+	return &clusterv1beta2.MachineDeployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "MachineDeployment",
-			APIVersion: "cluster.x-k8s.io/v1beta1",
+			APIVersion: "cluster.x-k8s.io/v1beta2",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "deployment",
@@ -232,7 +228,7 @@ func group(baseName string) *dockerWorkerGroup {
 	kct.Name = baseName
 	dmt := dockerMachineTemplate(baseName)
 
-	md.Spec.Template.Spec.Bootstrap.ConfigRef = objectReference(kct)
+	md.Spec.Template.Spec.Bootstrap.ConfigRef = *objectReference(kct)
 	md.Spec.Template.Spec.InfrastructureRef = *objectReference(dmt)
 
 	return &dockerWorkerGroup{

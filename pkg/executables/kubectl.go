@@ -30,6 +30,7 @@ import (
 	addons "sigs.k8s.io/cluster-api/api/addons/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
@@ -848,7 +849,7 @@ func (k *Kubectl) ValidateNodes(ctx context.Context, kubeconfig string) error {
 	return nil
 }
 
-func (k *Kubectl) DeleteOldWorkerNodeGroup(ctx context.Context, md *clusterv1.MachineDeployment, kubeconfig string) error {
+func (k *Kubectl) DeleteOldWorkerNodeGroup(ctx context.Context, md *clusterv1beta2.MachineDeployment, kubeconfig string) error {
 	kubeadmConfigTemplateName := md.Spec.Template.Spec.Bootstrap.ConfigRef.Name
 	providerMachineTemplateName := md.Spec.Template.Spec.InfrastructureRef.Name
 	params := []string{"delete", md.Kind, md.Name, "--kubeconfig", kubeconfig, "--namespace", constants.EksaSystemNamespace}
@@ -914,12 +915,18 @@ func (k *Kubectl) CountMachineDeploymentReplicasReady(ctx context.Context, clust
 			return 0, 0, fmt.Errorf("machine deployment is in %s phase", machineDeployment.Status.Phase)
 		}
 
-		if machineDeployment.Status.UnavailableReplicas != 0 {
-			return 0, 0, fmt.Errorf("%d machine deployment replicas are unavailable", machineDeployment.Status.UnavailableReplicas)
+		if machineDeployment.Status.AvailableReplicas != nil && machineDeployment.Status.Replicas != nil &&
+			*machineDeployment.Status.AvailableReplicas != *machineDeployment.Status.Replicas {
+			unavailable := *machineDeployment.Status.Replicas - *machineDeployment.Status.AvailableReplicas
+			return 0, 0, fmt.Errorf("%d machine deployment replicas are unavailable", unavailable)
 		}
 
-		ready += int(machineDeployment.Status.ReadyReplicas)
-		total += int(machineDeployment.Status.Replicas)
+		if machineDeployment.Status.ReadyReplicas != nil {
+			ready += int(*machineDeployment.Status.ReadyReplicas)
+		}
+		if machineDeployment.Status.Replicas != nil {
+			total += int(*machineDeployment.Status.Replicas)
+		}
 	}
 	return ready, total, nil
 }
@@ -1421,7 +1428,7 @@ func (k *Kubectl) GetKubeadmControlPlane(ctx context.Context, cluster *types.Clu
 	return response, nil
 }
 
-func (k *Kubectl) GetMachineDeployment(ctx context.Context, workerNodeGroupName string, opts ...KubectlOpt) (*clusterv1.MachineDeployment, error) {
+func (k *Kubectl) GetMachineDeployment(ctx context.Context, workerNodeGroupName string, opts ...KubectlOpt) (*clusterv1beta2.MachineDeployment, error) {
 	params := []string{"get", capiMachineDeploymentsType, workerNodeGroupName, "-o", "json"}
 	applyOpts(&params, opts...)
 	stdOut, err := k.Execute(ctx, params...)
@@ -1429,7 +1436,7 @@ func (k *Kubectl) GetMachineDeployment(ctx context.Context, workerNodeGroupName 
 		return nil, fmt.Errorf("getting machine deployment: %v", err)
 	}
 
-	response := &clusterv1.MachineDeployment{}
+	response := &clusterv1beta2.MachineDeployment{}
 	err = json.Unmarshal(stdOut.Bytes(), response)
 	if err != nil {
 		return nil, fmt.Errorf("parsing get machineDeployment response: %v", err)
@@ -1439,7 +1446,7 @@ func (k *Kubectl) GetMachineDeployment(ctx context.Context, workerNodeGroupName 
 }
 
 // GetMachineDeployments retrieves all Machine Deployments.
-func (k *Kubectl) GetMachineDeployments(ctx context.Context, opts ...KubectlOpt) ([]clusterv1.MachineDeployment, error) {
+func (k *Kubectl) GetMachineDeployments(ctx context.Context, opts ...KubectlOpt) ([]clusterv1beta2.MachineDeployment, error) {
 	params := []string{"get", capiMachineDeploymentsType, "-o", "json"}
 	applyOpts(&params, opts...)
 	stdOut, err := k.Execute(ctx, params...)
@@ -1447,7 +1454,7 @@ func (k *Kubectl) GetMachineDeployments(ctx context.Context, opts ...KubectlOpt)
 		return nil, fmt.Errorf("getting machine deployments: %v", err)
 	}
 
-	response := &clusterv1.MachineDeploymentList{}
+	response := &clusterv1beta2.MachineDeploymentList{}
 	err = json.Unmarshal(stdOut.Bytes(), response)
 	if err != nil {
 		return nil, fmt.Errorf("parsing get machineDeployments response: %v", err)
@@ -1457,7 +1464,7 @@ func (k *Kubectl) GetMachineDeployments(ctx context.Context, opts ...KubectlOpt)
 }
 
 // GetMachineDeploymentsForCluster retrieves all the Machine Deployments for a cluster with name "clusterName".
-func (k *Kubectl) GetMachineDeploymentsForCluster(ctx context.Context, clusterName string, opts ...KubectlOpt) ([]clusterv1.MachineDeployment, error) {
+func (k *Kubectl) GetMachineDeploymentsForCluster(ctx context.Context, clusterName string, opts ...KubectlOpt) ([]clusterv1beta2.MachineDeployment, error) {
 	return k.GetMachineDeployments(ctx, append(opts, WithSelector(fmt.Sprintf("cluster.x-k8s.io/cluster-name=%s", clusterName)))...)
 }
 

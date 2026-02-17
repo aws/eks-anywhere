@@ -11,7 +11,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -62,6 +62,10 @@ func (tt *reconcilerTest) withFakeClient() {
 	tt.client = fake.NewClientBuilder().WithObjects(clientutil.ObjectsToClientObjects(tt.eksaSupportObjs)...).Build()
 }
 
+func int32Ptr(i int32) *int32 {
+	return &i
+}
+
 func newReconciler(t testing.TB, suffix string) *reconcilerTest {
 	mhcDefaulter := anywhereCluster.NewMachineHealthCheckDefaulter(constants.DefaultNodeStartupTimeout, constants.DefaultUnhealthyMachineTimeout, intstr.Parse(constants.DefaultMaxUnhealthy), intstr.Parse(constants.DefaultWorkerMaxUnhealthy))
 	bundle := test.Bundle()
@@ -93,27 +97,28 @@ func newReconciler(t testing.TB, suffix string) *reconcilerTest {
 		},
 	}
 
-	mhc := &clusterv1.MachineHealthCheck{
+	mhc := &clusterv1beta2.MachineHealthCheck{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("y-cluster-kcp-unhealthy-%s", suffix),
 			Namespace: "eksa-system",
 		},
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "MachineHealthCheck",
-			APIVersion: "cluster.x-k8s.io/v1beta1",
+			APIVersion: "cluster.x-k8s.io/v1beta2",
 		},
-		Spec: clusterv1.MachineHealthCheckSpec{
+		Spec: clusterv1beta2.MachineHealthCheckSpec{
 			ClusterName: clusterName,
-			NodeStartupTimeout: &metav1.Duration{
-				Duration: 20 * time.Minute,
+			Selector: metav1.LabelSelector{
+				MatchLabels: map[string]string{},
 			},
-			UnhealthyConditions: []clusterv1.UnhealthyCondition{
-				{
-					Timeout: metav1.Duration{
-						Duration: 15 * time.Minute,
+			Checks: clusterv1beta2.MachineHealthCheckChecks{
+				NodeStartupTimeoutSeconds: int32Ptr(1200), // 20 minutes
+				UnhealthyNodeConditions: []clusterv1beta2.UnhealthyNodeCondition{
+					{
+						TimeoutSeconds: int32Ptr(900), // 15 minutes
+						Status:         v1.ConditionUnknown,
+						Type:           "Ready",
 					},
-					Status: v1.ConditionUnknown,
-					Type:   v1.NodeReady,
 				},
 			},
 		},
@@ -152,7 +157,7 @@ type reconcilerTest struct {
 	ctx             context.Context
 	client          client.Client
 	mhcDefaulter    anywhereCluster.MachineHealthCheckDefaulter
-	mhc             *clusterv1.MachineHealthCheck
+	mhc             *clusterv1beta2.MachineHealthCheck
 	eksaSupportObjs []client.Object
 	cluster         *anywherev1.Cluster
 	bundle          *releasev1.Bundles

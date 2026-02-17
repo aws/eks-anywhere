@@ -1,4 +1,4 @@
-apiVersion: cluster.x-k8s.io/v1beta1
+apiVersion: cluster.x-k8s.io/v1beta2
 kind: MachineDeployment
 metadata:
   labels:
@@ -18,12 +18,12 @@ spec:
       failureDomain: "pe1"
       bootstrap:
         configRef:
-          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          apiGroup: bootstrap.cluster.x-k8s.io
           kind: KubeadmConfigTemplate
           name: "eksa-unit-test"
       clusterName: "eksa-unit-test"
       infrastructureRef:
-        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        apiGroup: infrastructure.cluster.x-k8s.io
         kind: NutanixMachineTemplate
         name: "eksa-unit-test-1-pe1"
       version: "v1.19.8-eks-1-19-4"
@@ -52,7 +52,7 @@ spec:
         - type: uuid
           uuid: "2d166190-7759-4dc6-b835-923262d6b497"
 ---
-apiVersion: cluster.x-k8s.io/v1beta1
+apiVersion: cluster.x-k8s.io/v1beta2
 kind: MachineDeployment
 metadata:
   labels:
@@ -72,12 +72,12 @@ spec:
       failureDomain: "pe2"
       bootstrap:
         configRef:
-          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          apiGroup: bootstrap.cluster.x-k8s.io
           kind: KubeadmConfigTemplate
           name: "eksa-unit-test"
       clusterName: "eksa-unit-test"
       infrastructureRef:
-        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        apiGroup: infrastructure.cluster.x-k8s.io
         kind: NutanixMachineTemplate
         name: "eksa-unit-test-1-pe2"
       version: "v1.19.8-eks-1-19-4"
@@ -135,7 +135,7 @@ spec:
             - "mySshAuthorizedKey"
 
 ---
-apiVersion: cluster.x-k8s.io/v1beta1
+apiVersion: cluster.x-k8s.io/v1beta2
 kind: MachineDeployment
 metadata:
   labels:
@@ -155,12 +155,12 @@ spec:
       failureDomain: "pe1"
       bootstrap:
         configRef:
-          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          apiGroup: bootstrap.cluster.x-k8s.io
           kind: KubeadmConfigTemplate
           name: "eksa-unit-test"
       clusterName: "eksa-unit-test"
       infrastructureRef:
-        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        apiGroup: infrastructure.cluster.x-k8s.io
         kind: NutanixMachineTemplate
         name: "eksa-unit-test-2-pe1"
       version: "v1.19.8-eks-1-19-4"
@@ -189,7 +189,7 @@ spec:
         - type: uuid
           uuid: "2d166190-7759-4dc6-b835-923262d6b497"
 ---
-apiVersion: cluster.x-k8s.io/v1beta1
+apiVersion: cluster.x-k8s.io/v1beta2
 kind: MachineDeployment
 metadata:
   labels:
@@ -209,12 +209,12 @@ spec:
       failureDomain: "pe2"
       bootstrap:
         configRef:
-          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          apiGroup: bootstrap.cluster.x-k8s.io
           kind: KubeadmConfigTemplate
           name: "eksa-unit-test"
       clusterName: "eksa-unit-test"
       infrastructureRef:
-        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        apiGroup: infrastructure.cluster.x-k8s.io
         kind: NutanixMachineTemplate
         name: "eksa-unit-test-2-pe2"
       version: "v1.19.8-eks-1-19-4"
@@ -272,7 +272,7 @@ spec:
             - "mySshAuthorizedKey"
 
 ---
-apiVersion: cluster.x-k8s.io/v1beta1
+apiVersion: cluster.x-k8s.io/v1beta2
 kind: MachineDeployment
 metadata:
   labels:
@@ -292,12 +292,12 @@ spec:
       failureDomain: "pe1"
       bootstrap:
         configRef:
-          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          apiGroup: bootstrap.cluster.x-k8s.io
           kind: KubeadmConfigTemplate
           name: "eksa-unit-test"
       clusterName: "eksa-unit-test"
       infrastructureRef:
-        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        apiGroup: infrastructure.cluster.x-k8s.io
         kind: NutanixMachineTemplate
         name: "eksa-unit-test-3-pe1"
       version: "v1.19.8-eks-1-19-4"

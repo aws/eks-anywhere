@@ -3,10 +3,9 @@ package clusterapi
 import (
 	etcdbootstrapv1 "github.com/aws/etcdadm-bootstrap-provider/api/v1beta1"
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
-	v1 "k8s.io/api/core/v1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -28,12 +27,11 @@ func SetUbuntuConfigInEtcdCluster(etcd *etcdv1.EtcdadmCluster, versionsBundle *c
 }
 
 // SetEtcdConfigInCluster sets up the etcd config in CAPI Cluster.
-func setUnstackedEtcdConfigInCluster(cluster *clusterv1.Cluster, unstackedEtcdObject APIObject) {
-	cluster.Spec.ManagedExternalEtcdRef = &v1.ObjectReference{
-		APIVersion: unstackedEtcdObject.GetObjectKind().GroupVersionKind().GroupVersion().String(),
-		Kind:       unstackedEtcdObject.GetObjectKind().GroupVersionKind().Kind,
-		Name:       unstackedEtcdObject.GetName(),
-		Namespace:  constants.EksaSystemNamespace,
+func setUnstackedEtcdConfigInCluster(cluster *clusterv1beta2.Cluster, unstackedEtcdObject APIObject) {
+	cluster.Spec.ManagedExternalEtcdRef = &clusterv1beta2.ContractVersionedObjectReference{
+		APIGroup: unstackedEtcdObject.GetObjectKind().GroupVersionKind().Group,
+		Kind:     unstackedEtcdObject.GetObjectKind().GroupVersionKind().Kind,
+		Name:     unstackedEtcdObject.GetName(),
 	}
 }
 

@@ -5,7 +5,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/yamlutil"
@@ -38,7 +38,7 @@ func RegisterControlPlaneMappings(parser *yamlutil.Parser) error {
 	err := parser.RegisterMappings(
 		yamlutil.NewMapping(
 			"Cluster", func() yamlutil.APIObject {
-				return &clusterv1.Cluster{}
+				return &clusterv1beta2.Cluster{}
 			},
 		),
 		yamlutil.NewMapping(
@@ -94,7 +94,7 @@ func ProcessControlPlaneObjects[C clusterapi.Object[C], M clusterapi.Object[M]](
 func ProcessCluster[C clusterapi.Object[C], M clusterapi.Object[M]](cp *clusterapi.ControlPlane[C, M], lookup yamlutil.ObjectLookup) {
 	for _, obj := range lookup {
 		if obj.GetObjectKind().GroupVersionKind().Kind == "Cluster" {
-			cp.Cluster = obj.(*clusterv1.Cluster)
+			cp.Cluster = obj.(*clusterv1beta2.Cluster)
 			return
 		}
 	}
@@ -102,7 +102,7 @@ func ProcessCluster[C clusterapi.Object[C], M clusterapi.Object[M]](cp *clustera
 
 // ProcessProviderCluster finds the provider cluster in the parsed objects and sets it in ControlPlane.
 func ProcessProviderCluster[C clusterapi.Object[C], M clusterapi.Object[M]](cp *clusterapi.ControlPlane[C, M], lookup yamlutil.ObjectLookup) {
-	providerCluster := lookup.GetFromRef(*cp.Cluster.Spec.InfrastructureRef)
+	providerCluster := lookup.GetFromContractVersionedRef(cp.Cluster.Spec.InfrastructureRef)
 	if providerCluster == nil {
 		return
 	}
@@ -113,7 +113,7 @@ func ProcessProviderCluster[C clusterapi.Object[C], M clusterapi.Object[M]](cp *
 // ProcessKubeadmControlPlane finds the CAPI kubeadm control plane and the kubeadm control plane machine template
 // in the parsed objects and sets it in ControlPlane.
 func ProcessKubeadmControlPlane[C clusterapi.Object[C], M clusterapi.Object[M]](cp *clusterapi.ControlPlane[C, M], lookup yamlutil.ObjectLookup) {
-	kcp := lookup.GetFromRef(*cp.Cluster.Spec.ControlPlaneRef)
+	kcp := lookup.GetFromContractVersionedRef(cp.Cluster.Spec.ControlPlaneRef)
 	if kcp == nil {
 		return
 	}
@@ -134,7 +134,7 @@ func ProcessEtcdCluster[C clusterapi.Object[C], M clusterapi.Object[M]](cp *clus
 		return
 	}
 
-	etcdCluster := lookup.GetFromRef(*cp.Cluster.Spec.ManagedExternalEtcdRef)
+	etcdCluster := lookup.GetFromContractVersionedRef(*cp.Cluster.Spec.ManagedExternalEtcdRef)
 	if etcdCluster == nil {
 		return
 	}

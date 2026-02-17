@@ -4,14 +4,15 @@ import (
 	"context"
 	"fmt"
 	"testing"
-	"time"
 
 	. "github.com/onsi/gomega"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/utils/ptr"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -25,8 +26,8 @@ const mdInPlaceAnnotation = "machinedeployment.clusters.x-k8s.io/in-place-upgrad
 type mdObjects struct {
 	machine   *clusterv1.Machine
 	mdUpgrade *anywherev1.MachineDeploymentUpgrade
-	md        *clusterv1.MachineDeployment
-	mhc       *clusterv1.MachineHealthCheck
+	md        *clusterv1beta2.MachineDeployment
+	mhc       *clusterv1beta2.MachineHealthCheck
 }
 
 func TestMDSetupWithManager(t *testing.T) {
@@ -51,7 +52,7 @@ func TestMDReconcileNotNeeded(t *testing.T) {
 	_, err := r.Reconcile(ctx, req)
 	g.Expect(err).ToNot(HaveOccurred())
 
-	mhc := &clusterv1.MachineHealthCheck{}
+	mhc := &clusterv1beta2.MachineHealthCheck{}
 	err = client.Get(ctx, types.NamespacedName{Name: mdObjs.mhc.Name, Namespace: constants.EksaSystemNamespace}, mhc)
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(mhc.Annotations).ToNot(HaveKey(capiPausedAnnotation))
@@ -73,7 +74,7 @@ func TestMDReconcile(t *testing.T) {
 	err = client.Get(ctx, types.NamespacedName{Name: mdObjs.mdUpgrade.Name, Namespace: constants.EksaSystemNamespace}, mdu)
 	g.Expect(err).ToNot(HaveOccurred())
 
-	mhc := &clusterv1.MachineHealthCheck{}
+	mhc := &clusterv1beta2.MachineHealthCheck{}
 	err = client.Get(ctx, types.NamespacedName{Name: mdObjs.mhc.Name, Namespace: constants.EksaSystemNamespace}, mhc)
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(mhc.Annotations).ToNot(HaveKey(capiPausedAnnotation))
@@ -98,7 +99,7 @@ func TestMDReconcileCreateMachineDeploymentUpgrade(t *testing.T) {
 	g.Expect(len(mdu.Spec.MachinesRequireUpgrade)).To(BeEquivalentTo(1))
 	g.Expect(mdu.Spec.KubernetesVersion).To(BeEquivalentTo(mdObjs.mdUpgrade.Spec.KubernetesVersion))
 
-	mhc := &clusterv1.MachineHealthCheck{}
+	mhc := &clusterv1beta2.MachineHealthCheck{}
 	err = client.Get(ctx, types.NamespacedName{Name: mdObjs.mhc.Name, Namespace: constants.EksaSystemNamespace}, mhc)
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(mhc.Annotations).To(HaveKey(capiPausedAnnotation))
@@ -124,12 +125,12 @@ func TestMDReconcileMDAndMachineDeploymentUpgradeReady(t *testing.T) {
 	g.Expect(err).To(HaveOccurred())
 	g.Expect(err).To(MatchError("machinedeploymentupgrades.anywhere.eks.amazonaws.com \"my-cluster-md-upgrade\" not found"))
 
-	md := &clusterv1.MachineDeployment{}
+	md := &clusterv1beta2.MachineDeployment{}
 	err = client.Get(ctx, types.NamespacedName{Name: mdObjs.md.Name, Namespace: constants.EksaSystemNamespace}, md)
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(md.Annotations).ToNot(HaveKey(mdInPlaceAnnotation))
 
-	mhc := &clusterv1.MachineHealthCheck{}
+	mhc := &clusterv1beta2.MachineHealthCheck{}
 	err = client.Get(ctx, types.NamespacedName{Name: mdObjs.mhc.Name, Namespace: constants.EksaSystemNamespace}, mhc)
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(mhc.Annotations).ToNot(HaveKey(capiPausedAnnotation))
@@ -154,13 +155,13 @@ func TestMDReconcileFullFlow(t *testing.T) {
 	g.Expect(mdu.Status.Ready).To(BeFalse())
 
 	// Expect KCP to still have in-place annotation
-	md := &clusterv1.MachineDeployment{}
+	md := &clusterv1beta2.MachineDeployment{}
 	err = client.Get(ctx, types.NamespacedName{Name: mdObjs.md.Name, Namespace: constants.EksaSystemNamespace}, md)
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(md.Annotations).To(HaveKey(mdInPlaceAnnotation))
 
 	// Expect MHC for KCP to be paused
-	mhc := &clusterv1.MachineHealthCheck{}
+	mhc := &clusterv1beta2.MachineHealthCheck{}
 	err = client.Get(ctx, types.NamespacedName{Name: mdObjs.mhc.Name, Namespace: constants.EksaSystemNamespace}, mhc)
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(mhc.Annotations).To(HaveKey(capiPausedAnnotation))
@@ -228,7 +229,7 @@ func TestMDReconcileVersionMissing(t *testing.T) {
 	ctx := context.Background()
 	mdObjs := getObjectsForMD()
 
-	mdObjs.md.Spec.Template.Spec.Version = nil
+	mdObjs.md.Spec.Template.Spec.Version = ""
 
 	runtimeObjs := []runtime.Object{mdObjs.md}
 	client := fake.NewClientBuilder().WithRuntimeObjects(runtimeObjs...).Build()
@@ -270,7 +271,7 @@ func getObjectsForMD() mdObjects {
 	}
 }
 
-func mdRequest(md *clusterv1.MachineDeployment) reconcile.Request {
+func mdRequest(md *clusterv1beta2.MachineDeployment) reconcile.Request {
 	return reconcile.Request{
 		NamespacedName: types.NamespacedName{
 			Name:      md.Name,
@@ -279,15 +280,15 @@ func mdRequest(md *clusterv1.MachineDeployment) reconcile.Request {
 	}
 }
 
-func generateMHCforMD(mdName string) *clusterv1.MachineHealthCheck {
-	return &clusterv1.MachineHealthCheck{
+func generateMHCforMD(mdName string) *clusterv1beta2.MachineHealthCheck {
+	return &clusterv1beta2.MachineHealthCheck{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-worker-unhealthy", mdName),
 			Namespace: "eksa-system",
 		},
-		Spec: clusterv1.MachineHealthCheckSpec{
-			NodeStartupTimeout: &metav1.Duration{
-				Duration: 20 * time.Minute,
+		Spec: clusterv1beta2.MachineHealthCheckSpec{
+			Checks: clusterv1beta2.MachineHealthCheckChecks{
+				NodeStartupTimeoutSeconds: ptr.To(int32(1200)), // 20 minutes
 			},
 		},
 	}

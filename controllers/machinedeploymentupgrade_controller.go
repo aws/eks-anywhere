@@ -30,6 +30,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/util/patch"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -86,7 +87,7 @@ func (r *MachineDeploymentUpgradeReconciler) Reconcile(ctx context.Context, req 
 		return ctrl.Result{}, err
 	}
 
-	md := &clusterv1.MachineDeployment{}
+	md := &clusterv1beta2.MachineDeployment{}
 	if err := r.client.Get(ctx, types.NamespacedName{Name: mdUpgrade.Spec.MachineDeployment.Name, Namespace: mdUpgrade.Spec.MachineDeployment.Namespace}, md); err != nil {
 		return ctrl.Result{}, fmt.Errorf("getting MachineDeployment %s: %v", mdUpgrade.Spec.MachineDeployment.Name, err)
 	}
@@ -246,7 +247,7 @@ func (r *MachineDeploymentUpgradeReconciler) updateStatus(ctx context.Context, l
 	return nil
 }
 
-func (r *MachineDeploymentUpgradeReconciler) getCurrentMachineSet(ctx context.Context, md *clusterv1.MachineDeployment) (*clusterv1.MachineSet, error) {
+func (r *MachineDeploymentUpgradeReconciler) getCurrentMachineSet(ctx context.Context, md *clusterv1beta2.MachineDeployment) (*clusterv1.MachineSet, error) {
 	selector, err := metav1.LabelSelectorAsSelector(&metav1.LabelSelector{MatchLabels: map[string]string{mdLabelIdentifier: md.Name}})
 	if err != nil {
 		return nil, err

@@ -185,5 +185,5 @@ func TestBasicCloudStackMachineDeployment(t *testing.T) {
 	tt.Expect(int(*got[workerNodeGroupConfig.Name].Spec.Replicas)).To(Equal(*workerNodeGroupConfig.Count))
 	tt.Expect(got[workerNodeGroupConfig.Name].Spec.Template.Spec.InfrastructureRef.Name).To(Equal(fullMatchineTemplate.Name))
 	tt.Expect(got[workerNodeGroupConfig.Name].Spec.Template.Spec.InfrastructureRef.Kind).To(Equal(cloudstack.CloudStackMachineTemplateKind))
-	tt.Expect(got[workerNodeGroupConfig.Name].Spec.Template.Spec.InfrastructureRef.APIVersion).To(Equal(cloudstackv1.GroupVersion.String()))
+	tt.Expect(got[workerNodeGroupConfig.Name].Spec.Template.Spec.InfrastructureRef.APIGroup).To(Equal(cloudstackv1.GroupVersion.Group))
 }

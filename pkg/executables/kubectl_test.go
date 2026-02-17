@@ -23,6 +23,7 @@ import (
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
 	addons "sigs.k8s.io/cluster-api/api/addons/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
@@ -2575,7 +2576,7 @@ func TestKubectlGetObjectNotFound(t *testing.T) {
 				"get", "--ignore-not-found", "-o", "json", "--kubeconfig", tt.kubeconfig, tc.resourceType, "--namespace", tt.namespace, name,
 			).Return(bytes.Buffer{}, nil)
 
-			err := tt.k.GetObject(tt.ctx, tc.resourceType, name, tt.namespace, tt.kubeconfig, &clusterv1.Cluster{})
+			err := tt.k.GetObject(tt.ctx, tc.resourceType, name, tt.namespace, tt.kubeconfig, &clusterv1beta2.Cluster{})
 			tt.Expect(err).To(HaveOccurred())
 			tt.Expect(apierrors.IsNotFound(err)).To(BeTrue())
 		})
@@ -2592,7 +2593,7 @@ func TestKubectlGetObjectWithEMptyNamespace(t *testing.T) {
 		"get", "--ignore-not-found", "-o", "json", "--kubeconfig", tt.kubeconfig, "cluster", "--namespace", "default", name,
 	).Return(bytes.Buffer{}, nil)
 
-	err := tt.k.GetObject(tt.ctx, "cluster", name, emptyNamespace, tt.kubeconfig, &clusterv1.Cluster{})
+	err := tt.k.GetObject(tt.ctx, "cluster", name, emptyNamespace, tt.kubeconfig, &clusterv1beta2.Cluster{})
 	tt.Expect(err).To(HaveOccurred())
 	tt.Expect(apierrors.IsNotFound(err)).To(BeTrue())
 }
@@ -2762,7 +2763,7 @@ func TestKubectlGetClusterObjectNotFound(t *testing.T) {
 		"get", "--ignore-not-found", "-o", "json", "--kubeconfig", test.kubeconfig, "testresource", name,
 	).Return(bytes.Buffer{}, nil)
 
-	err := test.k.GetClusterObject(test.ctx, "testresource", name, test.kubeconfig, &clusterv1.Cluster{})
+	err := test.k.GetClusterObject(test.ctx, "testresource", name, test.kubeconfig, &clusterv1beta2.Cluster{})
 	test.Expect(err).To(HaveOccurred())
 	test.Expect(apierrors.IsNotFound(err)).To(BeTrue())
 }

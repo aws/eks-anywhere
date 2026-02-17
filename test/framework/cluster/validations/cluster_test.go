@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/equality"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
@@ -169,9 +170,17 @@ func TestValidateClusterReady(t *testing.T) {
 			vt := newStateValidatorTest(t, spec)
 			vt.createTestObjects(ctx)
 			if len(tt.conditions) != 0 {
-				capiCluster := test.CAPICluster(func(c *v1beta1.Cluster) {
+				capiCluster := test.CAPICluster(func(c *clusterv1beta2.Cluster) {
 					c.Name = tt.cluster.Name
-					c.SetConditions(tt.conditions)
+					c.Status.Conditions = []metav1.Condition{
+						{
+							Type:               string(tt.conditions[0].Type),
+							Status:             metav1.ConditionStatus(tt.conditions[0].Status),
+							LastTransitionTime: tt.conditions[0].LastTransitionTime,
+							Reason:             tt.conditions[0].Reason,
+							Message:            tt.conditions[0].Message,
+						},
+					}
 				})
 				vt.createManagementClusterObjects(ctx, capiCluster)
 			}

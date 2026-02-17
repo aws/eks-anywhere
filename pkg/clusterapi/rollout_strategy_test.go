@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
@@ -54,7 +54,7 @@ func TestSetUpgradeRolloutStrategyInMachineDeployment(t *testing.T) {
 	tests := []struct {
 		name            string
 		rolloutStrategy *anywherev1.WorkerNodesUpgradeRolloutStrategy
-		want            *clusterv1.MachineDeployment
+		want            *clusterv1beta2.MachineDeployment
 	}{
 		{
 			name:            "no upgrade rollout strategy",
@@ -69,12 +69,12 @@ func TestSetUpgradeRolloutStrategyInMachineDeployment(t *testing.T) {
 					MaxUnavailable: 0,
 				},
 			},
-			want: wantMachineDeployment(func(m *clusterv1.MachineDeployment) {
+			want: wantMachineDeployment(func(m *clusterv1beta2.MachineDeployment) {
 				maxSurge := intstr.FromInt(1)
 				maxUnavailable := intstr.FromInt(0)
-				m.Spec.Strategy = &clusterv1.MachineDeploymentStrategy{
-					Type: clusterv1.RollingUpdateMachineDeploymentStrategyType,
-					RollingUpdate: &clusterv1.MachineRollingUpdateDeployment{
+				m.Spec.Rollout.Strategy = clusterv1beta2.MachineDeploymentRolloutStrategy{
+					Type: clusterv1beta2.RollingUpdateMachineDeploymentStrategyType,
+					RollingUpdate: clusterv1beta2.MachineDeploymentRolloutStrategyRollingUpdate{
 						MaxSurge:       &maxSurge,
 						MaxUnavailable: &maxUnavailable,
 					},

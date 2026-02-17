@@ -151,7 +151,7 @@ spec:
         sudo: ALL=(ALL) NOPASSWD:ALL
       format: {{.format}}
 ---
-apiVersion: cluster.x-k8s.io/v1beta1
+apiVersion: cluster.x-k8s.io/v1beta2
 kind: MachineDeployment
 metadata:
   labels:
@@ -177,18 +177,20 @@ spec:
     spec:
       bootstrap:
         configRef:
-          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          apiGroup: bootstrap.cluster.x-k8s.io
           kind: KubeadmConfigTemplate
           name: {{.workloadkubeadmconfigTemplateName}}
       clusterName: {{.clusterName}}
       infrastructureRef:
-        apiVersion: infrastructure.cluster.x-k8s.io/v1beta3
+        apiGroup: infrastructure.cluster.x-k8s.io
         kind: CloudStackMachineTemplate
         name: {{.workloadTemplateName}}
       version: {{.kubernetesVersion}}
 {{- if .upgradeRolloutStrategy }}
-  strategy:
-    rollingUpdate:
-      maxSurge: {{.maxSurge}}
-      maxUnavailable: {{.maxUnavailable}}
+  rollout:
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: {{.maxSurge}}
+        maxUnavailable: {{.maxUnavailable}}
 {{- end }}
