@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/config"
@@ -77,7 +77,7 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) []validat
 		func() *validations.ValidationResult {
 			return &validations.ValidationResult{
 				Name:        "cluster object present on workload cluster",
-				Remediation: fmt.Sprintf("ensure that the CAPI cluster object %s representing cluster %s is present", clusterv1.GroupVersion, u.Opts.WorkloadCluster.Name),
+				Remediation: fmt.Sprintf("ensure that the CAPI cluster object %s representing cluster %s is present", clusterv1beta2.GroupVersion, u.Opts.WorkloadCluster.Name),
 				Err:         ValidateClusterObjectExists(ctx, k, u.Opts.ManagementCluster),
 			}
 		},

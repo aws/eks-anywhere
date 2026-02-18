@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"gopkg.in/yaml.v2"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
@@ -156,7 +156,7 @@ func PopulateConfig(ctx context.Context, cfg *RenewalConfig, kubeClient kubernet
 func getControlPlaneIPs(ctx context.Context, kubeClient kubernetes.Client, cluster *types.Cluster) ([]string, error) {
 	var controlPlaneIPs []string
 
-	machineList := &clusterv1.MachineList{}
+	machineList := &clusterv1beta2.MachineList{}
 
 	namespaceOpt := kubernetes.ListOptions{
 		Namespace: constants.EksaSystemNamespace,
@@ -171,7 +171,7 @@ func getControlPlaneIPs(ctx context.Context, kubeClient kubernetes.Client, clust
 			_, hasControlPlaneLabel := machine.Labels[controlPlaneLabel]
 			if hasControlPlaneLabel {
 				for _, address := range machine.Status.Addresses {
-					if address.Type == clusterv1.MachineExternalIP && address.Address != "" {
+					if address.Type == clusterv1beta2.MachineExternalIP && address.Address != "" {
 						controlPlaneIPs = append(controlPlaneIPs, address.Address)
 						break
 					}
@@ -186,7 +186,7 @@ func getControlPlaneIPs(ctx context.Context, kubeClient kubernetes.Client, clust
 func getEtcdIPs(ctx context.Context, kubeClient kubernetes.Client, cluster *types.Cluster) ([]string, error) {
 	var etcdIPs []string
 
-	machineList := &clusterv1.MachineList{}
+	machineList := &clusterv1beta2.MachineList{}
 
 	namespaceOpt := kubernetes.ListOptions{
 		Namespace: constants.EksaSystemNamespace,
@@ -199,7 +199,7 @@ func getEtcdIPs(ctx context.Context, kubeClient kubernetes.Client, cluster *type
 	for _, machine := range machineList.Items {
 		if machine.Labels[clusterNameLabel] == cluster.Name && machine.Labels[externalEtcdLabel] == cluster.Name+"-etcd" {
 			for _, address := range machine.Status.Addresses {
-				if address.Type == clusterv1.MachineExternalIP && address.Address != "" {
+				if address.Type == clusterv1beta2.MachineExternalIP && address.Address != "" {
 					etcdIPs = append(etcdIPs, address.Address)
 					break
 				}

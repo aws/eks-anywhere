@@ -23,7 +23,6 @@ import (
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
 	addons "sigs.k8s.io/cluster-api/api/addons/v1beta1"
 	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
@@ -60,7 +59,7 @@ var nutanixMachineConfigsJSON string
 //go:embed testdata/nutanix/datacenterConfigs.json
 var nutanixDatacenterConfigsJSON string
 
-var capiClustersResourceType = fmt.Sprintf("clusters.%s", clusterv1.GroupVersion.Group)
+var capiClustersResourceType = fmt.Sprintf("clusters.%s", clusterv1beta2.GroupVersion.Group)
 
 func newKubectl(t *testing.T) (*executables.Kubectl, context.Context, *types.Cluster, *mockexecutables.MockExecutable) {
 	kubeconfigFile := "c.kubeconfig"
@@ -3925,7 +3924,7 @@ func TestGetMachineDeploymentsForCluster(t *testing.T) {
 	}
 
 	params := []string{
-		"get", fmt.Sprintf("machinedeployments.%s", clusterv1.GroupVersion.Group), "-o", "json",
+		"get", fmt.Sprintf("machinedeployments.%s", clusterv1beta2.GroupVersion.Group), "-o", "json",
 		fmt.Sprintf("--selector=cluster.x-k8s.io/cluster-name=%s", clusterName),
 	}
 	e.EXPECT().Execute(ctx, gomock.Eq(params)).Return(*bytes.NewBufferString(""), nil).Return(*bytes.NewBufferString(fileContent), nil)

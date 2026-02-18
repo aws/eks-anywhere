@@ -31,7 +31,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/util/annotations"
 	v1beta1patch "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/patch"
@@ -188,7 +187,7 @@ func (r *KubeadmControlPlaneReconciler) machinesToUpgrade(ctx context.Context, k
 	if err != nil {
 		return nil, err
 	}
-	machineList := &clusterv1.MachineList{}
+	machineList := &clusterv1beta2.MachineList{}
 	if err := r.client.List(ctx, machineList, &client.ListOptions{LabelSelector: selector, Namespace: kcp.ObjectMeta.Namespace}); err != nil {
 		return nil, err
 	}

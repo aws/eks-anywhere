@@ -11,7 +11,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/utils/ptr"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -24,7 +23,7 @@ import (
 const mdInPlaceAnnotation = "machinedeployment.clusters.x-k8s.io/in-place-upgrade-needed"
 
 type mdObjects struct {
-	machine   *clusterv1.Machine
+	machine   *clusterv1beta2.Machine
 	mdUpgrade *anywherev1.MachineDeploymentUpgrade
 	md        *clusterv1beta2.MachineDeployment
 	mhc       *clusterv1beta2.MachineHealthCheck
@@ -111,7 +110,7 @@ func TestMDReconcileMDAndMachineDeploymentUpgradeReady(t *testing.T) {
 	mdObjs := getObjectsForMD()
 
 	mdObjs.mdUpgrade.Status.Ready = true
-	mdObjs.machine.Spec.Version = &mdObjs.mdUpgrade.Spec.KubernetesVersion
+	mdObjs.machine.Spec.Version = mdObjs.mdUpgrade.Spec.KubernetesVersion
 
 	runtimeObjs := []runtime.Object{mdObjs.machine, mdObjs.md, mdObjs.mdUpgrade, mdObjs.mhc}
 	client := fake.NewClientBuilder().WithRuntimeObjects(runtimeObjs...).Build()
@@ -166,7 +165,7 @@ func TestMDReconcileFullFlow(t *testing.T) {
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(mhc.Annotations).To(HaveKey(capiPausedAnnotation))
 
-	machine := &clusterv1.Machine{}
+	machine := &clusterv1beta2.Machine{}
 	err = client.Get(ctx, types.NamespacedName{Name: mdObjs.machine.Name, Namespace: constants.EksaSystemNamespace}, machine)
 	g.Expect(err).ToNot(HaveOccurred())
 
@@ -174,7 +173,7 @@ func TestMDReconcileFullFlow(t *testing.T) {
 	mdu.Status.Ready = true
 	err = client.Update(ctx, mdu)
 	g.Expect(err).ToNot(HaveOccurred())
-	machine.Spec.Version = &mdu.Spec.KubernetesVersion
+	machine.Spec.Version = mdu.Spec.KubernetesVersion
 	err = client.Update(ctx, machine)
 	g.Expect(err).ToNot(HaveOccurred())
 
@@ -244,7 +243,7 @@ func getObjectsForMD() mdObjects {
 	md := generateMachineDeployment(cluster)
 	md.Name = cluster.Name
 	md.TypeMeta = metav1.TypeMeta{
-		APIVersion: clusterv1.GroupVersion.String(),
+		APIVersion: clusterv1beta2.GroupVersion.String(),
 		Kind:       "MachineDeployment",
 	}
 	node := generateNode()

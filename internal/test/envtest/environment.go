@@ -27,7 +27,6 @@ import (
 	addonsv1 "sigs.k8s.io/cluster-api/api/addons/v1beta1"
 	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
 	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	clusterctlv1 "sigs.k8s.io/cluster-api/cmd/clusterctl/api/v1alpha3"
 	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1"
@@ -62,7 +61,6 @@ func init() {
 	// Register CRDs in Scheme in init so fake clients benefit from it
 	utilruntime.Must(corev1.AddToScheme(scheme.Scheme))
 	utilruntime.Must(releasev1.AddToScheme(scheme.Scheme))
-	utilruntime.Must(clusterv1.AddToScheme(scheme.Scheme))
 	utilruntime.Must(clusterv1beta2.AddToScheme(scheme.Scheme))
 	utilruntime.Must(clusterctlv1.AddToScheme(scheme.Scheme))
 	utilruntime.Must(controlplanev1beta2.AddToScheme(scheme.Scheme))

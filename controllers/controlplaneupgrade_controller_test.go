@@ -11,14 +11,15 @@ import (
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/utils/ptr"
 	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
 	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -40,7 +41,7 @@ const (
 
 type cpUpgradeObjects struct {
 	cluster        *clusterv1beta2.Cluster
-	machines       []*clusterv1.Machine
+	machines       []*clusterv1beta2.Machine
 	nodes          []*corev1.Node
 	cpUpgrade      *anywherev1.ControlPlaneUpgrade
 	nodeUpgrades   []*anywherev1.NodeUpgrade
@@ -65,7 +66,7 @@ func TestCPUpgradeReconcile(t *testing.T) {
 		testObjs.cluster, testObjs.cpUpgrade, testObjs.machines[0], testObjs.machines[1], testObjs.nodes[0], testObjs.nodes[1],
 		testObjs.nodeUpgrades[0], testObjs.nodeUpgrades[1], testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1], testObjs.infraMachines[0], testObjs.infraMachines[1],
 	}
-	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).
+	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).WithObjects(tinkerbellMachineCRD()).
 		WithStatusSubresource(testObjs.cpUpgrade).
 		Build()
 	kcp := testObjs.cpUpgrade.Spec.ControlPlane
@@ -98,7 +99,7 @@ func TestCPUpgradeReconcileEarly(t *testing.T) {
 		testObjs.cluster, testObjs.cpUpgrade, testObjs.machines[0], testObjs.machines[1], testObjs.nodes[0], testObjs.nodes[1],
 		testObjs.nodeUpgrades[0], testObjs.nodeUpgrades[1], testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1], testObjs.infraMachines[0], testObjs.infraMachines[1],
 	}
-	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).
+	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).WithObjects(tinkerbellMachineCRD()).
 		WithStatusSubresource(testObjs.cpUpgrade).
 		Build()
 	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: "my-cp", Namespace: "eksa-system"}).Return(client, nil)
@@ -129,7 +130,7 @@ func TestCPUpgradeReconcileNodeNotUpgraded(t *testing.T) {
 		testObjs.cluster, testObjs.cpUpgrade, testObjs.machines[0], testObjs.machines[1], testObjs.nodes[0], testObjs.nodes[1],
 		testObjs.nodeUpgrades[0], testObjs.nodeUpgrades[1], testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1], testObjs.infraMachines[0], testObjs.infraMachines[1],
 	}
-	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).
+	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).WithObjects(tinkerbellMachineCRD()).
 		WithStatusSubresource(testObjs.cpUpgrade).
 		Build()
 	kcp := testObjs.cpUpgrade.Spec.ControlPlane
@@ -156,7 +157,7 @@ func TestCPUpgradeReconcileNodeUpgradeEnsureStatusUpdated(t *testing.T) {
 		testObjs.cluster, testObjs.machines[0], testObjs.machines[1], testObjs.nodes[0], testObjs.nodes[1], testObjs.cpUpgrade,
 		testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1], testObjs.infraMachines[0], testObjs.infraMachines[1],
 	}
-	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).
+	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).WithObjects(tinkerbellMachineCRD()).
 		WithStatusSubresource(testObjs.cpUpgrade).
 		Build()
 	kcp := testObjs.cpUpgrade.Spec.ControlPlane
@@ -191,7 +192,7 @@ func TestCPUpgradeReconcileNodeUpgraderCreate(t *testing.T) {
 		testObjs.cluster, testObjs.machines[0], testObjs.machines[1], testObjs.nodes[0], testObjs.nodes[1], testObjs.cpUpgrade,
 		testObjs.nodeUpgrades[0], testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1], testObjs.infraMachines[0], testObjs.infraMachines[1],
 	}
-	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).
+	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).WithObjects(tinkerbellMachineCRD()).
 		WithStatusSubresource(testObjs.cpUpgrade).
 		Build()
 	kcp := testObjs.cpUpgrade.Spec.ControlPlane
@@ -241,7 +242,7 @@ func TestCPUpgradeReconcileNodeUpgraderInvalidKCPSpec(t *testing.T) {
 				testObjs.cluster, testObjs.machines[0], testObjs.machines[1], testObjs.nodes[0], testObjs.nodes[1],
 				testObjs.cpUpgrade, testObjs.nodeUpgrades[0], testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1], testObjs.infraMachines[0], testObjs.infraMachines[1],
 			}
-			client := fake.NewClientBuilder().WithRuntimeObjects(objs...).
+			client := fake.NewClientBuilder().WithRuntimeObjects(objs...).WithObjects(tinkerbellMachineCRD()).
 				WithStatusSubresource(testObjs.cpUpgrade).
 				Build()
 			kcp := testObjs.cpUpgrade.Spec.ControlPlane
@@ -277,7 +278,7 @@ func TestCPUpgradeReconcileNodesNotReadyYet(t *testing.T) {
 		testObjs.cluster, testObjs.cpUpgrade, testObjs.machines[0], testObjs.machines[1], testObjs.nodes[0], testObjs.nodes[1],
 		testObjs.nodeUpgrades[0], testObjs.nodeUpgrades[1], testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1], testObjs.infraMachines[0], testObjs.infraMachines[1],
 	}
-	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).
+	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).WithObjects(tinkerbellMachineCRD()).
 		WithStatusSubresource(testObjs.cpUpgrade).
 		Build()
 	kcp := testObjs.cpUpgrade.Spec.ControlPlane
@@ -311,7 +312,7 @@ func TestCPUpgradeReconcileDelete(t *testing.T) {
 		testObjs.cluster, testObjs.cpUpgrade, testObjs.machines[0], testObjs.machines[1], testObjs.nodes[0], testObjs.nodes[1],
 		testObjs.nodeUpgrades[0], testObjs.nodeUpgrades[1], testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1], testObjs.infraMachines[0], testObjs.infraMachines[1],
 	}
-	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).
+	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).WithObjects(tinkerbellMachineCRD()).
 		WithStatusSubresource(testObjs.cpUpgrade).
 		Build()
 
@@ -342,7 +343,7 @@ func TestCPUpgradeObjectDoesNotExist(t *testing.T) {
 		testObjs.cluster, testObjs.machines[0], testObjs.machines[1], testObjs.nodes[0], testObjs.nodes[1],
 		testObjs.nodeUpgrades[0], testObjs.nodeUpgrades[1], testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1], testObjs.infraMachines[0], testObjs.infraMachines[1],
 	}
-	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).
+	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).WithObjects(tinkerbellMachineCRD()).
 		WithStatusSubresource(testObjs.cpUpgrade).
 		Build()
 
@@ -371,7 +372,7 @@ func TestCPUpgradeReconcileUpdateCapiMachineVersion(t *testing.T) {
 		testObjs.nodeUpgrades[0], testObjs.nodeUpgrades[1], testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1], testObjs.infraMachines[0], testObjs.infraMachines[1],
 	}
 	testObjs.nodeUpgrades[0].Status.Completed = true
-	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).
+	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).WithObjects(tinkerbellMachineCRD()).
 		WithStatusSubresource(testObjs.cpUpgrade).
 		Build()
 	kcp := testObjs.cpUpgrade.Spec.ControlPlane
@@ -382,10 +383,10 @@ func TestCPUpgradeReconcileUpdateCapiMachineVersion(t *testing.T) {
 	req := cpUpgradeRequest(testObjs.cpUpgrade)
 	_, err := r.Reconcile(ctx, req)
 	g.Expect(err).ToNot(HaveOccurred())
-	machine := &clusterv1.Machine{}
+	machine := &clusterv1beta2.Machine{}
 	err = client.Get(ctx, types.NamespacedName{Name: testObjs.nodeUpgrades[0].Spec.Machine.Name, Namespace: constants.EksaSystemNamespace}, machine)
 	g.Expect(err).ToNot(HaveOccurred())
-	g.Expect(*machine.Spec.Version).To(BeEquivalentTo(k8s128))
+	g.Expect(machine.Spec.Version).To(BeEquivalentTo(k8s128))
 }
 
 func TestCPUpgradeReconcileUpdateKubeadmConfigSuccess(t *testing.T) {
@@ -407,7 +408,7 @@ func TestCPUpgradeReconcileUpdateKubeadmConfigSuccess(t *testing.T) {
 		testObjs.nodeUpgrades[0], testObjs.nodeUpgrades[1], testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1], testObjs.infraMachines[0], testObjs.infraMachines[1], kubeVipCm,
 	}
 	testObjs.nodeUpgrades[0].Status.Completed = true
-	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).
+	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).WithObjects(tinkerbellMachineCRD()).
 		WithStatusSubresource(testObjs.cpUpgrade).
 		Build()
 	kcp := testObjs.cpUpgrade.Spec.ControlPlane
@@ -470,7 +471,7 @@ func TestCPUpgradeReconcileUpdateKubeadmConfigPreservesFeatureGates(t *testing.T
 		testObjs.cluster, testObjs.cpUpgrade, testObjs.machines[0], testObjs.machines[1], testObjs.nodes[0], testObjs.nodes[1],
 		testObjs.nodeUpgrades[0], testObjs.nodeUpgrades[1], testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1], testObjs.infraMachines[0], testObjs.infraMachines[1],
 	}
-	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).
+	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).WithObjects(tinkerbellMachineCRD()).
 		WithStatusSubresource(testObjs.cpUpgrade).
 		Build()
 	kcp := testObjs.cpUpgrade.Spec.ControlPlane
@@ -529,7 +530,7 @@ func TestCPUpgradeReconcileUpdateKubeadmConfigPreservesFeatureGatesWithKCPFeatur
 		testObjs.cluster, testObjs.cpUpgrade, testObjs.machines[0], testObjs.machines[1], testObjs.nodes[0], testObjs.nodes[1],
 		testObjs.nodeUpgrades[0], testObjs.nodeUpgrades[1], testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1], testObjs.infraMachines[0], testObjs.infraMachines[1],
 	}
-	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).
+	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).WithObjects(tinkerbellMachineCRD()).
 		WithStatusSubresource(testObjs.cpUpgrade).
 		Build()
 	kcp := testObjs.cpUpgrade.Spec.ControlPlane
@@ -573,14 +574,14 @@ func TestCPUpgradeReconcileUpdateKubeadmConfigRefNil(t *testing.T) {
 		}
 	}
 	for i := range testObjs.machines {
-		testObjs.machines[i].Spec.Bootstrap.ConfigRef = nil
+		testObjs.machines[i].Spec.Bootstrap.ConfigRef = clusterv1beta2.ContractVersionedObjectReference{}
 	}
 	objs := []runtime.Object{
 		testObjs.cluster, testObjs.cpUpgrade, testObjs.machines[0], testObjs.machines[1], testObjs.nodes[0], testObjs.nodes[1],
 		testObjs.nodeUpgrades[0], testObjs.nodeUpgrades[1], testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1], testObjs.infraMachines[0], testObjs.infraMachines[1],
 	}
 	testObjs.nodeUpgrades[0].Status.Completed = true
-	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).
+	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).WithObjects(tinkerbellMachineCRD()).
 		WithStatusSubresource(testObjs.cpUpgrade).
 		Build()
 	kcp := testObjs.cpUpgrade.Spec.ControlPlane
@@ -591,7 +592,7 @@ func TestCPUpgradeReconcileUpdateKubeadmConfigRefNil(t *testing.T) {
 	req := cpUpgradeRequest(testObjs.cpUpgrade)
 	_, err := r.Reconcile(ctx, req)
 	g.Expect(err).To(HaveOccurred())
-	g.Expect(err.Error()).To(MatchRegexp("updating kubeadm config: bootstrap config for machine machine01 is nil"))
+	g.Expect(err.Error()).To(MatchRegexp("updating kubeadm config: bootstrap config for machine machine01 is not set"))
 }
 
 func TestCPUpgradeReconcileUpdateKubeadmConfigNotFound(t *testing.T) {
@@ -612,7 +613,7 @@ func TestCPUpgradeReconcileUpdateKubeadmConfigNotFound(t *testing.T) {
 		testObjs.nodeUpgrades[0], testObjs.nodeUpgrades[1], testObjs.infraMachines[0], testObjs.infraMachines[1],
 	}
 	testObjs.nodeUpgrades[0].Status.Completed = true
-	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).
+	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).WithObjects(tinkerbellMachineCRD()).
 		WithStatusSubresource(testObjs.cpUpgrade).
 		Build()
 	kcp := testObjs.cpUpgrade.Spec.ControlPlane
@@ -644,7 +645,7 @@ func TestCPUpgradeReconcileUpdateInfraMachineAnnotationSuccess(t *testing.T) {
 		testObjs.nodeUpgrades[0], testObjs.nodeUpgrades[1], testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1], testObjs.infraMachines[0], testObjs.infraMachines[1],
 	}
 	testObjs.nodeUpgrades[0].Status.Completed = true
-	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).
+	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).WithObjects(tinkerbellMachineCRD()).
 		WithStatusSubresource(testObjs.cpUpgrade).
 		Build()
 	kcp := testObjs.cpUpgrade.Spec.ControlPlane
@@ -685,7 +686,7 @@ func TestCPUpgradeReconcileUpdateInfraMachineAnnotationNilSuccess(t *testing.T) 
 		testObjs.nodeUpgrades[0], testObjs.nodeUpgrades[1], testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1], testObjs.infraMachines[0], testObjs.infraMachines[1],
 	}
 	testObjs.nodeUpgrades[0].Status.Completed = true
-	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).
+	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).WithObjects(tinkerbellMachineCRD()).
 		WithStatusSubresource(testObjs.cpUpgrade).
 		Build()
 	kcp := testObjs.cpUpgrade.Spec.ControlPlane
@@ -724,7 +725,7 @@ func TestCPUpgradeReconcileUpdateInfraMachineAnnotationErrror(t *testing.T) {
 		testObjs.nodeUpgrades[0], testObjs.nodeUpgrades[1], testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1],
 	}
 	testObjs.nodeUpgrades[0].Status.Completed = true
-	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).
+	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).WithObjects(tinkerbellMachineCRD()).
 		WithStatusSubresource(testObjs.cpUpgrade).
 		Build()
 	kcp := testObjs.cpUpgrade.Spec.ControlPlane
@@ -735,7 +736,7 @@ func TestCPUpgradeReconcileUpdateInfraMachineAnnotationErrror(t *testing.T) {
 	req := cpUpgradeRequest(testObjs.cpUpgrade)
 	_, err := r.Reconcile(ctx, req)
 	g.Expect(err).To(HaveOccurred())
-	g.Expect(err).To(MatchError("updating infra machine: retrieving infra machine machine01 for machine machine01: failed to retrieve TinkerbellMachine eksa-system/machine01: tinkerbellmachines.infrastructure.cluster.x-k8s.io \"machine01\" not found"))
+	g.Expect(err.Error()).To(ContainSubstring("updating infra machine: retrieving infra machine machine01 for machine machine01"))
 }
 
 func getObjectsForCPUpgradeTest() cpUpgradeObjects {
@@ -753,10 +754,10 @@ func getObjectsForCPUpgradeTest() cpUpgradeObjects {
 	nodeUpgrade1 := generateNodeUpgrade(machine1)
 	nodeUpgrade2 := generateNodeUpgrade(machine2)
 	nodeUpgrade2.ObjectMeta.Name = "node-upgrade-request-2"
-	machines := []*clusterv1.Machine{machine1, machine2}
+	machines := []*clusterv1beta2.Machine{machine1, machine2}
 	return cpUpgradeObjects{
 		cluster:        cluster,
-		machines:       []*clusterv1.Machine{machine1, machine2},
+		machines:       []*clusterv1beta2.Machine{machine1, machine2},
 		nodes:          []*corev1.Node{node1, node2},
 		cpUpgrade:      generateCPUpgrade(machines),
 		nodeUpgrades:   []*anywherev1.NodeUpgrade{nodeUpgrade1, nodeUpgrade2},
@@ -774,7 +775,7 @@ func cpUpgradeRequest(cpUpgrade *anywherev1.ControlPlaneUpgrade) reconcile.Reque
 	}
 }
 
-func generateCPUpgrade(machine []*clusterv1.Machine) *anywherev1.ControlPlaneUpgrade {
+func generateCPUpgrade(machine []*clusterv1beta2.Machine) *anywherev1.ControlPlaneUpgrade {
 	kcpSpec, _ := json.Marshal(generateKcpSpec())
 	return &anywherev1.ControlPlaneUpgrade{
 		ObjectMeta: metav1.ObjectMeta{
@@ -855,12 +856,23 @@ func generateKubeadmConfig() *bootstrapv1beta2.KubeadmConfig {
 	}
 }
 
-func generateAndSetInfraMachine(machine *clusterv1.Machine) *tinkerbellv1.TinkerbellMachine {
-	machine.Spec.InfrastructureRef = corev1.ObjectReference{
-		Namespace:  machine.Namespace,
-		Name:       machine.Name,
-		Kind:       "TinkerbellMachine",
-		APIVersion: tinkerbellv1.GroupVersion.String(),
+// tinkerbellMachineCRD creates a mock CRD object for TinkerbellMachine that provides
+// contract version metadata needed by external.GetObjectFromContractVersionedRef.
+func tinkerbellMachineCRD() *unstructured.Unstructured {
+	u := &unstructured.Unstructured{}
+	u.SetName("tinkerbellmachines.infrastructure.cluster.x-k8s.io")
+	u.SetGroupVersionKind(apiextensionsv1.SchemeGroupVersion.WithKind("CustomResourceDefinition"))
+	u.SetLabels(map[string]string{
+		"cluster.x-k8s.io/v1beta2": "v1beta1",
+	})
+	return u
+}
+
+func generateAndSetInfraMachine(machine *clusterv1beta2.Machine) *tinkerbellv1.TinkerbellMachine {
+	machine.Spec.InfrastructureRef = clusterv1beta2.ContractVersionedObjectReference{
+		APIGroup: tinkerbellv1.GroupVersion.Group,
+		Kind:     "TinkerbellMachine",
+		Name:     machine.Name,
 	}
 	return &tinkerbellv1.TinkerbellMachine{
 		ObjectMeta: metav1.ObjectMeta{
