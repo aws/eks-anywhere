@@ -9,7 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
-	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1"
+	dockerv1beta2 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/aws/eks-anywhere/internal/test"
@@ -19,8 +19,8 @@ import (
 )
 
 type (
-	dockerGroup   = clusterapi.WorkerGroup[*dockerv1.DockerMachineTemplate]
-	dockerWorkers = clusterapi.Workers[*dockerv1.DockerMachineTemplate]
+	dockerGroup   = clusterapi.WorkerGroup[*dockerv1beta2.DockerMachineTemplate]
+	dockerWorkers = clusterapi.Workers[*dockerv1beta2.DockerMachineTemplate]
 )
 
 func TestWorkersUpdateImmutableObjectNamesError(t *testing.T) {

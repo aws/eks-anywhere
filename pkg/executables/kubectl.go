@@ -27,7 +27,7 @@ import (
 	"k8s.io/apimachinery/pkg/version"
 	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta3"
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
-	addons "sigs.k8s.io/cluster-api/api/addons/v1beta1"
+	addons "sigs.k8s.io/cluster-api/api/addons/v1beta2"
 	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"

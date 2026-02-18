@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
-	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1"
+	dockerv1beta2 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/aws/eks-anywhere/internal/test"
@@ -20,7 +20,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 )
 
-type dockerControlPlane = clusterapi.ControlPlane[*dockerv1.DockerCluster, *dockerv1.DockerMachineTemplate]
+type dockerControlPlane = clusterapi.ControlPlane[*dockerv1beta2.DockerCluster, *dockerv1beta2.DockerMachineTemplate]
 
 func TestControlPlaneObjects(t *testing.T) {
 	tests := []struct {
@@ -236,16 +236,16 @@ func capiCluster() *clusterv1beta2.Cluster {
 	return &clusterv1beta2.Cluster{}
 }
 
-func dockerCluster() *dockerv1.DockerCluster {
-	return &dockerv1.DockerCluster{}
+func dockerCluster() *dockerv1beta2.DockerCluster {
+	return &dockerv1beta2.DockerCluster{}
 }
 
 func kubeadmControlPlane() *controlplanev1beta2.KubeadmControlPlane {
 	return &controlplanev1beta2.KubeadmControlPlane{}
 }
 
-func dockerMachineTemplate() *dockerv1.DockerMachineTemplate {
-	return &dockerv1.DockerMachineTemplate{
+func dockerMachineTemplate() *dockerv1beta2.DockerMachineTemplate {
+	return &dockerv1beta2.DockerMachineTemplate{
 		TypeMeta: metav1.TypeMeta{
 			Kind: "DockerMachineTemplate",
 		},

@@ -7,7 +7,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
-	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1"
+	dockerv1beta2 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta2"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
@@ -17,8 +17,8 @@ import (
 )
 
 type (
-	dockerWorkers     = clusterapi.Workers[*dockerv1.DockerMachineTemplate]
-	dockerWorkerGroup = clusterapi.WorkerGroup[*dockerv1.DockerMachineTemplate]
+	dockerWorkers     = clusterapi.Workers[*dockerv1beta2.DockerMachineTemplate]
+	dockerWorkerGroup = clusterapi.WorkerGroup[*dockerv1beta2.DockerMachineTemplate]
 )
 
 func TestNewWorkersParserAndBuilderSuccessParsing(t *testing.T) {
@@ -27,8 +27,8 @@ func TestNewWorkersParserAndBuilderSuccessParsing(t *testing.T) {
 		test.NewNullLogger(),
 		yamlutil.NewMapping(
 			"DockerMachineTemplate",
-			func() *dockerv1.DockerMachineTemplate {
-				return &dockerv1.DockerMachineTemplate{}
+			func() *dockerv1beta2.DockerMachineTemplate {
+				return &dockerv1beta2.DockerMachineTemplate{}
 			},
 		),
 	)
@@ -59,7 +59,7 @@ spec:
         kind: DockerMachineTemplate
         name: workers-1
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
 kind: DockerMachineTemplate
 metadata:
   name: workers-1
@@ -89,7 +89,7 @@ spec:
         kind: DockerMachineTemplate
         name: workers-2
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
 kind: DockerMachineTemplate
 metadata:
   name: workers-2
@@ -108,8 +108,8 @@ func TestNewWorkersParserAndBuilderErrorFromMappings(t *testing.T) {
 		test.NewNullLogger(),
 		yamlutil.NewMapping(
 			"MachineDeployment",
-			func() *dockerv1.DockerMachineTemplate {
-				return &dockerv1.DockerMachineTemplate{}
+			func() *dockerv1beta2.DockerMachineTemplate {
+				return &dockerv1beta2.DockerMachineTemplate{}
 			},
 		),
 	)
