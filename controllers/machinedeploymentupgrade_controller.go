@@ -29,7 +29,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/util/patch"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -196,7 +195,7 @@ func patchMachineDeploymentUpgrade(ctx context.Context, patchHelper *patch.Helpe
 	return patchHelper.Patch(ctx, mdUpgrade, patchOpts...)
 }
 
-func (r *MachineDeploymentUpgradeReconciler) updateStatus(ctx context.Context, log logr.Logger, mdUpgrade *anywherev1.MachineDeploymentUpgrade, ms *clusterv1.MachineSet) error {
+func (r *MachineDeploymentUpgradeReconciler) updateStatus(ctx context.Context, log logr.Logger, mdUpgrade *anywherev1.MachineDeploymentUpgrade, ms *clusterv1beta2.MachineSet) error {
 	// When MachineDeploymentUpgrade is fully deleted, we do not need to update the status. Without this check
 	// the subsequent patch operations would fail if the status is updated after it is fully deleted.
 	if !mdUpgrade.DeletionTimestamp.IsZero() && len(mdUpgrade.GetFinalizers()) == 0 {
@@ -235,7 +234,7 @@ func (r *MachineDeploymentUpgradeReconciler) updateStatus(ctx context.Context, l
 		if err != nil {
 			return fmt.Errorf("decoding value for %s with base64: %v", mdUpgrade.Spec.MachineSpecData, err)
 		}
-		machineSpec := clusterv1.MachineSpec{}
+		machineSpec := clusterv1beta2.MachineSpec{}
 		if err := json.Unmarshal(machineSpecJSON, &machineSpec); err != nil {
 			return fmt.Errorf("unmarshalling machineSpec: %v", err)
 		}
@@ -247,22 +246,22 @@ func (r *MachineDeploymentUpgradeReconciler) updateStatus(ctx context.Context, l
 	return nil
 }
 
-func (r *MachineDeploymentUpgradeReconciler) getCurrentMachineSet(ctx context.Context, md *clusterv1beta2.MachineDeployment) (*clusterv1.MachineSet, error) {
+func (r *MachineDeploymentUpgradeReconciler) getCurrentMachineSet(ctx context.Context, md *clusterv1beta2.MachineDeployment) (*clusterv1beta2.MachineSet, error) {
 	selector, err := metav1.LabelSelectorAsSelector(&metav1.LabelSelector{MatchLabels: map[string]string{mdLabelIdentifier: md.Name}})
 	if err != nil {
 		return nil, err
 	}
-	machineSetsList := &clusterv1.MachineSetList{}
+	machineSetsList := &clusterv1beta2.MachineSetList{}
 	if err := r.client.List(ctx, machineSetsList, &client.ListOptions{LabelSelector: selector}); err != nil {
 		return nil, fmt.Errorf("getting machine sets for %v: %v", md.Name, err)
 	}
-	revision, ok := md.Annotations[clusterv1.RevisionAnnotation]
+	revision, ok := md.Annotations[clusterv1beta2.RevisionAnnotation]
 	if !ok {
-		return nil, fmt.Errorf("machineDeployment is missing %s annotation", clusterv1.RevisionAnnotation)
+		return nil, fmt.Errorf("machineDeployment is missing %s annotation", clusterv1beta2.RevisionAnnotation)
 	}
-	var currentMS *clusterv1.MachineSet
+	var currentMS *clusterv1beta2.MachineSet
 	for _, ms := range machineSetsList.Items {
-		if ms.Annotations[clusterv1.RevisionAnnotation] == revision {
+		if ms.Annotations[clusterv1beta2.RevisionAnnotation] == revision {
 			currentMS = &ms
 			break
 		}
@@ -273,7 +272,7 @@ func (r *MachineDeploymentUpgradeReconciler) getCurrentMachineSet(ctx context.Co
 	return currentMS, nil
 }
 
-func (r *MachineDeploymentUpgradeReconciler) updateMachineSet(ctx context.Context, ms *clusterv1.MachineSet, spec clusterv1.MachineSpec) error {
+func (r *MachineDeploymentUpgradeReconciler) updateMachineSet(ctx context.Context, ms *clusterv1beta2.MachineSet, spec clusterv1beta2.MachineSpec) error {
 	patchHelper, err := patch.NewHelper(ms, r.client)
 	if err != nil {
 		return err
@@ -286,13 +285,13 @@ func (r *MachineDeploymentUpgradeReconciler) updateMachineSet(ctx context.Contex
 }
 
 func (r *MachineDeploymentUpgradeReconciler) updateMachineVersion(ctx context.Context, log logr.Logger, machineRef corev1.ObjectReference, kubernetesVersion string) error {
-	machine := &clusterv1.Machine{}
+	machine := &clusterv1beta2.Machine{}
 	if err := r.client.Get(ctx, types.NamespacedName{Name: machineRef.Name, Namespace: machineRef.Namespace}, machine); err != nil {
 		return fmt.Errorf("getting machine %s: %v", machineRef.Name, err)
 	}
 
 	// Check if update is needed
-	if machine.Spec.Version != nil && *machine.Spec.Version == kubernetesVersion {
+	if machine.Spec.Version == kubernetesVersion {
 		return nil
 	}
 
@@ -301,7 +300,7 @@ func (r *MachineDeploymentUpgradeReconciler) updateMachineVersion(ctx context.Co
 		return err
 	}
 
-	machine.Spec.Version = &kubernetesVersion
+	machine.Spec.Version = kubernetesVersion
 	log.Info("Updating Machine version", "Machine", machine.Name, "version", kubernetesVersion)
 
 	if err := patchHelper.Patch(ctx, machine); err != nil {

@@ -683,7 +683,7 @@ func TestUpdateClusterCertificateStatusSuccess(t *testing.T) {
 		name         string
 		cluster      *anywherev1.Cluster
 		conditions   []anywherev1.Condition
-		machines     []clusterv1.Machine
+		machines     []clusterv1beta2.Machine
 		expectedCert []anywherev1.ClusterCertificateInfo
 	}{
 		{
@@ -708,7 +708,7 @@ func TestUpdateClusterCertificateStatusSuccess(t *testing.T) {
 					Status: "True",
 				},
 			},
-			machines: []clusterv1.Machine{
+			machines: []clusterv1beta2.Machine{
 				{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-cluster-control-plane-abc123",
@@ -718,10 +718,10 @@ func TestUpdateClusterCertificateStatusSuccess(t *testing.T) {
 							"cluster.x-k8s.io/control-plane": "",
 						},
 					},
-					Status: clusterv1.MachineStatus{
-						Addresses: []clusterv1.MachineAddress{
+					Status: clusterv1beta2.MachineStatus{
+						Addresses: []clusterv1beta2.MachineAddress{
 							{
-								Type:    clusterv1.MachineExternalIP,
+								Type:    clusterv1beta2.MachineExternalIP,
 								Address: "127.0.0.1",
 							},
 						},
@@ -752,7 +752,7 @@ func TestUpdateClusterCertificateStatusSuccess(t *testing.T) {
 					Status: "False",
 				},
 			},
-			machines: []clusterv1.Machine{},
+			machines: []clusterv1beta2.Machine{},
 			expectedCert: []anywherev1.ClusterCertificateInfo{
 				{
 					Machine:       "should-be-there",
@@ -903,7 +903,7 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 					md.ObjectMeta.Name = "md-0"
 					md.ObjectMeta.Generation = 1
 					md.ObjectMeta.Labels = map[string]string{
-						clusterv1.ClusterNameLabel: clusterName,
+						clusterv1beta2.ClusterNameLabel: clusterName,
 					}
 					md.Status.ObservedGeneration = 0
 				}),
@@ -936,7 +936,7 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 					md.ObjectMeta.Name = "md-0"
 					md.ObjectMeta.Generation = 1
 					md.ObjectMeta.Labels = map[string]string{
-						clusterv1.ClusterNameLabel: clusterName,
+						clusterv1beta2.ClusterNameLabel: clusterName,
 					}
 					md.Status.ObservedGeneration = 0
 				}),
@@ -973,7 +973,7 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-0"
 					md.ObjectMeta.Labels = map[string]string{
-						clusterv1.ClusterNameLabel: clusterName,
+						clusterv1beta2.ClusterNameLabel: clusterName,
 					}
 					md.Status.Replicas = ptr.Int32(1)
 					md.Status.ReadyReplicas = ptr.Int32(1)
@@ -982,7 +982,7 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-1"
 					md.ObjectMeta.Labels = map[string]string{
-						clusterv1.ClusterNameLabel: clusterName,
+						clusterv1beta2.ClusterNameLabel: clusterName,
 					}
 					md.Status.Replicas = ptr.Int32(2)
 					md.Status.ReadyReplicas = ptr.Int32(2)
@@ -1017,7 +1017,7 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-0"
 					md.ObjectMeta.Labels = map[string]string{
-						clusterv1.ClusterNameLabel: clusterName,
+						clusterv1beta2.ClusterNameLabel: clusterName,
 					}
 					md.Status.Replicas = ptr.Int32(1)
 					md.Status.ReadyReplicas = ptr.Int32(1)
@@ -1026,7 +1026,7 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-1"
 					md.ObjectMeta.Labels = map[string]string{
-						clusterv1.ClusterNameLabel: clusterName,
+						clusterv1beta2.ClusterNameLabel: clusterName,
 					}
 					md.Status.Replicas = ptr.Int32(2)
 					md.Status.ReadyReplicas = ptr.Int32(2)
@@ -1062,7 +1062,7 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-0"
 					md.ObjectMeta.Labels = map[string]string{
-						clusterv1.ClusterNameLabel: clusterName,
+						clusterv1beta2.ClusterNameLabel: clusterName,
 					}
 					md.Status.Replicas = ptr.Int32(0)
 					md.Status.ReadyReplicas = ptr.Int32(0)
@@ -1071,7 +1071,7 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-1"
 					md.ObjectMeta.Labels = map[string]string{
-						clusterv1.ClusterNameLabel: clusterName,
+						clusterv1beta2.ClusterNameLabel: clusterName,
 					}
 					md.Status.Replicas = ptr.Int32(2)
 					md.Status.ReadyReplicas = ptr.Int32(2)
@@ -1106,7 +1106,7 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-0"
 					md.ObjectMeta.Labels = map[string]string{
-						clusterv1.ClusterNameLabel: clusterName,
+						clusterv1beta2.ClusterNameLabel: clusterName,
 					}
 					md.Status.Replicas = ptr.Int32(2)
 					md.Status.ReadyReplicas = ptr.Int32(2)
@@ -1115,7 +1115,7 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-1"
 					md.ObjectMeta.Labels = map[string]string{
-						clusterv1.ClusterNameLabel: clusterName,
+						clusterv1beta2.ClusterNameLabel: clusterName,
 					}
 					md.Status.Replicas = ptr.Int32(2)
 					md.Status.ReadyReplicas = ptr.Int32(2)
@@ -1150,7 +1150,7 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-0"
 					md.ObjectMeta.Labels = map[string]string{
-						clusterv1.ClusterNameLabel: clusterName,
+						clusterv1beta2.ClusterNameLabel: clusterName,
 					}
 					md.Status.ReadyReplicas = ptr.Int32(1)
 					md.Status.Replicas = ptr.Int32(1)
@@ -1159,7 +1159,7 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-1"
 					md.ObjectMeta.Labels = map[string]string{
-						clusterv1.ClusterNameLabel: clusterName,
+						clusterv1beta2.ClusterNameLabel: clusterName,
 					}
 					md.Status.ReadyReplicas = ptr.Int32(0)
 					md.Status.Replicas = ptr.Int32(2)
@@ -1191,7 +1191,7 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-0"
 					md.ObjectMeta.Labels = map[string]string{
-						clusterv1.ClusterNameLabel: clusterName,
+						clusterv1beta2.ClusterNameLabel: clusterName,
 					}
 					md.Status.ReadyReplicas = ptr.Int32(1)
 					md.Status.Replicas = ptr.Int32(1)
@@ -1238,7 +1238,7 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-0"
 					md.ObjectMeta.Labels = map[string]string{
-						clusterv1.ClusterNameLabel: clusterName,
+						clusterv1beta2.ClusterNameLabel: clusterName,
 					}
 					md.Status.Replicas = ptr.Int32(1)
 					md.Status.ReadyReplicas = ptr.Int32(1)
@@ -1247,7 +1247,7 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-1"
 					md.ObjectMeta.Labels = map[string]string{
-						clusterv1.ClusterNameLabel: clusterName,
+						clusterv1beta2.ClusterNameLabel: clusterName,
 					}
 					md.ObjectMeta.Annotations = map[string]string{
 						clusterapi.NodeGroupMinSizeAnnotation: "3",
@@ -1289,7 +1289,7 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-0"
 					md.ObjectMeta.Labels = map[string]string{
-						clusterv1.ClusterNameLabel: clusterName,
+						clusterv1beta2.ClusterNameLabel: clusterName,
 					}
 					md.Status.Replicas = ptr.Int32(1)
 					md.Status.ReadyReplicas = ptr.Int32(1)
@@ -1298,7 +1298,7 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-1"
 					md.ObjectMeta.Labels = map[string]string{
-						clusterv1.ClusterNameLabel: clusterName,
+						clusterv1beta2.ClusterNameLabel: clusterName,
 					}
 					md.ObjectMeta.Annotations = map[string]string{
 						clusterapi.NodeGroupMinSizeAnnotation: "1",
@@ -1334,7 +1334,7 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-0"
 					md.ObjectMeta.Labels = map[string]string{
-						clusterv1.ClusterNameLabel: clusterName,
+						clusterv1beta2.ClusterNameLabel: clusterName,
 					}
 					md.Status.Replicas = ptr.Int32(1)
 					md.Status.ReadyReplicas = ptr.Int32(1)
@@ -1343,7 +1343,7 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-1"
 					md.ObjectMeta.Labels = map[string]string{
-						clusterv1.ClusterNameLabel: clusterName,
+						clusterv1beta2.ClusterNameLabel: clusterName,
 					}
 					md.Status.Replicas = ptr.Int32(2)
 					md.Status.ReadyReplicas = ptr.Int32(2)

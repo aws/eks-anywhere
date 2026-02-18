@@ -9,7 +9,7 @@ import (
 	"github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
@@ -21,7 +21,7 @@ import (
 func newFakeClientBuilder() *fake.ClientBuilder {
 	scheme := runtime.NewScheme()
 	_ = anywherev1.AddToScheme(scheme)
-	_ = clusterv1.AddToScheme(scheme)
+	_ = clusterv1beta2.AddToScheme(scheme)
 	return fake.NewClientBuilder().WithScheme(scheme)
 }
 
@@ -45,8 +45,8 @@ func TestScanner_CheckCertificateExpiry_Success(t *testing.T) {
 	tests := []struct {
 		name                 string
 		cluster              *anywherev1.Cluster
-		controlPlaneMachines []clusterv1.Machine
-		etcdMachines         []clusterv1.Machine
+		controlPlaneMachines []clusterv1beta2.Machine
+		etcdMachines         []clusterv1beta2.Machine
 	}{
 		{
 			name: "successful certificate check with control plane only",
@@ -56,7 +56,7 @@ func TestScanner_CheckCertificateExpiry_Success(t *testing.T) {
 					Namespace: constants.EksaSystemNamespace,
 				},
 			},
-			controlPlaneMachines: []clusterv1.Machine{
+			controlPlaneMachines: []clusterv1beta2.Machine{
 				{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-cluster-control-plane-abc123",
@@ -66,10 +66,10 @@ func TestScanner_CheckCertificateExpiry_Success(t *testing.T) {
 							"cluster.x-k8s.io/control-plane": "",
 						},
 					},
-					Status: clusterv1.MachineStatus{
-						Addresses: []clusterv1.MachineAddress{
+					Status: clusterv1beta2.MachineStatus{
+						Addresses: []clusterv1beta2.MachineAddress{
 							{
-								Type:    clusterv1.MachineExternalIP,
+								Type:    clusterv1beta2.MachineExternalIP,
 								Address: endpoint,
 							},
 						},
@@ -93,7 +93,7 @@ func TestScanner_CheckCertificateExpiry_Success(t *testing.T) {
 					},
 				},
 			},
-			controlPlaneMachines: []clusterv1.Machine{
+			controlPlaneMachines: []clusterv1beta2.Machine{
 				{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-cluster-control-plane-abc123",
@@ -103,17 +103,17 @@ func TestScanner_CheckCertificateExpiry_Success(t *testing.T) {
 							"cluster.x-k8s.io/control-plane": "",
 						},
 					},
-					Status: clusterv1.MachineStatus{
-						Addresses: []clusterv1.MachineAddress{
+					Status: clusterv1beta2.MachineStatus{
+						Addresses: []clusterv1beta2.MachineAddress{
 							{
-								Type:    clusterv1.MachineExternalIP,
+								Type:    clusterv1beta2.MachineExternalIP,
 								Address: endpoint,
 							},
 						},
 					},
 				},
 			},
-			etcdMachines: []clusterv1.Machine{
+			etcdMachines: []clusterv1beta2.Machine{
 				{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-cluster-etcd-xyz789",
@@ -123,10 +123,10 @@ func TestScanner_CheckCertificateExpiry_Success(t *testing.T) {
 							"cluster.x-k8s.io/etcd-cluster": "test-cluster-etcd",
 						},
 					},
-					Status: clusterv1.MachineStatus{
-						Addresses: []clusterv1.MachineAddress{
+					Status: clusterv1beta2.MachineStatus{
+						Addresses: []clusterv1beta2.MachineAddress{
 							{
-								Type:    clusterv1.MachineExternalIP,
+								Type:    clusterv1beta2.MachineExternalIP,
 								Address: endpoint,
 							},
 						},
@@ -150,7 +150,7 @@ func TestScanner_CheckCertificateExpiry_Success(t *testing.T) {
 					},
 				},
 			},
-			controlPlaneMachines: []clusterv1.Machine{},
+			controlPlaneMachines: []clusterv1beta2.Machine{},
 		},
 		{
 			name: "machine without external IP address",
@@ -165,7 +165,7 @@ func TestScanner_CheckCertificateExpiry_Success(t *testing.T) {
 					},
 				},
 			},
-			controlPlaneMachines: []clusterv1.Machine{
+			controlPlaneMachines: []clusterv1beta2.Machine{
 				{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-cluster-control-plane-abc123",
@@ -175,10 +175,10 @@ func TestScanner_CheckCertificateExpiry_Success(t *testing.T) {
 							"cluster.x-k8s.io/control-plane": "",
 						},
 					},
-					Status: clusterv1.MachineStatus{
-						Addresses: []clusterv1.MachineAddress{
+					Status: clusterv1beta2.MachineStatus{
+						Addresses: []clusterv1beta2.MachineAddress{
 							{
-								Type: clusterv1.MachineInternalIP,
+								Type: clusterv1beta2.MachineInternalIP,
 							},
 						},
 					},
@@ -199,7 +199,7 @@ func TestScanner_CheckCertificateExpiry_Success(t *testing.T) {
 					},
 				},
 			},
-			controlPlaneMachines: []clusterv1.Machine{},
+			controlPlaneMachines: []clusterv1beta2.Machine{},
 		},
 	}
 
@@ -230,7 +230,7 @@ func TestScanner_UpdateClusterCertificateStatus_Success(t *testing.T) {
 	tests := []struct {
 		name     string
 		cluster  *anywherev1.Cluster
-		machines []clusterv1.Machine
+		machines []clusterv1beta2.Machine
 	}{
 		{
 			name: "successfully updates cluster certificate status",
@@ -245,7 +245,7 @@ func TestScanner_UpdateClusterCertificateStatus_Success(t *testing.T) {
 					},
 				},
 			},
-			machines: []clusterv1.Machine{
+			machines: []clusterv1beta2.Machine{
 				{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-cluster-control-plane-abc123",
@@ -255,10 +255,10 @@ func TestScanner_UpdateClusterCertificateStatus_Success(t *testing.T) {
 							"cluster.x-k8s.io/control-plane": "",
 						},
 					},
-					Status: clusterv1.MachineStatus{
-						Addresses: []clusterv1.MachineAddress{
+					Status: clusterv1beta2.MachineStatus{
+						Addresses: []clusterv1beta2.MachineAddress{
 							{
-								Type:    clusterv1.MachineExternalIP,
+								Type:    clusterv1beta2.MachineExternalIP,
 								Address: endpoint,
 							},
 						},
@@ -282,7 +282,7 @@ func TestScanner_UpdateClusterCertificateStatus_Success(t *testing.T) {
 					},
 				},
 			},
-			machines: []clusterv1.Machine{},
+			machines: []clusterv1beta2.Machine{},
 		},
 		{
 			name: "handles cluster with empty endpoint host",
@@ -300,7 +300,7 @@ func TestScanner_UpdateClusterCertificateStatus_Success(t *testing.T) {
 					},
 				},
 			},
-			machines: []clusterv1.Machine{},
+			machines: []clusterv1beta2.Machine{},
 		},
 		{
 			name: "UpdateClusterCertificateStatus no error", // UpdateClusterCertificateStatus will never return an error even if there is any error.
@@ -318,7 +318,7 @@ func TestScanner_UpdateClusterCertificateStatus_Success(t *testing.T) {
 					},
 				},
 			},
-			machines: []clusterv1.Machine{},
+			machines: []clusterv1beta2.Machine{},
 		},
 	}
 

@@ -33,7 +33,7 @@ import (
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
 	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/controllers/external"
 	"sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/cluster-api/util/patch"
@@ -288,7 +288,7 @@ func (r *ControlPlaneUpgradeReconciler) updateResources(ctx context.Context, log
 	}
 
 	// Update the machine k8s version and update the KubeadmClusterConfiguration annotation
-	machine.Spec.Version = &nodeUpgrade.Spec.KubernetesVersion
+	machine.Spec.Version = nodeUpgrade.Spec.KubernetesVersion
 	annotations.AddAnnotations(machine, map[string]string{kubeadmClusterConfigurationAnnotation: string(kcc)})
 
 	if err := machinePatchHelper.Patch(ctx, machine); err != nil {
@@ -306,10 +306,10 @@ func (r *ControlPlaneUpgradeReconciler) updateResources(ctx context.Context, log
 	return nil
 }
 
-func (r *ControlPlaneUpgradeReconciler) updateKubeadmConfig(ctx context.Context, log logr.Logger, kcpSpec *controlplanev1beta2.KubeadmControlPlaneSpec, machine *clusterv1.Machine) error {
+func (r *ControlPlaneUpgradeReconciler) updateKubeadmConfig(ctx context.Context, log logr.Logger, kcpSpec *controlplanev1beta2.KubeadmControlPlaneSpec, machine *clusterv1beta2.Machine) error {
 	bootstrapRef := machine.Spec.Bootstrap.ConfigRef
-	if bootstrapRef == nil {
-		return fmt.Errorf("bootstrap config for machine %s is nil", machine.Name)
+	if bootstrapRef.Name == "" {
+		return fmt.Errorf("bootstrap config for machine %s is not set", machine.Name)
 	}
 
 	kc := &bootstrapv1beta2.KubeadmConfig{}
@@ -360,8 +360,8 @@ func mergeFeatureGates(kc *bootstrapv1beta2.KubeadmConfig, existingFeatureGates 
 	}
 }
 
-func (r *ControlPlaneUpgradeReconciler) updateInfraMachine(ctx context.Context, log logr.Logger, kcpSpec *controlplanev1beta2.KubeadmControlPlaneSpec, machine *clusterv1.Machine) error {
-	infraMachineObj, err := external.Get(ctx, r.client, &machine.Spec.InfrastructureRef)
+func (r *ControlPlaneUpgradeReconciler) updateInfraMachine(ctx context.Context, log logr.Logger, kcpSpec *controlplanev1beta2.KubeadmControlPlaneSpec, machine *clusterv1beta2.Machine) error {
+	infraMachineObj, err := external.GetObjectFromContractVersionedRef(ctx, r.client, machine.Spec.InfrastructureRef, machine.Namespace)
 	if err != nil {
 		return fmt.Errorf("retrieving infra machine %s for machine %s: %v", machine.Spec.InfrastructureRef.Name, machine.Name, err)
 	}
@@ -396,8 +396,8 @@ func decodeAndUnmarshalKcpSpecData(kcpSpecData string) (*controlplanev1beta2.Kub
 	return kcpSpec, nil
 }
 
-func getCapiMachine(ctx context.Context, client client.Client, nodeUpgrade *anywherev1.NodeUpgrade) (*clusterv1.Machine, error) {
-	machine := &clusterv1.Machine{}
+func getCapiMachine(ctx context.Context, client client.Client, nodeUpgrade *anywherev1.NodeUpgrade) (*clusterv1beta2.Machine, error) {
+	machine := &clusterv1beta2.Machine{}
 	if err := client.Get(ctx, GetNamespacedNameType(nodeUpgrade.Spec.Machine.Name, nodeUpgrade.Spec.Machine.Namespace), machine); err != nil {
 		return nil, fmt.Errorf("getting machine %s: %v", nodeUpgrade.Spec.Machine.Name, err)
 	}

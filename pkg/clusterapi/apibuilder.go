@@ -56,7 +56,7 @@ func eksaClusterLabels(clusterSpec *cluster.Spec) map[string]string {
 
 func capiClusterLabel(clusterSpec *cluster.Spec) map[string]string {
 	return map[string]string{
-		clusterv1.ClusterNameLabel: ClusterName(clusterSpec.Cluster),
+		clusterv1beta2.ClusterNameLabel: ClusterName(clusterSpec.Cluster),
 	}
 }
 

@@ -30,7 +30,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	v1beta1patch "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/patch"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -143,7 +142,7 @@ func (r *MachineDeploymentReconciler) reconcile(ctx context.Context, log logr.Lo
 		machinesUpgraded := true
 		for i := range machineList {
 			m := machineList[i]
-			if m.Spec.Version == nil || *m.Spec.Version != mdUpgrade.Spec.KubernetesVersion {
+			if m.Spec.Version != mdUpgrade.Spec.KubernetesVersion {
 				machinesUpgraded = false
 				break
 			}
@@ -190,12 +189,12 @@ func (r *MachineDeploymentReconciler) inPlaceUpgradeNeeded(md *clusterv1beta2.Ma
 	return strings.ToLower(md.Annotations[mdInPlaceUpgradeNeededAnnotation]) == "true"
 }
 
-func (r *MachineDeploymentReconciler) machinesToUpgrade(ctx context.Context, md *clusterv1beta2.MachineDeployment) ([]*clusterv1.Machine, []corev1.ObjectReference, error) {
+func (r *MachineDeploymentReconciler) machinesToUpgrade(ctx context.Context, md *clusterv1beta2.MachineDeployment) ([]*clusterv1beta2.Machine, []corev1.ObjectReference, error) {
 	selector, err := metav1.LabelSelectorAsSelector(&metav1.LabelSelector{MatchLabels: map[string]string{workerMachineLabel: md.ObjectMeta.Name}})
 	if err != nil {
 		return nil, nil, err
 	}
-	machineList := &clusterv1.MachineList{}
+	machineList := &clusterv1beta2.MachineList{}
 	if err := r.client.List(ctx, machineList, &client.ListOptions{LabelSelector: selector, Namespace: md.ObjectMeta.Namespace}); err != nil {
 		return nil, nil, err
 	}
@@ -214,8 +213,8 @@ func (r *MachineDeploymentReconciler) machinesToUpgrade(ctx context.Context, md 
 	return machines, machineObjects, nil
 }
 
-func sortMachinesByCreationTimestamp(list *clusterv1.MachineList) []*clusterv1.Machine {
-	machines := make([]*clusterv1.Machine, len(list.Items))
+func sortMachinesByCreationTimestamp(list *clusterv1beta2.MachineList) []*clusterv1beta2.Machine {
+	machines := make([]*clusterv1beta2.Machine, len(list.Items))
 	for i := range list.Items {
 		machines[i] = &list.Items[i]
 	}
@@ -237,7 +236,7 @@ func machineDeploymentUpgrade(md *clusterv1beta2.MachineDeployment, machines []c
 			Name:      mdUpgradeName(md.ObjectMeta.Name),
 			Namespace: constants.EksaSystemNamespace,
 			OwnerReferences: []metav1.OwnerReference{{
-				APIVersion: clusterv1.GroupVersion.String(),
+				APIVersion: clusterv1beta2.GroupVersion.String(),
 				Kind:       machineDeploymentKind,
 				Name:       md.ObjectMeta.Name,
 				UID:        md.ObjectMeta.UID,

@@ -9,7 +9,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
@@ -105,7 +104,7 @@ func TestGetMachineDeploymentsSuccess(t *testing.T) {
 	md1.Name = "md-1"
 
 	md1.Labels = map[string]string{
-		clusterv1.ClusterNameLabel: eksaCluster.Name,
+		clusterv1beta2.ClusterNameLabel: eksaCluster.Name,
 	}
 
 	md2 := md1.DeepCopy()
@@ -123,13 +122,13 @@ func TestGetMachineDeploymentsMachineDeploymentsInDifferentClusters(t *testing.T
 	machineDeployment1 := machineDeployment()
 	machineDeployment1.Name = "md-1"
 	machineDeployment1.Labels = map[string]string{
-		clusterv1.ClusterNameLabel: eksaCluster.Name,
+		clusterv1beta2.ClusterNameLabel: eksaCluster.Name,
 	}
 
 	machineDeployment2 := machineDeployment()
 	machineDeployment2.Name = "md-2"
 	machineDeployment2.Labels = map[string]string{
-		clusterv1.ClusterNameLabel: "other-cluster",
+		clusterv1beta2.ClusterNameLabel: "other-cluster",
 	}
 
 	client := fake.NewClientBuilder().WithObjects(eksaCluster, machineDeployment1, machineDeployment2).Build()

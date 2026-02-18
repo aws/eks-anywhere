@@ -6,7 +6,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	addons "sigs.k8s.io/cluster-api/api/addons/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/templater"
@@ -47,14 +47,14 @@ func (c ClusterResourceSet) buildSet() *addons.ClusterResourceSet {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: fmt.Sprintf("%s-crs", c.clusterName),
 			Labels: map[string]string{
-				clusterv1.ClusterNameLabel: c.clusterName,
+				clusterv1beta2.ClusterNameLabel: c.clusterName,
 			},
 			Namespace: c.namespace,
 		},
 		Spec: addons.ClusterResourceSetSpec{
 			ClusterSelector: metav1.LabelSelector{
 				MatchLabels: map[string]string{
-					clusterv1.ClusterNameLabel: c.clusterName,
+					clusterv1beta2.ClusterNameLabel: c.clusterName,
 				},
 			},
 			Resources: c.resourceRefs(),

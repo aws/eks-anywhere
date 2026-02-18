@@ -10,7 +10,6 @@ import (
 	addonsv1 "sigs.k8s.io/cluster-api/api/addons/v1beta1"
 	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
 	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1"
 	dockerv1beta2 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta2"
@@ -26,7 +25,6 @@ type schemeAdder func(s *runtime.Scheme) error
 var schemeAdders = []schemeAdder{
 	// clientgoscheme adds all the native K8s kinds
 	clientgoscheme.AddToScheme,
-	clusterv1.AddToScheme,
 	clusterv1beta2.AddToScheme,
 	controlplanev1beta2.AddToScheme,
 	bootstrapv1beta2.AddToScheme,

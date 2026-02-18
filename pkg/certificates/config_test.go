@@ -9,7 +9,7 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/certificates"
@@ -29,14 +29,14 @@ const (
 )
 
 // helper to generate a Machine with the given labels and external IP.
-func buildMachine(labels map[string]string, ip string) clusterv1.Machine {
-	return clusterv1.Machine{
+func buildMachine(labels map[string]string, ip string) clusterv1beta2.Machine {
+	return clusterv1beta2.Machine{
 		ObjectMeta: metav1.ObjectMeta{
 			Labels: labels,
 		},
-		Status: clusterv1.MachineStatus{
-			Addresses: []clusterv1.MachineAddress{
-				{Type: clusterv1.MachineExternalIP, Address: ip},
+		Status: clusterv1beta2.MachineStatus{
+			Addresses: []clusterv1beta2.MachineAddress{
+				{Type: clusterv1beta2.MachineExternalIP, Address: ip},
 			},
 		},
 	}
@@ -485,8 +485,8 @@ func TestPopulateConfig_ControlPlaneSuccess(t *testing.T) {
 
 	k := kubemocks.NewMockClient(ctrl)
 
-	machines := &clusterv1.MachineList{
-		Items: []clusterv1.Machine{
+	machines := &clusterv1beta2.MachineList{
+		Items: []clusterv1beta2.Machine{
 			buildMachine(map[string]string{
 				clusterNameLabel:  clusterLabel,
 				controlPlaneLabel: "",
@@ -497,14 +497,14 @@ func TestPopulateConfig_ControlPlaneSuccess(t *testing.T) {
 	k.EXPECT().
 		List(gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(func(_ context.Context, l any, _ ...any) error {
-			*l.(*clusterv1.MachineList) = *machines
+			*l.(*clusterv1beta2.MachineList) = *machines
 			return nil
 		})
 
 	k.EXPECT().
 		List(gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(func(_ context.Context, l any, _ ...any) error {
-			*l.(*clusterv1.MachineList) = *machines
+			*l.(*clusterv1beta2.MachineList) = *machines
 			return nil
 		})
 
@@ -527,12 +527,12 @@ func TestPopulateConfig_EtcdSuccess(t *testing.T) {
 
 	k := kubemocks.NewMockClient(ctrl)
 
-	cpMachines := &clusterv1.MachineList{
-		Items: []clusterv1.Machine{},
+	cpMachines := &clusterv1beta2.MachineList{
+		Items: []clusterv1beta2.Machine{},
 	}
 
-	etcdMachines := &clusterv1.MachineList{
-		Items: []clusterv1.Machine{
+	etcdMachines := &clusterv1beta2.MachineList{
+		Items: []clusterv1beta2.Machine{
 			buildMachine(map[string]string{
 				clusterNameLabel:  clusterLabel,
 				externalEtcdLabel: clusterLabel + "-etcd",
@@ -543,14 +543,14 @@ func TestPopulateConfig_EtcdSuccess(t *testing.T) {
 	k.EXPECT().
 		List(gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(func(_ context.Context, l any, _ ...any) error {
-			*l.(*clusterv1.MachineList) = *cpMachines
+			*l.(*clusterv1beta2.MachineList) = *cpMachines
 			return nil
 		})
 
 	k.EXPECT().
 		List(gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(func(_ context.Context, l any, _ ...any) error {
-			*l.(*clusterv1.MachineList) = *etcdMachines
+			*l.(*clusterv1beta2.MachineList) = *etcdMachines
 			return nil
 		})
 
@@ -573,8 +573,8 @@ func TestPopulateConfig_EtcdListError(t *testing.T) {
 
 	k := kubemocks.NewMockClient(ctrl)
 
-	cpMachines := &clusterv1.MachineList{
-		Items: []clusterv1.Machine{
+	cpMachines := &clusterv1beta2.MachineList{
+		Items: []clusterv1beta2.Machine{
 			buildMachine(map[string]string{
 				clusterNameLabel:  clusterLabel,
 				controlPlaneLabel: "",
@@ -585,7 +585,7 @@ func TestPopulateConfig_EtcdListError(t *testing.T) {
 	k.EXPECT().
 		List(gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(func(_ context.Context, l interface{}, _ ...interface{}) error {
-			*l.(*clusterv1.MachineList) = *cpMachines
+			*l.(*clusterv1beta2.MachineList) = *cpMachines
 			return nil
 		})
 
@@ -612,8 +612,8 @@ func TestPopulateConfig_Success(t *testing.T) {
 
 	k := kubemocks.NewMockClient(ctrl)
 
-	all := &clusterv1.MachineList{
-		Items: []clusterv1.Machine{
+	all := &clusterv1beta2.MachineList{
+		Items: []clusterv1beta2.Machine{
 			buildMachine(map[string]string{
 				clusterNameLabel:  clusterLabel,
 				controlPlaneLabel: "",
@@ -628,7 +628,7 @@ func TestPopulateConfig_Success(t *testing.T) {
 	k.EXPECT().
 		List(gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(func(_ context.Context, l interface{}, _ ...interface{}) error {
-			*l.(*clusterv1.MachineList) = *all
+			*l.(*clusterv1beta2.MachineList) = *all
 			return nil
 		}).Times(2)
 

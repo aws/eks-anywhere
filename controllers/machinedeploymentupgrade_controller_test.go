@@ -12,7 +12,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -45,17 +44,17 @@ func TestMDUpgradeReconcile(t *testing.T) {
 	g.Expect(mdu.Status.Ready).To(BeTrue())
 
 	// Verify that Machine objects were updated with the new Kubernetes version
-	machine1 := &clusterv1.Machine{}
+	machine1 := &clusterv1beta2.Machine{}
 	err = client.Get(ctx, types.NamespacedName{Name: machines[0].Name, Namespace: machines[0].Namespace}, machine1)
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(machine1.Spec.Version).ToNot(BeNil())
-	g.Expect(*machine1.Spec.Version).To(Equal(k8s128))
+	g.Expect(machine1.Spec.Version).To(Equal(k8s128))
 
-	machine2 := &clusterv1.Machine{}
+	machine2 := &clusterv1beta2.Machine{}
 	err = client.Get(ctx, types.NamespacedName{Name: machines[1].Name, Namespace: machines[1].Namespace}, machine2)
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(machine2.Spec.Version).ToNot(BeNil())
-	g.Expect(*machine2.Spec.Version).To(Equal(k8s128))
+	g.Expect(machine2.Spec.Version).To(Equal(k8s128))
 }
 
 func TestMDUpgradeReconcileNodesNotReadyYet(t *testing.T) {
@@ -83,18 +82,18 @@ func TestMDUpgradeReconcileNodesNotReadyYet(t *testing.T) {
 	g.Expect(mdUpgrade.Status.Ready).To(BeFalse())
 
 	// Verify that only the completed machine was updated
-	machine1 := &clusterv1.Machine{}
+	machine1 := &clusterv1beta2.Machine{}
 	err = client.Get(ctx, types.NamespacedName{Name: machines[0].Name, Namespace: machines[0].Namespace}, machine1)
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(machine1.Spec.Version).ToNot(BeNil())
-	g.Expect(*machine1.Spec.Version).To(Equal(k8s128), "First machine should be updated since its NodeUpgrade is complete")
+	g.Expect(machine1.Spec.Version).To(Equal(k8s128), "First machine should be updated since its NodeUpgrade is complete")
 
 	// Second machine should not be updated yet since its NodeUpgrade is not complete
-	machine2 := &clusterv1.Machine{}
+	machine2 := &clusterv1beta2.Machine{}
 	err = client.Get(ctx, types.NamespacedName{Name: machines[1].Name, Namespace: machines[1].Namespace}, machine2)
 	g.Expect(err).ToNot(HaveOccurred())
 	g.Expect(machine2.Spec.Version).ToNot(BeNil())
-	g.Expect(*machine2.Spec.Version).To(Equal(k8s127), "Second machine should still have old version since its NodeUpgrade is not complete")
+	g.Expect(machine2.Spec.Version).To(Equal(k8s127), "Second machine should still have old version since its NodeUpgrade is not complete")
 }
 
 func TestMDUpgradeReconcileDelete(t *testing.T) {
@@ -198,11 +197,11 @@ func TestMDUpgradeReconcileUpdateMachineSet(t *testing.T) {
 	_, err := r.Reconcile(ctx, req)
 	g.Expect(err).ToNot(HaveOccurred())
 
-	ms = &clusterv1.MachineSet{}
+	ms = &clusterv1beta2.MachineSet{}
 	err = client.Get(ctx, types.NamespacedName{Name: "my-md-ms", Namespace: constants.EksaSystemNamespace}, ms)
 	g.Expect(err).ToNot(HaveOccurred())
-	if !strings.Contains(*ms.Spec.Template.Spec.Version, k8s128) {
-		t.Fatalf("unexpected k8s version in capi machine: %s", *machines[0].Spec.Version)
+	if !strings.Contains(ms.Spec.Template.Spec.Version, k8s128) {
+		t.Fatalf("unexpected k8s version in capi machine: %s", machines[0].Spec.Version)
 	}
 }
 
@@ -211,7 +210,7 @@ func TestMDUpgradeReconcileUpdateMachineSetError(t *testing.T) {
 	ctx := context.Background()
 
 	cluster, machines, nodes, mdUpgrade, nodeUpgrades, md, ms := getObjectsForMDUpgradeTest()
-	ms.Annotations[clusterv1.RevisionAnnotation] = "0"
+	ms.Annotations[clusterv1beta2.RevisionAnnotation] = "0"
 	client := fake.NewClientBuilder().WithRuntimeObjects(cluster, machines[0], machines[1], nodes[0], nodes[1], nodeUpgrades[0], nodeUpgrades[1], mdUpgrade, md, ms).
 		WithStatusSubresource(mdUpgrade).
 		Build()
@@ -219,7 +218,7 @@ func TestMDUpgradeReconcileUpdateMachineSetError(t *testing.T) {
 	r := controllers.NewMachineDeploymentUpgradeReconciler(client)
 	req := mdUpgradeRequest(mdUpgrade)
 	_, err := r.Reconcile(ctx, req)
-	g.Expect(err).To(MatchError(fmt.Sprintf("couldn't find machine set with revision version %v", md.Annotations[clusterv1.RevisionAnnotation])))
+	g.Expect(err).To(MatchError(fmt.Sprintf("couldn't find machine set with revision version %v", md.Annotations[clusterv1beta2.RevisionAnnotation])))
 }
 
 func TestMDObjectDoesNotExistError(t *testing.T) {
@@ -237,7 +236,7 @@ func TestMDObjectDoesNotExistError(t *testing.T) {
 	g.Expect(err).To(MatchError("getting MachineDeployment my-cluster-md: machinedeployments.cluster.x-k8s.io \"my-cluster-md\" not found"))
 }
 
-func getObjectsForMDUpgradeTest() (*clusterv1beta2.Cluster, []*clusterv1.Machine, []*corev1.Node, *anywherev1.MachineDeploymentUpgrade, []*anywherev1.NodeUpgrade, *clusterv1beta2.MachineDeployment, *clusterv1.MachineSet) {
+func getObjectsForMDUpgradeTest() (*clusterv1beta2.Cluster, []*clusterv1beta2.Machine, []*corev1.Node, *anywherev1.MachineDeploymentUpgrade, []*anywherev1.NodeUpgrade, *clusterv1beta2.MachineDeployment, *clusterv1beta2.MachineSet) {
 	cluster := generateCluster()
 	node1 := generateNode()
 	node2 := node1.DeepCopy()
@@ -246,11 +245,11 @@ func getObjectsForMDUpgradeTest() (*clusterv1beta2.Cluster, []*clusterv1.Machine
 	kubeadmConfig2 := generateKubeadmConfig()
 	machine1 := generateMachine(cluster, node1, kubeadmConfig1)
 	// Set initial version to k8s127 (pre-upgrade version)
-	machine1.Spec.Version = ptr.String(k8s127)
+	machine1.Spec.Version = k8s127
 	machine2 := generateMachine(cluster, node2, kubeadmConfig2)
 	machine2.ObjectMeta.Name = "machine02"
 	// Set initial version to k8s127 (pre-upgrade version)
-	machine2.Spec.Version = ptr.String(k8s127)
+	machine2.Spec.Version = k8s127
 	nodeUpgrade1 := generateNodeUpgrade(machine1)
 	nodeUpgrade1.Status = anywherev1.NodeUpgradeStatus{
 		Completed: true,
@@ -264,7 +263,7 @@ func getObjectsForMDUpgradeTest() (*clusterv1beta2.Cluster, []*clusterv1.Machine
 	mdUpgrade := generateMDUpgrade(cluster, machine1, machine2)
 	md := generateMachineDeployment(cluster)
 	ms := generateMachineset(cluster)
-	return cluster, []*clusterv1.Machine{machine1, machine2}, []*corev1.Node{node1, node2}, mdUpgrade, []*anywherev1.NodeUpgrade{nodeUpgrade1, nodeUpgrade2}, md, ms
+	return cluster, []*clusterv1beta2.Machine{machine1, machine2}, []*corev1.Node{node1, node2}, mdUpgrade, []*anywherev1.NodeUpgrade{nodeUpgrade1, nodeUpgrade2}, md, ms
 }
 
 func mdUpgradeRequest(mdUpgrade *anywherev1.MachineDeploymentUpgrade) reconcile.Request {
@@ -276,7 +275,7 @@ func mdUpgradeRequest(mdUpgrade *anywherev1.MachineDeploymentUpgrade) reconcile.
 	}
 }
 
-func generateMDUpgrade(cluster *clusterv1beta2.Cluster, machines ...*clusterv1.Machine) *anywherev1.MachineDeploymentUpgrade {
+func generateMDUpgrade(cluster *clusterv1beta2.Cluster, machines ...*clusterv1beta2.Machine) *anywherev1.MachineDeploymentUpgrade {
 	machineSpec := getMachineSpec(cluster)
 	machineSpecJSON, _ := json.Marshal(machineSpec)
 	machineSpecB64Encoded := base64.StdEncoding.EncodeToString(machineSpecJSON)
@@ -308,23 +307,23 @@ func generateMDUpgrade(cluster *clusterv1beta2.Cluster, machines ...*clusterv1.M
 	}
 }
 
-func generateMachineset(cluster *clusterv1beta2.Cluster) *clusterv1.MachineSet {
+func generateMachineset(cluster *clusterv1beta2.Cluster) *clusterv1beta2.MachineSet {
 	ms := getMachineSpec(cluster)
 	ms.Version = k8s127
-	return &clusterv1.MachineSet{
+	return &clusterv1beta2.MachineSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        "my-md-ms",
 			Namespace:   constants.EksaSystemNamespace,
 			Labels:      map[string]string{"cluster.x-k8s.io/deployment-name": fmt.Sprintf("%s-md", cluster.Name)},
-			Annotations: map[string]string{clusterv1.RevisionAnnotation: "1"},
+			Annotations: map[string]string{clusterv1beta2.RevisionAnnotation: "1"},
 		},
-		Spec: clusterv1.MachineSetSpec{
+		Spec: clusterv1beta2.MachineSetSpec{
 			ClusterName: cluster.Name,
 			Replicas:    new(int32),
-			Template: clusterv1.MachineTemplateSpec{
-				Spec: clusterv1.MachineSpec{
+			Template: clusterv1beta2.MachineTemplateSpec{
+				Spec: clusterv1beta2.MachineSpec{
 					ClusterName: ms.ClusterName,
-					Version:     &ms.Version,
+					Version:     ms.Version,
 				},
 			},
 		},
@@ -338,7 +337,7 @@ func generateMachineDeployment(cluster *clusterv1beta2.Cluster) *clusterv1beta2.
 			Name:      fmt.Sprintf("%s-md", cluster.Name),
 			Namespace: constants.EksaSystemNamespace,
 			Annotations: map[string]string{
-				clusterv1.RevisionAnnotation:                                  "1",
+				clusterv1beta2.RevisionAnnotation:                             "1",
 				"machinedeployment.clusters.x-k8s.io/in-place-upgrade-needed": "true",
 			},
 		},

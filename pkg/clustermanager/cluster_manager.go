@@ -15,7 +15,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/integer"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/yaml"
 
@@ -289,7 +288,7 @@ func (c *ClusterManager) backupCAPI(ctx context.Context, cluster *types.Cluster,
 
 func (c *ClusterManager) MoveCAPI(ctx context.Context, from, to *types.Cluster, clusterName string, clusterSpec *cluster.Spec, checkers ...types.NodeReadyChecker) error {
 	logger.V(3).Info("Waiting for management machines to be ready before move")
-	labels := []string{clusterv1.MachineControlPlaneNameLabel, clusterv1beta2.MachineDeploymentNameLabel}
+	labels := []string{clusterv1beta2.MachineControlPlaneNameLabel, clusterv1beta2.MachineDeploymentNameLabel}
 	if err := c.waitForNodesReady(ctx, from, clusterName, labels, checkers...); err != nil {
 		return err
 	}
@@ -581,7 +580,7 @@ func (c *ClusterManager) getNodesCount(ctx context.Context, managementCluster *t
 		labelsMap[label] = nil
 	}
 
-	if _, ok := labelsMap[clusterv1.MachineControlPlaneNameLabel]; ok {
+	if _, ok := labelsMap[clusterv1beta2.MachineControlPlaneNameLabel]; ok {
 		kcp, err := c.clusterClient.GetKubeadmControlPlane(ctx, managementCluster, clusterName, executables.WithCluster(managementCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 		if err != nil {
 			return 0, fmt.Errorf("getting KubeadmControlPlane for cluster %s: %v", clusterName, err)

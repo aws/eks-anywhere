@@ -9,7 +9,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -60,7 +59,7 @@ func TestReconcileWorkersSuccess(t *testing.T) {
 	existingMachineDeployment1 := machineDeployment("my-cluster-md-1", ns)
 	existingMachineDeployment2 := machineDeployment("my-cluster-md-2", ns)
 	existingMachineDeployment3 := machineDeployment("my-other-cluster-md-1", ns)
-	existingMachineDeployment3.Labels[clusterv1.ClusterNameLabel] = "my-other-cluster"
+	existingMachineDeployment3.Labels[clusterv1beta2.ClusterNameLabel] = "my-other-cluster"
 	envtest.CreateObjs(ctx, t, c,
 		existingMachineDeployment1,
 		existingMachineDeployment2,
@@ -167,7 +166,7 @@ func machineDeployment(name, namespace string) *clusterv1beta2.MachineDeployment
 			Namespace: namespace,
 			Name:      name,
 			Labels: map[string]string{
-				clusterv1.ClusterNameLabel: "my-cluster",
+				clusterv1beta2.ClusterNameLabel: "my-cluster",
 			},
 		},
 		Spec: clusterv1beta2.MachineDeploymentSpec{

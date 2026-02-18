@@ -29,7 +29,6 @@ import (
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
 	addons "sigs.k8s.io/cluster-api/api/addons/v1beta1"
 	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
@@ -60,22 +59,22 @@ const (
 )
 
 var (
-	capiClustersResourceType             = fmt.Sprintf("clusters.%s", clusterv1.GroupVersion.Group)
-	capiProvidersResourceType            = fmt.Sprintf("providers.clusterctl.%s", clusterv1.GroupVersion.Group)
-	capiMachinesType                     = fmt.Sprintf("machines.%s", clusterv1.GroupVersion.Group)
-	capiMachineDeploymentsType           = fmt.Sprintf("machinedeployments.%s", clusterv1.GroupVersion.Group)
-	capiMachineSetsType                  = fmt.Sprintf("machinesets.%s", clusterv1.GroupVersion.Group)
+	capiClustersResourceType             = fmt.Sprintf("clusters.%s", clusterv1beta2.GroupVersion.Group)
+	capiProvidersResourceType            = fmt.Sprintf("providers.clusterctl.%s", clusterv1beta2.GroupVersion.Group)
+	capiMachinesType                     = fmt.Sprintf("machines.%s", clusterv1beta2.GroupVersion.Group)
+	capiMachineDeploymentsType           = fmt.Sprintf("machinedeployments.%s", clusterv1beta2.GroupVersion.Group)
+	capiMachineSetsType                  = fmt.Sprintf("machinesets.%s", clusterv1beta2.GroupVersion.Group)
 	eksaClusterResourceType              = fmt.Sprintf("clusters.%s", v1alpha1.GroupVersion.Group)
 	eksaVSphereDatacenterResourceType    = fmt.Sprintf("vspheredatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaVSphereMachineResourceType       = fmt.Sprintf("vspheremachineconfigs.%s", v1alpha1.GroupVersion.Group)
-	vsphereMachineTemplatesType          = fmt.Sprintf("vspheremachinetemplates.infrastructure.%s", clusterv1.GroupVersion.Group)
+	vsphereMachineTemplatesType          = fmt.Sprintf("vspheremachinetemplates.infrastructure.%s", clusterv1beta2.GroupVersion.Group)
 	eksaTinkerbellDatacenterResourceType = fmt.Sprintf("tinkerbelldatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaTinkerbellMachineResourceType    = fmt.Sprintf("tinkerbellmachineconfigs.%s", v1alpha1.GroupVersion.Group)
 	TinkerbellHardwareResourceType       = fmt.Sprintf("hardware.%s", tinkv1alpha1.GroupVersion.Group)
 	rufioMachineResourceType             = fmt.Sprintf("machines.%s", rufiov1alpha1.GroupVersion.Group)
 	eksaCloudStackDatacenterResourceType = fmt.Sprintf("cloudstackdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaCloudStackMachineResourceType    = fmt.Sprintf("cloudstackmachineconfigs.%s", v1alpha1.GroupVersion.Group)
-	cloudstackMachineTemplatesType       = fmt.Sprintf("cloudstackmachinetemplates.infrastructure.%s", clusterv1.GroupVersion.Group)
+	cloudstackMachineTemplatesType       = fmt.Sprintf("cloudstackmachinetemplates.infrastructure.%s", clusterv1beta2.GroupVersion.Group)
 	eksaNutanixDatacenterResourceType    = fmt.Sprintf("nutanixdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaNutanixMachineResourceType       = fmt.Sprintf("nutanixmachineconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaAwsResourceType                  = fmt.Sprintf("awsdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
@@ -86,7 +85,7 @@ var (
 	etcdadmClustersResourceType          = fmt.Sprintf("etcdadmclusters.%s", etcdv1.GroupVersion.Group)
 	bundlesResourceType                  = fmt.Sprintf("bundles.%s", releasev1alpha1.GroupVersion.Group)
 	clusterResourceSetResourceType       = fmt.Sprintf("clusterresourcesets.%s", addons.GroupVersion.Group)
-	kubeadmControlPlaneResourceType      = fmt.Sprintf("kubeadmcontrolplanes.controlplane.%s", clusterv1.GroupVersion.Group)
+	kubeadmControlPlaneResourceType      = fmt.Sprintf("kubeadmcontrolplanes.controlplane.%s", clusterv1beta2.GroupVersion.Group)
 	eksdReleaseType                      = fmt.Sprintf("releases.%s", eksdv1alpha1.GroupVersion.Group)
 	eksaPackagesType                     = fmt.Sprintf("packages.%s", packagesv1.GroupVersion.Group)
 	eksaPackagesBundleControllerType     = fmt.Sprintf("packagebundlecontroller.%s", packagesv1.GroupVersion.Group)
@@ -141,11 +140,11 @@ func WithNetworkFaultBackoffFactor(factor float64) KubectlConfigOpt {
 }
 
 type capiMachinesResponse struct {
-	Items []clusterv1.Machine
+	Items []clusterv1beta2.Machine
 }
 
 // GetCAPIMachines returns all the CAPI machines for the provided clusterName.
-func (k *Kubectl) GetCAPIMachines(ctx context.Context, cluster *types.Cluster, clusterName string) ([]clusterv1.Machine, error) {
+func (k *Kubectl) GetCAPIMachines(ctx context.Context, cluster *types.Cluster, clusterName string) ([]clusterv1beta2.Machine, error) {
 	params := []string{
 		"get", capiMachinesType, "-o", "json", "--kubeconfig", cluster.KubeconfigFile,
 		"--selector=cluster.x-k8s.io/cluster-name=" + clusterName,
@@ -1112,10 +1111,10 @@ func (k *Kubectl) GetMachines(ctx context.Context, cluster *types.Cluster, clust
 }
 
 type machineSetResponse struct {
-	Items []clusterv1.MachineSet `json:"items,omitempty"`
+	Items []clusterv1beta2.MachineSet `json:"items,omitempty"`
 }
 
-func (k *Kubectl) GetMachineSets(ctx context.Context, machineDeploymentName string, cluster *types.Cluster) ([]clusterv1.MachineSet, error) {
+func (k *Kubectl) GetMachineSets(ctx context.Context, machineDeploymentName string, cluster *types.Cluster) ([]clusterv1beta2.MachineSet, error) {
 	params := []string{
 		"get", capiMachineSetsType, "-o", "json", "--kubeconfig", cluster.KubeconfigFile,
 		"--selector=cluster.x-k8s.io/deployment-name=" + machineDeploymentName,
