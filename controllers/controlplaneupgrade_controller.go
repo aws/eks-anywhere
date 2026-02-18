@@ -75,6 +75,7 @@ func NewControlPlaneUpgradeReconciler(client client.Client, remoteClientRegistry
 //+kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=controlplaneupgrades/finalizers,verbs=update
 //+kubebuilder:rbac:groups=bootstrap.cluster.x-k8s.io,resources=kubeadmconfigs,verbs=get;list;watch;update;patch
 //+kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=tinkerbellmachines;vspheremachines,verbs=get;list;update;patch
+//+kubebuilder:rbac:groups=apiextensions.k8s.io,resources=customresourcedefinitions,verbs=get;list;watch
 
 // Reconcile reconciles a ControlPlaneUpgrade object.
 // nolint:gocyclo
