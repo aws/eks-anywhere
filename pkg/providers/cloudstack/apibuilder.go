@@ -7,7 +7,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta3"
-	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -19,12 +19,12 @@ import (
 // CloudStackMachineTemplateKind defines the K8s Kind corresponding with the MachineTemplate.
 const CloudStackMachineTemplateKind = "CloudStackMachineTemplate"
 
-func machineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration, kubeadmConfigTemplate *bootstrapv1.KubeadmConfigTemplate, cloudstackMachineTemplate *cloudstackv1.CloudStackMachineTemplate) *clusterv1beta2.MachineDeployment {
+func machineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration, kubeadmConfigTemplate *bootstrapv1beta2.KubeadmConfigTemplate, cloudstackMachineTemplate *cloudstackv1.CloudStackMachineTemplate) *clusterv1beta2.MachineDeployment {
 	return clusterapi.MachineDeployment(clusterSpec, workerNodeGroupConfig, kubeadmConfigTemplate, cloudstackMachineTemplate)
 }
 
 // MachineDeployments returns generated CAPI MachineDeployment objects for a given cluster spec.
-func MachineDeployments(clusterSpec *cluster.Spec, kubeadmConfigTemplates map[string]*bootstrapv1.KubeadmConfigTemplate, machineTemplates map[string]*cloudstackv1.CloudStackMachineTemplate) map[string]*clusterv1beta2.MachineDeployment {
+func MachineDeployments(clusterSpec *cluster.Spec, kubeadmConfigTemplates map[string]*bootstrapv1beta2.KubeadmConfigTemplate, machineTemplates map[string]*cloudstackv1.CloudStackMachineTemplate) map[string]*clusterv1beta2.MachineDeployment {
 	m := make(map[string]*clusterv1beta2.MachineDeployment, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
 
 	for _, workerNodeGroupConfig := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {

@@ -6,7 +6,7 @@ import (
 	eksdv1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -289,14 +289,14 @@ func CAPICluster(opts ...CAPIClusterOpt) *clusterv1beta2.Cluster {
 }
 
 // KubeadmControlPlaneOpt represents an function where a kubeadmcontrolplane is passed as an argument.
-type KubeadmControlPlaneOpt func(kcp *controlplanev1.KubeadmControlPlane)
+type KubeadmControlPlaneOpt func(kcp *controlplanev1beta2.KubeadmControlPlane)
 
 // KubeadmControlPlane returns a kubeadm controlplane which can be configured by passing in opts arguments.
-func KubeadmControlPlane(opts ...KubeadmControlPlaneOpt) *controlplanev1.KubeadmControlPlane {
-	kcp := &controlplanev1.KubeadmControlPlane{
+func KubeadmControlPlane(opts ...KubeadmControlPlaneOpt) *controlplanev1beta2.KubeadmControlPlane {
+	kcp := &controlplanev1beta2.KubeadmControlPlane{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "KubeadmControlPlane",
-			APIVersion: controlplanev1.GroupVersion.String(),
+			APIVersion: controlplanev1beta2.GroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: constants.EksaSystemNamespace,

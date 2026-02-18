@@ -9,7 +9,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta2"
 
@@ -43,7 +43,7 @@ func TestWorkersSpecNewCluster(t *testing.T) {
 		},
 		clusterapi.WorkerGroup[*dockerv1.DockerMachineTemplate]{
 			KubeadmConfigTemplate: kubeadmConfigTemplate(
-				func(kct *bootstrapv1.KubeadmConfigTemplate) {
+				func(kct *bootstrapv1beta2.KubeadmConfigTemplate) {
 					kct.Name = "test-md-1-1"
 				},
 			),
@@ -73,7 +73,7 @@ func TestWorkersSpecUpgradeCluster(t *testing.T) {
 
 	currentGroup2 := clusterapi.WorkerGroup[*dockerv1.DockerMachineTemplate]{
 		KubeadmConfigTemplate: kubeadmConfigTemplate(
-			func(kct *bootstrapv1.KubeadmConfigTemplate) {
+			func(kct *bootstrapv1beta2.KubeadmConfigTemplate) {
 				kct.Name = "test-md-1-1"
 			},
 		),
@@ -105,7 +105,7 @@ func TestWorkersSpecUpgradeCluster(t *testing.T) {
 			Effect: corev1.TaintEffectNoSchedule,
 		},
 	}
-	expectedGroup1.KubeadmConfigTemplate.Spec.Template.Spec.JoinConfiguration.NodeRegistration.Taints = []corev1.Taint{
+	expectedGroup1.KubeadmConfigTemplate.Spec.Template.Spec.JoinConfiguration.NodeRegistration.Taints = &[]corev1.Taint{
 		{
 			Key:    "a",
 			Value:  "accept",
@@ -141,11 +141,11 @@ func TestWorkersSpecUpgradeClusterRemoveLabels(t *testing.T) {
 	spec := testClusterSpec()
 
 	kct := kubeadmConfigTemplate()
-	kct.Spec.Template.Spec.JoinConfiguration.NodeRegistration.KubeletExtraArgs = map[string]string{
-		"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-		"cgroup-driver":     "cgroupfs",
-		"node-labels":       "foo=bar",
-		"eviction-hard":     "nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%",
+	kct.Spec.Template.Spec.JoinConfiguration.NodeRegistration.KubeletExtraArgs = []bootstrapv1beta2.Arg{
+		{Name: "cgroup-driver", Value: ptr.String("cgroupfs")},
+		{Name: "eviction-hard", Value: ptr.String("nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%")},
+		{Name: "node-labels", Value: ptr.String("foo=bar")},
+		{Name: "tls-cipher-suites", Value: ptr.String("TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256")},
 	}
 
 	currentGroup1 := clusterapi.WorkerGroup[*dockerv1.DockerMachineTemplate]{
@@ -156,7 +156,7 @@ func TestWorkersSpecUpgradeClusterRemoveLabels(t *testing.T) {
 
 	currentGroup2 := clusterapi.WorkerGroup[*dockerv1.DockerMachineTemplate]{
 		KubeadmConfigTemplate: kubeadmConfigTemplate(
-			func(kct *bootstrapv1.KubeadmConfigTemplate) {
+			func(kct *bootstrapv1beta2.KubeadmConfigTemplate) {
 				kct.Name = "test-md-1-1"
 			},
 		),
@@ -182,10 +182,10 @@ func TestWorkersSpecUpgradeClusterRemoveLabels(t *testing.T) {
 	// This will cause a change in the kubeadmconfigtemplate which we also treat as immutable
 	spec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Labels = map[string]string{}
 
-	expectedGroup1.KubeadmConfigTemplate.Spec.Template.Spec.JoinConfiguration.NodeRegistration.KubeletExtraArgs = map[string]string{
-		"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-		"cgroup-driver":     "cgroupfs",
-		"eviction-hard":     "nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%",
+	expectedGroup1.KubeadmConfigTemplate.Spec.Template.Spec.JoinConfiguration.NodeRegistration.KubeletExtraArgs = []bootstrapv1beta2.Arg{
+		{Name: "cgroup-driver", Value: ptr.String("cgroupfs")},
+		{Name: "eviction-hard", Value: ptr.String("nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%")},
+		{Name: "tls-cipher-suites", Value: ptr.String("TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256")},
 	}
 	expectedGroup1.KubeadmConfigTemplate.Name = "test-md-0-2"
 	expectedGroup1.MachineDeployment.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "test-md-0-2"
@@ -211,7 +211,7 @@ func TestWorkersSpecNoMachineTemplateChanges(t *testing.T) {
 
 	currentGroup2 := clusterapi.WorkerGroup[*dockerv1.DockerMachineTemplate]{
 		KubeadmConfigTemplate: kubeadmConfigTemplate(
-			func(kct *bootstrapv1.KubeadmConfigTemplate) {
+			func(kct *bootstrapv1beta2.KubeadmConfigTemplate) {
 				kct.Name = "test-md-1-1"
 			},
 		),
@@ -281,7 +281,7 @@ func TestWorkersSpecRegistryMirrorConfiguration(t *testing.T) {
 	tests := []struct {
 		name         string
 		mirrorConfig *anywherev1.RegistryMirrorConfiguration
-		files        []bootstrapv1.File
+		files        []bootstrapv1beta2.File
 	}{
 		{
 			name:         "insecure skip verify",
@@ -307,7 +307,7 @@ func TestWorkersSpecRegistryMirrorConfiguration(t *testing.T) {
 			g.Expect(workers.Groups).To(HaveLen(2))
 			g.Expect(workers.Groups).To(ConsistOf(
 				clusterapi.WorkerGroup[*dockerv1.DockerMachineTemplate]{
-					KubeadmConfigTemplate: kubeadmConfigTemplate(func(kct *bootstrapv1.KubeadmConfigTemplate) {
+					KubeadmConfigTemplate: kubeadmConfigTemplate(func(kct *bootstrapv1beta2.KubeadmConfigTemplate) {
 						kct.Spec.Template.Spec.Files = append(kct.Spec.Template.Spec.Files, tt.files...)
 						kct.Spec.Template.Spec.PreKubeadmCommands = append(kct.Spec.Template.Spec.PreKubeadmCommands, test.RegistryMirrorPreKubeadmCommands()...)
 					}),
@@ -316,7 +316,7 @@ func TestWorkersSpecRegistryMirrorConfiguration(t *testing.T) {
 				},
 				clusterapi.WorkerGroup[*dockerv1.DockerMachineTemplate]{
 					KubeadmConfigTemplate: kubeadmConfigTemplate(
-						func(kct *bootstrapv1.KubeadmConfigTemplate) {
+						func(kct *bootstrapv1beta2.KubeadmConfigTemplate) {
 							kct.Name = "test-md-1-1"
 							kct.Spec.Template.Spec.Files = append(kct.Spec.Template.Spec.Files, tt.files...)
 							kct.Spec.Template.Spec.PreKubeadmCommands = append(kct.Spec.Template.Spec.PreKubeadmCommands, test.RegistryMirrorPreKubeadmCommands()...)
@@ -380,28 +380,28 @@ func TestWorkersSpecUpgradeRolloutStrategy(t *testing.T) {
 	))
 }
 
-func kubeadmConfigTemplate(opts ...func(*bootstrapv1.KubeadmConfigTemplate)) *bootstrapv1.KubeadmConfigTemplate {
-	o := &bootstrapv1.KubeadmConfigTemplate{
+func kubeadmConfigTemplate(opts ...func(*bootstrapv1beta2.KubeadmConfigTemplate)) *bootstrapv1beta2.KubeadmConfigTemplate {
+	o := &bootstrapv1beta2.KubeadmConfigTemplate{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "KubeadmConfigTemplate",
-			APIVersion: "bootstrap.cluster.x-k8s.io/v1beta1",
+			APIVersion: "bootstrap.cluster.x-k8s.io/v1beta2",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-md-0-1",
 			Namespace: "eksa-system",
 		},
-		Spec: bootstrapv1.KubeadmConfigTemplateSpec{
-			Template: bootstrapv1.KubeadmConfigTemplateResource{
-				Spec: bootstrapv1.KubeadmConfigSpec{
-					JoinConfiguration: &bootstrapv1.JoinConfiguration{
-						NodeRegistration: bootstrapv1.NodeRegistrationOptions{
+		Spec: bootstrapv1beta2.KubeadmConfigTemplateSpec{
+			Template: bootstrapv1beta2.KubeadmConfigTemplateResource{
+				Spec: bootstrapv1beta2.KubeadmConfigSpec{
+					JoinConfiguration: bootstrapv1beta2.JoinConfiguration{
+						NodeRegistration: bootstrapv1beta2.NodeRegistrationOptions{
 							CRISocket: "/var/run/containerd/containerd.sock",
-							KubeletExtraArgs: map[string]string{
-								"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-								"cgroup-driver":     "cgroupfs",
-								"eviction-hard":     "nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%",
+							KubeletExtraArgs: []bootstrapv1beta2.Arg{
+								{Name: "cgroup-driver", Value: ptr.String("cgroupfs")},
+								{Name: "eviction-hard", Value: ptr.String("nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%")},
+								{Name: "tls-cipher-suites", Value: ptr.String("TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256")},
 							},
-							Taints: []corev1.Taint{},
+							Taints: &[]corev1.Taint{},
 						},
 					},
 				},

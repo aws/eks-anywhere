@@ -9,7 +9,7 @@ import (
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
@@ -33,7 +33,7 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 
 	tests := []struct {
 		name                string
-		kcp                 *controlplanev1.KubeadmControlPlane
+		kcp                 *controlplanev1beta2.KubeadmControlPlane
 		controlPlaneCount   int
 		conditions          []anywherev1.Condition
 		wantCondition       *anywherev1.Condition
@@ -59,10 +59,10 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 		},
 		{
 			name: "control plane already initialized",
-			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
-				kcp.Status.Conditions = clusterv1.Conditions{
+			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
+				kcp.Status.Conditions = []metav1.Condition{
 					{
-						Type:   controlplanev1.AvailableCondition,
+						Type:   clusterv1beta2.AvailableCondition,
 						Status: "True",
 					},
 				}
@@ -83,7 +83,7 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 		},
 		{
 			name: "kcp status outdated, generations do not match",
-			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
+			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
 				kcp.ObjectMeta.Generation = 1
 				kcp.Status.ObservedGeneration = 0
 			}),
@@ -100,10 +100,10 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 		},
 		{
 			name: "kcp not availabe yet",
-			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
-				kcp.Status.Conditions = clusterv1.Conditions{
+			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
+				kcp.Status.Conditions = []metav1.Condition{
 					{
-						Type:   controlplanev1.AvailableCondition,
+						Type:   clusterv1beta2.AvailableCondition,
 						Status: "False",
 					},
 				}
@@ -122,10 +122,10 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 		},
 		{
 			name: "kcp available",
-			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
-				kcp.Status.Conditions = clusterv1.Conditions{
+			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
+				kcp.Status.Conditions = []metav1.Condition{
 					{
-						Type:   controlplanev1.AvailableCondition,
+						Type:   clusterv1beta2.AvailableCondition,
 						Status: "True",
 					},
 				}
@@ -141,7 +141,7 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 		},
 		{
 			name:              "control plane not initialized",
-			kcp:               &controlplanev1.KubeadmControlPlane{},
+			kcp:               &controlplanev1beta2.KubeadmControlPlane{},
 			controlPlaneCount: 1,
 			conditions: []anywherev1.Condition{
 				{
@@ -185,7 +185,7 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 		},
 		{
 			name: "kubeadmcontrolplane status out of date",
-			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
+			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
 				kcp.Generation = 1
 				kcp.Status.ObservedGeneration = 2
 			}),
@@ -207,14 +207,13 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 		},
 		{
 			name: "scaling up control plane nodes",
-			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
-				kcp.Status.Replicas = 1
-				kcp.Status.UpdatedReplicas = 1
-				kcp.Status.Conditions = []clusterv1.Condition{
+			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
+				kcp.Status.Replicas = ptr.Int32(1)
+				kcp.Status.UpToDateReplicas = ptr.Int32(1)
+				kcp.Status.Conditions = []metav1.Condition{
 					{
-						Type:     clusterv1.ReadyCondition,
-						Status:   "False",
-						Severity: clusterv1.ConditionSeverityInfo,
+						Type:   clusterv1beta2.AvailableCondition,
+						Status: "False",
 					},
 				}
 			}),
@@ -237,15 +236,14 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 		},
 		{
 			name: "scaling down control plane nodes",
-			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
-				kcp.Status.Replicas = 3
-				kcp.Status.UpdatedReplicas = 3
+			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
+				kcp.Status.Replicas = ptr.Int32(3)
+				kcp.Status.UpToDateReplicas = ptr.Int32(3)
 
-				kcp.Status.Conditions = []clusterv1.Condition{
+				kcp.Status.Conditions = []metav1.Condition{
 					{
-						Type:     clusterv1.ReadyCondition,
-						Status:   "False",
-						Severity: clusterv1.ConditionSeverityInfo,
+						Type:   clusterv1beta2.AvailableCondition,
+						Status: "False",
 					},
 				}
 			}),
@@ -268,16 +266,15 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 		},
 		{
 			name: "control plane replicas out of date",
-			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
-				kcp.Status.ReadyReplicas = 3
-				kcp.Status.Replicas = 3
-				kcp.Status.UpdatedReplicas = 1
+			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
+				kcp.Status.ReadyReplicas = ptr.Int32(3)
+				kcp.Status.Replicas = ptr.Int32(3)
+				kcp.Status.UpToDateReplicas = ptr.Int32(1)
 
-				kcp.Status.Conditions = []clusterv1.Condition{
+				kcp.Status.Conditions = []metav1.Condition{
 					{
-						Type:     clusterv1.ReadyCondition,
-						Status:   "False",
-						Severity: clusterv1.ConditionSeverityInfo,
+						Type:   clusterv1beta2.AvailableCondition,
+						Status: "False",
 					},
 				}
 			}),
@@ -300,16 +297,15 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 		},
 		{
 			name: "control plane replicas out of date, inplace upgrade",
-			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
-				kcp.Status.ReadyReplicas = 3
-				kcp.Status.Replicas = 3
-				kcp.Status.UpdatedReplicas = 1
+			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
+				kcp.Status.ReadyReplicas = ptr.Int32(3)
+				kcp.Status.Replicas = ptr.Int32(3)
+				kcp.Status.UpToDateReplicas = ptr.Int32(1)
 
-				kcp.Status.Conditions = []clusterv1.Condition{
+				kcp.Status.Conditions = []metav1.Condition{
 					{
-						Type:     clusterv1.ReadyCondition,
-						Status:   "False",
-						Severity: clusterv1.ConditionSeverityInfo,
+						Type:   clusterv1beta2.AvailableCondition,
+						Status: "False",
 					},
 				}
 			}),
@@ -333,14 +329,14 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 		},
 		{
 			name: "control plane nodes not ready yet",
-			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
-				kcp.Status.Replicas = 3
-				kcp.Status.ReadyReplicas = 2
-				kcp.Status.UpdatedReplicas = 3
+			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
+				kcp.Status.Replicas = ptr.Int32(3)
+				kcp.Status.ReadyReplicas = ptr.Int32(2)
+				kcp.Status.UpToDateReplicas = ptr.Int32(3)
 
-				kcp.Status.Conditions = []clusterv1.Condition{
+				kcp.Status.Conditions = []metav1.Condition{
 					{
-						Type:   clusterv1.ReadyCondition,
+						Type:   clusterv1beta2.AvailableCondition,
 						Status: "True",
 					},
 				}
@@ -364,22 +360,21 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 		},
 		{
 			name: "control plane components unhealthy",
-			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
-				kcp.Status.Replicas = 3
-				kcp.Status.ReadyReplicas = 3
-				kcp.Status.UpdatedReplicas = 3
+			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
+				kcp.Status.Replicas = ptr.Int32(3)
+				kcp.Status.ReadyReplicas = ptr.Int32(3)
+				kcp.Status.UpToDateReplicas = ptr.Int32(3)
 
-				kcp.Status.Conditions = []clusterv1.Condition{
+				kcp.Status.Conditions = []metav1.Condition{
 					{
-						Type:   clusterv1.ReadyCondition,
+						Type:   clusterv1beta2.AvailableCondition,
 						Status: "True",
 					},
 					{
-						Type:     controlplanev1.ControlPlaneComponentsHealthyCondition,
-						Reason:   controlplanev1.ControlPlaneComponentsUnhealthyReason,
-						Severity: clusterv1.ConditionSeverityError,
-						Message:  "test message",
-						Status:   "False",
+						Type:    controlplanev1beta2.KubeadmControlPlaneControlPlaneComponentsHealthyCondition,
+						Reason:  "Unhealthy",
+						Message: "test message",
+						Status:  "False",
 					},
 				}
 			}),
@@ -402,14 +397,14 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 		},
 		{
 			name: "kcp not ready yet",
-			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
-				kcp.Status.Replicas = 3
-				kcp.Status.ReadyReplicas = 3
-				kcp.Status.UpdatedReplicas = 3
+			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
+				kcp.Status.Replicas = ptr.Int32(3)
+				kcp.Status.ReadyReplicas = ptr.Int32(3)
+				kcp.Status.UpToDateReplicas = ptr.Int32(3)
 
-				kcp.Status.Conditions = []clusterv1.Condition{
+				kcp.Status.Conditions = []metav1.Condition{
 					{
-						Type:   clusterv1.ReadyCondition,
+						Type:   clusterv1beta2.AvailableCondition,
 						Status: "False",
 					},
 				}
@@ -433,14 +428,14 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 		},
 		{
 			name: "control plane ready",
-			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
-				kcp.Status.Replicas = 3
-				kcp.Status.ReadyReplicas = 3
-				kcp.Status.UpdatedReplicas = 3
+			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
+				kcp.Status.Replicas = ptr.Int32(3)
+				kcp.Status.ReadyReplicas = ptr.Int32(3)
+				kcp.Status.UpToDateReplicas = ptr.Int32(3)
 
-				kcp.Status.Conditions = []clusterv1.Condition{
+				kcp.Status.Conditions = []metav1.Condition{
 					{
-						Type:   clusterv1.ReadyCondition,
+						Type:   clusterv1beta2.AvailableCondition,
 						Status: "True",
 					},
 				}
@@ -461,14 +456,14 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 		},
 		{
 			name: "with external etcd ready",
-			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
-				kcp.Status.Replicas = 3
-				kcp.Status.ReadyReplicas = 3
-				kcp.Status.UpdatedReplicas = 3
+			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
+				kcp.Status.Replicas = ptr.Int32(3)
+				kcp.Status.ReadyReplicas = ptr.Int32(3)
+				kcp.Status.UpToDateReplicas = ptr.Int32(3)
 
-				kcp.Status.Conditions = []clusterv1.Condition{
+				kcp.Status.Conditions = []metav1.Condition{
 					{
-						Type:   clusterv1.ReadyCondition,
+						Type:   clusterv1beta2.AvailableCondition,
 						Status: "True",
 					},
 				}
@@ -511,14 +506,14 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 		},
 		{
 			name: "with external etcd not ready",
-			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
-				kcp.Status.Replicas = 3
-				kcp.Status.ReadyReplicas = 3
-				kcp.Status.UpdatedReplicas = 3
+			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
+				kcp.Status.Replicas = ptr.Int32(3)
+				kcp.Status.ReadyReplicas = ptr.Int32(3)
+				kcp.Status.UpToDateReplicas = ptr.Int32(3)
 
-				kcp.Status.Conditions = []clusterv1.Condition{
+				kcp.Status.Conditions = []metav1.Condition{
 					{
-						Type:   clusterv1.ReadyCondition,
+						Type:   clusterv1beta2.AvailableCondition,
 						Status: "True",
 					},
 				}
@@ -563,14 +558,14 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 		},
 		{
 			name: "with external etcd, etcd not reconciled",
-			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
-				kcp.Status.Replicas = 3
-				kcp.Status.ReadyReplicas = 3
-				kcp.Status.UpdatedReplicas = 3
+			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
+				kcp.Status.Replicas = ptr.Int32(3)
+				kcp.Status.ReadyReplicas = ptr.Int32(3)
+				kcp.Status.UpToDateReplicas = ptr.Int32(3)
 
-				kcp.Status.Conditions = []clusterv1.Condition{
+				kcp.Status.Conditions = []metav1.Condition{
 					{
-						Type:   clusterv1.ReadyCondition,
+						Type:   clusterv1beta2.AvailableCondition,
 						Status: "True",
 					},
 				}
@@ -595,14 +590,14 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 		},
 		{
 			name: "with external etcd, malformed etcd",
-			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
-				kcp.Status.Replicas = 3
-				kcp.Status.ReadyReplicas = 3
-				kcp.Status.UpdatedReplicas = 3
+			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
+				kcp.Status.Replicas = ptr.Int32(3)
+				kcp.Status.ReadyReplicas = ptr.Int32(3)
+				kcp.Status.UpToDateReplicas = ptr.Int32(3)
 
-				kcp.Status.Conditions = []clusterv1.Condition{
+				kcp.Status.Conditions = []metav1.Condition{
 					{
-						Type:   clusterv1.ReadyCondition,
+						Type:   clusterv1beta2.AvailableCondition,
 						Status: "True",
 					},
 				}
@@ -855,7 +850,7 @@ func TestUpdateClusterStatusForControlPlaneError(t *testing.T) {
 	}
 	objs := []runtime.Object{}
 	objs = append(objs, capiCluster)
-	objs = append(objs, &controlplanev1.KubeadmControlPlane{})
+	objs = append(objs, &controlplanev1beta2.KubeadmControlPlane{})
 	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
 
 	err := clusters.UpdateClusterStatusForControlPlane(context.Background(), client, cluster)

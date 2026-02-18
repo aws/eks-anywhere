@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	tinkerbellv1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1/thirdparty/tinkerbell/capt/v1beta1"
@@ -344,7 +344,7 @@ func (v *ValidatableTinkerbellClusterSpec) WorkerNodeGroupK8sVersion() map[strin
 
 // ValidatableTinkerbellCAPI wraps around the Tinkerbell control plane and worker CAPI obects as a ValidatableCluster.
 type ValidatableTinkerbellCAPI struct {
-	KubeadmControlPlane *controlplanev1.KubeadmControlPlane
+	KubeadmControlPlane *controlplanev1beta2.KubeadmControlPlane
 	WorkerGroups        []*clusterapi.WorkerGroup[*tinkerbellv1.TinkerbellMachineTemplate]
 }
 

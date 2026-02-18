@@ -8,9 +8,7 @@ import (
 	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta3"
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
 	addonsv1 "sigs.k8s.io/cluster-api/api/addons/v1beta1"
-	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
 	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
 	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
@@ -30,9 +28,8 @@ var schemeAdders = []schemeAdder{
 	clientgoscheme.AddToScheme,
 	clusterv1.AddToScheme,
 	clusterv1beta2.AddToScheme,
-	controlplanev1.AddToScheme,
 	controlplanev1beta2.AddToScheme,
-	bootstrapv1.AddToScheme,
+	bootstrapv1beta2.AddToScheme,
 	bootstrapv1beta2.AddToScheme,
 	anywherev1.AddToScheme,
 	snowv1.AddToScheme,

@@ -21,6 +21,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -30,8 +31,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
-	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	"sigs.k8s.io/cluster-api/controllers/external"
 	"sigs.k8s.io/cluster-api/util/annotations"
@@ -305,13 +306,13 @@ func (r *ControlPlaneUpgradeReconciler) updateResources(ctx context.Context, log
 	return nil
 }
 
-func (r *ControlPlaneUpgradeReconciler) updateKubeadmConfig(ctx context.Context, log logr.Logger, kcpSpec *controlplanev1.KubeadmControlPlaneSpec, machine *clusterv1.Machine) error {
+func (r *ControlPlaneUpgradeReconciler) updateKubeadmConfig(ctx context.Context, log logr.Logger, kcpSpec *controlplanev1beta2.KubeadmControlPlaneSpec, machine *clusterv1.Machine) error {
 	bootstrapRef := machine.Spec.Bootstrap.ConfigRef
 	if bootstrapRef == nil {
 		return fmt.Errorf("bootstrap config for machine %s is nil", machine.Name)
 	}
 
-	kc := &bootstrapv1.KubeadmConfig{}
+	kc := &bootstrapv1beta2.KubeadmConfig{}
 	if err := r.client.Get(ctx, types.NamespacedName{Name: bootstrapRef.Name, Namespace: machine.Namespace}, kc); err != nil {
 		return fmt.Errorf("retrieving bootstrap config for machine %s: %v", machine.Name, err)
 	}
@@ -323,12 +324,12 @@ func (r *ControlPlaneUpgradeReconciler) updateKubeadmConfig(ctx context.Context,
 	existingFeatureGates := kc.Spec.ClusterConfiguration.FeatureGates
 
 	kcSpec := kcpSpec.KubeadmConfigSpec.DeepCopy()
-	if kc.Spec.InitConfiguration == nil {
-		kcSpec.InitConfiguration = nil
+	if reflect.ValueOf(kc.Spec.InitConfiguration).IsZero() {
+		kcSpec.InitConfiguration = bootstrapv1beta2.InitConfiguration{}
 	}
 
-	if kc.Spec.JoinConfiguration == nil {
-		kcSpec.JoinConfiguration = nil
+	if reflect.ValueOf(kc.Spec.JoinConfiguration).IsZero() {
+		kcSpec.JoinConfiguration = bootstrapv1beta2.JoinConfiguration{}
 	}
 
 	kc.Spec = *kcSpec
@@ -348,7 +349,7 @@ func (r *ControlPlaneUpgradeReconciler) updateKubeadmConfig(ctx context.Context,
 // ClusterConfiguration. FeatureGates already present in the KubeadmConfig take precedence,
 // preserving user/KCP intent. This ensures CAPI runtime-added FeatureGates (like
 // ControlPlaneKubeletLocalMode) are not lost when the spec is overwritten from the KCP spec.
-func mergeFeatureGates(kc *bootstrapv1.KubeadmConfig, existingFeatureGates map[string]bool) {
+func mergeFeatureGates(kc *bootstrapv1beta2.KubeadmConfig, existingFeatureGates map[string]bool) {
 	for k, v := range existingFeatureGates {
 		if kc.Spec.ClusterConfiguration.FeatureGates == nil {
 			kc.Spec.ClusterConfiguration.FeatureGates = make(map[string]bool)
@@ -359,7 +360,7 @@ func mergeFeatureGates(kc *bootstrapv1.KubeadmConfig, existingFeatureGates map[s
 	}
 }
 
-func (r *ControlPlaneUpgradeReconciler) updateInfraMachine(ctx context.Context, log logr.Logger, kcpSpec *controlplanev1.KubeadmControlPlaneSpec, machine *clusterv1.Machine) error {
+func (r *ControlPlaneUpgradeReconciler) updateInfraMachine(ctx context.Context, log logr.Logger, kcpSpec *controlplanev1beta2.KubeadmControlPlaneSpec, machine *clusterv1.Machine) error {
 	infraMachineObj, err := external.Get(ctx, r.client, &machine.Spec.InfrastructureRef)
 	if err != nil {
 		return fmt.Errorf("retrieving infra machine %s for machine %s: %v", machine.Spec.InfrastructureRef.Name, machine.Name, err)
@@ -368,13 +369,13 @@ func (r *ControlPlaneUpgradeReconciler) updateInfraMachine(ctx context.Context, 
 	if err != nil {
 		return err
 	}
-	log.Info("Updating infra machine template annotation in infra machine", "InfrastructureRef.Name", kcpSpec.MachineTemplate.InfrastructureRef.Name)
+	log.Info("Updating infra machine template annotation in infra machine", "InfrastructureRef.Name", kcpSpec.MachineTemplate.Spec.InfrastructureRef.Name)
 	// Update the cloned-from-name annotation to match the updated infra machine template name in KubeadmControlPlane
 	annotations := infraMachineObj.GetAnnotations()
 	if annotations == nil {
 		annotations = make(map[string]string)
 	}
-	annotations[cloneFromNameAnnotationInfraMachine] = kcpSpec.MachineTemplate.InfrastructureRef.Name
+	annotations[cloneFromNameAnnotationInfraMachine] = kcpSpec.MachineTemplate.Spec.InfrastructureRef.Name
 	infraMachineObj.SetAnnotations(annotations)
 
 	if err := patchHelper.Patch(ctx, infraMachineObj); err != nil {
@@ -383,8 +384,8 @@ func (r *ControlPlaneUpgradeReconciler) updateInfraMachine(ctx context.Context, 
 	return nil
 }
 
-func decodeAndUnmarshalKcpSpecData(kcpSpecData string) (*controlplanev1.KubeadmControlPlaneSpec, error) {
-	kcpSpec := &controlplanev1.KubeadmControlPlaneSpec{}
+func decodeAndUnmarshalKcpSpecData(kcpSpecData string) (*controlplanev1beta2.KubeadmControlPlaneSpec, error) {
+	kcpSpec := &controlplanev1beta2.KubeadmControlPlaneSpec{}
 	decodedKcpSpec, err := base64.StdEncoding.DecodeString(kcpSpecData)
 	if err != nil {
 		return nil, fmt.Errorf("decoding cpUpgrade.Spec.ControlPlaneSpec: %v", err)

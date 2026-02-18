@@ -21,6 +21,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"strings"
 	"time"
 
@@ -29,7 +30,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/util/annotations"
@@ -73,7 +74,7 @@ func NewKubeadmControlPlaneReconciler(client client.Client, uncachedClient clien
 func (r *KubeadmControlPlaneReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result ctrl.Result, reterr error) {
 	log := r.log.WithValues("KubeadmControlPlane", req.NamespacedName)
 
-	kcp := &controlplanev1.KubeadmControlPlane{}
+	kcp := &controlplanev1beta2.KubeadmControlPlane{}
 	if err := r.uncachedClient.Get(ctx, req.NamespacedName, kcp); err != nil {
 		if apierrors.IsNotFound(err) {
 			return reconcile.Result{}, err
@@ -110,11 +111,11 @@ func (r *KubeadmControlPlaneReconciler) Reconcile(ctx context.Context, req ctrl.
 // SetupWithManager sets up the controller with the Manager.
 func (r *KubeadmControlPlaneReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&controlplanev1.KubeadmControlPlane{}).
+		For(&controlplanev1beta2.KubeadmControlPlane{}).
 		Complete(r)
 }
 
-func (r *KubeadmControlPlaneReconciler) reconcile(ctx context.Context, log logr.Logger, kcp *controlplanev1.KubeadmControlPlane) (ctrl.Result, error) {
+func (r *KubeadmControlPlaneReconciler) reconcile(ctx context.Context, log logr.Logger, kcp *controlplanev1beta2.KubeadmControlPlane) (ctrl.Result, error) {
 	log.Info("Reconciling in place upgrade for control plane")
 	if err := r.validateStackedEtcd(kcp); err != nil {
 		log.Info("Stacked etcd validation failed, unable to reconcile for in place upgrade")
@@ -136,7 +137,7 @@ func (r *KubeadmControlPlaneReconciler) reconcile(ctx context.Context, log logr.
 	cpUpgrade := &anywherev1.ControlPlaneUpgrade{}
 	cpuGetErr := r.client.Get(ctx, GetNamespacedNameType(cpUpgradeName(kcp.ObjectMeta.Name), constants.EksaSystemNamespace), cpUpgrade)
 	if cpuGetErr == nil {
-		if cpUpgrade.Status.Ready && kcp.Status.Version != nil && *kcp.Status.Version == cpUpgrade.Spec.KubernetesVersion {
+		if cpUpgrade.Status.Ready && kcp.Status.Version != "" && kcp.Status.Version == cpUpgrade.Spec.KubernetesVersion {
 			log.Info("Control plane upgrade complete, deleting object", "ControlPlaneUpgrade", cpUpgrade.Name)
 			if err := r.client.Delete(ctx, cpUpgrade); err != nil {
 				return ctrl.Result{}, fmt.Errorf("deleting ControlPlaneUpgrade object: %v", err)
@@ -178,11 +179,11 @@ func (r *KubeadmControlPlaneReconciler) reconcile(ctx context.Context, log logr.
 	return ctrl.Result{}, fmt.Errorf("getting ControlPlaneUpgrade for KubeadmControlPlane %s: %v", kcp.ObjectMeta.Name, err)
 }
 
-func (r *KubeadmControlPlaneReconciler) inPlaceUpgradeNeeded(kcp *controlplanev1.KubeadmControlPlane) bool {
+func (r *KubeadmControlPlaneReconciler) inPlaceUpgradeNeeded(kcp *controlplanev1beta2.KubeadmControlPlane) bool {
 	return strings.ToLower(kcp.Annotations[kcpInPlaceUpgradeNeededAnnotation]) == "true"
 }
 
-func (r *KubeadmControlPlaneReconciler) machinesToUpgrade(ctx context.Context, kcp *controlplanev1.KubeadmControlPlane) ([]corev1.ObjectReference, error) {
+func (r *KubeadmControlPlaneReconciler) machinesToUpgrade(ctx context.Context, kcp *controlplanev1beta2.KubeadmControlPlane) ([]corev1.ObjectReference, error) {
 	selector, err := metav1.LabelSelectorAsSelector(&metav1.LabelSelector{MatchLabels: map[string]string{controlPlaneMachineLabel: kcp.ObjectMeta.Name}})
 	if err != nil {
 		return nil, err
@@ -205,12 +206,9 @@ func (r *KubeadmControlPlaneReconciler) machinesToUpgrade(ctx context.Context, k
 	return machineObjects, nil
 }
 
-func (r *KubeadmControlPlaneReconciler) validateStackedEtcd(kcp *controlplanev1.KubeadmControlPlane) error {
-	if kcp.Spec.KubeadmConfigSpec.ClusterConfiguration == nil {
-		return fmt.Errorf("ClusterConfiguration not set for KubeadmControlPlane \"%s\", unable to retrieve etcd information", kcp.ObjectMeta.Name)
-	}
-	if kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.Local == nil {
-		return fmt.Errorf("local etcd configuration is missing")
+func (r *KubeadmControlPlaneReconciler) validateStackedEtcd(kcp *controlplanev1beta2.KubeadmControlPlane) error {
+	if reflect.ValueOf(kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.Local).IsZero() {
+		return fmt.Errorf("local etcd configuration is missing for KubeadmControlPlane %q", kcp.ObjectMeta.Name)
 	}
 	return nil
 }
@@ -225,7 +223,7 @@ func resumeMachineHealthCheck(ctx context.Context, mhc *clusterv1beta2.MachineHe
 	return mhcPatchHelper.Patch(ctx, mhc)
 }
 
-func controlPlaneUpgrade(kcp *controlplanev1.KubeadmControlPlane, machines []corev1.ObjectReference) (*anywherev1.ControlPlaneUpgrade, error) {
+func controlPlaneUpgrade(kcp *controlplanev1beta2.KubeadmControlPlane, machines []corev1.ObjectReference) (*anywherev1.ControlPlaneUpgrade, error) {
 	kcpSpec, err := json.Marshal(kcp.Spec)
 	if err != nil {
 		return nil, fmt.Errorf("marshaling KCP spec: %v", err)
@@ -236,7 +234,7 @@ func controlPlaneUpgrade(kcp *controlplanev1.KubeadmControlPlane, machines []cor
 			Name:      cpUpgradeName(kcp.ObjectMeta.Name),
 			Namespace: constants.EksaSystemNamespace,
 			OwnerReferences: []metav1.OwnerReference{{
-				APIVersion: controlplanev1.GroupVersion.String(),
+				APIVersion: controlplanev1beta2.GroupVersion.String(),
 				Kind:       kubeadmControlPlaneKind,
 				Name:       kcp.ObjectMeta.Name,
 				UID:        kcp.ObjectMeta.UID,

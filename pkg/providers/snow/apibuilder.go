@@ -7,8 +7,8 @@ import (
 	"github.com/go-logr/logr"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	clusterctlv1 "sigs.k8s.io/cluster-api/cmd/clusterctl/api/v1alpha3"
@@ -32,12 +32,12 @@ const (
 )
 
 // CAPICluster generates the CAPICluster object for snow provider.
-func CAPICluster(clusterSpec *cluster.Spec, snowCluster *snowv1.AWSSnowCluster, kubeadmControlPlane *controlplanev1.KubeadmControlPlane, etcdCluster *etcdv1.EtcdadmCluster) *clusterv1beta2.Cluster {
+func CAPICluster(clusterSpec *cluster.Spec, snowCluster *snowv1.AWSSnowCluster, kubeadmControlPlane *controlplanev1beta2.KubeadmControlPlane, etcdCluster *etcdv1.EtcdadmCluster) *clusterv1beta2.Cluster {
 	return clusterapi.Cluster(clusterSpec, snowCluster, kubeadmControlPlane, etcdCluster)
 }
 
 // KubeadmControlPlane generates the kubeadmControlPlane object for snow provider from clusterSpec and snowMachineTemplate.
-func KubeadmControlPlane(log logr.Logger, clusterSpec *cluster.Spec, snowMachineTemplate *snowv1.AWSSnowMachineTemplate) (*controlplanev1.KubeadmControlPlane, error) {
+func KubeadmControlPlane(log logr.Logger, clusterSpec *cluster.Spec, snowMachineTemplate *snowv1.AWSSnowMachineTemplate) (*controlplanev1beta2.KubeadmControlPlane, error) {
 	kcp, err := clusterapi.KubeadmControlPlane(clusterSpec, snowMachineTemplate)
 	if err != nil {
 		return nil, fmt.Errorf("generating KubeadmControlPlane: %v", err)
@@ -49,11 +49,12 @@ func KubeadmControlPlane(log logr.Logger, clusterSpec *cluster.Spec, snowMachine
 		return nil, fmt.Errorf("setting kube-vip: %v", err)
 	}
 
-	initConfigKubeletExtraArg := kcp.Spec.KubeadmConfigSpec.InitConfiguration.NodeRegistration.KubeletExtraArgs
-	initConfigKubeletExtraArg["provider-id"] = "aws-snow:////'{{ ds.meta_data.instance_id }}'"
-
-	joinConfigKubeletExtraArg := kcp.Spec.KubeadmConfigSpec.JoinConfiguration.NodeRegistration.KubeletExtraArgs
-	joinConfigKubeletExtraArg["provider-id"] = "aws-snow:////'{{ ds.meta_data.instance_id }}'"
+	providerIDValue := "aws-snow:////'{{ ds.meta_data.instance_id }}'"
+	providerIDArg := bootstrapv1beta2.Arg{Name: "provider-id", Value: &providerIDValue}
+	kcp.Spec.KubeadmConfigSpec.InitConfiguration.NodeRegistration.KubeletExtraArgs = append(
+		kcp.Spec.KubeadmConfigSpec.InitConfiguration.NodeRegistration.KubeletExtraArgs, providerIDArg)
+	kcp.Spec.KubeadmConfigSpec.JoinConfiguration.NodeRegistration.KubeletExtraArgs = append(
+		kcp.Spec.KubeadmConfigSpec.JoinConfiguration.NodeRegistration.KubeletExtraArgs, providerIDArg)
 
 	addStackedEtcdExtraArgsInKubeadmControlPlane(kcp, clusterSpec.Cluster.Spec.ExternalEtcdConfiguration)
 
@@ -125,7 +126,7 @@ func KubeadmControlPlane(log logr.Logger, clusterSpec *cluster.Spec, snowMachine
 }
 
 // KubeadmConfigTemplate generates the kubeadmConfigTemplate object for snow provider from clusterSpec and workerNodeGroupConfig.
-func KubeadmConfigTemplate(log logr.Logger, clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) (*bootstrapv1.KubeadmConfigTemplate, error) {
+func KubeadmConfigTemplate(log logr.Logger, clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) (*bootstrapv1beta2.KubeadmConfigTemplate, error) {
 	kct, err := clusterapi.KubeadmConfigTemplate(clusterSpec, workerNodeGroupConfig)
 	if err != nil {
 		return nil, fmt.Errorf("generating KubeadmConfigTemplate: %v", err)
@@ -133,8 +134,10 @@ func KubeadmConfigTemplate(log logr.Logger, clusterSpec *cluster.Spec, workerNod
 
 	versionsBundle := clusterSpec.RootVersionsBundle()
 
-	joinConfigKubeletExtraArg := kct.Spec.Template.Spec.JoinConfiguration.NodeRegistration.KubeletExtraArgs
-	joinConfigKubeletExtraArg["provider-id"] = "aws-snow:////'{{ ds.meta_data.instance_id }}'"
+	kctProviderIDValue := "aws-snow:////'{{ ds.meta_data.instance_id }}'"
+	kctProviderIDArg := bootstrapv1beta2.Arg{Name: "provider-id", Value: &kctProviderIDValue}
+	kct.Spec.Template.Spec.JoinConfiguration.NodeRegistration.KubeletExtraArgs = append(
+		kct.Spec.Template.Spec.JoinConfiguration.NodeRegistration.KubeletExtraArgs, kctProviderIDArg)
 
 	machineConfig := clusterSpec.SnowMachineConfig(workerNodeGroupConfig.MachineGroupRef.Name)
 	osFamily := machineConfig.OSFamily()
@@ -169,7 +172,7 @@ func KubeadmConfigTemplate(log logr.Logger, clusterSpec *cluster.Spec, workerNod
 	return kct, nil
 }
 
-func machineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration, kubeadmConfigTemplate *bootstrapv1.KubeadmConfigTemplate, snowMachineTemplate *snowv1.AWSSnowMachineTemplate) *clusterv1beta2.MachineDeployment {
+func machineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration, kubeadmConfigTemplate *bootstrapv1beta2.KubeadmConfigTemplate, snowMachineTemplate *snowv1.AWSSnowMachineTemplate) *clusterv1beta2.MachineDeployment {
 	return clusterapi.MachineDeployment(clusterSpec, workerNodeGroupConfig, kubeadmConfigTemplate, snowMachineTemplate)
 }
 

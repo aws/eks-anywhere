@@ -64,18 +64,18 @@ spec:
       template: 
       thumbprint: 'ABCDEFG'
 ---
-apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+apiVersion: controlplane.cluster.x-k8s.io/v1beta2
 kind: KubeadmControlPlane
 metadata:
   name: test
   namespace: eksa-system
 spec:
   machineTemplate:
-    infrastructureRef:
-      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-      kind: VSphereMachineTemplate
-      name: test-control-plane-1
-      namespace: eksa-system
+    spec:
+      infrastructureRef:
+        apiGroup: infrastructure.cluster.x-k8s.io
+        kind: VSphereMachineTemplate
+        name: test-control-plane-1
   kubeadmConfigSpec:
     clusterConfiguration:
       imageRepository: public.ecr.aws/eks-distro/kubernetes
@@ -99,14 +99,22 @@ spec:
           maxPods: 20
       apiServer:
         extraArgs:
-          cloud-provider: external
-          audit-policy-file: /etc/kubernetes/audit-policy.yaml
-          audit-log-path: /var/log/kubernetes/api-audit.log
-          audit-log-maxage: "30"
-          audit-log-maxbackup: "10"
-          audit-log-maxsize: "512"
-          profiling: "false"
-          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        - name: cloud-provider
+          value: "external"
+        - name: audit-policy-file
+          value: "/etc/kubernetes/audit-policy.yaml"
+        - name: audit-log-path
+          value: "/var/log/kubernetes/api-audit.log"
+        - name: audit-log-maxage
+          value: "30"
+        - name: audit-log-maxbackup
+          value: "10"
+        - name: audit-log-maxsize
+          value: "512"
+        - name: profiling
+          value: "false"
+        - name: tls-cipher-suites
+          value: "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
         extraVolumes:
         - hostPath: /var/lib/kubeadm/audit-policy.yaml
           mountPath: /etc/kubernetes/audit-policy.yaml
@@ -120,9 +128,12 @@ spec:
           readOnly: false
       controllerManager:
         extraArgs:
-          cloud-provider: external
-          profiling: "false"
-          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        - name: cloud-provider
+          value: "external"
+        - name: profiling
+          value: "false"
+        - name: tls-cipher-suites
+          value: "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
         extraVolumes:
         - hostPath: /var/lib/kubeadm/controller-manager.conf
           mountPath: /etc/kubernetes/controller-manager.conf
@@ -131,8 +142,10 @@ spec:
           readOnly: true
       scheduler:
         extraArgs:
-          profiling: "false"
-          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        - name: profiling
+          value: "false"
+        - name: tls-cipher-suites
+          value: "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
         extraVolumes:
         - hostPath: /var/lib/kubeadm/scheduler.conf
           mountPath: /etc/kubernetes/scheduler.conf
@@ -357,11 +370,16 @@ spec:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:
-          cloud-provider: external
-          read-only-port: "0"
-          anonymous-auth: "false"
-          resolv-conf: test-path
-          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        - name: cloud-provider
+          value: "external"
+        - name: read-only-port
+          value: "0"
+        - name: anonymous-auth
+          value: "false"
+        - name: resolv-conf
+          value: "test-path"
+        - name: tls-cipher-suites
+          value: "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
         name: '{{ ds.meta_data.hostname }}'
     joinConfiguration:
       pause:
@@ -376,11 +394,16 @@ spec:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:
-          cloud-provider: external
-          read-only-port: "0"
-          anonymous-auth: "false"
-          resolv-conf: test-path
-          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        - name: cloud-provider
+          value: "external"
+        - name: read-only-port
+          value: "0"
+        - name: anonymous-auth
+          value: "false"
+        - name: resolv-conf
+          value: "test-path"
+        - name: tls-cipher-suites
+          value: "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
         name: '{{ ds.meta_data.hostname }}'
     ntp:
       enabled: true
@@ -399,10 +422,11 @@ spec:
       sudo: ALL=(ALL) NOPASSWD:ALL
     format: bottlerocket
   replicas: 3
-  rolloutStrategy:
-    rollingUpdate:
-      maxSurge: 1
-    type: RollingUpdate
+  rollout:
+    strategy:
+      rollingUpdate:
+        maxSurge: 1
+      type: RollingUpdate
   version: v1.19.8-eks-1-19-4
 ---
 apiVersion: addons.cluster.x-k8s.io/v1beta1

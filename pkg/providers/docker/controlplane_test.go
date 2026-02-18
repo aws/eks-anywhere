@@ -11,8 +11,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	dockerv1beta2 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta2"
 
@@ -134,9 +134,9 @@ func TestControlPlaneSpecUpdateMachineTemplates(t *testing.T) {
 
 	spec.Cluster.Spec.ControlPlaneConfiguration.Taints = cpTaints
 
-	wantKCP.Spec.MachineTemplate.InfrastructureRef.Name = "test-control-plane-2"
-	wantKCP.Spec.KubeadmConfigSpec.InitConfiguration.NodeRegistration.Taints = cpTaints
-	wantKCP.Spec.KubeadmConfigSpec.JoinConfiguration.NodeRegistration.Taints = cpTaints
+	wantKCP.Spec.MachineTemplate.Spec.InfrastructureRef.Name = "test-control-plane-2"
+	wantKCP.Spec.KubeadmConfigSpec.InitConfiguration.NodeRegistration.Taints = &cpTaints
+	wantKCP.Spec.KubeadmConfigSpec.JoinConfiguration.NodeRegistration.Taints = &cpTaints
 	wantEtcd.Spec.InfrastructureTemplate.Name = "test-etcd-3"
 	wantCPtemplate.Name = "test-control-plane-2"
 	wantEtcdTemplate.Name = "test-etcd-3"
@@ -216,7 +216,7 @@ func TestControlPlaneSpecRegistryMirrorConfiguration(t *testing.T) {
 	tests := []struct {
 		name         string
 		mirrorConfig *anywherev1.RegistryMirrorConfiguration
-		files        []bootstrapv1.File
+		files        []bootstrapv1beta2.File
 	}{
 		{
 			name:         "insecure skip verify",
@@ -243,7 +243,7 @@ func TestControlPlaneSpecRegistryMirrorConfiguration(t *testing.T) {
 			g.Expect(err).NotTo(HaveOccurred())
 			g.Expect(cp).NotTo(BeNil())
 			g.Expect(cp.Cluster).To(Equal(capiCluster()))
-			g.Expect(cp.KubeadmControlPlane).To(Equal(kubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
+			g.Expect(cp.KubeadmControlPlane).To(Equal(kubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
 				kcp.Spec.KubeadmConfigSpec.Files = append(kcp.Spec.KubeadmConfigSpec.Files, tt.files...)
 				kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands = append(kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands, test.RegistryMirrorPreKubeadmCommands()...)
 			})))
@@ -276,10 +276,10 @@ func TestControlPlaneUpgradeRolloutStrategy(t *testing.T) {
 	cp, err := docker.ControlPlaneSpec(ctx, logger, client, spec)
 	g.Expect(err).NotTo(HaveOccurred())
 	g.Expect(cp).NotTo(BeNil())
-	g.Expect(cp.KubeadmControlPlane).To(Equal(kubeadmControlPlane(func(k *controlplanev1.KubeadmControlPlane) {
+	g.Expect(cp.KubeadmControlPlane).To(Equal(kubeadmControlPlane(func(k *controlplanev1beta2.KubeadmControlPlane) {
 		maxSurge := intstr.FromInt(1)
-		k.Spec.RolloutStrategy = &controlplanev1.RolloutStrategy{
-			RollingUpdate: &controlplanev1.RollingUpdate{
+		k.Spec.Rollout.Strategy = controlplanev1beta2.KubeadmControlPlaneRolloutStrategy{
+			RollingUpdate: controlplanev1beta2.KubeadmControlPlaneRolloutStrategyRollingUpdate{
 				MaxSurge: &maxSurge,
 			},
 		}
@@ -447,88 +447,85 @@ func dockerMachineTemplate(name string) *dockerv1beta2.DockerMachineTemplate {
 	}
 }
 
-func kubeadmControlPlane(opts ...func(*controlplanev1.KubeadmControlPlane)) *controlplanev1.KubeadmControlPlane {
+func kubeadmControlPlane(opts ...func(*controlplanev1beta2.KubeadmControlPlane)) *controlplanev1beta2.KubeadmControlPlane {
 	maxSurge := intstr.FromInt(1)
-	kcp := &controlplanev1.KubeadmControlPlane{
+	kcp := &controlplanev1beta2.KubeadmControlPlane{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "KubeadmControlPlane",
-			APIVersion: "controlplane.cluster.x-k8s.io/v1beta1",
+			APIVersion: "controlplane.cluster.x-k8s.io/v1beta2",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test",
 			Namespace: constants.EksaSystemNamespace,
 		},
-		Spec: controlplanev1.KubeadmControlPlaneSpec{
-			MachineTemplate: controlplanev1.KubeadmControlPlaneMachineTemplate{
-				InfrastructureRef: corev1.ObjectReference{
-					APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
-					Kind:       "DockerMachineTemplate",
-					Name:       "test-control-plane-1",
-					Namespace:  constants.EksaSystemNamespace,
+		Spec: controlplanev1beta2.KubeadmControlPlaneSpec{
+			MachineTemplate: controlplanev1beta2.KubeadmControlPlaneMachineTemplate{
+				Spec: controlplanev1beta2.KubeadmControlPlaneMachineTemplateSpec{
+					InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
+						APIGroup: "infrastructure.cluster.x-k8s.io",
+						Kind:     "DockerMachineTemplate",
+						Name:     "test-control-plane-1",
+					},
 				},
 			},
-			KubeadmConfigSpec: bootstrapv1.KubeadmConfigSpec{
-				ClusterConfiguration: &bootstrapv1.ClusterConfiguration{
+			KubeadmConfigSpec: bootstrapv1beta2.KubeadmConfigSpec{
+				ClusterConfiguration: bootstrapv1beta2.ClusterConfiguration{
 					ImageRepository: "public.ecr.aws/eks-distro/kubernetes",
-					Etcd: bootstrapv1.Etcd{
-						External: &bootstrapv1.ExternalEtcd{
+					Etcd: bootstrapv1beta2.Etcd{
+						External: bootstrapv1beta2.ExternalEtcd{
 							Endpoints: []string{constants.PlaceholderExternalEtcdEndpoint},
 							CAFile:    "/etc/kubernetes/pki/etcd/ca.crt",
 							CertFile:  "/etc/kubernetes/pki/apiserver-etcd-client.crt",
 							KeyFile:   "/etc/kubernetes/pki/apiserver-etcd-client.key",
 						},
 					},
-					DNS: bootstrapv1.DNS{
-						ImageMeta: bootstrapv1.ImageMeta{
-							ImageRepository: "public.ecr.aws/eks-distro/coredns",
-							ImageTag:        "v1.8.7-eks-1-23-6",
-						},
+					DNS: bootstrapv1beta2.DNS{
+						ImageRepository: "public.ecr.aws/eks-distro/coredns",
+						ImageTag:        "v1.8.7-eks-1-23-6",
 					},
-					APIServer: bootstrapv1.APIServer{
+					APIServer: bootstrapv1beta2.APIServer{
 						CertSANs: []string{"localhost", "127.0.0.1"},
-						ControlPlaneComponent: bootstrapv1.ControlPlaneComponent{
-							ExtraArgs: map[string]string{
-								"audit-policy-file":   "/etc/kubernetes/audit-policy.yaml",
-								"audit-log-path":      "/var/log/kubernetes/api-audit.log",
-								"audit-log-maxage":    "30",
-								"audit-log-maxbackup": "10",
-								"audit-log-maxsize":   "512",
-								"profiling":           "false",
-								"tls-cipher-suites":   "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+						ExtraArgs: []bootstrapv1beta2.Arg{
+							{Name: "audit-log-maxage", Value: ptr.String("30")},
+							{Name: "audit-log-maxbackup", Value: ptr.String("10")},
+							{Name: "audit-log-maxsize", Value: ptr.String("512")},
+							{Name: "audit-log-path", Value: ptr.String("/var/log/kubernetes/api-audit.log")},
+							{Name: "audit-policy-file", Value: ptr.String("/etc/kubernetes/audit-policy.yaml")},
+							{Name: "profiling", Value: ptr.String("false")},
+							{Name: "tls-cipher-suites", Value: ptr.String("TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256")},
+						},
+						ExtraVolumes: []bootstrapv1beta2.HostPathMount{
+							{
+								HostPath:  "/etc/kubernetes/audit-policy.yaml",
+								MountPath: "/etc/kubernetes/audit-policy.yaml",
+								Name:      "audit-policy",
+								PathType:  "File",
+								ReadOnly:  ptr.Bool(true),
 							},
-							ExtraVolumes: []bootstrapv1.HostPathMount{
-								{
-									HostPath:  "/etc/kubernetes/audit-policy.yaml",
-									MountPath: "/etc/kubernetes/audit-policy.yaml",
-									Name:      "audit-policy",
-									PathType:  "File",
-									ReadOnly:  true,
-								},
-								{
-									HostPath:  "/var/log/kubernetes",
-									MountPath: "/var/log/kubernetes",
-									Name:      "audit-log-dir",
-									PathType:  "DirectoryOrCreate",
-									ReadOnly:  false,
-								},
+							{
+								HostPath:  "/var/log/kubernetes",
+								MountPath: "/var/log/kubernetes",
+								Name:      "audit-log-dir",
+								PathType:  "DirectoryOrCreate",
+								ReadOnly:  ptr.Bool(false),
 							},
 						},
 					},
-					ControllerManager: bootstrapv1.ControlPlaneComponent{
-						ExtraArgs: map[string]string{
-							"enable-hostpath-provisioner": "true",
-							"profiling":                   "false",
-							"tls-cipher-suites":           "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+					ControllerManager: bootstrapv1beta2.ControllerManager{
+						ExtraArgs: []bootstrapv1beta2.Arg{
+							{Name: "enable-hostpath-provisioner", Value: ptr.String("true")},
+							{Name: "profiling", Value: ptr.String("false")},
+							{Name: "tls-cipher-suites", Value: ptr.String("TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256")},
 						},
 					},
-					Scheduler: bootstrapv1.ControlPlaneComponent{
-						ExtraArgs: map[string]string{
-							"profiling":         "false",
-							"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+					Scheduler: bootstrapv1beta2.Scheduler{
+						ExtraArgs: []bootstrapv1beta2.Arg{
+							{Name: "profiling", Value: ptr.String("false")},
+							{Name: "tls-cipher-suites", Value: ptr.String("TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256")},
 						},
 					},
 				},
-				Files: []bootstrapv1.File{
+				Files: []bootstrapv1beta2.File{
 					{
 						Path:  "/etc/kubernetes/audit-policy.yaml",
 						Owner: "root:root",
@@ -690,33 +687,35 @@ rules:
 `,
 					},
 				},
-				InitConfiguration: &bootstrapv1.InitConfiguration{
-					NodeRegistration: bootstrapv1.NodeRegistrationOptions{
+				InitConfiguration: bootstrapv1beta2.InitConfiguration{
+					NodeRegistration: bootstrapv1beta2.NodeRegistrationOptions{
 						CRISocket: "/var/run/containerd/containerd.sock",
-						KubeletExtraArgs: map[string]string{
-							"cgroup-driver":     "cgroupfs",
-							"eviction-hard":     "nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%",
-							"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+						KubeletExtraArgs: []bootstrapv1beta2.Arg{
+							{Name: "cgroup-driver", Value: ptr.String("cgroupfs")},
+							{Name: "eviction-hard", Value: ptr.String("nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%")},
+							{Name: "tls-cipher-suites", Value: ptr.String("TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256")},
 						},
 					},
 				},
-				JoinConfiguration: &bootstrapv1.JoinConfiguration{
-					NodeRegistration: bootstrapv1.NodeRegistrationOptions{
+				JoinConfiguration: bootstrapv1beta2.JoinConfiguration{
+					NodeRegistration: bootstrapv1beta2.NodeRegistrationOptions{
 						CRISocket: "/var/run/containerd/containerd.sock",
-						KubeletExtraArgs: map[string]string{
-							"cgroup-driver":     "cgroupfs",
-							"eviction-hard":     "nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%",
-							"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+						KubeletExtraArgs: []bootstrapv1beta2.Arg{
+							{Name: "cgroup-driver", Value: ptr.String("cgroupfs")},
+							{Name: "eviction-hard", Value: ptr.String("nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%")},
+							{Name: "tls-cipher-suites", Value: ptr.String("TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256")},
 						},
 					},
 				},
 			},
 			Replicas: ptr.Int32(3),
-			RolloutStrategy: &controlplanev1.RolloutStrategy{
-				RollingUpdate: &controlplanev1.RollingUpdate{
-					MaxSurge: &maxSurge,
+			Rollout: controlplanev1beta2.KubeadmControlPlaneRolloutSpec{
+				Strategy: controlplanev1beta2.KubeadmControlPlaneRolloutStrategy{
+					RollingUpdate: controlplanev1beta2.KubeadmControlPlaneRolloutStrategyRollingUpdate{
+						MaxSurge: &maxSurge,
+					},
+					Type: controlplanev1beta2.RollingUpdateStrategyType,
 				},
-				Type: controlplanev1.RollingUpdateStrategyType,
 			},
 			Version: "v1.23.12-eks-1-23-6",
 		},

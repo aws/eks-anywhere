@@ -8,7 +8,7 @@ import (
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	"github.com/aws/eks-anywhere/internal/test"
@@ -38,7 +38,7 @@ func TestWorkersSpecNewCluster(t *testing.T) {
 		},
 		clusterapi.WorkerGroup[*tinkerbellv1.TinkerbellMachineTemplate]{
 			KubeadmConfigTemplate: kubeadmConfigTemplate(
-				func(kct *bootstrapv1.KubeadmConfigTemplate) {
+				func(kct *bootstrapv1beta2.KubeadmConfigTemplate) {
 					kct.Name = "test-md-1-1"
 				},
 			),
@@ -99,7 +99,7 @@ func TestWorkersSpecNewClusterInPlaceRolloutStrategy(t *testing.T) {
 		},
 		clusterapi.WorkerGroup[*tinkerbellv1.TinkerbellMachineTemplate]{
 			KubeadmConfigTemplate: kubeadmConfigTemplate(
-				func(kct *bootstrapv1.KubeadmConfigTemplate) {
+				func(kct *bootstrapv1beta2.KubeadmConfigTemplate) {
 					kct.Name = "test-md-1-1"
 				},
 			),
@@ -137,7 +137,7 @@ func TestWorkersSpecUpgradeClusterNoMachineTemplateChanges(t *testing.T) {
 	}
 	oldGroup2 := &clusterapi.WorkerGroup[*tinkerbellv1.TinkerbellMachineTemplate]{
 		KubeadmConfigTemplate: kubeadmConfigTemplate(
-			func(kct *bootstrapv1.KubeadmConfigTemplate) {
+			func(kct *bootstrapv1beta2.KubeadmConfigTemplate) {
 				kct.Name = "test-md-1-1"
 			},
 		),
@@ -217,7 +217,7 @@ func TestWorkersSpecRegistryMirrorInsecureSkipVerify(t *testing.T) {
 	tests := []struct {
 		name         string
 		mirrorConfig *anywherev1.RegistryMirrorConfiguration
-		files        []bootstrapv1.File
+		files        []bootstrapv1beta2.File
 	}{
 		{
 			name:         "insecure skip verify",
@@ -240,7 +240,7 @@ func TestWorkersSpecRegistryMirrorInsecureSkipVerify(t *testing.T) {
 			g.Expect(workers.Groups).To(HaveLen(2))
 			g.Expect(workers.Groups).To(ConsistOf(
 				clusterapi.WorkerGroup[*tinkerbellv1.TinkerbellMachineTemplate]{
-					KubeadmConfigTemplate: kubeadmConfigTemplate(func(kct *bootstrapv1.KubeadmConfigTemplate) {
+					KubeadmConfigTemplate: kubeadmConfigTemplate(func(kct *bootstrapv1beta2.KubeadmConfigTemplate) {
 						kct.Spec.Template.Spec.Files = append(kct.Spec.Template.Spec.Files, tt.files...)
 						kct.Spec.Template.Spec.PreKubeadmCommands = append(kct.Spec.Template.Spec.PreKubeadmCommands, test.RegistryMirrorSudoPreKubeadmCommands()...)
 					}),
@@ -249,7 +249,7 @@ func TestWorkersSpecRegistryMirrorInsecureSkipVerify(t *testing.T) {
 				},
 				clusterapi.WorkerGroup[*tinkerbellv1.TinkerbellMachineTemplate]{
 					KubeadmConfigTemplate: kubeadmConfigTemplate(
-						func(kct *bootstrapv1.KubeadmConfigTemplate) {
+						func(kct *bootstrapv1beta2.KubeadmConfigTemplate) {
 							kct.Name = "test-md-1-1"
 							kct.Spec.Template.Spec.Files = append(kct.Spec.Template.Spec.Files, tt.files...)
 							kct.Spec.Template.Spec.PreKubeadmCommands = append(kct.Spec.Template.Spec.PreKubeadmCommands, test.RegistryMirrorSudoPreKubeadmCommands()...)
@@ -340,40 +340,40 @@ func machineDeployment(opts ...func(*clusterv1beta2.MachineDeployment)) *cluster
 	return o
 }
 
-func kubeadmConfigTemplate(opts ...func(*bootstrapv1.KubeadmConfigTemplate)) *bootstrapv1.KubeadmConfigTemplate {
-	o := &bootstrapv1.KubeadmConfigTemplate{
+func kubeadmConfigTemplate(opts ...func(*bootstrapv1beta2.KubeadmConfigTemplate)) *bootstrapv1beta2.KubeadmConfigTemplate {
+	o := &bootstrapv1beta2.KubeadmConfigTemplate{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "KubeadmConfigTemplate",
-			APIVersion: "bootstrap.cluster.x-k8s.io/v1beta1",
+			APIVersion: "bootstrap.cluster.x-k8s.io/v1beta2",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-md-0-1",
 			Namespace: "eksa-system",
 		},
-		Spec: bootstrapv1.KubeadmConfigTemplateSpec{
-			Template: bootstrapv1.KubeadmConfigTemplateResource{
-				Spec: bootstrapv1.KubeadmConfigSpec{
-					JoinConfiguration: &bootstrapv1.JoinConfiguration{
-						NodeRegistration: bootstrapv1.NodeRegistrationOptions{
+		Spec: bootstrapv1beta2.KubeadmConfigTemplateSpec{
+			Template: bootstrapv1beta2.KubeadmConfigTemplateResource{
+				Spec: bootstrapv1beta2.KubeadmConfigSpec{
+					JoinConfiguration: bootstrapv1beta2.JoinConfiguration{
+						NodeRegistration: bootstrapv1beta2.NodeRegistrationOptions{
 							Name:      "",
 							CRISocket: "",
 							Taints:    nil,
-							KubeletExtraArgs: map[string]string{
+							KubeletExtraArgs: clusterapi.ExtraArgs{
 								"anonymous-auth":    "false",
 								"provider-id":       "PROVIDER_ID",
 								"read-only-port":    "0",
 								"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-							},
+							}.ToArgs(),
 						},
 					},
-					Users: []bootstrapv1.User{
+					Users: []bootstrapv1beta2.User{
 						{
 							Name:              "tink-user",
-							Sudo:              ptr.String("ALL=(ALL) NOPASSWD:ALL"),
+							Sudo:              "ALL=(ALL) NOPASSWD:ALL",
 							SSHAuthorizedKeys: []string{"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ== testemail@test.com"},
 						},
 					},
-					Format: bootstrapv1.Format("cloud-config"),
+					Format: bootstrapv1beta2.Format("cloud-config"),
 				},
 			},
 		},

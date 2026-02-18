@@ -9,14 +9,15 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta3"
-	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
+	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
@@ -120,8 +121,8 @@ func TestControlPlaneSpecUpdateMachineTemplates(t *testing.T) {
 	}
 	spec.Cluster.Spec.ControlPlaneConfiguration.Taints = cpTaints
 
-	expectedKCP.Spec.KubeadmConfigSpec.InitConfiguration.NodeRegistration.Taints = cpTaints
-	expectedKCP.Spec.KubeadmConfigSpec.JoinConfiguration.NodeRegistration.Taints = cpTaints
+	expectedKCP.Spec.KubeadmConfigSpec.InitConfiguration.NodeRegistration.Taints = &cpTaints
+	expectedKCP.Spec.KubeadmConfigSpec.JoinConfiguration.NodeRegistration.Taints = &cpTaints
 
 	expectedCPTemplate.Name = "test-control-plane-1"
 
@@ -143,7 +144,7 @@ func TestControlPlaneSpecRegistryMirrorConfiguration(t *testing.T) {
 	tests := []struct {
 		name         string
 		mirrorConfig *anywherev1.RegistryMirrorConfiguration
-		files        []bootstrapv1.File
+		files        []bootstrapv1beta2.File
 	}{
 		{
 			name:         "insecure skip verify",
@@ -164,7 +165,7 @@ func TestControlPlaneSpecRegistryMirrorConfiguration(t *testing.T) {
 			g.Expect(err).NotTo(HaveOccurred())
 			g.Expect(cp).NotTo(BeNil())
 			g.Expect(cp.Cluster).To(Equal(capiCluster()))
-			g.Expect(cp.KubeadmControlPlane).To(Equal(kubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
+			g.Expect(cp.KubeadmControlPlane).To(Equal(kubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
 				kcp.Spec.KubeadmConfigSpec.Files = append(kcp.Spec.KubeadmConfigSpec.Files, tt.files...)
 				precmds := []string{"swapoff -a"}
 				precmds = append(precmds, test.RegistryMirrorSudoPreKubeadmCommands()...)
@@ -199,10 +200,10 @@ func TestControlPlaneSpecWithUpgradeRolloutStrategy(t *testing.T) {
 	cp, err := ControlPlaneSpec(ctx, logger, client, spec)
 	g.Expect(err).NotTo(HaveOccurred())
 	g.Expect(cp).NotTo(BeNil())
-	g.Expect(cp.KubeadmControlPlane).To(Equal(kubeadmControlPlane(func(k *controlplanev1.KubeadmControlPlane) {
+	g.Expect(cp.KubeadmControlPlane).To(Equal(kubeadmControlPlane(func(k *controlplanev1beta2.KubeadmControlPlane) {
 		maxSurge := intstr.FromInt(1)
-		k.Spec.RolloutStrategy = &controlplanev1.RolloutStrategy{
-			RollingUpdate: &controlplanev1.RollingUpdate{
+		k.Spec.Rollout.Strategy = controlplanev1beta2.KubeadmControlPlaneRolloutStrategy{
+			RollingUpdate: controlplanev1beta2.KubeadmControlPlaneRolloutStrategyRollingUpdate{
 				MaxSurge: &maxSurge,
 			},
 		}
@@ -287,95 +288,89 @@ func cloudstackCluster() *cloudstackv1.CloudStackCluster {
 	}
 }
 
-func kubeadmControlPlane(opts ...func(*controlplanev1.KubeadmControlPlane)) *controlplanev1.KubeadmControlPlane {
+func kubeadmControlPlane(opts ...func(*controlplanev1beta2.KubeadmControlPlane)) *controlplanev1beta2.KubeadmControlPlane {
 	maxSurge := intstr.FromInt(1)
-	kcp := &controlplanev1.KubeadmControlPlane{
+	kcp := &controlplanev1beta2.KubeadmControlPlane{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "KubeadmControlPlane",
-			APIVersion: "controlplane.cluster.x-k8s.io/v1beta1",
+			APIVersion: "controlplane.cluster.x-k8s.io/v1beta2",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test",
 			Namespace: constants.EksaSystemNamespace,
 		},
-		Spec: controlplanev1.KubeadmControlPlaneSpec{
-			MachineTemplate: controlplanev1.KubeadmControlPlaneMachineTemplate{
-				InfrastructureRef: corev1.ObjectReference{
-					APIVersion: "infrastructure.cluster.x-k8s.io/v1beta3",
-					Kind:       "CloudStackMachineTemplate",
-					Name:       "test-control-plane-1",
-					Namespace:  "eksa-system",
+		Spec: controlplanev1beta2.KubeadmControlPlaneSpec{
+			MachineTemplate: controlplanev1beta2.KubeadmControlPlaneMachineTemplate{
+				Spec: controlplanev1beta2.KubeadmControlPlaneMachineTemplateSpec{
+					InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
+						APIGroup: "infrastructure.cluster.x-k8s.io",
+						Kind:     "CloudStackMachineTemplate",
+						Name:     "test-control-plane-1",
+					},
 				},
 			},
-			KubeadmConfigSpec: bootstrapv1.KubeadmConfigSpec{
-				ClusterConfiguration: &bootstrapv1.ClusterConfiguration{
+			KubeadmConfigSpec: bootstrapv1beta2.KubeadmConfigSpec{
+				ClusterConfiguration: bootstrapv1beta2.ClusterConfiguration{
 					ImageRepository: "public.ecr.aws/eks-distro/kubernetes",
-					Etcd: bootstrapv1.Etcd{
-						External: &bootstrapv1.ExternalEtcd{
+					Etcd: bootstrapv1beta2.Etcd{
+						External: bootstrapv1beta2.ExternalEtcd{
 							Endpoints: []string{constants.PlaceholderExternalEtcdEndpoint},
 							CAFile:    "/etc/kubernetes/pki/etcd/ca.crt",
 							CertFile:  "/etc/kubernetes/pki/apiserver-etcd-client.crt",
 							KeyFile:   "/etc/kubernetes/pki/apiserver-etcd-client.key",
 						},
 					},
-					DNS: bootstrapv1.DNS{
-						ImageMeta: bootstrapv1.ImageMeta{
-							ImageRepository: "public.ecr.aws/eks-distro/coredns",
-							ImageTag:        "v1.8.3-eks-1-21-4",
-						},
+					DNS: bootstrapv1beta2.DNS{
+						ImageRepository: "public.ecr.aws/eks-distro/coredns",
+						ImageTag:        "v1.8.3-eks-1-21-4",
 					},
-					APIServer: bootstrapv1.APIServer{
-						ControlPlaneComponent: bootstrapv1.ControlPlaneComponent{
-							ExtraArgs: map[string]string{
-								"audit-log-maxage":    "30",
-								"audit-log-maxbackup": "10",
-								"profiling":           "false",
-								"tls-cipher-suites":   "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-								"audit-log-maxsize":   "512",
-								"audit-log-path":      "/var/log/kubernetes/api-audit.log",
-								"audit-policy-file":   "/etc/kubernetes/audit-policy.yaml",
-								"cloud-provider":      "external",
+					APIServer: bootstrapv1beta2.APIServer{
+						ExtraArgs: clusterapi.ExtraArgs{
+							"audit-log-maxage":    "30",
+							"audit-log-maxbackup": "10",
+							"profiling":           "false",
+							"tls-cipher-suites":   "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+							"audit-log-maxsize":   "512",
+							"audit-log-path":      "/var/log/kubernetes/api-audit.log",
+							"audit-policy-file":   "/etc/kubernetes/audit-policy.yaml",
+							"cloud-provider":      "external",
+						}.ToArgs(),
+						ExtraVolumes: []bootstrapv1beta2.HostPathMount{
+							{
+								HostPath:  "/etc/kubernetes/audit-policy.yaml",
+								MountPath: "/etc/kubernetes/audit-policy.yaml",
+								Name:      "audit-policy",
+								PathType:  "File",
+								ReadOnly:  ptr.Bool(true),
 							},
-							ExtraVolumes: []bootstrapv1.HostPathMount{
-								{
-									HostPath:  "/etc/kubernetes/audit-policy.yaml",
-									MountPath: "/etc/kubernetes/audit-policy.yaml",
-									Name:      "audit-policy",
-									PathType:  "File",
-									ReadOnly:  true,
-								},
-								{
-									HostPath:  "/var/log/kubernetes",
-									MountPath: "/var/log/kubernetes",
-									Name:      "audit-log-dir",
-									PathType:  "DirectoryOrCreate",
-									ReadOnly:  false,
-								},
+							{
+								HostPath:  "/var/log/kubernetes",
+								MountPath: "/var/log/kubernetes",
+								Name:      "audit-log-dir",
+								PathType:  "DirectoryOrCreate",
+								ReadOnly:  ptr.Bool(false),
 							},
 						},
 					},
-					ControllerManager: bootstrapv1.ControlPlaneComponent{
-						ExtraArgs: map[string]string{
+					ControllerManager: bootstrapv1beta2.ControllerManager{
+						ExtraArgs: clusterapi.ExtraArgs{
 							"cloud-provider":    "external",
 							"profiling":         "false",
 							"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-						},
+						}.ToArgs(),
 					},
-					Scheduler: bootstrapv1.ControlPlaneComponent{
-						ExtraArgs: map[string]string{
+					Scheduler: bootstrapv1beta2.Scheduler{
+						ExtraArgs: clusterapi.ExtraArgs{
 							"profiling":         "false",
 							"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-						},
+						}.ToArgs(),
 					},
 				},
-				Files: []bootstrapv1.File{
+				Files: []bootstrapv1beta2.File{
 					{
-						Path:        "/etc/kubernetes/manifests/kube-vip.yaml",
-						Owner:       "root:root",
-						Permissions: "",
-						Encoding:    "",
-						Append:      false,
-						Content:     "apiVersion: v1\nkind: Pod\nmetadata:\n  creationTimestamp: null\n  name: kube-vip\n  namespace: kube-system\nspec:\n  containers:\n  - args:\n    - manager\n    env:\n    - name: vip_arp\n      value: \"true\"\n    - name: port\n      value: \"6443\"\n    - name: vip_cidr\n      value: \"32\"\n    - name: cp_enable\n      value: \"true\"\n    - name: cp_namespace\n      value: kube-system\n    - name: vip_ddns\n      value: \"false\"\n    - name: vip_leaderelection\n      value: \"true\"\n    - name: vip_leaseduration\n      value: \"15\"\n    - name: vip_renewdeadline\n      value: \"10\"\n    - name: vip_retryperiod\n      value: \"2\"\n    - name: address\n      value: 1.2.3.4\n    image: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158\n    imagePullPolicy: IfNotPresent\n    name: kube-vip\n    resources: {}\n    securityContext:\n      capabilities:\n        add:\n        - NET_ADMIN\n        - NET_RAW\n    volumeMounts:\n    - mountPath: /etc/kubernetes/admin.conf\n      name: kubeconfig\n  hostNetwork: true\n  volumes:\n  - hostPath:\n      path: /etc/kubernetes/admin.conf\n    name: kubeconfig\nstatus: {}\n",
+						Path:    "/etc/kubernetes/manifests/kube-vip.yaml",
+						Owner:   "root:root",
+						Content: "apiVersion: v1\nkind: Pod\nmetadata:\n  creationTimestamp: null\n  name: kube-vip\n  namespace: kube-system\nspec:\n  containers:\n  - args:\n    - manager\n    env:\n    - name: vip_arp\n      value: \"true\"\n    - name: port\n      value: \"6443\"\n    - name: vip_cidr\n      value: \"32\"\n    - name: cp_enable\n      value: \"true\"\n    - name: cp_namespace\n      value: kube-system\n    - name: vip_ddns\n      value: \"false\"\n    - name: vip_leaderelection\n      value: \"true\"\n    - name: vip_leaseduration\n      value: \"15\"\n    - name: vip_renewdeadline\n      value: \"10\"\n    - name: vip_retryperiod\n      value: \"2\"\n    - name: address\n      value: 1.2.3.4\n    image: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158\n    imagePullPolicy: IfNotPresent\n    name: kube-vip\n    resources: {}\n    securityContext:\n      capabilities:\n        add:\n        - NET_ADMIN\n        - NET_RAW\n    volumeMounts:\n    - mountPath: /etc/kubernetes/admin.conf\n      name: kubeconfig\n  hostNetwork: true\n  volumes:\n  - hostPath:\n      path: /etc/kubernetes/admin.conf\n    name: kubeconfig\nstatus: {}\n",
 					},
 					{
 						Path:  "/etc/kubernetes/audit-policy.yaml",
@@ -538,42 +533,42 @@ rules:
 `,
 					},
 				},
-				InitConfiguration: &bootstrapv1.InitConfiguration{
-					NodeRegistration: bootstrapv1.NodeRegistrationOptions{
+				InitConfiguration: bootstrapv1beta2.InitConfiguration{
+					NodeRegistration: bootstrapv1beta2.NodeRegistrationOptions{
 						Name:      "{{ ds.meta_data.hostname }}",
 						CRISocket: "/var/run/containerd/containerd.sock",
-						KubeletExtraArgs: map[string]string{
+						KubeletExtraArgs: clusterapi.ExtraArgs{
 							"read-only-port":    "0",
 							"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
 							"anonymous-auth":    "false",
 							"provider-id":       "cloudstack:///'{{ ds.meta_data.instance_id }}'",
-						},
+						}.ToArgs(),
 					},
 				},
-				JoinConfiguration: &bootstrapv1.JoinConfiguration{
-					NodeRegistration: bootstrapv1.NodeRegistrationOptions{
+				JoinConfiguration: bootstrapv1beta2.JoinConfiguration{
+					NodeRegistration: bootstrapv1beta2.NodeRegistrationOptions{
 						Name:      "{{ ds.meta_data.hostname }}",
 						CRISocket: "/var/run/containerd/containerd.sock",
-						KubeletExtraArgs: map[string]string{
+						KubeletExtraArgs: clusterapi.ExtraArgs{
 							"provider-id":       "cloudstack:///'{{ ds.meta_data.instance_id }}'",
 							"read-only-port":    "0",
 							"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
 							"anonymous-auth":    "false",
-						},
+						}.ToArgs(),
 					},
 				},
-				DiskSetup: &bootstrapv1.DiskSetup{
-					Partitions: []bootstrapv1.Partition{
-						{Device: "/dev/vdb", Layout: true, Overwrite: ptr.Bool(false), TableType: ptr.String("gpt")},
+				DiskSetup: bootstrapv1beta2.DiskSetup{
+					Partitions: []bootstrapv1beta2.Partition{
+						{Device: "/dev/vdb", Layout: ptr.Bool(true), Overwrite: ptr.Bool(false), TableType: "gpt"},
 					},
-					Filesystems: []bootstrapv1.Filesystem{
+					Filesystems: []bootstrapv1beta2.Filesystem{
 						{
 							Device:     "/dev/vdb1",
 							Filesystem: "ext4",
 							Label:      "data_disk",
-							Partition:  nil,
+							Partition:  "",
 							Overwrite:  ptr.Bool(false),
-							ReplaceFS:  nil,
+							ReplaceFS:  "",
 							ExtraOpts: []string{
 								"-E",
 								"lazy_itable_init=1,lazy_journal_init=1",
@@ -581,7 +576,7 @@ rules:
 						},
 					},
 				},
-				Mounts: []bootstrapv1.MountPoints{
+				Mounts: []bootstrapv1beta2.MountPoints{
 					[]string{"LABEL=data_disk", "/data-small"},
 				},
 				PreKubeadmCommands: []string{
@@ -593,21 +588,23 @@ rules:
 					"echo \"{{ ds.meta_data.hostname }}\" >/etc/hostname",
 					"if [ ! -L /var/log/kubernetes ] ;\n  then\n    mv /var/log/kubernetes /var/log/kubernetes-$(tr -dc A-Za-z0-9 < /dev/urandom | head -c 10) ;\n    mkdir -p /data-small/var/log/kubernetes && ln -s /data-small/var/log/kubernetes /var/log/kubernetes ;\n  else echo \"/var/log/kubernetes already symlnk\";\nfi",
 				},
-				Users: []bootstrapv1.User{
+				Users: []bootstrapv1beta2.User{
 					{
 						Name:              "mySshUsername",
-						Sudo:              ptr.String("ALL=(ALL) NOPASSWD:ALL"),
+						Sudo:              "ALL=(ALL) NOPASSWD:ALL",
 						SSHAuthorizedKeys: []string{"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ=="},
 					},
 				},
 				Format: "cloud-config",
 			},
 			Replicas: ptr.Int32(3),
-			RolloutStrategy: &controlplanev1.RolloutStrategy{
-				RollingUpdate: &controlplanev1.RollingUpdate{
-					MaxSurge: &maxSurge,
+			Rollout: controlplanev1beta2.KubeadmControlPlaneRolloutSpec{
+				Strategy: controlplanev1beta2.KubeadmControlPlaneRolloutStrategy{
+					RollingUpdate: controlplanev1beta2.KubeadmControlPlaneRolloutStrategyRollingUpdate{
+						MaxSurge: &maxSurge,
+					},
+					Type: controlplanev1beta2.RollingUpdateStrategyType,
 				},
-				Type: controlplanev1.RollingUpdateStrategyType,
 			},
 			Version: "v1.21.2-eks-1-21-4",
 		},

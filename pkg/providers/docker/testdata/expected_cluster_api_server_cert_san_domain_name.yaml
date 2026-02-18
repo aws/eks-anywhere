@@ -42,18 +42,18 @@ spec:
         hostPath: /var/run/docker.sock
       customImage: public.ecr.aws/l0g8r8j6/kubernetes-sigs/kind/node:v1.21.2-eks-d-1-21-4-eks-a-v0.0.0-dev-build.158
 ---
-apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+apiVersion: controlplane.cluster.x-k8s.io/v1beta2
 kind: KubeadmControlPlane
 metadata:
   name: test
   namespace: eksa-system
 spec:
   machineTemplate:
-    infrastructureRef:
-      apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
-      kind: DockerMachineTemplate
-      name: <no value>
-      namespace: eksa-system
+    spec:
+      infrastructureRef:
+        apiGroup: infrastructure.cluster.x-k8s.io
+        kind: DockerMachineTemplate
+        name: <no value>
   kubeadmConfigSpec:
     clusterConfiguration:
       imageRepository: public.ecr.aws/eks-distro/kubernetes
@@ -62,7 +62,8 @@ spec:
           imageRepository: public.ecr.aws/eks-distro/etcd-io
           imageTag: v3.4.16-eks-1-21-4
           extraArgs:
-            cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+          - name: cipher-suites
+            value: "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
       dns:
         imageRepository: public.ecr.aws/eks-distro/coredns
         imageTag: v1.8.3-eks-1-21-4
@@ -72,13 +73,20 @@ spec:
         - 127.0.0.1
         - foo.bar
         extraArgs:
-          audit-policy-file: /etc/kubernetes/audit-policy.yaml
-          audit-log-path: /var/log/kubernetes/api-audit.log
-          audit-log-maxage: "30"
-          audit-log-maxbackup: "10"
-          audit-log-maxsize: "512"
-          profiling: "false"
-          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        - name: audit-policy-file
+          value: "/etc/kubernetes/audit-policy.yaml"
+        - name: audit-log-path
+          value: "/var/log/kubernetes/api-audit.log"
+        - name: audit-log-maxage
+          value: "30"
+        - name: audit-log-maxbackup
+          value: "10"
+        - name: audit-log-maxsize
+          value: "512"
+        - name: profiling
+          value: "false"
+        - name: tls-cipher-suites
+          value: "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
         extraVolumes:
         - hostPath: /etc/kubernetes/audit-policy.yaml
           mountPath: /etc/kubernetes/audit-policy.yaml
@@ -92,13 +100,18 @@ spec:
           readOnly: false
       controllerManager:
         extraArgs:
-          enable-hostpath-provisioner: "true"
-          profiling: "false"
-          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        - name: enable-hostpath-provisioner
+          value: "true"
+        - name: profiling
+          value: "false"
+        - name: tls-cipher-suites
+          value: "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
       scheduler:
         extraArgs:
-          profiling: "false"
-          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        - name: profiling
+          value: "false"
+        - name: tls-cipher-suites
+          value: "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
     files:
     - content: |
         apiVersion: audit.k8s.io/v1beta1
@@ -262,21 +275,28 @@ spec:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:
-          eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
-          cgroup-driver: cgroupfs
-          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        - name: eviction-hard
+          value: "nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%"
+        - name: cgroup-driver
+          value: "cgroupfs"
+        - name: tls-cipher-suites
+          value: "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
         taints: []
     joinConfiguration:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:
-          eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
-          cgroup-driver: cgroupfs
-          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        - name: eviction-hard
+          value: "nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%"
+        - name: cgroup-driver
+          value: "cgroupfs"
+        - name: tls-cipher-suites
+          value: "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
         taints: []
   replicas: 1
-  rolloutStrategy:
-    rollingUpdate:
-      maxSurge: 1
-    type: RollingUpdate
+  rollout:
+    strategy:
+      rollingUpdate:
+        maxSurge: 1
+      type: RollingUpdate
   version: v1.21.2-eks-1-21-4

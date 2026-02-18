@@ -11,12 +11,13 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
+	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/providers/snow"
 	snowv1 "github.com/aws/eks-anywhere/pkg/providers/snow/api/v1beta1"
@@ -30,10 +31,10 @@ func TestControlPlaneObjects(t *testing.T) {
 			g.ctx,
 			"snow-test",
 			constants.EksaSystemNamespace,
-			&controlplanev1.KubeadmControlPlane{},
+			&controlplanev1beta2.KubeadmControlPlane{},
 		).
-		DoAndReturn(func(_ context.Context, _, _ string, obj *controlplanev1.KubeadmControlPlane) error {
-			obj.Spec.MachineTemplate.InfrastructureRef.Name = "test-cp-1"
+		DoAndReturn(func(_ context.Context, _, _ string, obj *controlplanev1beta2.KubeadmControlPlane) error {
+			obj.Spec.MachineTemplate.Spec.InfrastructureRef.Name = "test-cp-1"
 			return nil
 		})
 	g.kubeconfigClient.EXPECT().
@@ -54,7 +55,7 @@ func TestControlPlaneObjects(t *testing.T) {
 	mt.SetName(wantMachineTemplateName)
 	mt.Spec.Template.Spec.InstanceType = "sbe-c.large"
 	kcp := wantKubeadmControlPlane("1.21")
-	kcp.Spec.MachineTemplate.InfrastructureRef.Name = wantMachineTemplateName
+	kcp.Spec.MachineTemplate.Spec.InfrastructureRef.Name = wantMachineTemplateName
 	kcp.Spec.KubeadmConfigSpec.JoinConfiguration.NodeRegistration.IgnorePreflightErrors = []string{"DirAvailable--etc-kubernetes-manifests"}
 
 	got, err := snow.ControlPlaneObjects(g.ctx, g.logger, g.clusterSpec, g.kubeconfigClient)
@@ -94,10 +95,10 @@ func TestControlPlaneObjectsWithIPPools(t *testing.T) {
 			g.ctx,
 			"snow-test",
 			constants.EksaSystemNamespace,
-			&controlplanev1.KubeadmControlPlane{},
+			&controlplanev1beta2.KubeadmControlPlane{},
 		).
-		DoAndReturn(func(_ context.Context, _, _ string, obj *controlplanev1.KubeadmControlPlane) error {
-			obj.Spec.MachineTemplate.InfrastructureRef.Name = "test-cp-1"
+		DoAndReturn(func(_ context.Context, _, _ string, obj *controlplanev1beta2.KubeadmControlPlane) error {
+			obj.Spec.MachineTemplate.Spec.InfrastructureRef.Name = "test-cp-1"
 			return nil
 		})
 	g.kubeconfigClient.EXPECT().
@@ -118,7 +119,7 @@ func TestControlPlaneObjectsWithIPPools(t *testing.T) {
 	mt.SetName(wantMachineTemplateName)
 	mt.Spec.Template.Spec.InstanceType = "sbe-c.large"
 	kcp := wantKubeadmControlPlane("1.21")
-	kcp.Spec.MachineTemplate.InfrastructureRef.Name = wantMachineTemplateName
+	kcp.Spec.MachineTemplate.Spec.InfrastructureRef.Name = wantMachineTemplateName
 	kcp.Spec.KubeadmConfigSpec.JoinConfiguration.NodeRegistration.IgnorePreflightErrors = []string{"DirAvailable--etc-kubernetes-manifests"}
 
 	got, err := snow.ControlPlaneObjects(g.ctx, g.logger, g.clusterSpec, g.kubeconfigClient)
@@ -171,10 +172,10 @@ func TestControlPlaneObjectsUnstackedEtcd(t *testing.T) {
 			g.ctx,
 			"snow-test",
 			constants.EksaSystemNamespace,
-			&controlplanev1.KubeadmControlPlane{},
+			&controlplanev1beta2.KubeadmControlPlane{},
 		).
-		DoAndReturn(func(_ context.Context, _, _ string, obj *controlplanev1.KubeadmControlPlane) error {
-			obj.Spec.MachineTemplate.InfrastructureRef.Name = "test-cp-1"
+		DoAndReturn(func(_ context.Context, _, _ string, obj *controlplanev1beta2.KubeadmControlPlane) error {
+			obj.Spec.MachineTemplate.Spec.InfrastructureRef.Name = "test-cp-1"
 			return nil
 		})
 	g.kubeconfigClient.EXPECT().
@@ -219,7 +220,7 @@ func TestControlPlaneObjectsUnstackedEtcd(t *testing.T) {
 	mtCp.SetName(mtCpName)
 	mtCp.Spec.Template.Spec.InstanceType = "sbe-c.large"
 	kcp := wantKubeadmControlPlaneUnstackedEtcd()
-	kcp.Spec.MachineTemplate.InfrastructureRef.Name = mtCpName
+	kcp.Spec.MachineTemplate.Spec.InfrastructureRef.Name = mtCpName
 	kcp.Spec.KubeadmConfigSpec.JoinConfiguration.NodeRegistration.IgnorePreflightErrors = []string{"DirAvailable--etc-kubernetes-manifests"}
 
 	mtEtcdName := "test-etcd-2"
@@ -267,7 +268,7 @@ func TestControlPlaneObjectsOldControlPlaneNotExists(t *testing.T) {
 			g.ctx,
 			"snow-test",
 			constants.EksaSystemNamespace,
-			&controlplanev1.KubeadmControlPlane{},
+			&controlplanev1beta2.KubeadmControlPlane{},
 		).
 		Return(apierrors.NewNotFound(schema.GroupResource{Group: "", Resource: ""}, ""))
 
@@ -289,10 +290,10 @@ func TestControlPlaneObjectsOldMachineTemplateNotExists(t *testing.T) {
 			g.ctx,
 			"snow-test",
 			constants.EksaSystemNamespace,
-			&controlplanev1.KubeadmControlPlane{},
+			&controlplanev1beta2.KubeadmControlPlane{},
 		).
-		DoAndReturn(func(_ context.Context, _, _ string, obj *controlplanev1.KubeadmControlPlane) error {
-			obj.Spec.MachineTemplate.InfrastructureRef.Name = "snow-test-control-plane-1"
+		DoAndReturn(func(_ context.Context, _, _ string, obj *controlplanev1beta2.KubeadmControlPlane) error {
+			obj.Spec.MachineTemplate.Spec.InfrastructureRef.Name = "snow-test-control-plane-1"
 			return nil
 		})
 	g.kubeconfigClient.EXPECT().
@@ -321,7 +322,7 @@ func TestControlPlaneObjectsGetOldControlPlaneError(t *testing.T) {
 			g.ctx,
 			"snow-test",
 			constants.EksaSystemNamespace,
-			&controlplanev1.KubeadmControlPlane{},
+			&controlplanev1beta2.KubeadmControlPlane{},
 		).
 		Return(errors.New("get cp error"))
 
@@ -336,10 +337,10 @@ func TestControlPlaneObjectsGetOldMachineTemplateError(t *testing.T) {
 			g.ctx,
 			"snow-test",
 			constants.EksaSystemNamespace,
-			&controlplanev1.KubeadmControlPlane{},
+			&controlplanev1beta2.KubeadmControlPlane{},
 		).
-		DoAndReturn(func(_ context.Context, _, _ string, obj *controlplanev1.KubeadmControlPlane) error {
-			obj.Spec.MachineTemplate.InfrastructureRef.Name = "test-cp-1"
+		DoAndReturn(func(_ context.Context, _, _ string, obj *controlplanev1beta2.KubeadmControlPlane) error {
+			obj.Spec.MachineTemplate.Spec.InfrastructureRef.Name = "test-cp-1"
 			return nil
 		})
 	g.kubeconfigClient.EXPECT().
@@ -376,9 +377,9 @@ func TestWorkersObjects(t *testing.T) {
 			g.ctx,
 			"snow-test-md-0-1",
 			constants.EksaSystemNamespace,
-			&bootstrapv1.KubeadmConfigTemplate{},
+			&bootstrapv1beta2.KubeadmConfigTemplate{},
 		).
-		DoAndReturn(func(_ context.Context, _, _ string, obj *bootstrapv1.KubeadmConfigTemplate) error {
+		DoAndReturn(func(_ context.Context, _, _ string, obj *bootstrapv1beta2.KubeadmConfigTemplate) error {
 			wantKubeadmConfigTemplate().DeepCopyInto(obj)
 			return nil
 		})
@@ -451,9 +452,9 @@ func TestWorkersObjectsWithIPPools(t *testing.T) {
 			g.ctx,
 			"snow-test-md-0-1",
 			constants.EksaSystemNamespace,
-			&bootstrapv1.KubeadmConfigTemplate{},
+			&bootstrapv1beta2.KubeadmConfigTemplate{},
 		).
-		DoAndReturn(func(_ context.Context, _, _ string, obj *bootstrapv1.KubeadmConfigTemplate) error {
+		DoAndReturn(func(_ context.Context, _, _ string, obj *bootstrapv1beta2.KubeadmConfigTemplate) error {
 			wantKubeadmConfigTemplate().DeepCopyInto(obj)
 			return nil
 		})
@@ -519,7 +520,7 @@ func TestWorkersObjectsOldKubeadmConfigTemplateNotExists(t *testing.T) {
 			g.ctx,
 			"snow-test-md-0-1",
 			constants.EksaSystemNamespace,
-			&bootstrapv1.KubeadmConfigTemplate{},
+			&bootstrapv1beta2.KubeadmConfigTemplate{},
 		).
 		Return(apierrors.NewNotFound(schema.GroupResource{Group: "", Resource: ""}, ""))
 	g.kubeconfigClient.EXPECT().
@@ -557,9 +558,9 @@ func TestWorkersObjectsOldMachineTemplateNotExists(t *testing.T) {
 			g.ctx,
 			"snow-test-md-0-1",
 			constants.EksaSystemNamespace,
-			&bootstrapv1.KubeadmConfigTemplate{},
+			&bootstrapv1beta2.KubeadmConfigTemplate{},
 		).
-		DoAndReturn(func(_ context.Context, _, _ string, obj *bootstrapv1.KubeadmConfigTemplate) error {
+		DoAndReturn(func(_ context.Context, _, _ string, obj *bootstrapv1beta2.KubeadmConfigTemplate) error {
 			wantKubeadmConfigTemplate().DeepCopyInto(obj)
 			return nil
 		})
@@ -598,11 +599,11 @@ func TestWorkersObjectsTaintsUpdated(t *testing.T) {
 			g.ctx,
 			"snow-test-md-0-1",
 			constants.EksaSystemNamespace,
-			&bootstrapv1.KubeadmConfigTemplate{},
+			&bootstrapv1beta2.KubeadmConfigTemplate{},
 		).
-		DoAndReturn(func(_ context.Context, _, _ string, obj *bootstrapv1.KubeadmConfigTemplate) error {
+		DoAndReturn(func(_ context.Context, _, _ string, obj *bootstrapv1beta2.KubeadmConfigTemplate) error {
 			wantKubeadmConfigTemplate().DeepCopyInto(obj)
-			obj.Spec.Template.Spec.JoinConfiguration.NodeRegistration.Taints = []v1.Taint{
+			obj.Spec.Template.Spec.JoinConfiguration.NodeRegistration.Taints = &[]v1.Taint{
 				{
 					Key:    "key1",
 					Value:  "val1",
@@ -659,14 +660,14 @@ func TestWorkersObjectsLabelsUpdated(t *testing.T) {
 			g.ctx,
 			"snow-test-md-0-1",
 			constants.EksaSystemNamespace,
-			&bootstrapv1.KubeadmConfigTemplate{},
+			&bootstrapv1beta2.KubeadmConfigTemplate{},
 		).
-		DoAndReturn(func(_ context.Context, _, _ string, obj *bootstrapv1.KubeadmConfigTemplate) error {
+		DoAndReturn(func(_ context.Context, _, _ string, obj *bootstrapv1beta2.KubeadmConfigTemplate) error {
 			wantKubeadmConfigTemplate().DeepCopyInto(obj)
-			obj.Spec.Template.Spec.JoinConfiguration.NodeRegistration.KubeletExtraArgs = map[string]string{
+			obj.Spec.Template.Spec.JoinConfiguration.NodeRegistration.KubeletExtraArgs = clusterapi.ExtraArgs{
 				"provider-id": "aws-snow:////'{{ ds.meta_data.instance_id }}'",
 				"node-labels": "label1=val2,label2=val1",
-			}
+			}.ToArgs()
 			return nil
 		})
 	g.kubeconfigClient.EXPECT().
@@ -688,10 +689,10 @@ func TestWorkersObjectsLabelsUpdated(t *testing.T) {
 	md.Spec.Template.Spec.InfrastructureRef.Name = "snow-test-md-0-2"
 	kct := wantKubeadmConfigTemplate()
 	kct.SetName("snow-test-md-0-2")
-	kct.Spec.Template.Spec.JoinConfiguration.NodeRegistration.KubeletExtraArgs = map[string]string{
+	kct.Spec.Template.Spec.JoinConfiguration.NodeRegistration.KubeletExtraArgs = clusterapi.ExtraArgs{
 		"provider-id": "aws-snow:////'{{ ds.meta_data.instance_id }}'",
 		"node-labels": "label1=val1,label2=val2",
-	}
+	}.ToArgs()
 	mt.SetName("snow-test-md-0-2")
 
 	g.Expect(err).To(Succeed())
@@ -733,7 +734,7 @@ func TestWorkersObjectsGetKubeadmConfigTemplateError(t *testing.T) {
 			g.ctx,
 			"snow-test-md-0-1",
 			constants.EksaSystemNamespace,
-			&bootstrapv1.KubeadmConfigTemplate{},
+			&bootstrapv1beta2.KubeadmConfigTemplate{},
 		).
 		Return(errors.New("get kct error"))
 	g.kubeconfigClient.EXPECT().
@@ -797,9 +798,9 @@ func TestWorkersObjectsWithRegistryMirror(t *testing.T) {
 			g.Expect(got).To(HaveLen(3)) // MachineDeployment, KubeadmConfigTemplate, MachineTemplate
 
 			// Extract KubeadmConfigTemplate from results
-			var gotKct *bootstrapv1.KubeadmConfigTemplate
+			var gotKct *bootstrapv1beta2.KubeadmConfigTemplate
 			for _, obj := range got {
-				if kct, ok := obj.(*bootstrapv1.KubeadmConfigTemplate); ok {
+				if kct, ok := obj.(*bootstrapv1beta2.KubeadmConfigTemplate); ok {
 					gotKct = kct
 					break
 				}

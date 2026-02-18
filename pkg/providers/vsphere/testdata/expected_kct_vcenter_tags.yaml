@@ -1,4 +1,4 @@
-apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta2
 kind: KubeadmConfigTemplate
 metadata:
   name: 
@@ -11,10 +11,14 @@ spec:
           criSocket: /var/run/containerd/containerd.sock
           taints: []
           kubeletExtraArgs:
-            cloud-provider: external
-            read-only-port: "0"
-            anonymous-auth: "false"
-            tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+          - name: cloud-provider
+            value: "external"
+          - name: read-only-port
+            value: "0"
+          - name: anonymous-auth
+            value: "false"
+          - name: tls-cipher-suites
+            value: "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
           name: '{{ ds.meta_data.hostname }}'
       preKubeadmCommands:
       - hostname "{{ ds.meta_data.hostname }}"

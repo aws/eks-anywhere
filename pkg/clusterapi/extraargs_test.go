@@ -7,7 +7,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/crypto"
-	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
@@ -135,45 +134,6 @@ func TestExtraArgsAddIfNotEmpty(t *testing.T) {
 
 			if gotV != tt.wantV {
 				t.Errorf("ExtraArgs.AddIfNotZero() gotValue = %v, wantValue %v", gotV, tt.wantV)
-			}
-		})
-	}
-}
-
-func TestExtraArgsToPartialYaml(t *testing.T) {
-	tests := []struct {
-		testName string
-		e        clusterapi.ExtraArgs
-		want     templater.PartialYaml
-	}{
-		{
-			testName: "valid args",
-			e: clusterapi.ExtraArgs{
-				"oidc-client-id":       "my-client-id",
-				"oidc-groups-claim":    "claim1,claim2",
-				"oidc-groups-prefix":   "prefix-for-groups",
-				"oidc-issuer-url":      "https://mydomain.com/issuer",
-				"oidc-required-claim":  "hd=example.com,sub=test",
-				"oidc-signing-algs":    "ES256,HS256",
-				"oidc-username-claim":  "username-claim",
-				"oidc-username-prefix": "username-prefix",
-			},
-			want: templater.PartialYaml{
-				"oidc-client-id":       "my-client-id",
-				"oidc-groups-claim":    "claim1,claim2",
-				"oidc-groups-prefix":   "prefix-for-groups",
-				"oidc-issuer-url":      "https://mydomain.com/issuer",
-				"oidc-required-claim":  "hd=example.com,sub=test",
-				"oidc-signing-algs":    "ES256,HS256",
-				"oidc-username-claim":  "username-claim",
-				"oidc-username-prefix": "username-prefix",
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.testName, func(t *testing.T) {
-			if got := tt.e.ToPartialYaml(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ExtraArgs.ToPartialYaml() = %v, want %v", got, tt.want)
 			}
 		})
 	}

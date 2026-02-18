@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	. "github.com/onsi/gomega"
-	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
@@ -14,7 +14,7 @@ func TestSetKubeVipInKubeadmControlPlane(t *testing.T) {
 	g := newApiBuilerTest(t)
 	got := wantKubeadmControlPlane()
 	want := got.DeepCopy()
-	want.Spec.KubeadmConfigSpec.Files = []bootstrapv1.File{
+	want.Spec.KubeadmConfigSpec.Files = []bootstrapv1beta2.File{
 		{
 			Path:    "/etc/kubernetes/manifests/kube-vip.yaml",
 			Owner:   "root:root",

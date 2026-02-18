@@ -98,15 +98,22 @@ func validateKCP(ctx context.Context, vc clusterf.StateValidationConfig) error {
 	}
 
 	for _, condition := range kcp.Status.Conditions {
-		if condition.Type == v1beta1.ReadyCondition {
-			if condition.Status != corev1.ConditionTrue {
+		if condition.Type == clusterv1beta2.AvailableCondition {
+			if condition.Status != metav1.ConditionTrue {
 				return fmt.Errorf("kcp %s is not ready yet", kcp.GetName())
 			}
 			break
 		}
 	}
-	if kcp.Status.UpdatedReplicas != kcp.Status.ReadyReplicas || *kcp.Spec.Replicas != kcp.Status.UpdatedReplicas {
-		return fmt.Errorf("kcp replicas count %d, updated replicas count %d and ready replicas count %d are not in sync", *kcp.Spec.Replicas, kcp.Status.UpdatedReplicas, kcp.Status.ReadyReplicas)
+	var upToDate, ready int32
+	if kcp.Status.UpToDateReplicas != nil {
+		upToDate = *kcp.Status.UpToDateReplicas
+	}
+	if kcp.Status.ReadyReplicas != nil {
+		ready = *kcp.Status.ReadyReplicas
+	}
+	if upToDate != ready || *kcp.Spec.Replicas != upToDate {
+		return fmt.Errorf("kcp replicas count %d, up-to-date replicas count %d and ready replicas count %d are not in sync", *kcp.Spec.Replicas, upToDate, ready)
 	}
 	return nil
 }
@@ -406,8 +413,15 @@ func validateKCPForAPIServerExtraArgs(ctx context.Context, vc clusterf.StateVali
 	if apiServerExtraArgsKCP == nil {
 		return fmt.Errorf("kcp object APIServerExtraArgs is nil expected: %v", apiServerExtraArgsSpec)
 	}
+	// Build a lookup map from []Arg for comparison
+	kcpArgsMap := make(map[string]string, len(apiServerExtraArgsKCP))
+	for _, arg := range apiServerExtraArgsKCP {
+		if arg.Value != nil {
+			kcpArgsMap[arg.Name] = *arg.Value
+		}
+	}
 	for k, v := range apiServerExtraArgsSpec {
-		if val, ok := apiServerExtraArgsKCP[k]; !ok || val != v {
+		if val, ok := kcpArgsMap[k]; !ok || val != v {
 			return fmt.Errorf("kcp object does not have required APIServerExtraArgs expected: %v, actual: %v", apiServerExtraArgsSpec, apiServerExtraArgsKCP)
 		}
 	}

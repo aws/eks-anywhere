@@ -4,7 +4,7 @@ import (
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
@@ -43,7 +43,7 @@ func RegisterControlPlaneMappings(parser *yamlutil.Parser) error {
 		),
 		yamlutil.NewMapping(
 			"KubeadmControlPlane", func() yamlutil.APIObject {
-				return &controlplanev1.KubeadmControlPlane{}
+				return &controlplanev1beta2.KubeadmControlPlane{}
 			},
 		),
 		yamlutil.NewMapping(
@@ -118,9 +118,10 @@ func ProcessKubeadmControlPlane[C clusterapi.Object[C], M clusterapi.Object[M]](
 		return
 	}
 
-	cp.KubeadmControlPlane = kcp.(*controlplanev1.KubeadmControlPlane)
+	cp.KubeadmControlPlane = kcp.(*controlplanev1beta2.KubeadmControlPlane)
+	sortKCPExtraArgs(cp.KubeadmControlPlane)
 
-	machineTemplate := lookup.GetFromRef(cp.KubeadmControlPlane.Spec.MachineTemplate.InfrastructureRef)
+	machineTemplate := lookup.GetFromContractVersionedRef(cp.KubeadmControlPlane.Spec.MachineTemplate.Spec.InfrastructureRef)
 	if machineTemplate == nil {
 		return
 	}
@@ -147,4 +148,23 @@ func ProcessEtcdCluster[C clusterapi.Object[C], M clusterapi.Object[M]](cp *clus
 	}
 
 	cp.EtcdMachineTemplate = etcdMachineTemplate.(M)
+}
+
+// sortKCPExtraArgs sorts all ExtraArgs slices in a KubeadmControlPlane for deterministic comparison.
+// YAML-parsed KCP objects have args in template order, while test helpers use alphabetical order via ToArgs().
+func sortKCPExtraArgs(kcp *controlplanev1beta2.KubeadmControlPlane) {
+	if kcp == nil {
+		return
+	}
+	spec := &kcp.Spec.KubeadmConfigSpec
+	clusterapi.SortArgs(spec.ClusterConfiguration.APIServer.ExtraArgs)
+	clusterapi.SortArgs(spec.ClusterConfiguration.ControllerManager.ExtraArgs)
+	clusterapi.SortArgs(spec.ClusterConfiguration.Scheduler.ExtraArgs)
+	clusterapi.SortArgs(spec.ClusterConfiguration.Etcd.Local.ExtraArgs)
+	if spec.InitConfiguration.NodeRegistration.KubeletExtraArgs != nil {
+		clusterapi.SortArgs(spec.InitConfiguration.NodeRegistration.KubeletExtraArgs)
+	}
+	if spec.JoinConfiguration.NodeRegistration.KubeletExtraArgs != nil {
+		clusterapi.SortArgs(spec.JoinConfiguration.NodeRegistration.KubeletExtraArgs)
+	}
 }

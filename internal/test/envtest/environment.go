@@ -25,8 +25,8 @@ import (
 	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta3"
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
 	addonsv1 "sigs.k8s.io/cluster-api/api/addons/v1beta1"
-	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	clusterctlv1 "sigs.k8s.io/cluster-api/cmd/clusterctl/api/v1alpha3"
@@ -65,8 +65,8 @@ func init() {
 	utilruntime.Must(clusterv1.AddToScheme(scheme.Scheme))
 	utilruntime.Must(clusterv1beta2.AddToScheme(scheme.Scheme))
 	utilruntime.Must(clusterctlv1.AddToScheme(scheme.Scheme))
-	utilruntime.Must(controlplanev1.AddToScheme(scheme.Scheme))
-	utilruntime.Must(bootstrapv1.AddToScheme(scheme.Scheme))
+	utilruntime.Must(controlplanev1beta2.AddToScheme(scheme.Scheme))
+	utilruntime.Must(bootstrapv1beta2.AddToScheme(scheme.Scheme))
 	utilruntime.Must(vspherev1.AddToScheme(scheme.Scheme))
 	utilruntime.Must(dockerv1.AddToScheme(scheme.Scheme))
 	utilruntime.Must(dockerv1beta2.AddToScheme(scheme.Scheme))

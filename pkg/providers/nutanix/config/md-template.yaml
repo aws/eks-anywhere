@@ -221,7 +221,7 @@ spec:
 {{- end }}
 ---
 {{ end -}}
-apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta2
 kind: KubeadmConfigTemplate
 metadata:
   name: "{{.workloadkubeadmconfigTemplateName}}"
@@ -245,18 +245,17 @@ spec:
 {{- end }}
         nodeRegistration:
           kubeletExtraArgs:
-            cloud-provider: external
-            # We have to pin the cgroupDriver to cgroupfs as kubeadm >=1.21 defaults to systemd
-            # kind will implement systemd support in: https://github.com/kubernetes-sigs/kind/issues/1726
-            #cgroup-driver: cgroupfs
+          - name: cloud-provider
+            value: "external"
 {{- if not .kubeletConfiguration }}
-            eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
+          - name: eviction-hard
+            value: "nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%"
 {{- if .kubeletExtraArgs }}
-{{ .kubeletExtraArgs.ToYaml | indent 12 }}
+{{ .kubeletExtraArgs.ToYaml | indent 10 }}
 {{- end }}
 {{- end }}
 {{- if .nodeLabelArgs }}
-{{ .nodeLabelArgs.ToYaml | indent 12 }}
+{{ .nodeLabelArgs.ToYaml | indent 10 }}
 {{- end }}
 {{- if .workerNodeGroupTaints }}
           taints:

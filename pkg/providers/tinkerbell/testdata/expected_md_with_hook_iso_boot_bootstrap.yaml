@@ -173,7 +173,7 @@ spec:
         version: "0.1"
         
 ---
-apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta2
 kind: KubeadmConfigTemplate
 metadata:
   name: test-md-0-1
@@ -184,10 +184,14 @@ spec:
       joinConfiguration:
         nodeRegistration:
           kubeletExtraArgs:
-            provider-id: PROVIDER_ID
-            read-only-port: "0"
-            anonymous-auth: "false"
-            tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+          - name: provider-id
+            value: "PROVIDER_ID"
+          - name: read-only-port
+            value: "0"
+          - name: anonymous-auth
+            value: "false"
+          - name: tls-cipher-suites
+            value: "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
       users:
       - name: ec2-user
         sshAuthorizedKeys:

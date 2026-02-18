@@ -5,7 +5,7 @@ import (
 
 	etcdbootstrapv1 "github.com/aws/etcdadm-bootstrap-provider/api/v1beta1"
 	. "github.com/onsi/gomega"
-	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
@@ -14,14 +14,14 @@ import (
 var proxyTests = []struct {
 	name            string
 	proxy           *v1alpha1.ProxyConfiguration
-	wantFiles       []bootstrapv1.File
-	wantProxyConfig bootstrapv1.ProxyConfiguration
+	wantFiles       []bootstrapv1beta2.File
+	wantProxyConfig bootstrapv1beta2.ProxyConfiguration
 	wantProxyEtcd   *etcdbootstrapv1.ProxyConfiguration
 }{
 	{
 		name:      "proxy config nil",
 		proxy:     nil,
-		wantFiles: []bootstrapv1.File{},
+		wantFiles: []bootstrapv1beta2.File{},
 	},
 	{
 		name: "with proxy, pods cidr, service cidr, cp endpoint",
@@ -33,7 +33,7 @@ var proxyTests = []struct {
 				"1.2.3.5/0",
 			},
 		},
-		wantFiles: []bootstrapv1.File{
+		wantFiles: []bootstrapv1beta2.File{
 			{
 				Path:  "/etc/systemd/system/containerd.service.d/http-proxy.conf",
 				Owner: "root:root",
@@ -43,7 +43,7 @@ Environment="HTTPS_PROXY=1.2.3.4:8888"
 Environment="NO_PROXY=1.2.3.4/5,1.2.3.4/5,1.2.3.4/0,1.2.3.5/0,localhost,127.0.0.1,.svc,1.2.3.4"`,
 			},
 		},
-		wantProxyConfig: bootstrapv1.ProxyConfiguration{
+		wantProxyConfig: bootstrapv1beta2.ProxyConfiguration{
 			HTTPSProxy: "1.2.3.4:8888",
 			NoProxy: []string{
 				"1.2.3.4/5",

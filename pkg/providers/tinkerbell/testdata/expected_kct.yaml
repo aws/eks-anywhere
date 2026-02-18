@@ -165,7 +165,7 @@ spec:
         version: "0.1"
         
 ---
-apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta2
 kind: KubeadmConfigTemplate
 metadata:
   name: test-test-1
@@ -178,7 +178,8 @@ spec:
           directory: /etc/kubernetes/patches
         nodeRegistration:
           kubeletExtraArgs:
-            provider-id: PROVIDER_ID
+          - name: provider-id
+            value: "PROVIDER_ID"
       files:
         - content: |
             apiVersion: kubelet.config.k8s.io/v1beta1

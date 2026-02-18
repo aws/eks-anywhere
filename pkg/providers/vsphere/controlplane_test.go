@@ -13,8 +13,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
 	addons "sigs.k8s.io/cluster-api/api/addons/v1beta1"
-	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/yaml"
 
@@ -149,9 +149,9 @@ func TestControlPlaneSpecUpdateMachineTemplates(t *testing.T) {
 	spec.Cluster.Spec.ControlPlaneConfiguration.Taints = cpTaints
 	spec.VSphereMachineConfigs["test-etcd"].Spec.Datastore = "new-datastore"
 
-	wantKCP.Spec.MachineTemplate.InfrastructureRef.Name = "test-control-plane-2"
-	wantKCP.Spec.KubeadmConfigSpec.InitConfiguration.NodeRegistration.Taints = cpTaints
-	wantKCP.Spec.KubeadmConfigSpec.JoinConfiguration.NodeRegistration.Taints = cpTaints
+	wantKCP.Spec.MachineTemplate.Spec.InfrastructureRef.Name = "test-control-plane-2"
+	wantKCP.Spec.KubeadmConfigSpec.InitConfiguration.NodeRegistration.Taints = &cpTaints
+	wantKCP.Spec.KubeadmConfigSpec.JoinConfiguration.NodeRegistration.Taints = &cpTaints
 
 	wantEtcd.Spec.InfrastructureTemplate.Name = "test-etcd-3"
 
@@ -239,7 +239,7 @@ func TestControlPlaneSpecRegistryMirrorConfiguration(t *testing.T) {
 	tests := []struct {
 		name         string
 		mirrorConfig *anywherev1.RegistryMirrorConfiguration
-		files        []bootstrapv1.File
+		files        []bootstrapv1beta2.File
 	}{
 		{
 			name:         "insecure skip verify",
@@ -261,7 +261,7 @@ func TestControlPlaneSpecRegistryMirrorConfiguration(t *testing.T) {
 			g.Expect(err).NotTo(HaveOccurred())
 			g.Expect(cp).NotTo(BeNil())
 			g.Expect(cp.Cluster).To(Equal(capiCluster()))
-			g.Expect(cp.KubeadmControlPlane).To(Equal(kubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
+			g.Expect(cp.KubeadmControlPlane).To(Equal(kubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
 				kcp.Spec.KubeadmConfigSpec.Files = append(kcp.Spec.KubeadmConfigSpec.Files, tt.files...)
 				kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands = append(test.RegistryMirrorSudoPreKubeadmCommands(), kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands...)
 			})))
@@ -293,10 +293,10 @@ func TestControlPlaneSpecWithUpgradeRolloutStrategyRollingUpdate(t *testing.T) {
 	cp, err := vsphere.ControlPlaneSpec(ctx, logger, client, spec)
 	g.Expect(err).NotTo(HaveOccurred())
 	g.Expect(cp).NotTo(BeNil())
-	g.Expect(cp.KubeadmControlPlane).To(Equal(kubeadmControlPlane(func(k *controlplanev1.KubeadmControlPlane) {
+	g.Expect(cp.KubeadmControlPlane).To(Equal(kubeadmControlPlane(func(k *controlplanev1beta2.KubeadmControlPlane) {
 		maxSurge := intstr.FromInt(1)
-		k.Spec.RolloutStrategy = &controlplanev1.RolloutStrategy{
-			RollingUpdate: &controlplanev1.RollingUpdate{
+		k.Spec.Rollout.Strategy = controlplanev1beta2.KubeadmControlPlaneRolloutStrategy{
+			RollingUpdate: controlplanev1beta2.KubeadmControlPlaneRolloutStrategyRollingUpdate{
 				MaxSurge: &maxSurge,
 			},
 		}
@@ -316,8 +316,8 @@ func TestControlPlaneSpecWithUpgradeRolloutStrategyInPlace(t *testing.T) {
 	cp, err := vsphere.ControlPlaneSpec(ctx, logger, client, spec)
 	g.Expect(err).NotTo(HaveOccurred())
 	g.Expect(cp).NotTo(BeNil())
-	g.Expect(cp.KubeadmControlPlane).To(Equal(kubeadmControlPlane(func(k *controlplanev1.KubeadmControlPlane) {
-		k.Spec.RolloutStrategy = &controlplanev1.RolloutStrategy{
+	g.Expect(cp.KubeadmControlPlane).To(Equal(kubeadmControlPlane(func(k *controlplanev1beta2.KubeadmControlPlane) {
+		k.Spec.Rollout.Strategy = controlplanev1beta2.KubeadmControlPlaneRolloutStrategy{
 			Type: "InPlace",
 		}
 	})))
@@ -476,20 +476,20 @@ func clusterResourceSet() *addons.ClusterResourceSet {
 	}
 }
 
-func kubeadmControlPlane(opts ...func(*controlplanev1.KubeadmControlPlane)) *controlplanev1.KubeadmControlPlane {
-	var kcp *controlplanev1.KubeadmControlPlane
-	b := []byte(`apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+func kubeadmControlPlane(opts ...func(*controlplanev1beta2.KubeadmControlPlane)) *controlplanev1beta2.KubeadmControlPlane {
+	var kcp *controlplanev1beta2.KubeadmControlPlane
+	b := []byte(`apiVersion: controlplane.cluster.x-k8s.io/v1beta2
 kind: KubeadmControlPlane
 metadata:
   name: test
   namespace: eksa-system
 spec:
   machineTemplate:
-    infrastructureRef:
-      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-      kind: VSphereMachineTemplate
-      name: test-control-plane-1
-      namespace: eksa-system
+    spec:
+      infrastructureRef:
+        apiGroup: infrastructure.cluster.x-k8s.io
+        kind: VSphereMachineTemplate
+        name: test-control-plane-1
   kubeadmConfigSpec:
     clusterConfiguration:
       imageRepository: public.ecr.aws/eks-distro/kubernetes
@@ -504,14 +504,22 @@ spec:
         imageTag: v1.8.0-eks-1-19-4
       apiServer:
         extraArgs:
-          cloud-provider: external
-          audit-policy-file: /etc/kubernetes/audit-policy.yaml
-          audit-log-path: /var/log/kubernetes/api-audit.log
-          audit-log-maxage: "30"
-          audit-log-maxbackup: "10"
-          audit-log-maxsize: "512"
-          profiling: "false"
-          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        - name: audit-log-maxage
+          value: "30"
+        - name: audit-log-maxbackup
+          value: "10"
+        - name: audit-log-maxsize
+          value: "512"
+        - name: audit-log-path
+          value: "/var/log/kubernetes/api-audit.log"
+        - name: audit-policy-file
+          value: "/etc/kubernetes/audit-policy.yaml"
+        - name: cloud-provider
+          value: external
+        - name: profiling
+          value: "false"
+        - name: tls-cipher-suites
+          value: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         extraVolumes:
         - hostPath: /etc/kubernetes/audit-policy.yaml
           mountPath: /etc/kubernetes/audit-policy.yaml
@@ -525,13 +533,18 @@ spec:
           readOnly: false
       controllerManager:
         extraArgs:
-          cloud-provider: external
-          profiling: "false"
-          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        - name: cloud-provider
+          value: external
+        - name: profiling
+          value: "false"
+        - name: tls-cipher-suites
+          value: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
       scheduler:
         extraArgs:
-          profiling: "false"
-          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        - name: profiling
+          value: "false"
+        - name: tls-cipher-suites
+          value: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     files:
     - content: |
         apiVersion: v1
@@ -749,19 +762,27 @@ spec:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:
-          cloud-provider: external
-          read-only-port: "0"
-          anonymous-auth: "false"
-          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        - name: anonymous-auth
+          value: "false"
+        - name: cloud-provider
+          value: external
+        - name: read-only-port
+          value: "0"
+        - name: tls-cipher-suites
+          value: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         name: '{{ ds.meta_data.hostname }}'
     joinConfiguration:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:
-          cloud-provider: external
-          read-only-port: "0"
-          anonymous-auth: "false"
-          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        - name: anonymous-auth
+          value: "false"
+        - name: cloud-provider
+          value: external
+        - name: read-only-port
+          value: "0"
+        - name: tls-cipher-suites
+          value: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         name: '{{ ds.meta_data.hostname }}'
     preKubeadmCommands:
     - hostname "{{ ds.meta_data.hostname }}"
@@ -776,10 +797,11 @@ spec:
       sudo: ALL=(ALL) NOPASSWD:ALL
     format: cloud-config
   replicas: 3
-  rolloutStrategy:
-    rollingUpdate:
-      maxSurge: 1
-    type: RollingUpdate
+  rollout:
+    strategy:
+      rollingUpdate:
+        maxSurge: 1
+      type: RollingUpdate
   version: v1.19.8-eks-1-19-4`)
 	if err := yaml.UnmarshalStrict(b, &kcp); err != nil {
 		return nil

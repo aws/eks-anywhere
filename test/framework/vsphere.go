@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/internal/test/cleanup"
@@ -338,7 +338,7 @@ func WithBottlerocketKubernetesSettingsForAllMachines() VSphereOpt {
 			v.t.Fatalf("failed to get bottlerocket kubernetes settings from env: %v", err)
 		}
 		config := &anywherev1.BottlerocketConfiguration{
-			Kubernetes: &v1beta1.BottlerocketKubernetesSettings{
+			Kubernetes: &bootstrapv1beta2.BottlerocketKubernetesSettings{
 				AllowedUnsafeSysctls: unsafeSysctls,
 				ClusterDNSIPs:        clusterDNSIPS,
 				MaxPods:              maxPods,

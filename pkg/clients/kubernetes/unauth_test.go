@@ -10,7 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/pointer"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 	clusterapiv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -44,8 +44,8 @@ func TestUnAuthClientGetSuccess(t *testing.T) {
 		{
 			name:             "capi kubeadm controlplane",
 			namespace:        "eksa-system",
-			obj:              &controlplanev1.KubeadmControlPlane{},
-			wantResourceType: "KubeadmControlPlane.v1beta1.controlplane.cluster.x-k8s.io",
+			obj:              &controlplanev1beta2.KubeadmControlPlane{},
+			wantResourceType: "KubeadmControlPlane.v1beta2.controlplane.cluster.x-k8s.io",
 			options:          kubernetes.KubectlGetOptions{Name: "capi kubeadm controlplane", Namespace: "eksa-system"},
 		},
 		{

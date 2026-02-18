@@ -8,7 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -189,8 +189,8 @@ func capiCluster() *clusterv1beta2.Cluster {
 	}
 }
 
-func kubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
-	return &controlplanev1.KubeadmControlPlane{
+func kubeadmControlPlane() *controlplanev1beta2.KubeadmControlPlane {
+	return &controlplanev1beta2.KubeadmControlPlane{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-cluster",
 			Namespace: "eksa-system",

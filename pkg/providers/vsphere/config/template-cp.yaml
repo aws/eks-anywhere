@@ -75,18 +75,18 @@ spec:
       {{- end }}
 {{- end }}
 ---
-apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+apiVersion: controlplane.cluster.x-k8s.io/v1beta2
 kind: KubeadmControlPlane
 metadata:
   name: {{.clusterName}}
   namespace: {{.eksaSystemNamespace}}
 spec:
   machineTemplate:
-    infrastructureRef:
-      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-      kind: VSphereMachineTemplate
-      name: {{.controlPlaneTemplateName}}
-      namespace: {{.eksaSystemNamespace}}
+    spec:
+      infrastructureRef:
+        apiGroup: infrastructure.cluster.x-k8s.io
+        kind: VSphereMachineTemplate
+        name: {{.controlPlaneTemplateName}}
   kubeadmConfigSpec:
     clusterConfiguration:
 {{- if (and (ge (atoi $kube_minor_version) 29) (lt (atoi $kube_minor_version) 33)) }}
@@ -113,7 +113,7 @@ spec:
           imageTag: {{.etcdImageTag}}
 {{- if .etcdExtraArgs }}
           extraArgs:
-{{ .etcdExtraArgs.ToYaml | indent 12 }}
+{{ .etcdExtraArgs.ToYaml | indent 10 }}
 {{- end }}
 {{- end }}
       dns:
@@ -175,19 +175,27 @@ spec:
 {{- end }}
         extraArgs:
 {{- if (lt (atoi $kube_minor_version) 33) }}
-          cloud-provider: external
+        - name: cloud-provider
+          value: "external"
 {{- end }}
-          audit-policy-file: /etc/kubernetes/audit-policy.yaml
-          audit-log-path: /var/log/kubernetes/api-audit.log
-          audit-log-maxage: "30"
-          audit-log-maxbackup: "10"
-          audit-log-maxsize: "512"
-          profiling: "false"
+        - name: audit-policy-file
+          value: "/etc/kubernetes/audit-policy.yaml"
+        - name: audit-log-path
+          value: "/var/log/kubernetes/api-audit.log"
+        - name: audit-log-maxage
+          value: "30"
+        - name: audit-log-maxbackup
+          value: "10"
+        - name: audit-log-maxsize
+          value: "512"
+        - name: profiling
+          value: "false"
 {{- if and .encryptionProviderConfig (ge (atoi $kube_minor_version) 29) }}
-          feature-gates: "KMSv1=true"
+        - name: feature-gates
+          value: "KMSv1=true"
 {{- end }}
 {{- if .apiserverExtraArgs }}
-{{ .apiserverExtraArgs.ToYaml | indent 10 }}
+{{ .apiserverExtraArgs.ToYaml | indent 8 }}
 {{- end }}
         extraVolumes:
 {{- if (eq .format "bottlerocket") }}
@@ -238,10 +246,12 @@ spec:
 {{- end }}
       controllerManager:
         extraArgs:
-          cloud-provider: external
-          profiling: "false"
+        - name: cloud-provider
+          value: "external"
+        - name: profiling
+          value: "false"
 {{- if .controllerManagerExtraArgs }}
-{{ .controllerManagerExtraArgs.ToYaml | indent 10 }}
+{{ .controllerManagerExtraArgs.ToYaml | indent 8 }}
 {{- end }}
 {{- if (eq .format "bottlerocket") }}
         extraVolumes:
@@ -253,9 +263,10 @@ spec:
 {{- end }}
       scheduler:
         extraArgs:
-          profiling: "false"
+        - name: profiling
+          value: "false"
 {{- if .schedulerExtraArgs }}
-{{ .schedulerExtraArgs.ToYaml | indent 10 }}
+{{ .schedulerExtraArgs.ToYaml | indent 8 }}
 {{- end }}
 {{- if (eq .format "bottlerocket") }}
         extraVolumes:
@@ -457,16 +468,19 @@ spec:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:
-          cloud-provider: external
+        - name: cloud-provider
+          value: "external"
 {{- if not .kubeletConfiguration }}
-          read-only-port: "0"
-          anonymous-auth: "false"
+        - name: read-only-port
+          value: "0"
+        - name: anonymous-auth
+          value: "false"
 {{- if .kubeletExtraArgs }}
-{{ .kubeletExtraArgs.ToYaml | indent 10 }}
+{{ .kubeletExtraArgs.ToYaml | indent 8 }}
 {{- end }}
 {{- end }}
 {{- if .nodeLabelArgs }}
-{{ .nodeLabelArgs.ToYaml | indent 10 }}
+{{ .nodeLabelArgs.ToYaml | indent 8 }}
 {{- end }}
         name: '{{`{{ ds.meta_data.hostname }}`}}'
 {{- if .controlPlaneTaints }}
@@ -532,16 +546,19 @@ spec:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:
-          cloud-provider: external
+        - name: cloud-provider
+          value: "external"
 {{- if not .kubeletConfiguration }}
-          read-only-port: "0"
-          anonymous-auth: "false"
+        - name: read-only-port
+          value: "0"
+        - name: anonymous-auth
+          value: "false"
 {{- if .kubeletExtraArgs }}
-{{ .kubeletExtraArgs.ToYaml | indent 10 }}
+{{ .kubeletExtraArgs.ToYaml | indent 8 }}
 {{- end }}
 {{- end }}
 {{- if .nodeLabelArgs }}
-{{ .nodeLabelArgs.ToYaml | indent 10 }}
+{{ .nodeLabelArgs.ToYaml | indent 8 }}
 {{- end }}
         name: '{{`{{ ds.meta_data.hostname }}`}}'
 {{- if .controlPlaneTaints }}
@@ -586,18 +603,20 @@ spec:
     format: {{.format}}
   replicas: {{.controlPlaneReplicas}}
 {{- if .upgradeRolloutStrategy }}
-  rolloutStrategy:
+  rollout:
+    strategy:
 {{- if (eq .upgradeRolloutStrategyType "InPlace") }}
-    type: {{.upgradeRolloutStrategyType}}
+      type: {{.upgradeRolloutStrategyType}}
 {{- else}}
-    rollingUpdate:
-      maxSurge: {{.maxSurge}} 
+      rollingUpdate:
+        maxSurge: {{.maxSurge}} 
 {{- end }}
 {{- else }}
-  rolloutStrategy:
-    rollingUpdate:
-      maxSurge: 1
-    type: RollingUpdate
+  rollout:
+    strategy:
+      rollingUpdate:
+        maxSurge: 1
+      type: RollingUpdate
 {{- end }}
   version: {{.kubernetesVersion}}
 ---

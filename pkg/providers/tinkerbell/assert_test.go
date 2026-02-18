@@ -12,7 +12,7 @@ import (
 	"github.com/tinkerbell/tink/api/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	"github.com/aws/eks-anywhere/internal/test"
@@ -1212,8 +1212,8 @@ func mergeHardwareSelectors(m1, m2 map[string]string) map[string]string {
 
 func validatableTinkerbellCAPI() *tinkerbell.ValidatableTinkerbellCAPI {
 	return &tinkerbell.ValidatableTinkerbellCAPI{
-		KubeadmControlPlane: &controlplanev1.KubeadmControlPlane{
-			Spec: controlplanev1.KubeadmControlPlaneSpec{
+		KubeadmControlPlane: &controlplanev1beta2.KubeadmControlPlane{
+			Spec: controlplanev1beta2.KubeadmControlPlaneSpec{
 				Replicas: ptr.Int32(1),
 				Version:  "1.22",
 			},

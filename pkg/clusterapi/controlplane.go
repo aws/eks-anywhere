@@ -6,7 +6,7 @@ import (
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
@@ -20,10 +20,10 @@ type ControlPlane[C Object[C], M Object[M]] struct {
 	// for provisioning the infrastructure, referenced in Cluster.Spec.InfrastructureRef
 	ProviderCluster C
 
-	KubeadmControlPlane *controlplanev1.KubeadmControlPlane
+	KubeadmControlPlane *controlplanev1beta2.KubeadmControlPlane
 
 	// ControlPlaneMachineTemplate is the provider-specific machine template referenced
-	// in KubeadmControlPlane.Spec.MachineTemplate.InfrastructureRef
+	// in KubeadmControlPlane.Spec.MachineTemplate.Spec.InfrastructureRef
 	ControlPlaneMachineTemplate M
 
 	EtcdCluster *etcdv1.EtcdadmCluster
@@ -54,7 +54,7 @@ func (cp *ControlPlane[C, M]) UpdateImmutableObjectNames(
 	machineTemplateRetriever ObjectRetriever[M],
 	machineTemplateComparator ObjectComparator[M],
 ) error {
-	currentKCP := &controlplanev1.KubeadmControlPlane{}
+	currentKCP := &controlplanev1beta2.KubeadmControlPlane{}
 	err := client.Get(ctx, cp.KubeadmControlPlane.Name, cp.KubeadmControlPlane.Namespace, currentKCP)
 	if apierrors.IsNotFound(err) {
 		// KubeadmControlPlane doesn't exist, this is a new cluster so machine templates should use their default name
@@ -65,12 +65,12 @@ func (cp *ControlPlane[C, M]) UpdateImmutableObjectNames(
 	}
 
 	// Ensure we don't set an empty name which would cause "resource name may not be empty" errors
-	if currentKCP.Spec.MachineTemplate.InfrastructureRef.Name != "" {
-		cp.ControlPlaneMachineTemplate.SetName(currentKCP.Spec.MachineTemplate.InfrastructureRef.Name)
+	if currentKCP.Spec.MachineTemplate.Spec.InfrastructureRef.Name != "" {
+		cp.ControlPlaneMachineTemplate.SetName(currentKCP.Spec.MachineTemplate.Spec.InfrastructureRef.Name)
 		if err = EnsureNewNameIfChanged(ctx, client, machineTemplateRetriever, machineTemplateComparator, cp.ControlPlaneMachineTemplate); err != nil {
 			return err
 		}
-		cp.KubeadmControlPlane.Spec.MachineTemplate.InfrastructureRef.Name = cp.ControlPlaneMachineTemplate.GetName()
+		cp.KubeadmControlPlane.Spec.MachineTemplate.Spec.InfrastructureRef.Name = cp.ControlPlaneMachineTemplate.GetName()
 	}
 	// If the name is empty, we keep the default name that was set during template generation
 

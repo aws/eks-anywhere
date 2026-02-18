@@ -107,7 +107,7 @@ spec:
         - type: name
           name: "prism-subnet"
 ---
-apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta2
 kind: KubeadmConfigTemplate
 metadata:
   name: "eksa-unit-test"
@@ -120,12 +120,12 @@ spec:
       joinConfiguration:
         nodeRegistration:
           kubeletExtraArgs:
-            cloud-provider: external
-            # We have to pin the cgroupDriver to cgroupfs as kubeadm >=1.21 defaults to systemd
-            # kind will implement systemd support in: https://github.com/kubernetes-sigs/kind/issues/1726
-            #cgroup-driver: cgroupfs
-            eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
-            tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+          - name: cloud-provider
+            value: "external"
+          - name: eviction-hard
+            value: "nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%"
+          - name: tls-cipher-suites
+            value: "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
           name: '{{ ds.meta_data.hostname }}'
       users:
         - name: "mySshUsername"
