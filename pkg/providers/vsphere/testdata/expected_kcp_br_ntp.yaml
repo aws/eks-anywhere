@@ -429,7 +429,7 @@ spec:
       type: RollingUpdate
   version: v1.19.8-eks-1-19-4
 ---
-apiVersion: addons.cluster.x-k8s.io/v1beta1
+apiVersion: addons.cluster.x-k8s.io/v1beta2
 kind: ClusterResourceSet
 metadata:
   labels:

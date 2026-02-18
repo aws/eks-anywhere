@@ -7,11 +7,10 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta3"
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
-	addonsv1 "sigs.k8s.io/cluster-api/api/addons/v1beta1"
+	addonsv1 "sigs.k8s.io/cluster-api/api/addons/v1beta2"
 	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
 	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
-	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1"
 	dockerv1beta2 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta2"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -32,7 +31,6 @@ var schemeAdders = []schemeAdder{
 	anywherev1.AddToScheme,
 	snowv1.AddToScheme,
 	cloudstackv1.AddToScheme,
-	dockerv1.AddToScheme,
 	dockerv1beta2.AddToScheme,
 	releasev1.AddToScheme,
 	eksdv1alpha1.AddToScheme,

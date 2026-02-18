@@ -891,7 +891,7 @@ data:
               configMap:
                 name: nutanix-config
 ---
-apiVersion: addons.cluster.x-k8s.io/v1beta1
+apiVersion: addons.cluster.x-k8s.io/v1beta2
 kind: ClusterResourceSet
 metadata:
   name: {{.clusterName}}-nutanix-ccm-crs

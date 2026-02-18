@@ -12,7 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
-	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1"
+	dockerv1beta2 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta2"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
@@ -97,8 +97,8 @@ func TestObjectsToRuntimeObjects(t *testing.T) {
 	}
 }
 
-func dockerCluster() *dockerv1.DockerCluster {
-	return &dockerv1.DockerCluster{}
+func dockerCluster() *dockerv1beta2.DockerCluster {
+	return &dockerv1beta2.DockerCluster{}
 }
 
 func TestMachineSetWarningFilter_HandleWarningHeader(t *testing.T) {

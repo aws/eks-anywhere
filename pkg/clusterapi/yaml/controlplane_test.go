@@ -9,7 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
-	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1"
+	dockerv1beta2 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/aws/eks-anywhere/internal/test"
@@ -19,7 +19,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/yamlutil"
 )
 
-type dockerControlPlane = clusterapi.ControlPlane[*dockerv1.DockerCluster, *dockerv1.DockerMachineTemplate]
+type dockerControlPlane = clusterapi.ControlPlane[*dockerv1beta2.DockerCluster, *dockerv1beta2.DockerMachineTemplate]
 
 func TestNewControlPlaneParserAndBuilderSuccessParsing(t *testing.T) {
 	g := NewWithT(t)
@@ -27,14 +27,14 @@ func TestNewControlPlaneParserAndBuilderSuccessParsing(t *testing.T) {
 		test.NewNullLogger(),
 		yamlutil.NewMapping(
 			"DockerCluster",
-			func() *dockerv1.DockerCluster {
-				return &dockerv1.DockerCluster{}
+			func() *dockerv1beta2.DockerCluster {
+				return &dockerv1beta2.DockerCluster{}
 			},
 		),
 		yamlutil.NewMapping(
 			"DockerMachineTemplate",
-			func() *dockerv1.DockerMachineTemplate {
-				return &dockerv1.DockerMachineTemplate{}
+			func() *dockerv1beta2.DockerMachineTemplate {
+				return &dockerv1beta2.DockerMachineTemplate{}
 			},
 		),
 	)
@@ -67,14 +67,14 @@ func TestNewControlPlaneParserAndBuilderErrorFromMappings(t *testing.T) {
 		test.NewNullLogger(),
 		yamlutil.NewMapping(
 			"Cluster",
-			func() *dockerv1.DockerCluster {
-				return &dockerv1.DockerCluster{}
+			func() *dockerv1beta2.DockerCluster {
+				return &dockerv1beta2.DockerCluster{}
 			},
 		),
 		yamlutil.NewMapping(
 			"DockerMachineTemplate",
-			func() *dockerv1.DockerMachineTemplate {
-				return &dockerv1.DockerMachineTemplate{}
+			func() *dockerv1beta2.DockerMachineTemplate {
+				return &dockerv1beta2.DockerMachineTemplate{}
 			},
 		),
 	)
@@ -322,11 +322,11 @@ func kubeadmControlPlane() *controlplanev1beta2.KubeadmControlPlane {
 	}
 }
 
-func dockerCluster() *dockerv1.DockerCluster {
-	return &dockerv1.DockerCluster{
+func dockerCluster() *dockerv1beta2.DockerCluster {
+	return &dockerv1beta2.DockerCluster{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "DockerCluster",
-			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "cluster",
@@ -335,11 +335,11 @@ func dockerCluster() *dockerv1.DockerCluster {
 	}
 }
 
-func dockerMachineTemplate(name string) *dockerv1.DockerMachineTemplate {
-	return &dockerv1.DockerMachineTemplate{
+func dockerMachineTemplate(name string) *dockerv1beta2.DockerMachineTemplate {
+	return &dockerv1beta2.DockerMachineTemplate{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "DockerMachineTemplate",
-			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
