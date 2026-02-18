@@ -6,8 +6,8 @@ import (
 
 	etcdbootstrapv1 "github.com/aws/etcdadm-bootstrap-provider/api/v1beta1"
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
-	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
@@ -22,7 +22,7 @@ var containerdConfig string
 var hostsTemplate string
 
 // SetRegistryMirrorInKubeadmControlPlaneForBottlerocket sets up registry mirror configuration in kubeadmControlPlane for bottlerocket.
-func SetRegistryMirrorInKubeadmControlPlaneForBottlerocket(kcp *controlplanev1.KubeadmControlPlane, mirrorConfig *v1alpha1.RegistryMirrorConfiguration) {
+func SetRegistryMirrorInKubeadmControlPlaneForBottlerocket(kcp *controlplanev1beta2.KubeadmControlPlane, mirrorConfig *v1alpha1.RegistryMirrorConfiguration) {
 	if mirrorConfig == nil {
 		return
 	}
@@ -32,7 +32,7 @@ func SetRegistryMirrorInKubeadmControlPlaneForBottlerocket(kcp *controlplanev1.K
 }
 
 // SetRegistryMirrorInKubeadmControlPlaneForUbuntu sets up registry mirror configuration in kubeadmControlPlane for ubuntu.
-func SetRegistryMirrorInKubeadmControlPlaneForUbuntu(kcp *controlplanev1.KubeadmControlPlane, mirrorConfig *v1alpha1.RegistryMirrorConfiguration) error {
+func SetRegistryMirrorInKubeadmControlPlaneForUbuntu(kcp *controlplanev1beta2.KubeadmControlPlane, mirrorConfig *v1alpha1.RegistryMirrorConfiguration) error {
 	if mirrorConfig == nil {
 		return nil
 	}
@@ -41,7 +41,7 @@ func SetRegistryMirrorInKubeadmControlPlaneForUbuntu(kcp *controlplanev1.Kubeadm
 }
 
 // SetRegistryMirrorInKubeadmConfigTemplateForBottlerocket sets up registry mirror configuration in kubeadmConfigTemplate for bottlerocket.
-func SetRegistryMirrorInKubeadmConfigTemplateForBottlerocket(kct *bootstrapv1.KubeadmConfigTemplate, mirrorConfig *v1alpha1.RegistryMirrorConfiguration) {
+func SetRegistryMirrorInKubeadmConfigTemplateForBottlerocket(kct *bootstrapv1beta2.KubeadmConfigTemplate, mirrorConfig *v1alpha1.RegistryMirrorConfiguration) {
 	if mirrorConfig == nil {
 		return
 	}
@@ -50,7 +50,7 @@ func SetRegistryMirrorInKubeadmConfigTemplateForBottlerocket(kct *bootstrapv1.Ku
 }
 
 // SetRegistryMirrorInKubeadmConfigTemplateForUbuntu sets up registry mirror configuration in kubeadmConfigTemplate for ubuntu.
-func SetRegistryMirrorInKubeadmConfigTemplateForUbuntu(kct *bootstrapv1.KubeadmConfigTemplate, mirrorConfig *v1alpha1.RegistryMirrorConfiguration) error {
+func SetRegistryMirrorInKubeadmConfigTemplateForUbuntu(kct *bootstrapv1beta2.KubeadmConfigTemplate, mirrorConfig *v1alpha1.RegistryMirrorConfiguration) error {
 	if mirrorConfig == nil {
 		return nil
 	}
@@ -70,8 +70,8 @@ func setRegistryMirrorInEtcdCluster(etcd *etcdv1.EtcdadmCluster, mirrorConfig *v
 	}
 }
 
-func registryMirror(mirrorConfig *v1alpha1.RegistryMirrorConfiguration) bootstrapv1.RegistryMirrorConfiguration {
-	return bootstrapv1.RegistryMirrorConfiguration{
+func registryMirror(mirrorConfig *v1alpha1.RegistryMirrorConfiguration) bootstrapv1beta2.RegistryMirrorConfiguration {
+	return bootstrapv1beta2.RegistryMirrorConfiguration{
 		Endpoint: containerd.ToAPIEndpoint(registrymirror.FromClusterRegistryMirrorConfiguration(mirrorConfig).CoreEKSAMirror()),
 		CACert:   mirrorConfig.CACertContent,
 	}
@@ -103,7 +103,7 @@ func hostsFileContent(registryMirror *registrymirror.RegistryMirror, server, hos
 	return string(content), nil
 }
 
-func registryMirrorConfig(registryMirrorConfig *v1alpha1.RegistryMirrorConfiguration) (files []bootstrapv1.File, err error) {
+func registryMirrorConfig(registryMirrorConfig *v1alpha1.RegistryMirrorConfiguration) (files []bootstrapv1beta2.File, err error) {
 	registryMirror := registrymirror.FromClusterRegistryMirrorConfiguration(registryMirrorConfig)
 	registryConfig, err := registryMirrorConfigContent(registryMirror)
 	if err != nil {
@@ -111,7 +111,7 @@ func registryMirrorConfig(registryMirrorConfig *v1alpha1.RegistryMirrorConfigura
 	}
 
 	// Main config file
-	files = []bootstrapv1.File{
+	files = []bootstrapv1beta2.File{
 		{
 			Path:    "/etc/containerd/config_append.toml",
 			Owner:   "root:root",
@@ -121,7 +121,7 @@ func registryMirrorConfig(registryMirrorConfig *v1alpha1.RegistryMirrorConfigura
 
 	// CA certificate if present
 	if registryMirrorConfig.CACertContent != "" {
-		files = append(files, bootstrapv1.File{
+		files = append(files, bootstrapv1beta2.File{
 			Path:    fmt.Sprintf("/etc/containerd/certs.d/%s/ca.crt", registryMirror.BaseRegistry),
 			Owner:   "root:root",
 			Content: registryMirrorConfig.CACertContent,
@@ -133,7 +133,7 @@ func registryMirrorConfig(registryMirrorConfig *v1alpha1.RegistryMirrorConfigura
 	if err != nil {
 		return nil, err
 	}
-	files = append(files, bootstrapv1.File{
+	files = append(files, bootstrapv1beta2.File{
 		Path:    fmt.Sprintf("/etc/containerd/certs.d/%s/hosts.toml", registryMirror.BaseRegistry),
 		Owner:   "root:root",
 		Content: mirrorBaseContent,
@@ -145,7 +145,7 @@ func registryMirrorConfig(registryMirrorConfig *v1alpha1.RegistryMirrorConfigura
 		if err != nil {
 			return nil, err
 		}
-		files = append(files, bootstrapv1.File{
+		files = append(files, bootstrapv1beta2.File{
 			Path:    fmt.Sprintf("/etc/containerd/certs.d/%s/hosts.toml", originalRegistry),
 			Owner:   "root:root",
 			Content: registryContent,
@@ -155,7 +155,7 @@ func registryMirrorConfig(registryMirrorConfig *v1alpha1.RegistryMirrorConfigura
 	return files, nil
 }
 
-func addRegistryMirrorInKubeadmConfigSpecFiles(kcs *bootstrapv1.KubeadmConfigSpec, mirrorConfig *v1alpha1.RegistryMirrorConfiguration) error {
+func addRegistryMirrorInKubeadmConfigSpecFiles(kcs *bootstrapv1beta2.KubeadmConfigSpec, mirrorConfig *v1alpha1.RegistryMirrorConfiguration) error {
 	containerdFiles, err := registryMirrorConfig(mirrorConfig)
 	if err != nil {
 		return fmt.Errorf("setting registry mirror configuration: %v", err)

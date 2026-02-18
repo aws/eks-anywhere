@@ -28,7 +28,7 @@ import (
 	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta3"
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
 	addons "sigs.k8s.io/cluster-api/api/addons/v1beta1"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -879,14 +879,16 @@ func (k *Kubectl) ValidateControlPlaneNodes(ctx context.Context, cluster *types.
 		return fmt.Errorf("kubeadm control plane %s status needs to be refreshed: generation=%v, observedGeneration=%d", cp.Name, generation, observedGeneration)
 	}
 
-	if cp.Status.ReadyReplicas != cp.Status.Replicas {
-		return fmt.Errorf("api server is not fully ready: %d/%d replicas ready",
-			cp.Status.ReadyReplicas, cp.Status.Replicas)
+	var readyReplicas, replicas int32
+	if cp.Status.ReadyReplicas != nil {
+		readyReplicas = *cp.Status.ReadyReplicas
 	}
-
-	if cp.Status.UnavailableReplicas != 0 {
-		return fmt.Errorf("%v/%v control plane replicas are unavailable",
-			cp.Status.UnavailableReplicas, cp.Status.Replicas)
+	if cp.Status.Replicas != nil {
+		replicas = *cp.Status.Replicas
+	}
+	if readyReplicas != replicas {
+		return fmt.Errorf("control plane is not fully ready: %d/%d replicas ready",
+			readyReplicas, replicas)
 	}
 
 	return nil
@@ -1382,7 +1384,7 @@ func (k *Kubectl) GetSecret(ctx context.Context, secretObjectName string, opts .
 	return response, err
 }
 
-func (k *Kubectl) GetKubeadmControlPlanes(ctx context.Context, opts ...KubectlOpt) ([]controlplanev1.KubeadmControlPlane, error) {
+func (k *Kubectl) GetKubeadmControlPlanes(ctx context.Context, opts ...KubectlOpt) ([]controlplanev1beta2.KubeadmControlPlane, error) {
 	params := []string{"get", kubeadmControlPlaneResourceType, "-o", "json"}
 	applyOpts(&params, opts...)
 	stdOut, err := k.Execute(ctx, params...)
@@ -1390,7 +1392,7 @@ func (k *Kubectl) GetKubeadmControlPlanes(ctx context.Context, opts ...KubectlOp
 		return nil, fmt.Errorf("getting kubeadmcontrolplanes: %v", err)
 	}
 
-	response := &controlplanev1.KubeadmControlPlaneList{}
+	response := &controlplanev1beta2.KubeadmControlPlaneList{}
 	err = json.Unmarshal(stdOut.Bytes(), response)
 	if err != nil {
 		return nil, fmt.Errorf("parsing get kubeadmcontrolplanes response: %v", err)
@@ -1399,7 +1401,7 @@ func (k *Kubectl) GetKubeadmControlPlanes(ctx context.Context, opts ...KubectlOp
 	return response.Items, nil
 }
 
-func (k *Kubectl) GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...KubectlOpt) (*controlplanev1.KubeadmControlPlane, error) {
+func (k *Kubectl) GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...KubectlOpt) (*controlplanev1beta2.KubeadmControlPlane, error) {
 	logger.V(6).Info("Getting KubeadmControlPlane CRDs", "cluster", clusterName)
 	params := []string{"get", kubeadmControlPlaneResourceType, clusterName, "-o", "json"}
 	applyOpts(&params, opts...)
@@ -1408,21 +1410,9 @@ func (k *Kubectl) GetKubeadmControlPlane(ctx context.Context, cluster *types.Clu
 		return nil, fmt.Errorf("getting kubeadmcontrolplane: %v", err)
 	}
 
-	// Use unstructured to handle the conversion manually
-	var unstructuredKCP unstructured.Unstructured
-	if err := json.Unmarshal(stdOut.Bytes(), &unstructuredKCP); err != nil {
-		return nil, fmt.Errorf("parsing kubeadmcontrolplane as unstructured: %v", err)
-	}
-
-	// Convert extraArgs from array format to map format if needed
-	if err := k.convertExtraArgsInUnstructured(&unstructuredKCP); err != nil {
-		return nil, fmt.Errorf("converting extraArgs format: %v", err)
-	}
-
-	// Convert unstructured to v1beta1 KubeadmControlPlane
-	response := &controlplanev1.KubeadmControlPlane{}
-	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredKCP.Object, response); err != nil {
-		return nil, fmt.Errorf("converting unstructured to kubeadmcontrolplane: %v", err)
+	response := &controlplanev1beta2.KubeadmControlPlane{}
+	if err := json.Unmarshal(stdOut.Bytes(), response); err != nil {
+		return nil, fmt.Errorf("parsing get kubeadmcontrolplane response: %v", err)
 	}
 
 	return response, nil
@@ -2539,85 +2529,4 @@ func (k *Kubectl) DeleteCRD(ctx context.Context, crd, kubeconfig string) error {
 	}
 
 	return nil
-}
-
-// convertExtraArgsInUnstructured converts extraArgs from v1beta2 array format to v1beta1 map format
-// in an unstructured object to handle CAPI v1.11 migration.
-func (k *Kubectl) convertExtraArgsInUnstructured(obj *unstructured.Unstructured) error {
-	return k.convertExtraArgsRecursive(obj.Object)
-}
-
-// convertExtraArgsRecursive recursively searches for extraArgs fields and converts them from array to map format.
-// We will remove this function when we move on to using v1beta2 CAPI APIs.
-//
-//nolint:gocyclo // This function has complex logic for recursive type conversion that is difficult to simplify.
-func (k *Kubectl) convertExtraArgsRecursive(obj interface{}) error {
-	switch v := obj.(type) {
-	case map[string]interface{}:
-		// Check if this map contains extraArgs or kubeletExtraArgs
-		fieldsToConvert := []string{"extraArgs", "kubeletExtraArgs"}
-		for _, fieldName := range fieldsToConvert {
-			if extraArgs, exists := v[fieldName]; exists {
-				if converted, err := k.convertExtraArgsField(extraArgs); err != nil {
-					return err
-				} else if converted != nil {
-					v[fieldName] = converted
-				}
-			}
-		}
-
-		// Recursively process nested objects
-		for _, value := range v {
-			if err := k.convertExtraArgsRecursive(value); err != nil {
-				return err
-			}
-		}
-	case []interface{}:
-		// Recursively process array elements
-		for _, item := range v {
-			if err := k.convertExtraArgsRecursive(item); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-// convertExtraArgsField converts a single extraArgs field from array to map format.
-func (k *Kubectl) convertExtraArgsField(extraArgs interface{}) (map[string]string, error) {
-	switch args := extraArgs.(type) {
-	case []interface{}:
-		// This is the v1beta2 array format: [{"name": "key", "value": "val"}]
-		result := make(map[string]string)
-		for _, item := range args {
-			if argMap, ok := item.(map[string]interface{}); ok {
-				name, nameOk := argMap["name"].(string)
-				value, valueOk := argMap["value"].(string)
-				if nameOk && valueOk {
-					result[name] = value
-				} else {
-					return nil, fmt.Errorf("invalid extraArgs array format: expected name and value fields")
-				}
-			} else {
-				return nil, fmt.Errorf("invalid extraArgs array format: expected object with name and value")
-			}
-		}
-		return result, nil
-	case map[string]interface{}:
-		// This is already the v1beta1 map format: {"key": "val"}
-		result := make(map[string]string)
-		for k, v := range args {
-			if str, ok := v.(string); ok {
-				result[k] = str
-			} else {
-				return nil, fmt.Errorf("invalid extraArgs map format: expected string values")
-			}
-		}
-		return result, nil
-	case nil:
-		// No extraArgs field
-		return nil, nil
-	default:
-		return nil, fmt.Errorf("unsupported extraArgs format: %T", extraArgs)
-	}
 }

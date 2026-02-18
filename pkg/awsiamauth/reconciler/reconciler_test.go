@@ -14,9 +14,9 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/utils/pointer"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	"k8s.io/utils/ptr"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -182,8 +182,7 @@ func TestReconcileKCPObjectNotFound(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = releasev1.AddToScheme(scheme)
 	_ = eksdv1.AddToScheme(scheme)
-	_ = clusterv1.AddToScheme(scheme)
-	_ = controlplanev1.AddToScheme(scheme)
+	_ = controlplanev1beta2.AddToScheme(scheme)
 	cl := cb.WithScheme(scheme).WithRuntimeObjects(objs...).Build()
 	version := test.DevEksaVersion()
 
@@ -237,20 +236,20 @@ func TestReconcileRemoteGetClientError(t *testing.T) {
 		},
 	}
 	kcpVersion := "test"
-	kcp := test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
+	kcp := test.KubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
 		kcp.Name = cluster.Name
 		kcp.Spec.Version = kcpVersion
-		kcp.Status = controlplanev1.KubeadmControlPlaneStatus{
-			Conditions: clusterv1.Conditions{
+		kcp.Status = controlplanev1beta2.KubeadmControlPlaneStatus{
+			Conditions: []metav1.Condition{
 				{
-					Type:               clusterv1.ClusterAvailableV1Beta2Condition,
-					Status:             corev1.ConditionTrue,
+					Type:               clusterv1beta2.AvailableCondition,
+					Status:             metav1.ConditionTrue,
 					LastTransitionTime: metav1.NewTime(time.Now()),
 				},
 			},
-			Version:            pointer.String(kcpVersion),
-			ReadyReplicas:      1,
-			Replicas:           1,
+			Version:            kcpVersion,
+			ReadyReplicas:      ptr.To(int32(1)),
+			Replicas:           ptr.To(int32(1)),
 			ObservedGeneration: 1,
 		}
 		kcp.Generation = 1
@@ -266,9 +265,8 @@ func TestReconcileRemoteGetClientError(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = releasev1.AddToScheme(scheme)
 	_ = eksdv1.AddToScheme(scheme)
-	_ = clusterv1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)
-	_ = controlplanev1.AddToScheme(scheme)
+	_ = controlplanev1beta2.AddToScheme(scheme)
 	cl := cb.WithScheme(scheme).WithRuntimeObjects(objs...).Build()
 
 	remoteClientRegistry.EXPECT().GetClient(ctx, gomock.AssignableToTypeOf(client.ObjectKey{})).Return(nil, errors.New("client error"))
@@ -318,20 +316,20 @@ func TestReconcileConfigMapNotFoundApplyError(t *testing.T) {
 		},
 	}
 	kcpVersion := "test"
-	kcp := test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
+	kcp := test.KubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
 		kcp.Name = cluster.Name
 		kcp.Spec.Version = kcpVersion
-		kcp.Status = controlplanev1.KubeadmControlPlaneStatus{
-			Conditions: clusterv1.Conditions{
+		kcp.Status = controlplanev1beta2.KubeadmControlPlaneStatus{
+			Conditions: []metav1.Condition{
 				{
-					Type:               clusterv1.ClusterAvailableV1Beta2Condition,
-					Status:             corev1.ConditionTrue,
+					Type:               clusterv1beta2.AvailableCondition,
+					Status:             metav1.ConditionTrue,
 					LastTransitionTime: metav1.NewTime(time.Now()),
 				},
 			},
-			Version:            pointer.String(kcpVersion),
-			ReadyReplicas:      1,
-			Replicas:           1,
+			Version:            kcpVersion,
+			ReadyReplicas:      ptr.To(int32(1)),
+			Replicas:           ptr.To(int32(1)),
 			ObservedGeneration: 1,
 		}
 		kcp.Generation = 1
@@ -363,9 +361,8 @@ func TestReconcileConfigMapNotFoundApplyError(t *testing.T) {
 	_ = anywherev1.AddToScheme(scheme)
 	_ = releasev1.AddToScheme(scheme)
 	_ = eksdv1.AddToScheme(scheme)
-	_ = clusterv1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)
-	_ = controlplanev1.AddToScheme(scheme)
+	_ = controlplanev1beta2.AddToScheme(scheme)
 	cl := cb.WithScheme(scheme).WithRuntimeObjects(objs...).Build()
 
 	rCb := fake.NewClientBuilder()

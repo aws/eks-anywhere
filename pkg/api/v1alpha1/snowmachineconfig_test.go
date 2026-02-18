@@ -5,7 +5,7 @@ import (
 
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
 
 	snowv1 "github.com/aws/eks-anywhere/pkg/providers/snow/api/v1beta1"
 )
@@ -93,7 +93,7 @@ func TestSnowMachineConfigSetDefaults(t *testing.T) {
 					OSFamily: Bottlerocket,
 					HostOSConfiguration: &HostOSConfiguration{
 						BottlerocketConfiguration: &BottlerocketConfiguration{
-							Kernel: &v1beta1.BottlerocketKernelSettings{
+							Kernel: &bootstrapv1beta2.BottlerocketKernelSettings{
 								SysctlSettings: map[string]string{
 									"foo": "bar",
 								},
@@ -109,7 +109,7 @@ func TestSnowMachineConfigSetDefaults(t *testing.T) {
 					OSFamily:                 Bottlerocket,
 					HostOSConfiguration: &HostOSConfiguration{
 						BottlerocketConfiguration: &BottlerocketConfiguration{
-							Kernel: &v1beta1.BottlerocketKernelSettings{
+							Kernel: &bootstrapv1beta2.BottlerocketKernelSettings{
 								SysctlSettings: map[string]string{"foo": "bar"},
 							},
 						},
@@ -573,7 +573,7 @@ func TestSnowMachineConfigValidate(t *testing.T) {
 					OSFamily:                 Ubuntu,
 					HostOSConfiguration: &HostOSConfiguration{
 						BottlerocketConfiguration: &BottlerocketConfiguration{
-							Kernel: &v1beta1.BottlerocketKernelSettings{
+							Kernel: &bootstrapv1beta2.BottlerocketKernelSettings{
 								SysctlSettings: map[string]string{"foo": "bar"},
 							},
 						},

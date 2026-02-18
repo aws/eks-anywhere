@@ -5,7 +5,7 @@ import (
 
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	kubeadmv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1"
 
@@ -195,8 +195,8 @@ func TestProcessWorkerGroupObjects(t *testing.T) {
 	g.Expect(group.ProviderMachineTemplate).To(Equal(mt))
 }
 
-func kubeadmConfigTemplate() *kubeadmv1.KubeadmConfigTemplate {
-	return &kubeadmv1.KubeadmConfigTemplate{
+func kubeadmConfigTemplate() *bootstrapv1beta2.KubeadmConfigTemplate {
+	return &bootstrapv1beta2.KubeadmConfigTemplate{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "KubeadmConfigTemplate",
 			APIVersion: "bootstrap.cluster.x-k8s.io/v1beta1",

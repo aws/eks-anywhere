@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
-	"sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
+	"sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
 )
 
 func validateHostOSConfig(config *HostOSConfiguration, osFamily OSFamily) error {
@@ -98,7 +98,7 @@ func validateBotterocketConfig(config *BottlerocketConfiguration, osFamily OSFam
 	return validateBottlerocketBootSettingsConfiguration(config.Boot)
 }
 
-func validateBottlerocketKubernetesConfig(config *v1beta1.BottlerocketKubernetesSettings) error {
+func validateBottlerocketKubernetesConfig(config *v1beta2.BottlerocketKubernetesSettings) error {
 	if config == nil {
 		return nil
 	}
@@ -122,7 +122,7 @@ func validateBottlerocketKubernetesConfig(config *v1beta1.BottlerocketKubernetes
 	return nil
 }
 
-func validateBottlerocketKernelConfiguration(config *v1beta1.BottlerocketKernelSettings) error {
+func validateBottlerocketKernelConfiguration(config *v1beta2.BottlerocketKernelSettings) error {
 	if config == nil {
 		return nil
 	}
@@ -135,7 +135,7 @@ func validateBottlerocketKernelConfiguration(config *v1beta1.BottlerocketKernelS
 	return nil
 }
 
-func validateBottlerocketBootSettingsConfiguration(config *v1beta1.BottlerocketBootSettings) error {
+func validateBottlerocketBootSettingsConfiguration(config *v1beta2.BottlerocketBootSettings) error {
 	if config == nil {
 		return nil
 	}

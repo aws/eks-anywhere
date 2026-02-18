@@ -46,18 +46,18 @@ spec:
       name: global
       namespace: eksa-system
 ---
-apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+apiVersion: controlplane.cluster.x-k8s.io/v1beta2
 kind: KubeadmControlPlane
 metadata:
   name: test
   namespace: eksa-system
 spec:
   machineTemplate:
-    infrastructureRef:
-      apiVersion: infrastructure.cluster.x-k8s.io/v1beta3
-      kind: CloudStackMachineTemplate
-      name: test-control-plane-1
-      namespace: eksa-system
+    spec:
+      infrastructureRef:
+        apiGroup: infrastructure.cluster.x-k8s.io
+        kind: CloudStackMachineTemplate
+        name: test-control-plane-1
   kubeadmConfigSpec:
     clusterConfiguration:
       imageRepository: public.ecr.aws/eks-distro/kubernetes
@@ -66,20 +66,29 @@ spec:
           imageRepository: public.ecr.aws/eks-distro/etcd-io
           imageTag: v3.4.16-eks-1-21-4
           extraArgs:
-            cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+          - name: cipher-suites
+            value: "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
       dns:
         imageRepository: public.ecr.aws/eks-distro/coredns
         imageTag: v1.8.3-eks-1-21-4
       apiServer:
         extraArgs:
-          cloud-provider: external
-          audit-policy-file: /etc/kubernetes/audit-policy.yaml
-          audit-log-path: /var/log/kubernetes/api-audit.log
-          audit-log-maxage: "30"
-          audit-log-maxbackup: "10"
-          audit-log-maxsize: "512"
-          profiling: "false"
-          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        - name: cloud-provider
+          value: "external"
+        - name: audit-policy-file
+          value: "/etc/kubernetes/audit-policy.yaml"
+        - name: audit-log-path
+          value: "/var/log/kubernetes/api-audit.log"
+        - name: audit-log-maxage
+          value: "30"
+        - name: audit-log-maxbackup
+          value: "10"
+        - name: audit-log-maxsize
+          value: "512"
+        - name: profiling
+          value: "false"
+        - name: tls-cipher-suites
+          value: "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
         extraVolumes:
         - hostPath: /etc/kubernetes/audit-policy.yaml
           mountPath: /etc/kubernetes/audit-policy.yaml
@@ -93,13 +102,18 @@ spec:
           readOnly: false
       controllerManager:
         extraArgs:
-          cloud-provider: external
-          profiling: "false"
-          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        - name: cloud-provider
+          value: "external"
+        - name: profiling
+          value: "false"
+        - name: tls-cipher-suites
+          value: "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
       scheduler:
         extraArgs:
-          profiling: "false"
-          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        - name: profiling
+          value: "false"
+        - name: tls-cipher-suites
+          value: "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
     files:
     - content: |
         maxPods: 20
@@ -328,7 +342,8 @@ spec:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:
-          provider-id: cloudstack:///'{{ ds.meta_data.instance_id }}'
+        - name: provider-id
+          value: "cloudstack:///'{{ ds.meta_data.instance_id }}'"
         name: "{{ ds.meta_data.hostname }}"
     joinConfiguration:
       patches: 
@@ -336,7 +351,8 @@ spec:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:
-          provider-id: cloudstack:///'{{ ds.meta_data.instance_id }}'
+        - name: provider-id
+          value: "cloudstack:///'{{ ds.meta_data.instance_id }}'"
         name: "{{ ds.meta_data.hostname }}"
     preKubeadmCommands:
     - swapoff -a
@@ -376,10 +392,11 @@ spec:
       sudo: ALL=(ALL) NOPASSWD:ALL
     format: cloud-config
   replicas: 3
-  rolloutStrategy:
-    rollingUpdate:
-      maxSurge: 1
-    type: RollingUpdate
+  rollout:
+    strategy:
+      rollingUpdate:
+        maxSurge: 1
+      type: RollingUpdate
   version: v1.21.2-eks-1-21-4
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta3

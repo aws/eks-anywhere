@@ -5,7 +5,7 @@ import (
 
 	etcdbootstrapv1 "github.com/aws/etcdadm-bootstrap-provider/api/v1beta1"
 	. "github.com/onsi/gomega"
-	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
@@ -14,14 +14,14 @@ import (
 var registryMirrorTests = []struct {
 	name                   string
 	registryMirrorConfig   *v1alpha1.RegistryMirrorConfiguration
-	wantFiles              []bootstrapv1.File
-	wantRegistryConfig     bootstrapv1.RegistryMirrorConfiguration
+	wantFiles              []bootstrapv1beta2.File
+	wantRegistryConfig     bootstrapv1beta2.RegistryMirrorConfiguration
 	wantRegistryConfigEtcd *etcdbootstrapv1.RegistryMirrorConfiguration
 }{
 	{
 		name:               "registry config nil",
-		wantFiles:          []bootstrapv1.File{},
-		wantRegistryConfig: bootstrapv1.RegistryMirrorConfiguration{},
+		wantFiles:          []bootstrapv1beta2.File{},
+		wantRegistryConfig: bootstrapv1beta2.RegistryMirrorConfiguration{},
 	},
 	{
 		name: "with ca cert and namespace mapping for eksa and curated packages",
@@ -40,7 +40,7 @@ var registryMirrorTests = []struct {
 				},
 			},
 		},
-		wantFiles: []bootstrapv1.File{
+		wantFiles: []bootstrapv1beta2.File{
 			{
 				Path:  "/etc/containerd/config_append.toml",
 				Owner: "root:root",
@@ -84,7 +84,7 @@ var registryMirrorTests = []struct {
 `,
 			},
 		},
-		wantRegistryConfig: bootstrapv1.RegistryMirrorConfiguration{
+		wantRegistryConfig: bootstrapv1beta2.RegistryMirrorConfiguration{
 			Endpoint: "1.2.3.4:443/v2/eks-anywhere",
 			CACert:   "xyz",
 		},
@@ -100,7 +100,7 @@ var registryMirrorTests = []struct {
 			Port:               "443",
 			InsecureSkipVerify: true,
 		},
-		wantFiles: []bootstrapv1.File{
+		wantFiles: []bootstrapv1beta2.File{
 			{
 				Path:  "/etc/containerd/config_append.toml",
 				Owner: "root:root",
@@ -129,7 +129,7 @@ var registryMirrorTests = []struct {
 `,
 			},
 		},
-		wantRegistryConfig: bootstrapv1.RegistryMirrorConfiguration{
+		wantRegistryConfig: bootstrapv1beta2.RegistryMirrorConfiguration{
 			Endpoint: "1.2.3.4:443",
 		},
 		wantRegistryConfigEtcd: &etcdbootstrapv1.RegistryMirrorConfiguration{
@@ -144,7 +144,7 @@ var registryMirrorTests = []struct {
 			CACertContent:      "xyz",
 			InsecureSkipVerify: true,
 		},
-		wantFiles: []bootstrapv1.File{
+		wantFiles: []bootstrapv1beta2.File{
 			{
 				Path:  "/etc/containerd/config_append.toml",
 				Owner: "root:root",
@@ -180,7 +180,7 @@ var registryMirrorTests = []struct {
 `,
 			},
 		},
-		wantRegistryConfig: bootstrapv1.RegistryMirrorConfiguration{
+		wantRegistryConfig: bootstrapv1beta2.RegistryMirrorConfiguration{
 			Endpoint: "1.2.3.4:443",
 			CACert:   "xyz",
 		},

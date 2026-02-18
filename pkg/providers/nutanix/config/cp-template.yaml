@@ -89,7 +89,7 @@ spec:
     name: "{{.clusterName}}-etcd"
 {{- end }}
 ---
-apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+apiVersion: controlplane.cluster.x-k8s.io/v1beta2
 kind: KubeadmControlPlane
 metadata:
   name: "{{.clusterName}}"
@@ -98,20 +98,22 @@ spec:
   replicas: {{.controlPlaneReplicas}}
   version: "{{.kubernetesVersion}}"
   machineTemplate:
-    infrastructureRef:
-      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-      kind: NutanixMachineTemplate
-      name: "{{.controlPlaneTemplateName}}"
-      namespace: {{.eksaSystemNamespace}}
+    spec:
+      infrastructureRef:
+        apiGroup: infrastructure.cluster.x-k8s.io
+        kind: NutanixMachineTemplate
+        name: "{{.controlPlaneTemplateName}}"
 {{- if .upgradeRolloutStrategy }}
-  rolloutStrategy:
-    rollingUpdate:
-      maxSurge: {{.maxSurge}} 
+  rollout:
+    strategy:
+      rollingUpdate:
+        maxSurge: {{.maxSurge}} 
   {{- else }}
-  rolloutStrategy:
-    rollingUpdate:
-      maxSurge: 1
-    type: RollingUpdate
+  rollout:
+    strategy:
+      rollingUpdate:
+        maxSurge: 1
+      type: RollingUpdate
 {{- end }}
   kubeadmConfigSpec:
     clusterConfiguration:
@@ -131,18 +133,25 @@ spec:
 {{- end }}
         extraArgs:
 {{- if (lt (atoi $kube_minor_version) 33) }}
-          cloud-provider: external
+        - name: cloud-provider
+          value: "external"
 {{- end }}
-          audit-policy-file: /etc/kubernetes/audit-policy.yaml
-          audit-log-path: /var/log/kubernetes/api-audit.log
-          audit-log-maxage: "30"
-          audit-log-maxbackup: "10"
-          audit-log-maxsize: "512"
+        - name: audit-policy-file
+          value: "/etc/kubernetes/audit-policy.yaml"
+        - name: audit-log-path
+          value: "/var/log/kubernetes/api-audit.log"
+        - name: audit-log-maxage
+          value: "30"
+        - name: audit-log-maxbackup
+          value: "10"
+        - name: audit-log-maxsize
+          value: "512"
 {{- if and .encryptionProviderConfig (ge (atoi $kube_minor_version) 29) }}
-          feature-gates: "KMSv1=true"
+        - name: feature-gates
+          value: "KMSv1=true"
 {{- end }}
 {{- if .apiServerExtraArgs }}
-{{ .apiServerExtraArgs.ToYaml | indent 10 }}
+{{ .apiServerExtraArgs.ToYaml | indent 8 }}
 {{- end }}
         extraVolumes:
         - hostPath: /etc/kubernetes/audit-policy.yaml
@@ -185,8 +194,10 @@ spec:
 {{- end }}
       controllerManager:
         extraArgs:
-          cloud-provider: external
-          enable-hostpath-provisioner: "true"
+        - name: cloud-provider
+          value: "external"
+        - name: enable-hostpath-provisioner
+          value: "true"
       dns:
         imageRepository: {{.corednsRepository}}
         imageTag: {{.corednsVersion}}
@@ -392,18 +403,17 @@ spec:
 {{- end }}
       nodeRegistration:
         kubeletExtraArgs:
-          cloud-provider: external
-          # We have to pin the cgroupDriver to cgroupfs as kubeadm >=1.21 defaults to systemd
-          # kind will implement systemd support in: https://github.com/kubernetes-sigs/kind/issues/1726
-          #cgroup-driver: cgroupfs
+        - name: cloud-provider
+          value: "external"
 {{- if not .kubeletConfiguration }}
-          eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
+        - name: eviction-hard
+          value: "nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%"
 {{- if .kubeletExtraArgs }}
-{{ .kubeletExtraArgs.ToYaml | indent 10 }}
+{{ .kubeletExtraArgs.ToYaml | indent 8 }}
 {{- end }}
 {{- end }}
 {{- if .nodeLabelArgs }}
-{{ .nodeLabelArgs.ToYaml | indent 10 }}
+{{ .nodeLabelArgs.ToYaml | indent 8 }}
 {{- end }}
 {{- if .controlPlaneTaints }}
         taints:
@@ -424,16 +434,19 @@ spec:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:
-          cloud-provider: external
+        - name: cloud-provider
+          value: "external"
 {{- if not .kubeletConfiguration }}
-          read-only-port: "0"
-          anonymous-auth: "false"
+        - name: read-only-port
+          value: "0"
+        - name: anonymous-auth
+          value: "false"
 {{- if .kubeletExtraArgs }}
-{{ .kubeletExtraArgs.ToYaml | indent 10 }}
+{{ .kubeletExtraArgs.ToYaml | indent 8 }}
 {{- end }}
 {{- end }}
 {{- if .nodeLabelArgs }}
-{{ .nodeLabelArgs.ToYaml | indent 10 }}
+{{ .nodeLabelArgs.ToYaml | indent 8 }}
 {{- end }}
 {{- if .controlPlaneTaints }}
         taints:

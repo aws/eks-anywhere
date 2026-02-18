@@ -8,7 +8,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
-	kubeadmv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -41,7 +41,7 @@ func (w *Workers) objects() []client.Object {
 
 // WorkerGroup represents the CAPI spec for an eks-a worker group.
 type WorkerGroup struct {
-	KubeadmConfigTemplate   *kubeadmv1.KubeadmConfigTemplate
+	KubeadmConfigTemplate   *bootstrapv1beta2.KubeadmConfigTemplate
 	MachineDeployment       *clusterv1beta2.MachineDeployment
 	ProviderMachineTemplate client.Object
 }

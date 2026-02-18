@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -15,8 +16,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/utils/ptr"
-	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -43,7 +44,7 @@ type cpUpgradeObjects struct {
 	nodes          []*corev1.Node
 	cpUpgrade      *anywherev1.ControlPlaneUpgrade
 	nodeUpgrades   []*anywherev1.NodeUpgrade
-	kubeadmConfigs []*bootstrapv1.KubeadmConfig
+	kubeadmConfigs []*bootstrapv1beta2.KubeadmConfig
 	infraMachines  []*tinkerbellv1.TinkerbellMachine
 }
 
@@ -421,22 +422,22 @@ func TestCPUpgradeReconcileUpdateKubeadmConfigSuccess(t *testing.T) {
 	kcpDecoded, err := base64.StdEncoding.DecodeString(testObjs.cpUpgrade.Spec.ControlPlaneSpecData)
 	g.Expect(err).ToNot(HaveOccurred())
 
-	kcpSpec := &controlplanev1.KubeadmControlPlaneSpec{}
+	kcpSpec := &controlplanev1beta2.KubeadmControlPlaneSpec{}
 	err = json.Unmarshal(kcpDecoded, kcpSpec)
 	g.Expect(err).ToNot(HaveOccurred())
 
 	for i := range testObjs.kubeadmConfigs {
 		kc := testObjs.kubeadmConfigs[i]
-		kcNew := &bootstrapv1.KubeadmConfig{}
+		kcNew := &bootstrapv1beta2.KubeadmConfig{}
 		err = client.Get(ctx, types.NamespacedName{Name: kc.Name, Namespace: kc.Namespace}, kcNew)
 		g.Expect(err).ToNot(HaveOccurred())
 
 		kcsCopy := kcpSpec.KubeadmConfigSpec.DeepCopy()
-		if kcNew.Spec.InitConfiguration == nil {
-			kcsCopy.InitConfiguration = nil
+		if reflect.ValueOf(kcNew.Spec.InitConfiguration).IsZero() {
+			kcsCopy.InitConfiguration = bootstrapv1beta2.InitConfiguration{}
 		}
-		if kcNew.Spec.JoinConfiguration == nil {
-			kcsCopy.JoinConfiguration = nil
+		if reflect.ValueOf(kcNew.Spec.JoinConfiguration).IsZero() {
+			kcsCopy.JoinConfiguration = bootstrapv1beta2.JoinConfiguration{}
 		}
 
 		g.Expect(kcNew.Spec).To(BeEquivalentTo(*kcsCopy))
@@ -484,7 +485,7 @@ func TestCPUpgradeReconcileUpdateKubeadmConfigPreservesFeatureGates(t *testing.T
 	// Verify that the CAPI-added FeatureGates are preserved on both KubeadmConfigs
 	for i := range testObjs.kubeadmConfigs {
 		kc := testObjs.kubeadmConfigs[i]
-		kcNew := &bootstrapv1.KubeadmConfig{}
+		kcNew := &bootstrapv1beta2.KubeadmConfig{}
 		err = client.Get(ctx, types.NamespacedName{Name: kc.Name, Namespace: kc.Namespace}, kcNew)
 		g.Expect(err).ToNot(HaveOccurred())
 		g.Expect(kcNew.Spec.ClusterConfiguration.FeatureGates).ToNot(BeNil(),
@@ -543,7 +544,7 @@ func TestCPUpgradeReconcileUpdateKubeadmConfigPreservesFeatureGatesWithKCPFeatur
 	// Verify FeatureGates merge behavior
 	for i := range testObjs.kubeadmConfigs {
 		kc := testObjs.kubeadmConfigs[i]
-		kcNew := &bootstrapv1.KubeadmConfig{}
+		kcNew := &bootstrapv1beta2.KubeadmConfig{}
 		err = client.Get(ctx, types.NamespacedName{Name: kc.Name, Namespace: kc.Namespace}, kcNew)
 		g.Expect(err).ToNot(HaveOccurred())
 		g.Expect(kcNew.Spec.ClusterConfiguration.FeatureGates).ToNot(BeNil())
@@ -759,7 +760,7 @@ func getObjectsForCPUpgradeTest() cpUpgradeObjects {
 		nodes:          []*corev1.Node{node1, node2},
 		cpUpgrade:      generateCPUpgrade(machines),
 		nodeUpgrades:   []*anywherev1.NodeUpgrade{nodeUpgrade1, nodeUpgrade2},
-		kubeadmConfigs: []*bootstrapv1.KubeadmConfig{kubeadmConfig1, kubeadmConfig2},
+		kubeadmConfigs: []*bootstrapv1beta2.KubeadmConfig{kubeadmConfig1, kubeadmConfig2},
 		infraMachines:  []*tinkerbellv1.TinkerbellMachine{infraMachine1, infraMachine2},
 	}
 }
@@ -805,44 +806,46 @@ func generateCPUpgrade(machine []*clusterv1.Machine) *anywherev1.ControlPlaneUpg
 	}
 }
 
-func generateKcpSpec() *controlplanev1.KubeadmControlPlaneSpec {
+func generateKcpSpec() *controlplanev1beta2.KubeadmControlPlaneSpec {
 	kcs := generateKubeadmConfig().Spec
 	kcs.ClusterConfiguration.Etcd.Local.ImageTag = etcd129
-	kcs.InitConfiguration = &bootstrapv1.InitConfiguration{}
-	kcs.JoinConfiguration = &bootstrapv1.JoinConfiguration{}
-	return &controlplanev1.KubeadmControlPlaneSpec{
+	kcs.InitConfiguration = bootstrapv1beta2.InitConfiguration{}
+	kcs.JoinConfiguration = bootstrapv1beta2.JoinConfiguration{}
+	return &controlplanev1beta2.KubeadmControlPlaneSpec{
 		KubeadmConfigSpec: kcs,
 		Version:           k8s129,
-		RolloutStrategy: &controlplanev1.RolloutStrategy{
-			Type: "InPlace",
+		Rollout: controlplanev1beta2.KubeadmControlPlaneRolloutSpec{
+			Strategy: controlplanev1beta2.KubeadmControlPlaneRolloutStrategy{
+				Type: controlplanev1beta2.InPlaceUpgradeStrategyType,
+			},
 		},
 		Replicas: ptr.To(int32(3)),
-		MachineTemplate: controlplanev1.KubeadmControlPlaneMachineTemplate{
-			InfrastructureRef: corev1.ObjectReference{
-				Name: "new-ref",
+		MachineTemplate: controlplanev1beta2.KubeadmControlPlaneMachineTemplate{
+			Spec: controlplanev1beta2.KubeadmControlPlaneMachineTemplateSpec{
+				InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
+					Name: "new-ref",
+				},
 			},
 		},
 	}
 }
 
-func generateKubeadmConfig() *bootstrapv1.KubeadmConfig {
-	return &bootstrapv1.KubeadmConfig{
+func generateKubeadmConfig() *bootstrapv1beta2.KubeadmConfig {
+	return &bootstrapv1beta2.KubeadmConfig{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s%s", "kubeadm-config-", rand.String(10)),
 			Namespace: constants.EksaSystemNamespace,
 		},
-		Spec: bootstrapv1.KubeadmConfigSpec{
-			ClusterConfiguration: &bootstrapv1.ClusterConfiguration{
-				Etcd: bootstrapv1.Etcd{
-					Local: &bootstrapv1.LocalEtcd{
-						ImageMeta: bootstrapv1.ImageMeta{
-							ImageTag: etcd128,
-						},
+		Spec: bootstrapv1beta2.KubeadmConfigSpec{
+			ClusterConfiguration: bootstrapv1beta2.ClusterConfiguration{
+				Etcd: bootstrapv1beta2.Etcd{
+					Local: bootstrapv1beta2.LocalEtcd{
+						ImageTag: etcd128,
 					},
 				},
 			},
-			InitConfiguration: &bootstrapv1.InitConfiguration{},
-			Files: []bootstrapv1.File{
+			InitConfiguration: bootstrapv1beta2.InitConfiguration{},
+			Files: []bootstrapv1beta2.File{
 				{
 					Path:    "/etc/kubernetes/manifests/kube-vip.yaml",
 					Content: kubeVipSpec(),

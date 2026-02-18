@@ -8,7 +8,7 @@ import (
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta2"
@@ -197,10 +197,10 @@ func machineDeployment(name, namespace string) *clusterv1beta2.MachineDeployment
 	}
 }
 
-func kubeadmConfigTemplate(name, namespace string) *bootstrapv1.KubeadmConfigTemplate {
-	return &bootstrapv1.KubeadmConfigTemplate{
+func kubeadmConfigTemplate(name, namespace string) *bootstrapv1beta2.KubeadmConfigTemplate {
+	return &bootstrapv1beta2.KubeadmConfigTemplate{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "bootstrap.cluster.x-k8s.io/v1beta1",
+			APIVersion: "bootstrap.cluster.x-k8s.io/v1beta2",
 			Kind:       "KubeadmConfigTemplate",
 		},
 		ObjectMeta: metav1.ObjectMeta{

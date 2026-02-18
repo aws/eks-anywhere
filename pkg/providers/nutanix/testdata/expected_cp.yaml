@@ -39,7 +39,7 @@ spec:
     kind: NutanixCluster
     name: "eksa-unit-test"
 ---
-apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+apiVersion: controlplane.cluster.x-k8s.io/v1beta2
 kind: KubeadmControlPlane
 metadata:
   name: "eksa-unit-test"
@@ -48,15 +48,16 @@ spec:
   replicas: 3
   version: "v1.19.8-eks-1-19-4"
   machineTemplate:
-    infrastructureRef:
-      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-      kind: NutanixMachineTemplate
-      name: "<no value>"
-      namespace: eksa-system
-  rolloutStrategy:
-    rollingUpdate:
-      maxSurge: 1
-    type: RollingUpdate
+    spec:
+      infrastructureRef:
+        apiGroup: infrastructure.cluster.x-k8s.io
+        kind: NutanixMachineTemplate
+        name: "<no value>"
+  rollout:
+    strategy:
+      rollingUpdate:
+        maxSurge: 1
+      type: RollingUpdate
   kubeadmConfigSpec:
     clusterConfiguration:
       imageRepository: "public.ecr.aws/eks-distro/kubernetes"
@@ -66,12 +67,18 @@ spec:
           - 127.0.0.1
           - 0.0.0.0
         extraArgs:
-          cloud-provider: external
-          audit-policy-file: /etc/kubernetes/audit-policy.yaml
-          audit-log-path: /var/log/kubernetes/api-audit.log
-          audit-log-maxage: "30"
-          audit-log-maxbackup: "10"
-          audit-log-maxsize: "512"
+        - name: cloud-provider
+          value: "external"
+        - name: audit-policy-file
+          value: "/etc/kubernetes/audit-policy.yaml"
+        - name: audit-log-path
+          value: "/var/log/kubernetes/api-audit.log"
+        - name: audit-log-maxage
+          value: "30"
+        - name: audit-log-maxbackup
+          value: "10"
+        - name: audit-log-maxsize
+          value: "512"
         extraVolumes:
         - hostPath: /etc/kubernetes/audit-policy.yaml
           mountPath: /etc/kubernetes/audit-policy.yaml
@@ -85,8 +92,10 @@ spec:
           readOnly: false
       controllerManager:
         extraArgs:
-          cloud-provider: external
-          enable-hostpath-provisioner: "true"
+        - name: cloud-provider
+          value: "external"
+        - name: enable-hostpath-provisioner
+          value: "true"
       dns:
         imageRepository: public.ecr.aws/eks-distro/coredns
         imageTag: v1.8.0-eks-1-19-4
@@ -327,17 +336,16 @@ spec:
         directory: /etc/kubernetes/patches
       nodeRegistration:
         kubeletExtraArgs:
-          cloud-provider: external
-          # We have to pin the cgroupDriver to cgroupfs as kubeadm >=1.21 defaults to systemd
-          # kind will implement systemd support in: https://github.com/kubernetes-sigs/kind/issues/1726
-          #cgroup-driver: cgroupfs
+        - name: cloud-provider
+          value: "external"
     joinConfiguration:
       patches: 
         directory: /etc/kubernetes/patches
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:
-          cloud-provider: external
+        - name: cloud-provider
+          value: "external"
         name: "{{ ds.meta_data.hostname }}"
     users:
       - name: "mySshUsername"

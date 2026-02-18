@@ -9,8 +9,8 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	"github.com/aws/eks-anywhere/internal/test"
@@ -25,7 +25,7 @@ type apiBuilerTest struct {
 	*WithT
 	clusterSpec             *cluster.Spec
 	workerNodeGroupConfig   *anywherev1.WorkerNodeGroupConfiguration
-	kubeadmConfigTemplate   *bootstrapv1.KubeadmConfigTemplate
+	kubeadmConfigTemplate   *bootstrapv1beta2.KubeadmConfigTemplate
 	providerCluster         clusterapi.APIObject
 	controlPlane            clusterapi.APIObject
 	providerMachineTemplate clusterapi.APIObject
@@ -143,13 +143,13 @@ func newApiBuilerTest(t *testing.T) apiBuilerTest {
 		}
 	})
 
-	controlPlane := &controlplanev1.KubeadmControlPlane{
+	controlPlane := &controlplanev1beta2.KubeadmControlPlane{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "cp-test",
 		},
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "KubeadmControlPlane",
-			APIVersion: "controlplane.cluster.x-k8s.io/v1beta1",
+			APIVersion: "controlplane.cluster.x-k8s.io/v1beta2",
 		},
 	}
 
@@ -169,13 +169,13 @@ func newApiBuilerTest(t *testing.T) apiBuilerTest {
 		},
 	}
 
-	kubeadmConfigTemplate := &bootstrapv1.KubeadmConfigTemplate{
+	kubeadmConfigTemplate := &bootstrapv1beta2.KubeadmConfigTemplate{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "md-0",
 		},
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "KubeadmConfigTemplate",
-			APIVersion: "bootstrap.cluster.x-k8s.io/v1beta1",
+			APIVersion: "bootstrap.cluster.x-k8s.io/v1beta2",
 		},
 	}
 
@@ -270,70 +270,61 @@ func TestCluster(t *testing.T) {
 	tt.Expect(got).To(Equal(want))
 }
 
-type kubeadmControlPlaneOpt func(k *controlplanev1.KubeadmControlPlane)
+type kubeadmControlPlaneOpt func(k *controlplanev1beta2.KubeadmControlPlane)
 
-func wantKubeadmControlPlane(opts ...kubeadmControlPlaneOpt) *controlplanev1.KubeadmControlPlane {
+func wantKubeadmControlPlane(opts ...kubeadmControlPlaneOpt) *controlplanev1beta2.KubeadmControlPlane {
 	replicas := int32(3)
-	kcp := &controlplanev1.KubeadmControlPlane{
+	kcp := &controlplanev1beta2.KubeadmControlPlane{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "controlplane.cluster.x-k8s.io/v1beta1",
+			APIVersion: "controlplane.cluster.x-k8s.io/v1beta2",
 			Kind:       "KubeadmControlPlane",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-cluster",
 			Namespace: "eksa-system",
 		},
-		Spec: controlplanev1.KubeadmControlPlaneSpec{
-			MachineTemplate: controlplanev1.KubeadmControlPlaneMachineTemplate{
-				InfrastructureRef: v1.ObjectReference{
-					APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
-					Kind:       "ProviderMachineTemplate",
-					Name:       "provider-template",
+		Spec: controlplanev1beta2.KubeadmControlPlaneSpec{
+			MachineTemplate: controlplanev1beta2.KubeadmControlPlaneMachineTemplate{
+				Spec: controlplanev1beta2.KubeadmControlPlaneMachineTemplateSpec{
+					InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
+						APIGroup: "infrastructure.cluster.x-k8s.io",
+						Kind:     "ProviderMachineTemplate",
+						Name:     "provider-template",
+					},
 				},
 			},
-			KubeadmConfigSpec: bootstrapv1.KubeadmConfigSpec{
-				ClusterConfiguration: &bootstrapv1.ClusterConfiguration{
+			KubeadmConfigSpec: bootstrapv1beta2.KubeadmConfigSpec{
+				ClusterConfiguration: bootstrapv1beta2.ClusterConfiguration{
 					ImageRepository: "public.ecr.aws/eks-distro/kubernetes",
-					DNS: bootstrapv1.DNS{
-						ImageMeta: bootstrapv1.ImageMeta{
-							ImageRepository: "public.ecr.aws/eks-distro/coredns",
-							ImageTag:        "v1.8.4-eks-1-21-9",
-						},
+					DNS: bootstrapv1beta2.DNS{
+						ImageRepository: "public.ecr.aws/eks-distro/coredns",
+						ImageTag:        "v1.8.4-eks-1-21-9",
 					},
-					Etcd: bootstrapv1.Etcd{
-						Local: &bootstrapv1.LocalEtcd{
-							ImageMeta: bootstrapv1.ImageMeta{
-								ImageRepository: "public.ecr.aws/eks-distro/etcd-io",
-								ImageTag:        "v3.4.16-eks-1-21-9",
-							},
-							ExtraArgs: map[string]string{
+					Etcd: bootstrapv1beta2.Etcd{
+						Local: bootstrapv1beta2.LocalEtcd{
+							ImageRepository: "public.ecr.aws/eks-distro/etcd-io",
+							ImageTag:        "v3.4.16-eks-1-21-9",
+							ExtraArgs: clusterapi.ExtraArgs{
 								"cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-							},
+							}.ToArgs(),
 						},
 					},
-					APIServer: bootstrapv1.APIServer{
-						ControlPlaneComponent: bootstrapv1.ControlPlaneComponent{
-							ExtraArgs:    map[string]string{},
-							ExtraVolumes: []bootstrapv1.HostPathMount{},
-						},
+					APIServer: bootstrapv1beta2.APIServer{
 						CertSANs: []string{"foo.bar", "11.11.11.11"},
 					},
-					ControllerManager: bootstrapv1.ControlPlaneComponent{
-						ExtraArgs:    tlsCipherSuitesArgs(),
-						ExtraVolumes: []bootstrapv1.HostPathMount{},
+					ControllerManager: bootstrapv1beta2.ControllerManager{
+						ExtraArgs:    clusterapi.SecureTlsCipherSuitesExtraArgs().ToArgs(),
+						ExtraVolumes: []bootstrapv1beta2.HostPathMount{},
 					},
-					Scheduler: bootstrapv1.ControlPlaneComponent{
-						ExtraArgs:    map[string]string{},
-						ExtraVolumes: []bootstrapv1.HostPathMount{},
-					},
+					Scheduler: bootstrapv1beta2.Scheduler{},
 				},
-				InitConfiguration: &bootstrapv1.InitConfiguration{
-					NodeRegistration: bootstrapv1.NodeRegistrationOptions{
-						KubeletExtraArgs: map[string]string{
-							"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-							"node-labels":       "key1=val1,key2=val2",
-						},
-						Taints: []v1.Taint{
+				InitConfiguration: bootstrapv1beta2.InitConfiguration{
+					NodeRegistration: bootstrapv1beta2.NodeRegistrationOptions{
+						KubeletExtraArgs: clusterapi.SecureTlsCipherSuitesExtraArgs().
+							Append(clusterapi.ControlPlaneNodeLabelsExtraArgs(anywherev1.ControlPlaneConfiguration{
+								Labels: map[string]string{"key1": "val1", "key2": "val2"},
+							})).ToArgs(),
+						Taints: &[]v1.Taint{
 							{
 								Key:       "key1",
 								Value:     "val1",
@@ -343,13 +334,13 @@ func wantKubeadmControlPlane(opts ...kubeadmControlPlaneOpt) *controlplanev1.Kub
 						},
 					},
 				},
-				JoinConfiguration: &bootstrapv1.JoinConfiguration{
-					NodeRegistration: bootstrapv1.NodeRegistrationOptions{
-						KubeletExtraArgs: map[string]string{
-							"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-							"node-labels":       "key1=val1,key2=val2",
-						},
-						Taints: []v1.Taint{
+				JoinConfiguration: bootstrapv1beta2.JoinConfiguration{
+					NodeRegistration: bootstrapv1beta2.NodeRegistrationOptions{
+						KubeletExtraArgs: clusterapi.SecureTlsCipherSuitesExtraArgs().
+							Append(clusterapi.ControlPlaneNodeLabelsExtraArgs(anywherev1.ControlPlaneConfiguration{
+								Labels: map[string]string{"key1": "val1", "key2": "val2"},
+							})).ToArgs(),
+						Taints: &[]v1.Taint{
 							{
 								Key:       "key1",
 								Value:     "val1",
@@ -361,7 +352,7 @@ func wantKubeadmControlPlane(opts ...kubeadmControlPlaneOpt) *controlplanev1.Kub
 				},
 				PreKubeadmCommands:  []string{},
 				PostKubeadmCommands: []string{},
-				Files:               []bootstrapv1.File{},
+				Files:               []bootstrapv1beta2.File{},
 			},
 			Replicas: &replicas,
 			Version:  "v1.21.5-eks-1-21-9",
@@ -383,36 +374,34 @@ func TestKubeadmControlPlane(t *testing.T) {
 	tt.Expect(got).To(Equal(want))
 }
 
-func wantKubeadmConfigTemplate() *bootstrapv1.KubeadmConfigTemplate {
-	return &bootstrapv1.KubeadmConfigTemplate{
+func wantKubeadmConfigTemplate() *bootstrapv1beta2.KubeadmConfigTemplate {
+	return &bootstrapv1beta2.KubeadmConfigTemplate{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "bootstrap.cluster.x-k8s.io/v1beta1",
+			APIVersion: "bootstrap.cluster.x-k8s.io/v1beta2",
 			Kind:       "KubeadmConfigTemplate",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-cluster-wng-1-1",
 			Namespace: "eksa-system",
 		},
-		Spec: bootstrapv1.KubeadmConfigTemplateSpec{
-			Template: bootstrapv1.KubeadmConfigTemplateResource{
-				Spec: bootstrapv1.KubeadmConfigSpec{
-					ClusterConfiguration: &bootstrapv1.ClusterConfiguration{
-						ControllerManager: bootstrapv1.ControlPlaneComponent{
-							ExtraArgs: map[string]string{},
+		Spec: bootstrapv1beta2.KubeadmConfigTemplateSpec{
+			Template: bootstrapv1beta2.KubeadmConfigTemplateResource{
+				Spec: bootstrapv1beta2.KubeadmConfigSpec{
+					ClusterConfiguration: bootstrapv1beta2.ClusterConfiguration{
+						ControllerManager: bootstrapv1beta2.ControllerManager{
+							ExtraArgs: clusterapi.ExtraArgs{}.ToArgs(),
 						},
-						APIServer: bootstrapv1.APIServer{
-							ControlPlaneComponent: bootstrapv1.ControlPlaneComponent{
-								ExtraArgs: map[string]string{},
-							},
-							CertSANs: []string{"foo.bar", "11.11.11.11"},
+						APIServer: bootstrapv1beta2.APIServer{
+							ExtraArgs: clusterapi.ExtraArgs{}.ToArgs(),
+							CertSANs:  []string{"foo.bar", "11.11.11.11"},
 						},
 					},
-					JoinConfiguration: &bootstrapv1.JoinConfiguration{
-						NodeRegistration: bootstrapv1.NodeRegistrationOptions{
-							KubeletExtraArgs: map[string]string{
-								"node-labels": "key3=val3",
-							},
-							Taints: []v1.Taint{
+					JoinConfiguration: bootstrapv1beta2.JoinConfiguration{
+						NodeRegistration: bootstrapv1beta2.NodeRegistrationOptions{
+							KubeletExtraArgs: clusterapi.WorkerNodeLabelsExtraArgs(anywherev1.WorkerNodeGroupConfiguration{
+								Labels: map[string]string{"key3": "val3"},
+							}).ToArgs(),
+							Taints: &[]v1.Taint{
 								{
 									Key:       "key2",
 									Value:     "val2",
@@ -424,7 +413,7 @@ func wantKubeadmConfigTemplate() *bootstrapv1.KubeadmConfigTemplate {
 					},
 					PreKubeadmCommands:  []string{},
 					PostKubeadmCommands: []string{},
-					Files:               []bootstrapv1.File{},
+					Files:               []bootstrapv1beta2.File{},
 				},
 			},
 		},
@@ -474,15 +463,15 @@ func wantMachineDeployment(opts ...machineDeploymentOpt) *clusterv1beta2.Machine
 					Bootstrap: clusterv1beta2.Bootstrap{
 						ConfigRef: clusterv1beta2.ContractVersionedObjectReference{
 							APIGroup: "bootstrap.cluster.x-k8s.io",
-							Kind:       "KubeadmConfigTemplate",
-							Name:       "md-0",
+							Kind:     "KubeadmConfigTemplate",
+							Name:     "md-0",
 						},
 					},
 					ClusterName: "test-cluster",
 					InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
 						APIGroup: "infrastructure.cluster.x-k8s.io",
-						Kind:       "ProviderMachineTemplate",
-						Name:       "provider-template",
+						Kind:     "ProviderMachineTemplate",
+						Name:     "provider-template",
 					},
 					Version: version,
 				},

@@ -183,11 +183,11 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 		"cloudstackEtcdSshAuthorizedKey":             etcdSSHAuthorizedKey,
 		"podCidrs":                                   clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks,
 		"serviceCidrs":                               clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks,
-		"apiserverExtraArgs":                         apiServerExtraArgs.ToPartialYaml(),
-		"etcdExtraArgs":                              etcdExtraArgs.ToPartialYaml(),
+		"apiserverExtraArgs":                         apiServerExtraArgs,
+		"etcdExtraArgs":                              etcdExtraArgs,
 		"etcdCipherSuites":                           crypto.SecureCipherSuitesString(),
-		"controllermanagerExtraArgs":                 controllerManagerExtraArgs.ToPartialYaml(),
-		"schedulerExtraArgs":                         sharedExtraArgs.ToPartialYaml(),
+		"controllermanagerExtraArgs":                 controllerManagerExtraArgs,
+		"schedulerExtraArgs":                         sharedExtraArgs,
 		"format":                                     format,
 		"externalEtcdVersion":                        versionsBundle.KubeDistro.EtcdVersion,
 		"externalEtcdReleaseUrl":                     versionsBundle.KubeDistro.EtcdURL,
@@ -286,12 +286,12 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 	} else {
 		kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
 			Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf))
-		values["kubeletExtraArgs"] = kubeletExtraArgs.ToPartialYaml()
+		values["kubeletExtraArgs"] = kubeletExtraArgs
 	}
 
 	nodeLabelArgs := clusterapi.ControlPlaneNodeLabelsExtraArgs(clusterSpec.Cluster.Spec.ControlPlaneConfiguration)
 	if len(nodeLabelArgs) != 0 {
-		values["nodeLabelArgs"] = nodeLabelArgs.ToPartialYaml()
+		values["nodeLabelArgs"] = nodeLabelArgs
 	}
 
 	return values, nil
@@ -444,12 +444,12 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupConfiguration 
 	} else {
 		kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
 			Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf))
-		values["kubeletExtraArgs"] = kubeletExtraArgs.ToPartialYaml()
+		values["kubeletExtraArgs"] = kubeletExtraArgs
 	}
 
 	nodeLabelArgs := clusterapi.WorkerNodeLabelsExtraArgs(workerNodeGroupConfiguration)
 	if len(nodeLabelArgs) != 0 {
-		values["nodeLabelArgs"] = nodeLabelArgs.ToPartialYaml()
+		values["nodeLabelArgs"] = nodeLabelArgs
 	}
 
 	return values, nil

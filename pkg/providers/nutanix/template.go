@@ -187,7 +187,7 @@ func buildTemplateMapCP(
 
 	values := map[string]interface{}{
 		"auditPolicy":                  auditPolicy,
-		"apiServerExtraArgs":           apiServerExtraArgs.ToPartialYaml(),
+		"apiServerExtraArgs":           apiServerExtraArgs,
 		"ccmIgnoredNodeIPs":            ccmIgnoredNodeIPs,
 		"cloudProviderImage":           versionsBundle.Nutanix.CloudProvider.VersionedImage(),
 		"clusterName":                  clusterSpec.Cluster.Name,
@@ -363,12 +363,12 @@ func buildTemplateMapCP(
 	} else {
 		kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
 			Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf))
-		values["kubeletExtraArgs"] = kubeletExtraArgs.ToPartialYaml()
+		values["kubeletExtraArgs"] = kubeletExtraArgs
 	}
 
 	nodeLabelArgs := clusterapi.ControlPlaneNodeLabelsExtraArgs(clusterSpec.Cluster.Spec.ControlPlaneConfiguration)
 	if len(nodeLabelArgs) != 0 {
-		values["nodeLabelArgs"] = nodeLabelArgs.ToPartialYaml()
+		values["nodeLabelArgs"] = nodeLabelArgs
 	}
 
 	return values, nil
@@ -516,12 +516,12 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 	} else {
 		kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
 			Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf))
-		values["kubeletExtraArgs"] = kubeletExtraArgs.ToPartialYaml()
+		values["kubeletExtraArgs"] = kubeletExtraArgs
 	}
 
 	nodeLabelArgs := clusterapi.WorkerNodeLabelsExtraArgs(workerNodeGroupConfiguration)
 	if len(nodeLabelArgs) != 0 {
-		values["nodeLabelArgs"] = nodeLabelArgs.ToPartialYaml()
+		values["nodeLabelArgs"] = nodeLabelArgs
 	}
 
 	return values, nil
