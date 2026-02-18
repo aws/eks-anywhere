@@ -12,7 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
-	addons "sigs.k8s.io/cluster-api/api/addons/v1beta1"
+	addons "sigs.k8s.io/cluster-api/api/addons/v1beta2"
 	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
 	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
@@ -466,7 +466,7 @@ func configMap() *corev1.ConfigMap {
 func clusterResourceSet() *addons.ClusterResourceSet {
 	return &addons.ClusterResourceSet{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "addons.cluster.x-k8s.io/v1beta1",
+			APIVersion: "addons.cluster.x-k8s.io/v1beta2",
 			Kind:       "ClusterResourceSet",
 		},
 		ObjectMeta: metav1.ObjectMeta{
