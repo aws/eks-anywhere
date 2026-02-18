@@ -33,7 +33,7 @@ import (
 	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/util/annotations"
-	v1beta1patch "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/patch"
+	"sigs.k8s.io/cluster-api/util/patch"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -85,7 +85,7 @@ func (r *KubeadmControlPlaneReconciler) Reconcile(ctx context.Context, req ctrl.
 		return ctrl.Result{}, nil
 	}
 
-	patchHelper, err := v1beta1patch.NewHelper(kcp, r.client)
+	patchHelper, err := patch.NewHelper(kcp, r.client)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -128,7 +128,7 @@ func (r *KubeadmControlPlaneReconciler) reconcile(ctx context.Context, log logr.
 		}
 		return ctrl.Result{}, fmt.Errorf("getting MachineHealthCheck %s: %v", cpMachineHealthCheckName(kcp.ObjectMeta.Name), err)
 	}
-	mhcPatchHelper, err := v1beta1patch.NewHelper(mhc, r.client)
+	mhcPatchHelper, err := patch.NewHelper(mhc, r.client)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -212,12 +212,12 @@ func (r *KubeadmControlPlaneReconciler) validateStackedEtcd(kcp *controlplanev1b
 	return nil
 }
 
-func pauseMachineHealthCheck(ctx context.Context, mhc *clusterv1beta2.MachineHealthCheck, mhcPatchHelper *v1beta1patch.Helper) error {
+func pauseMachineHealthCheck(ctx context.Context, mhc *clusterv1beta2.MachineHealthCheck, mhcPatchHelper *patch.Helper) error {
 	annotations.AddAnnotations(mhc, map[string]string{clusterv1beta2.PausedAnnotation: "true"})
 	return mhcPatchHelper.Patch(ctx, mhc)
 }
 
-func resumeMachineHealthCheck(ctx context.Context, mhc *clusterv1beta2.MachineHealthCheck, mhcPatchHelper *v1beta1patch.Helper) error {
+func resumeMachineHealthCheck(ctx context.Context, mhc *clusterv1beta2.MachineHealthCheck, mhcPatchHelper *patch.Helper) error {
 	delete(mhc.Annotations, clusterv1beta2.PausedAnnotation)
 	return mhcPatchHelper.Patch(ctx, mhc)
 }
