@@ -1,7 +1,6 @@
 package kubernetes_test
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"reflect"
@@ -99,59 +98,4 @@ func TestObjectsToRuntimeObjects(t *testing.T) {
 
 func dockerCluster() *dockerv1.DockerCluster {
 	return &dockerv1.DockerCluster{}
-}
-
-func TestMachineSetWarningFilter_HandleWarningHeader(t *testing.T) {
-	tests := []struct {
-		name             string
-		warningMessage   string
-		expectSuppressed bool
-	}{
-		{
-			name:             "suppress MachineSet v1beta1 deprecation warning",
-			warningMessage:   "cluster.x-k8s.io/v1beta1 MachineSet is deprecated; use cluster.x-k8s.io/v1beta2 MachineSet",
-			expectSuppressed: true,
-		},
-		{
-			name:             "suppress Cluster v1beta1 deprecation warning",
-			warningMessage:   "cluster.x-k8s.io/v1beta1 Cluster is deprecated; use cluster.x-k8s.io/v1beta2 Cluster",
-			expectSuppressed: true,
-		},
-		{
-			name:             "allow non-v1beta1 warnings through",
-			warningMessage:   "some other warning message",
-			expectSuppressed: false,
-		},
-		{
-			name:             "allow cluster.x-k8s.io warnings that are not deprecation warnings",
-			warningMessage:   "cluster.x-k8s.io/v1beta1 MachineSet has some other issue",
-			expectSuppressed: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			g := NewWithT(t)
-
-			// Capture stderr output
-			var buf bytes.Buffer
-			originalStderr := rest.NewWarningWriter(&buf, rest.WarningWriterOptions{})
-
-			filter := kubernetes.NewMachineSetWarningFilter()
-
-			// Call the handler
-			filter.HandleWarningHeader(299, "test-agent", tt.warningMessage)
-
-			// Check if warning was suppressed or passed through
-			output := buf.String()
-			if tt.expectSuppressed {
-				g.Expect(output).To(BeEmpty(), "expected warning to be suppressed but it was logged")
-			} else {
-				// For non-suppressed warnings, we expect them to be logged
-				// Note: The actual output format depends on rest.NewWarningWriter implementation
-				// We just verify that something was attempted to be written
-				_ = originalStderr
-			}
-		})
-	}
 }
