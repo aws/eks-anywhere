@@ -10,7 +10,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -231,7 +230,7 @@ func TestNodeUpgradeReconcilerReconcileDeleteUpgraderPodAlreadyDeleted(t *testin
 	g.Expect(err).To(MatchError("pods \"node01-node-upgrader\" not found"))
 }
 
-func getObjectsForNodeUpgradeTest() (*clusterv1beta2.Cluster, *clusterv1.Machine, *corev1.Node, *anywherev1.NodeUpgrade, *corev1.ConfigMap) {
+func getObjectsForNodeUpgradeTest() (*clusterv1beta2.Cluster, *clusterv1beta2.Machine, *corev1.Node, *anywherev1.NodeUpgrade, *corev1.ConfigMap) {
 	cluster := generateCluster()
 	node := generateNode()
 	bootstrapConfig := generateKubeadmConfig()
@@ -250,7 +249,7 @@ func nodeUpgradeRequest(nodeUpgrade *anywherev1.NodeUpgrade) reconcile.Request {
 	}
 }
 
-func generateNodeUpgrade(machine *clusterv1.Machine) *anywherev1.NodeUpgrade {
+func generateNodeUpgrade(machine *clusterv1beta2.Machine) *anywherev1.NodeUpgrade {
 	return &anywherev1.NodeUpgrade{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "node-upgrade-request",
@@ -266,24 +265,23 @@ func generateNodeUpgrade(machine *clusterv1.Machine) *anywherev1.NodeUpgrade {
 	}
 }
 
-func generateMachine(cluster *clusterv1beta2.Cluster, node *corev1.Node, bootstrapConfig *bootstrapv1beta2.KubeadmConfig) *clusterv1.Machine {
-	return &clusterv1.Machine{
+func generateMachine(cluster *clusterv1beta2.Cluster, node *corev1.Node, bootstrapConfig *bootstrapv1beta2.KubeadmConfig) *clusterv1beta2.Machine {
+	return &clusterv1beta2.Machine{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "machine01",
 			Namespace: "eksa-system",
 		},
-		Spec: clusterv1.MachineSpec{
-			Version:     ptr.String("v1.27.8-eks-1-27-18"),
+		Spec: clusterv1beta2.MachineSpec{
+			Version:     "v1.27.8-eks-1-27-18",
 			ClusterName: cluster.Name,
-			Bootstrap: clusterv1.Bootstrap{
-				ConfigRef: &corev1.ObjectReference{
-					Name:      bootstrapConfig.Name,
-					Namespace: bootstrapConfig.Namespace,
+			Bootstrap: clusterv1beta2.Bootstrap{
+				ConfigRef: clusterv1beta2.ContractVersionedObjectReference{
+					Name: bootstrapConfig.Name,
 				},
 			},
 		},
-		Status: clusterv1.MachineStatus{
-			NodeRef: &corev1.ObjectReference{
+		Status: clusterv1beta2.MachineStatus{
+			NodeRef: clusterv1beta2.MachineNodeReference{
 				Name: node.Name,
 			},
 		},

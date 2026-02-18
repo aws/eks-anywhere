@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -74,7 +74,7 @@ func (s *Scanner) CheckCertificateExpiry(ctx context.Context, cluster *anywherev
 func (s *Scanner) getControlPlaneMachines(ctx context.Context, cluster *anywherev1.Cluster) ([]MachineInfo, error) {
 	var machines []MachineInfo
 
-	machineList := &clusterv1.MachineList{}
+	machineList := &clusterv1beta2.MachineList{}
 	selector := client.MatchingLabels{
 		clusterNameLabel:  cluster.Name,
 		controlPlaneLabel: "",
@@ -86,7 +86,7 @@ func (s *Scanner) getControlPlaneMachines(ctx context.Context, cluster *anywhere
 
 	for _, machine := range machineList.Items {
 		for _, address := range machine.Status.Addresses {
-			if address.Type == clusterv1.MachineExternalIP {
+			if address.Type == clusterv1beta2.MachineExternalIP {
 				machines = append(machines, MachineInfo{
 					Name: machine.Name,
 					IP:   address.Address,
@@ -102,7 +102,7 @@ func (s *Scanner) getControlPlaneMachines(ctx context.Context, cluster *anywhere
 func (s *Scanner) getEtcdMachines(ctx context.Context, cluster *anywherev1.Cluster) ([]MachineInfo, error) {
 	var machines []MachineInfo
 
-	machineList := &clusterv1.MachineList{}
+	machineList := &clusterv1beta2.MachineList{}
 	selector := client.MatchingLabels{
 		clusterNameLabel:  cluster.Name,
 		externalEtcdLabel: cluster.Name + "-etcd",
@@ -114,7 +114,7 @@ func (s *Scanner) getEtcdMachines(ctx context.Context, cluster *anywherev1.Clust
 
 	for _, machine := range machineList.Items {
 		for _, address := range machine.Status.Addresses {
-			if address.Type == clusterv1.MachineExternalIP {
+			if address.Type == clusterv1beta2.MachineExternalIP {
 				machines = append(machines, MachineInfo{
 					Name: machine.Name,
 					IP:   address.Address,

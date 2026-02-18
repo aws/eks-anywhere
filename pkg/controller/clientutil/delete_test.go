@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	clusterapiv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
@@ -25,7 +25,7 @@ func TestDeleteYamlSuccess(t *testing.T) {
 			initialObjs: []client.Object{
 				cluster("cluster-1"),
 			},
-			yaml: []byte(`apiVersion: cluster.x-k8s.io/v1beta1
+			yaml: []byte(`apiVersion: cluster.x-k8s.io/v1beta2
 kind: Cluster
 metadata:
   name: cluster-1
@@ -37,7 +37,7 @@ spec:
 		},
 		{
 			name: "delete multiple objects",
-			yaml: []byte(`apiVersion: cluster.x-k8s.io/v1beta1
+			yaml: []byte(`apiVersion: cluster.x-k8s.io/v1beta2
 kind: Cluster
 metadata:
   name: cluster-1
@@ -45,7 +45,7 @@ metadata:
 spec:
   paused: true
 ---
-apiVersion: cluster.x-k8s.io/v1beta1
+apiVersion: cluster.x-k8s.io/v1beta2
 kind: Cluster
 metadata:
   name: cluster-2
@@ -72,7 +72,7 @@ spec:
 					Name:      o.GetName(),
 				}
 
-				cluster := &clusterapiv1.Cluster{}
+				cluster := &clusterv1beta2.Cluster{}
 				err := c.Get(ctx, key, cluster)
 				g.Expect(apierrors.IsNotFound(err)).To(BeTrue(), "Object should have been deleted")
 			}
@@ -80,11 +80,11 @@ spec:
 	}
 }
 
-func cluster(name string) *clusterapiv1.Cluster {
-	c := &clusterapiv1.Cluster{
+func cluster(name string) *clusterv1beta2.Cluster {
+	c := &clusterv1beta2.Cluster{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Cluster",
-			APIVersion: clusterapiv1.GroupVersion.String(),
+			APIVersion: clusterv1beta2.GroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -108,14 +108,14 @@ func TestDeleteYamlError(t *testing.T) {
 		},
 		{
 			name: "error deleting",
-			yaml: []byte(`apiVersion: cluster.x-k8s.io/v1beta1
+			yaml: []byte(`apiVersion: cluster.x-k8s.io/v1beta2
 kind: Cluster
 metadata:
   name: cluster-1
   namespace: default
 spec:
   paused: true`),
-			wantErr: "deleting object cluster.x-k8s.io/v1beta1, Kind=Cluster, default/cluster-1",
+			wantErr: "deleting object cluster.x-k8s.io/v1beta2, Kind=Cluster, default/cluster-1",
 		},
 	}
 	ctx := context.Background()

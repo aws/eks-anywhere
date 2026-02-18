@@ -6,7 +6,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -97,7 +96,7 @@ func GetMachineDeployment(ctx context.Context, client client.Client, machineDepl
 func GetMachineDeployments(ctx context.Context, c client.Client, cluster *anywherev1.Cluster) ([]clusterv1beta2.MachineDeployment, error) {
 	machineDeployments := &clusterv1beta2.MachineDeploymentList{}
 
-	err := c.List(ctx, machineDeployments, client.MatchingLabels{clusterv1.ClusterNameLabel: cluster.Name}, client.InNamespace(constants.EksaSystemNamespace))
+	err := c.List(ctx, machineDeployments, client.MatchingLabels{clusterv1beta2.ClusterNameLabel: cluster.Name}, client.InNamespace(constants.EksaSystemNamespace))
 	if err != nil {
 		return nil, err
 	}

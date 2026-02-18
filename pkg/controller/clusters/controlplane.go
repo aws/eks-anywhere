@@ -12,7 +12,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/klog/v2"
 	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -170,7 +169,7 @@ func reconcileEtcdChanges(ctx context.Context, log logr.Logger, c client.Client,
 	// etcd endpoints change.
 	if !annotations.HasPaused(currentKCP) {
 		log.Info("Pausing KCP before making any etcd changes", "kcp", klog.KObj(currentKCP))
-		clientutil.AddAnnotation(currentKCP, clusterv1.PausedAnnotation, "true")
+		clientutil.AddAnnotation(currentKCP, clusterv1beta2.PausedAnnotation, "true")
 		if err := c.Update(ctx, currentKCP); err != nil {
 			return controller.Result{}, err
 		}
@@ -227,7 +226,7 @@ func reconcileControlPlaneNodeChanges(ctx context.Context, log logr.Logger, c cl
 			return controller.Result{}, errors.Wrap(err, "reading updates kubeadm control plane to unpause")
 		}
 
-		delete(kcp.Annotations, clusterv1.PausedAnnotation)
+		delete(kcp.Annotations, clusterv1beta2.PausedAnnotation)
 		log.Info("Unpausing KCP after update to start reconciliation", klog.KObj(currentKCP))
 		if err := c.Update(ctx, kcp); err != nil {
 			return controller.Result{}, err

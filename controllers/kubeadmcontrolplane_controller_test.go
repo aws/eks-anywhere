@@ -15,7 +15,6 @@ import (
 	"k8s.io/utils/ptr"
 	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
 	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -31,7 +30,7 @@ const (
 )
 
 type kcpObjects struct {
-	machines  []*clusterv1.Machine
+	machines  []*clusterv1beta2.Machine
 	cpUpgrade *anywherev1.ControlPlaneUpgrade
 	kcp       *controlplanev1beta2.KubeadmControlPlane
 	mhc       *clusterv1beta2.MachineHealthCheck
@@ -278,7 +277,7 @@ func getObjectsForKCP() kcpObjects {
 	machine2.Labels = map[string]string{
 		"cluster.x-k8s.io/control-plane-name": kcp.Name,
 	}
-	machines := []*clusterv1.Machine{machine1, machine2}
+	machines := []*clusterv1beta2.Machine{machine1, machine2}
 	cpUpgrade := generateCPUpgrade(machines)
 	cpUpgrade.Name = kcp.Name + "-cp-upgrade"
 	cpUpgrade.OwnerReferences = []metav1.OwnerReference{{

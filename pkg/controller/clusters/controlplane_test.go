@@ -11,7 +11,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
 	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	dockerv1beta2 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta2"
 	"sigs.k8s.io/cluster-api/util/annotations"
@@ -150,7 +149,7 @@ func TestReconcileControlPlaneExternalEtcdUpgradeWithDiff(t *testing.T) {
 		kcp,
 		func(g Gomega) {
 			g.Expect(kcp.Annotations).To(
-				HaveKeyWithValue(clusterv1.PausedAnnotation, "true"),
+				HaveKeyWithValue(clusterv1beta2.PausedAnnotation, "true"),
 				"kcp paused annotation should have been added",
 			)
 			g.Expect(kcp.Spec.Replicas).To(
@@ -212,7 +211,7 @@ func TestReconcileControlPlaneExternalEtcdReadyControlPlaneUpgrade(t *testing.T)
 	var oldCPReplicas int32 = 3
 	var newCPReplicas int32 = 4
 	cp.KubeadmControlPlane.Spec.Replicas = ptr.Int32(oldCPReplicas)
-	clientutil.AddAnnotation(cp.KubeadmControlPlane, clusterv1.PausedAnnotation, "true")
+	clientutil.AddAnnotation(cp.KubeadmControlPlane, clusterv1beta2.PausedAnnotation, "true")
 	// an existing kcp should already have etcd endpoints
 	cp.KubeadmControlPlane.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External.Endpoints = []string{"https://1.1.1.1:2379"}
 	envtest.CreateObjs(ctx, t, c, cp.AllObjects()...)
@@ -269,7 +268,7 @@ func TestReconcileControlPlaneExternalEtcdWithPlaceholderEndpoints(t *testing.T)
 	var oldCPReplicas int32 = 3
 	var newCPReplicas int32 = 4
 	cp.KubeadmControlPlane.Spec.Replicas = ptr.Int32(oldCPReplicas)
-	clientutil.AddAnnotation(cp.KubeadmControlPlane, clusterv1.PausedAnnotation, "true")
+	clientutil.AddAnnotation(cp.KubeadmControlPlane, clusterv1beta2.PausedAnnotation, "true")
 	// Set placeholder endpoint in existing kcp
 	cp.KubeadmControlPlane.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External.Endpoints = []string{constants.PlaceholderExternalEtcdEndpoint}
 	envtest.CreateObjs(ctx, t, c, cp.AllObjects()...)
@@ -328,7 +327,7 @@ func TestReconcileControlPlaneExternalEtcdWithMultipleEndpoints(t *testing.T) {
 	var oldCPReplicas int32 = 3
 	var newCPReplicas int32 = 4
 	cp.KubeadmControlPlane.Spec.Replicas = ptr.Int32(oldCPReplicas)
-	clientutil.AddAnnotation(cp.KubeadmControlPlane, clusterv1.PausedAnnotation, "true")
+	clientutil.AddAnnotation(cp.KubeadmControlPlane, clusterv1beta2.PausedAnnotation, "true")
 	// Set multiple real etcd endpoints in existing kcp
 	multipleEndpoints := []string{"https://1.1.1.1:2379", "https://2.2.2.2:2379", "https://3.3.3.3:2379"}
 	cp.KubeadmControlPlane.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External.Endpoints = multipleEndpoints
@@ -387,7 +386,7 @@ func TestReconcileControlPlaneExternalEtcdWithEmptyEndpoints(t *testing.T) {
 	var oldCPReplicas int32 = 3
 	var newCPReplicas int32 = 4
 	cp.KubeadmControlPlane.Spec.Replicas = ptr.Int32(oldCPReplicas)
-	clientutil.AddAnnotation(cp.KubeadmControlPlane, clusterv1.PausedAnnotation, "true")
+	clientutil.AddAnnotation(cp.KubeadmControlPlane, clusterv1beta2.PausedAnnotation, "true")
 	// Set placeholder endpoints in existing kcp (v1beta2 requires non-empty endpoints)
 	cp.KubeadmControlPlane.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External.Endpoints = []string{constants.PlaceholderExternalEtcdEndpoint}
 	envtest.CreateObjs(ctx, t, c, cp.AllObjects()...)
