@@ -31,7 +31,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
-	v1beta1patch "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/patch"
+	"sigs.k8s.io/cluster-api/util/patch"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -83,7 +83,7 @@ func (r *MachineDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		return ctrl.Result{}, nil
 	}
 
-	patchHelper, err := v1beta1patch.NewHelper(md, r.client)
+	patchHelper, err := patch.NewHelper(md, r.client)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -126,7 +126,7 @@ func (r *MachineDeploymentReconciler) reconcile(ctx context.Context, log logr.Lo
 		}
 		return ctrl.Result{}, fmt.Errorf("getting MachineHealthCheck %s: %v", mdMachineHealthCheckName(md.ObjectMeta.Name), err)
 	}
-	mhcPatchHelper, err := v1beta1patch.NewHelper(mhc, r.client)
+	mhcPatchHelper, err := patch.NewHelper(mhc, r.client)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
