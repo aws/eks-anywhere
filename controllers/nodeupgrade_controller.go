@@ -12,16 +12,15 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
-	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
-	v1beta1patch "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/patch"
+	"sigs.k8s.io/cluster-api/util/patch"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/conditions"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	upgrader "github.com/aws/eks-anywhere/pkg/nodeupgrader"
 )
@@ -101,7 +100,7 @@ func (r *NodeUpgradeReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	}
 
 	// Initialize the patch helper
-	patchHelper, err := v1beta1patch.NewHelper(nodeUpgrade, r.client)
+	patchHelper, err := patch.NewHelper(nodeUpgrade, r.client)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -113,7 +112,7 @@ func (r *NodeUpgradeReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		}
 
 		// Always attempt to patch the object and status after each reconciliation.
-		patchOpts := []v1beta1patch.Option{}
+		patchOpts := []patch.Option{}
 
 		// We want the observedGeneration to indicate, that the status shown is up-to-date given the desired spec of the same generation.
 		// However, if there is an error while updating the status, we may get a partial status update, In this case,
@@ -121,7 +120,7 @@ func (r *NodeUpgradeReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 		// Patch ObservedGeneration only if the reconciliation completed without error
 		if reterr == nil {
-			patchOpts = append(patchOpts, v1beta1patch.WithStatusObservedGeneration{})
+			patchOpts = append(patchOpts, patch.WithStatusObservedGeneration{})
 		}
 		if err := patchNodeUpgrade(ctx, patchHelper, *nodeUpgrade, patchOpts...); err != nil {
 			reterr = kerrors.NewAggregate([]error{reterr, err})
@@ -131,7 +130,7 @@ func (r *NodeUpgradeReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		// We do this to be able to update the status continuously until the NodeUpgrade becomes ready,
 		// since there might be changes in state of the world that don't trigger reconciliation requests
 
-		if reterr == nil && !result.Requeue && result.RequeueAfter <= 0 && v1beta1conditions.IsFalse(nodeUpgrade, anywherev1.ReadyCondition) {
+		if reterr == nil && !result.Requeue && result.RequeueAfter <= 0 && conditions.IsFalse(nodeUpgrade, anywherev1.ReadyCondition) {
 			result = ctrl.Result{RequeueAfter: 10 * time.Second}
 		}
 	}()
@@ -164,7 +163,7 @@ func (r *NodeUpgradeReconciler) reconcile(ctx context.Context, log logr.Logger, 
 
 	log.Info("Upgrading node", "Node", node.Name)
 	upgraderPod := &corev1.Pod{}
-	if v1beta1conditions.IsTrue(nodeUpgrade, anywherev1.UpgraderPodCreated) || upgraderPodExists(ctx, remoteClient, node.Name) {
+	if conditions.IsTrue(nodeUpgrade, anywherev1.UpgraderPodCreated) || upgraderPodExists(ctx, remoteClient, node.Name) {
 		log.Info("Upgrader pod already exists, skipping creation of the pod", "Pod", upgrader.PodName(node.Name))
 		return ctrl.Result{}, nil
 	}
@@ -256,19 +255,19 @@ func (r *NodeUpgradeReconciler) updateStatus(ctx context.Context, log logr.Logge
 	pod, err := getUpgraderPod(ctx, remoteClient, nodeName)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			markAllConditionsFalse(nodeUpgrade, podDNEMessage, clusterv1.ConditionSeverityInfo)
+			markAllConditionsFalse(nodeUpgrade, podDNEMessage, anywherev1.ConditionSeverityInfo)
 		} else {
-			markAllConditionsFalse(nodeUpgrade, err.Error(), clusterv1.ConditionSeverityError)
+			markAllConditionsFalse(nodeUpgrade, err.Error(), anywherev1.ConditionSeverityError)
 		}
 		return fmt.Errorf("getting upgrader pod: %v", err)
 	}
 
-	v1beta1conditions.MarkTrue(nodeUpgrade, anywherev1.UpgraderPodCreated)
+	conditions.MarkTrue(nodeUpgrade, anywherev1.UpgraderPodCreated)
 	updateComponentsConditions(pod, nodeUpgrade)
 
 	// Always update the readyCondition by summarizing the state of other conditions.
-	v1beta1conditions.SetSummary(nodeUpgrade,
-		v1beta1conditions.WithConditions(
+	conditions.SetSummary(nodeUpgrade,
+		conditions.WithConditions(
 			anywherev1.UpgraderPodCreated,
 			anywherev1.BinariesCopied,
 			anywherev1.ContainerdUpgraded,
@@ -284,7 +283,7 @@ func (r *NodeUpgradeReconciler) updateStatus(ctx context.Context, log logr.Logge
 func updateComponentsConditions(pod *corev1.Pod, nodeUpgrade *anywherev1.NodeUpgrade) {
 	containersMap := []struct {
 		name      string
-		condition clusterv1.ConditionType
+		condition anywherev1.ConditionType
 	}{
 		{
 			name:      upgrader.CopierContainerName,
@@ -316,25 +315,25 @@ func updateComponentsConditions(pod *corev1.Pod, nodeUpgrade *anywherev1.NodeUpg
 	for _, container := range containersMap {
 		status, err := getContainerStatus(pod, container.name)
 		if err != nil {
-			v1beta1conditions.MarkFalse(nodeUpgrade, container.condition, "Container status not available yet", clusterv1.ConditionSeverityWarning, "")
+			conditions.MarkFalse(nodeUpgrade, container.condition, "Container status not available yet", anywherev1.ConditionSeverityWarning, "")
 			completed = false
 		} else {
 			if status.State.Waiting != nil {
-				v1beta1conditions.MarkFalse(nodeUpgrade, container.condition, "Container is waiting to be initialized", clusterv1.ConditionSeverityInfo, "")
+				conditions.MarkFalse(nodeUpgrade, container.condition, "Container is waiting to be initialized", anywherev1.ConditionSeverityInfo, "")
 				completed = false
 			} else if status.State.Running != nil {
-				v1beta1conditions.MarkFalse(nodeUpgrade, container.condition, "Container is still running", clusterv1.ConditionSeverityInfo, "")
+				conditions.MarkFalse(nodeUpgrade, container.condition, "Container is still running", anywherev1.ConditionSeverityInfo, "")
 				completed = false
 			} else if status.State.Terminated != nil {
 				if status.State.Terminated.ExitCode != 0 {
-					v1beta1conditions.MarkFalse(nodeUpgrade, container.condition, fmt.Sprintf("Container exited with a non-zero exit code, reason: %s", status.State.Terminated.Reason), clusterv1.ConditionSeverityError, "")
+					conditions.MarkFalse(nodeUpgrade, container.condition, fmt.Sprintf("Container exited with a non-zero exit code, reason: %s", status.State.Terminated.Reason), anywherev1.ConditionSeverityError, "")
 					completed = false
 				} else {
-					v1beta1conditions.MarkTrue(nodeUpgrade, container.condition)
+					conditions.MarkTrue(nodeUpgrade, container.condition)
 				}
 			} else {
 				// this should not happen
-				v1beta1conditions.MarkFalse(nodeUpgrade, container.condition, "Container state is unknown", clusterv1.ConditionSeverityWarning, "")
+				conditions.MarkFalse(nodeUpgrade, container.condition, "Container state is unknown", anywherev1.ConditionSeverityWarning, "")
 				completed = false
 			}
 		}
@@ -356,13 +355,13 @@ func getContainerStatus(pod *corev1.Pod, containerName string) (*corev1.Containe
 	return nil, fmt.Errorf("status not found for container %s in pod %s", containerName, pod.Name)
 }
 
-func markAllConditionsFalse(nodeUpgrade *anywherev1.NodeUpgrade, message string, severity clusterv1.ConditionSeverity) {
-	v1beta1conditions.MarkFalse(nodeUpgrade, anywherev1.UpgraderPodCreated, message, clusterv1.ConditionSeverityError, "")
-	v1beta1conditions.MarkFalse(nodeUpgrade, anywherev1.BinariesCopied, message, clusterv1.ConditionSeverityError, "")
-	v1beta1conditions.MarkFalse(nodeUpgrade, anywherev1.ContainerdUpgraded, message, clusterv1.ConditionSeverityError, "")
-	v1beta1conditions.MarkFalse(nodeUpgrade, anywherev1.CNIPluginsUpgraded, message, clusterv1.ConditionSeverityError, "")
-	v1beta1conditions.MarkFalse(nodeUpgrade, anywherev1.KubeadmUpgraded, message, clusterv1.ConditionSeverityError, "")
-	v1beta1conditions.MarkFalse(nodeUpgrade, anywherev1.KubeletUpgraded, message, clusterv1.ConditionSeverityError, "")
+func markAllConditionsFalse(nodeUpgrade *anywherev1.NodeUpgrade, message string, severity anywherev1.ConditionSeverity) {
+	conditions.MarkFalse(nodeUpgrade, anywherev1.UpgraderPodCreated, message, anywherev1.ConditionSeverityError, "")
+	conditions.MarkFalse(nodeUpgrade, anywherev1.BinariesCopied, message, anywherev1.ConditionSeverityError, "")
+	conditions.MarkFalse(nodeUpgrade, anywherev1.ContainerdUpgraded, message, anywherev1.ConditionSeverityError, "")
+	conditions.MarkFalse(nodeUpgrade, anywherev1.CNIPluginsUpgraded, message, anywherev1.ConditionSeverityError, "")
+	conditions.MarkFalse(nodeUpgrade, anywherev1.KubeadmUpgraded, message, anywherev1.ConditionSeverityError, "")
+	conditions.MarkFalse(nodeUpgrade, anywherev1.KubeletUpgraded, message, anywherev1.ConditionSeverityError, "")
 }
 
 func isControlPlane(node *corev1.Node) bool {
@@ -378,17 +377,17 @@ func GetNamespacedNameType(name, namespace string) types.NamespacedName {
 	}
 }
 
-func patchNodeUpgrade(ctx context.Context, patchHelper *v1beta1patch.Helper, nodeUpgrade anywherev1.NodeUpgrade, patchOpts ...v1beta1patch.Option) error {
+func patchNodeUpgrade(ctx context.Context, patchHelper *patch.Helper, nodeUpgrade anywherev1.NodeUpgrade, patchOpts ...patch.Option) error {
 	// Patch the object, ignoring conflicts on the conditions owned by this controller.
-	options := append([]v1beta1patch.Option{
-		v1beta1patch.WithOwnedConditions{Conditions: []clusterv1.ConditionType{
-			// Add each condition her that the controller should ignored conflicts for.
-			anywherev1.UpgraderPodCreated,
-			anywherev1.BinariesCopied,
-			anywherev1.ContainerdUpgraded,
-			anywherev1.CNIPluginsUpgraded,
-			anywherev1.KubeadmUpgraded,
-			anywherev1.KubeletUpgraded,
+	options := append([]patch.Option{
+		patch.WithOwnedV1Beta1Conditions{Conditions: []clusterv1beta2.ConditionType{
+			// Add each condition here that the controller should ignore conflicts for.
+			clusterv1beta2.ConditionType(anywherev1.UpgraderPodCreated),
+			clusterv1beta2.ConditionType(anywherev1.BinariesCopied),
+			clusterv1beta2.ConditionType(anywherev1.ContainerdUpgraded),
+			clusterv1beta2.ConditionType(anywherev1.CNIPluginsUpgraded),
+			clusterv1beta2.ConditionType(anywherev1.KubeadmUpgraded),
+			clusterv1beta2.ConditionType(anywherev1.KubeletUpgraded),
 		}},
 	}, patchOpts...)
 

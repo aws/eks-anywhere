@@ -10,7 +10,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -120,15 +119,15 @@ func TestValidateClusterReady(t *testing.T) {
 	g := NewWithT(t)
 	tests := []struct {
 		name       string
-		conditions v1beta1.Conditions
+		conditions v1alpha1.Conditions
 		cluster    *v1alpha1.Cluster
 		wantErr    string
 	}{
 		{
 			name: "CAPI cluster ready",
-			conditions: v1beta1.Conditions{
+			conditions: v1alpha1.Conditions{
 				{
-					Type:   v1beta1.ConditionType(corev1.NodeReady),
+					Type:   v1alpha1.ConditionType(corev1.NodeReady),
 					Status: "True",
 					Reason: "",
 					LastTransitionTime: metav1.Time{
@@ -141,9 +140,9 @@ func TestValidateClusterReady(t *testing.T) {
 		},
 		{
 			name: "CAPI cluster does not ready",
-			conditions: v1beta1.Conditions{
+			conditions: v1alpha1.Conditions{
 				{
-					Type:   v1beta1.ConditionType(corev1.NodeReady),
+					Type:   v1alpha1.ConditionType(corev1.NodeReady),
 					Status: "False",
 					Reason: "Never ready for testing",
 					LastTransitionTime: metav1.Time{
@@ -156,7 +155,7 @@ func TestValidateClusterReady(t *testing.T) {
 		},
 		{
 			name:       "CAPI cluster does not exist",
-			conditions: v1beta1.Conditions{},
+			conditions: v1alpha1.Conditions{},
 			cluster:    testCluster(),
 			wantErr:    fmt.Sprintf("cluster %s does not exist", clusterName),
 		},

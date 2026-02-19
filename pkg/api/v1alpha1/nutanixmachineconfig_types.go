@@ -7,7 +7,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	capiv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 )
 
 // NutanixMachineConfigSpec defines the desired state of NutanixMachineConfig.
@@ -167,7 +167,7 @@ type NutanixMachineConfigStatus struct {
 
 	// Addresses contains the Nutanix VM associated addresses.
 	// Address type is one of Hostname, ExternalIP, InternalIP, ExternalDNS, InternalDNS
-	Addresses []capiv1.MachineAddress `json:"addresses,omitempty"`
+	Addresses []clusterv1beta2.MachineAddress `json:"addresses,omitempty"`
 
 	// The Nutanix VM's UUID
 	// +optional
@@ -179,7 +179,7 @@ type NutanixMachineConfigStatus struct {
 
 	// Conditions defines current service state of the NutanixMachine.
 	// +optional
-	Conditions capiv1.Conditions `json:"conditions,omitempty"`
+	Conditions Conditions `json:"conditions,omitempty"`
 }
 
 // NutanixMachineConfig is the Schema for the nutanix machine configs API

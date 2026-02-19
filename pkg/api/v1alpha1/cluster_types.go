@@ -11,7 +11,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/semver"
@@ -1427,11 +1426,11 @@ type Cluster struct {
 	Status ClusterStatus `json:"status,omitempty"`
 }
 
-func (c *Cluster) GetConditions() clusterv1.Conditions {
+func (c *Cluster) GetConditions() Conditions {
 	return c.Status.Conditions
 }
 
-func (c *Cluster) SetConditions(conditions clusterv1.Conditions) {
+func (c *Cluster) SetConditions(conditions Conditions) {
 	c.Status.Conditions = conditions
 }
 

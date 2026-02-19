@@ -10,9 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
-	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
@@ -21,6 +19,7 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
+	"github.com/aws/eks-anywhere/pkg/conditions"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
@@ -52,7 +51,7 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 			wantCondition: &anywherev1.Condition{
 				Type:     "ControlPlaneInitialized",
 				Status:   "False",
-				Severity: clusterv1.ConditionSeverityInfo,
+				Severity: anywherev1.ConditionSeverityInfo,
 				Reason:   anywherev1.ControlPlaneInitializationInProgressReason,
 				Message:  controlPlaneInitalizationInProgressReason,
 			},
@@ -93,7 +92,7 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 			wantCondition: &anywherev1.Condition{
 				Type:     anywherev1.ControlPlaneInitializedCondition,
 				Status:   "False",
-				Severity: clusterv1.ConditionSeverityInfo,
+				Severity: anywherev1.ConditionSeverityInfo,
 				Reason:   anywherev1.OutdatedInformationReason,
 				Message:  "",
 			},
@@ -115,7 +114,7 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 			wantCondition: &anywherev1.Condition{
 				Type:     anywherev1.ControlPlaneInitializedCondition,
 				Status:   "False",
-				Severity: clusterv1.ConditionSeverityInfo,
+				Severity: anywherev1.ConditionSeverityInfo,
 				Reason:   anywherev1.ControlPlaneInitializationInProgressReason,
 				Message:  controlPlaneInitalizationInProgressReason,
 			},
@@ -147,7 +146,7 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 				{
 					Type:     anywherev1.ControlPlaneInitializedCondition,
 					Status:   "False",
-					Severity: clusterv1.ConditionSeverityInfo,
+					Severity: anywherev1.ConditionSeverityInfo,
 					Reason:   anywherev1.ControlPlaneInitializationInProgressReason,
 					Message:  controlPlaneInitalizationInProgressReason,
 				},
@@ -157,7 +156,7 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 			wantCondition: &anywherev1.Condition{
 				Type:     anywherev1.ControlPlaneReadyCondition,
 				Status:   "False",
-				Severity: clusterv1.ConditionSeverityInfo,
+				Severity: anywherev1.ConditionSeverityInfo,
 				Reason:   anywherev1.ControlPlaneInitializationInProgressReason,
 				Message:  controlPlaneInitalizationInProgressReason,
 			},
@@ -202,7 +201,7 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 				Type:     anywherev1.ControlPlaneReadyCondition,
 				Status:   "False",
 				Reason:   anywherev1.OutdatedInformationReason,
-				Severity: clusterv1.ConditionSeverityInfo,
+				Severity: anywherev1.ConditionSeverityInfo,
 			},
 		},
 		{
@@ -230,7 +229,7 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 				Type:     anywherev1.ControlPlaneReadyCondition,
 				Status:   "False",
 				Reason:   anywherev1.ScalingUpReason,
-				Severity: clusterv1.ConditionSeverityInfo,
+				Severity: anywherev1.ConditionSeverityInfo,
 				Message:  "Scaling up control plane nodes, 3 expected (1 actual)",
 			},
 		},
@@ -260,7 +259,7 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 				Type:     anywherev1.ControlPlaneReadyCondition,
 				Status:   "False",
 				Reason:   anywherev1.ScalingDownReason,
-				Severity: clusterv1.ConditionSeverityInfo,
+				Severity: anywherev1.ConditionSeverityInfo,
 				Message:  "Scaling down control plane nodes",
 			},
 		},
@@ -291,7 +290,7 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 				Type:     anywherev1.ControlPlaneReadyCondition,
 				Status:   "False",
 				Reason:   anywherev1.RollingUpgradeInProgress,
-				Severity: clusterv1.ConditionSeverityInfo,
+				Severity: anywherev1.ConditionSeverityInfo,
 				Message:  "Control plane nodes not up-to-date yet",
 			},
 		},
@@ -322,7 +321,7 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 				Type:     anywherev1.ControlPlaneReadyCondition,
 				Status:   "False",
 				Reason:   anywherev1.InPlaceUpgradeInProgress,
-				Severity: clusterv1.ConditionSeverityInfo,
+				Severity: anywherev1.ConditionSeverityInfo,
 				Message:  "Control plane nodes not up-to-date yet",
 			},
 			upgradeType: anywherev1.InPlaceStrategyType,
@@ -354,7 +353,7 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 				Type:     anywherev1.ControlPlaneReadyCondition,
 				Status:   "False",
 				Reason:   anywherev1.NodesNotReadyReason,
-				Severity: clusterv1.ConditionSeverityInfo,
+				Severity: anywherev1.ConditionSeverityInfo,
 				Message:  "Control plane nodes not ready yet",
 			},
 		},
@@ -390,7 +389,7 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 			wantCondition: &anywherev1.Condition{
 				Type:     anywherev1.ControlPlaneReadyCondition,
 				Reason:   anywherev1.ControlPlaneComponentsUnhealthyReason,
-				Severity: clusterv1.ConditionSeverityError,
+				Severity: anywherev1.ConditionSeverityError,
 				Message:  "test message",
 				Status:   "False",
 			},
@@ -422,7 +421,7 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 				Type:     anywherev1.ControlPlaneReadyCondition,
 				Status:   "False",
 				Reason:   anywherev1.KubeadmControlPlaneNotReadyReason,
-				Severity: clusterv1.ConditionSeverityError,
+				Severity: anywherev1.ConditionSeverityError,
 				Message:  "Kubeadm control plane test-cluster not ready yet",
 			},
 		},
@@ -539,7 +538,7 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 			wantCondition: &anywherev1.Condition{
 				Type:     anywherev1.ControlPlaneReadyCondition,
 				Reason:   anywherev1.RollingUpgradeInProgress,
-				Severity: clusterv1.ConditionSeverityInfo,
+				Severity: anywherev1.ConditionSeverityInfo,
 				Message:  "Etcd is not ready",
 				Status:   "False",
 			},
@@ -582,7 +581,7 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 			wantCondition: &anywherev1.Condition{
 				Type:     anywherev1.ControlPlaneReadyCondition,
 				Reason:   anywherev1.ExternalEtcdNotAvailable,
-				Severity: clusterv1.ConditionSeverityInfo,
+				Severity: anywherev1.ConditionSeverityInfo,
 				Message:  "Etcd cluster is not available",
 				Status:   "False",
 			},
@@ -614,7 +613,7 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 			wantCondition: &anywherev1.Condition{
 				Type:     anywherev1.ControlPlaneReadyCondition,
 				Reason:   anywherev1.ExternalEtcdNotAvailable,
-				Severity: clusterv1.ConditionSeverityInfo,
+				Severity: anywherev1.ConditionSeverityInfo,
 				Message:  "Etcd cluster is not available",
 				Status:   "False",
 			},
@@ -665,7 +664,7 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 			err := clusters.UpdateClusterStatusForControlPlane(ctx, client, cluster)
 			g.Expect(err).To(BeNil())
 
-			condition := v1beta1conditions.Get(cluster, tt.wantCondition.Type)
+			condition := conditions.Get(cluster, tt.wantCondition.Type)
 			g.Expect(condition).ToNot(BeNil())
 			g.Expect(condition.Type).To(Equal(tt.wantCondition.Type))
 			g.Expect(condition.Severity).To(Equal(tt.wantCondition.Severity))
@@ -879,7 +878,7 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 				{
 					Type:     anywherev1.ControlPlaneInitializedCondition,
 					Status:   "False",
-					Severity: clusterv1.ConditionSeverityInfo,
+					Severity: anywherev1.ConditionSeverityInfo,
 					Reason:   anywherev1.ControlPlaneInitializationInProgressReason,
 					Message:  controlPlaneInitalizationInProgressReason,
 				},
@@ -888,7 +887,7 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 				Type:     anywherev1.WorkersReadyCondition,
 				Status:   "False",
 				Reason:   anywherev1.ControlPlaneNotInitializedReason,
-				Severity: clusterv1.ConditionSeverityInfo,
+				Severity: anywherev1.ConditionSeverityInfo,
 			},
 		},
 		{
@@ -918,7 +917,7 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 				Type:     anywherev1.WorkersReadyCondition,
 				Status:   "False",
 				Reason:   anywherev1.OutdatedInformationReason,
-				Severity: clusterv1.ConditionSeverityInfo,
+				Severity: anywherev1.ConditionSeverityInfo,
 			},
 		},
 		{
@@ -956,7 +955,7 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 				Type:     anywherev1.WorkersReadyCondition,
 				Status:   "False",
 				Reason:   anywherev1.OutdatedInformationReason,
-				Severity: clusterv1.ConditionSeverityInfo,
+				Severity: anywherev1.ConditionSeverityInfo,
 			},
 		},
 		{
@@ -999,7 +998,7 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 				Type:     anywherev1.WorkersReadyCondition,
 				Status:   "False",
 				Reason:   anywherev1.RollingUpgradeInProgress,
-				Severity: clusterv1.ConditionSeverityInfo,
+				Severity: anywherev1.ConditionSeverityInfo,
 				Message:  "Worker nodes not up-to-date yet",
 			},
 		},
@@ -1043,7 +1042,7 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 				Type:     anywherev1.WorkersReadyCondition,
 				Status:   "False",
 				Reason:   anywherev1.InPlaceUpgradeInProgress,
-				Severity: clusterv1.ConditionSeverityInfo,
+				Severity: anywherev1.ConditionSeverityInfo,
 				Message:  "Worker nodes not up-to-date yet",
 			},
 			upgradeType: anywherev1.InPlaceStrategyType,
@@ -1088,7 +1087,7 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 				Type:     anywherev1.WorkersReadyCondition,
 				Status:   "False",
 				Reason:   anywherev1.ScalingUpReason,
-				Severity: clusterv1.ConditionSeverityInfo,
+				Severity: anywherev1.ConditionSeverityInfo,
 				Message:  "Scaling up worker nodes",
 			},
 		},
@@ -1132,7 +1131,7 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 				Type:     anywherev1.WorkersReadyCondition,
 				Status:   "False",
 				Reason:   anywherev1.ScalingDownReason,
-				Severity: clusterv1.ConditionSeverityInfo,
+				Severity: anywherev1.ConditionSeverityInfo,
 				Message:  "Scaling down worker nodes",
 			},
 		},
@@ -1176,7 +1175,7 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 				Type:     anywherev1.WorkersReadyCondition,
 				Status:   "False",
 				Reason:   anywherev1.NodesNotReadyReason,
-				Severity: clusterv1.ConditionSeverityInfo,
+				Severity: anywherev1.ConditionSeverityInfo,
 				Message:  "Worker nodes not ready yet",
 			},
 		},
@@ -1215,7 +1214,7 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 				Type:     anywherev1.WorkersReadyCondition,
 				Status:   "False",
 				Reason:   anywherev1.MachineDeploymentNotReadyReason,
-				Severity: clusterv1.ConditionSeverityError,
+				Severity: anywherev1.ConditionSeverityError,
 				Message:  "Machine deployment md-0 not ready yet",
 			},
 		},
@@ -1268,7 +1267,7 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 				Type:     anywherev1.WorkersReadyCondition,
 				Status:   "False",
 				Reason:   anywherev1.AutoscalerConstraintNotMetReason,
-				Severity: clusterv1.ConditionSeverityInfo,
+				Severity: anywherev1.ConditionSeverityInfo,
 				Message:  "Worker nodes count for md-1 not between 3 and 5 yet (1 actual)",
 			},
 		},
@@ -1389,7 +1388,7 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 			err := clusters.UpdateClusterStatusForWorkers(ctx, client, cluster)
 			g.Expect(err).To(BeNil())
 
-			condition := v1beta1conditions.Get(cluster, tt.wantCondition.Type)
+			condition := conditions.Get(cluster, tt.wantCondition.Type)
 			fmt.Println(condition)
 			g.Expect(condition).ToNot(BeNil())
 
@@ -1426,7 +1425,7 @@ func TestUpdateClusterStatusForCNI(t *testing.T) {
 				Type:     anywherev1.DefaultCNIConfiguredCondition,
 				Reason:   anywherev1.ControlPlaneNotReadyReason,
 				Status:   "False",
-				Severity: clusterv1.ConditionSeverityInfo,
+				Severity: anywherev1.ConditionSeverityInfo,
 			},
 		},
 		{
@@ -1469,7 +1468,7 @@ func TestUpdateClusterStatusForCNI(t *testing.T) {
 			clusters.UpdateClusterStatusForCNI(ctx, spec.Cluster)
 
 			if tt.wantCondition != nil {
-				condition := v1beta1conditions.Get(spec.Cluster, tt.wantCondition.Type)
+				condition := conditions.Get(spec.Cluster, tt.wantCondition.Type)
 				g.Expect(condition).ToNot(BeNil())
 				g.Expect(condition.Type).To(Equal(tt.wantCondition.Type))
 				g.Expect(condition.Severity).To(Equal(tt.wantCondition.Severity))

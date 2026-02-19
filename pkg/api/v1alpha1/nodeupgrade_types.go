@@ -3,7 +3,6 @@ package v1alpha1
 import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 )
 
 const (
@@ -98,11 +97,11 @@ func init() {
 }
 
 // GetConditions returns all the Conditions for the NodeUpgrade object.
-func (n *NodeUpgrade) GetConditions() clusterv1.Conditions {
+func (n *NodeUpgrade) GetConditions() Conditions {
 	return n.Status.Conditions
 }
 
 // SetConditions sets the Conditons on the NodeUpgrade object.
-func (n *NodeUpgrade) SetConditions(conditions clusterv1.Conditions) {
+func (n *NodeUpgrade) SetConditions(conditions Conditions) {
 	n.Status.Conditions = conditions
 }
