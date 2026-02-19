@@ -152,10 +152,10 @@ github.com/aws/eks-anywhere-packages v0.4.5 h1:G/wiNmH/LY5aDRh4/QGr4fI2e368HLeJr
 github.com/aws/eks-anywhere-packages v0.4.5/go.mod h1:5OYMcgR6wkyjjTBtjOFcfxAAr/z1aUsPzVbMQ+u43hU=
 github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae5e h1:GB6Cn9yKEt31mDF7RrVWyM9WoppNkGYth8zBPIJGJ+w=
 github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae5e/go.mod h1:p/KHVJAMv3kofnUnShkZ6pUnZYzm+LK2G7bIi8nnTKA=
-github.com/aws/etcdadm-bootstrap-provider v1.0.17 h1:DdcYhciifHzun+dwCzC2UC4l/SkYFd909Xkv6MTXzGQ=
-github.com/aws/etcdadm-bootstrap-provider v1.0.17/go.mod h1:i9JO7KTkYqqbs7n6dYfMNsT8gYkyEIcVKNCxIFS6S88=
-github.com/aws/etcdadm-controller v1.0.25 h1:O3wq/G2079m3FsblW5nhZ3YzZGcJgw0PyRcwyUBoExo=
-github.com/aws/etcdadm-controller v1.0.25/go.mod h1:TVBppyiC6h5EENXdOeTD+rZgw6CkS6M8VVTDoMyjK7Q=
+github.com/aws/etcdadm-bootstrap-provider v1.0.19 h1:78kVcusipP6hf0o2SWOsv+GaJiIuXdpNYf2xvo1Kjfo=
+github.com/aws/etcdadm-bootstrap-provider v1.0.19/go.mod h1:u6J1qcJ+6XsXtZZeKBWyN/8dxjlH4gddSYBcDMnswQQ=
+github.com/aws/etcdadm-controller v1.0.27 h1:rL+MiRm/PSMGHs/EY/RkiojKCTTEcC1mPQg/aVnT6oU=
+github.com/aws/etcdadm-controller v1.0.27/go.mod h1:bvcrYTZr7l4C2RmvH/UuK1igTa0VufwOY4qmZeK4OWg=
 github.com/aws/smithy-go v1.20.3 h1:ryHwveWzPV5BIof6fyDvor6V3iUL7nTfiTKXHiW05nE=
 github.com/aws/smithy-go v1.20.3/go.mod h1:krry+ya/rV9RDcV/Q16kpu6ypI4K2czasz0NC3qS14E=
 github.com/benbjohnson/clock v1.1.0/go.mod h1:J11/hYXuz8f4ySSvYwY0FKfm+ezbsZBKZxNJlLklBHA=

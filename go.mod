@@ -14,8 +14,8 @@ require (
 	github.com/aws/eks-anywhere-packages v0.4.5
 	github.com/aws/eks-anywhere/internal/aws-sdk-go-v2/service/snowballdevice v0.0.0-00010101000000-000000000000
 	github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae5e
-	github.com/aws/etcdadm-bootstrap-provider v1.0.17
-	github.com/aws/etcdadm-controller v1.0.25
+	github.com/aws/etcdadm-bootstrap-provider v1.0.19
+	github.com/aws/etcdadm-controller v1.0.27
 	github.com/aws/smithy-go v1.20.3
 	github.com/bmc-toolbox/bmclib/v2 v2.1.1-0.20231206130132-1063371b9ed6
 	github.com/docker/cli v27.0.3+incompatible
@@ -59,7 +59,7 @@ require (
 	k8s.io/klog/v2 v2.130.1
 	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397
 	oras.land/oras-go/v2 v2.6.0
-	sigs.k8s.io/cluster-api v1.6.2
+	sigs.k8s.io/cluster-api v1.12.1
 	sigs.k8s.io/cluster-api-provider-cloudstack v0.4.9-rc7
 	sigs.k8s.io/cluster-api-provider-vsphere v1.14.0
 	sigs.k8s.io/cluster-api/test v1.11.1
