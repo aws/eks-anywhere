@@ -144,17 +144,10 @@ func (vb *VersionsBundle) TinkerbellImages() []Image {
 		vb.Tinkerbell.TinkerbellStack.Actions.WriteFile,
 		vb.Tinkerbell.TinkerbellStack.Actions.Reboot,
 		vb.Tinkerbell.TinkerbellStack.Boots,
-		vb.Tinkerbell.TinkerbellStack.Hegel,
 		vb.Tinkerbell.TinkerbellStack.Hook.Bootkit,
 		vb.Tinkerbell.TinkerbellStack.Hook.Docker,
 		vb.Tinkerbell.TinkerbellStack.Hook.Kernel,
-		vb.Tinkerbell.TinkerbellStack.Rufio,
-		vb.Tinkerbell.TinkerbellStack.Tink.TinkRelay,
 		vb.Tinkerbell.TinkerbellStack.Tink.TinkRelayInit,
-		vb.Tinkerbell.TinkerbellStack.Tink.TinkController,
-		vb.Tinkerbell.TinkerbellStack.Tink.TinkServer,
-		vb.Tinkerbell.TinkerbellStack.Tink.TinkWorker,
-		vb.Tinkerbell.TinkerbellStack.Tink.Nginx,
 	}
 }
 

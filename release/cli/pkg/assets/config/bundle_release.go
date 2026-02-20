@@ -502,21 +502,6 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 			"projectPath",
 		},
 	},
-	// Hegel artifacts
-	{
-		ProjectName: "hegel",
-		ProjectPath: "projects/tinkerbell/hegel",
-		Images: []*assettypes.Image{
-			{
-				RepoName: "hegel",
-			},
-		},
-		ImageRepoPrefix: "tinkerbell",
-		ImageTagOptions: []string{
-			"gitTag",
-			"projectPath",
-		},
-	},
 	// Helm-controller artifacts
 	{
 		ProjectName: "helm-controller",
@@ -778,21 +763,6 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 			"projectPath",
 		},
 	},
-	// Rufio artifacts
-	{
-		ProjectName: "rufio",
-		ProjectPath: "projects/tinkerbell/rufio",
-		Images: []*assettypes.Image{
-			{
-				RepoName: "rufio",
-			},
-		},
-		ImageRepoPrefix: "tinkerbell",
-		ImageTagOptions: []string{
-			"gitTag",
-			"projectPath",
-		},
-	},
 	// Source-controller artifacts
 	{
 		ProjectName: "source-controller",
@@ -814,22 +784,7 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 		ProjectPath: "projects/tinkerbell/tink",
 		Images: []*assettypes.Image{
 			{
-				RepoName: "nginx",
-			},
-			{
-				RepoName: "tink-relay",
-			},
-			{
 				RepoName: "tink-relay-init",
-			},
-			{
-				RepoName: "tink-controller",
-			},
-			{
-				RepoName: "tink-server",
-			},
-			{
-				RepoName: "tink-worker",
 			},
 		},
 		ImageRepoPrefix: "tinkerbell/tink",
@@ -845,9 +800,6 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 		Images: []*assettypes.Image{
 			{
 				RepoName: "tinkerbell",
-			},
-			{
-				RepoName: "tink-agent",
 			},
 		},
 		ImageRepoPrefix: "tinkerbell/tinkerbell",
