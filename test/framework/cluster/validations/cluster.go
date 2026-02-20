@@ -12,7 +12,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 	apierrors "k8s.io/apimachinery/pkg/util/errors"
-	"sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -201,7 +200,7 @@ func validateMDUsDeleted(ctx context.Context, vc clusterf.StateValidationConfig)
 }
 
 func validateNUsAndPodsDeleted(ctx context.Context, vc clusterf.StateValidationConfig) error {
-	machines := &v1beta1.MachineList{}
+	machines := &clusterv1beta2.MachineList{}
 	if err := vc.ManagementClusterClient.List(ctx, machines); err != nil {
 		return fmt.Errorf("failed to list machines: %s", err)
 	}
@@ -368,7 +367,7 @@ func validateControlPlaneTaints(cluster *v1alpha1.Cluster, node corev1.Node) err
 	return api.ValidateControlPlaneTaints(cluster.Spec.ControlPlaneConfiguration, node)
 }
 
-func filterWorkerNodes(nodes []corev1.Node, ms []v1beta1.MachineSet, w v1alpha1.WorkerNodeGroupConfiguration) []corev1.Node {
+func filterWorkerNodes(nodes []corev1.Node, ms []clusterv1beta2.MachineSet, w v1alpha1.WorkerNodeGroupConfiguration) []corev1.Node {
 	wNodes := make([]corev1.Node, 0)
 	for _, node := range nodes {
 		ownerName, ok := node.Annotations["cluster.x-k8s.io/owner-name"]
@@ -385,9 +384,9 @@ func filterWorkerNodes(nodes []corev1.Node, ms []v1beta1.MachineSet, w v1alpha1.
 	return wNodes
 }
 
-func getWorkerNodeMachineSets(ctx context.Context, vc clusterf.StateValidationConfig, w v1alpha1.WorkerNodeGroupConfiguration) ([]v1beta1.MachineSet, error) {
+func getWorkerNodeMachineSets(ctx context.Context, vc clusterf.StateValidationConfig, w v1alpha1.WorkerNodeGroupConfiguration) ([]clusterv1beta2.MachineSet, error) {
 	mdName := clusterapi.MachineDeploymentName(vc.ClusterSpec.Cluster, w)
-	ms := &v1beta1.MachineSetList{}
+	ms := &clusterv1beta2.MachineSetList{}
 	err := vc.ManagementClusterClient.List(ctx, ms, client.InNamespace(constants.EksaSystemNamespace), client.MatchingLabels{
 		"cluster.x-k8s.io/deployment-name": mdName,
 	})
