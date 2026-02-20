@@ -311,15 +311,17 @@ type EtcdadmControllerBundle struct {
 
 // TinkerbellStackBundle defines the Tinkerbell stack components for provisioning bare metal.
 type TinkerbellStackBundle struct {
-	Actions        ActionsBundle `json:"actions"`
-	Boots          Image         `json:"boots"`
-	Hegel          Image         `json:"hegel"`
-	TinkebellChart Image         `json:"tinkerbellChart"`
-	Hook           HookBundle    `json:"hook"`
-	Rufio          Image         `json:"rufio"`
-	Tink           TinkBundle    `json:"tink"`
-	TinkerbellCrds Image         `json:"tinkerbellCrds"`
-	Stack          Image         `json:"stack"`
+	Actions ActionsBundle `json:"actions"`
+	Boots   Image         `json:"boots"`
+	// This field has been deprecated
+	Hegel          *Image     `json:"hegel,omitempty"`
+	TinkebellChart Image      `json:"tinkerbellChart"`
+	Hook           HookBundle `json:"hook"`
+	// This field has been deprecated
+	Rufio          *Image     `json:"rufio,omitempty"`
+	Tink           TinkBundle `json:"tink"`
+	TinkerbellCrds Image      `json:"tinkerbellCrds"`
+	Stack          Image      `json:"stack"`
 }
 
 // ActionsBundle defines the Tinkerbell template actions.
@@ -334,12 +336,17 @@ type ActionsBundle struct {
 
 // TinkBundle defines the images required for Tinkerbell controller and worker processes.
 type TinkBundle struct {
-	TinkRelay      Image `json:"tinkRelay"`
-	TinkRelayInit  Image `json:"tinkRelayInit"`
-	TinkController Image `json:"tinkController"`
-	TinkServer     Image `json:"tinkServer"`
-	TinkWorker     Image `json:"tinkWorker"`
-	Nginx          Image `json:"nginx"`
+	// This field has been deprecated
+	TinkRelay     *Image `json:"tinkRelay,omitempty"`
+	TinkRelayInit Image  `json:"tinkRelayInit"`
+	// This field has been deprecated
+	TinkController *Image `json:"tinkController,omitempty"`
+	// This field has been deprecated
+	TinkServer *Image `json:"tinkServer,omitempty"`
+	// This field has been deprecated
+	TinkWorker *Image `json:"tinkWorker,omitempty"`
+	// This field has been deprecated
+	Nginx *Image `json:"nginx,omitempty"`
 }
 
 // HookBundle defines the Tinkerbell hook OS images used for provisioning.

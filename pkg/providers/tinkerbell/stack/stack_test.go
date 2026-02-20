@@ -42,15 +42,9 @@ func getTinkBundle() releasev1alpha1.TinkerbellBundle {
 	return releasev1alpha1.TinkerbellBundle{
 		TinkerbellStack: releasev1alpha1.TinkerbellStackBundle{
 			Tink: releasev1alpha1.TinkBundle{
-				Nginx:          releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/nginx:latest"},
-				TinkController: releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/tinkerbell:latest"},
-				TinkServer:     releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/tinkerbell:latest"},
-				TinkWorker:     releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/tink-agent:latest"},
-				TinkRelay:      releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/tink-relay:latest"},
-				TinkRelayInit:  releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/tink-relay-init:latest"},
+				TinkRelayInit: releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/tink-relay-init:latest"},
 			},
 			Boots: releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/tinkerbell:latest"},
-			Hegel: releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/tinkerbell:latest"},
 			Hook: releasev1alpha1.HookBundle{
 				Initramfs: releasev1alpha1.HookArch{
 					Amd: releasev1alpha1.Archive{
@@ -62,9 +56,6 @@ func getTinkBundle() releasev1alpha1.TinkerbellBundle {
 						URI: "https://anywhere-assests.eks.amazonaws.com/tinkerbell/hook/hook-x86_64-efi-initrd.iso",
 					},
 				},
-			},
-			Rufio: releasev1alpha1.Image{
-				URI: "public.ecr.aws/eks-anywhere/tinkerbell:latest",
 			},
 			Stack: releasev1alpha1.Image{
 				Name: "stack",
