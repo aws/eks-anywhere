@@ -22,7 +22,7 @@ Depending on whether the infrastructure components are changed or not after the 
 
 ### Cluster accessible and the infrastructure components not changed after etcd backup was taken
 
-If the management cluster is still accessible through the API server, and the underlying infrastructure layer (nodes, machines, VMs, etc.) are not changed after the etcd backup was taken, simply follow the [External etcd backup and restore]({{< relref "../etcd-backup-restore/etcdbackup" >}}) to restore the management cluster itself from the backup.
+If the management cluster is still accessible through the API server, and the underlying infrastructure layer (nodes, machines, VMs, etc.) are not changed after the etcd backup was taken, simply follow the [External etcd backup and restore]({{< relref "../etcd-backup-restore/external-etcd-backup" >}}) to restore the management cluster itself from the backup.
 
 {{% alert title="Warning" color="warning" %}}
 
@@ -163,7 +163,7 @@ If the cluster is no longer accessible in any means, or the infrastructure machi
 
 ### Cluster accessible and the infrastructure components not changed after etcd backup was taken
 
-Similar to the failed management cluster without infrastructure components change situation, follow the [External etcd backup and restore]({{< relref "../etcd-backup-restore/etcdbackup" >}}) to restore the workload cluster itself from the backup.
+Similar to the failed management cluster without infrastructure components change situation, follow the [External etcd backup and restore]({{< relref "../etcd-backup-restore/external-etcd-backup" >}}) to restore the workload cluster itself from the backup.
 
 ### Cluster not accessible or infrastructure components changed after etcd backup was taken
 
@@ -202,9 +202,9 @@ If the original workload cluster becomes inaccessible or cannot be restored to a
     Manually remove the `creationTimestamp`, `resourceVersion`, `uid` from the config map objects, so that later you can run `kubectl apply` against this file without errors.
 
 
-1. Follow the [External etcd backup and restore]({{< relref "../etcd-backup-restore/etcdbackup" >}}) to restore the old workload cluster's etcd backup `etcd-snapshot-w01.db` onto the new workload cluster `w02`. Use different restore process based on OS family:
-    * [BottleRocket]({{< relref "../etcd-backup-restore/bottlerocket-etcd-backup/#restore-etcd-from-backup" >}})
-    * [Ubuntu]({{< relref "../etcd-backup-restore/ubuntu-rhel-etcd-backup/#restore" >}})
+1. Follow the [External etcd backup and restore]({{< relref "../etcd-backup-restore/external-etcd-backup" >}}) to restore the old workload cluster's etcd backup `etcd-snapshot-w01.db` onto the new workload cluster `w02`. Use different restore process based on OS family:
+    * [BottleRocket]({{< relref "../etcd-backup-restore/external-etcd-backup/bottlerocket-etcd-backup/#restore-etcd-from-backup" >}})
+    * [Ubuntu]({{< relref "../etcd-backup-restore/external-etcd-backup/ubuntu-rhel-etcd-backup/#restore" >}})
 
     {{% alert title="Warning" color="warning" %}}
 
