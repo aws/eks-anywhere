@@ -638,7 +638,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell:v0.22.1-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell:58b84f7d3bc93eda2c5f064665ba582d3618ef52-eks-a-v0.0.0-dev-build.1
         hook:
           bootkit:
             arch:
@@ -704,7 +704,7 @@ spec:
           description: Helm chart for tinkerbell
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell-helm:0.22.1-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell-helm:0.0.1-58b84f7d3bc93eda2c5f064665ba582d3618ef52-eks-a-v0.0.0-dev-build.1
         tink:
           tinkRelayInit:
             arch:
@@ -1410,7 +1410,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell:v0.22.1-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell:58b84f7d3bc93eda2c5f064665ba582d3618ef52-eks-a-v0.0.0-dev-build.1
         hook:
           bootkit:
             arch:
@@ -1476,7 +1476,7 @@ spec:
           description: Helm chart for tinkerbell
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell-helm:0.22.1-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell-helm:0.0.1-58b84f7d3bc93eda2c5f064665ba582d3618ef52-eks-a-v0.0.0-dev-build.1
         tink:
           tinkRelayInit:
             arch:
@@ -2182,7 +2182,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell:v0.22.1-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell:58b84f7d3bc93eda2c5f064665ba582d3618ef52-eks-a-v0.0.0-dev-build.1
         hook:
           bootkit:
             arch:
@@ -2248,7 +2248,7 @@ spec:
           description: Helm chart for tinkerbell
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell-helm:0.22.1-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell-helm:0.0.1-58b84f7d3bc93eda2c5f064665ba582d3618ef52-eks-a-v0.0.0-dev-build.1
         tink:
           tinkRelayInit:
             arch:
@@ -2954,7 +2954,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell:v0.22.1-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell:58b84f7d3bc93eda2c5f064665ba582d3618ef52-eks-a-v0.0.0-dev-build.1
         hook:
           bootkit:
             arch:
@@ -3020,7 +3020,7 @@ spec:
           description: Helm chart for tinkerbell
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell-helm:0.22.1-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell-helm:0.0.1-58b84f7d3bc93eda2c5f064665ba582d3618ef52-eks-a-v0.0.0-dev-build.1
         tink:
           tinkRelayInit:
             arch:
@@ -3726,7 +3726,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell:v0.22.1-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell:58b84f7d3bc93eda2c5f064665ba582d3618ef52-eks-a-v0.0.0-dev-build.1
         hook:
           bootkit:
             arch:
@@ -3792,7 +3792,7 @@ spec:
           description: Helm chart for tinkerbell
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell-helm:0.22.1-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell-helm:0.0.1-58b84f7d3bc93eda2c5f064665ba582d3618ef52-eks-a-v0.0.0-dev-build.1
         tink:
           tinkRelayInit:
             arch:
@@ -4498,7 +4498,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell:v0.22.1-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell:58b84f7d3bc93eda2c5f064665ba582d3618ef52-eks-a-v0.0.0-dev-build.1
         hook:
           bootkit:
             arch:
@@ -4564,7 +4564,7 @@ spec:
           description: Helm chart for tinkerbell
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell-helm:0.22.1-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell-helm:0.0.1-58b84f7d3bc93eda2c5f064665ba582d3618ef52-eks-a-v0.0.0-dev-build.1
         tink:
           tinkRelayInit:
             arch:
@@ -5270,7 +5270,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell:v0.22.1-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell:58b84f7d3bc93eda2c5f064665ba582d3618ef52-eks-a-v0.0.0-dev-build.1
         hook:
           bootkit:
             arch:
@@ -5336,7 +5336,7 @@ spec:
           description: Helm chart for tinkerbell
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell-helm:0.22.1-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell/tinkerbell-helm:0.0.1-58b84f7d3bc93eda2c5f064665ba582d3618ef52-eks-a-v0.0.0-dev-build.1
         tink:
           tinkRelayInit:
             arch:
