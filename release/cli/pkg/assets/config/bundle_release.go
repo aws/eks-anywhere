@@ -841,6 +841,7 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 					// This must match the HELM_TAG override in eks-anywhere-build-tooling tinkerbell Makefile.
 					NonProdSourceImageTagFormat: "0.0.1-<gitTag>",
 					ProdSourceImageTagFormat:    "0.0.1-<gitTag>",
+					ReleaseImageTagFormat:       "0.0.1-<gitTag>",
 				},
 			},
 		},
