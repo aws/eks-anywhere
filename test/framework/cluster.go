@@ -36,7 +36,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/git"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
@@ -767,7 +766,6 @@ func (e *ClusterE2ETest) ChangeInstanceSecurityGroup(securityGroup string) {
 }
 
 func (e *ClusterE2ETest) CreateCluster(opts ...CommandOpt) {
-	e.setFeatureFlagForUnreleasedKubernetesVersion(e.ClusterConfig.Cluster.Spec.KubernetesVersion)
 	e.createCluster(opts...)
 }
 
@@ -903,7 +901,6 @@ func (e *ClusterE2ETest) upgradeCluster(clusterOpts []ClusterE2ETestOpt, command
 		opt(e)
 	}
 	e.buildClusterConfigFile()
-	e.setFeatureFlagForUnreleasedKubernetesVersion(e.ClusterConfig.Cluster.Spec.KubernetesVersion)
 	e.UpgradeCluster(commandOpts...)
 }
 
@@ -2315,18 +2312,6 @@ func dumpFile(description, path string, t T) {
 		t.Fatal(err)
 	}
 	t.Logf("%s:\n%s\n", description, string(b))
-}
-
-func (e *ClusterE2ETest) setFeatureFlagForUnreleasedKubernetesVersion(version v1alpha1.KubernetesVersion) {
-	// Update this variable to equal the feature flagged k8s version when applicable.
-	// For example, if k8s 1.31 is under a feature flag, we would set this to v1alpha1.Kube131
-	unreleasedK8sVersion := v1alpha1.Kube135
-
-	if version == unreleasedK8sVersion {
-		// Set feature flag for the unreleased k8s version when applicable
-		e.T.Logf("Setting k8s version support feature flag...")
-		os.Setenv(features.K8s135SupportEnvVar, "true")
-	}
 }
 
 // CreateCloudStackCredentialsSecretFromEnvVar parses the cloudstack credentials from an environment variable,
