@@ -836,7 +836,11 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 				AssetName:            "tinkerbell-helm",
 				TrimVersionSignifier: true,
 				ImageTagConfiguration: assettypes.ImageTagConfiguration{
-					NonProdSourceImageTagFormat: "<gitTag>",
+					// When GIT_TAG is a commit SHA, the helm chart version must be valid semver.
+					// The 0.0.1- prefix wraps the commit SHA to satisfy helm's semver requirement.
+					// This must match the HELM_TAG override in eks-anywhere-build-tooling tinkerbell Makefile.
+					NonProdSourceImageTagFormat: "0.0.1-<gitTag>",
+					ProdSourceImageTagFormat:    "0.0.1-<gitTag>",
 				},
 			},
 		},
