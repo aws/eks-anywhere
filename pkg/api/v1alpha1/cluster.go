@@ -230,7 +230,7 @@ func GetAndValidateClusterConfig(fileName string) (*Cluster, error) {
 
 // GetClusterDefaultKubernetesVersion returns the default kubernetes version for a Cluster.
 func GetClusterDefaultKubernetesVersion() KubernetesVersion {
-	return Kube134
+	return Kube135
 }
 
 // ValidateClusterConfigContent validates a Cluster object without modifying it
