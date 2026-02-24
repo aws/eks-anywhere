@@ -26,8 +26,6 @@ const (
 	testResultError      = "error"
 	nonAirgappedHardware = "nonAirgappedHardware"
 	airgappedHardware    = "AirgappedHardware"
-	maxIPPoolSize        = 7
-	minIPPoolSize        = 1
 	tinkerbellIPPoolSize = 2
 
 	// Default timeout for E2E test instance.
@@ -360,7 +358,12 @@ func splitTests(testsList []string, conf ParallelRunConf) ([]instanceRunConf, er
 	cloudstackTestRe := regexp.MustCompile(cloudstackRegex)
 	nutanixTestsRe := regexp.MustCompile(nutanixRegex)
 	privateNetworkTestsRe := regexp.MustCompile(`^.*(Proxy|RegistryMirror).*$`)
-	multiClusterTestsRe := regexp.MustCompile(`^.*Multicluster.*$`)
+
+	// Load IP pool size requirements from YAML config
+	ipPoolReqs, err := e2etest.LoadIPPoolRequirements()
+	if err != nil {
+		return nil, fmt.Errorf("loading IP pool size requirements: %v", err)
+	}
 
 	runConfs := make([]instanceRunConf, 0, conf.MaxConcurrentTests)
 	vsphereIPMan := newE2EIPManager(conf.Logger, os.Getenv(vsphereCidrVar))
@@ -382,37 +385,25 @@ func splitTests(testsList []string, conf ParallelRunConf) ([]instanceRunConf, er
 		if tinkerbellTestsRe.MatchString(testName) {
 			continue
 		}
-		multiClusterTest := multiClusterTestsRe.MatchString(testName)
+		ipPoolSize := e2etest.GetIPPoolSize(testName, ipPoolReqs)
 
 		var ips networkutils.IPPool
 		if vsphereTestsRe.MatchString(testName) {
 			if privateNetworkTestsRe.MatchString(testName) {
-				if multiClusterTest {
-					ips, err = vspherePrivateIPMan.reserveIPPool(maxIPPoolSize)
-				} else {
-					ips, err = vspherePrivateIPMan.reserveIPPool(minIPPoolSize)
-				}
+				ips, err = vspherePrivateIPMan.reserveIPPool(ipPoolSize)
 			} else {
-				if multiClusterTest {
-					ips, err = vsphereIPMan.reserveIPPool(maxIPPoolSize)
-				} else {
-					ips, err = vsphereIPMan.reserveIPPool(minIPPoolSize)
-				}
+				ips, err = vsphereIPMan.reserveIPPool(ipPoolSize)
 			}
 			if err != nil {
 				return nil, fmt.Errorf("failed to reserve IP pool for test %s: %v", testName, err)
 			}
 		} else if nutanixTestsRe.MatchString(testName) {
-			ips, err = nutanixIPMan.reserveIPPool(minIPPoolSize)
+			ips, err = nutanixIPMan.reserveIPPool(ipPoolSize)
 			if err != nil {
 				return nil, fmt.Errorf("failed to reserve IP pool for test %s: %v", testName, err)
 			}
 		} else if cloudstackTestRe.MatchString(testName) {
-			if multiClusterTest {
-				ips, err = cloudstackIPMan.reserveIPPool(maxIPPoolSize)
-			} else {
-				ips, err = cloudstackIPMan.reserveIPPool(minIPPoolSize)
-			}
+			ips, err = cloudstackIPMan.reserveIPPool(ipPoolSize)
 			if err != nil {
 				return nil, fmt.Errorf("failed to reserve IP pool for test %s: %v", testName, err)
 			}
