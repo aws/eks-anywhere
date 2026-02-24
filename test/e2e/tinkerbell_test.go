@@ -640,6 +640,7 @@ func TestTinkerbellKubernetes132UbuntuTo133UpgradeCPOnly(t *testing.T) {
 
 func TestTinkerbellKubernetes131UbuntuTo132UpgradeCPOnly(t *testing.T) {
 	provider := framework.NewTinkerbell(t)
+	licenseToken := framework.GetLicenseToken()
 	kube131 := v1alpha1.Kube131
 	test := framework.NewClusterE2ETest(
 		t,
@@ -653,6 +654,9 @@ func TestTinkerbellKubernetes131UbuntuTo132UpgradeCPOnly(t *testing.T) {
 	).WithClusterConfig(
 		provider.WithCPKubeVersionAndOS(kube131, framework.Ubuntu2204),
 		provider.WithWorkerKubeVersionAndOS(kube131, framework.Ubuntu2204),
+		api.ClusterToConfigFiller(
+			api.WithLicenseToken(licenseToken),
+		),
 	)
 	runSimpleUpgradeFlowWorkerNodeVersionForBareMetal(
 		test,
@@ -663,6 +667,7 @@ func TestTinkerbellKubernetes131UbuntuTo132UpgradeCPOnly(t *testing.T) {
 
 func TestTinkerbellKubernetes130UbuntuTo131UpgradeWorkerOnly(t *testing.T) {
 	provider := framework.NewTinkerbell(t)
+	licenseToken := framework.GetLicenseToken()
 	kube130 := v1alpha1.Kube130
 	kube131 := v1alpha1.Kube131
 	test := framework.NewClusterE2ETest(
@@ -678,6 +683,9 @@ func TestTinkerbellKubernetes130UbuntuTo131UpgradeWorkerOnly(t *testing.T) {
 	).WithClusterConfig(
 		provider.WithCPKubeVersionAndOS(v1alpha1.Kube131, framework.Ubuntu2204),
 		provider.WithWorkerKubeVersionAndOS(v1alpha1.Kube130, framework.Ubuntu2204),
+		api.ClusterToConfigFiller(
+			api.WithLicenseToken(licenseToken),
+		),
 	)
 	runSimpleUpgradeFlowWorkerNodeVersionForBareMetal(
 		test,
@@ -736,6 +744,7 @@ func TestTinkerbellKubernetes133UbuntuTo134UpgradeWorkerOnly(t *testing.T) {
 
 func TestTinkerbellKubernetes131UbuntuTo132UpgradeWorkerOnly(t *testing.T) {
 	provider := framework.NewTinkerbell(t)
+	licenseToken := framework.GetLicenseToken()
 	kube131 := v1alpha1.Kube131
 	kube132 := v1alpha1.Kube132
 	test := framework.NewClusterE2ETest(
@@ -751,6 +760,9 @@ func TestTinkerbellKubernetes131UbuntuTo132UpgradeWorkerOnly(t *testing.T) {
 	).WithClusterConfig(
 		provider.WithCPKubeVersionAndOS(v1alpha1.Kube132, framework.Ubuntu2204),
 		provider.WithWorkerKubeVersionAndOS(v1alpha1.Kube131, framework.Ubuntu2204),
+		api.ClusterToConfigFiller(
+			api.WithLicenseToken(licenseToken),
+		),
 	)
 	runSimpleUpgradeFlowWorkerNodeVersionForBareMetal(
 		test,
