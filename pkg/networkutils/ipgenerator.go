@@ -25,46 +25,62 @@ func (ipgen IPGenerator) GenerateUniqueIP(cidrBlock string, usedIPs map[string]b
 		return "", err
 	}
 
-	// Start from the first IP in the CIDR range
-	ip := incrementIP(copyIP(cidr.IP))
-	checked := 0
+	// Count total usable IPs in the CIDR range (skip network address)
+	totalIPs := cidrHostCount(cidr)
+	if totalIPs == 0 {
+		return "", fmt.Errorf("no usable IPs in CIDR %s", cidrBlock)
+	}
 
-	// Iterate sequentially through all IPs in the range
-	for cidr.Contains(ip) {
+	// Pick a random starting offset to reduce collisions between parallel instances
+	startOffset := ipgen.rand.Intn(totalIPs)
+
+	// Walk through all IPs starting from the random offset, wrapping around
+	for i := 0; i < totalIPs; i++ {
+		offset := (startOffset + i) % totalIPs
+		// offset 0 = first host IP (network address + 1)
+		ip := addToIP(cidr.IP, offset+1)
+
+		if !cidr.Contains(ip) {
+			continue
+		}
+
 		ipStr := ip.String()
-		checked++
 
 		if usedIPs != nil && usedIPs[ipStr] {
-			ip = incrementIP(ip)
 			continue
 		}
 
 		if IsIPInUse(ipgen.netClient, ipStr) {
-			ip = incrementIP(ip)
 			continue
 		}
 
 		return ipStr, nil
 	}
 
-	return "", fmt.Errorf("no available IPs in CIDR %s (checked %d IPs)", cidrBlock, checked)
+	return "", fmt.Errorf("no available IPs in CIDR %s (checked %d IPs)", cidrBlock, totalIPs)
 }
 
-// incrementIP returns a new IP address incremented by 1.
-func incrementIP(ip net.IP) net.IP {
-	// Make a copy to avoid modifying the original
-	newIP := copyIP(ip)
-
-	// Increment from the last byte
-	for i := len(newIP) - 1; i >= 0; i-- {
-		newIP[i]++
-		if newIP[i] != 0 {
-			// No overflow, we're done
-			break
-		}
-		// Overflow occurred, continue to next byte
+// cidrHostCount returns the number of usable host IPs in a CIDR range (excluding network address).
+func cidrHostCount(cidr *net.IPNet) int {
+	ones, bits := cidr.Mask.Size()
+	if bits-ones <= 0 {
+		return 0
 	}
-	return newIP
+	// Total addresses = 2^(bits-ones), subtract 1 for network address
+	total := 1 << uint(bits-ones)
+	return total - 1
+}
+
+// addToIP returns a new IP that is base + offset.
+func addToIP(base net.IP, offset int) net.IP {
+	ip := copyIP(base)
+	carry := offset
+	for i := len(ip) - 1; i >= 0 && carry > 0; i-- {
+		sum := int(ip[i]) + carry
+		ip[i] = byte(sum & 0xff)
+		carry = sum >> 8
+	}
+	return ip
 }
 
 // copyIP creates a copy of the IP address.
