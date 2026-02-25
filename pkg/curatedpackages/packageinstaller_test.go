@@ -68,6 +68,7 @@ func TestPackageInstallerSuccess(t *testing.T) {
 
 func TestPackageInstallerFailWhenControllerFails(t *testing.T) {
 	tt := newPackageInstallerTest(t)
+	tt.command.WithRetries(0, 0)
 
 	tt.packageControllerClient.EXPECT().Enable(tt.ctx).Return(errors.New("controller installation failed"))
 
