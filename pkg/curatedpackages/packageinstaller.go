@@ -2,10 +2,12 @@ package curatedpackages
 
 import (
 	"context"
+	"time"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/retrier"
 )
 
 type PackageController interface {
@@ -25,6 +27,8 @@ type Installer struct {
 	kubectl           KubectlRunner
 	packagesLocation  string
 	mgmtKubeconfig    string
+	installMaxRetries int
+	installBackoff    time.Duration
 }
 
 // IsPackageControllerDisabled detect if the package controller is disabled.
@@ -41,7 +45,16 @@ func NewInstaller(runner KubectlRunner, pc PackageHandler, pcc PackageController
 		packageClient:     pc,
 		kubectl:           runner,
 		mgmtKubeconfig:    mgmtKubeconfig,
+		installMaxRetries: 6,
+		installBackoff:    10 * time.Second,
 	}
+}
+
+// WithRetries sets the retry parameters for the package controller installation.
+func (pi *Installer) WithRetries(maxRetries int, backoff time.Duration) *Installer {
+	pi.installMaxRetries = maxRetries
+	pi.installBackoff = backoff
+	return pi
 }
 
 // InstallCuratedPackages installs curated packages as part of the cluster creation.
@@ -86,11 +99,9 @@ func (pi *Installer) UpgradeCuratedPackages(ctx context.Context) {
 
 func (pi *Installer) installPackagesController(ctx context.Context) error {
 	logger.Info("Enabling curated packages on the cluster")
-	err := pi.packageController.Enable(ctx)
-	if err != nil {
-		return err
-	}
-	return nil
+	return retrier.Retry(pi.installMaxRetries, pi.installBackoff, func() error {
+		return pi.packageController.Enable(ctx)
+	})
 }
 
 func (pi *Installer) installPackages(ctx context.Context) error {
