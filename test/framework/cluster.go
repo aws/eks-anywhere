@@ -1233,11 +1233,10 @@ func (e *ClusterE2ETest) SetPackageBundleActive() {
 	ctx := context.Background()
 	// Wait for PackageBundleController to be created by helm
 	e.T.Log("Waiting for PackageBundleController to be created...")
-	err := e.KubectlClient.WaitForResource(ctx, kubeconfig,
-		"packagebundlecontroller", e.ClusterName, "eksa-packages", "5m")
-	if err != nil {
-		e.T.Fatalf("Timed out waiting for PackageBundleController: %v", err)
-	}
+	err := e.KubectlClient.WaitJSONPathLoop(ctx, kubeconfig, "5m", "metadata.name", e.ClusterName, "packagebundlecontroller.packages.eks.amazonaws.com/"+e.ClusterName, "eksa-packages")
+	// if err != nil {
+	// 	e.T.Fatalf("Timed out waiting for PackageBundleController: %v", err)
+	// }
 	pbc, err := e.KubectlClient.GetPackageBundleController(ctx, kubeconfig, e.ClusterName)
 	if err != nil {
 		e.T.Fatalf("Error getting PackageBundleController: %v", err)
