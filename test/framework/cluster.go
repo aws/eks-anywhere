@@ -1230,10 +1230,23 @@ func (e *ClusterE2ETest) DeleteNamespace(namespace string) {
 // SetPackageBundleActive will set the current packagebundle to the active state.
 func (e *ClusterE2ETest) SetPackageBundleActive() {
 	kubeconfig := e.KubeconfigFilePath()
-	pbc, err := e.KubectlClient.GetPackageBundleController(context.Background(), kubeconfig, e.ClusterName)
+	ctx := context.Background()
+	// Wait for PackageBundleController to be created by helm
+	e.T.Log("Waiting for PackageBundleController to be created...")
+	err := e.KubectlClient.WaitForResource(ctx, kubeconfig,
+		"packagebundlecontroller", e.ClusterName, "eksa-packages", "5m")
+	if err != nil {
+		e.T.Fatalf("Timed out waiting for PackageBundleController: %v", err)
+	}
+	pbc, err := e.KubectlClient.GetPackageBundleController(ctx, kubeconfig, e.ClusterName)
 	if err != nil {
 		e.T.Fatalf("Error getting PackageBundleController: %v", err)
 	}
+	// kubeconfig := e.KubeconfigFilePath()
+	// pbc, err := e.KubectlClient.GetPackageBundleController(context.Background(), kubeconfig, e.ClusterName)
+	// if err != nil {
+	// 	e.T.Fatalf("Error getting PackageBundleController: %v", err)
+	// }
 	pb, err := e.KubectlClient.GetPackageBundleList(context.Background(), e.KubeconfigFilePath())
 	if err != nil {
 		e.T.Fatalf("Error getting PackageBundle: %v", err)

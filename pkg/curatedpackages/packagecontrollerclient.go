@@ -27,6 +27,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
+	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -234,11 +235,51 @@ func (pc *PackageControllerClient) Enable(ctx context.Context) error {
 		return err
 	}
 
+	// Ensure PBC exists - it may fail during helm install if webhook wasn't ready
+	if err := pc.ensurePackageBundleControllerExists(ctx, defaultRegistry, defaultImageRegistry); err != nil {
+		return fmt.Errorf("ensuring package bundle controller exists: %w", err)
+	}
+
 	if !pc.skipWaitForPackageBundle {
 		return pc.waitForActiveBundle(ctx)
 	}
 
 	return nil
+}
+
+// ensurePackageBundleControllerExists creates the PBC if it doesn't exist.
+// This handles the race condition where the webhook may not be ready during helm install.
+func (pc *PackageControllerClient) ensurePackageBundleControllerExists(ctx context.Context, defaultRegistry, defaultImageRegistry string) error {
+	pbc := &packagesv1.PackageBundleController{}
+	err := pc.kubectl.GetObject(ctx, packageBundleControllerResource, pc.clusterName,
+		packagesv1.PackageNamespace, pc.kubeConfig, pbc)
+	if err == nil {
+		logger.V(6).Info("PackageBundleController already exists", "name", pc.clusterName)
+		return nil
+	}
+	if !apierrors.IsNotFound(err) {
+		return fmt.Errorf("checking for existing PBC: %w", err)
+	}
+
+	logger.V(4).Info("PackageBundleController not found, creating with retry", "name", pc.clusterName)
+
+	pbcYaml := fmt.Sprintf(`apiVersion: packages.eks.amazonaws.com/v1alpha1
+kind: PackageBundleController
+metadata:
+  name: %s
+  namespace: %s
+spec:
+  upgradeCheckInterval: 24h
+  upgradeCheckShortInterval: 10s
+  defaultRegistry: %s
+  defaultImageRegistry: %s
+`, pc.clusterName, packagesv1.PackageNamespace, defaultRegistry, defaultImageRegistry)
+
+	r := retrier.NewWithMaxRetries(10, 5*time.Second)
+	return r.Retry(func() error {
+		_, err := pc.kubectl.ExecuteFromYaml(ctx, []byte(pbcYaml), "--kubeconfig", pc.kubeConfig, "apply", "-f", "-")
+		return err
+	})
 }
 
 // GetCuratedPackagesRegistries gets value for configurable registries from PBC.
