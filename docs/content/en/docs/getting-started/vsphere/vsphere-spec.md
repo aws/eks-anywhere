@@ -49,7 +49,7 @@ spec:
      machineGroupRef:                <a href="#externaletcdconfigurationmachinegroupref-optional"># vSphere-specific Kubernetes etcd config</a>
         kind: VSphereMachineConfig
         name: my-cluster-machines
-   kubernetesVersion: <span>"1.31"</span>         <a href="#kubernetesversion-required"># Kubernetes version to use for the cluster (required)</a>
+   kubernetesVersion: <span>"1.35"</span>         <a href="#kubernetesversion-required"># Kubernetes version to use for the cluster (required)</a>
    workerNodeGroupConfigurations:    <a href="#workernodegroupconfigurations-required"># List of node groups you can define for workers (required) </a>
    - count: <span style="color:green">2</span>                        <a href="#workernodegroupconfigurationscount-optional"># Number of worker nodes </a>
      machineGroupRef:                <a href="#workernodegroupconfigurationsmachinegroupref-required"># vSphere-specific Kubernetes node objects (required) </a>
@@ -352,7 +352,7 @@ The default is generating a key in your `$(pwd)/<cluster-name>` folder when not 
 The VM template to use for your EKS Anywhere cluster. This template was created when you
 [imported the OVA file into vSphere]({{< relref "../vsphere/customize/vsphere-ovas.md" >}}).
 This is a required field if you are using Ubuntu-based or RHEL-based OVAs.
-The `template` must contain the `Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` version (in case of modular upgrade). For example, if the Kubernetes version is 1.31, `template` must include 1.31, 1_31, 1-31 or 131.
+The `template` must contain the `Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` version (in case of modular upgrade). For example, if the Kubernetes version is 1.35, `template` must include 1.35, 1_35, 1-35 or 135.
 
 ### cloneMode (optional)
 `cloneMode` defines the clone mode to use when creating the cluster VMs from the template. Allowed values are:
