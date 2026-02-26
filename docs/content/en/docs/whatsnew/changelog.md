@@ -35,11 +35,70 @@ description: >
   * [Upgrading an EKS Anywhere cluster]({{< relref "../clustermgmt/cluster-upgrades" >}})
 * On October 11, 2024, a security issue CVE-2024-9594 was discovered in the Kubernetes Image Builder where default credentials are enabled during the image build process when using the Nutanix, OVA, QEMU or raw providers. The credentials can be used to gain root access. The credentials are disabled at the conclusion of the image build process. Kubernetes clusters are only affected if their nodes use VM images created via the Image Builder project. Clusters using virtual machine images built with [Kubernetes Image Builder](https://github.com/kubernetes-sigs/image-builder) version `v0.1.37` or earlier are affected if built with the Nutanix, OVA, QEMU or raw providers. These images built using previous versions of image-builder will be vulnerable only during the image build process, if an attacker was able to reach the VM where the image build was happening, login using these default credentials and modify the image at the time the image build was occurring. This CVE has been fixed in image-builder versions >= `v0.1.38`, which has been included in EKS Anywhere releases `v0.19.11` and `v0.20.8`.
   * [CVE-2024-9594: VM images built with Image Builder with some providers use default credentials during builds](https://github.com/kubernetes/kubernetes/issues/128007)
+* Starting with EKS Anywhere `v0.25.0`, the **CloudStack provider** is deprecated and will be removed in the next minor release. Users should plan to migrate to a supported provider.
+* Starting with EKS Anywhere `v0.25.0`, the **Snow provider** is deprecated and will be removed in the next minor release. Users should plan to migrate to a supported provider.
 {{% /alert %}}
 
 {{% alert title="General Information" color="info" %}}
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
+
+## [v0.25.0](https://github.com/aws/eks-anywhere/releases/tag/v0.25.0)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 24.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.54.0 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+
+\* Starting with EKS-A minor release v0.25.0, the bundled Kubernetes Image Builder no longer supports Ubuntu 20.04 LTS builds, as Ubuntu 20.04 LTS Standard Support has ended, and the upstream Kubernetes Image Builder no longer supports Ubuntu 20.04 LTS.
+\* RHEL 8's kernel version (4.18) is not supported by kubeadm for Kubernetes versions 1.32 and above (see Kubernetes GitHub issue [#129462](https://github.com/kubernetes/kubernetes/issues/129462)). As a result, EKS Anywhere does not support using RHEL 8 as the node operating system for Kubernetes versions 1.32 and above.
+\* CloudStack provider support is deprecated in v0.25.0 and will be removed in the next minor release.
+\* Snow provider support is deprecated in v0.25.0 and will be removed in the next minor release.
+
+### Added
+- Support for Kubernetes v1.35 ([#10517](https://github.com/aws/eks-anywhere/pull/10517), [#5112](https://github.com/aws/eks-anywhere-build-tooling/pull/5112))
+- Migrate all Cluster API resources to v1beta2 contract ([#10545](https://github.com/aws/eks-anywhere/pull/10545), [#10547](https://github.com/aws/eks-anywhere/pull/10547), [#10556](https://github.com/aws/eks-anywhere/pull/10556), [#10604](https://github.com/aws/eks-anywhere/pull/10604))
+- Add HardwareAffinity field to TinkerbellMachineConfig API ([#10472](https://github.com/aws/eks-anywhere/pull/10472))
+- Add Intel ICE E800 series out-of-tree driver support in Hook ([#5156](https://github.com/aws/eks-anywhere-build-tooling/pull/5156))
+- Consolidate tinkerbell components into a single mono-repo with unified helm chart ([#10518](https://github.com/aws/eks-anywhere/pull/10518), [#10521](https://github.com/aws/eks-anywhere/pull/10521), [#10523](https://github.com/aws/eks-anywhere/pull/10523), [#5074](https://github.com/aws/eks-anywhere-build-tooling/pull/5074), [#5095](https://github.com/aws/eks-anywhere-build-tooling/pull/5095), [#5100](https://github.com/aws/eks-anywhere-build-tooling/pull/5100), [#5194](https://github.com/aws/eks-anywhere-build-tooling/pull/5194))
+- EKS Distro:
+  - [`v1-35-eks-5`](https://distro.eks.amazonaws.com/releases/1-35/5/)
+  - [`v1-34-eks-14`](https://distro.eks.amazonaws.com/releases/1-34/14/)
+  - [`v1-33-eks-23`](https://distro.eks.amazonaws.com/releases/1-33/23/)
+  - [`v1-32-eks-33`](https://distro.eks.amazonaws.com/releases/1-32/33/)
+  - [`v1-31-eks-40`](https://distro.eks.amazonaws.com/releases/1-31/40/)
+  - [`v1-30-eks-51`](https://distro.eks.amazonaws.com/releases/1-30/51/)
+  - [`v1-29-eks-58`](https://distro.eks.amazonaws.com/releases/1-29/58/)
+
+### Changed
+- Cluster API (CAPI): `v1.11.1` to `v1.12.2`
+- Cluster API Provider vSphere: `v1.13.1` to `v1.15.2`
+- Cluster API Provider Tinkerbell: `v0.6.5` to `v0.6.6`
+- Cluster API Provider AWS Snow: `v0.2.8` to `v0.2.9`
+- Bottlerocket: `v1.51.0` to `v1.54.0`
+- Cert-manager: `v1.18.5` to `v1.19.3`
+- Cilium: `v1.17.12` to `v1.18.5`
+- Helm: `v3.16.4` to `v4.1.0`
+- Image builder: `v0.1.44` to `v0.1.48`
+- Kind: `v0.29.0` to `v0.31.0`
+- Cri-tools: `v1.34.0` to `v1.35.0`
+- Kube-rbac-proxy: `v0.20.0` to `v0.20.2`
+- CloudStack cloudmonkey: `6.4.0` to `6.5.0`
+- etcdadm-controller: `v1.0.26` to `v1.0.27`
+- etcdadm-bootstrap-provider: `v1.0.18` to `v1.0.19`
+
+### Deprecated
+- CloudStack provider support is deprecated and will be removed in the next minor release
+- Snow provider support is deprecated and will be removed in the next minor release
+
+### Removed
+- Dropped Kubernetes v1.28 support ([#5128](https://github.com/aws/eks-anywhere-build-tooling/pull/5128))
+- Dropped Ubuntu 20.04 image-builder support
+- Removed unused old tinkerbell components from bundle ([#10612](https://github.com/aws/eks-anywhere/pull/10612))
 
 ## [v0.24.4](https://github.com/aws/eks-anywhere/releases/tag/v0.24.4)
 

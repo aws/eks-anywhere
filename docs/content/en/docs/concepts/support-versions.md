@@ -55,7 +55,8 @@ Bottlerocket, Ubuntu, and Red Hat Enterprise Linux (RHEL) can be used as operati
 | Ubuntu        | 24.04     | 0.24
                 | 22.04     | 0.17
 |               | 20.04     | 0.5
-| Bottlerocket  | 1.50.0    | 0.24
+| Bottlerocket  | 1.54.0    | 0.25
+                | 1.50.0    | 0.24
                 | 1.48.0    | 0.23
 |               | 1.26.1    | 0.21
 |               | 1.20.0    | 0.20
