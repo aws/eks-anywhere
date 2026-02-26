@@ -50,7 +50,7 @@ spec:
     machineGroupRef:
       kind: SnowMachineConfig
       name: my-cluster-machines
-  kubernetesVersion: "1.28"
+  kubernetesVersion: "1.35"
   workerNodeGroupConfigurations:
   - count: 1
     machineGroupRef:
