@@ -371,7 +371,7 @@ const packageBundleControllerResource string = "packageBundleController"
 //
 // If no timeout is specified, a default of 3 minutes is used.
 func (pc *PackageControllerClient) waitForActiveBundle(ctx context.Context) error {
-	timeout := 3 * time.Minute
+	timeout := 4 * time.Minute
 	if pc.activeBundleTimeout > 0 {
 		timeout = pc.activeBundleTimeout
 	}
