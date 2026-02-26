@@ -44,6 +44,7 @@ import (
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	eksasemver "github.com/aws/eks-anywhere/pkg/semver"
 )
 
 // controlPlaneUpgradeFinalizerName is the finalizer added to NodeUpgrade objects to handle deletion.
@@ -322,8 +323,6 @@ func (r *ControlPlaneUpgradeReconciler) updateKubeadmConfig(ctx context.Context,
 	if err != nil {
 		return fmt.Errorf("initializing patch helper for KubeadmConfig %s: %v", kc.Name, err)
 	}
-	existingFeatureGates := kc.Spec.ClusterConfiguration.FeatureGates
-
 	kcSpec := kcpSpec.KubeadmConfigSpec.DeepCopy()
 	if reflect.ValueOf(kc.Spec.InitConfiguration).IsZero() {
 		kcSpec.InitConfiguration = bootstrapv1beta2.InitConfiguration{}
@@ -335,8 +334,12 @@ func (r *ControlPlaneUpgradeReconciler) updateKubeadmConfig(ctx context.Context,
 
 	kc.Spec = *kcSpec
 
-	// Merge back CAPI-added FeatureGates that are not present in the KCP spec.
-	mergeFeatureGates(kc, existingFeatureGates)
+	// Apply CAPI's runtime-computed default FeatureGates for the target Kubernetes version.
+	// CAPI's KCP controller adds ControlPlaneKubeletLocalMode for K8s 1.31-1.35 via
+	// DefaultFeatureGates() during KubeadmConfig creation, but this gate is not stored in the
+	// KCP spec. Since CAPI v1.12+ compares the full KubeadmConfig (including ClusterConfiguration),
+	// the gate must be present to avoid the UpToDate condition remaining False.
+	applyCAPIDefaultFeatureGates(kc, kcpSpec.Version)
 
 	log.Info("Patching KubeadmConfig", "KubeadmConfig", kc.Name)
 	if err := patchHelper.Patch(ctx, kc); err != nil {
@@ -346,18 +349,22 @@ func (r *ControlPlaneUpgradeReconciler) updateKubeadmConfig(ctx context.Context,
 	return nil
 }
 
-// mergeFeatureGates merges previously existing FeatureGates into the KubeadmConfig's
-// ClusterConfiguration. FeatureGates already present in the KubeadmConfig take precedence,
-// preserving user/KCP intent. This ensures CAPI runtime-added FeatureGates (like
-// ControlPlaneKubeletLocalMode) are not lost when the spec is overwritten from the KCP spec.
-func mergeFeatureGates(kc *bootstrapv1beta2.KubeadmConfig, existingFeatureGates map[string]bool) {
-	for k, v := range existingFeatureGates {
-		if kc.Spec.ClusterConfiguration.FeatureGates == nil {
-			kc.Spec.ClusterConfiguration.FeatureGates = make(map[string]bool)
-		}
-		if _, exists := kc.Spec.ClusterConfiguration.FeatureGates[k]; !exists {
-			kc.Spec.ClusterConfiguration.FeatureGates[k] = v
-		}
+// applyCAPIDefaultFeatureGates applies the same default FeatureGates that CAPI's KCP controller
+// adds at runtime via DefaultFeatureGates().
+// FeatureGates already present in the KubeadmConfig (from the KCP spec) take precedence.
+func applyCAPIDefaultFeatureGates(kc *bootstrapv1beta2.KubeadmConfig, kubernetesVersion string) {
+	v, err := eksasemver.New(kubernetesVersion)
+	if err != nil {
+		return
+	}
+	if v.Minor < 31 || v.Minor >= 36 {
+		return
+	}
+	if kc.Spec.ClusterConfiguration.FeatureGates == nil {
+		kc.Spec.ClusterConfiguration.FeatureGates = make(map[string]bool)
+	}
+	if _, exists := kc.Spec.ClusterConfiguration.FeatureGates["ControlPlaneKubeletLocalMode"]; !exists {
+		kc.Spec.ClusterConfiguration.FeatureGates["ControlPlaneKubeletLocalMode"] = true
 	}
 }
 
