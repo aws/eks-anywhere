@@ -50,7 +50,7 @@ spec:
   datacenterRef:
     kind: TinkerbellDatacenterConfig
     name: my-cluster-name
-  kubernetesVersion: "1.31"
+  kubernetesVersion: "1.35"
   managementCluster:
     name: my-cluster-name
   workerNodeGroupConfigurations:
@@ -271,7 +271,7 @@ When separate management and workload clusters are supported in Bare Metal, the 
 
 ### osImageURL (required)
 Required field to set the operating system. In order to use Ubuntu or RHEL see [building baremetal node images]({{< relref "../../osmgmt/artifacts/#build-bare-metal-node-images" >}}). This field is also useful if you want to provide a customized operating system image or simply host the standard image locally. To upgrade a node or group of nodes to a new operating system version (ie. RHEL 8.7 to RHEL 8.8), modify this field to point to the new operating system image URL and run [upgrade cluster command]({{< relref "../../clustermgmt/cluster-upgrades/baremetal-upgrades/#upgrade-cluster-command" >}}).
-The `osImageURL` must contain the `Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` version (in case of modular upgrade). For example, if the Kubernetes version is 1.31, the `osImageURL` name should include 1.31, 1_31, 1-31 or 131.
+The `osImageURL` must contain the `Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` version (in case of modular upgrade). For example, if the Kubernetes version is 1.35, the `osImageURL` name should include 1.35, 1_35, 1-35 or 135.
 
 >**_NOTE:_** osImageURL field cannot be set both in the `TinkerbellDatacenterConfig` and `TinkerbellMachineConfig` objects. If this value is set for `TinkerbellDatacenterConfig`, osImageURL has to be set to empty string `""` for all the `TinkerbellMachineConfigs`.
 
@@ -462,7 +462,7 @@ spec:
 Operating system on the machine. Permitted values: `ubuntu` and `redhat` (Default: `ubuntu`).
 
 ### osImageURL (required)
-Required field to set the operating system. In order to use Ubuntu or RHEL see [building baremetal node images]({{< relref "../../osmgmt/artifacts/#build-bare-metal-node-images" >}}). This field is also useful if you want to provide a customized operating system image or simply host the standard image locally. To upgrade a node or group of nodes to a new operating system version (ie. RHEL 8.7 to RHEL 8.8), modify this field to point to the new operating system image URL and run [upgrade cluster command]({{< relref "../../clustermgmt/cluster-upgrades/baremetal-upgrades/#upgrade-cluster-command" >}}). The `osImageURL` must contain the `Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` version (in case of modular upgrade). For example, if the Kubernetes version is 1.31, the `osImageURL` name should include 1.31, 1_31, 1-31 or 131.
+Required field to set the operating system. In order to use Ubuntu or RHEL see [building baremetal node images]({{< relref "../../osmgmt/artifacts/#build-bare-metal-node-images" >}}). This field is also useful if you want to provide a customized operating system image or simply host the standard image locally. To upgrade a node or group of nodes to a new operating system version (ie. RHEL 8.7 to RHEL 8.8), modify this field to point to the new operating system image URL and run [upgrade cluster command]({{< relref "../../clustermgmt/cluster-upgrades/baremetal-upgrades/#upgrade-cluster-command" >}}). The `osImageURL` must contain the `Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` version (in case of modular upgrade). For example, if the Kubernetes version is 1.35, the `osImageURL` name should include 1.35, 1_35, 1-35 or 135.
 
 >**_NOTE:_** If this value is set for a single `TinkerbellMachineConfig`, osImageURL has to be set for all the `TinkerbellMachineConfigs`. osImageURL field cannot be set both in the `TinkerbellDatacenterConfig` and `TinkerbellMachineConfig` objects. If set for `TinkerbellMachineConfig`, the value must be set to empty string `""` for `TinkerbellDatacenterConfig`
 

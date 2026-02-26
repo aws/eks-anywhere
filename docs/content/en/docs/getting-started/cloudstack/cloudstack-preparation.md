@@ -112,7 +112,7 @@ spec:
   computeOffering:
     name: "Medium Instance"
   template:
-    name: "rhel8-kube-1.31-eksa"
+    name: "rhel9-kube-1.35-eksa"
   diskOffering:
     name: "Small"
     mountPath: "/data-small"

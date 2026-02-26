@@ -17,7 +17,7 @@ anywhere list packages [flags]
       --bundles-override string   Override default Bundles manifest (not recommended)
       --cluster string            Name of cluster for package list.
   -h, --help                      help for packages
-      --kube-version string       Kubernetes version <major>.<minor> of the packages to list, for example: "1.31".
+      --kube-version string       Kubernetes version <major>.<minor> of the packages to list, for example: "1.35".
       --kubeconfig string         Path to a kubeconfig file to use when source is a cluster.
       --registry string           Specifies an alternative registry for packages discovery.
 ```
