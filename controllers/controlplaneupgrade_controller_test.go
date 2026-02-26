@@ -34,9 +34,14 @@ import (
 const (
 	etcd128 = "v3.5.9-eks-1-28-9"
 	etcd129 = "v3.5.10-eks-1-29-0"
+	etcd134 = "v3.5.21-eks-1-34-14"
 	k8s127  = "v1.27.1-eks-1-27-1"
 	k8s128  = "v1.28.3-eks-1-28-9"
 	k8s129  = "v1.29.0-eks-1-29-0"
+	k8s131  = "v1.31.0-eks-1-31-9"
+	k8s133  = "v1.33.0-eks-1-33-0"
+	k8s134  = "v1.34.3-eks-1-34-14"
+	k8s136  = "v1.36.0-eks-1-36-0"
 )
 
 type cpUpgradeObjects struct {
@@ -445,7 +450,7 @@ func TestCPUpgradeReconcileUpdateKubeadmConfigSuccess(t *testing.T) {
 	}
 }
 
-func TestCPUpgradeReconcileUpdateKubeadmConfigPreservesFeatureGates(t *testing.T) {
+func TestCPUpgradeReconcileUpdateKubeadmConfigAddsFeatureGateForK8s131(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
 	ctrl := gomock.NewController(t)
@@ -458,14 +463,13 @@ func TestCPUpgradeReconcileUpdateKubeadmConfigPreservesFeatureGates(t *testing.T
 			Completed: true,
 		}
 	}
-	// Simulate CAPI-added FeatureGates on existing KubeadmConfigs (e.g. ControlPlaneKubeletLocalMode).
-	// These are added by CAPI's DefaultFeatureGates() during KubeadmConfig creation but are NOT
-	// stored in the KCP spec. The controller must preserve them after updating the KubeadmConfig.
-	for _, kc := range testObjs.kubeadmConfigs {
-		kc.Spec.ClusterConfiguration.FeatureGates = map[string]bool{
-			"ControlPlaneKubeletLocalMode": true,
-		}
-	}
+
+	// Use K8s 1.31 as target version (ControlPlaneKubeletLocalMode should be added)
+	kcpSpec := generateKcpSpec()
+	kcpSpec.Version = k8s131
+	kcpSpecJSON, _ := json.Marshal(kcpSpec)
+	testObjs.cpUpgrade.Spec.ControlPlaneSpecData = base64.StdEncoding.EncodeToString(kcpSpecJSON)
+	testObjs.cpUpgrade.Spec.KubernetesVersion = k8s131
 
 	objs := []runtime.Object{
 		testObjs.cluster, testObjs.cpUpgrade, testObjs.machines[0], testObjs.machines[1], testObjs.nodes[0], testObjs.nodes[1],
@@ -483,20 +487,20 @@ func TestCPUpgradeReconcileUpdateKubeadmConfigPreservesFeatureGates(t *testing.T
 	_, err := r.Reconcile(ctx, req)
 	g.Expect(err).ToNot(HaveOccurred())
 
-	// Verify that the CAPI-added FeatureGates are preserved on both KubeadmConfigs
+	// Verify that ControlPlaneKubeletLocalMode is added for K8s 1.31
 	for i := range testObjs.kubeadmConfigs {
 		kc := testObjs.kubeadmConfigs[i]
 		kcNew := &bootstrapv1beta2.KubeadmConfig{}
 		err = client.Get(ctx, types.NamespacedName{Name: kc.Name, Namespace: kc.Namespace}, kcNew)
 		g.Expect(err).ToNot(HaveOccurred())
 		g.Expect(kcNew.Spec.ClusterConfiguration.FeatureGates).ToNot(BeNil(),
-			"FeatureGates should be preserved after KubeadmConfig update")
+			"FeatureGates should be set for K8s 1.31")
 		g.Expect(kcNew.Spec.ClusterConfiguration.FeatureGates["ControlPlaneKubeletLocalMode"]).To(BeTrue(),
-			"ControlPlaneKubeletLocalMode feature gate should be preserved")
+			"ControlPlaneKubeletLocalMode should be added for K8s 1.31")
 	}
 }
 
-func TestCPUpgradeReconcileUpdateKubeadmConfigPreservesFeatureGatesWithKCPFeatureGates(t *testing.T) {
+func TestCPUpgradeReconcileUpdateKubeadmConfigDoesNotAddFeatureGateForK8s130(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
 	ctrl := gomock.NewController(t)
@@ -509,22 +513,56 @@ func TestCPUpgradeReconcileUpdateKubeadmConfigPreservesFeatureGatesWithKCPFeatur
 			Completed: true,
 		}
 	}
-	// Simulate CAPI-added FeatureGates on existing KubeadmConfigs
-	for _, kc := range testObjs.kubeadmConfigs {
-		kc.Spec.ClusterConfiguration.FeatureGates = map[string]bool{
-			"ControlPlaneKubeletLocalMode": true,
-			"EtcdLearnerMode":              true,
+
+	// Use K8s 1.29 as target version (ControlPlaneKubeletLocalMode should NOT be added)
+	// KCP spec has no FeatureGates
+	objs := []runtime.Object{
+		testObjs.cluster, testObjs.cpUpgrade, testObjs.machines[0], testObjs.machines[1], testObjs.nodes[0], testObjs.nodes[1],
+		testObjs.nodeUpgrades[0], testObjs.nodeUpgrades[1], testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1], testObjs.infraMachines[0], testObjs.infraMachines[1],
+	}
+	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).WithObjects(tinkerbellMachineCRD()).
+		WithStatusSubresource(testObjs.cpUpgrade).
+		Build()
+	kcp := testObjs.cpUpgrade.Spec.ControlPlane
+	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: kcp.Name, Namespace: kcp.Namespace}).Return(client, nil)
+
+	r := controllers.NewControlPlaneUpgradeReconciler(client, clientRegistry)
+
+	req := cpUpgradeRequest(testObjs.cpUpgrade)
+	_, err := r.Reconcile(ctx, req)
+	g.Expect(err).ToNot(HaveOccurred())
+
+	// Verify that FeatureGates are nil for K8s < 1.31
+	for i := range testObjs.kubeadmConfigs {
+		kc := testObjs.kubeadmConfigs[i]
+		kcNew := &bootstrapv1beta2.KubeadmConfig{}
+		err = client.Get(ctx, types.NamespacedName{Name: kc.Name, Namespace: kc.Namespace}, kcNew)
+		g.Expect(err).ToNot(HaveOccurred())
+		g.Expect(kcNew.Spec.ClusterConfiguration.FeatureGates).To(BeNil(),
+			"FeatureGates should be nil for K8s < 1.31 when KCP spec has no FeatureGates")
+	}
+}
+
+func TestCPUpgradeReconcileUpdateKubeadmConfigDoesNotAddFeatureGateForK8s136(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	clientRegistry := mocks.NewMockRemoteClientRegistry(ctrl)
+
+	testObjs := getObjectsForCPUpgradeTest()
+	for i := range testObjs.nodeUpgrades {
+		testObjs.nodeUpgrades[i].Name = fmt.Sprintf("%s-node-upgrader", testObjs.machines[i].Name)
+		testObjs.nodeUpgrades[i].Status = anywherev1.NodeUpgradeStatus{
+			Completed: true,
 		}
 	}
 
-	// Also set a FeatureGate in the KCP spec (user-specified). This should take precedence
-	// over the existing value on the KubeadmConfig.
+	// Use K8s 1.36 as target version (ControlPlaneKubeletLocalMode GA'd, should NOT be added)
 	kcpSpec := generateKcpSpec()
-	kcpSpec.KubeadmConfigSpec.ClusterConfiguration.FeatureGates = map[string]bool{
-		"EtcdLearnerMode": false, // User explicitly set to false, should override existing true
-	}
+	kcpSpec.Version = k8s136
 	kcpSpecJSON, _ := json.Marshal(kcpSpec)
 	testObjs.cpUpgrade.Spec.ControlPlaneSpecData = base64.StdEncoding.EncodeToString(kcpSpecJSON)
+	testObjs.cpUpgrade.Spec.KubernetesVersion = k8s136
 
 	objs := []runtime.Object{
 		testObjs.cluster, testObjs.cpUpgrade, testObjs.machines[0], testObjs.machines[1], testObjs.nodes[0], testObjs.nodes[1],
@@ -542,7 +580,64 @@ func TestCPUpgradeReconcileUpdateKubeadmConfigPreservesFeatureGatesWithKCPFeatur
 	_, err := r.Reconcile(ctx, req)
 	g.Expect(err).ToNot(HaveOccurred())
 
-	// Verify FeatureGates merge behavior
+	// Verify that ControlPlaneKubeletLocalMode is NOT added for K8s >= 1.36
+	for i := range testObjs.kubeadmConfigs {
+		kc := testObjs.kubeadmConfigs[i]
+		kcNew := &bootstrapv1beta2.KubeadmConfig{}
+		err = client.Get(ctx, types.NamespacedName{Name: kc.Name, Namespace: kc.Namespace}, kcNew)
+		g.Expect(err).ToNot(HaveOccurred())
+		g.Expect(kcNew.Spec.ClusterConfiguration.FeatureGates).To(BeNil(),
+			"ControlPlaneKubeletLocalMode should NOT be added for K8s >= 1.36")
+	}
+}
+
+func TestCPUpgradeReconcileUpdateKubeadmConfigDoesNotPreserveEtcdLearnerMode(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	clientRegistry := mocks.NewMockRemoteClientRegistry(ctrl)
+
+	testObjs := getObjectsForCPUpgradeTest()
+	for i := range testObjs.nodeUpgrades {
+		testObjs.nodeUpgrades[i].Name = fmt.Sprintf("%s-node-upgrader", testObjs.machines[i].Name)
+		testObjs.nodeUpgrades[i].Status = anywherev1.NodeUpgradeStatus{
+			Completed: true,
+		}
+	}
+	// Simulate upgrading from K8s 1.32→1.33: existing KubeadmConfig has EtcdLearnerMode: false
+	// (set by template for 1.32), but KCP spec for 1.33 does not have it.
+	// EtcdLearnerMode should NOT be preserved.
+	for _, kc := range testObjs.kubeadmConfigs {
+		kc.Spec.ClusterConfiguration.FeatureGates = map[string]bool{
+			"ControlPlaneKubeletLocalMode": true,
+			"EtcdLearnerMode":              false,
+		}
+	}
+
+	// Target version is K8s 1.33 (ControlPlaneKubeletLocalMode should be added, EtcdLearnerMode should be removed)
+	kcpSpec := generateKcpSpec()
+	kcpSpec.Version = k8s133
+	// KCP spec for 1.33 has NO EtcdLearnerMode (template condition no longer applies)
+	kcpSpecJSON, _ := json.Marshal(kcpSpec)
+	testObjs.cpUpgrade.Spec.ControlPlaneSpecData = base64.StdEncoding.EncodeToString(kcpSpecJSON)
+	testObjs.cpUpgrade.Spec.KubernetesVersion = k8s133
+
+	objs := []runtime.Object{
+		testObjs.cluster, testObjs.cpUpgrade, testObjs.machines[0], testObjs.machines[1], testObjs.nodes[0], testObjs.nodes[1],
+		testObjs.nodeUpgrades[0], testObjs.nodeUpgrades[1], testObjs.kubeadmConfigs[0], testObjs.kubeadmConfigs[1], testObjs.infraMachines[0], testObjs.infraMachines[1],
+	}
+	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).WithObjects(tinkerbellMachineCRD()).
+		WithStatusSubresource(testObjs.cpUpgrade).
+		Build()
+	kcp := testObjs.cpUpgrade.Spec.ControlPlane
+	clientRegistry.EXPECT().GetClient(ctx, types.NamespacedName{Name: kcp.Name, Namespace: kcp.Namespace}).Return(client, nil)
+
+	r := controllers.NewControlPlaneUpgradeReconciler(client, clientRegistry)
+
+	req := cpUpgradeRequest(testObjs.cpUpgrade)
+	_, err := r.Reconcile(ctx, req)
+	g.Expect(err).ToNot(HaveOccurred())
+
 	for i := range testObjs.kubeadmConfigs {
 		kc := testObjs.kubeadmConfigs[i]
 		kcNew := &bootstrapv1beta2.KubeadmConfig{}
@@ -550,13 +645,14 @@ func TestCPUpgradeReconcileUpdateKubeadmConfigPreservesFeatureGatesWithKCPFeatur
 		g.Expect(err).ToNot(HaveOccurred())
 		g.Expect(kcNew.Spec.ClusterConfiguration.FeatureGates).ToNot(BeNil())
 
-		// CAPI-added gate should be preserved
+		// ControlPlaneKubeletLocalMode should be added for K8s 1.33
 		g.Expect(kcNew.Spec.ClusterConfiguration.FeatureGates["ControlPlaneKubeletLocalMode"]).To(BeTrue(),
-			"CAPI-added ControlPlaneKubeletLocalMode should be preserved")
+			"ControlPlaneKubeletLocalMode should be added for K8s 1.33")
 
-		// KCP spec gate should take precedence (user set to false)
-		g.Expect(kcNew.Spec.ClusterConfiguration.FeatureGates["EtcdLearnerMode"]).To(BeFalse(),
-			"KCP spec FeatureGate should take precedence over existing value")
+		// EtcdLearnerMode should NOT be preserved from old config
+		_, hasEtcdLearnerMode := kcNew.Spec.ClusterConfiguration.FeatureGates["EtcdLearnerMode"]
+		g.Expect(hasEtcdLearnerMode).To(BeFalse(),
+			"EtcdLearnerMode should NOT be preserved when upgrading to K8s 1.33")
 	}
 }
 
