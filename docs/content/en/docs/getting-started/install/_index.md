@@ -22,7 +22,7 @@ See [Create cluster workflow]({{< relref "../overview" >}}) for an overview of t
 ### Administrative machine prerequisites
 
 #### System and network requirements
-- Mac OS 10.15+ / Ubuntu 20.04.2 LTS or 22.04 LTS / RHEL or Rocky Linux 8.8+
+- Mac OS 10.15+ / Ubuntu 22.04 LTS or 24.04 LTS / RHEL or Rocky Linux 8.8+
 - 4 CPU cores
 - 16GB memory
 - 30GB free disk space
