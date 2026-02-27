@@ -134,6 +134,12 @@ func runUpgradeFlowForBareMetalWithAPI(test *framework.ClusterE2ETest, fillers .
 	test.GenerateHardwareConfig()
 	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
 	test.LoadClusterConfigGeneratedByCLI()
+	// The CLI-generated config file is written before the bootstrap cluster pivot,
+	// so it still contains the tinkerbell-bootstrap-ip annotation. This annotation
+	// causes the controller to use the bootstrap IP when regenerating machine templates,
+	// creating a diff with the existing templates (which were updated during pivot to
+	// use the tinkerbellIP). Clear it so the kubectl apply doesn't re-add it.
+	test.ClusterConfig.Cluster.ClearTinkerbellIPAnnotation()
 	test.UpdateClusterConfig(fillers...)
 	test.ApplyClusterManifest()
 	test.ValidateClusterState()
