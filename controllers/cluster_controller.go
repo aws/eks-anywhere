@@ -257,7 +257,7 @@ func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager, log logr.Logger) 
 // +kubebuilder:rbac:groups="",resources=events,verbs=create;patch;update
 // +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;create;delete;update;patch
 // +kubebuilder:rbac:groups="",namespace=eksa-system,resources=secrets,verbs=patch;update
-// +kubebuilder:rbac:groups="",resources=namespaces,verbs=get;list;create;delete
+// +kubebuilder:rbac:groups="",resources=namespaces,verbs=get;list;create;delete;patch;update
 // +kubebuilder:rbac:groups="",resources=nodes,verbs=list
 // +kubebuilder:rbac:groups=addons.cluster.x-k8s.io,resources=clusterresourcesets,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=clusters;gitopsconfigs;snowmachineconfigs;snowdatacenterconfigs;snowippools;vspheredatacenterconfigs;vspheremachineconfigs;dockerdatacenterconfigs;tinkerbellmachineconfigs;tinkerbelltemplateconfigs;tinkerbelldatacenterconfigs;cloudstackdatacenterconfigs;cloudstackmachineconfigs;nutanixdatacenterconfigs;nutanixmachineconfigs;oidcconfigs;fluxconfigs,verbs=get;list;watch;update;patch
