@@ -245,3 +245,146 @@ func TestVSphereDatacenterConfigValidateDeleteCastFail(t *testing.T) {
 	g.Expect(err).To(HaveOccurred())
 	g.Expect(err.Error()).To(ContainSubstring("expected a VSphereDatacenterConfig"))
 }
+
+func TestVSphereDatacenterValidateUpdateIPPoolAddAllowed(t *testing.T) {
+	ctx := context.Background()
+	g := NewWithT(t)
+
+	// Old config without IPPool (DHCP mode)
+	vOld := vsphereDatacenterConfig()
+	vOld.Spec.IPPool = nil
+
+	// New config with IPPool (static IP mode)
+	c := vOld.DeepCopy()
+	c.Spec.IPPool = &v1alpha1.IPPoolConfiguration{
+		Name:      "test-pool",
+		Addresses: []string{"192.168.1.100-192.168.1.120"},
+		Prefix:    24,
+		Gateway:   "192.168.1.1",
+	}
+
+	// Should succeed - switching from DHCP to static IP is allowed (triggers rolling update)
+	g.Expect(c.ValidateUpdate(ctx, &vOld, c)).Error().To(Succeed())
+}
+
+func TestVSphereDatacenterValidateUpdateIPPoolRemoveAllowed(t *testing.T) {
+	ctx := context.Background()
+	g := NewWithT(t)
+
+	// Old config with IPPool (static IP mode)
+	vOld := vsphereDatacenterConfig()
+	vOld.Spec.IPPool = &v1alpha1.IPPoolConfiguration{
+		Name:      "test-pool",
+		Addresses: []string{"192.168.1.100-192.168.1.120"},
+		Prefix:    24,
+		Gateway:   "192.168.1.1",
+	}
+
+	// New config without IPPool (DHCP mode)
+	c := vOld.DeepCopy()
+	c.Spec.IPPool = nil
+
+	// Should succeed - switching from static IP to DHCP is allowed (triggers rolling update)
+	g.Expect(c.ValidateUpdate(ctx, &vOld, c)).Error().To(Succeed())
+}
+
+func TestVSphereDatacenterValidateUpdateIPPoolFieldsMutable(t *testing.T) {
+	ctx := context.Background()
+	g := NewWithT(t)
+
+	// Old config with IPPool
+	vOld := vsphereDatacenterConfig()
+	vOld.Spec.IPPool = &v1alpha1.IPPoolConfiguration{
+		Name:      "test-pool",
+		Addresses: []string{"192.168.1.100-192.168.1.120"},
+		Prefix:    24,
+		Gateway:   "192.168.1.1",
+	}
+
+	// New config with modified IPPool fields (but still has IPPool)
+	c := vOld.DeepCopy()
+	c.Spec.IPPool = &v1alpha1.IPPoolConfiguration{
+		Name:        "test-pool",
+		Addresses:   []string{"192.168.1.100-192.168.1.150"}, // Extended range
+		Prefix:      24,
+		Gateway:     "192.168.1.1",
+		Nameservers: []string{"8.8.8.8"}, // Added nameservers
+	}
+
+	// Should succeed because updating IPPool fields within the same mode is allowed
+	g.Expect(c.ValidateUpdate(ctx, &vOld, c)).Error().To(Succeed())
+}
+
+func TestVSphereDatacenterValidateUpdateBothWithoutIPPool(t *testing.T) {
+	ctx := context.Background()
+	g := NewWithT(t)
+
+	// Both old and new without IPPool (DHCP mode)
+	vOld := vsphereDatacenterConfig()
+	vOld.Spec.IPPool = nil
+
+	c := vOld.DeepCopy()
+	c.Spec.IPPool = nil
+
+	// Should succeed because both are using DHCP mode
+	g.Expect(c.ValidateUpdate(ctx, &vOld, c)).Error().To(Succeed())
+}
+
+func TestVSphereDatacenterValidateUpdateBothWithIPPool(t *testing.T) {
+	ctx := context.Background()
+	g := NewWithT(t)
+
+	// Both old and new with IPPool (static IP mode)
+	vOld := vsphereDatacenterConfig()
+	vOld.Spec.IPPool = &v1alpha1.IPPoolConfiguration{
+		Name:      "test-pool",
+		Addresses: []string{"192.168.1.100-192.168.1.120"},
+		Prefix:    24,
+		Gateway:   "192.168.1.1",
+	}
+
+	c := vOld.DeepCopy()
+	// Same IPPool config
+	c.Spec.IPPool = &v1alpha1.IPPoolConfiguration{
+		Name:      "test-pool",
+		Addresses: []string{"192.168.1.100-192.168.1.120"},
+		Prefix:    24,
+		Gateway:   "192.168.1.1",
+	}
+
+	// Should succeed because both are using static IP mode
+	g.Expect(c.ValidateUpdate(ctx, &vOld, c)).Error().To(Succeed())
+}
+
+func TestVSphereDatacenterValidateCreateWithIPPool(t *testing.T) {
+	ctx := context.Background()
+	g := NewWithT(t)
+
+	dataCenterConfig := vsphereDatacenterConfig()
+	dataCenterConfig.Spec.IPPool = &v1alpha1.IPPoolConfiguration{
+		Name:        "test-pool",
+		Addresses:   []string{"192.168.1.100-192.168.1.120"},
+		Prefix:      24,
+		Gateway:     "192.168.1.1",
+		Nameservers: []string{"8.8.8.8"},
+	}
+
+	// Should succeed with valid IPPool configuration
+	g.Expect(dataCenterConfig.ValidateCreate(ctx, &dataCenterConfig)).Error().To(Succeed())
+}
+
+func TestVSphereDatacenterValidateCreateWithInvalidIPPool(t *testing.T) {
+	ctx := context.Background()
+	g := NewWithT(t)
+
+	dataCenterConfig := vsphereDatacenterConfig()
+	dataCenterConfig.Spec.IPPool = &v1alpha1.IPPoolConfiguration{
+		Name:      "", // Empty name is invalid
+		Addresses: []string{"192.168.1.100-192.168.1.120"},
+		Prefix:    24,
+		Gateway:   "192.168.1.1",
+	}
+
+	// Should fail with invalid IPPool configuration
+	g.Expect(dataCenterConfig.ValidateCreate(ctx, &dataCenterConfig)).Error().To(MatchError(ContainSubstring("ipPool.name cannot be empty")))
+}

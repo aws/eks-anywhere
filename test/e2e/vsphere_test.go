@@ -8527,3 +8527,368 @@ func TestVSphereKubernetes134BottlerocketKubeletConfiguration(t *testing.T) {
 	)
 	runKubeletConfigurationFlow(test)
 }
+
+// Static IP Tests - CAPI IPAM with InClusterIPPool
+
+// TestVSphereKubernetes130UbuntuStaticIPSimpleFlow tests cluster creation with static IP allocation using CAPI IPAM.
+func TestVSphereKubernetes130UbuntuStaticIPSimpleFlow(t *testing.T) {
+	ipConfig := framework.StaticIPConfig{
+		PoolName:    "test-ip-pool",
+		Addresses:   []string{"192.168.1.100-192.168.1.120"},
+		Prefix:      24,
+		Gateway:     "192.168.1.1",
+		Nameservers: []string{"8.8.8.8", "8.8.4.4"},
+	}
+
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithUbuntu130()),
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube130),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(2),
+		),
+		api.VSphereToConfigFiller(
+			api.WithVSphereIPPool(ipConfig.PoolName, ipConfig.Addresses, ipConfig.Prefix, ipConfig.Gateway, ipConfig.Nameservers),
+		),
+	)
+	runStaticIPWithoutClusterConfigGeneration(test, ipConfig)
+}
+
+// TestVSphereKubernetes130BottlerocketStaticIPSimpleFlow tests static IP allocation with Bottlerocket OS.
+func TestVSphereKubernetes130BottlerocketStaticIPSimpleFlow(t *testing.T) {
+	ipConfig := framework.StaticIPConfig{
+		PoolName:    "test-ip-pool-br",
+		Addresses:   []string{"192.168.1.100-192.168.1.120"},
+		Prefix:      24,
+		Gateway:     "192.168.1.1",
+		Nameservers: []string{"8.8.8.8"},
+	}
+
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithBottleRocket130()),
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube130),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(2),
+		),
+		api.VSphereToConfigFiller(
+			api.WithVSphereIPPool(ipConfig.PoolName, ipConfig.Addresses, ipConfig.Prefix, ipConfig.Gateway, ipConfig.Nameservers),
+		),
+	)
+	runStaticIPWithoutClusterConfigGeneration(test, ipConfig)
+}
+
+// TestVSphereKubernetes131UbuntuStaticIPSimpleFlow tests cluster creation with static IP using K8s 1.31.
+func TestVSphereKubernetes131UbuntuStaticIPSimpleFlow(t *testing.T) {
+	ipConfig := framework.StaticIPConfig{
+		PoolName:    "test-ip-pool-131",
+		Addresses:   []string{"192.168.1.100-192.168.1.120"},
+		Prefix:      24,
+		Gateway:     "192.168.1.1",
+		Nameservers: []string{"8.8.8.8", "8.8.4.4"},
+	}
+
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithUbuntu131()),
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube131),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(2),
+		),
+		api.VSphereToConfigFiller(
+			api.WithVSphereIPPool(ipConfig.PoolName, ipConfig.Addresses, ipConfig.Prefix, ipConfig.Gateway, ipConfig.Nameservers),
+		),
+	)
+	runStaticIPWithoutClusterConfigGeneration(test, ipConfig)
+}
+
+// TestVSphereKubernetes130UbuntuStaticIPUpgradeFlow tests cluster upgrade with static IP configuration.
+func TestVSphereKubernetes130UbuntuStaticIPUpgradeFlow(t *testing.T) {
+	ipConfig := framework.StaticIPConfig{
+		PoolName:    "test-ip-pool-upgrade",
+		Addresses:   []string{"192.168.1.100-192.168.1.130"}, // Extra IPs for rolling upgrade
+		Prefix:      24,
+		Gateway:     "192.168.1.1",
+		Nameservers: []string{"8.8.8.8"},
+	}
+
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithUbuntu130(), framework.WithVSphereFillers(
+			api.WithVSphereIPPool(ipConfig.PoolName, ipConfig.Addresses, ipConfig.Prefix, ipConfig.Gateway, ipConfig.Nameservers),
+		)),
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube130),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(2),
+		),
+	)
+
+	runStaticIPUpgradeFlow(test, ipConfig,
+		framework.WithClusterUpgrade(
+			api.WithKubernetesVersion(v1alpha1.Kube131),
+		),
+	)
+}
+
+// TestVSphereKubernetes130UbuntuStaticIPScaleFlow tests scaling with static IP allocation.
+func TestVSphereKubernetes130UbuntuStaticIPScaleFlow(t *testing.T) {
+	ipConfig := framework.StaticIPConfig{
+		PoolName:    "test-ip-pool-scale",
+		Addresses:   []string{"192.168.1.100-192.168.1.130"}, // Extra IPs for scaling
+		Prefix:      24,
+		Gateway:     "192.168.1.1",
+		Nameservers: []string{"8.8.8.8"},
+	}
+
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithUbuntu130(), framework.WithVSphereFillers(
+			api.WithVSphereIPPool(ipConfig.PoolName, ipConfig.Addresses, ipConfig.Prefix, ipConfig.Gateway, ipConfig.Nameservers),
+		)),
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube130),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(2),
+		),
+	)
+
+	runStaticIPScaleFlow(test, ipConfig,
+		// Scale up to 4 workers
+		[]framework.ClusterE2ETestOpt{
+			framework.WithClusterUpgrade(api.WithWorkerNodeCount(4)),
+		},
+		// Scale down to 2 workers
+		[]framework.ClusterE2ETestOpt{
+			framework.WithClusterUpgrade(api.WithWorkerNodeCount(2)),
+		},
+	)
+}
+
+// TestVSphereKubernetes130UbuntuStaticIPStackedEtcd tests static IP with stacked etcd topology.
+func TestVSphereKubernetes130UbuntuStaticIPStackedEtcd(t *testing.T) {
+	ipConfig := framework.StaticIPConfig{
+		PoolName:    "test-ip-pool-stacked",
+		Addresses:   []string{"192.168.1.100-192.168.1.120"},
+		Prefix:      24,
+		Gateway:     "192.168.1.1",
+		Nameservers: []string{"8.8.8.8"},
+	}
+
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithUbuntu130()),
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube130),
+			api.WithControlPlaneCount(3),
+			api.WithWorkerNodeCount(2),
+			api.WithStackedEtcdTopology(),
+		),
+		api.VSphereToConfigFiller(
+			api.WithVSphereIPPool(ipConfig.PoolName, ipConfig.Addresses, ipConfig.Prefix, ipConfig.Gateway, ipConfig.Nameservers),
+		),
+	)
+	runStaticIPWithoutClusterConfigGeneration(test, ipConfig)
+}
+
+// TestVSphereKubernetes130UbuntuStaticIPCIDRFormat tests static IP with CIDR address format.
+func TestVSphereKubernetes130UbuntuStaticIPCIDRFormat(t *testing.T) {
+	ipConfig := framework.StaticIPConfig{
+		PoolName:    "test-ip-pool-cidr",
+		Addresses:   []string{"192.168.1.0/28"}, // 16 IPs (192.168.1.0 - 192.168.1.15)
+		Prefix:      24,
+		Gateway:     "192.168.1.1",
+		Nameservers: []string{"8.8.8.8"},
+	}
+
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithUbuntu130()),
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube130),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(2),
+		),
+		api.VSphereToConfigFiller(
+			api.WithVSphereIPPool(ipConfig.PoolName, ipConfig.Addresses, ipConfig.Prefix, ipConfig.Gateway, ipConfig.Nameservers),
+		),
+	)
+	runStaticIPWithoutClusterConfigGeneration(test, ipConfig)
+}
+
+// RedHat Static IP Tests
+
+// TestVSphereKubernetes130RedHat8StaticIPSimpleFlow tests static IP allocation with RedHat 8 OS.
+func TestVSphereKubernetes130RedHat8StaticIPSimpleFlow(t *testing.T) {
+	ipConfig := framework.StaticIPConfig{
+		PoolName:    "test-ip-pool-rh8",
+		Addresses:   []string{"192.168.1.100-192.168.1.120"},
+		Prefix:      24,
+		Gateway:     "192.168.1.1",
+		Nameservers: []string{"8.8.8.8", "8.8.4.4"},
+	}
+
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithRedHat130VSphere()),
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube130),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(2),
+		),
+		api.VSphereToConfigFiller(
+			api.WithVSphereIPPool(ipConfig.PoolName, ipConfig.Addresses, ipConfig.Prefix, ipConfig.Gateway, ipConfig.Nameservers),
+		),
+	)
+	runStaticIPWithoutClusterConfigGeneration(test, ipConfig)
+}
+
+// TestVSphereKubernetes131RedHat8StaticIPSimpleFlow tests static IP allocation with RedHat 8 OS on K8s 1.31.
+func TestVSphereKubernetes131RedHat8StaticIPSimpleFlow(t *testing.T) {
+	ipConfig := framework.StaticIPConfig{
+		PoolName:    "test-ip-pool-rh8-131",
+		Addresses:   []string{"192.168.1.100-192.168.1.120"},
+		Prefix:      24,
+		Gateway:     "192.168.1.1",
+		Nameservers: []string{"8.8.8.8"},
+	}
+
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithRedHat131VSphere()),
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube131),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(2),
+		),
+		api.VSphereToConfigFiller(
+			api.WithVSphereIPPool(ipConfig.PoolName, ipConfig.Addresses, ipConfig.Prefix, ipConfig.Gateway, ipConfig.Nameservers),
+		),
+	)
+	runStaticIPWithoutClusterConfigGeneration(test, ipConfig)
+}
+
+// TestVSphereKubernetes130RedHat9StaticIPSimpleFlow tests static IP allocation with RedHat 9 OS.
+func TestVSphereKubernetes130RedHat9StaticIPSimpleFlow(t *testing.T) {
+	ipConfig := framework.StaticIPConfig{
+		PoolName:    "test-ip-pool-rh9",
+		Addresses:   []string{"192.168.1.100-192.168.1.120"},
+		Prefix:      24,
+		Gateway:     "192.168.1.1",
+		Nameservers: []string{"8.8.8.8", "8.8.4.4"},
+	}
+
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithRedHat9130VSphere()),
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube130),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(2),
+		),
+		api.VSphereToConfigFiller(
+			api.WithVSphereIPPool(ipConfig.PoolName, ipConfig.Addresses, ipConfig.Prefix, ipConfig.Gateway, ipConfig.Nameservers),
+		),
+	)
+	runStaticIPWithoutClusterConfigGeneration(test, ipConfig)
+}
+
+// TestVSphereKubernetes131RedHat9StaticIPSimpleFlow tests static IP allocation with RedHat 9 OS on K8s 1.31.
+func TestVSphereKubernetes131RedHat9StaticIPSimpleFlow(t *testing.T) {
+	ipConfig := framework.StaticIPConfig{
+		PoolName:    "test-ip-pool-rh9-131",
+		Addresses:   []string{"192.168.1.100-192.168.1.120"},
+		Prefix:      24,
+		Gateway:     "192.168.1.1",
+		Nameservers: []string{"8.8.8.8"},
+	}
+
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithRedHat9131VSphere()),
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube131),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(2),
+		),
+		api.VSphereToConfigFiller(
+			api.WithVSphereIPPool(ipConfig.PoolName, ipConfig.Addresses, ipConfig.Prefix, ipConfig.Gateway, ipConfig.Nameservers),
+		),
+	)
+	runStaticIPWithoutClusterConfigGeneration(test, ipConfig)
+}
+
+// TestVSphereKubernetes130RedHat9StaticIPUpgradeFlow tests cluster upgrade with RedHat 9 and static IP.
+func TestVSphereKubernetes130RedHat9StaticIPUpgradeFlow(t *testing.T) {
+	ipConfig := framework.StaticIPConfig{
+		PoolName:    "test-ip-pool-rh9-upgrade",
+		Addresses:   []string{"192.168.1.100-192.168.1.130"}, // Extra IPs for rolling upgrade
+		Prefix:      24,
+		Gateway:     "192.168.1.1",
+		Nameservers: []string{"8.8.8.8"},
+	}
+
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithRedHat9130VSphere(), framework.WithVSphereFillers(
+			api.WithVSphereIPPool(ipConfig.PoolName, ipConfig.Addresses, ipConfig.Prefix, ipConfig.Gateway, ipConfig.Nameservers),
+		)),
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube130),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(2),
+		),
+	)
+
+	runStaticIPUpgradeFlow(test, ipConfig,
+		framework.WithClusterUpgrade(
+			api.WithKubernetesVersion(v1alpha1.Kube131),
+		),
+	)
+}
+
+// TestVSphereKubernetes130RedHat9StaticIPScaleFlow tests scaling with RedHat 9 and static IP allocation.
+func TestVSphereKubernetes130RedHat9StaticIPScaleFlow(t *testing.T) {
+	ipConfig := framework.StaticIPConfig{
+		PoolName:    "test-ip-pool-rh9-scale",
+		Addresses:   []string{"192.168.1.100-192.168.1.130"}, // Extra IPs for scaling
+		Prefix:      24,
+		Gateway:     "192.168.1.1",
+		Nameservers: []string{"8.8.8.8"},
+	}
+
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithRedHat9130VSphere(), framework.WithVSphereFillers(
+			api.WithVSphereIPPool(ipConfig.PoolName, ipConfig.Addresses, ipConfig.Prefix, ipConfig.Gateway, ipConfig.Nameservers),
+		)),
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube130),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(2),
+		),
+	)
+
+	runStaticIPScaleFlow(test, ipConfig,
+		// Scale up to 4 workers
+		[]framework.ClusterE2ETestOpt{
+			framework.WithClusterUpgrade(api.WithWorkerNodeCount(4)),
+		},
+		// Scale down to 2 workers
+		[]framework.ClusterE2ETestOpt{
+			framework.WithClusterUpgrade(api.WithWorkerNodeCount(2)),
+		},
+	)
+}

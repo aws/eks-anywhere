@@ -18,6 +18,15 @@ func (s *moveClusterManagementTask) Run(ctx context.Context, commandContext *tas
 		return &workflows.CollectDiagnosticsTask{}
 	}
 
+	// Install custom provider components (like IPAM provider) on the management cluster BEFORE the move
+	// This is required because after clusterctl move, the management cluster needs the IPAM provider
+	// to reconcile the cluster resources and update controlPlaneInitialized status
+	logger.Info("Installing custom provider components on management cluster before move")
+	if err := commandContext.Provider.InstallCustomProviderComponents(ctx, commandContext.WorkloadCluster.KubeconfigFile); err != nil {
+		commandContext.SetError(err)
+		return &workflows.CollectDiagnosticsTask{}
+	}
+
 	logger.Info("Moving the cluster management components from the bootstrap cluster to the management cluster")
 	err = commandContext.ClusterManager.MoveCAPI(ctx, commandContext.BootstrapCluster, commandContext.WorkloadCluster, commandContext.WorkloadCluster.Name, commandContext.ClusterSpec, types.WithNodeRef())
 	if err != nil {

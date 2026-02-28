@@ -58,8 +58,22 @@ spec:
       memoryMiB: {{.controlPlaneVMsMemoryMiB}}
       network:
         devices:
+{{- if .ipPoolName }}
+        - networkName: {{.vsphereNetwork}}
+          addressesFromPools:
+          - apiGroup: ipam.cluster.x-k8s.io
+            kind: InClusterIPPool
+            name: {{.ipPoolName}}
+{{- if .ipPoolNameservers }}
+          nameservers:
+{{- range .ipPoolNameservers }}
+          - {{ . }}
+{{- end }}
+{{- end }}
+{{- else }}
         - dhcp4: true
           networkName: {{.vsphereNetwork}}
+{{- end }}
       numCPUs: {{.controlPlaneVMsNumCPUs}}
       resourcePool: '{{.controlPlaneVsphereResourcePool}}'
       server: {{.vsphereServer}}
@@ -747,8 +761,22 @@ spec:
       memoryMiB: {{.etcdVMsMemoryMiB}}
       network:
         devices:
+{{- if .ipPoolName }}
+          - networkName: {{.vsphereNetwork}}
+            addressesFromPools:
+            - apiGroup: ipam.cluster.x-k8s.io
+              kind: InClusterIPPool
+              name: {{.ipPoolName}}
+{{- if .ipPoolNameservers }}
+            nameservers:
+{{- range .ipPoolNameservers }}
+            - {{ . }}
+{{- end }}
+{{- end }}
+{{- else }}
           - dhcp4: true
             networkName: {{.vsphereNetwork}}
+{{- end }}
       numCPUs: {{.etcdVMsNumCPUs}}
       resourcePool: '{{.etcdVsphereResourcePool}}'
       server: {{.vsphereServer}}

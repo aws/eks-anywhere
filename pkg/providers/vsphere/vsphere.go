@@ -67,6 +67,15 @@ var defaultSecretObject string
 //go:embed config/template-failuredomain.yaml
 var defaultFailureDomainConfig string
 
+//go:embed config/ipam-provider-crds.yaml
+var defaultIPAMProviderCRDs string
+
+//go:embed config/ipam-provider-deployment.yaml
+var defaultIPAMProviderDeployment string
+
+//go:embed config/template-ippool.yaml
+var defaultIPPoolTemplate string
+
 var (
 	eksaVSphereDatacenterResourceType = fmt.Sprintf("vspheredatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaVSphereMachineResourceType    = fmt.Sprintf("vspheremachineconfigs.%s", v1alpha1.GroupVersion.Group)
@@ -75,6 +84,7 @@ var (
 var requiredEnvs = []string{vSphereUsernameKey, vSpherePasswordKey, expClusterResourceSetKey}
 
 type vsphereProvider struct {
+	datacenterConfig      *v1alpha1.VSphereDatacenterConfig
 	clusterConfig         *v1alpha1.Cluster
 	providerGovcClient    ProviderGovcClient
 	providerKubectlClient ProviderKubectlClient
@@ -149,6 +159,7 @@ type ProviderKubectlClient interface {
 	DeleteEksaDatacenterConfig(ctx context.Context, vsphereDatacenterResourceType, vsphereDatacenterConfigName, kubeconfigFile, namespace string) error
 	DeleteEksaMachineConfig(ctx context.Context, vsphereMachineResourceType, vsphereMachineConfigName, kubeconfigFile, namespace string) error
 	ApplyTolerationsFromTaintsToDaemonSet(ctx context.Context, oldTaints, newTaints []corev1.Taint, dsName, kubeconfigFile string) error
+	HasCRD(ctx context.Context, crd, kubeconfig string) (bool, error)
 }
 
 // IPValidator is an interface that defines methods to validate the control plane IP.
@@ -207,6 +218,7 @@ func NewProviderCustomNet(
 	// We should make it exported, but that would involve a bunch of changes, so will do it separately
 	retrier := retrier.NewWithMaxRetries(maxRetries, backOffPeriod)
 	return &vsphereProvider{
+		datacenterConfig:      datacenterConfig,
 		clusterConfig:         clusterConfig,
 		providerGovcClient:    providerGovcClient,
 		providerKubectlClient: providerKubectlClient,
@@ -288,6 +300,11 @@ func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 	}
 
 	if err := vSphereClusterSpec.VSphereDatacenter.Validate(); err != nil {
+		return err
+	}
+
+	// Validate IP pool size if configured
+	if err := validateIPPoolSize(clusterSpec); err != nil {
 		return err
 	}
 
@@ -375,6 +392,11 @@ func (p *vsphereProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cl
 	}
 
 	if err := vSphereClusterSpec.VSphereDatacenter.Validate(); err != nil {
+		return err
+	}
+
+	// Validate IP pool size if configured
+	if err := validateIPPoolSize(clusterSpec); err != nil {
 		return err
 	}
 
@@ -736,10 +758,191 @@ func (p *vsphereProvider) createSecret(ctx context.Context, cluster *types.Clust
 }
 
 func (p *vsphereProvider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
-	return p.UpdateSecrets(ctx, cluster, nil)
+	if err := p.UpdateSecrets(ctx, cluster, nil); err != nil {
+		return err
+	}
+
+	// Install IPAM provider and create InClusterIPPool BEFORE CAPI installs VSphereMachineTemplates.
+	// This is critical because VSphereMachineTemplates reference the InClusterIPPool via addressesFromPools,
+	// and CAPV will fail to create IPAddressClaims if the pool doesn't exist.
+	if clusterSpec != nil && clusterSpec.Config != nil && clusterSpec.VSphereDatacenter != nil && clusterSpec.VSphereDatacenter.Spec.IPPool != nil {
+		logger.V(3).Info("Installing IPAM provider for static IP allocation",
+			"poolName", clusterSpec.VSphereDatacenter.Spec.IPPool.Name,
+		)
+		if err := p.installIPAMProviderAndCreatePool(ctx, cluster, clusterSpec.VSphereDatacenter); err != nil {
+			return fmt.Errorf("setting up static IP allocation in PreCAPIInstallOnBootstrap: %v", err)
+		}
+	}
+
+	return nil
 }
 
 func (p *vsphereProvider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
+	// IPAM setup has been moved to PreCAPIInstallOnBootstrap to ensure the InClusterIPPool
+	// exists BEFORE VSphereMachineTemplates are applied. This is required because CAPV
+	// creates IPAddressClaims when processing VSphereMachineTemplates with addressesFromPools.
+	return nil
+}
+
+// installIPAMProviderAndCreatePool installs the CAPI IPAM provider and creates the InClusterIPPool.
+func (p *vsphereProvider) installIPAMProviderAndCreatePool(ctx context.Context, cluster *types.Cluster, datacenterConfig *v1alpha1.VSphereDatacenterConfig) error {
+	// Step 1: Install CAPI IPAM provider (cluster-api-ipam-provider-in-cluster)
+	if err := p.installCAPIIPAMProvider(ctx, cluster); err != nil {
+		return fmt.Errorf("installing CAPI IPAM provider: %v", err)
+	}
+
+	// Step 2: Create InClusterIPPool resource
+	if err := p.createInClusterIPPoolFromConfig(ctx, cluster, datacenterConfig); err != nil {
+		return fmt.Errorf("creating InClusterIPPool: %v", err)
+	}
+
+	return nil
+}
+
+// installCAPIIPAMProvider installs the cluster-api-ipam-provider-in-cluster components.
+// Note: IPAddressClaim and IPAddress CRDs are part of core CAPI (v1.5+) and are already installed.
+// This function only installs the InClusterIPPool/GlobalInClusterIPPool CRDs and the IPAM controller.
+// The installation is split into two phases to avoid controller startup failures:
+// 1. Apply CRDs and namespace first, wait for CRDs to be established
+// 2. Apply RBAC and deployment after CRDs are ready.
+func (p *vsphereProvider) installCAPIIPAMProvider(ctx context.Context, cluster *types.Cluster) error {
+	// Step 1: Apply CRDs and namespace first
+	err := p.providerKubectlClient.ApplyKubeSpecFromBytes(ctx, cluster, []byte(defaultIPAMProviderCRDs))
+	if err != nil {
+		return fmt.Errorf("applying IPAM provider CRDs: %v", err)
+	}
+
+	// Step 2: Wait for CRDs to be established before deploying the controller
+	// This prevents the controller from failing on startup due to missing API resources
+	if err := p.waitForIPAMCRDs(ctx, cluster); err != nil {
+		return fmt.Errorf("waiting for IPAM CRDs to be established: %v", err)
+	}
+
+	// Step 3: Apply RBAC and deployment
+	err = p.providerKubectlClient.ApplyKubeSpecFromBytes(ctx, cluster, []byte(defaultIPAMProviderDeployment))
+	if err != nil {
+		return fmt.Errorf("applying IPAM provider deployment: %v", err)
+	}
+
+	logger.V(3).Info("CAPI IPAM provider installed successfully")
+	return nil
+}
+
+// waitForIPAMCRDs waits for the IPAM CRDs to be established in the cluster.
+func (p *vsphereProvider) waitForIPAMCRDs(ctx context.Context, cluster *types.Cluster) error {
+	crdsToWait := []string{
+		"inclusterippools.ipam.cluster.x-k8s.io",
+		"globalinclusterippools.ipam.cluster.x-k8s.io",
+	}
+
+	for _, crdName := range crdsToWait {
+		err := p.Retrier.Retry(func() error {
+			hasCRD, err := p.providerKubectlClient.HasCRD(ctx, crdName, cluster.KubeconfigFile)
+			if err != nil {
+				return err
+			}
+			if !hasCRD {
+				return fmt.Errorf("CRD %s not yet established", crdName)
+			}
+			return nil
+		})
+		if err != nil {
+			return fmt.Errorf("waiting for CRD %s: %v", crdName, err)
+		}
+	}
+
+	return nil
+}
+
+// validateIPPoolSize validates that the IP pool has sufficient IPs for the cluster nodes.
+// It calculates the total number of nodes (control plane + workers + etcd) and ensures
+// the pool has enough addresses, including extra IPs for rolling upgrades.
+// For worker nodes with autoscaling, it uses MaxCount to ensure the pool can accommodate scale-up.
+func validateIPPoolSize(clusterSpec *cluster.Spec) error {
+	if clusterSpec.VSphereDatacenter == nil || clusterSpec.VSphereDatacenter.Spec.IPPool == nil {
+		return nil
+	}
+
+	ipPool := clusterSpec.VSphereDatacenter.Spec.IPPool
+	clusterConfig := clusterSpec.Cluster
+
+	// Calculate total nodes needed
+	cpCount := clusterConfig.Spec.ControlPlaneConfiguration.Count
+	workerCount := 0
+	etcdCount := 0
+
+	for _, wng := range clusterConfig.Spec.WorkerNodeGroupConfigurations {
+		// For autoscaling, use MaxCount to ensure pool has enough IPs for scale-up
+		if wng.AutoScalingConfiguration != nil && wng.AutoScalingConfiguration.MaxCount > 0 {
+			workerCount += wng.AutoScalingConfiguration.MaxCount
+		} else if wng.Count != nil {
+			workerCount += *wng.Count
+		}
+	}
+	if clusterConfig.Spec.ExternalEtcdConfiguration != nil {
+		etcdCount = clusterConfig.Spec.ExternalEtcdConfiguration.Count
+	}
+
+	totalNodes := cpCount + workerCount + etcdCount
+
+	// Calculate pool size
+	poolSize, err := v1alpha1.CalculateIPPoolSize(ipPool.Addresses)
+	if err != nil {
+		return fmt.Errorf("failed to calculate IP pool size: %v", err)
+	}
+
+	// Need extra IPs for rolling upgrades (maxSurge)
+	requiredIPs := totalNodes + 1 // +1 for rolling upgrade buffer
+	if poolSize < requiredIPs {
+		return fmt.Errorf("ipPool '%s' has %d addresses but cluster requires at least %d (control plane: %d, workers: %d, etcd: %d, rolling upgrade buffer: 1)",
+			ipPool.Name, poolSize, requiredIPs, cpCount, workerCount, etcdCount)
+	}
+
+	logger.Info("IP pool size validation passed",
+		"poolName", ipPool.Name,
+		"poolSize", poolSize,
+		"totalNodes", totalNodes,
+		"requiredIPs", requiredIPs,
+	)
+
+	return nil
+}
+
+// createInClusterIPPoolFromConfig creates an InClusterIPPool resource from the datacenter config.
+func (p *vsphereProvider) createInClusterIPPoolFromConfig(ctx context.Context, cluster *types.Cluster, datacenterConfig *v1alpha1.VSphereDatacenterConfig) error {
+	ipPool := datacenterConfig.Spec.IPPool
+	if ipPool == nil {
+		return nil
+	}
+
+	// Build the InClusterIPPool YAML using template
+	values := map[string]interface{}{
+		"ipPoolName":      ipPool.Name,
+		"ipPoolNamespace": constants.EksaSystemNamespace,
+		"ipPoolAddresses": ipPool.Addresses,
+		"ipPoolPrefix":    ipPool.Prefix,
+		"ipPoolGateway":   ipPool.Gateway,
+	}
+
+	t, err := template.New("ippool").Parse(defaultIPPoolTemplate)
+	if err != nil {
+		return fmt.Errorf("parsing InClusterIPPool template: %v", err)
+	}
+
+	var poolYAML bytes.Buffer
+	if err := t.Execute(&poolYAML, values); err != nil {
+		return fmt.Errorf("executing InClusterIPPool template: %v", err)
+	}
+
+	err = p.providerKubectlClient.ApplyKubeSpecFromBytes(ctx, cluster, poolYAML.Bytes())
+	if err != nil {
+		return fmt.Errorf("applying InClusterIPPool: %v", err)
+	}
+
+	logger.V(3).Info("InClusterIPPool created successfully",
+		"name", ipPool.Name,
+		"namespace", constants.EksaSystemNamespace,
+	)
 	return nil
 }
 
@@ -960,6 +1163,28 @@ func machineRefSliceToMap(machineRefs []v1alpha1.Ref) map[string]v1alpha1.Ref {
 }
 
 func (p *vsphereProvider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
+	// Check if IPPool is configured in VSphereDatacenterConfig - if so, install IPAM provider on the management cluster
+	if p.datacenterConfig != nil && p.datacenterConfig.Spec.IPPool != nil {
+		logger.V(3).Info("Installing IPAM provider on management cluster",
+			"poolName", p.datacenterConfig.Spec.IPPool.Name,
+		)
+
+		// Create a temporary cluster object with the kubeconfig for kubectl operations
+		targetCluster := &types.Cluster{
+			KubeconfigFile: kubeconfigFile,
+		}
+
+		// Step 1: Install CAPI IPAM provider (CRDs, RBAC, Deployment)
+		if err := p.installCAPIIPAMProvider(ctx, targetCluster); err != nil {
+			return fmt.Errorf("installing CAPI IPAM provider on management cluster: %v", err)
+		}
+
+		// Step 2: Create InClusterIPPool resource
+		if err := p.createInClusterIPPoolFromConfig(ctx, targetCluster, p.datacenterConfig); err != nil {
+			return fmt.Errorf("creating InClusterIPPool on management cluster: %v", err)
+		}
+	}
+
 	return nil
 }
 

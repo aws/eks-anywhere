@@ -257,3 +257,24 @@ func RemoveEtcdVsphereMachineConfig() VSphereFiller {
 		}
 	}
 }
+
+// WithVSphereIPPool configures the IP pool for static IP assignment on the VSphereDatacenterConfig.
+// This enables CAPI IPAM-based static IP allocation for vSphere clusters.
+func WithVSphereIPPool(name string, addresses []string, prefix int, gateway string, nameservers []string) VSphereFiller {
+	return func(config VSphereConfig) {
+		config.datacenterConfig.Spec.IPPool = &anywherev1.IPPoolConfiguration{
+			Name:        name,
+			Addresses:   addresses,
+			Prefix:      prefix,
+			Gateway:     gateway,
+			Nameservers: nameservers,
+		}
+	}
+}
+
+// RemoveVSphereIPPool removes the IP pool configuration from the VSphereDatacenterConfig.
+func RemoveVSphereIPPool() VSphereFiller {
+	return func(config VSphereConfig) {
+		config.datacenterConfig.Spec.IPPool = nil
+	}
+}
