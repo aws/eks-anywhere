@@ -22,7 +22,7 @@ description: >
 - It is highly recommended to run the `eksctl anywhere upgrade cluster` command with the `--no-timeouts` option when the command is executed through automation. This prevents the CLI from timing out and enables cluster operators to fix issues preventing the upgrade from completing while the process is running. 
 - In EKS Anywhere version `v0.15.0`, we introduced the EKS Anywhere cluster lifecycle controller that runs on management clusters and manages workload clusters. The EKS Anywhere lifecycle controller enables you to use Kubernetes API-compatible clients such as `kubectl`, GitOps, or Terraform for managing workload clusters. In this EKS Anywhere version, the EKS Anywhere cluster lifecycle controller rolls out new nodes in workload clusters when management clusters are upgraded. In EKS Anywhere version `v0.16.0`, this behavior was changed such that management clusters can be upgraded separately from workload clusters.
 - When running workload cluster upgrades after upgrading a management cluster, a machine rollout may be triggered on workload clusters during the workload cluster upgrade, even if the changes to the workload cluster spec didn't require one (for example scaling down a worker node group).
-- Starting with EKS Anywhere `v0.18.0`, the `osImageURL` must include the Kubernetes minor version (`Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` in the cluster spec). For example, if the Kubernetes version is 1.33, the `osImageURL` must include 1.33, 1_33, 1-33 or 133. If you are upgrading Kubernetes versions, you must have a new OS image with your target Kubernetes version components.
+- Starting with EKS Anywhere `v0.18.0`, the `osImageURL` must include the Kubernetes minor version (`Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` in the cluster spec). For example, if the Kubernetes version is 1.35, the `osImageURL` must include 1.35, 1_35, 1-35 or 135. If you are upgrading Kubernetes versions, you must have a new OS image with your target Kubernetes version components.
 - If you are running EKS Anywhere in an airgapped environment, you must download the new artifacts and images prior to initiating the upgrade. Reference the [Airgapped Upgrades page]({{< relref "./airgapped-upgrades" >}}) page for more information.
 
 ### Upgrade Version Skew
@@ -110,7 +110,7 @@ kubectl label machine.bmc.tinkerbell.org <machine-name> \
 
 To perform a cluster upgrade you can modify your cluster specification `kubernetesVersion` field to the desired version.
 
-As an example, to upgrade a cluster with version 1.32 to 1.33 you would change your spec as follows:
+As an example, to upgrade a cluster with version 1.34 to 1.35 you would change your spec as follows:
 
 ```
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
@@ -126,7 +126,7 @@ spec:
       kind: TinkerbellMachineConfig
       name: dev
       ...
-  kubernetesVersion: "1.33"
+  kubernetesVersion: "1.35"
       ...
 ```
 
@@ -278,7 +278,7 @@ spec:
   datacenterRef:
     kind: TinkerbellDatacenterConfig
     name: my-cluster-name
-  kubernetesVersion: "1.33"
+  kubernetesVersion: "1.35"
   managementCluster:
     name: my-cluster-name 
   workerNodeGroupConfigurations:
