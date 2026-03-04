@@ -268,7 +268,7 @@ func TestNutanixKubernetes129UbuntuCuratedPackagesClusterAutoscalerSimpleFlow(t 
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewNutanix(t, framework.WithUbuntu2204Kubernetes129Nutanix()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129), api.WithWorkerNodeCount(minNodes), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
 	)
 	runAutoscalerWithMetricsServerSimpleFlow(test)
 }
@@ -279,7 +279,7 @@ func TestNutanixKubernetes130UbuntuCuratedPackagesClusterAutoscalerSimpleFlow(t 
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewNutanix(t, framework.WithUbuntu2204Kubernetes130Nutanix()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130), api.WithWorkerNodeCount(minNodes), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
 	)
 	runAutoscalerWithMetricsServerSimpleFlow(test)
 }
@@ -290,7 +290,7 @@ func TestNutanixKubernetes131UbuntuCuratedPackagesClusterAutoscalerSimpleFlow(t 
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewNutanix(t, framework.WithUbuntu2204Kubernetes131Nutanix()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube131), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube131), api.WithWorkerNodeCount(minNodes), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
 	)
 	runAutoscalerWithMetricsServerSimpleFlow(test)
 }
@@ -301,7 +301,7 @@ func TestNutanixKubernetes132UbuntuCuratedPackagesClusterAutoscalerSimpleFlow(t 
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewNutanix(t, framework.WithUbuntu2204Kubernetes132Nutanix()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube132), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube132), api.WithWorkerNodeCount(minNodes), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
 	)
 	runAutoscalerWithMetricsServerSimpleFlow(test)
 }
@@ -312,7 +312,7 @@ func TestNutanixKubernetes133UbuntuCuratedPackagesClusterAutoscalerSimpleFlow(t 
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewNutanix(t, framework.WithUbuntu2204Kubernetes133Nutanix()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133), api.WithWorkerNodeCount(minNodes), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
 	)
 	runAutoscalerWithMetricsServerSimpleFlow(test)
 }
@@ -323,7 +323,7 @@ func TestNutanixKubernetes134UbuntuCuratedPackagesClusterAutoscalerSimpleFlow(t 
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewNutanix(t, framework.WithUbuntu2204Kubernetes134Nutanix()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube134), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube134), api.WithWorkerNodeCount(minNodes), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
 	)
 	runAutoscalerWithMetricsServerSimpleFlow(test)
 }
@@ -334,7 +334,7 @@ func TestNutanixKubernetes135UbuntuCuratedPackagesClusterAutoscalerSimpleFlow(t 
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewNutanix(t, framework.WithUbuntu2204135Nutanix()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube135), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube135), api.WithWorkerNodeCount(minNodes), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
 	)
 	runAutoscalerWithMetricsServerSimpleFlow(test)
 }
