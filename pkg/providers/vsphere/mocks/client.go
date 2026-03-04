@@ -827,6 +827,21 @@ func (mr *MockProviderKubectlClientMockRecorder) GetSecretFromNamespace(arg0, ar
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSecretFromNamespace", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetSecretFromNamespace), arg0, arg1, arg2, arg3)
 }
 
+// HasCRD mocks base method.
+func (m *MockProviderKubectlClient) HasCRD(arg0 context.Context, arg1, arg2 string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HasCRD", arg0, arg1, arg2)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// HasCRD indicates an expected call of HasCRD.
+func (mr *MockProviderKubectlClientMockRecorder) HasCRD(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasCRD", reflect.TypeOf((*MockProviderKubectlClient)(nil).HasCRD), arg0, arg1, arg2)
+}
+
 // LoadSecret mocks base method.
 func (m *MockProviderKubectlClient) LoadSecret(arg0 context.Context, arg1, arg2, arg3, arg4 string) error {
 	m.ctrl.T.Helper()
