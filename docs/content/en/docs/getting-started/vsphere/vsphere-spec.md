@@ -89,6 +89,15 @@ spec:
     datastore: "dataStore2"
     folder: "folder2"
     network: "network2"
+  ipPool:                              <a href="#ippool-optional"># Static IP configuration (optional, alternative to DHCP) </a>
+    name: <span>"my-cluster-pool"</span>          <a href="#ippoolname-required"># Name for the InClusterIPPool resource </a>
+    addresses:                         <a href="#ippooladdresses-required"># IP addresses (ranges, CIDRs, or individual IPs) </a>
+    - <span>"192.168.1.100-192.168.1.150"</span>
+    prefix: <span style="color:green">24</span>                        <a href="#ippoolprefix-required"># Subnet prefix length </a>
+    gateway: <span>"192.168.1.1"</span>            <a href="#ippoolgateway-required"># Default gateway </a>
+    nameservers:                       <a href="#ippoolnameservers-optional"># DNS servers (optional) </a>
+    - <span>"8.8.8.8"</span>
+    - <span>"8.8.4.4"</span>
 
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
@@ -301,6 +310,46 @@ Folder is the name or inventory path of the folder in which the the VM is create
 
 #### failureDomains[0].network
 Network is the name or inventory path of the network which will be added to the VM.
+
+### ipPool (optional)
+The IP pool configuration for static IP assignment to cluster nodes. When specified, nodes will be assigned static IPs from this pool instead of using DHCP. The CLI creates an `InClusterIPPool` resource from this configuration using the [CAPI IPAM Provider](https://github.com/kubernetes-sigs/cluster-api-ipam-provider-in-cluster).
+
+This is an alternative to DHCP-based IP assignment. You can switch between DHCP and static IP modes at any time by adding or removing the `ipPool` configuration, which will trigger a rolling update of all cluster nodes.
+
+>**_NOTE:_** When using static IP, ensure your IP pool has enough addresses for all nodes plus one additional address for rolling upgrades. The required count is: control plane nodes + worker nodes + etcd nodes (if external) + 1.
+
+#### ipPool.name (required)
+Name for the generated `InClusterIPPool` Kubernetes resource. This name will be referenced by the VSphereMachineTemplates.
+
+#### ipPool.addresses (required)
+List of IP addresses to include in the pool. Supports three formats:
+- **Ranges**: `"192.168.1.100-192.168.1.150"` (51 addresses)
+- **CIDR blocks**: `"192.168.1.0/28"` (16 addresses)
+- **Individual IPs**: `"192.168.1.100"`
+
+Example with multiple entries:
+```yaml
+addresses:
+- "192.168.1.100-192.168.1.120"  # 21 addresses
+- "192.168.1.200"                 # 1 address
+- "192.168.2.0/28"                # 16 addresses
+```
+
+#### ipPool.prefix (required)
+The subnet prefix length (CIDR notation). For example, `24` for a `/24` subnet (255.255.255.0 netmask). Valid range is 1-32.
+
+#### ipPool.gateway (required)
+The default gateway IP address for the subnet. This will be configured on all cluster nodes.
+
+#### ipPool.nameservers (optional)
+List of DNS server IP addresses. These will be configured on all cluster nodes for DNS resolution.
+
+Example:
+```yaml
+nameservers:
+- "8.8.8.8"
+- "8.8.4.4"
+```
 
 ## VSphereMachineConfig Fields
 
