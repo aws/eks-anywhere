@@ -5,6 +5,14 @@ weight: 7
 description: >
   Changelog for Curated packages release
 ---
+## Package Bundle Release (03-04-2026)
+#### Changed
+- Fix Critical CVEs in all curated packages
+- Cert-Manager `1.18.2` to `1.19.3`
+- Cluster-Autoscaler to `9.55.0`
+- Harbor `2.12.2` to `v2.14.2`
+- Credential-Provider-Package to `0.4.15`
+
 ## Package Bundle Release (12-29-2025)
 #### Changed
 - ADOT `0.43.1` to `0.45.1`
