@@ -43,6 +43,16 @@ description: >
 
 ## [v0.25.0](https://github.com/aws/eks-anywhere/releases/tag/v0.25.0)
 
+### Planned updates to supported kubernetes versions
+- Kubernetes 1.32 reaches end of standard support on April 30, 2026
+  - Extended support continues until April 30, 2027 for clusters with valid license tokens
+  - Clusters will continue to function but will not receive CVE patches or bug fixes after standard support ends
+- Kubernetes 1.29 reaches end of extended support on April 30, 2026
+  - No further patches will be available after this date
+  - Existing clusters will continue to function but upgrading is strongly recommended
+
+For complete version support details, see the [Kubernetes version support table]({{< relref "../concepts/support-versions#kubernetes-versions" >}}).
+
 ### Supported OS version details
 |                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
 |:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
@@ -96,6 +106,16 @@ description: >
 - Removed unused old tinkerbell components from bundle ([#10612](https://github.com/aws/eks-anywhere/pull/10612))
 
 ## [v0.24.4](https://github.com/aws/eks-anywhere/releases/tag/v0.24.4)
+
+### Planned updates to supported kubernetes versions
+- Kubernetes 1.32 reaches end of standard support on April 30, 2026
+  - Extended support continues until April 30, 2027 for clusters with valid license tokens
+  - Clusters will continue to function but will not receive CVE patches or bug fixes after standard support ends
+- Kubernetes 1.29 reaches end of extended support on April 30, 2026
+  - No further patches will be available after this date
+  - Existing clusters will continue to function but upgrading is strongly recommended
+
+For complete version support details, see the [Kubernetes version support table]({{< relref "../concepts/support-versions#kubernetes-versions" >}}).
 
 ### Supported OS version details
 |                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
