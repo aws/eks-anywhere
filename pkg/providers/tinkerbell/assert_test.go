@@ -349,7 +349,7 @@ func TestK8sVersionInCPMachineConfigOSImageURL_Error(t *testing.T) {
 	clusterSpec.MachineConfigs[builder.ControlPlaneMachineName].Spec.OSImageURL = "test-url"
 	clusterSpec.MachineConfigs[builder.ExternalEtcdMachineName].Spec.OSImageURL = "test-url-122"
 	clusterSpec.MachineConfigs[builder.WorkerNodeGroupMachineName].Spec.OSImageURL = "test-url-122"
-	g.Expect(tinkerbell.AssertOSImageURL(clusterSpec)).To(gomega.MatchError(gomega.ContainSubstring("missing kube version from control plane machine config OSImageURL:")))
+	g.Expect(tinkerbell.AssertOSImageURL(clusterSpec)).To(gomega.MatchError(gomega.ContainSubstring("missing kube version from control plane machine config OSImageURL")))
 }
 
 func TestK8sVersionInWorkerMachineConfigOSImageURL_Error(t *testing.T) {
@@ -362,7 +362,7 @@ func TestK8sVersionInWorkerMachineConfigOSImageURL_Error(t *testing.T) {
 	clusterSpec.MachineConfigs[builder.ControlPlaneMachineName].Spec.OSImageURL = "test-url-122"
 	clusterSpec.MachineConfigs[builder.ExternalEtcdMachineName].Spec.OSImageURL = "test-url-122"
 	clusterSpec.MachineConfigs[builder.WorkerNodeGroupMachineName].Spec.OSImageURL = "test-url"
-	g.Expect(tinkerbell.AssertOSImageURL(clusterSpec)).To(gomega.MatchError(gomega.ContainSubstring("missing kube version from worker node group machine config OSImageURL:")))
+	g.Expect(tinkerbell.AssertOSImageURL(clusterSpec)).To(gomega.MatchError(gomega.ContainSubstring("missing kube version from worker node group machine config OSImageURL")))
 }
 
 func TestK8sVersionForBRAutoImport_Succeed(t *testing.T) {
