@@ -1453,7 +1453,7 @@ func TestTinkerbellKubernetes128UbuntuCuratedPackagesClusterAutoscalerSimpleFlow
 	maxNodes := 2
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithUbuntu128Tinkerbell()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128), api.WithWorkerNodeCount(minNodes), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
 		framework.WithControlPlaneHardware(1),
 		framework.WithWorkerHardware(2),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube128),
@@ -1593,7 +1593,7 @@ func TestTinkerbellKubernetes132UbuntuCuratedPackagesClusterAutoscalerSimpleFlow
 	maxNodes := 2
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithUbuntu132Tinkerbell()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube132), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube132), api.WithWorkerNodeCount(minNodes), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
 		framework.WithControlPlaneHardware(1),
 		framework.WithWorkerHardware(2),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube132),
@@ -1609,7 +1609,7 @@ func TestTinkerbellKubernetes134UbuntuCuratedPackagesClusterAutoscalerSimpleFlow
 	maxNodes := 2
 	test := framework.NewClusterE2ETest(t,
 		framework.NewTinkerbell(t, framework.WithUbuntu134Tinkerbell()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube134), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube134), api.WithWorkerNodeCount(minNodes), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
 		framework.WithControlPlaneHardware(1),
 		framework.WithWorkerHardware(2),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube134),
