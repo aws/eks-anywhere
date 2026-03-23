@@ -1,5 +1,3 @@
-
-
 ---
 title: "Changelog"
 linkTitle: "Changelog"
