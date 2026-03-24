@@ -146,11 +146,9 @@ For complete version support details, see the [Kubernetes version support table]
 - rancher/local-path-provisioner `v0.0.34` to `v0.0.35`
 
 ### Fixed
--  Patch kube-vip to retry exponentially on transient 403/401 errors ([#5257](https://github.com/aws/eks-anywhere-build-tooling/pull/5257))
-- Patch Tinkerbell and Rufio to use a BMCLib forks with fixes for Idrac 10
- ([#5248](https://github.com/aws/eks-anywhere-build-tooling/pull/5248))
-- Add a patch to bump bmclib to include virtual media mount fix
- ([#5222](https://github.com/aws/eks-anywhere-build-tooling/pull/5222))
+- Patch kube-vip to retry exponentially on transient 403/401 errors ([#5257](https://github.com/aws/eks-anywhere-build-tooling/pull/5257))
+- Patch Tinkerbell and Rufio to use a BMCLib forks with fixes for Idrac 10 ([#5248](https://github.com/aws/eks-anywhere-build-tooling/pull/5248))
+- Add a patch to bump bmclib to include virtual media mount fix ([#5222](https://github.com/aws/eks-anywhere-build-tooling/pull/5222))
 
 
 ## [v0.24.4](https://github.com/aws/eks-anywhere/releases/tag/v0.24.4)
