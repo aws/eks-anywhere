@@ -20,13 +20,15 @@ SHELL := /bin/bash
 ARTIFACTS_BUCKET?=my-s3-bucket
 GIT_VERSION?=$(shell git describe --tag)
 GIT_TAG?=$(shell git tag -l "v*.*.*" --sort -v:refname | head -1)
-GOLANG_VERSION?="1.24"
+GOLANG_VERSION?="1.25"
 GO_PATH ?= $(shell source ./scripts/common.sh && build::common::get_go_path $(GOLANG_VERSION))
 GO ?= $(GO_PATH)/go
 GO_TEST ?= $(GO) test
 # A regular expression defining what packages to exclude from the unit-test recipe.
 UNIT_TEST_PACKAGE_EXCLUSION_REGEX ?=mocks$
-UNIT_TEST_PACKAGES ?= $$($(GO) list ./... | grep -vE "$(UNIT_TEST_PACKAGE_EXCLUSION_REGEX)")
+# Filter out packages with no test files to avoid "go: no such tool covdata" errors
+# in Go 1.25+ when running go test -cover on packages without tests.
+UNIT_TEST_PACKAGES ?= $(shell $(GO) list -f '{{if or .TestGoFiles .XTestGoFiles}}{{.ImportPath}}{{end}}' ./... | grep -vE "$(UNIT_TEST_PACKAGE_EXCLUSION_REGEX)")
 
 ## ensure local execution uses the 'main' branch bundle
 BRANCH_NAME?=main
