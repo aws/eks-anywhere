@@ -41,7 +41,7 @@ https://github.com/aws/aws-sdk-go-v2/service/ssooidc
 ** github.com/aws/aws-sdk-go-v2/service/sts; version v1.28.4 --
 https://github.com/aws/aws-sdk-go-v2/service/sts
 
-** github.com/aws/eks-anywhere; version e7853f48704227aa00433fa6d1d0215074f159aa --
+** github.com/aws/eks-anywhere; version 489989728de268663312749100d2a4369f7c6682 --
 https://github.com/aws/eks-anywhere
 
 ** github.com/aws/eks-distro-build-tooling/release/api/v1alpha1; version v0.0.0-20211103003257-a7e2379eae5e --
