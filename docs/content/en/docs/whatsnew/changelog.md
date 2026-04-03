@@ -86,7 +86,7 @@ For complete version support details, see the [Kubernetes version support table]
 
 ### Fixed
 - Patch kube-vip to retry exponentially on transient 403/401 errors ([#5267](https://github.com/aws/eks-anywhere-build-tooling/pull/5267))
-- Patch Tinkerbell and Rufio to use a BMCLib forks with fixes for Idrac 10 ([#5263](https://github.com/aws/eks-anywhere-build-tooling/pull/5263))
+- Patch BMCLib to try all matching slots during virtual media mount to fix ISO boot workflow on IDRAC 10 ([#5263](https://github.com/aws/eks-anywhere-build-tooling/pull/5263))
 
 
 ## [v0.25.0](https://github.com/aws/eks-anywhere/releases/tag/v0.25.0)
