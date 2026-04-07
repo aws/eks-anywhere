@@ -314,7 +314,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cli-tools
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.25.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.25.1-eks-a-v0.0.0-dev-build.1
       clusterController:
         arch:
         - amd64
@@ -323,9 +323,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.25.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.25.1-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.25.0/eksa-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.25.1/eksa-components.yaml
       diagnosticCollector:
         arch:
         - amd64
@@ -334,7 +334,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-diagnostic-collector
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.25.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.25.1-eks-a-v0.0.0-dev-build.1
       version: v0.0.0-dev+build.0+abcdef1
     endOfStandardSupport: "2025-04-30"
     etcdadmBootstrap:
@@ -394,7 +394,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: helm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v1.4.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v1.5.3-eks-a-v0.0.0-dev-build.1
       kustomizeController:
         arch:
         - amd64
@@ -412,7 +412,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: notification-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v1.7.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v1.8.2-eks-a-v0.0.0-dev-build.1
       sourceController:
         arch:
         - amd64
@@ -422,7 +422,7 @@ spec:
         name: source-controller
         os: linux
         uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.7.4-eks-a-v0.0.0-dev-build.1
-      version: v2.7.5+abcdef1
+      version: v2.8.3+abcdef1
     haproxy:
       image:
         arch:
@@ -1086,7 +1086,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cli-tools
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.25.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.25.1-eks-a-v0.0.0-dev-build.1
       clusterController:
         arch:
         - amd64
@@ -1095,9 +1095,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.25.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.25.1-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.25.0/eksa-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.25.1/eksa-components.yaml
       diagnosticCollector:
         arch:
         - amd64
@@ -1106,7 +1106,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-diagnostic-collector
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.25.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.25.1-eks-a-v0.0.0-dev-build.1
       version: v0.0.0-dev+build.0+abcdef1
     endOfStandardSupport: "2025-08-31"
     etcdadmBootstrap:
@@ -1166,7 +1166,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: helm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v1.4.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v1.5.3-eks-a-v0.0.0-dev-build.1
       kustomizeController:
         arch:
         - amd64
@@ -1184,7 +1184,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: notification-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v1.7.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v1.8.2-eks-a-v0.0.0-dev-build.1
       sourceController:
         arch:
         - amd64
@@ -1194,7 +1194,7 @@ spec:
         name: source-controller
         os: linux
         uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.7.4-eks-a-v0.0.0-dev-build.1
-      version: v2.7.5+abcdef1
+      version: v2.8.3+abcdef1
     haproxy:
       image:
         arch:
@@ -1858,7 +1858,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cli-tools
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.25.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.25.1-eks-a-v0.0.0-dev-build.1
       clusterController:
         arch:
         - amd64
@@ -1867,9 +1867,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.25.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.25.1-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.25.0/eksa-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.25.1/eksa-components.yaml
       diagnosticCollector:
         arch:
         - amd64
@@ -1878,7 +1878,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-diagnostic-collector
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.25.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.25.1-eks-a-v0.0.0-dev-build.1
       version: v0.0.0-dev+build.0+abcdef1
     endOfStandardSupport: "2025-12-31"
     etcdadmBootstrap:
@@ -1938,7 +1938,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: helm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v1.4.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v1.5.3-eks-a-v0.0.0-dev-build.1
       kustomizeController:
         arch:
         - amd64
@@ -1956,7 +1956,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: notification-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v1.7.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v1.8.2-eks-a-v0.0.0-dev-build.1
       sourceController:
         arch:
         - amd64
@@ -1966,7 +1966,7 @@ spec:
         name: source-controller
         os: linux
         uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.7.4-eks-a-v0.0.0-dev-build.1
-      version: v2.7.5+abcdef1
+      version: v2.8.3+abcdef1
     haproxy:
       image:
         arch:
@@ -2630,7 +2630,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cli-tools
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.25.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.25.1-eks-a-v0.0.0-dev-build.1
       clusterController:
         arch:
         - amd64
@@ -2639,9 +2639,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.25.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.25.1-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.25.0/eksa-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.25.1/eksa-components.yaml
       diagnosticCollector:
         arch:
         - amd64
@@ -2650,7 +2650,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-diagnostic-collector
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.25.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.25.1-eks-a-v0.0.0-dev-build.1
       version: v0.0.0-dev+build.0+abcdef1
     endOfStandardSupport: "2026-04-30"
     etcdadmBootstrap:
@@ -2710,7 +2710,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: helm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v1.4.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v1.5.3-eks-a-v0.0.0-dev-build.1
       kustomizeController:
         arch:
         - amd64
@@ -2728,7 +2728,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: notification-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v1.7.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v1.8.2-eks-a-v0.0.0-dev-build.1
       sourceController:
         arch:
         - amd64
@@ -2738,7 +2738,7 @@ spec:
         name: source-controller
         os: linux
         uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.7.4-eks-a-v0.0.0-dev-build.1
-      version: v2.7.5+abcdef1
+      version: v2.8.3+abcdef1
     haproxy:
       image:
         arch:
@@ -3402,7 +3402,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cli-tools
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.25.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.25.1-eks-a-v0.0.0-dev-build.1
       clusterController:
         arch:
         - amd64
@@ -3411,9 +3411,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.25.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.25.1-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.25.0/eksa-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.25.1/eksa-components.yaml
       diagnosticCollector:
         arch:
         - amd64
@@ -3422,7 +3422,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-diagnostic-collector
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.25.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.25.1-eks-a-v0.0.0-dev-build.1
       version: v0.0.0-dev+build.0+abcdef1
     endOfStandardSupport: "2026-08-31"
     etcdadmBootstrap:
@@ -3482,7 +3482,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: helm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v1.4.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v1.5.3-eks-a-v0.0.0-dev-build.1
       kustomizeController:
         arch:
         - amd64
@@ -3500,7 +3500,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: notification-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v1.7.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v1.8.2-eks-a-v0.0.0-dev-build.1
       sourceController:
         arch:
         - amd64
@@ -3510,7 +3510,7 @@ spec:
         name: source-controller
         os: linux
         uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.7.4-eks-a-v0.0.0-dev-build.1
-      version: v2.7.5+abcdef1
+      version: v2.8.3+abcdef1
     haproxy:
       image:
         arch:
@@ -4174,7 +4174,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cli-tools
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.25.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.25.1-eks-a-v0.0.0-dev-build.1
       clusterController:
         arch:
         - amd64
@@ -4183,9 +4183,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.25.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.25.1-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.25.0/eksa-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.25.1/eksa-components.yaml
       diagnosticCollector:
         arch:
         - amd64
@@ -4194,7 +4194,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-diagnostic-collector
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.25.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.25.1-eks-a-v0.0.0-dev-build.1
       version: v0.0.0-dev+build.0+abcdef1
     endOfStandardSupport: "2026-12-31"
     etcdadmBootstrap:
@@ -4254,7 +4254,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: helm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v1.4.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v1.5.3-eks-a-v0.0.0-dev-build.1
       kustomizeController:
         arch:
         - amd64
@@ -4272,7 +4272,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: notification-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v1.7.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v1.8.2-eks-a-v0.0.0-dev-build.1
       sourceController:
         arch:
         - amd64
@@ -4282,7 +4282,7 @@ spec:
         name: source-controller
         os: linux
         uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.7.4-eks-a-v0.0.0-dev-build.1
-      version: v2.7.5+abcdef1
+      version: v2.8.3+abcdef1
     haproxy:
       image:
         arch:
@@ -4946,7 +4946,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cli-tools
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.25.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.25.1-eks-a-v0.0.0-dev-build.1
       clusterController:
         arch:
         - amd64
@@ -4955,9 +4955,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.25.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.25.1-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.25.0/eksa-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.25.1/eksa-components.yaml
       diagnosticCollector:
         arch:
         - amd64
@@ -4966,7 +4966,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-diagnostic-collector
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.25.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.25.1-eks-a-v0.0.0-dev-build.1
       version: v0.0.0-dev+build.0+abcdef1
     endOfStandardSupport: "2027-04-30"
     etcdadmBootstrap:
@@ -5026,7 +5026,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: helm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v1.4.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v1.5.3-eks-a-v0.0.0-dev-build.1
       kustomizeController:
         arch:
         - amd64
@@ -5044,7 +5044,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: notification-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v1.7.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v1.8.2-eks-a-v0.0.0-dev-build.1
       sourceController:
         arch:
         - amd64
@@ -5054,7 +5054,7 @@ spec:
         name: source-controller
         os: linux
         uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.7.4-eks-a-v0.0.0-dev-build.1
-      version: v2.7.5+abcdef1
+      version: v2.8.3+abcdef1
     haproxy:
       image:
         arch:
