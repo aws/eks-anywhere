@@ -41,7 +41,7 @@ https://github.com/aws/aws-sdk-go-v2/service/ssooidc
 ** github.com/aws/aws-sdk-go-v2/service/sts; version v1.28.4 --
 https://github.com/aws/aws-sdk-go-v2/service/sts
 
-** github.com/aws/eks-anywhere; version 0780f640310c8380015d9f61ffeca843f76325fc --
+** github.com/aws/eks-anywhere; version 0bb76188578f169154bf23033c485761385c916c --
 https://github.com/aws/eks-anywhere
 
 ** github.com/aws/eks-distro-build-tooling/release/api/v1alpha1; version v0.0.0-20211103003257-a7e2379eae5e --
@@ -68,13 +68,13 @@ https://github.com/containerd/log
 ** github.com/containerd/platforms; version v0.2.1 --
 https://github.com/containerd/platforms
 
-** github.com/docker/cli/cli/config; version v27.0.3+incompatible --
+** github.com/docker/cli/cli/config; version v29.2.0+incompatible --
 https://github.com/docker/cli
 
-** github.com/go-git/go-billy/v5; version v5.6.2 --
+** github.com/go-git/go-billy/v5; version v5.8.0 --
 https://github.com/go-git/go-billy/v5
 
-** github.com/go-git/go-git/v5; version v5.16.5 --
+** github.com/go-git/go-git/v5; version v5.17.1 --
 https://github.com/go-git/go-git/v5
 
 ** github.com/go-logr/logr; version v1.4.3 --
