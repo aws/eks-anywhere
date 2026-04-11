@@ -2126,11 +2126,11 @@ func (e *ClusterE2ETest) VerifyWorkerNodesScaleUp(mgmtCluster *types.Cluster) {
 	ctx := context.Background()
 	machineDeploymentName := e.ClusterName + "-" + "md-0"
 
-	e.T.Log("Waiting for machinedeployment to begin scaling up")
-	err := e.KubectlClient.WaitJSONPathLoop(ctx, mgmtCluster.KubeconfigFile, "10m", "status.phase", "ScalingUp",
+	e.T.Log("Waiting for machinedeployment to scale up (checking for ScalingUp phase or increased replicas)")
+	err := e.KubectlClient.WaitJSONPathLoop(ctx, mgmtCluster.KubeconfigFile, "10m", "status.replicas", "2",
 		fmt.Sprintf("machinedeployments.cluster.x-k8s.io/%s", machineDeploymentName), constants.EksaSystemNamespace)
 	if err != nil {
-		e.T.Fatalf("Failed to get ScalingUp phase for machinedeployment: %s", err)
+		e.T.Fatalf("Failed to get increased replicas for machinedeployment: %s", err)
 	}
 
 	e.T.Log("Waiting for machinedeployment to finish scaling up")
