@@ -76,7 +76,7 @@ For complete version support details, see the [Kubernetes version support table]
   - [`v1-30-eks-54`](https://distro.eks.amazonaws.com/releases/1-30/54/)
 - New EKS-Distro base images
 - cloud-provider-vsphere 1-35: `v1.35.0` to `v1.35.1`
-- Helm: `v4.1.3` go `v4.1.4`
+- Helm: `v4.1.3` to `v4.1.4`
 
 ### Fixed
 - Update BMCLib to latest commit that includes critical Gofish fixes ([#5319](https://github.com/aws/eks-anywhere-build-tooling/pull/5319))
@@ -120,7 +120,7 @@ For complete version support details, see the [Kubernetes version support table]
 - Cert-manager: `v1.19.3` to `v1.19.4`
 - Cilium: `v1.18.5` to `v1.18.7`
 - Cluster-api-provider-nutanix: `v1.6.1` to `v1.6.2`
-- Helm: `v4.1.0` go `v4.1.3`
+- Helm: `v4.1.0` to `v4.1.3`
 - rancher/local-path-provisioner `v0.0.34` to `v0.0.35`
 - replicatedhq/troubleshoot: `v0.123.17` to `v0.123.18`
 
