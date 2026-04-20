@@ -154,13 +154,13 @@ Error: loading config file "cluster.yaml": error unmarshaling JSON: while decodi
 ```
 Use `eksctl anywhere create cluster -f cluster.yaml` instead of `eksctl create cluster -f cluster.yaml` to create an EKS Anywhere cluster.
 
-### Error: old cluster config file exists under my-cluster, please use a different clusterName to proceed
+### Error: old cluster config file already exists under the "my-cluster" folder, please use a different cluster name or remove the existing "my-cluster" folder to proceed
 
 ```
-Error: old cluster config file exists under my-cluster, please use a different clusterName to proceed
+Error: old cluster config file already exists under the "my-cluster" folder, please use a different cluster name or remove the existing "my-cluster" folder to proceed
 ```
 The `my-cluster` directory already exists in the current directory.
-Either use a different cluster name or move the directory.
+Either use a different cluster name or remove the existing directory.
 
 ### Error: unable to get cluster config from file: kubernetes version 1.3 is not supported by bundles manifest ...
 
