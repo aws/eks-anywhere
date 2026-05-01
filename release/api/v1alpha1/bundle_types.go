@@ -280,6 +280,7 @@ type PackageBundle struct {
 	TokenRefresher            Image  `json:"tokenRefresher"`
 	CredentialProviderPackage Image  `json:"credentialProviderPackage,omitempty"`
 	HelmChart                 Image  `json:"helmChart,omitempty"`
+	CRDChart                  Image  `json:"crdChart,omitempty"`
 }
 
 // EksaBundle defines EKS Anywhere-specific images and configurations for this bundle.

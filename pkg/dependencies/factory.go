@@ -1397,6 +1397,10 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec, kubeConfig str
 			curatedpackages.WithClusterSpec(spec),
 		}
 
+		if bundle.PackageController.CRDChart.Image() != "" {
+			options = append(options, curatedpackages.WithCRDChart(&bundle.PackageController.CRDChart))
+		}
+
 		options = append(options, opts...)
 
 		f.dependencies.PackageControllerClient = curatedpackages.NewPackageControllerClient(
