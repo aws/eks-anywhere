@@ -219,8 +219,16 @@ func (c *createTestSetup) expectPauseReconcile(err error) {
 }
 
 func (c *createTestSetup) expectMoveManagement(err error) {
-	c.clusterManager.EXPECT().MoveCAPI(
-		c.ctx, c.bootstrapCluster, c.workloadCluster, c.workloadCluster.Name, c.clusterSpec, gomock.Any()).Return(err)
+	c.expectMoveManagementWithInstallErr(nil, err)
+}
+
+func (c *createTestSetup) expectMoveManagementWithInstallErr(installErr, moveErr error) {
+	gomock.InOrder(
+		c.provider.EXPECT().InstallCustomProviderComponents(
+			c.ctx, c.workloadCluster.KubeconfigFile).Return(installErr),
+		c.clusterManager.EXPECT().MoveCAPI(
+			c.ctx, c.bootstrapCluster, c.workloadCluster, c.workloadCluster.Name, c.clusterSpec, gomock.Any()).Return(moveErr).MaxTimes(1),
+	)
 }
 
 func (c *createTestSetup) expectInstallEksaComponentsWorkload(err1, err2, err3, err4, err5 error) {
@@ -680,6 +688,30 @@ func TestCreateMoveCAPIFailure(t *testing.T) {
 	err := c.run()
 	if err == nil {
 		t.Fatalf("Create.Run() expected to return an error %v", err)
+	}
+}
+
+func TestCreateMoveInstallCustomProviderComponentsFailure(t *testing.T) {
+	c := newCreateTest(t)
+	c.expectSetup()
+	c.expectCreateBootstrap()
+	c.expectPreflightValidationsToPass()
+	c.expectCAPIInstall(nil, nil, nil)
+	c.expectInstallEksaComponentsBootstrap(nil, nil, nil, nil)
+	c.expectCreateWorkload(nil, nil, nil, nil, nil, nil)
+	c.expectInstallResourcesOnManagementTask(nil)
+	c.expectPauseReconcile(nil)
+	c.expectMoveManagementWithInstallErr(errors.New("failed to install custom provider components"), nil)
+	c.expectCreateNamespace()
+
+	c.clusterManager.EXPECT().SaveLogsManagementCluster(c.ctx, c.clusterSpec, c.bootstrapCluster)
+	c.clusterManager.EXPECT().SaveLogsWorkloadCluster(c.ctx, c.provider, c.clusterSpec, c.workloadCluster)
+
+	c.writer.EXPECT().Write(fmt.Sprintf("%s-checkpoint.yaml", c.clusterSpec.Cluster.Name), gomock.Any())
+
+	err := c.run()
+	if err == nil {
+		t.Fatalf("Create.Run() expected to return an error when InstallCustomProviderComponents fails")
 	}
 }
 

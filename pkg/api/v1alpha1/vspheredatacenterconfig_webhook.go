@@ -152,6 +152,9 @@ func validateImmutableFieldsVSphereCluster(new, old *VSphereDatacenterConfig) fi
 		)
 	}
 
+	// IPPool configuration is mutable - users can switch between DHCP and static IP modes
+	// When switching modes, a rolling update of all nodes will be triggered
+
 	return allErrs
 }
 
