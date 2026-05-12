@@ -292,19 +292,21 @@ spec:
       path: "/etc/containerd/config_append.toml"
     - content: |
         server = "https://1.2.3.4:1234"
-        
-        [host."https://1.2.3.4:1234"]
+
+        [host."https://1.2.3.4:1234/v2"]
           capabilities = ["pull", "resolve"]
+          override_path = true
           ca = "/etc/containerd/certs.d/1.2.3.4:1234/ca.crt"
-          [host."https://1.2.3.4:1234".header]
+          [host."https://1.2.3.4:1234/v2".header]
             authorization = "Basic dXNlcm5hbWU6cGFzc3dvcmQ="
       owner: root:root
       path: "/etc/containerd/certs.d/1.2.3.4:1234/hosts.toml"
     - content: |
         server = "https://public.ecr.aws"
-        
+
         [host."https://1.2.3.4:1234/v2/eks-anywhere"]
           capabilities = ["pull", "resolve"]
+          override_path = true
           ca = "/etc/containerd/certs.d/1.2.3.4:1234/ca.crt"
           [host."https://1.2.3.4:1234/v2/eks-anywhere".header]
             authorization = "Basic dXNlcm5hbWU6cGFzc3dvcmQ="

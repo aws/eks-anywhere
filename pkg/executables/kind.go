@@ -311,7 +311,7 @@ func (k *Kind) setupRegistryMirror(clusterSpec *cluster.Spec, registryMirror *re
 	// Setup configuration for the mirror registry
 	err := setupRegistryConfig(RegistryConfig{
 		Server:     mirrorBase,
-		Host:       mirrorBase,
+		Host:       containerd.ToAPIEndpoint(mirrorBase),
 		CACertPath: mountedCACertPath,
 		AuthHeader: authHeader,
 		OutputDir:  filepath.Join(certsBasePath, mirrorBase),

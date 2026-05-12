@@ -314,16 +314,18 @@ spec:
     - content: |
         server = "https://10.10.10.10:443"
 
-        [host."https://10.10.10.10:443"]
+        [host."https://10.10.10.10:443/v2"]
           capabilities = ["pull", "resolve"]
+          override_path = true
           ca = "/etc/containerd/certs.d/10.10.10.10:443/ca.crt"
       owner: root:root
       path: /etc/containerd/certs.d/10.10.10.10:443/hosts.toml
     - content: |
         server = "https://public.ecr.aws"
 
-        [host."https://10.10.10.10:443"]
+        [host."https://10.10.10.10:443/v2"]
           capabilities = ["pull", "resolve"]
+          override_path = true
           ca = "/etc/containerd/certs.d/10.10.10.10:443/ca.crt"
       owner: root:root
       path: /etc/containerd/certs.d/public.ecr.aws/hosts.toml
