@@ -156,8 +156,6 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 		"etcdImageTag":                               versionsBundle.KubeDistro.Etcd.Tag,
 		"corednsRepository":                          versionsBundle.KubeDistro.CoreDNS.Repository,
 		"corednsVersion":                             versionsBundle.KubeDistro.CoreDNS.Tag,
-		"managerImage":                               versionsBundle.CloudStack.ClusterAPIController.VersionedImage(),
-		"kubeRbacProxyImage":                         versionsBundle.CloudStack.KubeRbacProxy.VersionedImage(),
 		"kubeVipImage":                               versionsBundle.CloudStack.KubeVip.VersionedImage(),
 		"cloudstackKubeVip":                          !features.IsActive(features.CloudStackKubeVipDisabled()),
 		"cloudstackAvailabilityZones":                datacenterConfigSpec.AvailabilityZones,
