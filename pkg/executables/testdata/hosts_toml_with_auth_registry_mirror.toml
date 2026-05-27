@@ -1,7 +1,8 @@
 server = "https://registry-mirror.test:443"
 
-[host."https://registry-mirror.test:443"]
+[host."https://registry-mirror.test:443/v2"]
   capabilities = ["pull", "resolve"]
+  override_path = true
   skip_verify = true
-  [host."https://registry-mirror.test:443".header]
+  [host."https://registry-mirror.test:443/v2".header]
     authorization = "Basic dXNlcm5hbWU6cGFzc3dvcmQ="

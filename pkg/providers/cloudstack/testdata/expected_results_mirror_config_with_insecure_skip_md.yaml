@@ -24,17 +24,19 @@ spec:
         path: "/etc/containerd/config_append.toml"
       - content: |
           server = "https://0.0.0.0:5000"
-          
-          [host."https://0.0.0.0:5000"]
+
+          [host."https://0.0.0.0:5000/v2"]
             capabilities = ["pull", "resolve"]
+            override_path = true
             skip_verify = true
         owner: root:root
         path: "/etc/containerd/certs.d/0.0.0.0:5000/hosts.toml"
       - content: |
           server = "https://public.ecr.aws"
-          
-          [host."https://0.0.0.0:5000"]
+
+          [host."https://0.0.0.0:5000/v2"]
             capabilities = ["pull", "resolve"]
+            override_path = true
             skip_verify = true
         owner: root:root
         path: "/etc/containerd/certs.d/public.ecr.aws/hosts.toml"

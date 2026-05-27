@@ -24,16 +24,18 @@ spec:
         path: "/etc/containerd/config_append.toml"
       - content: |
           server = "https://1.2.3.4:443"
-          
-          [host."https://1.2.3.4:443"]
+
+          [host."https://1.2.3.4:443/v2"]
             capabilities = ["pull", "resolve"]
+            override_path = true
         owner: root:root
         path: "/etc/containerd/certs.d/1.2.3.4:443/hosts.toml"
       - content: |
           server = "https://public.ecr.aws"
-          
+
           [host."https://1.2.3.4:443/v2/eks-anywhere"]
             capabilities = ["pull", "resolve"]
+            override_path = true
         owner: root:root
         path: "/etc/containerd/certs.d/public.ecr.aws/hosts.toml"
       preKubeadmCommands:

@@ -51,8 +51,9 @@ func RegistryMirrorConfigFilesInsecureSkipVerify() []bootstrapv1.File {
 		{
 			Content: `server = "https://0.0.0.0:5000"
 
-[host."https://0.0.0.0:5000"]
+[host."https://0.0.0.0:5000/v2"]
   capabilities = ["pull", "resolve"]
+  override_path = true
   skip_verify = true
 `,
 			Owner: "root:root",
@@ -61,8 +62,9 @@ func RegistryMirrorConfigFilesInsecureSkipVerify() []bootstrapv1.File {
 		{
 			Content: `server = "https://public.ecr.aws"
 
-[host."https://0.0.0.0:5000"]
+[host."https://0.0.0.0:5000/v2"]
   capabilities = ["pull", "resolve"]
+  override_path = true
   skip_verify = true
 `,
 			Owner: "root:root",
@@ -90,8 +92,9 @@ func RegistryMirrorConfigFilesInsecureSkipVerifyAndCACert() []bootstrapv1.File {
 		{
 			Content: `server = "https://0.0.0.0:5000"
 
-[host."https://0.0.0.0:5000"]
+[host."https://0.0.0.0:5000/v2"]
   capabilities = ["pull", "resolve"]
+  override_path = true
   ca = "/etc/containerd/certs.d/0.0.0.0:5000/ca.crt"
   skip_verify = true
 `,
@@ -101,8 +104,9 @@ func RegistryMirrorConfigFilesInsecureSkipVerifyAndCACert() []bootstrapv1.File {
 		{
 			Content: `server = "https://public.ecr.aws"
 
-[host."https://0.0.0.0:5000"]
+[host."https://0.0.0.0:5000/v2"]
   capabilities = ["pull", "resolve"]
+  override_path = true
   ca = "/etc/containerd/certs.d/0.0.0.0:5000/ca.crt"
   skip_verify = true
 `,

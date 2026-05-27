@@ -129,7 +129,7 @@ func registryMirrorConfig(registryMirrorConfig *v1alpha1.RegistryMirrorConfigura
 	}
 
 	// Mirror base hosts.toml
-	mirrorBaseContent, err := hostsFileContent(registryMirror, registryMirror.BaseRegistry, registryMirror.BaseRegistry)
+	mirrorBaseContent, err := hostsFileContent(registryMirror, registryMirror.BaseRegistry, containerd.ToAPIEndpoint(registryMirror.BaseRegistry))
 	if err != nil {
 		return nil, err
 	}

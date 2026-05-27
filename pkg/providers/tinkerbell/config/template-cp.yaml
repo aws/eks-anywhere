@@ -419,9 +419,10 @@ spec:
         path: "/etc/containerd/config_append.toml"
       - content: |
           server = "https://{{ .mirrorBase }}"
-          
-          [host."https://{{ .mirrorBase }}"]
+
+          [host."https://{{ .mirrorBaseAPIEndpoint }}"]
             capabilities = ["pull", "resolve"]
+            override_path = true
           {{- if or .registryCACert .insecureSkip }}
           {{- if .registryCACert }}
             ca = "/etc/containerd/certs.d/{{ .mirrorBase }}/ca.crt"
@@ -431,7 +432,7 @@ spec:
           {{- end }}
           {{- end }}
           {{- if .registryAuth }}
-            [host."https://{{ .mirrorBase }}".header]
+            [host."https://{{ .mirrorBaseAPIEndpoint }}".header]
               authorization = "Basic {{ printf "%s:%s" .registryUsername .registryPassword | b64enc }}"
           {{- end }}
         owner: root:root
@@ -439,9 +440,10 @@ spec:
       {{- range $orig, $mirror := .registryMirrorMap }}
       - content: |
           server = "https://{{ $orig }}"
-          
+
           [host."https://{{ $mirror }}"]
             capabilities = ["pull", "resolve"]
+            override_path = true
           {{- if or $.registryCACert $.insecureSkip }}
           {{- if $.registryCACert }}
             ca = "/etc/containerd/certs.d/{{ $.mirrorBase }}/ca.crt"
