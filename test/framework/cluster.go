@@ -674,6 +674,8 @@ func (e *ClusterE2ETest) DownloadImages(opts ...CommandOpt) {
 }
 
 // ImportImages runs the EKS-A `import images` command with appropriate args.
+// When ociNamespaces are configured, it imports images into each namespace path
+// so containerd can find them at the correct namespaced location.
 func (e *ClusterE2ETest) ImportImages(opts ...CommandOpt) {
 	clusterConfig := e.ClusterConfig.Cluster
 	registyMirrorEndpoint, registryMirrorPort := clusterConfig.Spec.RegistryMirrorConfiguration.Endpoint, clusterConfig.Spec.RegistryMirrorConfiguration.Port
@@ -684,8 +686,20 @@ func (e *ClusterE2ETest) ImportImages(opts ...CommandOpt) {
 	} else {
 		bundleManifestLocation = defaultBundleReleaseManifestFile
 	}
-	importImagesArgs := []string{"import images", "--input", defaultDownloadImagesOutputLocation, "--bundles", bundleManifestLocation, "--registry", registryMirrorHost, "--insecure"}
-	e.RunEKSA(importImagesArgs, opts...)
+
+	registries := []string{registryMirrorHost}
+	seen := make(map[string]bool)
+	for _, ns := range clusterConfig.Spec.RegistryMirrorConfiguration.OCINamespaces {
+		if ns.Namespace != "" && !seen[ns.Namespace] {
+			seen[ns.Namespace] = true
+			registries = append(registries, registryMirrorHost+"/"+ns.Namespace)
+		}
+	}
+
+	for _, reg := range registries {
+		importImagesArgs := []string{"import images", "--input", defaultDownloadImagesOutputLocation, "--bundles", bundleManifestLocation, "--registry", reg, "--insecure"}
+		e.RunEKSA(importImagesArgs, opts...)
+	}
 }
 
 // CopyPackages runs the EKS-A `copy packages` command to copy curated packages to the registry mirror.

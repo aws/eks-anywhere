@@ -3200,6 +3200,20 @@ func TestVSphereKubernetes133BottlerocketRegistryMirrorOciNamespaces(t *testing.
 	runRegistryMirrorConfigFlow(test)
 }
 
+func TestVSphereKubernetes134UbuntuRegistryMirrorOciNamespaces(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithUbuntu134(), framework.WithPrivateNetwork()),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube134)),
+		framework.WithRegistryMirrorOciNamespaces(constants.VSphereProviderName),
+	)
+	runRegistryMirrorConfigFlow(test)
+}
+
+
 func TestVSphereKubernetes129UbuntuAuthenticatedRegistryMirrorCuratedPackagesSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(
