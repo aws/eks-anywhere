@@ -352,7 +352,7 @@ func TestNutanixKubernetes128UbuntuCuratedPackagesClusterAutoscalerSimpleFlow(t 
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewNutanix(t, framework.WithUbuntu128Nutanix()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube128), api.WithWorkerNodeCount(minNodes), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube128),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
@@ -366,7 +366,7 @@ func TestNutanixKubernetes129UbuntuCuratedPackagesClusterAutoscalerSimpleFlow(t 
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewNutanix(t, framework.WithUbuntu129Nutanix()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129), api.WithWorkerNodeCount(minNodes), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube129),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
@@ -380,7 +380,7 @@ func TestNutanixKubernetes130UbuntuCuratedPackagesClusterAutoscalerSimpleFlow(t 
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewNutanix(t, framework.WithUbuntu130Nutanix()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130), api.WithWorkerNodeCount(minNodes), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube130),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
@@ -394,7 +394,7 @@ func TestNutanixKubernetes131UbuntuCuratedPackagesClusterAutoscalerSimpleFlow(t 
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewNutanix(t, framework.WithUbuntu131Nutanix()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube131), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube131), api.WithWorkerNodeCount(minNodes), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube131),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
@@ -408,7 +408,7 @@ func TestNutanixKubernetes132UbuntuCuratedPackagesClusterAutoscalerSimpleFlow(t 
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewNutanix(t, framework.WithUbuntu132Nutanix()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube132), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube132), api.WithWorkerNodeCount(minNodes), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube132),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
@@ -422,7 +422,7 @@ func TestNutanixKubernetes133UbuntuCuratedPackagesClusterAutoscalerSimpleFlow(t 
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewNutanix(t, framework.WithUbuntu133Nutanix()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133), api.WithWorkerNodeCount(minNodes), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube133),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
@@ -436,7 +436,7 @@ func TestNutanixKubernetes134UbuntuCuratedPackagesClusterAutoscalerSimpleFlow(t 
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewNutanix(t, framework.WithUbuntu134Nutanix()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube134), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube134), api.WithWorkerNodeCount(minNodes), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube134),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues, nil),
