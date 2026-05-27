@@ -903,6 +903,17 @@ func TestDockerKubernetes131AirgappedRegistryMirrorAndCert(t *testing.T) {
 	runDockerAirgapConfigFlow(test)
 }
 
+func TestDockerKubernetes134AirgappedRegistryMirrorAndCertOciNamespaces(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewDocker(t),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube134)),
+		framework.WithRegistryMirrorOciNamespaces(constants.DockerProviderName),
+	)
+	runDockerAirgapConfigFlow(test)
+}
+
 func TestDockerKubernetes131AirgappedUpgradeFromLatestRegistryMirrorAndCert(t *testing.T) {
 	release := latestMinorRelease(t)
 	test := framework.NewClusterE2ETest(
