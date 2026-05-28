@@ -394,7 +394,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: helm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v1.5.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v1.5.5-eks-a-v0.0.0-dev-build.1
       kustomizeController:
         arch:
         - amd64
@@ -422,7 +422,7 @@ spec:
         name: source-controller
         os: linux
         uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.7.4-eks-a-v0.0.0-dev-build.1
-      version: v2.8.3+abcdef1
+      version: v2.8.8+abcdef1
     haproxy:
       image:
         arch:
@@ -1166,7 +1166,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: helm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v1.5.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v1.5.5-eks-a-v0.0.0-dev-build.1
       kustomizeController:
         arch:
         - amd64
@@ -1194,7 +1194,7 @@ spec:
         name: source-controller
         os: linux
         uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.7.4-eks-a-v0.0.0-dev-build.1
-      version: v2.8.3+abcdef1
+      version: v2.8.8+abcdef1
     haproxy:
       image:
         arch:
@@ -1938,7 +1938,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: helm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v1.5.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v1.5.5-eks-a-v0.0.0-dev-build.1
       kustomizeController:
         arch:
         - amd64
@@ -1966,7 +1966,7 @@ spec:
         name: source-controller
         os: linux
         uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.7.4-eks-a-v0.0.0-dev-build.1
-      version: v2.8.3+abcdef1
+      version: v2.8.8+abcdef1
     haproxy:
       image:
         arch:
@@ -2710,7 +2710,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: helm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v1.5.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v1.5.5-eks-a-v0.0.0-dev-build.1
       kustomizeController:
         arch:
         - amd64
@@ -2738,7 +2738,7 @@ spec:
         name: source-controller
         os: linux
         uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.7.4-eks-a-v0.0.0-dev-build.1
-      version: v2.8.3+abcdef1
+      version: v2.8.8+abcdef1
     haproxy:
       image:
         arch:
@@ -3482,7 +3482,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: helm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v1.5.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v1.5.5-eks-a-v0.0.0-dev-build.1
       kustomizeController:
         arch:
         - amd64
@@ -3510,7 +3510,7 @@ spec:
         name: source-controller
         os: linux
         uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.7.4-eks-a-v0.0.0-dev-build.1
-      version: v2.8.3+abcdef1
+      version: v2.8.8+abcdef1
     haproxy:
       image:
         arch:
@@ -4254,7 +4254,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: helm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v1.5.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v1.5.5-eks-a-v0.0.0-dev-build.1
       kustomizeController:
         arch:
         - amd64
@@ -4282,7 +4282,7 @@ spec:
         name: source-controller
         os: linux
         uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.7.4-eks-a-v0.0.0-dev-build.1
-      version: v2.8.3+abcdef1
+      version: v2.8.8+abcdef1
     haproxy:
       image:
         arch:
@@ -5026,7 +5026,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: helm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v1.5.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v1.5.5-eks-a-v0.0.0-dev-build.1
       kustomizeController:
         arch:
         - amd64
@@ -5054,7 +5054,7 @@ spec:
         name: source-controller
         os: linux
         uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.7.4-eks-a-v0.0.0-dev-build.1
-      version: v2.8.3+abcdef1
+      version: v2.8.8+abcdef1
     haproxy:
       image:
         arch:
