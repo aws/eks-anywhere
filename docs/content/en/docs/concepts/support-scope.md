@@ -98,4 +98,4 @@ If you need to pay upfront for subscriptions, please contact your AWS account te
 
 **15. Is there a free trial for EKS Anywhere Enterprise Subscriptions?**
 
-Free trial access to EKS Anywhere Curated Packages is available upon request. Free trial access to EKS Anywhere Curated Packages does not include troubleshooting support for your EKS Anywhere clusters or access to extended support for Kubernetes versions. Contact your AWS account team for more information.
+There is no free trial for EKS Anywhere Enterprise Subscriptions. A flexible pilot program is available for the EKS-A Enterprise Subscription, providing customers with a 3-month support subscription term.
