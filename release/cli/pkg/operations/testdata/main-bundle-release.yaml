@@ -422,7 +422,7 @@ spec:
         name: source-controller
         os: linux
         uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.7.4-eks-a-v0.0.0-dev-build.1
-      version: v2.8.8+abcdef1
+      version: v2.8.3+abcdef1
     haproxy:
       image:
         arch:
@@ -1194,7 +1194,7 @@ spec:
         name: source-controller
         os: linux
         uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.7.4-eks-a-v0.0.0-dev-build.1
-      version: v2.8.8+abcdef1
+      version: v2.8.3+abcdef1
     haproxy:
       image:
         arch:
@@ -1966,7 +1966,7 @@ spec:
         name: source-controller
         os: linux
         uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.7.4-eks-a-v0.0.0-dev-build.1
-      version: v2.8.8+abcdef1
+      version: v2.8.3+abcdef1
     haproxy:
       image:
         arch:
@@ -2738,7 +2738,7 @@ spec:
         name: source-controller
         os: linux
         uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.7.4-eks-a-v0.0.0-dev-build.1
-      version: v2.8.8+abcdef1
+      version: v2.8.3+abcdef1
     haproxy:
       image:
         arch:
@@ -3510,7 +3510,7 @@ spec:
         name: source-controller
         os: linux
         uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.7.4-eks-a-v0.0.0-dev-build.1
-      version: v2.8.8+abcdef1
+      version: v2.8.3+abcdef1
     haproxy:
       image:
         arch:
@@ -4282,7 +4282,7 @@ spec:
         name: source-controller
         os: linux
         uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.7.4-eks-a-v0.0.0-dev-build.1
-      version: v2.8.8+abcdef1
+      version: v2.8.3+abcdef1
     haproxy:
       image:
         arch:
@@ -5054,7 +5054,7 @@ spec:
         name: source-controller
         os: linux
         uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v1.7.4-eks-a-v0.0.0-dev-build.1
-      version: v2.8.8+abcdef1
+      version: v2.8.3+abcdef1
     haproxy:
       image:
         arch:
