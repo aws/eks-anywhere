@@ -32,28 +32,6 @@ See descriptions of the [`osImageURL`]({{< relref "../getting-started/baremetal/
 EKS Anywhere does not distribute Ubuntu or RHEL OS images.
 However, see [Building node images]({{< relref "#building-node-images">}}) for information on how to build EKS Anywhere images from those Linux distributions.  Note:  if you utilize your Admin Host to build images, you will need to review the DHCP integration provided by Libvirtd and ensure it is disabled.  If the Libvirtd DHCP is enabled, the "boots container" will detect a port conflict and terminate.
 
-### Bottlerocket OS images for Bare Metal
-
-Bottlerocket vends its Baremetal variant Images using a secure distribution tool called `tuftool`. Please refer to [Download Bottlerocket node images]({{< relref "#download-bottlerocket-node-images">}}) for instructions on downloading Bottlerocket Baremetal images. You can also get the download URIs for EKS Anywhere-vended Bottlerocket Baremetal images from the bundle release by running the following commands:
-
-Using the latest EKS Anywhere version
-```bash
-EKSA_RELEASE_VERSION=$(curl -sL https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.latestVersion")
-```
-
-OR
-
-Using a specific EKS Anywhere version
-```bash
-EKSA_RELEASE_VERSION=<EKS-A version>
-```
-
-```bash
-KUBEVERSION=1.31 # Replace this with the Kubernetes version you wish to use
-
-BUNDLE_MANIFEST_URL=$(curl -sL https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$EKSA_RELEASE_VERSION\").bundleManifestUrl")
-curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[] | select(.kubeVersion==\"$KUBEVERSION\").eksD.raw.bottlerocket.uri"
-```
 
 ### HookOS (kernel and initial ramdisk) for Bare Metal
 Using the latest EKS Anywhere version
