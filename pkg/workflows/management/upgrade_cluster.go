@@ -17,6 +17,16 @@ type upgradeCluster struct{}
 // Run upgradeCluster performs actions needed to upgrade the management cluster.
 func (s *upgradeCluster) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	logger.Info("Upgrading management cluster")
+
+	// Install custom provider components (e.g., IPAM provider for static IP) before upgrading.
+	// This ensures that any new provider resources (like InClusterIPPool) are available
+	// when the upgraded VSphereMachineTemplates reference them.
+	logger.Info("Installing custom provider components on management cluster")
+	if err := commandContext.Provider.InstallCustomProviderComponents(ctx, commandContext.ManagementCluster.KubeconfigFile); err != nil {
+		commandContext.SetError(err)
+		return &workflows.CollectMgmtClusterDiagnosticsTask{}
+	}
+
 	if commandContext.ClusterSpec.Cluster.Spec.DatacenterRef.Kind == v1alpha1.TinkerbellDatacenterKind {
 		clientutil.AddAnnotation(commandContext.ClusterSpec.TinkerbellDatacenter, v1alpha1.ManagedByCLIAnnotation, "true")
 	}

@@ -270,3 +270,48 @@ func TestVsphereTemplateBuilderGenerateCAPISpecControlPlaneWithDefaultAuditPolic
 
 	g.Expect(collapseWhitespace(string(data))).To(ContainSubstring(collapseWhitespace(defaultAuditPolicy)))
 }
+
+func TestVsphereTemplateBuilderGenerateCAPISpecControlPlaneWithIPPool(t *testing.T) {
+	g := NewWithT(t)
+	spec := test.NewFullClusterSpec(t, "testdata/cluster_main_ippool.yaml")
+
+	builder := vsphere.NewVsphereTemplateBuilder(time.Now)
+	data, err := builder.GenerateCAPISpecControlPlane(spec, func(values map[string]interface{}) {
+		values["controlPlaneTemplateName"] = clusterapi.ControlPlaneMachineTemplateName(spec.Cluster)
+	})
+
+	g.Expect(err).ToNot(HaveOccurred())
+
+	// Verify IPPool configuration is present in the generated YAML
+	yamlStr := string(data)
+	g.Expect(yamlStr).To(ContainSubstring("addressesFromPools"))
+	g.Expect(yamlStr).To(ContainSubstring("apiGroup: ipam.cluster.x-k8s.io"))
+	g.Expect(yamlStr).To(ContainSubstring("kind: InClusterIPPool"))
+	g.Expect(yamlStr).To(ContainSubstring("name: test-ip-pool"))
+	g.Expect(yamlStr).To(ContainSubstring("nameservers"))
+	g.Expect(yamlStr).To(ContainSubstring("8.8.8.8"))
+	g.Expect(yamlStr).To(ContainSubstring("8.8.4.4"))
+	// Verify DHCP is NOT present
+	g.Expect(yamlStr).ToNot(ContainSubstring("dhcp4: true"))
+}
+
+func TestVsphereTemplateBuilderGenerateCAPISpecWorkersWithIPPool(t *testing.T) {
+	g := NewWithT(t)
+	spec := test.NewFullClusterSpec(t, "testdata/cluster_main_ippool.yaml")
+
+	builder := vsphere.NewVsphereTemplateBuilder(time.Now)
+	data, err := builder.GenerateCAPISpecWorkers(spec, nil, nil)
+
+	g.Expect(err).ToNot(HaveOccurred())
+
+	// Verify IPPool configuration is present in the generated YAML
+	yamlStr := string(data)
+	g.Expect(yamlStr).To(ContainSubstring("addressesFromPools"))
+	g.Expect(yamlStr).To(ContainSubstring("apiGroup: ipam.cluster.x-k8s.io"))
+	g.Expect(yamlStr).To(ContainSubstring("kind: InClusterIPPool"))
+	g.Expect(yamlStr).To(ContainSubstring("name: test-ip-pool"))
+	g.Expect(yamlStr).To(ContainSubstring("nameservers"))
+	g.Expect(yamlStr).To(ContainSubstring("8.8.8.8"))
+	// Verify DHCP is NOT present
+	g.Expect(yamlStr).ToNot(ContainSubstring("dhcp4: true"))
+}

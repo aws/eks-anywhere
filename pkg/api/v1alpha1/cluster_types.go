@@ -1333,6 +1333,51 @@ func (n *PodIAMConfig) Equal(o *PodIAMConfig) bool {
 	return n.ServiceAccountIssuer == o.ServiceAccountIssuer
 }
 
+// IPPoolConfiguration defines the IP pool configuration for static IP assignment.
+// When specified, eksctl creates an InClusterIPPool resource from this configuration
+// and nodes will be assigned static IPs from this pool via CAPI IPAM.
+type IPPoolConfiguration struct {
+	// Name is the name for the generated InClusterIPPool resource.
+	// +kubebuilder:validation:Required
+	Name string `json:"name"`
+
+	// Addresses defines the IP addresses to include in the pool.
+	// Supports ranges (e.g., "192.168.1.100-192.168.1.120"),
+	// CIDR blocks (e.g., "192.168.1.0/24"), or individual IPs.
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinItems=1
+	Addresses []string `json:"addresses"`
+
+	// Prefix is the subnet prefix length (e.g., 24 for /24 subnet).
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=32
+	Prefix int `json:"prefix"`
+
+	// Gateway is the default gateway IP address for the subnet.
+	// +kubebuilder:validation:Required
+	Gateway string `json:"gateway"`
+
+	// Nameservers is a list of DNS server IP addresses.
+	// +kubebuilder:validation:Optional
+	Nameservers []string `json:"nameservers,omitempty"`
+}
+
+// Equal compares two IPPoolConfigurations for equality.
+func (n *IPPoolConfiguration) Equal(o *IPPoolConfiguration) bool {
+	if n == o {
+		return true
+	}
+	if n == nil || o == nil {
+		return false
+	}
+	return n.Name == o.Name &&
+		SliceEqual(n.Addresses, o.Addresses) &&
+		n.Prefix == o.Prefix &&
+		n.Gateway == o.Gateway &&
+		SliceEqual(n.Nameservers, o.Nameservers)
+}
+
 // AutoScalingConfiguration defines the configuration for the node autoscaling feature.
 type AutoScalingConfiguration struct {
 	// MinCount defines the minimum number of nodes for the associated resource group.

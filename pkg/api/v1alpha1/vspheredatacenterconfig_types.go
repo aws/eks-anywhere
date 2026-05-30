@@ -21,6 +21,12 @@ type VSphereDatacenterConfigSpec struct {
 	Thumbprint     string          `json:"thumbprint"`
 	Insecure       bool            `json:"insecure"`
 	FailureDomains []FailureDomain `json:"failureDomains,omitempty"`
+
+	// IPPool defines the IP pool configuration for static IP assignment to cluster nodes.
+	// When specified, nodes will be assigned static IPs from this pool instead of using DHCP.
+	// The CLI creates an InClusterIPPool resource from this configuration.
+	// +kubebuilder:validation:Optional
+	IPPool *IPPoolConfiguration `json:"ipPool,omitempty"`
 }
 
 // FailureDomain defines the list of failure domains to spread the VMs across.
@@ -170,6 +176,13 @@ func (v *VSphereDatacenterConfig) Validate() error {
 			if err := validatePath(networkFolderType, fd.Network, v.Spec.Datacenter); err != nil {
 				return err
 			}
+		}
+	}
+
+	// Validate IPPool configuration if present
+	if v.Spec.IPPool != nil {
+		if err := validateIPPoolConfig(v.Spec.IPPool); err != nil {
+			return fmt.Errorf("invalid ipPool configuration: %v", err)
 		}
 	}
 
