@@ -98,13 +98,26 @@ func (h *Helm) PushChart(ctx context.Context, chart, registry string) error {
 }
 
 func (h *Helm) RegistryLogin(ctx context.Context, registry, username, password string) error {
-	logger.Info("Logging in to helm registry", "registry", registry)
-	params := []string{"registry", "login", registry, "--username", username, "--password-stdin"}
+	// Helm registry login only accepts host:port, not host:port/path.
+	// Strip any path component to avoid validation errors in newer Helm versions.
+	loginRegistry := registryHostOnly(registry)
+	logger.Info("Logging in to helm registry", "registry", loginRegistry)
+	params := []string{"registry", "login", loginRegistry, "--username", username, "--password-stdin"}
 	if h.helmConfig.Insecure {
 		params = append(params, "--insecure")
 	}
 	_, err := h.executable.Command(ctx, params...).WithEnvVars(h.env).WithStdIn([]byte(password)).Run()
 	return err
+}
+
+// registryHostOnly extracts just the host:port portion from a registry string
+// that may contain a path (e.g., "192.168.1.1:443/namespace" -> "192.168.1.1:443").
+func registryHostOnly(registry string) string {
+	slashIdx := strings.Index(registry, "/")
+	if slashIdx == -1 {
+		return registry
+	}
+	return registry[:slashIdx]
 }
 
 func (h *Helm) SaveChart(ctx context.Context, ociURI, version, folder string) error {

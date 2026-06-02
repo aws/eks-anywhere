@@ -374,6 +374,30 @@ func TestHelmRegistryLoginSuccessWithInsecure(t *testing.T) {
 	tt.Expect(tt.h.RegistryLogin(tt.ctx, registry, username, password)).To(Succeed())
 }
 
+func TestHelmRegistryLoginWithPathStripsPath(t *testing.T) {
+	tt := newHelmTest(t)
+	// Registry with a namespace path - RegistryLogin should strip the path
+	registry := "192.168.1.1:443/eks-a-test"
+	username := "username"
+	password := "password"
+
+	// Expect the command to receive only host:port, not the full path
+	expectCommand(tt.e, tt.ctx, "registry", "login", "192.168.1.1:443", "--username", username, "--password-stdin").withEnvVars(tt.envVars).withStdIn([]byte(password)).to().Return(bytes.Buffer{}, nil)
+	tt.Expect(tt.h.RegistryLogin(tt.ctx, registry, username, password)).To(Succeed())
+}
+
+func TestHelmRegistryLoginWithPathAndInsecureStripsPath(t *testing.T) {
+	tt := newHelmTest(t, helm.WithInsecure())
+	// Registry with a namespace path - RegistryLogin should strip the path
+	registry := "10.0.0.1:5000/org/team"
+	username := "username"
+	password := "password"
+
+	// Expect the command to receive only host:port, not the full path
+	expectCommand(tt.e, tt.ctx, "registry", "login", "10.0.0.1:5000", "--username", username, "--password-stdin", "--insecure").withEnvVars(tt.envVars).withStdIn([]byte(password)).to().Return(bytes.Buffer{}, nil)
+	tt.Expect(tt.h.RegistryLogin(tt.ctx, registry, username, password)).To(Succeed())
+}
+
 func TestHelmUpgradeChartWithValues(s *testing.T) {
 	url := "url"
 	version := "1.1"
