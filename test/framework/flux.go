@@ -551,7 +551,7 @@ func (e *ClusterE2ETest) validateWorkerNodeMultiConfigUpdates(ctx context.Contex
 		}
 		vsphereMachineConfigs[workerName].Spec.DiskGiB = vsphereMachineConfigs[workerName].Spec.DiskGiB + 10
 		vsphereMachineConfigs[workerName].Spec.MemoryMiB = 10196
-		vsphereMachineConfigs[workerName].Spec.NumCPUs = 1
+		vsphereMachineConfigs[workerName].Spec.NumCPUs = 2
 
 		// update replica
 		clusterSpec, err := e.clusterSpecFromGit()
