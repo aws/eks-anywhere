@@ -12,7 +12,8 @@ import (
 	"github.com/bmc-toolbox/bmclib/v2"
 	"github.com/go-logr/logr"
 	prismgoclient "github.com/nutanix-cloud-native/prism-go-client"
-	v3 "github.com/nutanix-cloud-native/prism-go-client/v3"
+	"github.com/nutanix-cloud-native/prism-go-client/converged"
+	v4converged "github.com/nutanix-cloud-native/prism-go-client/converged/v4"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/internal/pkg/ec2"
@@ -172,25 +173,37 @@ func NutanixTestResources(clusterName, endpoint, port string, insecure, ignoreEr
 		Insecure: insecure,
 	}
 
-	client, err := v3.NewV3Client(nutanixCreds)
+	client, err := v4converged.NewClient(nutanixCreds)
 	if err != nil {
 		return fmt.Errorf("initailizing prism client: %v", err)
 	}
 
-	response, err := client.V3.ListAllVM(context.Background(), fmt.Sprintf("vm_name==%s.*", clusterName))
+	ctx := context.Background()
+	filter := fmt.Sprintf("startswith(name, '%s')", clusterName)
+	vms, err := client.VMs.List(ctx, converged.WithFilter(filter))
 	if err != nil {
 		return fmt.Errorf("getting ListVM response: %v", err)
 	}
 
-	for _, vm := range response.Entities {
-		logger.V(4).Info("Deleting Nutanix VM", "Name", *vm.Spec.Name, "UUID:", *vm.Metadata.UUID)
+	for _, vm := range vms {
+		vmName := ""
+		vmUUID := ""
+		if vm.Name != nil {
+			vmName = *vm.Name
+		}
+		if vm.ExtId != nil {
+			vmUUID = *vm.ExtId
+		}
+		logger.V(4).Info("Deleting Nutanix VM", "Name", vmName, "UUID:", vmUUID)
 
-		_, err = client.V3.DeleteVM(context.Background(), *vm.Metadata.UUID)
-		if err != nil {
-			if !ignoreErrors {
-				return fmt.Errorf("deleting Nutanix VM %s: %v", *vm.Spec.Name, err)
+		if vmUUID != "" {
+			err = client.VMs.Delete(ctx, vmUUID)
+			if err != nil {
+				if !ignoreErrors {
+					return fmt.Errorf("deleting Nutanix VM %s: %v", vmName, err)
+				}
+				logger.Info("Warning: Failed to delete Nutanix VM, skipping...", "Name", vmName, "UUID:", vmUUID)
 			}
-			logger.Info("Warning: Failed to delete Nutanix VM, skipping...", "Name", *vm.Spec.Name, "UUID:", *vm.Metadata.UUID)
 		}
 	}
 	return nil

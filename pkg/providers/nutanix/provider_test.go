@@ -12,10 +12,12 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
-	"github.com/nutanix-cloud-native/prism-go-client/utils"
-	v3 "github.com/nutanix-cloud-native/prism-go-client/v3"
+	clusterModels "github.com/nutanix/ntnx-api-golang-clients/clustermgmt-go-client/v4/models/clustermgmt/v4/config"
+	subnetModels "github.com/nutanix/ntnx-api-golang-clients/networking-go-client/v4/models/networking/v4/config"
+	imageModels "github.com/nutanix/ntnx-api-golang-clients/vmm-go-client/v4/models/vmm/v4/content"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/internal/test"
@@ -210,13 +212,13 @@ func TestNutanixProviderSetupAndValidateCreate(t *testing.T) {
 			name:            "valid cluster config with invalid pe cluster name - same as pc name",
 			clusterConfFile: "testdata/eksa-cluster-invalid-pe-cluster-pc.yaml",
 			expectErr:       true,
-			expectErrStr:    "failed to validate cluster spec: failed to validate machine config: failed to find cluster with name \"prism-central\": failed to find cluster by name \"prism-central\": <nil>",
+			expectErrStr:    "failed to validate cluster spec: failed to validate machine config: failed to find cluster with name \"prism-central\": failed to find cluster by name \"prism-central\"",
 		},
 		{
 			name:            "valid cluster config with invalid pe cluster name - non existent pe name",
 			clusterConfFile: "testdata/eksa-cluster-invalid-pe-cluster-random-name.yaml",
 			expectErr:       true,
-			expectErrStr:    "failed to validate cluster spec: failed to validate machine config: failed to find cluster with name \"non-existent-cluster\": failed to find cluster by name \"non-existent-cluster\": <nil>",
+			expectErrStr:    "failed to validate cluster spec: failed to validate machine config: failed to find cluster with name \"non-existent-cluster\": failed to find cluster by name \"non-existent-cluster\"",
 		},
 		{
 			name:            "cluster config with unsupported upgrade strategy configuration for cp",
@@ -236,112 +238,59 @@ func TestNutanixProviderSetupAndValidateCreate(t *testing.T) {
 	kubectl := executables.NewKubectl(executable)
 
 	mockClient := mocknutanix.NewMockClient(ctrl)
-	mockClient.EXPECT().GetCurrentLoggedInUser(gomock.Any()).Return(&v3.UserIntentResponse{}, nil).AnyTimes()
-	clusters := &v3.ClusterListIntentResponse{
-		Entities: []*v3.ClusterIntentResponse{
-			{
-				Metadata: &v3.Metadata{
-					UUID: utils.StringPtr("a15f6966-bfc7-4d1e-8575-224096fc1cda"),
-				},
-				Spec: &v3.Cluster{
-					Name: utils.StringPtr("prism-cluster"),
-				},
-				Status: &v3.ClusterDefStatus{
-					Resources: &v3.ClusterObj{
-						Config: &v3.ClusterConfig{
-							ServiceList: []*string{utils.StringPtr("AOS")},
-						},
-					},
-				},
+	clusters := []clusterModels.Cluster{
+		{
+			ExtId: ptr.To("a15f6966-bfc7-4d1e-8575-224096fc1cda"),
+			Name:  ptr.To("prism-cluster"),
+			Config: &clusterModels.ClusterConfigReference{
+				ClusterFunction: []clusterModels.ClusterFunctionRef{clusterModels.CLUSTERFUNCTIONREF_AOS},
 			},
-			{
-				Metadata: &v3.Metadata{
-					UUID: utils.StringPtr("4692a614-85e7-4abc-9bf3-8fb0f9d790bc"),
-				},
-				Spec: &v3.Cluster{
-					Name: utils.StringPtr("prism-central"),
-				},
-				Status: &v3.ClusterDefStatus{
-					Resources: &v3.ClusterObj{
-						Config: &v3.ClusterConfig{
-							ServiceList: []*string{utils.StringPtr("PRISM_CENTRAL")},
-						},
-					},
-				},
+		},
+		{
+			ExtId: ptr.To("4692a614-85e7-4abc-9bf3-8fb0f9d790bc"),
+			Name:  ptr.To("prism-central"),
+			Config: &clusterModels.ClusterConfigReference{
+				ClusterFunction: []clusterModels.ClusterFunctionRef{clusterModels.CLUSTERFUNCTIONREF_PRISM_CENTRAL},
 			},
-			{
-				Metadata: &v3.Metadata{
-					UUID: utils.StringPtr("a15f6966-bfc7-4d1e-8575-224096fc1abc"),
-				},
-				Spec: &v3.Cluster{
-					Name: utils.StringPtr("prism-cluster-2"),
-				},
-				Status: &v3.ClusterDefStatus{
-					Resources: &v3.ClusterObj{
-						Config: &v3.ClusterConfig{
-							ServiceList: []*string{utils.StringPtr("AOS")},
-						},
-					},
-				},
+		},
+		{
+			ExtId: ptr.To("a15f6966-bfc7-4d1e-8575-224096fc1abc"),
+			Name:  ptr.To("prism-cluster-2"),
+			Config: &clusterModels.ClusterConfigReference{
+				ClusterFunction: []clusterModels.ClusterFunctionRef{clusterModels.CLUSTERFUNCTIONREF_AOS},
 			},
-			{
-				Metadata: &v3.Metadata{
-					UUID: utils.StringPtr("a15f6966-bfc7-4d1e-8575-224096fc1xyz"),
-				},
-				Spec: &v3.Cluster{
-					Name: utils.StringPtr("prism-cluster-3"),
-				},
-				Status: &v3.ClusterDefStatus{
-					Resources: &v3.ClusterObj{
-						Config: &v3.ClusterConfig{
-							ServiceList: []*string{utils.StringPtr("AOS")},
-						},
-					},
-				},
+		},
+		{
+			ExtId: ptr.To("a15f6966-bfc7-4d1e-8575-224096fc1xyz"),
+			Name:  ptr.To("prism-cluster-3"),
+			Config: &clusterModels.ClusterConfigReference{
+				ClusterFunction: []clusterModels.ClusterFunctionRef{clusterModels.CLUSTERFUNCTIONREF_AOS},
 			},
 		},
 	}
-	mockClient.EXPECT().ListAllCluster(gomock.Any(), gomock.Any()).Return(clusters, nil).AnyTimes()
-	subnets := &v3.SubnetListIntentResponse{
-		Entities: []*v3.SubnetIntentResponse{
-			{
-				Metadata: &v3.Metadata{
-					UUID: utils.StringPtr("a15f6966-bfc7-4d1e-8575-224096fc1cdb"),
-				},
-				Spec: &v3.Subnet{
-					Name: utils.StringPtr("prism-subnet"),
-					ClusterReference: &v3.Reference{
-						Kind: utils.StringPtr("cluster"),
-						UUID: utils.StringPtr("a15f6966-bfc7-4d1e-8575-224096fc1cda"),
-						Name: utils.StringPtr("prism-cluster"),
-					},
-				},
-			},
+	mockClient.EXPECT().ListClusters(gomock.Any(), gomock.Any()).Return(clusters, nil).AnyTimes()
+	subnets := []subnetModels.Subnet{
+		{
+			ExtId:            ptr.To("a15f6966-bfc7-4d1e-8575-224096fc1cdb"),
+			Name:             ptr.To("prism-subnet"),
+			SubnetType:       subnetModels.SUBNETTYPE_VLAN.Ref(),
+			ClusterReference: ptr.To("a15f6966-bfc7-4d1e-8575-224096fc1cda"),
 		},
 	}
-	mockClient.EXPECT().ListAllSubnet(gomock.Any(), gomock.Any(), nil).Return(subnets, nil).AnyTimes()
-	images := &v3.ImageListIntentResponse{
-		Entities: []*v3.ImageIntentResponse{
-			{
-				Metadata: &v3.Metadata{
-					UUID: utils.StringPtr("a15f6966-bfc7-4d1e-8575-224096fc1cdc"),
-				},
-				Spec: &v3.Image{
-					Name: utils.StringPtr("prism-image"),
-				},
-			},
-			{
-				Metadata: &v3.Metadata{
-					UUID: utils.StringPtr("a15f6966-bfc7-4d1e-8575-224096fc1cdd"),
-				},
-				Spec: &v3.Image{
-					Name: utils.StringPtr("prism-image-1-19"),
-				},
-			},
+	mockClient.EXPECT().ListSubnets(gomock.Any(), gomock.Any()).Return(subnets, nil).AnyTimes()
+	images := []imageModels.Image{
+		{
+			ExtId: ptr.To("a15f6966-bfc7-4d1e-8575-224096fc1cdc"),
+			Name:  ptr.To("prism-image"),
+		},
+		{
+			ExtId: ptr.To("a15f6966-bfc7-4d1e-8575-224096fc1cdd"),
+			Name:  ptr.To("prism-image-1-19"),
 		},
 	}
-	mockClient.EXPECT().ListAllImage(gomock.Any(), gomock.Any()).Return(images, nil).AnyTimes()
-	mockClient.EXPECT().ListAllHost(gomock.Any()).Return(fakeHostList(), nil).AnyTimes()
+	mockClient.EXPECT().ListImages(gomock.Any(), gomock.Any()).Return(images, nil).AnyTimes()
+	mockClient.EXPECT().ListClusterPhysicalGPUs(gomock.Any(), gomock.Any()).Return([]clusterModels.PhysicalGpuProfile{}, nil).AnyTimes()
+	mockClient.EXPECT().ListClusterVirtualGPUs(gomock.Any(), gomock.Any()).Return([]clusterModels.VirtualGpuProfile{}, nil).AnyTimes()
 	mockCertValidator := mockCrypto.NewMockTlsValidator(ctrl)
 	mockCertValidator.EXPECT().ValidateCert(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 	mockCertValidator.EXPECT().ValidateCert(gomock.Any(), gomock.Any(), gomock.Any()).Return(errors.New("invalid cert"))
