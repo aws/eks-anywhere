@@ -95,20 +95,6 @@ func (mr *MockClusterClientMockRecorder) ApplyKubeSpecFromBytesForce(arg0, arg1,
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyKubeSpecFromBytesForce", reflect.TypeOf((*MockClusterClient)(nil).ApplyKubeSpecFromBytesForce), arg0, arg1, arg2)
 }
 
-// ApplyKubeSpecFromBytesServerSide mocks base method.
-func (m *MockClusterClient) ApplyKubeSpecFromBytesServerSide(arg0 context.Context, arg1 *types.Cluster, arg2 []byte) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ApplyKubeSpecFromBytesServerSide", arg0, arg1, arg2)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// ApplyKubeSpecFromBytesServerSide indicates an expected call of ApplyKubeSpecFromBytesServerSide.
-func (mr *MockClusterClientMockRecorder) ApplyKubeSpecFromBytesServerSide(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyKubeSpecFromBytesServerSide", reflect.TypeOf((*MockClusterClient)(nil).ApplyKubeSpecFromBytesServerSide), arg0, arg1, arg2)
-}
-
 // ApplyKubeSpecFromBytesWithNamespace mocks base method.
 func (m *MockClusterClient) ApplyKubeSpecFromBytesWithNamespace(arg0 context.Context, arg1 *types.Cluster, arg2 []byte, arg3 string) error {
 	m.ctrl.T.Helper()
@@ -881,20 +867,6 @@ func (m *MockKubernetesClient) ApplyKubeSpecFromBytesForce(arg0 context.Context,
 func (mr *MockKubernetesClientMockRecorder) ApplyKubeSpecFromBytesForce(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyKubeSpecFromBytesForce", reflect.TypeOf((*MockKubernetesClient)(nil).ApplyKubeSpecFromBytesForce), arg0, arg1, arg2)
-}
-
-// ApplyKubeSpecFromBytesServerSide mocks base method.
-func (m *MockKubernetesClient) ApplyKubeSpecFromBytesServerSide(arg0 context.Context, arg1 *types.Cluster, arg2 []byte) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ApplyKubeSpecFromBytesServerSide", arg0, arg1, arg2)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// ApplyKubeSpecFromBytesServerSide indicates an expected call of ApplyKubeSpecFromBytesServerSide.
-func (mr *MockKubernetesClientMockRecorder) ApplyKubeSpecFromBytesServerSide(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyKubeSpecFromBytesServerSide", reflect.TypeOf((*MockKubernetesClient)(nil).ApplyKubeSpecFromBytesServerSide), arg0, arg1, arg2)
 }
 
 // ApplyKubeSpecFromBytesWithNamespace mocks base method.

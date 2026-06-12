@@ -17,6 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/yaml"
 
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
@@ -164,13 +165,8 @@ func (i *EKSAInstaller) createEKSAComponents(ctx context.Context, log logr.Logge
 
 // applyBundles applies the bundles to the cluster.
 func (i *EKSAInstaller) applyBundles(ctx context.Context, log logr.Logger, cluster *types.Cluster, spec *cluster.Spec) error {
-	bundleObj, err := yaml.Marshal(spec.Bundles)
-	if err != nil {
-		return fmt.Errorf("outputting bundle yaml: %v", err)
-	}
-
 	log.V(1).Info("Applying Bundles to cluster")
-	if err := i.client.ApplyKubeSpecFromBytesServerSide(ctx, cluster, bundleObj); err != nil {
+	if err := i.client.Apply(ctx, cluster.KubeconfigFile, spec.Bundles, kubernetes.KubectlApplyOptions{ServerSide: true, ForceOwnership: true}); err != nil {
 		return fmt.Errorf("applying bundle spec: %v", err)
 	}
 
