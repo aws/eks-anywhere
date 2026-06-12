@@ -109,7 +109,6 @@ func (mr *MockClusterClientMockRecorder) ApplyKubeSpecFromBytesServerSide(arg0, 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyKubeSpecFromBytesServerSide", reflect.TypeOf((*MockClusterClient)(nil).ApplyKubeSpecFromBytesServerSide), arg0, arg1, arg2)
 }
 
-
 // ApplyKubeSpecFromBytesWithNamespace mocks base method.
 func (m *MockClusterClient) ApplyKubeSpecFromBytesWithNamespace(arg0 context.Context, arg1 *types.Cluster, arg2 []byte, arg3 string) error {
 	m.ctrl.T.Helper()
@@ -897,7 +896,6 @@ func (mr *MockKubernetesClientMockRecorder) ApplyKubeSpecFromBytesServerSide(arg
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyKubeSpecFromBytesServerSide", reflect.TypeOf((*MockKubernetesClient)(nil).ApplyKubeSpecFromBytesServerSide), arg0, arg1, arg2)
 }
-
 
 // ApplyKubeSpecFromBytesWithNamespace mocks base method.
 func (m *MockKubernetesClient) ApplyKubeSpecFromBytesWithNamespace(arg0 context.Context, arg1 *types.Cluster, arg2 []byte, arg3 string) error {
