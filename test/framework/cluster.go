@@ -781,6 +781,7 @@ func (e *ClusterE2ETest) ChangeInstanceSecurityGroup(securityGroup string) {
 }
 
 func (e *ClusterE2ETest) CreateCluster(opts ...CommandOpt) {
+	e.setFeatureFlagForUnreleasedKubernetesVersion(e.ClusterConfig.Cluster.Spec.KubernetesVersion)
 	e.createCluster(opts...)
 }
 
@@ -916,6 +917,7 @@ func (e *ClusterE2ETest) upgradeCluster(clusterOpts []ClusterE2ETestOpt, command
 		opt(e)
 	}
 	e.buildClusterConfigFile()
+	e.setFeatureFlagForUnreleasedKubernetesVersion(e.ClusterConfig.Cluster.Spec.KubernetesVersion)
 	e.UpgradeCluster(commandOpts...)
 }
 
