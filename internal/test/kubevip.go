@@ -4,7 +4,6 @@ package test
 const KubeVipTemplate = `apiVersion: v1
 kind: Pod
 metadata:
-  creationTimestamp: null
   name: kube-vip
   namespace: kube-system
 spec:

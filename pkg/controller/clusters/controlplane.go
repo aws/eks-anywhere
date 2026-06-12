@@ -8,12 +8,11 @@ import (
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/klog/v2"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -24,13 +23,13 @@ import (
 
 // ControlPlane represents a CAPI spec for a kubernetes cluster.
 type ControlPlane struct {
-	Cluster *clusterv1.Cluster
+	Cluster *clusterv1beta2.Cluster
 
 	// ProviderCluster is the provider-specific resource that holds the details
 	// for provisioning the infrastructure, referenced in Cluster.Spec.InfrastructureRef
 	ProviderCluster client.Object
 
-	KubeadmControlPlane *controlplanev1.KubeadmControlPlane
+	KubeadmControlPlane *controlplanev1beta2.KubeadmControlPlane
 
 	// ControlPlaneMachineTemplate is the provider-specific machine template referenced
 	// in KubeadmControlPlane.Spec.MachineTemplate.InfrastructureRef
@@ -125,8 +124,8 @@ func ReconcileControlPlane(ctx context.Context, log logr.Logger, c client.Client
 	return reconcileControlPlaneNodeChanges(ctx, log, c, cp, kcp)
 }
 
-func readCurrentControlPlane(ctx context.Context, c client.Client, cp *ControlPlane) (*clusterv1.Cluster, *controlplanev1.KubeadmControlPlane, *etcdv1.EtcdadmCluster, error) {
-	cluster := &clusterv1.Cluster{}
+func readCurrentControlPlane(ctx context.Context, c client.Client, cp *ControlPlane) (*clusterv1beta2.Cluster, *controlplanev1beta2.KubeadmControlPlane, *etcdv1.EtcdadmCluster, error) {
+	cluster := &clusterv1beta2.Cluster{}
 	err := c.Get(ctx, client.ObjectKeyFromObject(cp.Cluster), cluster)
 	if apierrors.IsNotFound(err) {
 		// If the CAPI cluster doesn't exist, this is a new cluster, no need to read the rest of the objects.
@@ -136,12 +135,11 @@ func readCurrentControlPlane(ctx context.Context, c client.Client, cp *ControlPl
 		return nil, nil, nil, errors.Wrap(err, "reading CAPI cluster")
 	}
 
-	kcp := &controlplanev1.KubeadmControlPlane{}
-	// We default to the cluster's namespace if the reference is incomplete because some
-	// providers (at least tinkerbell) are not correctly setting it when generating the spec.
-	// After we have updated all of them and we are confident all clusters object have been updates,
-	// this fallback could be removed.
-	key := keyWithFallbackNamespace(objKeyForRef(cluster.Spec.ControlPlaneRef), cluster)
+	kcp := &controlplanev1beta2.KubeadmControlPlane{}
+	key := client.ObjectKey{
+		Name:      cluster.Spec.ControlPlaneRef.Name,
+		Namespace: cluster.Namespace,
+	}
 	if err = c.Get(ctx, key, kcp); err != nil {
 		return nil, nil, nil, errors.Wrap(err, "reading kubeadm control plane")
 	}
@@ -166,12 +164,12 @@ func applyAllControlPlaneObjects(ctx context.Context, c client.Client, cp *Contr
 	return nil
 }
 
-func reconcileEtcdChanges(ctx context.Context, log logr.Logger, c client.Client, desiredCP *ControlPlane, currentKCP *controlplanev1.KubeadmControlPlane, currentEtcdadmCluster *etcdv1.EtcdadmCluster) (controller.Result, error) {
+func reconcileEtcdChanges(ctx context.Context, log logr.Logger, c client.Client, desiredCP *ControlPlane, currentKCP *controlplanev1beta2.KubeadmControlPlane, currentEtcdadmCluster *etcdv1.EtcdadmCluster) (controller.Result, error) {
 	// Before making any changes to etcd, pause the KCP so it doesn't rollout new nodes as the
 	// etcd endpoints change.
 	if !annotations.HasPaused(currentKCP) {
 		log.Info("Pausing KCP before making any etcd changes", "kcp", klog.KObj(currentKCP))
-		clientutil.AddAnnotation(currentKCP, clusterv1.PausedAnnotation, "true")
+		clientutil.AddAnnotation(currentKCP, clusterv1beta2.PausedAnnotation, "true")
 		if err := c.Update(ctx, currentKCP); err != nil {
 			return controller.Result{}, err
 		}
@@ -202,17 +200,18 @@ func etcdadmClusterReady(etcdadmCluster *etcdv1.EtcdadmCluster) bool {
 	return etcdadmCluster.Generation == etcdadmCluster.Status.ObservedGeneration && etcdadmCluster.Status.Ready
 }
 
-func reconcileControlPlaneNodeChanges(ctx context.Context, log logr.Logger, c client.Client, desiredCP *ControlPlane, currentKCP *controlplanev1.KubeadmControlPlane) (controller.Result, error) {
+func reconcileControlPlaneNodeChanges(ctx context.Context, log logr.Logger, c client.Client, desiredCP *ControlPlane, currentKCP *controlplanev1beta2.KubeadmControlPlane) (controller.Result, error) {
 	// When the controller reconciles the control plane for a cluster with an external etcd configuration
 	// the KubeadmControlPlane.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External.Endpoints field is
-	// defaulted to an empty slice. However, at some point that field in KubeadmControlPlane object is filled
-	// and updated by the kcp controller.
+	// defaulted to a placeholder value. At some point that field in KubeadmControlPlane object is filled
+	// and updated by the kcp controller with real etcd endpoints.
 	//
-	// We do not want to update the field with an empty slice again, so here we check if the endpoints for the
-	// external etcd have already been populated on the KubeadmControlPlane object and override ours before applying it.
-	externalEndpoints := currentKCP.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External.Endpoints
-	if len(externalEndpoints) != 0 && !isPlaceholderEndpoint(externalEndpoints) {
-		desiredCP.KubeadmControlPlane.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External.Endpoints = externalEndpoints
+	// We do not want to overwrite real endpoints with the placeholder again, so here we check if the endpoints
+	// for the external etcd have already been populated with real values on the KubeadmControlPlane object
+	// and preserve them in the desired state before applying.
+	currentEndpoints := currentKCP.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External.Endpoints
+	if len(currentEndpoints) != 0 && !isPlaceholderEndpoint(currentEndpoints) {
+		desiredCP.KubeadmControlPlane.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External.Endpoints = currentEndpoints
 	}
 
 	if err := serverside.ReconcileObjects(ctx, c, desiredCP.nonEtcdObjects()); err != nil {
@@ -222,12 +221,12 @@ func reconcileControlPlaneNodeChanges(ctx context.Context, log logr.Logger, c cl
 	// If the KCP is paused, we read the last version (in case we just updated it) and unpause it
 	// so the cp nodes are reconciled.
 	if annotations.HasPaused(currentKCP) {
-		kcp := &controlplanev1.KubeadmControlPlane{}
+		kcp := &controlplanev1beta2.KubeadmControlPlane{}
 		if err := c.Get(ctx, client.ObjectKeyFromObject(currentKCP), kcp); err != nil {
 			return controller.Result{}, errors.Wrap(err, "reading updates kubeadm control plane to unpause")
 		}
 
-		delete(kcp.Annotations, clusterv1.PausedAnnotation)
+		delete(kcp.Annotations, clusterv1beta2.PausedAnnotation)
 		log.Info("Unpausing KCP after update to start reconciliation", klog.KObj(currentKCP))
 		if err := c.Update(ctx, kcp); err != nil {
 			return controller.Result{}, err
@@ -245,14 +244,10 @@ func isPlaceholderEndpoint(endpoints []string) bool {
 	return false
 }
 
-func getEtcdadmCluster(ctx context.Context, c client.Client, cluster *clusterv1.Cluster) (*etcdv1.EtcdadmCluster, error) {
-	key := objKeyForRef(cluster.Spec.ManagedExternalEtcdRef)
-	// This can happen when a user has a workload cluster that is older than the following PR, causing cluster
-	// reconcilation to fail. By inferring namespace from clusterv1.Cluster, we will be able to retrieve the object correctly.
-	// PR: https://github.com/aws/eks-anywhere/pull/4025
-	// TODO: See if it is possible to propagate the namespace field in the clusterv1.Cluster object in cluster-api like the other refs.
-	if key.Namespace == "" {
-		key.Namespace = cluster.Namespace
+func getEtcdadmCluster(ctx context.Context, c client.Client, cluster *clusterv1beta2.Cluster) (*etcdv1.EtcdadmCluster, error) {
+	key := client.ObjectKey{
+		Name:      cluster.Spec.ManagedExternalEtcdRef.Name,
+		Namespace: cluster.Namespace,
 	}
 
 	etcdadmCluster := &etcdv1.EtcdadmCluster{}
@@ -261,22 +256,4 @@ func getEtcdadmCluster(ctx context.Context, c client.Client, cluster *clusterv1.
 	}
 
 	return etcdadmCluster, nil
-}
-
-func objKeyForRef(ref *corev1.ObjectReference) client.ObjectKey {
-	return client.ObjectKey{
-		Name:      ref.Name,
-		Namespace: ref.Namespace,
-	}
-}
-
-// keyWithFallbackNamespace returns the provided key with the namespace of the provided
-// object as a fallback if the provided key's namespace is empty.
-// Useful for incomplete references that are missing the namespace but where it can be
-// inferred from another object.
-func keyWithFallbackNamespace(key client.ObjectKey, obj client.Object) client.ObjectKey {
-	if key.Namespace == "" {
-		key.Namespace = obj.GetNamespace()
-	}
-	return key
 }

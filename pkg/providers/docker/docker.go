@@ -10,8 +10,8 @@ import (
 	"regexp"
 
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -74,8 +74,8 @@ func (p *Provider) InstallCustomProviderComponents(ctx context.Context, kubeconf
 
 type ProviderKubectlClient interface {
 	GetEksaCluster(ctx context.Context, cluster *types.Cluster, clusterName string) (*v1alpha1.Cluster, error)
-	GetMachineDeployment(ctx context.Context, machineDeploymentName string, opts ...executables.KubectlOpt) (*clusterv1.MachineDeployment, error)
-	GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*controlplanev1.KubeadmControlPlane, error)
+	GetMachineDeployment(ctx context.Context, machineDeploymentName string, opts ...executables.KubectlOpt) (*clusterv1beta2.MachineDeployment, error)
+	GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*controlplanev1beta2.KubeadmControlPlane, error)
 	GetEtcdadmCluster(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*etcdv1.EtcdadmCluster, error)
 	UpdateAnnotation(ctx context.Context, resourceType, objectName string, annotations map[string]string, opts ...executables.KubectlOpt) error
 }
@@ -285,11 +285,11 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 		"corednsRepository":             versionsBundle.KubeDistro.CoreDNS.Repository,
 		"corednsVersion":                versionsBundle.KubeDistro.CoreDNS.Tag,
 		"kindNodeImage":                 versionsBundle.EksD.KindNode.VersionedImage(),
-		"etcdExtraArgs":                 etcdExtraArgs.ToPartialYaml(),
+		"etcdExtraArgs":                 etcdExtraArgs,
 		"etcdCipherSuites":              crypto.SecureCipherSuitesString(),
-		"apiserverExtraArgs":            apiServerExtraArgs.ToPartialYaml(),
-		"controllermanagerExtraArgs":    controllerManagerExtraArgs.ToPartialYaml(),
-		"schedulerExtraArgs":            sharedExtraArgs.ToPartialYaml(),
+		"apiserverExtraArgs":            apiServerExtraArgs,
+		"controllermanagerExtraArgs":    controllerManagerExtraArgs,
+		"schedulerExtraArgs":            sharedExtraArgs,
 		"externalEtcdVersion":           versionsBundle.KubeDistro.EtcdVersion,
 		"eksaSystemNamespace":           constants.EksaSystemNamespace,
 		"podCidrs":                      clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks,
@@ -353,6 +353,22 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 				cpKubeletConfig["resolvConf"] = clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf.Path
 			}
 		}
+
+		// fail-cgroupv1 flag was introduced in Kubernetes 1.31
+		clusterKubeVersionSemver, err := v1alpha1.KubeVersionToSemver(clusterSpec.Cluster.Spec.KubernetesVersion)
+		if err != nil {
+			return nil, fmt.Errorf("converting kubeVersion %v to semver: %v", clusterSpec.Cluster.Spec.KubernetesVersion, err)
+		}
+		kube131Semver, err := v1alpha1.KubeVersionToSemver(v1alpha1.Kube131)
+		if err != nil {
+			return nil, fmt.Errorf("converting kubeVersion %v to semver: %v", v1alpha1.Kube131, err)
+		}
+		if clusterKubeVersionSemver.Compare(kube131Semver) >= 0 {
+			if _, ok := cpKubeletConfig["failCgroupV1"]; !ok {
+				cpKubeletConfig["failCgroupV1"] = false
+			}
+		}
+
 		kcString, err := yaml.Marshal(cpKubeletConfig)
 		if err != nil {
 			return nil, fmt.Errorf("marshaling control plane node Kubelet Configuration while building CAPI template %v", err)
@@ -372,12 +388,25 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 			kubeletExtraArgs.Append(cgroupDriverArgs)
 		}
 
-		values["kubeletExtraArgs"] = kubeletExtraArgs.ToPartialYaml()
+		// fail-cgroupv1 flag was introduced in Kubernetes 1.31
+		clusterKubeVersionSemver, err := v1alpha1.KubeVersionToSemver(clusterSpec.Cluster.Spec.KubernetesVersion)
+		if err != nil {
+			return nil, fmt.Errorf("converting kubeVersion %v to semver: %v", clusterSpec.Cluster.Spec.KubernetesVersion, err)
+		}
+		kube131Semver, err := v1alpha1.KubeVersionToSemver(v1alpha1.Kube131)
+		if err != nil {
+			return nil, fmt.Errorf("converting kubeVersion %v to semver: %v", v1alpha1.Kube131, err)
+		}
+		if clusterKubeVersionSemver.Compare(kube131Semver) >= 0 {
+			kubeletExtraArgs.Append(clusterapi.ExtraArgs{"fail-cgroupv1": "false"})
+		}
+
+		values["kubeletExtraArgs"] = kubeletExtraArgs
 	}
 
 	nodeLabelArgs := clusterapi.ControlPlaneNodeLabelsExtraArgs(clusterSpec.Cluster.Spec.ControlPlaneConfiguration)
 	if len(nodeLabelArgs) != 0 {
-		values["nodeLabelArgs"] = nodeLabelArgs.ToPartialYaml()
+		values["nodeLabelArgs"] = nodeLabelArgs
 	}
 
 	return values, nil
@@ -415,6 +444,26 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupConfiguration 
 				wnKubeletConfig["resolvConf"] = clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf.Path
 			}
 		}
+
+		// fail-cgroupv1 flag was introduced in Kubernetes 1.31
+		kubeVersion := clusterSpec.Cluster.Spec.KubernetesVersion
+		if workerNodeGroupConfiguration.KubernetesVersion != nil {
+			kubeVersion = *workerNodeGroupConfiguration.KubernetesVersion
+		}
+		workerKubeVersionSemver, err := v1alpha1.KubeVersionToSemver(kubeVersion)
+		if err != nil {
+			return nil, fmt.Errorf("converting kubeVersion %v to semver: %v", kubeVersion, err)
+		}
+		kube131Semver, err := v1alpha1.KubeVersionToSemver(v1alpha1.Kube131)
+		if err != nil {
+			return nil, fmt.Errorf("converting kubeVersion %v to semver: %v", v1alpha1.Kube131, err)
+		}
+		if workerKubeVersionSemver.Compare(kube131Semver) >= 0 {
+			if _, ok := wnKubeletConfig["failCgroupV1"]; !ok {
+				wnKubeletConfig["failCgroupV1"] = false
+			}
+		}
+
 		kcString, err := yaml.Marshal(wnKubeletConfig)
 		if err != nil {
 			return nil, fmt.Errorf("marshaling Kubelet Configuration for worker node %s: %v", workerNodeGroupConfiguration.Name, err)
@@ -437,12 +486,25 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupConfiguration 
 			kubeletExtraArgs.Append(cgroupDriverArgs)
 		}
 
-		values["kubeletExtraArgs"] = kubeletExtraArgs.ToPartialYaml()
+		// fail-cgroupv1 flag was introduced in Kubernetes 1.31
+		workerKubeVersionSemver, err := v1alpha1.KubeVersionToSemver(kubeVersion)
+		if err != nil {
+			return nil, fmt.Errorf("converting kubeVersion %v to semver: %v", kubeVersion, err)
+		}
+		kube131Semver, err := v1alpha1.KubeVersionToSemver(v1alpha1.Kube131)
+		if err != nil {
+			return nil, fmt.Errorf("converting kubeVersion %v to semver: %v", v1alpha1.Kube131, err)
+		}
+		if workerKubeVersionSemver.Compare(kube131Semver) >= 0 {
+			kubeletExtraArgs.Append(clusterapi.ExtraArgs{"fail-cgroupv1": "false"})
+		}
+
+		values["kubeletExtraArgs"] = kubeletExtraArgs
 	}
 
 	nodeLabelArgs := clusterapi.WorkerNodeLabelsExtraArgs(workerNodeGroupConfiguration)
 	if len(nodeLabelArgs) != 0 {
-		values["nodeLabelArgs"] = nodeLabelArgs.ToPartialYaml()
+		values["nodeLabelArgs"] = nodeLabelArgs
 	}
 
 	return values, nil
@@ -610,6 +672,7 @@ func populateRegistryMirrorValues(clusterSpec *cluster.Spec, values map[string]i
 	registryMirror := registrymirror.FromCluster(clusterSpec.Cluster)
 	values["registryMirrorMap"] = containerd.ToAPIEndpoints(registryMirror.NamespacedRegistryMap)
 	values["mirrorBase"] = registryMirror.BaseRegistry
+	values["mirrorBaseAPIEndpoint"] = containerd.ToAPIEndpoint(registryMirror.BaseRegistry)
 	values["insecureSkip"] = registryMirror.InsecureSkipVerify
 	values["publicMirror"] = containerd.ToAPIEndpoint(registryMirror.CoreEKSAMirror())
 	if len(registryMirror.CACertContent) > 0 {

@@ -7,11 +7,11 @@ import (
 
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	. "github.com/onsi/gomega"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -33,13 +33,13 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 
 	tests := []struct {
 		name                string
-		kcp                 *controlplanev1.KubeadmControlPlane
+		kcp                 *controlplanev1beta2.KubeadmControlPlane
 		controlPlaneCount   int
 		conditions          []anywherev1.Condition
 		wantCondition       *anywherev1.Condition
 		externalEtcdCount   int
 		externalEtcdCluster *etcdv1.EtcdadmCluster
-		capiCluster         *clusterv1.Cluster
+		capiCluster         *clusterv1beta2.Cluster
 		upgradeType         anywherev1.UpgradeRolloutStrategyType
 	}{
 		{
@@ -59,10 +59,10 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 		},
 		{
 			name: "control plane already initialized",
-			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
-				kcp.Status.Conditions = clusterv1.Conditions{
+			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
+				kcp.Status.Conditions = []metav1.Condition{
 					{
-						Type:   controlplanev1.AvailableCondition,
+						Type:   clusterv1beta2.AvailableCondition,
 						Status: "True",
 					},
 				}
@@ -83,7 +83,7 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 		},
 		{
 			name: "kcp status outdated, generations do not match",
-			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
+			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
 				kcp.ObjectMeta.Generation = 1
 				kcp.Status.ObservedGeneration = 0
 			}),
@@ -100,10 +100,10 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 		},
 		{
 			name: "kcp not availabe yet",
-			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
-				kcp.Status.Conditions = clusterv1.Conditions{
+			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
+				kcp.Status.Conditions = []metav1.Condition{
 					{
-						Type:   controlplanev1.AvailableCondition,
+						Type:   clusterv1beta2.AvailableCondition,
 						Status: "False",
 					},
 				}
@@ -122,10 +122,10 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 		},
 		{
 			name: "kcp available",
-			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
-				kcp.Status.Conditions = clusterv1.Conditions{
+			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
+				kcp.Status.Conditions = []metav1.Condition{
 					{
-						Type:   controlplanev1.AvailableCondition,
+						Type:   clusterv1beta2.AvailableCondition,
 						Status: "True",
 					},
 				}
@@ -141,7 +141,7 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 		},
 		{
 			name:              "control plane not initialized",
-			kcp:               &controlplanev1.KubeadmControlPlane{},
+			kcp:               &controlplanev1beta2.KubeadmControlPlane{},
 			controlPlaneCount: 1,
 			conditions: []anywherev1.Condition{
 				{
@@ -185,7 +185,7 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 		},
 		{
 			name: "kubeadmcontrolplane status out of date",
-			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
+			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
 				kcp.Generation = 1
 				kcp.Status.ObservedGeneration = 2
 			}),
@@ -207,14 +207,13 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 		},
 		{
 			name: "scaling up control plane nodes",
-			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
-				kcp.Status.Replicas = 1
-				kcp.Status.UpdatedReplicas = 1
-				kcp.Status.Conditions = []clusterv1.Condition{
+			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
+				kcp.Status.Replicas = ptr.Int32(1)
+				kcp.Status.UpToDateReplicas = ptr.Int32(1)
+				kcp.Status.Conditions = []metav1.Condition{
 					{
-						Type:     clusterv1.ReadyCondition,
-						Status:   "False",
-						Severity: clusterv1.ConditionSeverityInfo,
+						Type:   clusterv1beta2.AvailableCondition,
+						Status: "False",
 					},
 				}
 			}),
@@ -237,15 +236,14 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 		},
 		{
 			name: "scaling down control plane nodes",
-			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
-				kcp.Status.Replicas = 3
-				kcp.Status.UpdatedReplicas = 3
+			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
+				kcp.Status.Replicas = ptr.Int32(3)
+				kcp.Status.UpToDateReplicas = ptr.Int32(3)
 
-				kcp.Status.Conditions = []clusterv1.Condition{
+				kcp.Status.Conditions = []metav1.Condition{
 					{
-						Type:     clusterv1.ReadyCondition,
-						Status:   "False",
-						Severity: clusterv1.ConditionSeverityInfo,
+						Type:   clusterv1beta2.AvailableCondition,
+						Status: "False",
 					},
 				}
 			}),
@@ -268,16 +266,15 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 		},
 		{
 			name: "control plane replicas out of date",
-			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
-				kcp.Status.ReadyReplicas = 3
-				kcp.Status.Replicas = 3
-				kcp.Status.UpdatedReplicas = 1
+			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
+				kcp.Status.ReadyReplicas = ptr.Int32(3)
+				kcp.Status.Replicas = ptr.Int32(3)
+				kcp.Status.UpToDateReplicas = ptr.Int32(1)
 
-				kcp.Status.Conditions = []clusterv1.Condition{
+				kcp.Status.Conditions = []metav1.Condition{
 					{
-						Type:     clusterv1.ReadyCondition,
-						Status:   "False",
-						Severity: clusterv1.ConditionSeverityInfo,
+						Type:   clusterv1beta2.AvailableCondition,
+						Status: "False",
 					},
 				}
 			}),
@@ -300,16 +297,15 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 		},
 		{
 			name: "control plane replicas out of date, inplace upgrade",
-			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
-				kcp.Status.ReadyReplicas = 3
-				kcp.Status.Replicas = 3
-				kcp.Status.UpdatedReplicas = 1
+			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
+				kcp.Status.ReadyReplicas = ptr.Int32(3)
+				kcp.Status.Replicas = ptr.Int32(3)
+				kcp.Status.UpToDateReplicas = ptr.Int32(1)
 
-				kcp.Status.Conditions = []clusterv1.Condition{
+				kcp.Status.Conditions = []metav1.Condition{
 					{
-						Type:     clusterv1.ReadyCondition,
-						Status:   "False",
-						Severity: clusterv1.ConditionSeverityInfo,
+						Type:   clusterv1beta2.AvailableCondition,
+						Status: "False",
 					},
 				}
 			}),
@@ -333,14 +329,14 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 		},
 		{
 			name: "control plane nodes not ready yet",
-			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
-				kcp.Status.Replicas = 3
-				kcp.Status.ReadyReplicas = 2
-				kcp.Status.UpdatedReplicas = 3
+			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
+				kcp.Status.Replicas = ptr.Int32(3)
+				kcp.Status.ReadyReplicas = ptr.Int32(2)
+				kcp.Status.UpToDateReplicas = ptr.Int32(3)
 
-				kcp.Status.Conditions = []clusterv1.Condition{
+				kcp.Status.Conditions = []metav1.Condition{
 					{
-						Type:   clusterv1.ReadyCondition,
+						Type:   clusterv1beta2.AvailableCondition,
 						Status: "True",
 					},
 				}
@@ -364,22 +360,21 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 		},
 		{
 			name: "control plane components unhealthy",
-			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
-				kcp.Status.Replicas = 3
-				kcp.Status.ReadyReplicas = 3
-				kcp.Status.UpdatedReplicas = 3
+			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
+				kcp.Status.Replicas = ptr.Int32(3)
+				kcp.Status.ReadyReplicas = ptr.Int32(3)
+				kcp.Status.UpToDateReplicas = ptr.Int32(3)
 
-				kcp.Status.Conditions = []clusterv1.Condition{
+				kcp.Status.Conditions = []metav1.Condition{
 					{
-						Type:   clusterv1.ReadyCondition,
+						Type:   clusterv1beta2.AvailableCondition,
 						Status: "True",
 					},
 					{
-						Type:     controlplanev1.ControlPlaneComponentsHealthyCondition,
-						Reason:   controlplanev1.ControlPlaneComponentsUnhealthyReason,
-						Severity: clusterv1.ConditionSeverityError,
-						Message:  "test message",
-						Status:   "False",
+						Type:    controlplanev1beta2.KubeadmControlPlaneControlPlaneComponentsHealthyCondition,
+						Reason:  "Unhealthy",
+						Message: "test message",
+						Status:  "False",
 					},
 				}
 			}),
@@ -402,14 +397,14 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 		},
 		{
 			name: "kcp not ready yet",
-			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
-				kcp.Status.Replicas = 3
-				kcp.Status.ReadyReplicas = 3
-				kcp.Status.UpdatedReplicas = 3
+			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
+				kcp.Status.Replicas = ptr.Int32(3)
+				kcp.Status.ReadyReplicas = ptr.Int32(3)
+				kcp.Status.UpToDateReplicas = ptr.Int32(3)
 
-				kcp.Status.Conditions = []clusterv1.Condition{
+				kcp.Status.Conditions = []metav1.Condition{
 					{
-						Type:   clusterv1.ReadyCondition,
+						Type:   clusterv1beta2.AvailableCondition,
 						Status: "False",
 					},
 				}
@@ -433,14 +428,14 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 		},
 		{
 			name: "control plane ready",
-			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
-				kcp.Status.Replicas = 3
-				kcp.Status.ReadyReplicas = 3
-				kcp.Status.UpdatedReplicas = 3
+			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
+				kcp.Status.Replicas = ptr.Int32(3)
+				kcp.Status.ReadyReplicas = ptr.Int32(3)
+				kcp.Status.UpToDateReplicas = ptr.Int32(3)
 
-				kcp.Status.Conditions = []clusterv1.Condition{
+				kcp.Status.Conditions = []metav1.Condition{
 					{
-						Type:   clusterv1.ReadyCondition,
+						Type:   clusterv1beta2.AvailableCondition,
 						Status: "True",
 					},
 				}
@@ -461,14 +456,14 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 		},
 		{
 			name: "with external etcd ready",
-			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
-				kcp.Status.Replicas = 3
-				kcp.Status.ReadyReplicas = 3
-				kcp.Status.UpdatedReplicas = 3
+			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
+				kcp.Status.Replicas = ptr.Int32(3)
+				kcp.Status.ReadyReplicas = ptr.Int32(3)
+				kcp.Status.UpToDateReplicas = ptr.Int32(3)
 
-				kcp.Status.Conditions = []clusterv1.Condition{
+				kcp.Status.Conditions = []metav1.Condition{
 					{
-						Type:   clusterv1.ReadyCondition,
+						Type:   clusterv1beta2.AvailableCondition,
 						Status: "True",
 					},
 				}
@@ -496,13 +491,13 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 				Type:   anywherev1.ControlPlaneReadyCondition,
 				Status: "True",
 			},
-			capiCluster: &clusterv1.Cluster{
+			capiCluster: &clusterv1beta2.Cluster{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "test-cluster",
 					Namespace: constants.EksaSystemNamespace,
 				},
-				Spec: clusterv1.ClusterSpec{
-					ManagedExternalEtcdRef: &corev1.ObjectReference{
+				Spec: clusterv1beta2.ClusterSpec{
+					ManagedExternalEtcdRef: &clusterv1beta2.ContractVersionedObjectReference{
 						Kind: "EtcdadmCluster",
 						Name: fmt.Sprintf("%s-etcd", "test-cluster"),
 					},
@@ -511,14 +506,14 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 		},
 		{
 			name: "with external etcd not ready",
-			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
-				kcp.Status.Replicas = 3
-				kcp.Status.ReadyReplicas = 3
-				kcp.Status.UpdatedReplicas = 3
+			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
+				kcp.Status.Replicas = ptr.Int32(3)
+				kcp.Status.ReadyReplicas = ptr.Int32(3)
+				kcp.Status.UpToDateReplicas = ptr.Int32(3)
 
-				kcp.Status.Conditions = []clusterv1.Condition{
+				kcp.Status.Conditions = []metav1.Condition{
 					{
-						Type:   clusterv1.ReadyCondition,
+						Type:   clusterv1beta2.AvailableCondition,
 						Status: "True",
 					},
 				}
@@ -548,13 +543,13 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 				Message:  "Etcd is not ready",
 				Status:   "False",
 			},
-			capiCluster: &clusterv1.Cluster{
+			capiCluster: &clusterv1beta2.Cluster{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "test-cluster",
 					Namespace: constants.EksaSystemNamespace,
 				},
-				Spec: clusterv1.ClusterSpec{
-					ManagedExternalEtcdRef: &corev1.ObjectReference{
+				Spec: clusterv1beta2.ClusterSpec{
+					ManagedExternalEtcdRef: &clusterv1beta2.ContractVersionedObjectReference{
 						Kind: "EtcdadmCluster",
 						Name: fmt.Sprintf("%s-etcd", "test-cluster"),
 					},
@@ -563,14 +558,14 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 		},
 		{
 			name: "with external etcd, etcd not reconciled",
-			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
-				kcp.Status.Replicas = 3
-				kcp.Status.ReadyReplicas = 3
-				kcp.Status.UpdatedReplicas = 3
+			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
+				kcp.Status.Replicas = ptr.Int32(3)
+				kcp.Status.ReadyReplicas = ptr.Int32(3)
+				kcp.Status.UpToDateReplicas = ptr.Int32(3)
 
-				kcp.Status.Conditions = []clusterv1.Condition{
+				kcp.Status.Conditions = []metav1.Condition{
 					{
-						Type:   clusterv1.ReadyCondition,
+						Type:   clusterv1beta2.AvailableCondition,
 						Status: "True",
 					},
 				}
@@ -591,18 +586,18 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 				Message:  "Etcd cluster is not available",
 				Status:   "False",
 			},
-			capiCluster: &clusterv1.Cluster{},
+			capiCluster: &clusterv1beta2.Cluster{},
 		},
 		{
 			name: "with external etcd, malformed etcd",
-			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
-				kcp.Status.Replicas = 3
-				kcp.Status.ReadyReplicas = 3
-				kcp.Status.UpdatedReplicas = 3
+			kcp: test.KubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
+				kcp.Status.Replicas = ptr.Int32(3)
+				kcp.Status.ReadyReplicas = ptr.Int32(3)
+				kcp.Status.UpToDateReplicas = ptr.Int32(3)
 
-				kcp.Status.Conditions = []clusterv1.Condition{
+				kcp.Status.Conditions = []metav1.Condition{
 					{
-						Type:   clusterv1.ReadyCondition,
+						Type:   clusterv1beta2.AvailableCondition,
 						Status: "True",
 					},
 				}
@@ -623,7 +618,7 @@ func TestUpdateClusterStatusForControlPlane(t *testing.T) {
 				Message:  "Etcd cluster is not available",
 				Status:   "False",
 			},
-			capiCluster: &clusterv1.Cluster{},
+			capiCluster: &clusterv1beta2.Cluster{},
 		},
 	}
 
@@ -688,7 +683,7 @@ func TestUpdateClusterCertificateStatusSuccess(t *testing.T) {
 		name         string
 		cluster      *anywherev1.Cluster
 		conditions   []anywherev1.Condition
-		machines     []clusterv1.Machine
+		machines     []clusterv1beta2.Machine
 		expectedCert []anywherev1.ClusterCertificateInfo
 	}{
 		{
@@ -713,7 +708,7 @@ func TestUpdateClusterCertificateStatusSuccess(t *testing.T) {
 					Status: "True",
 				},
 			},
-			machines: []clusterv1.Machine{
+			machines: []clusterv1beta2.Machine{
 				{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-cluster-control-plane-abc123",
@@ -723,10 +718,10 @@ func TestUpdateClusterCertificateStatusSuccess(t *testing.T) {
 							"cluster.x-k8s.io/control-plane": "",
 						},
 					},
-					Status: clusterv1.MachineStatus{
-						Addresses: []clusterv1.MachineAddress{
+					Status: clusterv1beta2.MachineStatus{
+						Addresses: []clusterv1beta2.MachineAddress{
 							{
-								Type:    clusterv1.MachineExternalIP,
+								Type:    clusterv1beta2.MachineExternalIP,
 								Address: "127.0.0.1",
 							},
 						},
@@ -757,7 +752,7 @@ func TestUpdateClusterCertificateStatusSuccess(t *testing.T) {
 					Status: "False",
 				},
 			},
-			machines: []clusterv1.Machine{},
+			machines: []clusterv1beta2.Machine{},
 			expectedCert: []anywherev1.ClusterCertificateInfo{
 				{
 					Machine:       "should-be-there",
@@ -841,13 +836,13 @@ func TestUpdateClusterStatusForControlPlaneError(t *testing.T) {
 			},
 		},
 	}
-	capiCluster := &clusterv1.Cluster{
+	capiCluster := &clusterv1beta2.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-cluster",
 			Namespace: constants.EksaSystemNamespace,
 		},
-		Spec: clusterv1.ClusterSpec{
-			ManagedExternalEtcdRef: &corev1.ObjectReference{
+		Spec: clusterv1beta2.ClusterSpec{
+			ManagedExternalEtcdRef: &clusterv1beta2.ContractVersionedObjectReference{
 				Kind: "EtcdadmCluster",
 				Name: fmt.Sprintf("%s-etcd", "test-cluster"),
 			},
@@ -855,7 +850,7 @@ func TestUpdateClusterStatusForControlPlaneError(t *testing.T) {
 	}
 	objs := []runtime.Object{}
 	objs = append(objs, capiCluster)
-	objs = append(objs, &controlplanev1.KubeadmControlPlane{})
+	objs = append(objs, &controlplanev1beta2.KubeadmControlPlane{})
 	client := fake.NewClientBuilder().WithRuntimeObjects(objs...).Build()
 
 	err := clusters.UpdateClusterStatusForControlPlane(context.Background(), client, cluster)
@@ -869,7 +864,7 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 
 	tests := []struct {
 		name                          string
-		machineDeployments            []clusterv1.MachineDeployment
+		machineDeployments            []clusterv1beta2.MachineDeployment
 		workerNodeGroupConfigurations []anywherev1.WorkerNodeGroupConfiguration
 		conditions                    []anywherev1.Condition
 		wantCondition                 *anywherev1.Condition
@@ -879,7 +874,7 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 		{
 			name:                          "workers not ready, control plane not initialized",
 			workerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{},
-			machineDeployments:            []clusterv1.MachineDeployment{},
+			machineDeployments:            []clusterv1beta2.MachineDeployment{},
 			conditions: []anywherev1.Condition{
 				{
 					Type:     anywherev1.ControlPlaneInitializedCondition,
@@ -903,12 +898,12 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 					Count: ptr.Int(1),
 				},
 			},
-			machineDeployments: []clusterv1.MachineDeployment{
-				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+			machineDeployments: []clusterv1beta2.MachineDeployment{
+				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-0"
 					md.ObjectMeta.Generation = 1
 					md.ObjectMeta.Labels = map[string]string{
-						clusterv1.ClusterNameLabel: clusterName,
+						clusterv1beta2.ClusterNameLabel: clusterName,
 					}
 					md.Status.ObservedGeneration = 0
 				}),
@@ -936,16 +931,16 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 					Count: ptr.Int(1),
 				},
 			},
-			machineDeployments: []clusterv1.MachineDeployment{
-				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+			machineDeployments: []clusterv1beta2.MachineDeployment{
+				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-0"
 					md.ObjectMeta.Generation = 1
 					md.ObjectMeta.Labels = map[string]string{
-						clusterv1.ClusterNameLabel: clusterName,
+						clusterv1beta2.ClusterNameLabel: clusterName,
 					}
 					md.Status.ObservedGeneration = 0
 				}),
-				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-1"
 					md.ObjectMeta.Generation = 1
 					md.Status.ObservedGeneration = 1
@@ -974,24 +969,24 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 					Count: ptr.Int(2),
 				},
 			},
-			machineDeployments: []clusterv1.MachineDeployment{
-				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+			machineDeployments: []clusterv1beta2.MachineDeployment{
+				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-0"
 					md.ObjectMeta.Labels = map[string]string{
-						clusterv1.ClusterNameLabel: clusterName,
+						clusterv1beta2.ClusterNameLabel: clusterName,
 					}
-					md.Status.Replicas = 1
-					md.Status.ReadyReplicas = 1
-					md.Status.UpdatedReplicas = 1
+					md.Status.Replicas = ptr.Int32(1)
+					md.Status.ReadyReplicas = ptr.Int32(1)
+					md.Status.UpToDateReplicas = ptr.Int32(1)
 				}),
-				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-1"
 					md.ObjectMeta.Labels = map[string]string{
-						clusterv1.ClusterNameLabel: clusterName,
+						clusterv1beta2.ClusterNameLabel: clusterName,
 					}
-					md.Status.Replicas = 2
-					md.Status.ReadyReplicas = 2
-					md.Status.UpdatedReplicas = 1
+					md.Status.Replicas = ptr.Int32(2)
+					md.Status.ReadyReplicas = ptr.Int32(2)
+					md.Status.UpToDateReplicas = ptr.Int32(1)
 				}),
 			},
 			conditions: []anywherev1.Condition{
@@ -1018,24 +1013,24 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 					Count: ptr.Int(2),
 				},
 			},
-			machineDeployments: []clusterv1.MachineDeployment{
-				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+			machineDeployments: []clusterv1beta2.MachineDeployment{
+				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-0"
 					md.ObjectMeta.Labels = map[string]string{
-						clusterv1.ClusterNameLabel: clusterName,
+						clusterv1beta2.ClusterNameLabel: clusterName,
 					}
-					md.Status.Replicas = 1
-					md.Status.ReadyReplicas = 1
-					md.Status.UpdatedReplicas = 1
+					md.Status.Replicas = ptr.Int32(1)
+					md.Status.ReadyReplicas = ptr.Int32(1)
+					md.Status.UpToDateReplicas = ptr.Int32(1)
 				}),
-				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-1"
 					md.ObjectMeta.Labels = map[string]string{
-						clusterv1.ClusterNameLabel: clusterName,
+						clusterv1beta2.ClusterNameLabel: clusterName,
 					}
-					md.Status.Replicas = 2
-					md.Status.ReadyReplicas = 2
-					md.Status.UpdatedReplicas = 1
+					md.Status.Replicas = ptr.Int32(2)
+					md.Status.ReadyReplicas = ptr.Int32(2)
+					md.Status.UpToDateReplicas = ptr.Int32(1)
 				}),
 			},
 			conditions: []anywherev1.Condition{
@@ -1063,24 +1058,24 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 					Count: ptr.Int(2),
 				},
 			},
-			machineDeployments: []clusterv1.MachineDeployment{
-				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+			machineDeployments: []clusterv1beta2.MachineDeployment{
+				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-0"
 					md.ObjectMeta.Labels = map[string]string{
-						clusterv1.ClusterNameLabel: clusterName,
+						clusterv1beta2.ClusterNameLabel: clusterName,
 					}
-					md.Status.Replicas = 0
-					md.Status.ReadyReplicas = 0
-					md.Status.UpdatedReplicas = 0
+					md.Status.Replicas = ptr.Int32(0)
+					md.Status.ReadyReplicas = ptr.Int32(0)
+					md.Status.UpToDateReplicas = ptr.Int32(0)
 				}),
-				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-1"
 					md.ObjectMeta.Labels = map[string]string{
-						clusterv1.ClusterNameLabel: clusterName,
+						clusterv1beta2.ClusterNameLabel: clusterName,
 					}
-					md.Status.Replicas = 2
-					md.Status.ReadyReplicas = 2
-					md.Status.UpdatedReplicas = 2
+					md.Status.Replicas = ptr.Int32(2)
+					md.Status.ReadyReplicas = ptr.Int32(2)
+					md.Status.UpToDateReplicas = ptr.Int32(2)
 				}),
 			},
 			conditions: []anywherev1.Condition{
@@ -1107,24 +1102,24 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 					Count: ptr.Int(1),
 				},
 			},
-			machineDeployments: []clusterv1.MachineDeployment{
-				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+			machineDeployments: []clusterv1beta2.MachineDeployment{
+				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-0"
 					md.ObjectMeta.Labels = map[string]string{
-						clusterv1.ClusterNameLabel: clusterName,
+						clusterv1beta2.ClusterNameLabel: clusterName,
 					}
-					md.Status.Replicas = 2
-					md.Status.ReadyReplicas = 2
-					md.Status.UpdatedReplicas = 2
+					md.Status.Replicas = ptr.Int32(2)
+					md.Status.ReadyReplicas = ptr.Int32(2)
+					md.Status.UpToDateReplicas = ptr.Int32(2)
 				}),
-				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-1"
 					md.ObjectMeta.Labels = map[string]string{
-						clusterv1.ClusterNameLabel: clusterName,
+						clusterv1beta2.ClusterNameLabel: clusterName,
 					}
-					md.Status.Replicas = 2
-					md.Status.ReadyReplicas = 2
-					md.Status.UpdatedReplicas = 2
+					md.Status.Replicas = ptr.Int32(2)
+					md.Status.ReadyReplicas = ptr.Int32(2)
+					md.Status.UpToDateReplicas = ptr.Int32(2)
 				}),
 			},
 			conditions: []anywherev1.Condition{
@@ -1151,24 +1146,24 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 					Count: ptr.Int(2),
 				},
 			},
-			machineDeployments: []clusterv1.MachineDeployment{
-				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+			machineDeployments: []clusterv1beta2.MachineDeployment{
+				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-0"
 					md.ObjectMeta.Labels = map[string]string{
-						clusterv1.ClusterNameLabel: clusterName,
+						clusterv1beta2.ClusterNameLabel: clusterName,
 					}
-					md.Status.ReadyReplicas = 1
-					md.Status.Replicas = 1
-					md.Status.UpdatedReplicas = 1
+					md.Status.ReadyReplicas = ptr.Int32(1)
+					md.Status.Replicas = ptr.Int32(1)
+					md.Status.UpToDateReplicas = ptr.Int32(1)
 				}),
-				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-1"
 					md.ObjectMeta.Labels = map[string]string{
-						clusterv1.ClusterNameLabel: clusterName,
+						clusterv1beta2.ClusterNameLabel: clusterName,
 					}
-					md.Status.ReadyReplicas = 0
-					md.Status.Replicas = 2
-					md.Status.UpdatedReplicas = 2
+					md.Status.ReadyReplicas = ptr.Int32(0)
+					md.Status.Replicas = ptr.Int32(2)
+					md.Status.UpToDateReplicas = ptr.Int32(2)
 				}),
 			},
 			conditions: []anywherev1.Condition{
@@ -1192,22 +1187,22 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 					Count: ptr.Int(1),
 				},
 			},
-			machineDeployments: []clusterv1.MachineDeployment{
-				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+			machineDeployments: []clusterv1beta2.MachineDeployment{
+				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-0"
 					md.ObjectMeta.Labels = map[string]string{
-						clusterv1.ClusterNameLabel: clusterName,
+						clusterv1beta2.ClusterNameLabel: clusterName,
 					}
-					md.Status.ReadyReplicas = 1
-					md.Status.Replicas = 1
-					md.Status.UpdatedReplicas = 1
+					md.Status.ReadyReplicas = ptr.Int32(1)
+					md.Status.Replicas = ptr.Int32(1)
+					md.Status.UpToDateReplicas = ptr.Int32(1)
 
-					md.Status.Conditions = []clusterv1.Condition{
+					md.SetConditions([]metav1.Condition{
 						{
-							Type:   clusterv1.ReadyCondition,
-							Status: "False",
+							Type:   string(clusterv1beta2.ReadyCondition),
+							Status: metav1.ConditionFalse,
 						},
-					}
+					})
 				}),
 			},
 			conditions: []anywherev1.Condition{
@@ -1239,28 +1234,28 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 					},
 				},
 			},
-			machineDeployments: []clusterv1.MachineDeployment{
-				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+			machineDeployments: []clusterv1beta2.MachineDeployment{
+				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-0"
 					md.ObjectMeta.Labels = map[string]string{
-						clusterv1.ClusterNameLabel: clusterName,
+						clusterv1beta2.ClusterNameLabel: clusterName,
 					}
-					md.Status.Replicas = 1
-					md.Status.ReadyReplicas = 1
-					md.Status.UpdatedReplicas = 1
+					md.Status.Replicas = ptr.Int32(1)
+					md.Status.ReadyReplicas = ptr.Int32(1)
+					md.Status.UpToDateReplicas = ptr.Int32(1)
 				}),
-				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-1"
 					md.ObjectMeta.Labels = map[string]string{
-						clusterv1.ClusterNameLabel: clusterName,
+						clusterv1beta2.ClusterNameLabel: clusterName,
 					}
 					md.ObjectMeta.Annotations = map[string]string{
 						clusterapi.NodeGroupMinSizeAnnotation: "3",
 						clusterapi.NodeGroupMaxSizeAnnotation: "5",
 					}
-					md.Status.Replicas = 1
-					md.Status.ReadyReplicas = 1
-					md.Status.UpdatedReplicas = 1
+					md.Status.Replicas = ptr.Int32(1)
+					md.Status.ReadyReplicas = ptr.Int32(1)
+					md.Status.UpToDateReplicas = ptr.Int32(1)
 				}),
 			},
 			conditions: []anywherev1.Condition{
@@ -1290,28 +1285,28 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 					},
 				},
 			},
-			machineDeployments: []clusterv1.MachineDeployment{
-				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+			machineDeployments: []clusterv1beta2.MachineDeployment{
+				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-0"
 					md.ObjectMeta.Labels = map[string]string{
-						clusterv1.ClusterNameLabel: clusterName,
+						clusterv1beta2.ClusterNameLabel: clusterName,
 					}
-					md.Status.Replicas = 1
-					md.Status.ReadyReplicas = 1
-					md.Status.UpdatedReplicas = 1
+					md.Status.Replicas = ptr.Int32(1)
+					md.Status.ReadyReplicas = ptr.Int32(1)
+					md.Status.UpToDateReplicas = ptr.Int32(1)
 				}),
-				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-1"
 					md.ObjectMeta.Labels = map[string]string{
-						clusterv1.ClusterNameLabel: clusterName,
+						clusterv1beta2.ClusterNameLabel: clusterName,
 					}
 					md.ObjectMeta.Annotations = map[string]string{
 						clusterapi.NodeGroupMinSizeAnnotation: "1",
 						clusterapi.NodeGroupMaxSizeAnnotation: "5",
 					}
-					md.Status.Replicas = 1
-					md.Status.ReadyReplicas = 1
-					md.Status.UpdatedReplicas = 1
+					md.Status.Replicas = ptr.Int32(1)
+					md.Status.ReadyReplicas = ptr.Int32(1)
+					md.Status.UpToDateReplicas = ptr.Int32(1)
 				}),
 			},
 			conditions: []anywherev1.Condition{
@@ -1335,24 +1330,24 @@ func TestUpdateClusterStatusForWorkers(t *testing.T) {
 					Count: ptr.Int(2),
 				},
 			},
-			machineDeployments: []clusterv1.MachineDeployment{
-				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+			machineDeployments: []clusterv1beta2.MachineDeployment{
+				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-0"
 					md.ObjectMeta.Labels = map[string]string{
-						clusterv1.ClusterNameLabel: clusterName,
+						clusterv1beta2.ClusterNameLabel: clusterName,
 					}
-					md.Status.Replicas = 1
-					md.Status.ReadyReplicas = 1
-					md.Status.UpdatedReplicas = 1
+					md.Status.Replicas = ptr.Int32(1)
+					md.Status.ReadyReplicas = ptr.Int32(1)
+					md.Status.UpToDateReplicas = ptr.Int32(1)
 				}),
-				*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+				*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 					md.ObjectMeta.Name = "md-1"
 					md.ObjectMeta.Labels = map[string]string{
-						clusterv1.ClusterNameLabel: clusterName,
+						clusterv1beta2.ClusterNameLabel: clusterName,
 					}
-					md.Status.Replicas = 2
-					md.Status.ReadyReplicas = 2
-					md.Status.UpdatedReplicas = 2
+					md.Status.Replicas = ptr.Int32(2)
+					md.Status.ReadyReplicas = ptr.Int32(2)
+					md.Status.UpToDateReplicas = ptr.Int32(2)
 				}),
 			},
 			conditions: []anywherev1.Condition{

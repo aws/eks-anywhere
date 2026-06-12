@@ -29,7 +29,7 @@ Before installing any curated packages for EKS Anywhere, do the following:
      eksctl anywhere install packagecontroller -f $CLUSTER_NAME.yaml
      ```
 
-To request a free trial, talk to your Amazon representative or connect with one [here](https://aws.amazon.com/contact-us/sales-support-eks/).
+For subscription details, talk to your Amazon representative or connect with one [here](https://aws.amazon.com/contact-us/sales-support-eks/).
 
 ### Identify AWS account ID for ECR packages registry
 
@@ -113,7 +113,7 @@ aws sts get-caller-identity
 Login to docker
 
 ```bash
-aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin $ECR_PACKAGES_ACCOUNT.dkr.ecr.$EKSA_AWS_REGION.amazonaws.com
+aws ecr get-login-password --region $EKSA_AWS_REGION | docker login --username AWS --password-stdin $ECR_PACKAGES_ACCOUNT.dkr.ecr.$EKSA_AWS_REGION.amazonaws.com
 ```
 
 Verify you can pull an image
@@ -156,7 +156,7 @@ You can get a list of the available packages from the command line:
 ```bash
 export CLUSTER_NAME=<your-cluster-name>
 export KUBECONFIG=${PWD}/${CLUSTER_NAME}/${CLUSTER_NAME}-eks-a-cluster.kubeconfig
-eksctl anywhere list packages --kube-version 1.33
+eksctl anywhere list packages --kube-version 1.35
 ```
 
 Example command output:
@@ -182,5 +182,5 @@ The example shows how to install the `harbor` package from the [curated package 
 
 ```bash
 export CLUSTER_NAME=<your-cluster-name>
-eksctl anywhere generate package harbor --cluster ${CLUSTER_NAME} --kube-version 1.33 > harbor-spec.yaml
+eksctl anywhere generate package harbor --cluster ${CLUSTER_NAME} --kube-version 1.35 > harbor-spec.yaml
 ```

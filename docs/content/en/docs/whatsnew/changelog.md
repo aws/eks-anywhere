@@ -41,6 +41,360 @@ description: >
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
 
+## [v0.25.2](https://github.com/aws/eks-anywhere/releases/tag/v0.25.2)
+
+### Planned updates to supported kubernetes versions
+- Kubernetes 1.32 reaches end of standard support on April 30, 2026
+  - Extended support continues until April 30, 2027 for clusters with valid license tokens
+  - Clusters will continue to function but will not receive CVE patches or bug fixes after standard support ends
+- Kubernetes 1.29 reaches end of extended support on April 30, 2026
+  - No further patches will be available after this date
+  - Existing clusters will continue to function but upgrading is strongly recommended
+
+For complete version support details, see the [Kubernetes version support table](https://anywhere.eks.amazonaws.com/docs/concepts/support-versions/#kubernetes-versions).
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+|    Ubuntu 24.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.56.0 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+
+\* Starting with EKS-A minor release v0.25.0, the bundled Kubernetes Image Builder will no longer support Ubuntu 20.04 LTS builds, as Ubuntu 20.04 LTS Standard Support has ended, and the upstream Kubernetes Image Builder no longer supports Ubuntu 20.04 LTS.
+\* RHEL 8's kernel version (4.18) is not supported by kubeadm for Kubernetes versions 1.32 and above (see Kubernetes GitHub issue [#129462](https://github.com/kubernetes/kubernetes/issues/129462)). As a result, EKS Anywhere does not support using RHEL 8 as the node operating system for Kubernetes versions 1.32 and above.
+
+### Changed
+- EKS Distro:
+  - [`v1-35-eks-8`](https://distro.eks.amazonaws.com/releases/1-35/8/)
+  - [`v1-34-eks-17`](https://distro.eks.amazonaws.com/releases/1-34/17/)
+  - [`v1-33-eks-26`](https://distro.eks.amazonaws.com/releases/1-33/26/)
+  - [`v1-32-eks-36`](https://distro.eks.amazonaws.com/releases/1-32/36/)
+  - [`v1-31-eks-43`](https://distro.eks.amazonaws.com/releases/1-31/43/)
+  - [`v1-30-eks-54`](https://distro.eks.amazonaws.com/releases/1-30/54/)
+- New EKS-Distro base images
+- cloud-provider-vsphere 1-35: `v1.35.0` to `v1.35.1`
+- Helm: `v4.1.3` to `v4.1.4`
+
+### Fixed
+- Update BMCLib to latest commit that includes critical Gofish fixes ([#5319](https://github.com/aws/eks-anywhere-build-tooling/pull/5319))
+
+## [v0.25.1](https://github.com/aws/eks-anywhere/releases/tag/v0.25.1)
+
+### Planned updates to supported kubernetes versions
+- Kubernetes 1.32 reaches end of standard support on April 30, 2026
+  - Extended support continues until April 30, 2027 for clusters with valid license tokens
+  - Clusters will continue to function but will not receive CVE patches or bug fixes after standard support ends
+- Kubernetes 1.29 reaches end of extended support on April 30, 2026
+  - No further patches will be available after this date
+  - Existing clusters will continue to function but upgrading is strongly recommended
+
+For complete version support details, see the [Kubernetes version support table](https://anywhere.eks.amazonaws.com/docs/concepts/support-versions/#kubernetes-versions).
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+|    Ubuntu 24.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.56.0 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+
+\* Starting with EKS-A minor release v0.25.0, the bundled Kubernetes Image Builder will no longer support Ubuntu 20.04 LTS builds, as Ubuntu 20.04 LTS Standard Support has ended, and the upstream Kubernetes Image Builder no longer supports Ubuntu 20.04 LTS.
+\* RHEL 8's kernel version (4.18) is not supported by kubeadm for Kubernetes versions 1.32 and above (see Kubernetes GitHub issue [#129462](https://github.com/kubernetes/kubernetes/issues/129462)). As a result, EKS Anywhere does not support using RHEL 8 as the node operating system for Kubernetes versions 1.32 and above.
+
+### Changed
+- EKS Distro:
+  - [`v1-35-eks-7`](https://distro.eks.amazonaws.com/releases/1-35/7/)
+  - [`v1-34-eks-16`](https://distro.eks.amazonaws.com/releases/1-34/16/)
+  - [`v1-33-eks-25`](https://distro.eks.amazonaws.com/releases/1-33/25/)
+  - [`v1-32-eks-35`](https://distro.eks.amazonaws.com/releases/1-32/35/)
+  - [`v1-31-eks-42`](https://distro.eks.amazonaws.com/releases/1-31/42/)
+  - [`v1-30-eks-53`](https://distro.eks.amazonaws.com/releases/1-30/53/)
+  - [`v1-29-eks-60`](https://distro.eks.amazonaws.com/releases/1-29/60/)
+- New EKS-Distro base images
+- Bottlerocket: `v1.54.0` to `v1.56.0`
+- Cert-manager: `v1.19.3` to `v1.19.4`
+- Cilium: `v1.18.5` to `v1.18.7`
+- Cluster-api-provider-nutanix: `v1.6.1` to `v1.6.2`
+- Helm: `v4.1.0` to `v4.1.3`
+- rancher/local-path-provisioner `v0.0.34` to `v0.0.35`
+- replicatedhq/troubleshoot: `v0.123.17` to `v0.123.18`
+
+### Fixed
+- Patch kube-vip to retry exponentially on transient 403/401 errors ([#5267](https://github.com/aws/eks-anywhere-build-tooling/pull/5267))
+- Patch BMCLib to try all matching slots during virtual media mount to fix ISO boot workflow on IDRAC 10 ([#5263](https://github.com/aws/eks-anywhere-build-tooling/pull/5263))
+
+## [v0.25.0](https://github.com/aws/eks-anywhere/releases/tag/v0.25.0)
+
+### Planned updates to supported kubernetes versions
+- Kubernetes 1.32 reaches end of standard support on April 30, 2026
+  - Extended support continues until April 30, 2027 for clusters with valid license tokens
+  - Clusters will continue to function but will not receive CVE patches or bug fixes after standard support ends
+- Kubernetes 1.29 reaches end of extended support on April 30, 2026
+  - No further patches will be available after this date
+  - Existing clusters will continue to function but upgrading is strongly recommended
+
+For complete version support details, see the [Kubernetes version support table]({{< relref "../concepts/support-versions#kubernetes-versions" >}}).
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 24.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.54.0 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+
+\* Starting with EKS-A minor release v0.25.0, the bundled Kubernetes Image Builder no longer supports Ubuntu 20.04 LTS builds, as Ubuntu 20.04 LTS Standard Support has ended, and the upstream Kubernetes Image Builder no longer supports Ubuntu 20.04 LTS.
+\* RHEL 8's kernel version (4.18) is not supported by kubeadm for Kubernetes versions 1.32 and above (see Kubernetes GitHub issue [#129462](https://github.com/kubernetes/kubernetes/issues/129462)). As a result, EKS Anywhere does not support using RHEL 8 as the node operating system for Kubernetes versions 1.32 and above.
+
+### Added
+- Support for Kubernetes v1.35 ([#10517](https://github.com/aws/eks-anywhere/pull/10517), [#5112](https://github.com/aws/eks-anywhere-build-tooling/pull/5112))
+- Migrate all Cluster API resources to v1beta2 contract ([#10545](https://github.com/aws/eks-anywhere/pull/10545), [#10547](https://github.com/aws/eks-anywhere/pull/10547)
+- Add HardwareAffinity field to TinkerbellMachineConfig API for advanced hardware selection using Kubernetes-style label selectors with required and preferred terms ([#10472](https://github.com/aws/eks-anywhere/pull/10472))
+- Add Intel ICE E800 series out-of-tree driver support in Hook ([#5156](https://github.com/aws/eks-anywhere-build-tooling/pull/5156))
+- Consolidate tinkerbell components into a single mono-repo with unified helm chart ([#10518](https://github.com/aws/eks-anywhere/pull/10518), [#5074](https://github.com/aws/eks-anywhere-build-tooling/pull/5074)
+
+### Changed
+- EKS Distro:
+  - [`v1-35-eks-5`](https://distro.eks.amazonaws.com/releases/1-35/5/)
+  - [`v1-34-eks-14`](https://distro.eks.amazonaws.com/releases/1-34/14/)
+  - [`v1-33-eks-23`](https://distro.eks.amazonaws.com/releases/1-33/23/)
+  - [`v1-32-eks-33`](https://distro.eks.amazonaws.com/releases/1-32/33/)
+  - [`v1-31-eks-40`](https://distro.eks.amazonaws.com/releases/1-31/40/)
+  - [`v1-30-eks-51`](https://distro.eks.amazonaws.com/releases/1-30/51/)
+  - [`v1-29-eks-58`](https://distro.eks.amazonaws.com/releases/1-29/58/)
+- Cluster API (CAPI): `v1.11.1` to `v1.12.2`
+- Cluster API Provider vSphere: `v1.13.1` to `v1.15.2`
+- Cluster API Provider Tinkerbell: `v0.6.5` to `v0.6.6`
+- Cluster API Provider AWS Snow: `v0.2.8` to `v0.2.9`
+- Bottlerocket: `v1.51.0` to `v1.54.0`
+- Cert-manager: `v1.18.5` to `v1.19.3`
+- Cilium: `v1.17.12` to `v1.18.5`
+- Helm: `v3.16.4` to `v4.1.0`
+- Image builder: `v0.1.44` to `v0.1.48`
+- Kind: `v0.29.0` to `v0.31.0`
+- Cri-tools: `v1.34.0` to `v1.35.0`
+- Kube-rbac-proxy: `v0.20.0` to `v0.20.2`
+- CloudStack cloudmonkey: `6.4.0` to `6.5.0`
+- etcdadm-controller: `v1.0.26` to `v1.0.27`
+- etcdadm-bootstrap-provider: `v1.0.18` to `v1.0.19`
+
+### Planned updates to provider support
+- Starting with EKS-A minor release v0.26, EKS-A will no longer include Cluster API providers for CloudStack or AWS Snow, and AWS will no longer support these providers. Users are encouraged to find alternative support.
+
+### Removed
+- Dropped Kubernetes v1.28 support ([#5128](https://github.com/aws/eks-anywhere-build-tooling/pull/5128))
+- Dropped Ubuntu 20.04 image-builder support
+- Removed unused old tinkerbell components from bundle ([#10612](https://github.com/aws/eks-anywhere/pull/10612))
+
+## [v0.24.6](https://github.com/aws/eks-anywhere/releases/tag/v0.24.6)
+
+### Planned updates to supported kubernetes versions
+- Kubernetes 1.32 reaches end of standard support on April 30, 2026
+  - Extended support continues until April 30, 2027 for clusters with valid license tokens
+  - Clusters will continue to function but will not receive CVE patches or bug fixes after standard support ends
+- Kubernetes 1.29 reaches end of extended support on April 30, 2026
+  - No further patches will be available after this date
+  - Existing clusters will continue to function but upgrading is strongly recommended
+
+For complete version support details, see the [Kubernetes version support table](https://anywhere.eks.amazonaws.com/docs/concepts/support-versions/#kubernetes-versions).
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+|    Ubuntu 24.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.56.0 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+
+\* Starting with EKS-A minor release v0.25.0, the bundled Kubernetes Image Builder will no longer support Ubuntu 20.04 LTS builds, as Ubuntu 20.04 LTS Standard Support has ended, and the upstream Kubernetes Image Builder no longer supports Ubuntu 20.04 LTS.
+\* RHEL 8's kernel version (4.18) is not supported by kubeadm for Kubernetes versions 1.32 and above (see Kubernetes GitHub issue [#129462](https://github.com/kubernetes/kubernetes/issues/129462)). As a result, EKS Anywhere does not support using RHEL 8 as the node operating system for Kubernetes versions 1.32 and above.
+
+### Changed
+- EKS Distro:
+  - [`v1-34-eks-17`](https://distro.eks.amazonaws.com/releases/1-34/17/)
+  - [`v1-33-eks-26`](https://distro.eks.amazonaws.com/releases/1-33/26/)
+  - [`v1-32-eks-36`](https://distro.eks.amazonaws.com/releases/1-32/36/)
+  - [`v1-31-eks-43`](https://distro.eks.amazonaws.com/releases/1-31/43/)
+  - [`v1-30-eks-54`](https://distro.eks.amazonaws.com/releases/1-30/54/)
+- New EKS-Distro base images
+- Cert-manager: `v1.18.5` to `v1.18.6`
+- Cilium: `v1.17.12` to `v1.17.13`
+- fluxcd/flux2: `v2.7.5` to `v2.8.3`
+- fluxcd/helm-controller: `v1.4.5` to `v1.5.3`
+- fluxcd/notification-controller: `v1.7.5` to `v1.8.2`
+
+### Fixed
+- Patch BMCLib to try all matching slots during virtual media mount to fix ISO boot workflow on IDRAC 10 ([#5264](https://github.com/aws/eks-anywhere-build-tooling/pull/5264))
+
+## [v0.24.5](https://github.com/aws/eks-anywhere/releases/tag/v0.24.5)
+
+### Planned updates to supported kubernetes versions
+- Kubernetes 1.32 reaches end of standard support on April 30, 2026
+  - Extended support continues until April 30, 2027 for clusters with valid license tokens
+  - Clusters will continue to function but will not receive CVE patches or bug fixes after standard support ends
+- Kubernetes 1.29 reaches end of extended support on April 30, 2026
+  - No further patches will be available after this date
+  - Existing clusters will continue to function but upgrading is strongly recommended
+
+For complete version support details, see the [Kubernetes version support table]({{< relref "../concepts/support-versions#kubernetes-versions" >}}).
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+|    Ubuntu 24.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.56.0 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+
+\* Starting with EKS-A minor release v0.25.0, the bundled Kubernetes Image Builder will no longer support Ubuntu 20.04 LTS builds, as Ubuntu 20.04 LTS Standard Support has ended, and the upstream Kubernetes Image Builder no longer supports Ubuntu 20.04 LTS.
+\* RHEL 8's kernel version (4.18) is not supported by kubeadm for Kubernetes versions 1.32 and above (see Kubernetes GitHub issue [#129462](https://github.com/kubernetes/kubernetes/issues/129462)). As a result, EKS Anywhere does not support using RHEL 8 as the node operating system for Kubernetes versions 1.32 and above.
+
+### Changed
+- EKS Distro:
+  - [`v1-34-eks-16`](https://distro.eks.amazonaws.com/releases/1-34/16/)
+  - [`v1-33-eks-25`](https://distro.eks.amazonaws.com/releases/1-33/25/)
+  - [`v1-32-eks-35`](https://distro.eks.amazonaws.com/releases/1-32/35/)
+  - [`v1-31-eks-42`](https://distro.eks.amazonaws.com/releases/1-31/42/)
+  - [`v1-30-eks-53`](https://distro.eks.amazonaws.com/releases/1-30/53/)
+  - [`v1-29-eks-60`](https://distro.eks.amazonaws.com/releases/1-29/60/)
+- New EKS-Distro base images
+- Bottlerocket: `v1.54.0` to `v1.56.0`
+- aws/etcdadm-bootstrap-provider `1.0.18` to `1.0.19`
+- aws/etcdadm-bootstrap-controller `v1.0.26` to `v1.0.27`
+- replicatedhq/troubleshoot `v0.123.17` to `v0.123.18`
+- rancher/local-path-provisioner `v0.0.34` to `v0.0.35`
+
+### Fixed
+- Patch kube-vip to retry exponentially on transient 403/401 errors ([#5257](https://github.com/aws/eks-anywhere-build-tooling/pull/5257))
+- Patch Tinkerbell and Rufio to use a BMCLib forks with fixes for Idrac 10 ([#5248](https://github.com/aws/eks-anywhere-build-tooling/pull/5248))
+- Add a patch to bump bmclib to include virtual media mount fix ([#5222](https://github.com/aws/eks-anywhere-build-tooling/pull/5222))
+
+
+## [v0.24.4](https://github.com/aws/eks-anywhere/releases/tag/v0.24.4)
+
+### Planned updates to supported kubernetes versions
+- Kubernetes 1.32 reaches end of standard support on April 30, 2026
+  - Extended support continues until April 30, 2027 for clusters with valid license tokens
+  - Clusters will continue to function but will not receive CVE patches or bug fixes after standard support ends
+- Kubernetes 1.29 reaches end of extended support on April 30, 2026
+  - No further patches will be available after this date
+  - Existing clusters will continue to function but upgrading is strongly recommended
+
+For complete version support details, see the [Kubernetes version support table]({{< relref "../concepts/support-versions#kubernetes-versions" >}}).
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+|    Ubuntu 24.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.51.0 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+
+\* Starting with EKS-A minor release v0.25.0, the bundled Kubernetes Image Builder will no longer support Ubuntu 20.04 LTS builds, as Ubuntu 20.04 LTS Standard Support has ended, and the upstream Kubernetes Image Builder no longer supports Ubuntu 20.04 LTS.
+\* RHEL 8's kernel version (4.18) is not supported by kubeadm for Kubernetes versions 1.32 and above (see Kubernetes GitHub issue [#129462](https://github.com/kubernetes/kubernetes/issues/129462)). As a result, EKS Anywhere does not support using RHEL 8 as the node operating system for Kubernetes versions 1.32 and above.
+
+### Changed
+- EKS Distro:
+  - [`v1-33-eks-22`](https://distro.eks.amazonaws.com/releases/1-33/22/)
+  - [`v1-32-eks-32`](https://distro.eks.amazonaws.com/releases/1-32/32/)
+  - [`v1-31-eks-39`](https://distro.eks.amazonaws.com/releases/1-31/39/)
+  - [`v1-30-eks-50`](https://distro.eks.amazonaws.com/releases/1-30/50/)
+  - [`v1-29-eks-57`](https://distro.eks.amazonaws.com/releases/1-29/57/)
+
+- cilium `v1.17.10` to `v1.17.12`
+- kube-vip `v1.0.2` to `v1.0.4`
+- cert-manager `v1.18.3` to `v1.18.5`
+- fluxcd/flux2 `v2.7.0` to `v2.7.5`
+- fluxcd/notification-controller `v1.7.1` to `v1.7.5`
+- fluxcd/helm-controller `v1.4.0` to `v1.4.5`
+- fluxcd/kustomize-controller `v1.7.0` to `v1.7.3`
+- fluxcd/source-controller `v1.7.0` to `v1.7.4`
+- replicatedhq/troubleshoot `v0.123.12` to `v0.123.17`
+- rancher/local-path-provisioner `v0.0.32` to `v0.0.34`
+
+### Fixed
+- Fixed bottlerocket hostOSConfiguration values getting lost during upgrade to EKS-A v0.24 from previous minor versions ([5103](https://github.com/aws/eks-anywhere-build-tooling/pull/5103))
+- Improved garbage collection of cluster resources for Nutanix provider ([10494](https://github.com/aws/eks-anywhere/pull/10494))
+- Fixed Snow provider support for k8s 1.34 by migrating containerd configuration to v2 format ([#10491](https://github.com/aws/eks-anywhere/pull/10491))
+
+## [v0.24.3](https://github.com/aws/eks-anywhere/releases/tag/v0.24.3)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+|    Ubuntu 24.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.51.0 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+
+\* RHEL 8's kernel version (4.18) is not supported by kubeadm for Kubernetes versions 1.32 and above (see Kubernetes GitHub issue [#129462](https://github.com/kubernetes/kubernetes/issues/129462)). As a result, EKS Anywhere does not support using RHEL 8 as the node operating system for Kubernetes versions 1.32 and above.
+
+
+### Bug Fixes
+- Use cluster spec for worker maxSurge validation instead of generated CAPI object ([#10465](https://github.com/aws/eks-anywhere/pull/10465))
+- Remove older etcd machines after new etcd machines are rolled out ([#5055](https://github.com/aws/eks-anywhere-build-tooling/pull/5055))
+- Fix containerd socket race condition in kind node image build ([#5063](https://github.com/aws/eks-anywhere-build-tooling/pull/5063))
+
+### Other Changes
+- Docs for newly released package versions ([#10454](https://github.com/aws/eks-anywhere/pull/10454))
+- Improve ADOT and IRSA docs: automate RBAC, dedicated ServiceAccounts ([#10458](https://github.com/aws/eks-anywhere/pull/10458))
+- Update documentation: CAPI cluster pause/resume behavior during management cluster upgrades ([#10470](https://github.com/aws/eks-anywhere/pull/10470))
+
+
+
+## [v0.24.2](https://github.com/aws/eks-anywhere/releases/tag/v0.24.2)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+|    Ubuntu 24.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.51.0 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+
+\* RHEL 8's kernel version (4.18) is not supported by kubeadm for Kubernetes versions 1.32 and above (see Kubernetes GitHub issue [#129462](https://github.com/kubernetes/kubernetes/issues/129462)). As a result, EKS Anywhere does not support using RHEL 8 as the node operating system for Kubernetes versions 1.32 and above.
+
+### Changed
+- EKS Distro:
+  - [`v1-34-eks-12`](https://distro.eks.amazonaws.com/releases/1-34/12/)
+  - [`v1-33-eks-21`](https://distro.eks.amazonaws.com/releases/1-33/21/)
+  - [`v1-32-eks-31`](https://distro.eks.amazonaws.com/releases/1-32/31/)
+  - [`v1-31-eks-38`](https://distro.eks.amazonaws.com/releases/1-31/38/)
+  - [`v1-30-eks-49`](https://distro.eks.amazonaws.com/releases/1-30/49/)
+  - [`v1-29-eks-56`](https://distro.eks.amazonaws.com/releases/1-29/56/)
+  - [`v1-28-eks-66`](https://distro.eks.amazonaws.com/releases/1-28/66/)
+- New EKS-Distro base images with CVE fixes for Amazon Linux 2 and Amazon Linux 2023
+- Cilium: `v1.17.8-0` to `v1.17.10-0`
+- Kube-vip: `v1.0.0` to `v1.0.2`
+- cloud-provider-nutanix: `v0.5.2` to `v0.5.5`
+- cloud-provider-vsphere 1-33: `v1.33.0` to `v1.33.1`
+- cloud-provider-vsphere 1-32: `v1.32.2` to `v1.32.3`
+- cluster-api-provider-aws-snow `v0.2.7` to `v0.2.8`
+- Cert-manager: `v1.18.2` to `v1.18.3`
+- cluster-api-provider-nutanix: `v1.6.1` to `v1.6.2`
+- Rufio: `55a6a8c` to `126069b950a57d571df90dfec7cd98e6d64692be`
+
+### Fixed
+- Update custom TinkerbellTemplateConfig to use new static IPAM logic ([#10340](https://github.com/aws/eks-anywhere/pull/10340))
+- Set DHCP relay sourceInterface from LoadBalancerInterface config ([#10424](https://github.com/aws/eks-anywhere/pull/10424))
+- Eliminate race condition in package ctlr installation ([#10433](https://github.com/aws/eks-anywhere/pull/10433))
+
 ## [v0.24.1](https://github.com/aws/eks-anywhere/releases/tag/v0.24.1)
 
 ### Supported OS version details
@@ -70,13 +424,10 @@ description: >
   - [`v1-30-eks-47`](https://distro.eks.amazonaws.com/releases/1-30/47/)
   - [`v1-29-eks-54`](https://distro.eks.amazonaws.com/releases/1-29/54/)
   - [`v1-28-eks-65`](https://distro.eks.amazonaws.com/releases/1-28/65/)
-
 - Troubleshoot: `v0.122.0` to `v0.123.12`
 
 ### Fixed
 - Fix Bottlerocket cert renewal: Add 30s sleep and duplicate container ([#10360](https://github.com/aws/eks-anywhere/pull/10360))
-
-
 
 ## [v0.24.0](https://github.com/aws/eks-anywhere/releases/tag/v0.24.0)
 
@@ -134,6 +485,64 @@ description: >
 - etcdadm-controller: `v1.0.24` to `v1.0.26`
 - etcdadm-bootstrap-provider: `v1.0.16` to `v1.0.18`
 - controller-runtime: `v0.20.4` to `v0.21.0`
+
+## [v0.23.7](https://github.com/aws/eks-anywhere/releases/tag/v0.23.7)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.50.0 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+
+### Changed
+- EKS Distro:
+  - [`v1-33-eks-22`](https://distro.eks.amazonaws.com/releases/1-33/22/)
+  - [`v1-32-eks-32`](https://distro.eks.amazonaws.com/releases/1-32/32/)
+  - [`v1-31-eks-39`](https://distro.eks.amazonaws.com/releases/1-31/39/)
+  - [`v1-30-eks-50`](https://distro.eks.amazonaws.com/releases/1-30/50/)
+  - [`v1-29-eks-57`](https://distro.eks.amazonaws.com/releases/1-29/57/)
+- containerd `v1.7.28` to `v1.7.30`
+- rancher/local-path-provisioner `v0.0.32` to `v0.0.34`
+
+### Fixed
+- Ensure maxSurge value updates in Tinkerbell machine configurations are properly applied during ongoing cluster upgrades instead of using stale values ([#10466](https://github.com/aws/eks-anywhere/pull/10466))
+
+## [v0.23.6](https://github.com/aws/eks-anywhere/releases/tag/v0.23.6)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.50.0 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+
+\* RHEL 8's kernel version (4.18) is not supported by kubeadm for Kubernetes versions 1.32 and above (see Kubernetes GitHub issue [#129462](https://github.com/kubernetes/kubernetes/issues/129462)). As a result, EKS Anywhere does not support using RHEL 8 as the node operating system for Kubernetes versions 1.32 and above.
+
+### Changed
+- EKS Distro:
+  - [`v1-33-eks-21`](https://distro.eks.amazonaws.com/releases/1-33/21/)
+  - [`v1-32-eks-31`](https://distro.eks.amazonaws.com/releases/1-32/31/)
+  - [`v1-31-eks-38`](https://distro.eks.amazonaws.com/releases/1-31/38/)
+  - [`v1-30-eks-49`](https://distro.eks.amazonaws.com/releases/1-30/49/)
+  - [`v1-29-eks-56`](https://distro.eks.amazonaws.com/releases/1-29/56/)
+  - [`v1-28-eks-66`](https://distro.eks.amazonaws.com/releases/1-28/66/)
+- New EKS-Distro base images with CVE fixes for Amazon Linux 2 and Amazon Linux 2023
+- cloud-provider-nutanix `v0.5.3` to `v0.5.5`
+- cluster-api-provider-aws-snow `v0.2.7` to `v0.2.8`
+- eks-anywhere-packages: `v0.4.8` to `v0.4.9`
+
+### Added
+- Add support for skipping BMC contact checks for specific Rufio Machines [#10368](https://github.com/aws/eks-anywhere/pull/10368)
+
+### Fixed
+- Set DHCP relay sourceInterface from LoadBalancerInterface config ([#10425](https://github.com/aws/eks-anywhere/pull/10425))
+- Eliminate race condition in package ctlr installation ([#10434](https://github.com/aws/eks-anywhere/pull/10434))
+- Fix Bottlerocket cert renewal: Add 30s sleep and duplicate container ([#10435](https://github.com/aws/eks-anywhere/pull/10435))
 
 ## [v0.23.5](https://github.com/aws/eks-anywhere/releases/tag/v0.23.5)
 

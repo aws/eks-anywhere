@@ -1,7 +1,8 @@
 package snow
 
 import (
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
@@ -9,17 +10,21 @@ import (
 // FgEtcdLearner is a Kubeadm feature gate for etcd learner mode.
 const FgEtcdLearner = "EtcdLearnerMode"
 
-func addStackedEtcdExtraArgsInKubeadmControlPlane(kcp *controlplanev1.KubeadmControlPlane, externalEtcdConfig *v1alpha1.ExternalEtcdConfiguration) {
+func addStackedEtcdExtraArgsInKubeadmControlPlane(kcp *controlplanev1beta2.KubeadmControlPlane, externalEtcdConfig *v1alpha1.ExternalEtcdConfiguration) {
 	if externalEtcdConfig != nil {
 		return
 	}
 
-	stackedEtcdExtraArgs := kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.Local.ExtraArgs
-	stackedEtcdExtraArgs["listen-peer-urls"] = "https://0.0.0.0:2380"
-	stackedEtcdExtraArgs["listen-client-urls"] = "https://0.0.0.0:2379"
+	listenPeerURLs := "https://0.0.0.0:2380"
+	listenClientURLs := "https://0.0.0.0:2379"
+	kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.Local.ExtraArgs = append(
+		kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.Local.ExtraArgs,
+		bootstrapv1beta2.Arg{Name: "listen-peer-urls", Value: &listenPeerURLs},
+		bootstrapv1beta2.Arg{Name: "listen-client-urls", Value: &listenClientURLs},
+	)
 }
 
-func disableEtcdLearnerMode(kcp *controlplanev1.KubeadmControlPlane) {
+func disableEtcdLearnerMode(kcp *controlplanev1beta2.KubeadmControlPlane) {
 	if kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.FeatureGates == nil {
 		kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.FeatureGates = map[string]bool{}
 	}

@@ -8,10 +8,11 @@ import (
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	apierrors1 "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 	apierrors "k8s.io/apimachinery/pkg/util/errors"
-	"sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
@@ -35,8 +36,8 @@ func ValidateClusterReady(ctx context.Context, vc clusterf.StateValidationConfig
 	}
 
 	for _, condition := range capiCluster.Status.Conditions {
-		if condition.Type == v1beta1.ReadyCondition {
-			if condition.Status != corev1.ConditionTrue {
+		if condition.Type == string(clusterv1beta2.ReadyCondition) {
+			if condition.Status != metav1.ConditionTrue {
 				return fmt.Errorf("capi cluster %s not ready yet", capiCluster.GetName())
 			}
 			break
@@ -96,15 +97,22 @@ func validateKCP(ctx context.Context, vc clusterf.StateValidationConfig) error {
 	}
 
 	for _, condition := range kcp.Status.Conditions {
-		if condition.Type == v1beta1.ReadyCondition {
-			if condition.Status != corev1.ConditionTrue {
+		if condition.Type == clusterv1beta2.AvailableCondition {
+			if condition.Status != metav1.ConditionTrue {
 				return fmt.Errorf("kcp %s is not ready yet", kcp.GetName())
 			}
 			break
 		}
 	}
-	if kcp.Status.UpdatedReplicas != kcp.Status.ReadyReplicas || *kcp.Spec.Replicas != kcp.Status.UpdatedReplicas {
-		return fmt.Errorf("kcp replicas count %d, updated replicas count %d and ready replicas count %d are not in sync", *kcp.Spec.Replicas, kcp.Status.UpdatedReplicas, kcp.Status.ReadyReplicas)
+	var upToDate, ready int32
+	if kcp.Status.UpToDateReplicas != nil {
+		upToDate = *kcp.Status.UpToDateReplicas
+	}
+	if kcp.Status.ReadyReplicas != nil {
+		ready = *kcp.Status.ReadyReplicas
+	}
+	if upToDate != ready || *kcp.Spec.Replicas != upToDate {
+		return fmt.Errorf("kcp replicas count %d, up-to-date replicas count %d and ready replicas count %d are not in sync", *kcp.Spec.Replicas, upToDate, ready)
 	}
 	return nil
 }
@@ -119,15 +127,22 @@ func validateMDs(ctx context.Context, vc clusterf.StateValidationConfig) error {
 	}
 	for _, md := range mds {
 		for _, condition := range md.Status.Conditions {
-			if condition.Type == v1beta1.ReadyCondition {
-				if condition.Status != corev1.ConditionTrue {
+			if condition.Type == string(clusterv1beta2.ReadyCondition) {
+				if condition.Status != metav1.ConditionTrue {
 					return fmt.Errorf("md ready condition is not true for md %s", md.Name)
 				}
 				break
 			}
 		}
-		if md.Status.UpdatedReplicas != md.Status.ReadyReplicas || *md.Spec.Replicas != md.Status.UpdatedReplicas {
-			return fmt.Errorf("md replicas count %d, updated replicas count %d and ready replicas count %d for md %s are not in sync", *md.Spec.Replicas, md.Status.UpdatedReplicas, md.Status.ReadyReplicas, md.Name)
+		var upToDateReplicas, readyReplicas int32
+		if md.Status.UpToDateReplicas != nil {
+			upToDateReplicas = *md.Status.UpToDateReplicas
+		}
+		if md.Status.ReadyReplicas != nil {
+			readyReplicas = *md.Status.ReadyReplicas
+		}
+		if upToDateReplicas != readyReplicas || *md.Spec.Replicas != upToDateReplicas {
+			return fmt.Errorf("md replicas count %d, updated replicas count %d and ready replicas count %d for md %s are not in sync", *md.Spec.Replicas, upToDateReplicas, readyReplicas, md.Name)
 		}
 	}
 
@@ -185,7 +200,7 @@ func validateMDUsDeleted(ctx context.Context, vc clusterf.StateValidationConfig)
 }
 
 func validateNUsAndPodsDeleted(ctx context.Context, vc clusterf.StateValidationConfig) error {
-	machines := &v1beta1.MachineList{}
+	machines := &clusterv1beta2.MachineList{}
 	if err := vc.ManagementClusterClient.List(ctx, machines); err != nil {
 		return fmt.Errorf("failed to list machines: %s", err)
 	}
@@ -352,7 +367,7 @@ func validateControlPlaneTaints(cluster *v1alpha1.Cluster, node corev1.Node) err
 	return api.ValidateControlPlaneTaints(cluster.Spec.ControlPlaneConfiguration, node)
 }
 
-func filterWorkerNodes(nodes []corev1.Node, ms []v1beta1.MachineSet, w v1alpha1.WorkerNodeGroupConfiguration) []corev1.Node {
+func filterWorkerNodes(nodes []corev1.Node, ms []clusterv1beta2.MachineSet, w v1alpha1.WorkerNodeGroupConfiguration) []corev1.Node {
 	wNodes := make([]corev1.Node, 0)
 	for _, node := range nodes {
 		ownerName, ok := node.Annotations["cluster.x-k8s.io/owner-name"]
@@ -369,9 +384,9 @@ func filterWorkerNodes(nodes []corev1.Node, ms []v1beta1.MachineSet, w v1alpha1.
 	return wNodes
 }
 
-func getWorkerNodeMachineSets(ctx context.Context, vc clusterf.StateValidationConfig, w v1alpha1.WorkerNodeGroupConfiguration) ([]v1beta1.MachineSet, error) {
+func getWorkerNodeMachineSets(ctx context.Context, vc clusterf.StateValidationConfig, w v1alpha1.WorkerNodeGroupConfiguration) ([]clusterv1beta2.MachineSet, error) {
 	mdName := clusterapi.MachineDeploymentName(vc.ClusterSpec.Cluster, w)
-	ms := &v1beta1.MachineSetList{}
+	ms := &clusterv1beta2.MachineSetList{}
 	err := vc.ManagementClusterClient.List(ctx, ms, client.InNamespace(constants.EksaSystemNamespace), client.MatchingLabels{
 		"cluster.x-k8s.io/deployment-name": mdName,
 	})
@@ -397,8 +412,15 @@ func validateKCPForAPIServerExtraArgs(ctx context.Context, vc clusterf.StateVali
 	if apiServerExtraArgsKCP == nil {
 		return fmt.Errorf("kcp object APIServerExtraArgs is nil expected: %v", apiServerExtraArgsSpec)
 	}
+	// Build a lookup map from []Arg for comparison
+	kcpArgsMap := make(map[string]string, len(apiServerExtraArgsKCP))
+	for _, arg := range apiServerExtraArgsKCP {
+		if arg.Value != nil {
+			kcpArgsMap[arg.Name] = *arg.Value
+		}
+	}
 	for k, v := range apiServerExtraArgsSpec {
-		if val, ok := apiServerExtraArgsKCP[k]; !ok || val != v {
+		if val, ok := kcpArgsMap[k]; !ok || val != v {
 			return fmt.Errorf("kcp object does not have required APIServerExtraArgs expected: %v, actual: %v", apiServerExtraArgsSpec, apiServerExtraArgsKCP)
 		}
 	}

@@ -7,9 +7,9 @@ import (
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/internal/test"
@@ -120,9 +120,9 @@ func TestControlPlaneSpecUpdateMachineTemplates(t *testing.T) {
 	}
 	spec.Cluster.Spec.ControlPlaneConfiguration.Taints = cpTaints
 
-	expectedKCP.Spec.KubeadmConfigSpec.InitConfiguration.NodeRegistration.Taints = cpTaints
-	expectedKCP.Spec.KubeadmConfigSpec.JoinConfiguration.NodeRegistration.Taints = cpTaints
-	expectedKCP.Spec.MachineTemplate.InfrastructureRef.Name = "test-control-plane-1"
+	expectedKCP.Spec.KubeadmConfigSpec.InitConfiguration.NodeRegistration.Taints = &cpTaints
+	expectedKCP.Spec.KubeadmConfigSpec.JoinConfiguration.NodeRegistration.Taints = &cpTaints
+	expectedKCP.Spec.MachineTemplate.Spec.InfrastructureRef.Name = "test-control-plane-1"
 
 	expectedCPTemplate.Name = "test-control-plane-1"
 	expectedCPTemplate.Spec.Template.Spec.TemplateOverride = testTemplateOverride
@@ -172,7 +172,7 @@ func TestControlPlaneSpecRegistryMirrorInsecureSkipVerify(t *testing.T) {
 	tests := []struct {
 		name         string
 		mirrorConfig *anywherev1.RegistryMirrorConfiguration
-		files        []bootstrapv1.File
+		files        []bootstrapv1beta2.File
 	}{
 		{
 			name:         "insecure skip verify",
@@ -192,7 +192,7 @@ func TestControlPlaneSpecRegistryMirrorInsecureSkipVerify(t *testing.T) {
 			cp, err := ControlPlaneSpec(ctx, logger, client, spec)
 			g.Expect(err).NotTo(HaveOccurred())
 			g.Expect(cp.Cluster).To(Equal(capiCluster()))
-			g.Expect(cp.KubeadmControlPlane).To(Equal(kubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
+			g.Expect(cp.KubeadmControlPlane).To(Equal(kubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
 				kcp.Spec.KubeadmConfigSpec.Files = append(kcp.Spec.KubeadmConfigSpec.Files, tt.files...)
 				kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands = append(kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands, test.RegistryMirrorSudoPreKubeadmCommands()...)
 			})))
@@ -220,9 +220,9 @@ func tinkerbellCluster() *tinkerbellv1.TinkerbellCluster {
 	}
 }
 
-func kubeadmControlPlane(opts ...func(*controlplanev1.KubeadmControlPlane)) *controlplanev1.KubeadmControlPlane {
-	var kcp *controlplanev1.KubeadmControlPlane
-	b := []byte(`apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+func kubeadmControlPlane(opts ...func(*controlplanev1beta2.KubeadmControlPlane)) *controlplanev1beta2.KubeadmControlPlane {
+	var kcp *controlplanev1beta2.KubeadmControlPlane
+	b := []byte(`apiVersion: controlplane.cluster.x-k8s.io/v1beta2
 kind: KubeadmControlPlane
 metadata:
   name: test
@@ -240,12 +240,18 @@ spec:
         imageTag: v1.8.3-eks-1-21-4
       apiServer:
         extraArgs:
-          audit-policy-file: /etc/kubernetes/audit-policy.yaml
-          audit-log-path: /var/log/kubernetes/api-audit.log
-          audit-log-maxage: "30"
-          audit-log-maxbackup: "10"
-          audit-log-maxsize: "512"
-          authentication-token-webhook-config-file: /etc/kubernetes/aws-iam-authenticator/kubeconfig.yaml
+        - name: audit-log-maxage
+          value: "30"
+        - name: audit-log-maxbackup
+          value: "10"
+        - name: audit-log-maxsize
+          value: "512"
+        - name: audit-log-path
+          value: "/var/log/kubernetes/api-audit.log"
+        - name: audit-policy-file
+          value: "/etc/kubernetes/audit-policy.yaml"
+        - name: authentication-token-webhook-config-file
+          value: "/etc/kubernetes/aws-iam-authenticator/kubeconfig.yaml"
         extraVolumes:
           - hostPath: /etc/kubernetes/audit-policy.yaml
             mountPath: /etc/kubernetes/audit-policy.yaml
@@ -268,19 +274,27 @@ spec:
     initConfiguration:
       nodeRegistration:
         kubeletExtraArgs:
-          read-only-port: 0
-          provider-id: PROVIDER_ID
-          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-          anonymous-auth: false
+        - name: anonymous-auth
+          value: "false"
+        - name: provider-id
+          value: PROVIDER_ID
+        - name: read-only-port
+          value: "0"
+        - name: tls-cipher-suites
+          value: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     joinConfiguration:
       nodeRegistration:
         ignorePreflightErrors:
         - DirAvailable--etc-kubernetes-manifests
         kubeletExtraArgs:
-          anonymous-auth: false
-          provider-id: PROVIDER_ID
-          read-only-port: 0
-          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        - name: anonymous-auth
+          value: "false"
+        - name: provider-id
+          value: PROVIDER_ID
+        - name: read-only-port
+          value: "0"
+        - name: tls-cipher-suites
+          value: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     files:
       - content: |
           apiVersion: v1
@@ -535,15 +549,16 @@ spec:
       - 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ=='
       sudo: ALL=(ALL) NOPASSWD:ALL
     format: cloud-config
-  rolloutStrategy:
-    rollingUpdate:
-      maxSurge: 1
+  rollout:
+    strategy:
+      rollingUpdate:
+        maxSurge: 1
   machineTemplate:
-    infrastructureRef:
-      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-      kind: TinkerbellMachineTemplate
-      name: test-control-plane-1
-      namespace: eksa-system
+    spec:
+      infrastructureRef:
+        apiGroup: infrastructure.cluster.x-k8s.io
+        kind: TinkerbellMachineTemplate
+        name: test-control-plane-1
   replicas: 1
   version: v1.21.2-eks-1-21-4`)
 	if err := yaml.UnmarshalStrict(b, &kcp); err != nil {
@@ -555,12 +570,11 @@ spec:
 	return kcp
 }
 
-func kcpWithRegistryCredentials() *controlplanev1.KubeadmControlPlane {
-	var kcp *controlplanev1.KubeadmControlPlane
-	b := []byte(`apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+func kcpWithRegistryCredentials() *controlplanev1beta2.KubeadmControlPlane {
+	var kcp *controlplanev1beta2.KubeadmControlPlane
+	b := []byte(`apiVersion: controlplane.cluster.x-k8s.io/v1beta2
 kind: KubeadmControlPlane
 metadata:
-  creationTimestamp: null
   name: test
   namespace: eksa-system
 spec:
@@ -568,12 +582,18 @@ spec:
     clusterConfiguration:
       apiServer:
         extraArgs:
-          audit-policy-file: /etc/kubernetes/audit-policy.yaml
-          audit-log-path: /var/log/kubernetes/api-audit.log
-          audit-log-maxage: "30"
-          audit-log-maxbackup: "10"
-          audit-log-maxsize: "512"
-          authentication-token-webhook-config-file: /etc/kubernetes/aws-iam-authenticator/kubeconfig.yaml
+        - name: audit-log-maxage
+          value: "30"
+        - name: audit-log-maxbackup
+          value: "10"
+        - name: audit-log-maxsize
+          value: "512"
+        - name: audit-log-path
+          value: "/var/log/kubernetes/api-audit.log"
+        - name: audit-policy-file
+          value: "/etc/kubernetes/audit-policy.yaml"
+        - name: authentication-token-webhook-config-file
+          value: "/etc/kubernetes/aws-iam-authenticator/kubeconfig.yaml"
         extraVolumes:
         - hostPath: /etc/kubernetes/audit-policy.yaml
           mountPath: /etc/kubernetes/audit-policy.yaml
@@ -588,13 +608,11 @@ spec:
         - hostPath: /var/lib/kubeadm/aws-iam-authenticator/
           mountPath: /etc/kubernetes/aws-iam-authenticator/
           name: authconfig
+          readOnly: false
         - hostPath: /var/lib/kubeadm/aws-iam-authenticator/pki/
           mountPath: /var/aws-iam-authenticator/
           name: awsiamcert
-      bottlerocketAdmin: {}
-      bottlerocketBootstrap: {}
-      bottlerocketControl: {}
-      controllerManager: {}
+          readOnly: false
       dns:
         imageRepository: public.ecr.aws/eks-distro/coredns
         imageTag: v1.8.3-eks-1-21-4
@@ -603,11 +621,6 @@ spec:
           imageRepository: public.ecr.aws/eks-distro/etcd-io
           imageTag: v3.4.16-eks-1-21-4
       imageRepository: public.ecr.aws/eks-distro/kubernetes
-      networking: {}
-      pause: {}
-      proxy: {}
-      registryMirror: {}
-      scheduler: {}
     files:
     - content: |
         apiVersion: v1
@@ -863,47 +876,49 @@ spec:
       path: /etc/containerd/config_append.toml
     - content: |
         server = "https://:"
-        
-        [host."https://:"]
+
+        [host."https://:/v2"]
           capabilities = ["pull", "resolve"]
-          [host."https://:".header]
+          override_path = true
+          [host."https://:/v2".header]
             authorization = "Basic dXNlcm5hbWU6cGFzc3dvcmQ="
       owner: root:root
       path: /etc/containerd/certs.d/:/hosts.toml
     - content: |
         server = "https://public.ecr.aws"
-        
-        [host."https://:"]
+
+        [host."https://:/v2"]
           capabilities = ["pull", "resolve"]
-          [host."https://:".header]
+          override_path = true
+          [host."https://:/v2".header]
             authorization = "Basic dXNlcm5hbWU6cGFzc3dvcmQ="
       owner: root:root
       path: /etc/containerd/certs.d/public.ecr.aws/hosts.toml
     format: cloud-config
     initConfiguration:
-      localAPIEndpoint: {}
       nodeRegistration:
         kubeletExtraArgs:
-          anonymous-auth: "false"
-          provider-id: PROVIDER_ID
-          read-only-port: "0"
-          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        - name: anonymous-auth
+          value: "false"
+        - name: provider-id
+          value: PROVIDER_ID
+        - name: read-only-port
+          value: "0"
+        - name: tls-cipher-suites
+          value: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     joinConfiguration:
-      bottlerocketAdmin: {}
-      bottlerocketBootstrap: {}
-      bottlerocketControl: {}
-      discovery: {}
       nodeRegistration:
         ignorePreflightErrors:
         - DirAvailable--etc-kubernetes-manifests
         kubeletExtraArgs:
-          anonymous-auth: "false"
-          provider-id: PROVIDER_ID
-          read-only-port: "0"
-          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-      pause: {}
-      proxy: {}
-      registryMirror: {}
+        - name: anonymous-auth
+          value: "false"
+        - name: provider-id
+          value: PROVIDER_ID
+        - name: read-only-port
+          value: "0"
+        - name: tls-cipher-suites
+          value: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     preKubeadmCommands:
     - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
     - sudo systemctl daemon-reload
@@ -913,27 +928,18 @@ spec:
       sshAuthorizedKeys:
       - 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ=='
       sudo: ALL=(ALL) NOPASSWD:ALL
+  rollout:
+    strategy:
+      rollingUpdate:
+        maxSurge: 1
   machineTemplate:
-    infrastructureRef:
-      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-      kind: TinkerbellMachineTemplate
-      name: test-control-plane-1
-      namespace: eksa-system
-    metadata: {}
+    spec:
+      infrastructureRef:
+        apiGroup: infrastructure.cluster.x-k8s.io
+        kind: TinkerbellMachineTemplate
+        name: test-control-plane-1
   replicas: 1
-  rolloutStrategy:
-    rollingUpdate:
-      maxSurge: 1
-  version: v1.21.2-eks-1-21-4
-status:
-  initialized: false
-  ready: false
-  readyReplicas: 0
-  replicas: 0
-  unavailableReplicas: 0
-  updatedReplicas: 0
-
-`)
+  version: v1.21.2-eks-1-21-4`)
 	if err := yaml.UnmarshalStrict(b, &kcp); err != nil {
 		return nil
 	}
@@ -1066,40 +1072,39 @@ func tinkerbellMachineTemplate(name string) *tinkerbellv1.TinkerbellMachineTempl
 	}
 }
 
-func capiCluster() *clusterv1.Cluster {
-	return &clusterv1.Cluster{
+func capiCluster() *clusterv1beta2.Cluster {
+	return &clusterv1beta2.Cluster{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Cluster",
-			APIVersion: "cluster.x-k8s.io/v1beta1",
+			APIVersion: "cluster.x-k8s.io/v1beta2",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test",
 			Namespace: constants.EksaSystemNamespace,
 			Labels:    map[string]string{"cluster.x-k8s.io/cluster-name": "test"},
 		},
-		Spec: clusterv1.ClusterSpec{
-			ClusterNetwork: &clusterv1.ClusterNetwork{
-				APIServerPort: nil,
-				Services: &clusterv1.NetworkRanges{
+		Spec: clusterv1beta2.ClusterSpec{
+			ClusterNetwork: clusterv1beta2.ClusterNetwork{
+				Services: clusterv1beta2.NetworkRanges{
 					CIDRBlocks: []string{"10.96.0.0/12"},
 				},
-				Pods: &clusterv1.NetworkRanges{
+				Pods: clusterv1beta2.NetworkRanges{
 					CIDRBlocks: []string{"192.168.0.0/16"},
 				},
 			},
-			ControlPlaneEndpoint: clusterv1.APIEndpoint{
+			ControlPlaneEndpoint: clusterv1beta2.APIEndpoint{
 				Host: "1.2.3.4",
 				Port: 6443,
 			},
-			ControlPlaneRef: &corev1.ObjectReference{
-				Kind:       "KubeadmControlPlane",
-				Name:       "test",
-				APIVersion: "controlplane.cluster.x-k8s.io/v1beta1",
+			ControlPlaneRef: clusterv1beta2.ContractVersionedObjectReference{
+				APIGroup: "controlplane.cluster.x-k8s.io",
+				Kind:     "KubeadmControlPlane",
+				Name:     "test",
 			},
-			InfrastructureRef: &corev1.ObjectReference{
-				Kind:       "TinkerbellCluster",
-				Name:       "test",
-				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+			InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
+				APIGroup: "infrastructure.cluster.x-k8s.io",
+				Kind:     "TinkerbellCluster",
+				Name:     "test",
 			},
 		},
 	}

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"reflect"
 
 	tinkv1alpha1 "github.com/tinkerbell/tink/api/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -183,8 +182,11 @@ func (p *Provider) validateHardwareReqForControlPlaneRollOut(currentSpec, newClu
 		maxSurge = newClusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy.RollingUpdate.MaxSurge
 	}
 	if oldCP.Spec.OSImageURL != newCP.Spec.OSImageURL {
-		if err := requirements.Add(newCP.Spec.HardwareSelector, maxSurge); err != nil {
-			return nil, fmt.Errorf("validating hardware requirements for control-plane nodes roll out: %v", err)
+		selectors := GetSelectorsFromMachineConfig(newCP)
+		for _, selector := range selectors {
+			if err := requirements.Add(selector, maxSurge); err != nil {
+				return nil, fmt.Errorf("validating hardware requirements for control-plane nodes roll out: %v", err)
+			}
 		}
 	}
 	return requirements, nil
@@ -205,8 +207,11 @@ func (p *Provider) validateHardwareReqForWorkerNodeGroupsRollOut(currentSpec, ne
 			if rolloutStrategy != nil && rolloutStrategy.Type == "RollingUpdate" {
 				maxSurge = rolloutStrategy.RollingUpdate.MaxSurge
 			}
-			if err := requirements.Add(newWng.Spec.HardwareSelector, maxSurge); err != nil {
-				return nil, fmt.Errorf("validating hardware requirements for worker node groups roll out: %v", err)
+			selectors := GetSelectorsFromMachineConfig(newWng)
+			for _, selector := range selectors {
+				if err := requirements.Add(selector, maxSurge); err != nil {
+					return nil, fmt.Errorf("validating hardware requirements for worker node groups roll out: %v", err)
+				}
 			}
 		}
 	}
@@ -454,10 +459,6 @@ func (p *Provider) validateMachineCfg(ctx context.Context, cluster *types.Cluste
 		return fmt.Errorf("spec.Users[0].Name is immutable. Previous value %s,   New value %s", prevMachineConfig.Spec.Users[0].Name, newConfig.Spec.Users[0].Name)
 	}
 
-	if !reflect.DeepEqual(newConfig.Spec.HardwareSelector, prevMachineConfig.Spec.HardwareSelector) {
-		return fmt.Errorf("spec.HardwareSelector is immutable. Previous value %v,   New value %v", prevMachineConfig.Spec.HardwareSelector, newConfig.Spec.HardwareSelector)
-	}
-
 	return nil
 }
 
@@ -487,8 +488,10 @@ func (p *Provider) PreCoreComponentsUpgrade(
 	// Attempt the upgrade. This should upgrade the stack in the management cluster by updating
 	// images, installing new CRDs and possibly removing old ones.
 
+	legacyChartName := managementComponents.Tinkerbell.TinkerbellStack.TinkebellChart.Name
+
 	// Check if cluster has legacy chart installed
-	hasLegacy, err := p.stackInstaller.HasLegacyChart(ctx, managementComponents.Tinkerbell, cluster.KubeconfigFile)
+	hasLegacy, err := p.stackInstaller.HasChart(ctx, legacyChartName, cluster.KubeconfigFile, "")
 	if err != nil {
 		return fmt.Errorf("getting legacy chart: %v", err)
 	}
@@ -508,11 +511,7 @@ func (p *Provider) PreCoreComponentsUpgrade(
 		}
 
 		// Uninstall legacy chart
-		err = p.stackInstaller.Uninstall(
-			ctx,
-			managementComponents.Tinkerbell,
-			cluster.KubeconfigFile,
-		)
+		err = p.stackInstaller.UninstallChart(ctx, legacyChartName, cluster.KubeconfigFile, "")
 		if err != nil {
 			return fmt.Errorf("uninstalling legacy chart: %v", err)
 		}
@@ -521,6 +520,20 @@ func (p *Provider) PreCoreComponentsUpgrade(
 		err = p.annotateCRDs(ctx, cluster)
 		if err != nil {
 			return fmt.Errorf("annotating crds: %v", err)
+		}
+	}
+
+	// Check if cluster has stack chart installed (current production, pre-mono-repo)
+	hasStack, err := p.stackInstaller.HasChart(ctx, "stack", cluster.KubeconfigFile, p.stackInstaller.GetNamespace())
+	if err != nil {
+		return fmt.Errorf("getting stack chart: %v", err)
+	}
+
+	if hasStack {
+		// Uninstall stack chart before installing new mono-repo chart
+		err = p.stackInstaller.UninstallChart(ctx, "stack", cluster.KubeconfigFile, p.stackInstaller.GetNamespace())
+		if err != nil {
+			return fmt.Errorf("uninstalling stack chart: %v", err)
 		}
 	}
 
@@ -542,7 +555,7 @@ func (p *Provider) PreCoreComponentsUpgrade(
 		cluster.KubeconfigFile,
 		p.datacenterConfig.Spec.HookImagesURLPath,
 		stack.WithLoadBalancerInterface(p.datacenterConfig.Spec.LoadBalancerInterface),
-		stack.WithBootsOnKubernetes(),
+		stack.WithSmeeOnKubernetes(),
 		stack.WithStackServiceEnabled(true),
 		stack.WithDHCPRelayEnabled(true),
 		stack.WithLoadBalancerEnabled(

@@ -67,7 +67,7 @@ Follow these steps to create an EKS Anywhere cluster that can be used either as 
 
    **Configure Curated Packages**
 
-      The Amazon EKS Anywhere Curated Packages are only available to customers with the Amazon EKS Anywhere Enterprise Subscription. To request a free trial, talk to your Amazon representative or connect with one [here](https://aws.amazon.com/contact-us/sales-support-eks/). Cluster creation will succeed if authentication is not set up, but some warnings may be genered.  Detailed package configurations can be found [here]({{< relref "../../packages" >}}).
+      The Amazon EKS Anywhere Curated Packages are only available to customers with the Amazon EKS Anywhere Enterprise Subscription. For subscription details, talk to your Amazon representative or connect with one [here](https://aws.amazon.com/contact-us/sales-support-eks/). Cluster creation will succeed if authentication is not set up, but some warnings may be genered.  Detailed package configurations can be found [here]({{< relref "../../packages" >}}).
 
       If you are going to use packages, set up authentication. These credentials should have [limited capabilities]({{< relref "../../packages/prereq#setup-authentication-to-use-curated-packages" >}}):
       ```bash
@@ -159,7 +159,7 @@ Make sure you use single quotes around the values so that your shell does not in
    Example command output
    ```
    ...
-   kubernetesVersion: "1.31"
+   kubernetesVersion: "1.35"
    managementCluster:
      name: mgmt
    workerNodeGroupConfigurations:

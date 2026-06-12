@@ -5,8 +5,8 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -16,10 +16,10 @@ import (
 
 // GetCAPICluster reads a cluster-api Cluster for an eks-a cluster using a kube client
 // If the CAPI cluster is not found, the method returns (nil, nil).
-func GetCAPICluster(ctx context.Context, client client.Client, cluster *anywherev1.Cluster) (*clusterv1.Cluster, error) {
+func GetCAPICluster(ctx context.Context, client client.Client, cluster *anywherev1.Cluster) (*clusterv1beta2.Cluster, error) {
 	capiClusterName := clusterapi.ClusterName(cluster)
 
-	capiCluster := &clusterv1.Cluster{}
+	capiCluster := &clusterv1beta2.Cluster{}
 	key := types.NamespacedName{Namespace: constants.EksaSystemNamespace, Name: capiClusterName}
 
 	err := client.Get(ctx, key, capiCluster)
@@ -45,7 +45,7 @@ func CapiClusterObjectKey(cluster *anywherev1.Cluster) client.ObjectKey {
 
 // GetKubeadmControlPlane reads a cluster-api KubeadmControlPlane for an eks-a cluster using a kube client
 // If the KubeadmControlPlane is not found, the method returns (nil, nil).
-func GetKubeadmControlPlane(ctx context.Context, client client.Client, cluster *anywherev1.Cluster) (*controlplanev1.KubeadmControlPlane, error) {
+func GetKubeadmControlPlane(ctx context.Context, client client.Client, cluster *anywherev1.Cluster) (*controlplanev1beta2.KubeadmControlPlane, error) {
 	kubeadmControlPlane, err := KubeadmControlPlane(ctx, client, cluster)
 	if apierrors.IsNotFound(err) {
 		return nil, nil
@@ -58,8 +58,8 @@ func GetKubeadmControlPlane(ctx context.Context, client client.Client, cluster *
 }
 
 // KubeadmControlPlane reads a cluster-api KubeadmControlPlane for an eks-a cluster using a kube client.
-func KubeadmControlPlane(ctx context.Context, client client.Client, cluster *anywherev1.Cluster) (*controlplanev1.KubeadmControlPlane, error) {
-	kubeadmControlPlane := &controlplanev1.KubeadmControlPlane{}
+func KubeadmControlPlane(ctx context.Context, client client.Client, cluster *anywherev1.Cluster) (*controlplanev1beta2.KubeadmControlPlane, error) {
+	kubeadmControlPlane := &controlplanev1beta2.KubeadmControlPlane{}
 	if err := client.Get(ctx, CAPIKubeadmControlPlaneKey(cluster), kubeadmControlPlane); err != nil {
 		return nil, err
 	}
@@ -77,8 +77,8 @@ func CAPIKubeadmControlPlaneKey(cluster *anywherev1.Cluster) client.ObjectKey {
 
 // GetMachineDeployment reads a cluster-api MachineDeployment for an eks-a cluster using a kube client.
 // If the MachineDeployment is not found, the method returns (nil, nil).
-func GetMachineDeployment(ctx context.Context, client client.Client, machineDeploymentName string) (*clusterv1.MachineDeployment, error) {
-	machineDeployment := &clusterv1.MachineDeployment{}
+func GetMachineDeployment(ctx context.Context, client client.Client, machineDeploymentName string) (*clusterv1beta2.MachineDeployment, error) {
+	machineDeployment := &clusterv1beta2.MachineDeployment{}
 	key := types.NamespacedName{Namespace: constants.EksaSystemNamespace, Name: machineDeploymentName}
 
 	err := client.Get(ctx, key, machineDeployment)
@@ -93,10 +93,10 @@ func GetMachineDeployment(ctx context.Context, client client.Client, machineDepl
 }
 
 // GetMachineDeployments reads all of cluster-api MachineDeployment for an eks-a cluster using a kube client.
-func GetMachineDeployments(ctx context.Context, c client.Client, cluster *anywherev1.Cluster) ([]clusterv1.MachineDeployment, error) {
-	machineDeployments := &clusterv1.MachineDeploymentList{}
+func GetMachineDeployments(ctx context.Context, c client.Client, cluster *anywherev1.Cluster) ([]clusterv1beta2.MachineDeployment, error) {
+	machineDeployments := &clusterv1beta2.MachineDeploymentList{}
 
-	err := c.List(ctx, machineDeployments, client.MatchingLabels{clusterv1.ClusterNameLabel: cluster.Name}, client.InNamespace(constants.EksaSystemNamespace))
+	err := c.List(ctx, machineDeployments, client.MatchingLabels{clusterv1beta2.ClusterNameLabel: cluster.Name}, client.InNamespace(constants.EksaSystemNamespace))
 	if err != nil {
 		return nil, err
 	}

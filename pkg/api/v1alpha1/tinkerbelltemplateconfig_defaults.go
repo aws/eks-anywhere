@@ -29,12 +29,13 @@ warnings:
 // DefaultActions constructs a set of default actions for the given osFamily.
 func DefaultActions(clusterSpec *Cluster, osImageOverride, tinkerbellLocalIP, tinkerbellLBIP string, osFamily OSFamily) []ActionOpt {
 	// The metadata string will have two URLs:
-	// 1. one that will be used initially for bootstrap and will point to hegel running on kind.
-	// 2. one that will be used when the workload cluster is up and will point to hegel running on
+	// 1. one that will be used initially for bootstrap and will point to tootles running on kind.
+	// 2. one that will be used when the workload cluster is up and will point to tootles running on
 	//    the workload cluster.
+	// Port 7172 is the tootles (metadata service) port in the mono-repo tinkerbell chart.
 	metadataURLs := []string{
-		fmt.Sprintf("http://%s:50061", tinkerbellLocalIP),
-		fmt.Sprintf("http://%s:50061", tinkerbellLBIP),
+		fmt.Sprintf("http://%s:7172", tinkerbellLocalIP),
+		fmt.Sprintf("http://%s:7172", tinkerbellLBIP),
 	}
 
 	additionalEnvVar := make(map[string]string)
@@ -160,7 +161,7 @@ func withNetplanAction(disk string, osFamily OSFamily) ActionOpt {
             match:
                 macaddress: {{ (index .Hardware.Interfaces 0).DHCP.MAC }}
             addresses:
-                - {{ (index .Hardware.Interfaces 0).DHCP.IP.Address }}/{{ netmaskToCIDR (index .Hardware.Interfaces 0).DHCP.IP.Netmask }}
+                - {{ (index .Hardware.Interfaces 0).DHCP.IP.Address }}/{{ netmaskToPrefixLength (index .Hardware.Interfaces 0).DHCP.IP.Netmask }}
             nameservers:
                 addresses: [{{ range $i, $ns := (index .Hardware.Interfaces 0).DHCP.NameServers }}{{if $i}}, {{end}}{{$ns}}{{end}}]
             routes:
@@ -182,7 +183,7 @@ func withNetplanAction(disk string, osFamily OSFamily) ActionOpt {
             id: {{ (index .Hardware.Interfaces 0).DHCP.VLANID }}
             link: mainif
             addresses:
-            - {{ (index .Hardware.Interfaces 0).DHCP.IP.Address }}/{{ netmaskToCIDR (index .Hardware.Interfaces 0).DHCP.IP.Netmask }}
+            - {{ (index .Hardware.Interfaces 0).DHCP.IP.Address }}/{{ netmaskToPrefixLength (index .Hardware.Interfaces 0).DHCP.IP.Netmask }}
             nameservers:
                 addresses: [{{ range $i, $ns := (index .Hardware.Interfaces 0).DHCP.NameServers }}{{if $i}}, {{end}}{{$ns}}{{end}}]
             {{- if (index .Hardware.Interfaces 0).DHCP.IP.Gateway }}
@@ -341,7 +342,7 @@ autoconnect-priority=10
 mac-address={{ (index .Hardware.Interfaces 0).DHCP.MAC }}
 
 [ipv4]
-address1={{ (index .Hardware.Interfaces 0).DHCP.IP.Address }}/{{ netmaskToCIDR (index .Hardware.Interfaces 0).DHCP.IP.Netmask }}
+address1={{ (index .Hardware.Interfaces 0).DHCP.IP.Address }}/{{ netmaskToPrefixLength (index .Hardware.Interfaces 0).DHCP.IP.Netmask }}
 dns={{ range $i, $ns := (index .Hardware.Interfaces 0).DHCP.NameServers }}{{if $i}};{{end}}{{$ns}}{{end}};
 gateway={{ (index .Hardware.Interfaces 0).DHCP.IP.Gateway }}
 method=manual
@@ -366,7 +367,7 @@ id={{ (index .Hardware.Interfaces 0).DHCP.VLANID }}
 mac-address={{ (index .Hardware.Interfaces 0).DHCP.MAC }}
 
 [ipv4]
-address1={{ (index .Hardware.Interfaces 0).DHCP.IP.Address }}/{{ netmaskToCIDR (index .Hardware.Interfaces 0).DHCP.IP.Netmask }}
+address1={{ (index .Hardware.Interfaces 0).DHCP.IP.Address }}/{{ netmaskToPrefixLength (index .Hardware.Interfaces 0).DHCP.IP.Netmask }}
 dns={{ range $i, $ns := (index .Hardware.Interfaces 0).DHCP.NameServers }}{{if $i}};{{end}}{{$ns}}{{end}};
 gateway={{ (index .Hardware.Interfaces 0).DHCP.IP.Gateway }}
 method=manual

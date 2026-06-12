@@ -36,7 +36,7 @@ func TestControlPlaneSpecWithUpgradeRolloutStrategy(t *testing.T) {
 	cp, err := ControlPlaneSpec(context.TODO(), logger, client, spec)
 	assert.NoError(t, err)
 	assert.NotNil(t, cp)
-	assert.Equal(t, int32(1), cp.KubeadmControlPlane.Spec.RolloutStrategy.RollingUpdate.MaxSurge.IntVal)
+	assert.Equal(t, int32(1), cp.KubeadmControlPlane.Spec.Rollout.Strategy.RollingUpdate.MaxSurge.IntVal)
 }
 
 func TestCPObjects(t *testing.T) {

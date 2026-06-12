@@ -9,7 +9,7 @@ import (
 	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -182,7 +182,7 @@ func (r *Reconciler) DetectOperation(ctx context.Context, log logr.Logger, tinke
 		if err != nil {
 			return "", errors.Wrap(err, "failed to get workernode group machinedeployment")
 		}
-		if machineDeployment != nil && (*machineDeployment.Spec.Template.Spec.Version != *wg.MachineDeployment.Spec.Template.Spec.Version) {
+		if machineDeployment != nil && (machineDeployment.Spec.Template.Spec.Version != wg.MachineDeployment.Spec.Template.Spec.Version) {
 			log.Info("Operation detected", "operation", K8sVersionUpgradeOperation)
 			return K8sVersionUpgradeOperation, nil
 		}
@@ -373,7 +373,7 @@ func (r *Reconciler) getValidatableCAPI(ctx context.Context, cluster *anywherev1
 	}
 	var wgs []*clusterapi.WorkerGroup[*tinkerbellv1.TinkerbellMachineTemplate]
 	for _, wnc := range cluster.Spec.WorkerNodeGroupConfigurations {
-		md := &clusterv1.MachineDeployment{}
+		md := &clusterv1beta2.MachineDeployment{}
 		mdName := clusterapi.MachineDeploymentName(cluster, wnc)
 		key := types.NamespacedName{Namespace: constants.EksaSystemNamespace, Name: mdName}
 		err := r.client.Get(ctx, key, md)
@@ -401,13 +401,16 @@ func (r *Reconciler) validateHardwareReqForKCP(validatableCAPI *tinkerbell.Valid
 	tinkerbellClusterSpec := tinkerbell.NewClusterSpec(tinkerbellScope.ClusterSpec, tinkerbellScope.ClusterSpec.TinkerbellMachineConfigs, tinkerbellScope.ClusterSpec.TinkerbellDatacenter)
 	maxSurge := 1
 	requirements := tinkerbell.MinimumHardwareRequirements{}
-	if currentKCP.Spec.MachineTemplate.InfrastructureRef.Name != newKCP.Spec.MachineTemplate.InfrastructureRef.Name {
+	if currentKCP.Spec.MachineTemplate.Spec.InfrastructureRef.Name != newKCP.Spec.MachineTemplate.Spec.InfrastructureRef.Name {
 		upgradeStrategy := tinkerbellScope.ClusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy
 		if upgradeStrategy != nil && upgradeStrategy.Type == anywherev1.RollingUpdateStrategyType {
 			maxSurge = upgradeStrategy.RollingUpdate.MaxSurge
 		}
-		if err := requirements.Add(tinkerbellClusterSpec.ControlPlaneMachineConfig().Spec.HardwareSelector, maxSurge); err != nil {
-			return nil, err
+		selectors := tinkerbell.GetSelectorsFromMachineConfig(tinkerbellClusterSpec.ControlPlaneMachineConfig())
+		for _, selector := range selectors {
+			if err := requirements.Add(selector, maxSurge); err != nil {
+				return nil, err
+			}
 		}
 	}
 	return requirements, nil
@@ -441,12 +444,15 @@ func (r *Reconciler) validateHardwareReqForMachineDeployments(ctx context.Contex
 			}
 		}
 		if currentMachineDeployment != nil && currentMachineDeployment.Spec.Template.Spec.InfrastructureRef.Name != wg.MachineDeployment.Spec.Template.Spec.InfrastructureRef.Name {
-			upgradeStrategy := wg.MachineDeployment.Spec.Strategy
-			if upgradeStrategy != nil && upgradeStrategy.Type == clusterv1.RollingUpdateMachineDeploymentStrategyType {
-				maxSurge = int(upgradeStrategy.RollingUpdate.MaxSurge.IntVal)
+			upgradeStrategy := workerNodeGroup.UpgradeRolloutStrategy
+			if upgradeStrategy != nil && upgradeStrategy.Type == anywherev1.RollingUpdateStrategyType {
+				maxSurge = upgradeStrategy.RollingUpdate.MaxSurge
 			}
-			if err := requirements.Add(tinkerbellClusterSpec.WorkerNodeGroupMachineConfig(workerNodeGroup).Spec.HardwareSelector, maxSurge); err != nil {
-				return nil, err
+			selectors := tinkerbell.GetSelectorsFromMachineConfig(tinkerbellClusterSpec.WorkerNodeGroupMachineConfig(workerNodeGroup))
+			for _, selector := range selectors {
+				if err := requirements.Add(selector, maxSurge); err != nil {
+					return nil, err
+				}
 			}
 		}
 	}

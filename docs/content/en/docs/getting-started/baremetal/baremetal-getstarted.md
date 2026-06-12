@@ -51,7 +51,7 @@ Follow these steps to create an EKS Anywhere cluster that can be used either as 
 
    **Configure Curated Packages**
 
-      The Amazon EKS Anywhere Curated Packages are only available to customers with the Amazon EKS Anywhere Enterprise Subscription. To request a free trial, talk to your Amazon representative or connect with one [here](https://aws.amazon.com/contact-us/sales-support-eks/). Cluster creation will succeed if authentication is not set up, but some warnings may be generated.  Detailed package configurations can be found [here.]({{< relref "../../packages" >}})
+      The Amazon EKS Anywhere Curated Packages are only available to customers with the Amazon EKS Anywhere Enterprise Subscription. For subscription details, talk to your Amazon representative or connect with one [here](https://aws.amazon.com/contact-us/sales-support-eks/). Cluster creation will succeed if authentication is not set up, but some warnings may be generated.  Detailed package configurations can be found [here.]({{< relref "../../packages" >}})
 
       If you are going to use packages, set up authentication. These credentials should have [limited capabilities:]({{< relref "../../packages/prereq#setup-authentication-to-use-curated-packages" >}})
       ```bash
@@ -213,7 +213,7 @@ Follow these steps if you want to use your initial cluster to create and manage 
      >   ```
      > * For creating multiple workload clusters, it is essential that the hardware labels and selectors defined for a given workload cluster are unique to that workload cluster. For instance, for an EKS Anywhere cluster named `eksa-workload1`, the hardware that is assigned for this cluster should have labels that are only going to be used for this cluster like `type=eksa-workload1-cp` and `type=eksa-workload1-worker`.
      Another workload cluster named `eksa-workload2` can have labels like `type=eksa-workload2-cp` and `type=eksa-workload2-worker`. Please note that even though labels can be arbitrary, they need to be unique for each workload cluster. Not specifying unique cluster labels can cause cluster creations to behave in unexpected ways which may lead to unsuccessful creations and unstable clusters.
-     See the [hardware selectors]({{< relref "./bare-spec/#hardwareselector-required" >}}) section for more information
+     See the [hardware selectors]({{< relref "./bare-spec/#hardwareselector-optional" >}}) section for more information
 
 1. Check the workload cluster:
 

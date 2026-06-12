@@ -502,21 +502,6 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 			"projectPath",
 		},
 	},
-	// Hegel artifacts
-	{
-		ProjectName: "hegel",
-		ProjectPath: "projects/tinkerbell/hegel",
-		Images: []*assettypes.Image{
-			{
-				RepoName: "hegel",
-			},
-		},
-		ImageRepoPrefix: "tinkerbell",
-		ImageTagOptions: []string{
-			"gitTag",
-			"projectPath",
-		},
-	},
 	// Helm-controller artifacts
 	{
 		ProjectName: "helm-controller",
@@ -778,21 +763,6 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 			"projectPath",
 		},
 	},
-	// Rufio artifacts
-	{
-		ProjectName: "rufio",
-		ProjectPath: "projects/tinkerbell/rufio",
-		Images: []*assettypes.Image{
-			{
-				RepoName: "rufio",
-			},
-		},
-		ImageRepoPrefix: "tinkerbell",
-		ImageTagOptions: []string{
-			"gitTag",
-			"projectPath",
-		},
-	},
 	// Source-controller artifacts
 	{
 		ProjectName: "source-controller",
@@ -814,25 +784,25 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 		ProjectPath: "projects/tinkerbell/tink",
 		Images: []*assettypes.Image{
 			{
-				RepoName: "nginx",
-			},
-			{
-				RepoName: "tink-relay",
-			},
-			{
 				RepoName: "tink-relay-init",
-			},
-			{
-				RepoName: "tink-controller",
-			},
-			{
-				RepoName: "tink-server",
-			},
-			{
-				RepoName: "tink-worker",
 			},
 		},
 		ImageRepoPrefix: "tinkerbell/tink",
+		ImageTagOptions: []string{
+			"gitTag",
+			"projectPath",
+		},
+	},
+	// Tinkerbell mono-repo artifacts (unified binary)
+	{
+		ProjectName: "tinkerbell",
+		ProjectPath: "projects/tinkerbell/tinkerbell",
+		Images: []*assettypes.Image{
+			{
+				RepoName: "tinkerbell",
+			},
+		},
+		ImageRepoPrefix: "tinkerbell/tinkerbell",
 		ImageTagOptions: []string{
 			"gitTag",
 			"projectPath",
@@ -859,18 +829,23 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 	},
 	{
 		ProjectName: "stack",
-		ProjectPath: "projects/tinkerbell/charts",
+		ProjectPath: "projects/tinkerbell/tinkerbell",
 		Images: []*assettypes.Image{
 			{
-				RepoName:             "stack",
-				AssetName:            "stack-helm",
+				RepoName:             "tinkerbell-helm",
+				AssetName:            "tinkerbell-helm",
 				TrimVersionSignifier: true,
 				ImageTagConfiguration: assettypes.ImageTagConfiguration{
-					NonProdSourceImageTagFormat: "<gitTag>",
+					// When GIT_TAG is a commit SHA, the helm chart version must be valid semver.
+					// The 0.0.1- prefix wraps the commit SHA to satisfy helm's semver requirement.
+					// This must match the HELM_TAG override in eks-anywhere-build-tooling tinkerbell Makefile.
+					NonProdSourceImageTagFormat: "0.0.1-<gitTag>",
+					ProdSourceImageTagFormat:    "0.0.1-<gitTag>",
+					ReleaseImageTagFormat:       "0.0.1-<gitTag>",
 				},
 			},
 		},
-		ImageRepoPrefix: "tinkerbell",
+		ImageRepoPrefix: "tinkerbell/tinkerbell",
 		ImageTagOptions: []string{
 			"gitTag",
 			"projectPath",

@@ -28,7 +28,7 @@ import (
 
 const (
 	overridesFileName = "tinkerbell-chart-overrides.yaml"
-	boots             = "boots"
+	smee              = "smee"
 	testIP            = "1.2.3.4"
 
 	helmChartPath    = "public.ecr.aws/eks-anywhere/tinkerbell/tinkerbell-chart"
@@ -42,15 +42,9 @@ func getTinkBundle() releasev1alpha1.TinkerbellBundle {
 	return releasev1alpha1.TinkerbellBundle{
 		TinkerbellStack: releasev1alpha1.TinkerbellStackBundle{
 			Tink: releasev1alpha1.TinkBundle{
-				Nginx:          releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/nginx:latest"},
-				TinkController: releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/tink-controller:latest"},
-				TinkServer:     releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/tink-server:latest"},
-				TinkWorker:     releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/tink-worker:latest"},
-				TinkRelay:      releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/tink-relay:latest"},
-				TinkRelayInit:  releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/tink-relay-init:latest"},
+				TinkRelayInit: releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/tink-relay-init:latest"},
 			},
-			Boots: releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/boots:latest"},
-			Hegel: releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/hegel:latest"},
+			Boots: releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/tinkerbell:latest"},
 			Hook: releasev1alpha1.HookBundle{
 				Initramfs: releasev1alpha1.HookArch{
 					Amd: releasev1alpha1.Archive{
@@ -62,9 +56,6 @@ func getTinkBundle() releasev1alpha1.TinkerbellBundle {
 						URI: "https://anywhere-assests.eks.amazonaws.com/tinkerbell/hook/hook-x86_64-efi-initrd.iso",
 					},
 				},
-			},
-			Rufio: releasev1alpha1.Image{
-				URI: "public.ecr.aws/eks-anywhere/rufio:latest",
 			},
 			Stack: releasev1alpha1.Image{
 				Name: "stack",
@@ -133,12 +124,12 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 			name:            "with_boots_on_docker",
 			expectedFile:    "testdata/expected_with_boots_on_docker.yaml",
 			installOnDocker: true,
-			opts:            []stack.InstallOption{stack.WithBootsOnDocker()},
+			opts:            []stack.InstallOption{stack.WithSmeeOnDocker()},
 		},
 		{
 			name:         "with_boots_on_kubernetes",
 			expectedFile: "testdata/expected_with_boots_on_kubernetes.yaml",
-			opts:         []stack.InstallOption{stack.WithBootsOnKubernetes()},
+			opts:         []stack.InstallOption{stack.WithSmeeOnKubernetes()},
 		},
 		{
 			name:         "with_host_port_enabled_true",
@@ -169,7 +160,7 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 			name:         "with_kubernetes_options",
 			expectedFile: "testdata/expected_with_kubernetes_options.yaml",
 			opts: []stack.InstallOption{
-				stack.WithBootsOnKubernetes(),
+				stack.WithSmeeOnKubernetes(),
 				stack.WithLoadBalancerEnabled(true),
 			},
 		},
@@ -178,7 +169,7 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 			expectedFile:    "testdata/expected_with_docker_options.yaml",
 			installOnDocker: true,
 			opts: []stack.InstallOption{
-				stack.WithBootsOnDocker(),
+				stack.WithSmeeOnDocker(),
 				stack.WithHostNetworkEnabled(true),
 				stack.WithLoadBalancerEnabled(false),
 			},
@@ -239,33 +230,49 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 			}
 
 			if stackTest.installOnDocker {
-				docker.EXPECT().Run(ctx, "public.ecr.aws/eks-anywhere/boots:latest",
-					boots,
-					[]string{
-						"-backend-kube-config",
-						"/kubeconfig",
-						"-dhcp-addr", "0.0.0.0:67",
-						"-osie-url", "https://anywhere-assests.eks.amazonaws.com/tinkerbell/hook",
-						"-tink-server", "1.2.3.4:42113",
-						"-syslog-addr", testIP,
-						"-tftp-addr", testIP,
-						"-http-addr", testIP,
-					},
+				docker.EXPECT().Run(ctx, "public.ecr.aws/eks-anywhere/tinkerbell:latest",
+					smee,
+					[]string{}, // Mono-repo binary uses env vars, not command line args
 					"-v", gomock.Any(),
 					"--network", "host",
-					"-e", gomock.Any(),
-					"-e", gomock.Any(),
-					"-e", gomock.Any(),
-					"-e", gomock.Any(),
-					"-e", gomock.Any(),
-					"-e", gomock.Any(),
-					"-e", gomock.Any(),
-					"-e", gomock.Any(),
-					"-e", gomock.Any(),
-					"-e", gomock.Any(),
-					"-e", gomock.Any(),
-					"-e", gomock.Any(),
-					"-e", gomock.Any(),
+					// Global settings
+					"-e", "TINKERBELL_BACKEND=kube",
+					"-e", "TINKERBELL_BACKEND_KUBE_CONFIG=/kubeconfig",
+					"-e", gomock.Any(), // TINKERBELL_BACKEND_KUBE_NAMESPACE
+					"-e", gomock.Any(), // TINKERBELL_PUBLIC_IPV4
+					"-e", gomock.Any(), // TINKERBELL_TRUSTED_PROXIES
+					// Enable flags
+					"-e", "TINKERBELL_ENABLE_SMEE=true",
+					"-e", "TINKERBELL_ENABLE_TOOTLES=false",
+					"-e", "TINKERBELL_ENABLE_TINK_SERVER=false",
+					"-e", "TINKERBELL_ENABLE_TINK_CONTROLLER=false",
+					"-e", "TINKERBELL_ENABLE_RUFIO_CONTROLLER=false",
+					"-e", "TINKERBELL_ENABLE_SECONDSTAR=false",
+					"-e", "TINKERBELL_ENABLE_CRD_MIGRATIONS=false",
+					// DHCP settings
+					"-e", "TINKERBELL_DHCP_ENABLED=true",
+					"-e", "TINKERBELL_DHCP_MODE=reservation",
+					"-e", gomock.Any(), // TINKERBELL_DHCP_IP_FOR_PACKET
+					"-e", gomock.Any(), // TINKERBELL_DHCP_SYSLOG_IP
+					"-e", gomock.Any(), // TINKERBELL_DHCP_TFTP_IP
+					"-e", gomock.Any(), // TINKERBELL_DHCP_IPXE_HTTP_BINARY_HOST
+					"-e", gomock.Any(), // TINKERBELL_DHCP_IPXE_HTTP_BINARY_PORT
+					"-e", gomock.Any(), // TINKERBELL_DHCP_IPXE_HTTP_SCRIPT_HOST
+					"-e", gomock.Any(), // TINKERBELL_DHCP_IPXE_HTTP_SCRIPT_PORT
+					// HTTP/iPXE settings
+					"-e", gomock.Any(), // TINKERBELL_IPXE_HTTP_SCRIPT_BIND_PORT
+					"-e", gomock.Any(), // TINKERBELL_IPXE_HTTP_SCRIPT_OSIE_URL
+					"-e", gomock.Any(), // TINKERBELL_IPXE_HTTP_SCRIPT_EXTRA_KERNEL_ARGS
+					"-e", gomock.Any(), // TINKERBELL_IPXE_SCRIPT_TINK_SERVER_ADDR_PORT
+					"-e", "TINKERBELL_IPXE_SCRIPT_TINK_SERVER_INSECURE_TLS=true",
+					// ISO settings
+					"-e", "TINKERBELL_ISO_ENABLED=true",
+					"-e", "TINKERBELL_ISO_STATIC_IPAM_ENABLED=true",
+					"-e", gomock.Any(), // TINKERBELL_ISO_UPSTREAM_URL
+					// TFTP settings
+					"-e", "TINKERBELL_TFTP_SERVER_ENABLED=true",
+					// Syslog settings
+					"-e", "TINKERBELL_SYSLOG_ENABLED=true",
 				)
 
 			}
@@ -295,7 +302,7 @@ func TestTinkerbellStackUninstallLocalSucess(t *testing.T) {
 
 	s := stack.NewInstaller(docker, writer, helm, "", constants.EksaSystemNamespace, "192.168.0.0/16", nil, nil)
 
-	docker.EXPECT().ForceRemove(ctx, boots)
+	docker.EXPECT().ForceRemove(ctx, smee)
 
 	err := s.UninstallLocal(ctx)
 	if err != nil {
@@ -314,7 +321,7 @@ func TestTinkerbellStackUninstallLocalFailure(t *testing.T) {
 
 	dockerError := "docker error"
 	expectedError := fmt.Sprintf("removing local boots container: %s", dockerError)
-	docker.EXPECT().ForceRemove(ctx, boots).Return(errors.New(dockerError))
+	docker.EXPECT().ForceRemove(ctx, smee).Return(errors.New(dockerError))
 
 	err := s.UninstallLocal(ctx)
 	assert.EqualError(t, err, expectedError, "Error should be: %v, got: %v", expectedError, err)
@@ -329,8 +336,8 @@ func TestTinkerbellStackCheckLocalBootsExistenceDoesNotExist(t *testing.T) {
 
 	s := stack.NewInstaller(docker, writer, helm, "", constants.EksaSystemNamespace, "192.168.0.0/16", nil, nil)
 
-	docker.EXPECT().CheckContainerExistence(ctx, "boots").Return(true, nil)
-	docker.EXPECT().ForceRemove(ctx, "boots")
+	docker.EXPECT().CheckContainerExistence(ctx, "smee").Return(true, nil)
+	docker.EXPECT().ForceRemove(ctx, "smee")
 
 	err := s.CleanupLocalBoots(ctx, true)
 	assert.NoError(t, err)
@@ -346,7 +353,7 @@ func TestTinkerbellStackCheckLocalBootsExistenceDoesExist(t *testing.T) {
 	s := stack.NewInstaller(docker, writer, helm, "", constants.EksaSystemNamespace, "192.168.0.0/16", nil, nil)
 	expectedErrorMsg := "boots container already exists, delete the container manually"
 
-	docker.EXPECT().CheckContainerExistence(ctx, "boots").Return(true, nil)
+	docker.EXPECT().CheckContainerExistence(ctx, "smee").Return(true, nil)
 
 	err := s.CleanupLocalBoots(ctx, false)
 	assert.EqualError(t, err, expectedErrorMsg, "Error should be: %v, got: %v", expectedErrorMsg, err)
@@ -361,7 +368,7 @@ func TestTinkerbellStackCheckLocalBootsExistenceDockerError(t *testing.T) {
 
 	s := stack.NewInstaller(docker, writer, helm, "", constants.EksaSystemNamespace, "192.168.0.0/16", nil, nil)
 
-	docker.EXPECT().CheckContainerExistence(ctx, "boots").Return(false, nil)
+	docker.EXPECT().CheckContainerExistence(ctx, "smee").Return(false, nil)
 
 	err := s.CleanupLocalBoots(ctx, true)
 	assert.NoError(t, err)
@@ -526,11 +533,11 @@ func TestUninstall(t *testing.T) {
 	err := s.Upgrade(ctx, getTinkBundle(), testIP, cluster.KubeconfigFile, "")
 	assert.NoError(t, err)
 
-	err = s.Uninstall(ctx, getTinkBundle(), cluster.KubeconfigFile)
+	err = s.UninstallChart(ctx, getTinkBundle().TinkerbellStack.TinkebellChart.Name, cluster.KubeconfigFile, "")
 	assert.NoError(t, err)
 }
 
-func TestHasLegacyChart(t *testing.T) {
+func TestHasChart(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	docker := mocks.NewMockDocker(mockCtrl)
 	helm := mocks.NewMockHelm(mockCtrl)
@@ -540,8 +547,8 @@ func TestHasLegacyChart(t *testing.T) {
 	ctx := context.Background()
 
 	s := stack.NewInstaller(docker, writer, helm, "", constants.EksaSystemNamespace, "192.168.0.0/16", nil, nil)
-	helm.EXPECT().ListCharts(ctx, cluster.KubeconfigFile, "tinkerbell-chart")
+	helm.EXPECT().ListCharts(ctx, cluster.KubeconfigFile, "tinkerbell-chart", constants.EksaSystemNamespace)
 
-	_, err := s.HasLegacyChart(ctx, getTinkBundle(), cluster.KubeconfigFile)
+	_, err := s.HasChart(ctx, "tinkerbell-chart", cluster.KubeconfigFile, constants.EksaSystemNamespace)
 	assert.NoError(t, err)
 }

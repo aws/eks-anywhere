@@ -8,7 +8,7 @@ import (
 	. "github.com/onsi/gomega"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1"
+	dockerv1beta2 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta2"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
@@ -365,22 +365,22 @@ func TestInitialTemplateNamesForWorkers(t *testing.T) {
 	}
 }
 
-func dummyRetriever(_ context.Context, _ kubernetes.Client, _, _ string) (*dockerv1.DockerMachineTemplate, error) {
+func dummyRetriever(_ context.Context, _ kubernetes.Client, _, _ string) (*dockerv1beta2.DockerMachineTemplate, error) {
 	return dockerMachineTemplate(), nil
 }
 
-func errorRetriever(_ context.Context, _ kubernetes.Client, _, _ string) (*dockerv1.DockerMachineTemplate, error) {
+func errorRetriever(_ context.Context, _ kubernetes.Client, _, _ string) (*dockerv1beta2.DockerMachineTemplate, error) {
 	return nil, errors.New("reading object")
 }
 
-func notFoundRetriever(_ context.Context, _ kubernetes.Client, _, _ string) (*dockerv1.DockerMachineTemplate, error) {
+func notFoundRetriever(_ context.Context, _ kubernetes.Client, _, _ string) (*dockerv1beta2.DockerMachineTemplate, error) {
 	return nil, apierrors.NewNotFound(schema.GroupResource{}, "")
 }
 
-func noChangesCompare(_, _ *dockerv1.DockerMachineTemplate) bool {
+func noChangesCompare(_, _ *dockerv1beta2.DockerMachineTemplate) bool {
 	return true
 }
 
-func withChangesCompare(_, _ *dockerv1.DockerMachineTemplate) bool {
+func withChangesCompare(_, _ *dockerv1beta2.DockerMachineTemplate) bool {
 	return false
 }

@@ -27,9 +27,9 @@ import (
 	"k8s.io/apimachinery/pkg/version"
 	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta3"
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
-	addons "sigs.k8s.io/cluster-api/api/addons/v1beta1"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	addons "sigs.k8s.io/cluster-api/api/addons/v1beta2"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
@@ -59,22 +59,22 @@ const (
 )
 
 var (
-	capiClustersResourceType             = fmt.Sprintf("clusters.%s", clusterv1.GroupVersion.Group)
-	capiProvidersResourceType            = fmt.Sprintf("providers.clusterctl.%s", clusterv1.GroupVersion.Group)
-	capiMachinesType                     = fmt.Sprintf("machines.%s", clusterv1.GroupVersion.Group)
-	capiMachineDeploymentsType           = fmt.Sprintf("machinedeployments.%s", clusterv1.GroupVersion.Group)
-	capiMachineSetsType                  = fmt.Sprintf("machinesets.%s", clusterv1.GroupVersion.Group)
+	capiClustersResourceType             = fmt.Sprintf("clusters.%s", clusterv1beta2.GroupVersion.Group)
+	capiProvidersResourceType            = fmt.Sprintf("providers.clusterctl.%s", clusterv1beta2.GroupVersion.Group)
+	capiMachinesType                     = fmt.Sprintf("machines.%s", clusterv1beta2.GroupVersion.Group)
+	capiMachineDeploymentsType           = fmt.Sprintf("machinedeployments.%s", clusterv1beta2.GroupVersion.Group)
+	capiMachineSetsType                  = fmt.Sprintf("machinesets.%s", clusterv1beta2.GroupVersion.Group)
 	eksaClusterResourceType              = fmt.Sprintf("clusters.%s", v1alpha1.GroupVersion.Group)
 	eksaVSphereDatacenterResourceType    = fmt.Sprintf("vspheredatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaVSphereMachineResourceType       = fmt.Sprintf("vspheremachineconfigs.%s", v1alpha1.GroupVersion.Group)
-	vsphereMachineTemplatesType          = fmt.Sprintf("vspheremachinetemplates.infrastructure.%s", clusterv1.GroupVersion.Group)
+	vsphereMachineTemplatesType          = fmt.Sprintf("vspheremachinetemplates.infrastructure.%s", clusterv1beta2.GroupVersion.Group)
 	eksaTinkerbellDatacenterResourceType = fmt.Sprintf("tinkerbelldatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaTinkerbellMachineResourceType    = fmt.Sprintf("tinkerbellmachineconfigs.%s", v1alpha1.GroupVersion.Group)
 	TinkerbellHardwareResourceType       = fmt.Sprintf("hardware.%s", tinkv1alpha1.GroupVersion.Group)
 	rufioMachineResourceType             = fmt.Sprintf("machines.%s", rufiov1alpha1.GroupVersion.Group)
 	eksaCloudStackDatacenterResourceType = fmt.Sprintf("cloudstackdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaCloudStackMachineResourceType    = fmt.Sprintf("cloudstackmachineconfigs.%s", v1alpha1.GroupVersion.Group)
-	cloudstackMachineTemplatesType       = fmt.Sprintf("cloudstackmachinetemplates.infrastructure.%s", clusterv1.GroupVersion.Group)
+	cloudstackMachineTemplatesType       = fmt.Sprintf("cloudstackmachinetemplates.infrastructure.%s", clusterv1beta2.GroupVersion.Group)
 	eksaNutanixDatacenterResourceType    = fmt.Sprintf("nutanixdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaNutanixMachineResourceType       = fmt.Sprintf("nutanixmachineconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaAwsResourceType                  = fmt.Sprintf("awsdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
@@ -85,7 +85,7 @@ var (
 	etcdadmClustersResourceType          = fmt.Sprintf("etcdadmclusters.%s", etcdv1.GroupVersion.Group)
 	bundlesResourceType                  = fmt.Sprintf("bundles.%s", releasev1alpha1.GroupVersion.Group)
 	clusterResourceSetResourceType       = fmt.Sprintf("clusterresourcesets.%s", addons.GroupVersion.Group)
-	kubeadmControlPlaneResourceType      = fmt.Sprintf("kubeadmcontrolplanes.controlplane.%s", clusterv1.GroupVersion.Group)
+	kubeadmControlPlaneResourceType      = fmt.Sprintf("kubeadmcontrolplanes.controlplane.%s", clusterv1beta2.GroupVersion.Group)
 	eksdReleaseType                      = fmt.Sprintf("releases.%s", eksdv1alpha1.GroupVersion.Group)
 	eksaPackagesType                     = fmt.Sprintf("packages.%s", packagesv1.GroupVersion.Group)
 	eksaPackagesBundleControllerType     = fmt.Sprintf("packagebundlecontroller.%s", packagesv1.GroupVersion.Group)
@@ -140,11 +140,11 @@ func WithNetworkFaultBackoffFactor(factor float64) KubectlConfigOpt {
 }
 
 type capiMachinesResponse struct {
-	Items []clusterv1.Machine
+	Items []clusterv1beta2.Machine
 }
 
 // GetCAPIMachines returns all the CAPI machines for the provided clusterName.
-func (k *Kubectl) GetCAPIMachines(ctx context.Context, cluster *types.Cluster, clusterName string) ([]clusterv1.Machine, error) {
+func (k *Kubectl) GetCAPIMachines(ctx context.Context, cluster *types.Cluster, clusterName string) ([]clusterv1beta2.Machine, error) {
 	params := []string{
 		"get", capiMachinesType, "-o", "json", "--kubeconfig", cluster.KubeconfigFile,
 		"--selector=cluster.x-k8s.io/cluster-name=" + clusterName,
@@ -848,7 +848,7 @@ func (k *Kubectl) ValidateNodes(ctx context.Context, kubeconfig string) error {
 	return nil
 }
 
-func (k *Kubectl) DeleteOldWorkerNodeGroup(ctx context.Context, md *clusterv1.MachineDeployment, kubeconfig string) error {
+func (k *Kubectl) DeleteOldWorkerNodeGroup(ctx context.Context, md *clusterv1beta2.MachineDeployment, kubeconfig string) error {
 	kubeadmConfigTemplateName := md.Spec.Template.Spec.Bootstrap.ConfigRef.Name
 	providerMachineTemplateName := md.Spec.Template.Spec.InfrastructureRef.Name
 	params := []string{"delete", md.Kind, md.Name, "--kubeconfig", kubeconfig, "--namespace", constants.EksaSystemNamespace}
@@ -878,14 +878,16 @@ func (k *Kubectl) ValidateControlPlaneNodes(ctx context.Context, cluster *types.
 		return fmt.Errorf("kubeadm control plane %s status needs to be refreshed: generation=%v, observedGeneration=%d", cp.Name, generation, observedGeneration)
 	}
 
-	if cp.Status.ReadyReplicas != cp.Status.Replicas {
-		return fmt.Errorf("api server is not fully ready: %d/%d replicas ready",
-			cp.Status.ReadyReplicas, cp.Status.Replicas)
+	var readyReplicas, replicas int32
+	if cp.Status.ReadyReplicas != nil {
+		readyReplicas = *cp.Status.ReadyReplicas
 	}
-
-	if cp.Status.UnavailableReplicas != 0 {
-		return fmt.Errorf("%v/%v control plane replicas are unavailable",
-			cp.Status.UnavailableReplicas, cp.Status.Replicas)
+	if cp.Status.Replicas != nil {
+		replicas = *cp.Status.Replicas
+	}
+	if readyReplicas != replicas {
+		return fmt.Errorf("control plane is not fully ready: %d/%d replicas ready",
+			readyReplicas, replicas)
 	}
 
 	return nil
@@ -914,12 +916,18 @@ func (k *Kubectl) CountMachineDeploymentReplicasReady(ctx context.Context, clust
 			return 0, 0, fmt.Errorf("machine deployment is in %s phase", machineDeployment.Status.Phase)
 		}
 
-		if machineDeployment.Status.UnavailableReplicas != 0 {
-			return 0, 0, fmt.Errorf("%d machine deployment replicas are unavailable", machineDeployment.Status.UnavailableReplicas)
+		if machineDeployment.Status.AvailableReplicas != nil && machineDeployment.Status.Replicas != nil &&
+			*machineDeployment.Status.AvailableReplicas != *machineDeployment.Status.Replicas {
+			unavailable := *machineDeployment.Status.Replicas - *machineDeployment.Status.AvailableReplicas
+			return 0, 0, fmt.Errorf("%d machine deployment replicas are unavailable", unavailable)
 		}
 
-		ready += int(machineDeployment.Status.ReadyReplicas)
-		total += int(machineDeployment.Status.Replicas)
+		if machineDeployment.Status.ReadyReplicas != nil {
+			ready += int(*machineDeployment.Status.ReadyReplicas)
+		}
+		if machineDeployment.Status.Replicas != nil {
+			total += int(*machineDeployment.Status.Replicas)
+		}
 	}
 	return ready, total, nil
 }
@@ -1103,10 +1111,10 @@ func (k *Kubectl) GetMachines(ctx context.Context, cluster *types.Cluster, clust
 }
 
 type machineSetResponse struct {
-	Items []clusterv1.MachineSet `json:"items,omitempty"`
+	Items []clusterv1beta2.MachineSet `json:"items,omitempty"`
 }
 
-func (k *Kubectl) GetMachineSets(ctx context.Context, machineDeploymentName string, cluster *types.Cluster) ([]clusterv1.MachineSet, error) {
+func (k *Kubectl) GetMachineSets(ctx context.Context, machineDeploymentName string, cluster *types.Cluster) ([]clusterv1beta2.MachineSet, error) {
 	params := []string{
 		"get", capiMachineSetsType, "-o", "json", "--kubeconfig", cluster.KubeconfigFile,
 		"--selector=cluster.x-k8s.io/deployment-name=" + machineDeploymentName,
@@ -1375,7 +1383,7 @@ func (k *Kubectl) GetSecret(ctx context.Context, secretObjectName string, opts .
 	return response, err
 }
 
-func (k *Kubectl) GetKubeadmControlPlanes(ctx context.Context, opts ...KubectlOpt) ([]controlplanev1.KubeadmControlPlane, error) {
+func (k *Kubectl) GetKubeadmControlPlanes(ctx context.Context, opts ...KubectlOpt) ([]controlplanev1beta2.KubeadmControlPlane, error) {
 	params := []string{"get", kubeadmControlPlaneResourceType, "-o", "json"}
 	applyOpts(&params, opts...)
 	stdOut, err := k.Execute(ctx, params...)
@@ -1383,7 +1391,7 @@ func (k *Kubectl) GetKubeadmControlPlanes(ctx context.Context, opts ...KubectlOp
 		return nil, fmt.Errorf("getting kubeadmcontrolplanes: %v", err)
 	}
 
-	response := &controlplanev1.KubeadmControlPlaneList{}
+	response := &controlplanev1beta2.KubeadmControlPlaneList{}
 	err = json.Unmarshal(stdOut.Bytes(), response)
 	if err != nil {
 		return nil, fmt.Errorf("parsing get kubeadmcontrolplanes response: %v", err)
@@ -1392,7 +1400,7 @@ func (k *Kubectl) GetKubeadmControlPlanes(ctx context.Context, opts ...KubectlOp
 	return response.Items, nil
 }
 
-func (k *Kubectl) GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...KubectlOpt) (*controlplanev1.KubeadmControlPlane, error) {
+func (k *Kubectl) GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...KubectlOpt) (*controlplanev1beta2.KubeadmControlPlane, error) {
 	logger.V(6).Info("Getting KubeadmControlPlane CRDs", "cluster", clusterName)
 	params := []string{"get", kubeadmControlPlaneResourceType, clusterName, "-o", "json"}
 	applyOpts(&params, opts...)
@@ -1401,27 +1409,15 @@ func (k *Kubectl) GetKubeadmControlPlane(ctx context.Context, cluster *types.Clu
 		return nil, fmt.Errorf("getting kubeadmcontrolplane: %v", err)
 	}
 
-	// Use unstructured to handle the conversion manually
-	var unstructuredKCP unstructured.Unstructured
-	if err := json.Unmarshal(stdOut.Bytes(), &unstructuredKCP); err != nil {
-		return nil, fmt.Errorf("parsing kubeadmcontrolplane as unstructured: %v", err)
-	}
-
-	// Convert extraArgs from array format to map format if needed
-	if err := k.convertExtraArgsInUnstructured(&unstructuredKCP); err != nil {
-		return nil, fmt.Errorf("converting extraArgs format: %v", err)
-	}
-
-	// Convert unstructured to v1beta1 KubeadmControlPlane
-	response := &controlplanev1.KubeadmControlPlane{}
-	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredKCP.Object, response); err != nil {
-		return nil, fmt.Errorf("converting unstructured to kubeadmcontrolplane: %v", err)
+	response := &controlplanev1beta2.KubeadmControlPlane{}
+	if err := json.Unmarshal(stdOut.Bytes(), response); err != nil {
+		return nil, fmt.Errorf("parsing get kubeadmcontrolplane response: %v", err)
 	}
 
 	return response, nil
 }
 
-func (k *Kubectl) GetMachineDeployment(ctx context.Context, workerNodeGroupName string, opts ...KubectlOpt) (*clusterv1.MachineDeployment, error) {
+func (k *Kubectl) GetMachineDeployment(ctx context.Context, workerNodeGroupName string, opts ...KubectlOpt) (*clusterv1beta2.MachineDeployment, error) {
 	params := []string{"get", capiMachineDeploymentsType, workerNodeGroupName, "-o", "json"}
 	applyOpts(&params, opts...)
 	stdOut, err := k.Execute(ctx, params...)
@@ -1429,7 +1425,7 @@ func (k *Kubectl) GetMachineDeployment(ctx context.Context, workerNodeGroupName 
 		return nil, fmt.Errorf("getting machine deployment: %v", err)
 	}
 
-	response := &clusterv1.MachineDeployment{}
+	response := &clusterv1beta2.MachineDeployment{}
 	err = json.Unmarshal(stdOut.Bytes(), response)
 	if err != nil {
 		return nil, fmt.Errorf("parsing get machineDeployment response: %v", err)
@@ -1439,7 +1435,7 @@ func (k *Kubectl) GetMachineDeployment(ctx context.Context, workerNodeGroupName 
 }
 
 // GetMachineDeployments retrieves all Machine Deployments.
-func (k *Kubectl) GetMachineDeployments(ctx context.Context, opts ...KubectlOpt) ([]clusterv1.MachineDeployment, error) {
+func (k *Kubectl) GetMachineDeployments(ctx context.Context, opts ...KubectlOpt) ([]clusterv1beta2.MachineDeployment, error) {
 	params := []string{"get", capiMachineDeploymentsType, "-o", "json"}
 	applyOpts(&params, opts...)
 	stdOut, err := k.Execute(ctx, params...)
@@ -1447,7 +1443,7 @@ func (k *Kubectl) GetMachineDeployments(ctx context.Context, opts ...KubectlOpt)
 		return nil, fmt.Errorf("getting machine deployments: %v", err)
 	}
 
-	response := &clusterv1.MachineDeploymentList{}
+	response := &clusterv1beta2.MachineDeploymentList{}
 	err = json.Unmarshal(stdOut.Bytes(), response)
 	if err != nil {
 		return nil, fmt.Errorf("parsing get machineDeployments response: %v", err)
@@ -1457,7 +1453,7 @@ func (k *Kubectl) GetMachineDeployments(ctx context.Context, opts ...KubectlOpt)
 }
 
 // GetMachineDeploymentsForCluster retrieves all the Machine Deployments for a cluster with name "clusterName".
-func (k *Kubectl) GetMachineDeploymentsForCluster(ctx context.Context, clusterName string, opts ...KubectlOpt) ([]clusterv1.MachineDeployment, error) {
+func (k *Kubectl) GetMachineDeploymentsForCluster(ctx context.Context, clusterName string, opts ...KubectlOpt) ([]clusterv1beta2.MachineDeployment, error) {
 	return k.GetMachineDeployments(ctx, append(opts, WithSelector(fmt.Sprintf("cluster.x-k8s.io/cluster-name=%s", clusterName)))...)
 }
 
@@ -2532,85 +2528,4 @@ func (k *Kubectl) DeleteCRD(ctx context.Context, crd, kubeconfig string) error {
 	}
 
 	return nil
-}
-
-// convertExtraArgsInUnstructured converts extraArgs from v1beta2 array format to v1beta1 map format
-// in an unstructured object to handle CAPI v1.11 migration.
-func (k *Kubectl) convertExtraArgsInUnstructured(obj *unstructured.Unstructured) error {
-	return k.convertExtraArgsRecursive(obj.Object)
-}
-
-// convertExtraArgsRecursive recursively searches for extraArgs fields and converts them from array to map format.
-// We will remove this function when we move on to using v1beta2 CAPI APIs.
-//
-//nolint:gocyclo // This function has complex logic for recursive type conversion that is difficult to simplify.
-func (k *Kubectl) convertExtraArgsRecursive(obj interface{}) error {
-	switch v := obj.(type) {
-	case map[string]interface{}:
-		// Check if this map contains extraArgs or kubeletExtraArgs
-		fieldsToConvert := []string{"extraArgs", "kubeletExtraArgs"}
-		for _, fieldName := range fieldsToConvert {
-			if extraArgs, exists := v[fieldName]; exists {
-				if converted, err := k.convertExtraArgsField(extraArgs); err != nil {
-					return err
-				} else if converted != nil {
-					v[fieldName] = converted
-				}
-			}
-		}
-
-		// Recursively process nested objects
-		for _, value := range v {
-			if err := k.convertExtraArgsRecursive(value); err != nil {
-				return err
-			}
-		}
-	case []interface{}:
-		// Recursively process array elements
-		for _, item := range v {
-			if err := k.convertExtraArgsRecursive(item); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-// convertExtraArgsField converts a single extraArgs field from array to map format.
-func (k *Kubectl) convertExtraArgsField(extraArgs interface{}) (map[string]string, error) {
-	switch args := extraArgs.(type) {
-	case []interface{}:
-		// This is the v1beta2 array format: [{"name": "key", "value": "val"}]
-		result := make(map[string]string)
-		for _, item := range args {
-			if argMap, ok := item.(map[string]interface{}); ok {
-				name, nameOk := argMap["name"].(string)
-				value, valueOk := argMap["value"].(string)
-				if nameOk && valueOk {
-					result[name] = value
-				} else {
-					return nil, fmt.Errorf("invalid extraArgs array format: expected name and value fields")
-				}
-			} else {
-				return nil, fmt.Errorf("invalid extraArgs array format: expected object with name and value")
-			}
-		}
-		return result, nil
-	case map[string]interface{}:
-		// This is already the v1beta1 map format: {"key": "val"}
-		result := make(map[string]string)
-		for k, v := range args {
-			if str, ok := v.(string); ok {
-				result[k] = str
-			} else {
-				return nil, fmt.Errorf("invalid extraArgs map format: expected string values")
-			}
-		}
-		return result, nil
-	case nil:
-		// No extraArgs field
-		return nil, nil
-	default:
-		return nil, fmt.Errorf("unsupported extraArgs format: %T", extraArgs)
-	}
 }

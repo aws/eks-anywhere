@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	. "github.com/onsi/gomega"
-	"sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
 )
 
 func TestValidateHostOSConfig(t *testing.T) {
@@ -78,7 +78,7 @@ func TestValidateHostOSConfig(t *testing.T) {
 			name: "empty Bottlerocket.Kubernetes config",
 			hostOSConfig: &HostOSConfiguration{
 				BottlerocketConfiguration: &BottlerocketConfiguration{
-					Kubernetes: &v1beta1.BottlerocketKubernetesSettings{},
+					Kubernetes: &bootstrapv1beta2.BottlerocketKubernetesSettings{},
 				},
 			},
 			osFamily: Bottlerocket,
@@ -88,7 +88,7 @@ func TestValidateHostOSConfig(t *testing.T) {
 			name: "empty Bottlerocket.Kubernetes full valid config",
 			hostOSConfig: &HostOSConfiguration{
 				BottlerocketConfiguration: &BottlerocketConfiguration{
-					Kubernetes: &v1beta1.BottlerocketKubernetesSettings{
+					Kubernetes: &bootstrapv1beta2.BottlerocketKubernetesSettings{
 						AllowedUnsafeSysctls: []string{
 							"net.core.somaxconn",
 							"net.ipv4.ip_local_port_range",
@@ -108,7 +108,7 @@ func TestValidateHostOSConfig(t *testing.T) {
 			name: "invalid Bottlerocket.Kubernetes.AllowedUnsafeSysctls",
 			hostOSConfig: &HostOSConfiguration{
 				BottlerocketConfiguration: &BottlerocketConfiguration{
-					Kubernetes: &v1beta1.BottlerocketKubernetesSettings{
+					Kubernetes: &bootstrapv1beta2.BottlerocketKubernetesSettings{
 						AllowedUnsafeSysctls: []string{
 							"net.core.somaxconn",
 							"",
@@ -123,7 +123,7 @@ func TestValidateHostOSConfig(t *testing.T) {
 			name: "invalid Bottlerocket.Kubernetes.ClusterDNSIPs",
 			hostOSConfig: &HostOSConfiguration{
 				BottlerocketConfiguration: &BottlerocketConfiguration{
-					Kubernetes: &v1beta1.BottlerocketKubernetesSettings{
+					Kubernetes: &bootstrapv1beta2.BottlerocketKubernetesSettings{
 						ClusterDNSIPs: []string{
 							"1.2.3.4",
 							"not a valid IP",
@@ -138,7 +138,7 @@ func TestValidateHostOSConfig(t *testing.T) {
 			name: "invalid Bottlerocket.Kubernetes.MaxPods",
 			hostOSConfig: &HostOSConfiguration{
 				BottlerocketConfiguration: &BottlerocketConfiguration{
-					Kubernetes: &v1beta1.BottlerocketKubernetesSettings{
+					Kubernetes: &bootstrapv1beta2.BottlerocketKubernetesSettings{
 						MaxPods: -1,
 					},
 				},
@@ -158,7 +158,7 @@ func TestValidateHostOSConfig(t *testing.T) {
 			name: "valid kernel config",
 			hostOSConfig: &HostOSConfiguration{
 				BottlerocketConfiguration: &BottlerocketConfiguration{
-					Kernel: &v1beta1.BottlerocketKernelSettings{
+					Kernel: &bootstrapv1beta2.BottlerocketKernelSettings{
 						SysctlSettings: map[string]string{
 							"vm.max_map_count":         "262144",
 							"fs.file-max":              "65535",
@@ -174,7 +174,7 @@ func TestValidateHostOSConfig(t *testing.T) {
 			name: "invalid kernel key value",
 			hostOSConfig: &HostOSConfiguration{
 				BottlerocketConfiguration: &BottlerocketConfiguration{
-					Kernel: &v1beta1.BottlerocketKernelSettings{
+					Kernel: &bootstrapv1beta2.BottlerocketKernelSettings{
 						SysctlSettings: map[string]string{
 							"": "262144",
 						},
@@ -188,7 +188,7 @@ func TestValidateHostOSConfig(t *testing.T) {
 			name: "valid bootSettings config",
 			hostOSConfig: &HostOSConfiguration{
 				BottlerocketConfiguration: &BottlerocketConfiguration{
-					Boot: &v1beta1.BottlerocketBootSettings{
+					Boot: &bootstrapv1beta2.BottlerocketBootSettings{
 						BootKernelParameters: map[string][]string{
 							"console": {
 								"tty0",
@@ -205,7 +205,7 @@ func TestValidateHostOSConfig(t *testing.T) {
 			name: "invalid bootSettings config",
 			hostOSConfig: &HostOSConfiguration{
 				BottlerocketConfiguration: &BottlerocketConfiguration{
-					Boot: &v1beta1.BottlerocketBootSettings{
+					Boot: &bootstrapv1beta2.BottlerocketBootSettings{
 						BootKernelParameters: map[string][]string{
 							"": {
 								"tty0",

@@ -1,4 +1,4 @@
-apiVersion: cluster.x-k8s.io/v1beta1
+apiVersion: cluster.x-k8s.io/v1beta2
 kind: MachineDeployment
 metadata:
   labels:
@@ -19,12 +19,12 @@ spec:
     spec:
       bootstrap:
         configRef:
-          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          apiGroup: bootstrap.cluster.x-k8s.io
           kind: KubeadmConfigTemplate
           name: test-test-1
       clusterName: test
       infrastructureRef:
-        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        apiGroup: infrastructure.cluster.x-k8s.io
         kind: TinkerbellMachineTemplate
         name: test-test-1
       version: v1.21.2-eks-1-21-4
@@ -72,7 +72,7 @@ spec:
                             id: {{ (index .Hardware.Interfaces 0).DHCP.VLANID }}
                             link: mainif
                             addresses:
-                            - {{ (index .Hardware.Interfaces 0).DHCP.IP.Address }}/{{ netmaskToCIDR (index .Hardware.Interfaces 0).DHCP.IP.Netmask }}
+                            - {{ (index .Hardware.Interfaces 0).DHCP.IP.Address }}/{{ netmaskToPrefixLength (index .Hardware.Interfaces 0).DHCP.IP.Netmask }}
                             nameservers:
                                 addresses: [{{ range $i, $ns := (index .Hardware.Interfaces 0).DHCP.NameServers }}{{if $i}}, {{end}}{{$ns}}{{end}}]
                             {{- if (index .Hardware.Interfaces 0).DHCP.IP.Gateway }}
@@ -88,7 +88,7 @@ spec:
                             match:
                                 macaddress: {{ (index .Hardware.Interfaces 0).DHCP.MAC }}
                             addresses:
-                                - {{ (index .Hardware.Interfaces 0).DHCP.IP.Address }}/{{ netmaskToCIDR (index .Hardware.Interfaces 0).DHCP.IP.Netmask }}
+                                - {{ (index .Hardware.Interfaces 0).DHCP.IP.Address }}/{{ netmaskToPrefixLength (index .Hardware.Interfaces 0).DHCP.IP.Netmask }}
                             nameservers:
                                 addresses: [{{ range $i, $ns := (index .Hardware.Interfaces 0).DHCP.NameServers }}{{if $i}}, {{end}}{{$ns}}{{end}}]
                             routes:
@@ -122,7 +122,7 @@ spec:
               CONTENTS: |
                 datasource:
                   Ec2:
-                    metadata_urls: [http://0.0.0.0:50061,http://5.6.7.8:50061]
+                    metadata_urls: [http://0.0.0.0:7172,http://5.6.7.8:7172]
                     strict_id: false
                 manage_etc_hosts: localhost
                 warnings:
@@ -165,7 +165,7 @@ spec:
         version: "0.1"
         
 ---
-apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta2
 kind: KubeadmConfigTemplate
 metadata:
   name: test-test-1
@@ -178,7 +178,8 @@ spec:
           directory: /etc/kubernetes/patches
         nodeRegistration:
           kubeletExtraArgs:
-            provider-id: PROVIDER_ID
+          - name: provider-id
+            value: "PROVIDER_ID"
       files:
         - content: |
             apiVersion: kubelet.config.k8s.io/v1beta1

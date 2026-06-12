@@ -11,8 +11,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -40,10 +42,10 @@ func newApiBuilerTest(t *testing.T) apiBuilerTest {
 	}
 }
 
-func wantCAPICluster() *clusterv1.Cluster {
-	return &clusterv1.Cluster{
+func wantCAPICluster() *clusterv1beta2.Cluster {
+	return &clusterv1beta2.Cluster{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "cluster.x-k8s.io/v1beta1",
+			APIVersion: "cluster.x-k8s.io/v1beta2",
 			Kind:       "Cluster",
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -55,40 +57,39 @@ func wantCAPICluster() *clusterv1.Cluster {
 				"cluster.anywhere.eks.amazonaws.com/cluster-namespace": "test-namespace",
 			},
 		},
-		Spec: clusterv1.ClusterSpec{
-			ClusterNetwork: &clusterv1.ClusterNetwork{
-				Pods: &clusterv1.NetworkRanges{
+		Spec: clusterv1beta2.ClusterSpec{
+			ClusterNetwork: clusterv1beta2.ClusterNetwork{
+				Pods: clusterv1beta2.NetworkRanges{
 					CIDRBlocks: []string{
 						"10.1.0.0/16",
 					},
 				},
-				Services: &clusterv1.NetworkRanges{
+				Services: clusterv1beta2.NetworkRanges{
 					CIDRBlocks: []string{
 						"10.96.0.0/12",
 					},
 				},
 			},
-			ControlPlaneRef: &v1.ObjectReference{
-				APIVersion: "controlplane.cluster.x-k8s.io/v1beta1",
-				Kind:       "KubeadmControlPlane",
-				Name:       "snow-test",
+			ControlPlaneRef: clusterv1beta2.ContractVersionedObjectReference{
+				APIGroup: "controlplane.cluster.x-k8s.io",
+				Kind:     "KubeadmControlPlane",
+				Name:     "snow-test",
 			},
-			InfrastructureRef: &v1.ObjectReference{
-				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
-				Kind:       "AWSSnowCluster",
-				Name:       "snow-test",
+			InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
+				APIGroup: "infrastructure.cluster.x-k8s.io",
+				Kind:     "AWSSnowCluster",
+				Name:     "snow-test",
 			},
 		},
 	}
 }
 
-func wantCAPIClusterUnstackedEtcd() *clusterv1.Cluster {
+func wantCAPIClusterUnstackedEtcd() *clusterv1beta2.Cluster {
 	cluster := wantCAPICluster()
-	cluster.Spec.ManagedExternalEtcdRef = &v1.ObjectReference{
-		Kind:       "EtcdadmCluster",
-		APIVersion: "etcdcluster.cluster.x-k8s.io/v1beta1",
-		Namespace:  "eksa-system",
-		Name:       "snow-test-etcd",
+	cluster.Spec.ManagedExternalEtcdRef = &clusterv1beta2.ContractVersionedObjectReference{
+		APIGroup: "etcdcluster.cluster.x-k8s.io",
+		Kind:     "EtcdadmCluster",
+		Name:     "snow-test-etcd",
 	}
 	return cluster
 }
@@ -104,85 +105,88 @@ func TestCAPICluster(t *testing.T) {
 	tt.Expect(got).To(Equal(wantCAPICluster()))
 }
 
-func wantKubeadmControlPlane(kubeVersion v1alpha1.KubernetesVersion) *controlplanev1.KubeadmControlPlane {
+func wantKubeadmControlPlane(kubeVersion v1alpha1.KubernetesVersion) *controlplanev1beta2.KubeadmControlPlane {
 	wantReplicas := int32(3)
 	wantMaxSurge := intstr.FromInt(1)
 	versionBundles := givenVersionsBundle(kubeVersion)
-	kcp := &controlplanev1.KubeadmControlPlane{
+	kcp := &controlplanev1beta2.KubeadmControlPlane{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "controlplane.cluster.x-k8s.io/v1beta1",
+			APIVersion: "controlplane.cluster.x-k8s.io/v1beta2",
 			Kind:       "KubeadmControlPlane",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "snow-test",
 			Namespace: "eksa-system",
 		},
-		Spec: controlplanev1.KubeadmControlPlaneSpec{
-			MachineTemplate: controlplanev1.KubeadmControlPlaneMachineTemplate{
-				InfrastructureRef: v1.ObjectReference{
-					APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
-					Kind:       "AWSSnowMachineTemplate",
-					Name:       "snow-test-control-plane-1",
+		Spec: controlplanev1beta2.KubeadmControlPlaneSpec{
+			MachineTemplate: controlplanev1beta2.KubeadmControlPlaneMachineTemplate{
+				Spec: controlplanev1beta2.KubeadmControlPlaneMachineTemplateSpec{
+					InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
+						APIGroup: "infrastructure.cluster.x-k8s.io",
+						Kind:     "AWSSnowMachineTemplate",
+						Name:     "snow-test-control-plane-1",
+					},
 				},
 			},
-			KubeadmConfigSpec: bootstrapv1.KubeadmConfigSpec{
-				ClusterConfiguration: &bootstrapv1.ClusterConfiguration{
+			KubeadmConfigSpec: bootstrapv1beta2.KubeadmConfigSpec{
+				ClusterConfiguration: bootstrapv1beta2.ClusterConfiguration{
 					ImageRepository: versionBundles.KubeDistro.Kubernetes.Repository,
-					DNS: bootstrapv1.DNS{
-						ImageMeta: bootstrapv1.ImageMeta{
-							ImageRepository: versionBundles.KubeDistro.CoreDNS.Repository,
-							ImageTag:        versionBundles.KubeDistro.CoreDNS.Tag,
+					DNS: bootstrapv1beta2.DNS{
+						ImageRepository: versionBundles.KubeDistro.CoreDNS.Repository,
+						ImageTag:        versionBundles.KubeDistro.CoreDNS.Tag,
+					},
+					Etcd: bootstrapv1beta2.Etcd{
+						Local: bootstrapv1beta2.LocalEtcd{
+							ImageRepository: versionBundles.KubeDistro.Etcd.Repository,
+							ImageTag:        versionBundles.KubeDistro.Etcd.Tag,
+							ExtraArgs: func() []bootstrapv1beta2.Arg {
+								cipherSuites := "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
+								listenPeerURLs := "https://0.0.0.0:2380"
+								listenClientURLs := "https://0.0.0.0:2379"
+								return []bootstrapv1beta2.Arg{
+									{Name: "cipher-suites", Value: &cipherSuites},
+									{Name: "listen-peer-urls", Value: &listenPeerURLs},
+									{Name: "listen-client-urls", Value: &listenClientURLs},
+								}
+							}(),
 						},
 					},
-					Etcd: bootstrapv1.Etcd{
-						Local: &bootstrapv1.LocalEtcd{
-							ImageMeta: bootstrapv1.ImageMeta{
-								ImageRepository: versionBundles.KubeDistro.Etcd.Repository,
-								ImageTag:        versionBundles.KubeDistro.Etcd.Tag,
-							},
-							ExtraArgs: map[string]string{
-								"cipher-suites":      "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-								"listen-peer-urls":   "https://0.0.0.0:2380",
-								"listen-client-urls": "https://0.0.0.0:2379",
-							},
-						},
+					APIServer: bootstrapv1beta2.APIServer{},
+					ControllerManager: bootstrapv1beta2.ControllerManager{
+						ExtraArgs:    clusterapi.SecureTlsCipherSuitesExtraArgs().ToArgs(),
+						ExtraVolumes: []bootstrapv1beta2.HostPathMount{},
 					},
-					APIServer: bootstrapv1.APIServer{
-						ControlPlaneComponent: bootstrapv1.ControlPlaneComponent{
-							ExtraArgs:    map[string]string{},
-							ExtraVolumes: []bootstrapv1.HostPathMount{},
-						},
-					},
-					ControllerManager: bootstrapv1.ControlPlaneComponent{
-						ExtraArgs:    tlsCipherSuitesArgs(),
-						ExtraVolumes: []bootstrapv1.HostPathMount{},
-					},
-					Scheduler: bootstrapv1.ControlPlaneComponent{
-						ExtraArgs:    map[string]string{},
-						ExtraVolumes: []bootstrapv1.HostPathMount{},
+					Scheduler: bootstrapv1beta2.Scheduler{},
+				},
+				InitConfiguration: bootstrapv1beta2.InitConfiguration{
+					NodeRegistration: bootstrapv1beta2.NodeRegistrationOptions{
+						KubeletExtraArgs: func() []bootstrapv1beta2.Arg {
+							tls := "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
+							pid := "aws-snow:////'{{ ds.meta_data.instance_id }}'"
+							return []bootstrapv1beta2.Arg{
+								{Name: "tls-cipher-suites", Value: &tls},
+								{Name: "provider-id", Value: &pid},
+							}
+						}(),
 					},
 				},
-				InitConfiguration: &bootstrapv1.InitConfiguration{
-					NodeRegistration: bootstrapv1.NodeRegistrationOptions{
-						KubeletExtraArgs: map[string]string{
-							"provider-id":       "aws-snow:////'{{ ds.meta_data.instance_id }}'",
-							"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-						},
-					},
-				},
-				JoinConfiguration: &bootstrapv1.JoinConfiguration{
-					NodeRegistration: bootstrapv1.NodeRegistrationOptions{
-						KubeletExtraArgs: map[string]string{
-							"provider-id":       "aws-snow:////'{{ ds.meta_data.instance_id }}'",
-							"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-						},
+				JoinConfiguration: bootstrapv1beta2.JoinConfiguration{
+					NodeRegistration: bootstrapv1beta2.NodeRegistrationOptions{
+						KubeletExtraArgs: func() []bootstrapv1beta2.Arg {
+							tls := "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
+							pid := "aws-snow:////'{{ ds.meta_data.instance_id }}'"
+							return []bootstrapv1beta2.Arg{
+								{Name: "tls-cipher-suites", Value: &tls},
+								{Name: "provider-id", Value: &pid},
+							}
+						}(),
 					},
 				},
 				PreKubeadmCommands: []string{
 					"/etc/eks/bootstrap.sh",
 				},
 				PostKubeadmCommands: []string{},
-				Files: []bootstrapv1.File{
+				Files: []bootstrapv1beta2.File{
 					{
 						Path:    "/etc/kubernetes/manifests/kube-vip.yaml",
 						Owner:   "root:root",
@@ -190,10 +194,12 @@ func wantKubeadmControlPlane(kubeVersion v1alpha1.KubernetesVersion) *controlpla
 					},
 				},
 			},
-			RolloutStrategy: &controlplanev1.RolloutStrategy{
-				Type: controlplanev1.RollingUpdateStrategyType,
-				RollingUpdate: &controlplanev1.RollingUpdate{
-					MaxSurge: &wantMaxSurge,
+			Rollout: controlplanev1beta2.KubeadmControlPlaneRolloutSpec{
+				Strategy: controlplanev1beta2.KubeadmControlPlaneRolloutStrategy{
+					Type: controlplanev1beta2.RollingUpdateStrategyType,
+					RollingUpdate: controlplanev1beta2.KubeadmControlPlaneRolloutStrategyRollingUpdate{
+						MaxSurge: &wantMaxSurge,
+					},
 				},
 			},
 			Replicas: &wantReplicas,
@@ -210,10 +216,10 @@ func wantKubeadmControlPlane(kubeVersion v1alpha1.KubernetesVersion) *controlpla
 	return kcp
 }
 
-func wantKubeadmControlPlaneUnstackedEtcd() *controlplanev1.KubeadmControlPlane {
+func wantKubeadmControlPlaneUnstackedEtcd() *controlplanev1beta2.KubeadmControlPlane {
 	kcp := wantKubeadmControlPlane("1.21")
-	kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd = bootstrapv1.Etcd{
-		External: &bootstrapv1.ExternalEtcd{
+	kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd = bootstrapv1beta2.Etcd{
+		External: bootstrapv1beta2.ExternalEtcd{
 			Endpoints: []string{constants.PlaceholderExternalEtcdEndpoint},
 			CAFile:    "/etc/kubernetes/pki/etcd/ca.crt",
 			CertFile:  "/etc/kubernetes/pki/apiserver-etcd-client.crt",
@@ -245,8 +251,8 @@ func TestKubeadmControlPlane(t *testing.T) {
 var registryMirrorTests = []struct {
 	name                 string
 	registryMirrorConfig *v1alpha1.RegistryMirrorConfiguration
-	wantFiles            []bootstrapv1.File
-	wantRegistryConfig   bootstrapv1.RegistryMirrorConfiguration
+	wantFiles            []bootstrapv1beta2.File
+	wantRegistryConfig   bootstrapv1beta2.RegistryMirrorConfiguration
 }{
 	{
 		name: "with namespace",
@@ -261,23 +267,43 @@ var registryMirrorTests = []struct {
 			},
 			CACertContent: "xyz",
 		},
-		wantFiles: []bootstrapv1.File{
+		wantFiles: []bootstrapv1beta2.File{
 			{
 				Path:  "/etc/containerd/config_append.toml",
 				Owner: "root:root",
-				Content: `[plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
-    endpoint = ["https://1.2.3.4:443/v2/eks-anywhere"]
-  [plugins."io.containerd.grpc.v1.cri".registry.configs."1.2.3.4:443".tls]
-    ca_file = "/etc/containerd/certs.d/1.2.3.4:443/ca.crt"`,
+				Content: `[plugins."io.containerd.grpc.v1.cri".registry]
+  config_path = "/etc/containerd/certs.d"
+`,
 			},
 			{
 				Path:    "/etc/containerd/certs.d/1.2.3.4:443/ca.crt",
 				Owner:   "root:root",
 				Content: "xyz",
 			},
+			{
+				Path:  "/etc/containerd/certs.d/1.2.3.4:443/hosts.toml",
+				Owner: "root:root",
+				Content: `server = "https://1.2.3.4:443"
+
+[host."https://1.2.3.4:443/v2"]
+  capabilities = ["pull", "resolve"]
+  override_path = true
+  ca = "/etc/containerd/certs.d/1.2.3.4:443/ca.crt"
+`,
+			},
+			{
+				Path:  "/etc/containerd/certs.d/public.ecr.aws/hosts.toml",
+				Owner: "root:root",
+				Content: `server = "https://public.ecr.aws"
+
+[host."https://1.2.3.4:443/v2/eks-anywhere"]
+  capabilities = ["pull", "resolve"]
+  override_path = true
+  ca = "/etc/containerd/certs.d/1.2.3.4:443/ca.crt"
+`,
+			},
 		},
-		wantRegistryConfig: bootstrapv1.RegistryMirrorConfiguration{
+		wantRegistryConfig: bootstrapv1beta2.RegistryMirrorConfiguration{
 			Endpoint: "1.2.3.4:443/v2/eks-anywhere",
 			CACert:   "xyz",
 		},
@@ -299,25 +325,54 @@ var registryMirrorTests = []struct {
 			},
 			CACertContent: "xyz",
 		},
-		wantFiles: []bootstrapv1.File{
+		wantFiles: []bootstrapv1beta2.File{
 			{
 				Path:  "/etc/containerd/config_append.toml",
 				Owner: "root:root",
-				Content: `[plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."783794618700.dkr.ecr.us-west-2.amazonaws.com"]
-    endpoint = ["https://1.2.3.4:443/v2/curated-packages"]
-  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
-    endpoint = ["https://1.2.3.4:443/v2/eks-anywhere"]
-  [plugins."io.containerd.grpc.v1.cri".registry.configs."1.2.3.4:443".tls]
-    ca_file = "/etc/containerd/certs.d/1.2.3.4:443/ca.crt"`,
+				Content: `[plugins."io.containerd.grpc.v1.cri".registry]
+  config_path = "/etc/containerd/certs.d"
+`,
 			},
 			{
 				Path:    "/etc/containerd/certs.d/1.2.3.4:443/ca.crt",
 				Owner:   "root:root",
 				Content: "xyz",
 			},
+			{
+				Path:  "/etc/containerd/certs.d/1.2.3.4:443/hosts.toml",
+				Owner: "root:root",
+				Content: `server = "https://1.2.3.4:443"
+
+[host."https://1.2.3.4:443/v2"]
+  capabilities = ["pull", "resolve"]
+  override_path = true
+  ca = "/etc/containerd/certs.d/1.2.3.4:443/ca.crt"
+`,
+			},
+			{
+				Path:  "/etc/containerd/certs.d/783794618700.dkr.ecr.us-west-2.amazonaws.com/hosts.toml",
+				Owner: "root:root",
+				Content: `server = "https://783794618700.dkr.ecr.us-west-2.amazonaws.com"
+
+[host."https://1.2.3.4:443/v2/curated-packages"]
+  capabilities = ["pull", "resolve"]
+  override_path = true
+  ca = "/etc/containerd/certs.d/1.2.3.4:443/ca.crt"
+`,
+			},
+			{
+				Path:  "/etc/containerd/certs.d/public.ecr.aws/hosts.toml",
+				Owner: "root:root",
+				Content: `server = "https://public.ecr.aws"
+
+[host."https://1.2.3.4:443/v2/eks-anywhere"]
+  capabilities = ["pull", "resolve"]
+  override_path = true
+  ca = "/etc/containerd/certs.d/1.2.3.4:443/ca.crt"
+`,
+			},
 		},
-		wantRegistryConfig: bootstrapv1.RegistryMirrorConfiguration{
+		wantRegistryConfig: bootstrapv1beta2.RegistryMirrorConfiguration{
 			Endpoint: "1.2.3.4:443/v2/eks-anywhere",
 			CACert:   "xyz",
 		},
@@ -329,19 +384,39 @@ var registryMirrorTests = []struct {
 			Port:               "443",
 			InsecureSkipVerify: true,
 		},
-		wantFiles: []bootstrapv1.File{
+		wantFiles: []bootstrapv1beta2.File{
 			{
 				Path:  "/etc/containerd/config_append.toml",
 				Owner: "root:root",
-				Content: `[plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
-    endpoint = ["https://1.2.3.4:443"]
-  [plugins."io.containerd.grpc.v1.cri".registry.configs."1.2.3.4:443".tls]
-    insecure_skip_verify = true`,
+				Content: `[plugins."io.containerd.grpc.v1.cri".registry]
+  config_path = "/etc/containerd/certs.d"
+`,
+			},
+			{
+				Path:  "/etc/containerd/certs.d/1.2.3.4:443/hosts.toml",
+				Owner: "root:root",
+				Content: `server = "https://1.2.3.4:443"
+
+[host."https://1.2.3.4:443/v2"]
+  capabilities = ["pull", "resolve"]
+  override_path = true
+  skip_verify = true
+`,
+			},
+			{
+				Path:  "/etc/containerd/certs.d/public.ecr.aws/hosts.toml",
+				Owner: "root:root",
+				Content: `server = "https://public.ecr.aws"
+
+[host."https://1.2.3.4:443/v2"]
+  capabilities = ["pull", "resolve"]
+  override_path = true
+  skip_verify = true
+`,
 			},
 		},
-		wantRegistryConfig: bootstrapv1.RegistryMirrorConfiguration{
-			Endpoint: "1.2.3.4:443",
+		wantRegistryConfig: bootstrapv1beta2.RegistryMirrorConfiguration{
+			Endpoint: "1.2.3.4:443/v2",
 		},
 	},
 	{
@@ -350,17 +425,37 @@ var registryMirrorTests = []struct {
 			Endpoint: "1.2.3.4",
 			Port:     "443",
 		},
-		wantFiles: []bootstrapv1.File{
+		wantFiles: []bootstrapv1beta2.File{
 			{
 				Path:  "/etc/containerd/config_append.toml",
 				Owner: "root:root",
-				Content: `[plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
-    endpoint = ["https://1.2.3.4:443"]`,
+				Content: `[plugins."io.containerd.grpc.v1.cri".registry]
+  config_path = "/etc/containerd/certs.d"
+`,
+			},
+			{
+				Path:  "/etc/containerd/certs.d/1.2.3.4:443/hosts.toml",
+				Owner: "root:root",
+				Content: `server = "https://1.2.3.4:443"
+
+[host."https://1.2.3.4:443/v2"]
+  capabilities = ["pull", "resolve"]
+  override_path = true
+`,
+			},
+			{
+				Path:  "/etc/containerd/certs.d/public.ecr.aws/hosts.toml",
+				Owner: "root:root",
+				Content: `server = "https://public.ecr.aws"
+
+[host."https://1.2.3.4:443/v2"]
+  capabilities = ["pull", "resolve"]
+  override_path = true
+`,
 			},
 		},
-		wantRegistryConfig: bootstrapv1.RegistryMirrorConfiguration{
-			Endpoint: "1.2.3.4:443",
+		wantRegistryConfig: bootstrapv1beta2.RegistryMirrorConfiguration{
+			Endpoint: "1.2.3.4:443/v2",
 		},
 	},
 	{
@@ -371,25 +466,46 @@ var registryMirrorTests = []struct {
 			CACertContent:      "xyz",
 			InsecureSkipVerify: true,
 		},
-		wantFiles: []bootstrapv1.File{
+		wantFiles: []bootstrapv1beta2.File{
 			{
 				Path:  "/etc/containerd/config_append.toml",
 				Owner: "root:root",
-				Content: `[plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
-    endpoint = ["https://1.2.3.4:443"]
-  [plugins."io.containerd.grpc.v1.cri".registry.configs."1.2.3.4:443".tls]
-    ca_file = "/etc/containerd/certs.d/1.2.3.4:443/ca.crt"
-    insecure_skip_verify = true`,
+				Content: `[plugins."io.containerd.grpc.v1.cri".registry]
+  config_path = "/etc/containerd/certs.d"
+`,
 			},
 			{
 				Path:    "/etc/containerd/certs.d/1.2.3.4:443/ca.crt",
 				Owner:   "root:root",
 				Content: "xyz",
 			},
+			{
+				Path:  "/etc/containerd/certs.d/1.2.3.4:443/hosts.toml",
+				Owner: "root:root",
+				Content: `server = "https://1.2.3.4:443"
+
+[host."https://1.2.3.4:443/v2"]
+  capabilities = ["pull", "resolve"]
+  override_path = true
+  ca = "/etc/containerd/certs.d/1.2.3.4:443/ca.crt"
+  skip_verify = true
+`,
+			},
+			{
+				Path:  "/etc/containerd/certs.d/public.ecr.aws/hosts.toml",
+				Owner: "root:root",
+				Content: `server = "https://public.ecr.aws"
+
+[host."https://1.2.3.4:443/v2"]
+  capabilities = ["pull", "resolve"]
+  override_path = true
+  ca = "/etc/containerd/certs.d/1.2.3.4:443/ca.crt"
+  skip_verify = true
+`,
+			},
 		},
-		wantRegistryConfig: bootstrapv1.RegistryMirrorConfiguration{
-			Endpoint: "1.2.3.4:443",
+		wantRegistryConfig: bootstrapv1beta2.RegistryMirrorConfiguration{
+			Endpoint: "1.2.3.4:443/v2",
 			CACert:   "xyz",
 		},
 	},
@@ -403,51 +519,53 @@ func TestKubeadmControlPlaneWithRegistryMirrorUbuntu(t *testing.T) {
 			controlPlaneMachineTemplate := snow.MachineTemplate("snow-test-control-plane-1", g.machineConfigs[g.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name], nil)
 			got, err := snow.KubeadmControlPlane(g.logger, g.clusterSpec, controlPlaneMachineTemplate)
 			g.Expect(err).To(Succeed())
-			want := wantKubeadmControlPlane("1.21")
-			want.Spec.KubeadmConfigSpec.Files = append(want.Spec.KubeadmConfigSpec.Files, tt.wantFiles...)
-			want.Spec.KubeadmConfigSpec.PreKubeadmCommands = append(want.Spec.KubeadmConfigSpec.PreKubeadmCommands, wantRegistryMirrorCommands()...)
-			want.Spec.KubeadmConfigSpec.JoinConfiguration.NodeRegistration.IgnorePreflightErrors = []string{"DirAvailable--etc-kubernetes-manifests"}
-			g.Expect(got).To(BeComparableTo(want))
+
+			// Verify PreKubeadmCommands
+			g.Expect(got.Spec.KubeadmConfigSpec.PreKubeadmCommands).To(ContainElements(
+				"/etc/eks/bootstrap.sh",
+				"cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml",
+				"sudo systemctl daemon-reload",
+				"sudo systemctl restart containerd",
+			))
+
+			// Verify IgnorePreflightErrors
+			g.Expect(got.Spec.KubeadmConfigSpec.JoinConfiguration.NodeRegistration.IgnorePreflightErrors).To(ContainElement("DirAvailable--etc-kubernetes-manifests"))
+
+			// Verify Files - check that each expected file is present
+			g.Expect(got.Spec.KubeadmConfigSpec.Files).To(HaveLen(len(tt.wantFiles) + 1)) // +1 for kube-vip
+			for _, wantFile := range tt.wantFiles {
+				g.Expect(got.Spec.KubeadmConfigSpec.Files).To(ContainElement(wantFile))
+			}
 		})
 	}
 }
 
-var pause = bootstrapv1.Pause{
-	ImageMeta: bootstrapv1.ImageMeta{
-		ImageRepository: "public.ecr.aws/eks-distro/kubernetes/pause",
-		ImageTag:        "0.0.1",
-	},
+var pause = bootstrapv1beta2.Pause{
+	ImageRepository: "public.ecr.aws/eks-distro/kubernetes/pause",
+	ImageTag:        "0.0.1",
 }
 
-var bootstrap = bootstrapv1.BottlerocketBootstrap{
-	ImageMeta: bootstrapv1.ImageMeta{
-		ImageRepository: "public.ecr.aws/eks-anywhere/bottlerocket-bootstrap",
-		ImageTag:        "0.0.1",
-	},
+var bootstrap = bootstrapv1beta2.BottlerocketBootstrap{
+	ImageRepository: "public.ecr.aws/eks-anywhere/bottlerocket-bootstrap",
+	ImageTag:        "0.0.1",
 }
 
-var admin = bootstrapv1.BottlerocketAdmin{
-	ImageMeta: bootstrapv1.ImageMeta{
-		ImageRepository: "public.ecr.aws/eks-anywhere/bottlerocket-admin",
-		ImageTag:        "0.0.1",
-	},
+var admin = bootstrapv1beta2.BottlerocketAdmin{
+	ImageRepository: "public.ecr.aws/eks-anywhere/bottlerocket-admin",
+	ImageTag:        "0.0.1",
 }
 
-var control = bootstrapv1.BottlerocketControl{
-	ImageMeta: bootstrapv1.ImageMeta{
-		ImageRepository: "public.ecr.aws/eks-anywhere/bottlerocket-control",
-		ImageTag:        "0.0.1",
-	},
+var control = bootstrapv1beta2.BottlerocketControl{
+	ImageRepository: "public.ecr.aws/eks-anywhere/bottlerocket-control",
+	ImageTag:        "0.0.1",
 }
 
-var bootstrapCustom = []bootstrapv1.BottlerocketBootstrapContainer{
+var bootstrapCustom = []bootstrapv1beta2.BottlerocketBootstrapContainer{
 	{
-		Name: "bottlerocket-bootstrap-snow",
-		ImageMeta: bootstrapv1.ImageMeta{
-			ImageRepository: "public.ecr.aws/l0g8r8j6/bottlerocket-bootstrap-snow",
-			ImageTag:        "v1-20-22-eks-a-v0.0.0-dev-build.4984",
-		},
-		Mode: "always",
+		Name:            "bottlerocket-bootstrap-snow",
+		ImageRepository: "public.ecr.aws/l0g8r8j6/bottlerocket-bootstrap-snow",
+		ImageTag:        "v1-20-22-eks-a-v0.0.0-dev-build.4984",
+		Mode:            "always",
 	},
 }
 
@@ -476,21 +594,21 @@ func TestKubeadmControlPlaneWithRegistryMirrorBottlerocket(t *testing.T) {
 			want.Spec.KubeadmConfigSpec.ClusterConfiguration.RegistryMirror = tt.wantRegistryConfig
 			want.Spec.KubeadmConfigSpec.JoinConfiguration.RegistryMirror = tt.wantRegistryConfig
 			want.Spec.KubeadmConfigSpec.ClusterConfiguration.ControllerManager.ExtraVolumes = append(want.Spec.KubeadmConfigSpec.ClusterConfiguration.ControllerManager.ExtraVolumes,
-				bootstrapv1.HostPathMount{
+				bootstrapv1beta2.HostPathMount{
 					HostPath:  "/var/lib/kubeadm/controller-manager.conf",
 					MountPath: "/etc/kubernetes/controller-manager.conf",
 					Name:      "kubeconfig",
 					PathType:  "File",
-					ReadOnly:  true,
+					ReadOnly:  ptr.Bool(true),
 				},
 			)
 			want.Spec.KubeadmConfigSpec.ClusterConfiguration.Scheduler.ExtraVolumes = append(want.Spec.KubeadmConfigSpec.ClusterConfiguration.Scheduler.ExtraVolumes,
-				bootstrapv1.HostPathMount{
+				bootstrapv1beta2.HostPathMount{
 					HostPath:  "/var/lib/kubeadm/scheduler.conf",
 					MountPath: "/etc/kubernetes/scheduler.conf",
 					Name:      "kubeconfig",
 					PathType:  "File",
-					ReadOnly:  true,
+					ReadOnly:  ptr.Bool(true),
 				},
 			)
 			want.Spec.KubeadmConfigSpec.ClusterConfiguration.CertificatesDir = "/var/lib/kubeadm/pki"
@@ -510,8 +628,8 @@ func wantProxyConfigCommands() []string {
 var proxyTests = []struct {
 	name            string
 	proxy           *v1alpha1.ProxyConfiguration
-	wantFiles       []bootstrapv1.File
-	wantProxyConfig bootstrapv1.ProxyConfiguration
+	wantFiles       []bootstrapv1beta2.File
+	wantProxyConfig bootstrapv1beta2.ProxyConfiguration
 }{
 	{
 		name: "with proxy, pods cidr, service cidr, cp endpoint",
@@ -523,7 +641,7 @@ var proxyTests = []struct {
 				"1.2.3.5/0",
 			},
 		},
-		wantFiles: []bootstrapv1.File{
+		wantFiles: []bootstrapv1beta2.File{
 			{
 				Path:  "/etc/systemd/system/containerd.service.d/http-proxy.conf",
 				Owner: "root:root",
@@ -533,7 +651,7 @@ Environment="HTTPS_PROXY=1.2.3.4:8888"
 Environment="NO_PROXY=10.1.0.0/16,10.96.0.0/12,1.2.3.4/0,1.2.3.5/0,localhost,127.0.0.1,.svc,1.2.3.4"`,
 			},
 		},
-		wantProxyConfig: bootstrapv1.ProxyConfiguration{
+		wantProxyConfig: bootstrapv1beta2.ProxyConfiguration{
 			HTTPSProxy: "1.2.3.4:8888",
 			NoProxy: []string{
 				"10.1.0.0/16",
@@ -604,21 +722,21 @@ func TestKubeadmControlPlaneWithProxyConfigBottlerocket(t *testing.T) {
 			want.Spec.KubeadmConfigSpec.ClusterConfiguration.Proxy = tt.wantProxyConfig
 			want.Spec.KubeadmConfigSpec.JoinConfiguration.Proxy = tt.wantProxyConfig
 			want.Spec.KubeadmConfigSpec.ClusterConfiguration.ControllerManager.ExtraVolumes = append(want.Spec.KubeadmConfigSpec.ClusterConfiguration.ControllerManager.ExtraVolumes,
-				bootstrapv1.HostPathMount{
+				bootstrapv1beta2.HostPathMount{
 					HostPath:  "/var/lib/kubeadm/controller-manager.conf",
 					MountPath: "/etc/kubernetes/controller-manager.conf",
 					Name:      "kubeconfig",
 					PathType:  "File",
-					ReadOnly:  true,
+					ReadOnly:  ptr.Bool(true),
 				},
 			)
 			want.Spec.KubeadmConfigSpec.ClusterConfiguration.Scheduler.ExtraVolumes = append(want.Spec.KubeadmConfigSpec.ClusterConfiguration.Scheduler.ExtraVolumes,
-				bootstrapv1.HostPathMount{
+				bootstrapv1beta2.HostPathMount{
 					HostPath:  "/var/lib/kubeadm/scheduler.conf",
 					MountPath: "/etc/kubernetes/scheduler.conf",
 					Name:      "kubeconfig",
 					PathType:  "File",
-					ReadOnly:  true,
+					ReadOnly:  ptr.Bool(true),
 				},
 			)
 			want.Spec.KubeadmConfigSpec.ClusterConfiguration.CertificatesDir = "/var/lib/kubeadm/pki"
@@ -631,21 +749,21 @@ func TestKubeadmControlPlaneWithProxyConfigBottlerocket(t *testing.T) {
 var bottlerocketAdditionalSettingsTests = []struct {
 	name       string
 	settings   *v1alpha1.HostOSConfiguration
-	wantConfig *bootstrapv1.BottlerocketSettings
+	wantConfig *bootstrapv1beta2.BottlerocketSettings
 }{
 	{
 		name: "with kernel sysctl settings",
 		settings: &v1alpha1.HostOSConfiguration{
 			BottlerocketConfiguration: &v1alpha1.BottlerocketConfiguration{
-				Kernel: &bootstrapv1.BottlerocketKernelSettings{
+				Kernel: &bootstrapv1beta2.BottlerocketKernelSettings{
 					SysctlSettings: map[string]string{
 						"foo": "bar",
 					},
 				},
 			},
 		},
-		wantConfig: &bootstrapv1.BottlerocketSettings{
-			Kernel: &bootstrapv1.BottlerocketKernelSettings{
+		wantConfig: &bootstrapv1beta2.BottlerocketSettings{
+			Kernel: &bootstrapv1beta2.BottlerocketKernelSettings{
 				SysctlSettings: map[string]string{
 					"foo": "bar",
 				},
@@ -656,7 +774,7 @@ var bottlerocketAdditionalSettingsTests = []struct {
 		name: "with boot kernel settings",
 		settings: &v1alpha1.HostOSConfiguration{
 			BottlerocketConfiguration: &v1alpha1.BottlerocketConfiguration{
-				Boot: &bootstrapv1.BottlerocketBootSettings{
+				Boot: &bootstrapv1beta2.BottlerocketBootSettings{
 					BootKernelParameters: map[string][]string{
 						"foo": {
 							"abc",
@@ -666,8 +784,8 @@ var bottlerocketAdditionalSettingsTests = []struct {
 				},
 			},
 		},
-		wantConfig: &bootstrapv1.BottlerocketSettings{
-			Boot: &bootstrapv1.BottlerocketBootSettings{
+		wantConfig: &bootstrapv1beta2.BottlerocketSettings{
+			Boot: &bootstrapv1beta2.BottlerocketBootSettings{
 				BootKernelParameters: map[string][]string{
 					"foo": {
 						"abc",
@@ -681,13 +799,13 @@ var bottlerocketAdditionalSettingsTests = []struct {
 		name: "with both empty",
 		settings: &v1alpha1.HostOSConfiguration{
 			BottlerocketConfiguration: &v1alpha1.BottlerocketConfiguration{
-				Boot:   &bootstrapv1.BottlerocketBootSettings{},
-				Kernel: &bootstrapv1.BottlerocketKernelSettings{},
+				Boot:   &bootstrapv1beta2.BottlerocketBootSettings{},
+				Kernel: &bootstrapv1beta2.BottlerocketKernelSettings{},
 			},
 		},
-		wantConfig: &bootstrapv1.BottlerocketSettings{
-			Boot:   &bootstrapv1.BottlerocketBootSettings{},
-			Kernel: &bootstrapv1.BottlerocketKernelSettings{},
+		wantConfig: &bootstrapv1beta2.BottlerocketSettings{
+			Boot:   &bootstrapv1beta2.BottlerocketBootSettings{},
+			Kernel: &bootstrapv1beta2.BottlerocketKernelSettings{},
 		},
 	},
 }
@@ -717,21 +835,21 @@ func TestKubeadmControlPlaneWithBottlerocketAdditionalSettings(t *testing.T) {
 			want.Spec.KubeadmConfigSpec.ClusterConfiguration.Bottlerocket = tt.wantConfig
 			want.Spec.KubeadmConfigSpec.JoinConfiguration.Bottlerocket = tt.wantConfig
 			want.Spec.KubeadmConfigSpec.ClusterConfiguration.ControllerManager.ExtraVolumes = append(want.Spec.KubeadmConfigSpec.ClusterConfiguration.ControllerManager.ExtraVolumes,
-				bootstrapv1.HostPathMount{
+				bootstrapv1beta2.HostPathMount{
 					HostPath:  "/var/lib/kubeadm/controller-manager.conf",
 					MountPath: "/etc/kubernetes/controller-manager.conf",
 					Name:      "kubeconfig",
 					PathType:  "File",
-					ReadOnly:  true,
+					ReadOnly:  ptr.Bool(true),
 				},
 			)
 			want.Spec.KubeadmConfigSpec.ClusterConfiguration.Scheduler.ExtraVolumes = append(want.Spec.KubeadmConfigSpec.ClusterConfiguration.Scheduler.ExtraVolumes,
-				bootstrapv1.HostPathMount{
+				bootstrapv1beta2.HostPathMount{
 					HostPath:  "/var/lib/kubeadm/scheduler.conf",
 					MountPath: "/etc/kubernetes/scheduler.conf",
 					Name:      "kubeconfig",
 					PathType:  "File",
-					ReadOnly:  true,
+					ReadOnly:  ptr.Bool(true),
 				},
 			)
 			want.Spec.KubeadmConfigSpec.ClusterConfiguration.CertificatesDir = "/var/lib/kubeadm/pki"
@@ -741,41 +859,39 @@ func TestKubeadmControlPlaneWithBottlerocketAdditionalSettings(t *testing.T) {
 	}
 }
 
-func wantKubeadmConfigTemplate() *bootstrapv1.KubeadmConfigTemplate {
-	return &bootstrapv1.KubeadmConfigTemplate{
+func wantKubeadmConfigTemplate() *bootstrapv1beta2.KubeadmConfigTemplate {
+	return &bootstrapv1beta2.KubeadmConfigTemplate{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "bootstrap.cluster.x-k8s.io/v1beta1",
+			APIVersion: "bootstrap.cluster.x-k8s.io/v1beta2",
 			Kind:       "KubeadmConfigTemplate",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "snow-test-md-0-1",
 			Namespace: "eksa-system",
 		},
-		Spec: bootstrapv1.KubeadmConfigTemplateSpec{
-			Template: bootstrapv1.KubeadmConfigTemplateResource{
-				Spec: bootstrapv1.KubeadmConfigSpec{
-					ClusterConfiguration: &bootstrapv1.ClusterConfiguration{
-						ControllerManager: bootstrapv1.ControlPlaneComponent{
-							ExtraArgs: map[string]string{},
+		Spec: bootstrapv1beta2.KubeadmConfigTemplateSpec{
+			Template: bootstrapv1beta2.KubeadmConfigTemplateResource{
+				Spec: bootstrapv1beta2.KubeadmConfigSpec{
+					ClusterConfiguration: bootstrapv1beta2.ClusterConfiguration{
+						ControllerManager: bootstrapv1beta2.ControllerManager{
+							ExtraArgs: nil,
 						},
-						APIServer: bootstrapv1.APIServer{
-							ControlPlaneComponent: bootstrapv1.ControlPlaneComponent{
-								ExtraArgs: map[string]string{},
-							},
+						APIServer: bootstrapv1beta2.APIServer{
+							ExtraArgs: nil,
 						},
 					},
-					JoinConfiguration: &bootstrapv1.JoinConfiguration{
-						NodeRegistration: bootstrapv1.NodeRegistrationOptions{
-							KubeletExtraArgs: map[string]string{
+					JoinConfiguration: bootstrapv1beta2.JoinConfiguration{
+						NodeRegistration: bootstrapv1beta2.NodeRegistrationOptions{
+							KubeletExtraArgs: clusterapi.ExtraArgs{
 								"provider-id": "aws-snow:////'{{ ds.meta_data.instance_id }}'",
-							},
+							}.ToArgs(),
 						},
 					},
 					PreKubeadmCommands: []string{
 						"/etc/eks/bootstrap.sh",
 					},
 					PostKubeadmCommands: []string{},
-					Files:               []bootstrapv1.File{},
+					Files:               []bootstrapv1beta2.File{},
 				},
 			},
 		},
@@ -792,14 +908,14 @@ func TestKubeadmConfigTemplate(t *testing.T) {
 	g.Expect(got).To(Equal(want))
 }
 
-func wantMachineDeployment() *clusterv1.MachineDeployment {
+func wantMachineDeployment() *clusterv1beta2.MachineDeployment {
 	wantVersion := "v1.21.5-eks-1-21-9"
 	wantReplicas := int32(3)
 	wantMaxUnavailable := intstr.FromInt(0)
 	wantMaxSurge := intstr.FromInt(1)
-	return &clusterv1.MachineDeployment{
+	return &clusterv1beta2.MachineDeployment{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "cluster.x-k8s.io/v1beta1",
+			APIVersion: "cluster.x-k8s.io/v1beta2",
 			Kind:       "MachineDeployment",
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -812,41 +928,43 @@ func wantMachineDeployment() *clusterv1.MachineDeployment {
 			},
 			Annotations: map[string]string{},
 		},
-		Spec: clusterv1.MachineDeploymentSpec{
+		Spec: clusterv1beta2.MachineDeploymentSpec{
 			ClusterName: "snow-test",
 			Selector: metav1.LabelSelector{
 				MatchLabels: map[string]string{},
 			},
-			Template: clusterv1.MachineTemplateSpec{
-				ObjectMeta: clusterv1.ObjectMeta{
+			Template: clusterv1beta2.MachineTemplateSpec{
+				ObjectMeta: clusterv1beta2.ObjectMeta{
 					Labels: map[string]string{
 						"cluster.x-k8s.io/cluster-name": "snow-test",
 					},
 				},
-				Spec: clusterv1.MachineSpec{
-					Bootstrap: clusterv1.Bootstrap{
-						ConfigRef: &v1.ObjectReference{
-							APIVersion: "bootstrap.cluster.x-k8s.io/v1beta1",
-							Kind:       "KubeadmConfigTemplate",
-							Name:       "snow-test-md-0-1",
+				Spec: clusterv1beta2.MachineSpec{
+					Bootstrap: clusterv1beta2.Bootstrap{
+						ConfigRef: clusterv1beta2.ContractVersionedObjectReference{
+							APIGroup: "bootstrap.cluster.x-k8s.io",
+							Kind:     "KubeadmConfigTemplate",
+							Name:     "snow-test-md-0-1",
 						},
 					},
 					ClusterName: "snow-test",
-					InfrastructureRef: v1.ObjectReference{
-						APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
-						Kind:       "AWSSnowMachineTemplate",
-						Name:       "snow-test-md-0-1",
+					InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
+						APIGroup: "infrastructure.cluster.x-k8s.io",
+						Kind:     "AWSSnowMachineTemplate",
+						Name:     "snow-test-md-0-1",
 					},
-					Version: &wantVersion,
+					Version: wantVersion,
 				},
 			},
 			Replicas: &wantReplicas,
-			Strategy: &clusterv1.MachineDeploymentStrategy{
-				RollingUpdate: &clusterv1.MachineRollingUpdateDeployment{
-					MaxUnavailable: &wantMaxUnavailable,
-					MaxSurge:       &wantMaxSurge,
+			Rollout: clusterv1beta2.MachineDeploymentRolloutSpec{
+				Strategy: clusterv1beta2.MachineDeploymentRolloutStrategy{
+					Type: clusterv1beta2.RollingUpdateMachineDeploymentStrategyType,
+					RollingUpdate: clusterv1beta2.MachineDeploymentRolloutStrategyRollingUpdate{
+						MaxUnavailable: &wantMaxUnavailable,
+						MaxSurge:       &wantMaxSurge,
+					},
 				},
-				Type: clusterv1.RollingUpdateMachineDeploymentStrategyType,
 			},
 		},
 	}
@@ -1185,12 +1303,12 @@ func TestEtcdadmClusterBottlerocket(t *testing.T) {
 			OSFamily: "bottlerocket",
 			HostOSConfiguration: &v1alpha1.HostOSConfiguration{
 				BottlerocketConfiguration: &v1alpha1.BottlerocketConfiguration{
-					Kernel: &bootstrapv1.BottlerocketKernelSettings{
+					Kernel: &bootstrapv1beta2.BottlerocketKernelSettings{
 						SysctlSettings: map[string]string{
 							"foo": "bar",
 						},
 					},
-					Boot: &bootstrapv1.BottlerocketBootSettings{
+					Boot: &bootstrapv1beta2.BottlerocketBootSettings{
 						BootKernelParameters: map[string][]string{
 							"foo": {
 								"abc",

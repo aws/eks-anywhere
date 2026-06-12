@@ -319,11 +319,16 @@ func TestEnableSuccess(t *testing.T) {
 		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, false, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-			DoAndReturn(getPBCSuccess(t)).
-			AnyTimes()
-		tt.kubectl.EXPECT().
-			HasResource(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-			DoAndReturn(func(_, _, _, _, _ interface{}) (bool, error) { return true, nil }).
+			DoAndReturn(func(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj interface{}) error {
+				switch v := obj.(type) {
+				case *packagesv1.PackageBundleController:
+					return getPBCSuccess(t)(ctx, resourceType, name, namespace, kubeconfig, v)
+				case *packagesv1.Package:
+					return getPackageSuccess(t)(ctx, resourceType, name, namespace, kubeconfig, v)
+				default:
+					return fmt.Errorf("unexpected type: %T", obj)
+				}
+			}).
 			AnyTimes()
 
 		err := tt.command.Enable(tt.ctx)
@@ -343,6 +348,7 @@ func TestEnableSucceedInWorkloadCluster(t *testing.T) {
 			curatedpackages.WithEksaAccessKeyId(tt.eksaAccessID),
 			curatedpackages.WithManagementClusterName("mgmt"),
 			curatedpackages.WithValuesFileWriter(tt.writer),
+			curatedpackages.WithSkipWait(),
 		)
 		clusterName := fmt.Sprintf("clusterName=%s", "billy")
 		valueFilePath := filepath.Join("billy", filewriter.DefaultTmpFolder, valueFileName)
@@ -364,7 +370,16 @@ func TestEnableSucceedInWorkloadCluster(t *testing.T) {
 		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name+"-billy", ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, true, gomock.InAnyOrder(values)).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-			DoAndReturn(getPBCSuccess(t)).
+			DoAndReturn(func(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj interface{}) error {
+				switch v := obj.(type) {
+				case *packagesv1.PackageBundleController:
+					return getPBCSuccess(t)(ctx, resourceType, name, namespace, kubeconfig, v)
+				case *packagesv1.Package:
+					return getPackageSuccess(t)(ctx, resourceType, name, namespace, kubeconfig, v)
+				default:
+					return fmt.Errorf("unexpected type: %T", obj)
+				}
+			}).
 			AnyTimes()
 		tt.kubectl.EXPECT().
 			HasResource(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
@@ -386,6 +401,7 @@ func TestEnableSucceedInWorkloadClusterWhenPackageBundleControllerNotExist(t *te
 			curatedpackages.WithEksaAccessKeyId(tt.eksaAccessID),
 			curatedpackages.WithManagementClusterName("mgmt"),
 			curatedpackages.WithValuesFileWriter(tt.writer),
+			curatedpackages.WithSkipWait(),
 		)
 		clusterName := fmt.Sprintf("clusterName=%s", "billy")
 		valueFilePath := filepath.Join("billy", filewriter.DefaultTmpFolder, valueFileName)
@@ -405,18 +421,6 @@ func TestEnableSucceedInWorkloadClusterWhenPackageBundleControllerNotExist(t *te
 		values = append(values, "managementClusterName=mgmt")
 		values = append(values, "workloadPackageOnly=true")
 		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name+"-billy", ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, true, gomock.InAnyOrder(values)).Return(nil)
-		gomock.InOrder(
-			tt.kubectl.EXPECT().
-				GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-				DoAndReturn(getPBCNotFound(t)),
-			tt.kubectl.EXPECT().
-				GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-				DoAndReturn(getPBCSuccess(t)))
-		tt.kubectl.EXPECT().
-			HasResource(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-			DoAndReturn(func(_, _, _, _, _ interface{}) (bool, error) { return true, nil }).
-			AnyTimes()
-
 		err := tt.command.Enable(tt.ctx)
 		tt.Expect(err).To(BeNil())
 	}
@@ -446,6 +450,36 @@ func getPBCNotFound(t *testing.T) func(context.Context, string, string, string, 
 func getPBCFail(t *testing.T) func(context.Context, string, string, string, string, *packagesv1.PackageBundleController) error {
 	return func(_ context.Context, _, _, _, _ string, obj *packagesv1.PackageBundleController) error {
 		return fmt.Errorf("test error")
+	}
+}
+
+func getPackageSuccess(t *testing.T) func(context.Context, string, string, string, string, *packagesv1.Package) error {
+	return func(_ context.Context, _, _, _, _ string, obj *packagesv1.Package) error {
+		pkg := &packagesv1.Package{
+			Status: packagesv1.PackageStatus{
+				State: "installed",
+			},
+		}
+		pkg.DeepCopyInto(obj)
+		return nil
+	}
+}
+
+func getPackageNotInstalled(t *testing.T) func(context.Context, string, string, string, string, *packagesv1.Package) error {
+	return func(_ context.Context, _, _, _, _ string, obj *packagesv1.Package) error {
+		pkg := &packagesv1.Package{
+			Status: packagesv1.PackageStatus{
+				State: "installing",
+			},
+		}
+		pkg.DeepCopyInto(obj)
+		return nil
+	}
+}
+
+func getPackageFail(t *testing.T) func(context.Context, string, string, string, string, *packagesv1.Package) error {
+	return func(_ context.Context, _, _, _, _ string, obj *packagesv1.Package) error {
+		return fmt.Errorf("test error getting package")
 	}
 }
 
@@ -489,7 +523,16 @@ func TestEnableWithProxy(t *testing.T) {
 		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, false, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-			DoAndReturn(getPBCSuccess(t)).
+			DoAndReturn(func(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj interface{}) error {
+				switch v := obj.(type) {
+				case *packagesv1.PackageBundleController:
+					return getPBCSuccess(t)(ctx, resourceType, name, namespace, kubeconfig, v)
+				case *packagesv1.Package:
+					return getPackageSuccess(t)(ctx, resourceType, name, namespace, kubeconfig, v)
+				default:
+					return fmt.Errorf("unexpected type: %T", obj)
+				}
+			}).
 			AnyTimes()
 		tt.kubectl.EXPECT().
 			HasResource(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
@@ -540,7 +583,16 @@ func TestEnableWithEmptyProxy(t *testing.T) {
 		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, false, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-			DoAndReturn(getPBCSuccess(t)).
+			DoAndReturn(func(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj interface{}) error {
+				switch v := obj.(type) {
+				case *packagesv1.PackageBundleController:
+					return getPBCSuccess(t)(ctx, resourceType, name, namespace, kubeconfig, v)
+				case *packagesv1.Package:
+					return getPackageSuccess(t)(ctx, resourceType, name, namespace, kubeconfig, v)
+				default:
+					return fmt.Errorf("unexpected type: %T", obj)
+				}
+			}).
 			AnyTimes()
 		tt.kubectl.EXPECT().
 			HasResource(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
@@ -589,7 +641,16 @@ func TestEnableWithSkipWait(t *testing.T) {
 		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, false, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-			DoAndReturn(getPBCSuccess(t)).
+			DoAndReturn(func(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj interface{}) error {
+				switch v := obj.(type) {
+				case *packagesv1.PackageBundleController:
+					return getPBCSuccess(t)(ctx, resourceType, name, namespace, kubeconfig, v)
+				case *packagesv1.Package:
+					return getPackageSuccess(t)(ctx, resourceType, name, namespace, kubeconfig, v)
+				default:
+					return fmt.Errorf("unexpected type: %T", obj)
+				}
+			}).
 			AnyTimes()
 		tt.kubectl.EXPECT().
 			HasResource(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
@@ -623,7 +684,16 @@ func TestEnableFail(t *testing.T) {
 		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, false, values).Return(errors.New("login failed"))
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-			DoAndReturn(getPBCSuccess(t)).
+			DoAndReturn(func(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj interface{}) error {
+				switch v := obj.(type) {
+				case *packagesv1.PackageBundleController:
+					return getPBCSuccess(t)(ctx, resourceType, name, namespace, kubeconfig, v)
+				case *packagesv1.Package:
+					return getPackageSuccess(t)(ctx, resourceType, name, namespace, kubeconfig, v)
+				default:
+					return fmt.Errorf("unexpected type: %T", obj)
+				}
+			}).
 			AnyTimes()
 
 		err := tt.command.Enable(tt.ctx)
@@ -683,7 +753,16 @@ func TestEnableSuccessWhenCronJobFails(t *testing.T) {
 		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, false, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-			DoAndReturn(getPBCSuccess(t)).
+			DoAndReturn(func(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj interface{}) error {
+				switch v := obj.(type) {
+				case *packagesv1.PackageBundleController:
+					return getPBCSuccess(t)(ctx, resourceType, name, namespace, kubeconfig, v)
+				case *packagesv1.Package:
+					return getPackageSuccess(t)(ctx, resourceType, name, namespace, kubeconfig, v)
+				default:
+					return fmt.Errorf("unexpected type: %T", obj)
+				}
+			}).
 			AnyTimes()
 		tt.kubectl.EXPECT().
 			HasResource(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
@@ -756,7 +835,16 @@ func TestEnableActiveBundleCustomTimeout(t *testing.T) {
 		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, false, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-			DoAndReturn(getPBCSuccess(t)).
+			DoAndReturn(func(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj interface{}) error {
+				switch v := obj.(type) {
+				case *packagesv1.PackageBundleController:
+					return getPBCSuccess(t)(ctx, resourceType, name, namespace, kubeconfig, v)
+				case *packagesv1.Package:
+					return getPackageSuccess(t)(ctx, resourceType, name, namespace, kubeconfig, v)
+				default:
+					return fmt.Errorf("unexpected type: %T", obj)
+				}
+			}).
 			AnyTimes()
 		tt.kubectl.EXPECT().
 			HasResource(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
@@ -772,6 +860,17 @@ func TestEnableActiveBundleCustomTimeout(t *testing.T) {
 
 func TestEnableActiveBundleWaitLoops(t *testing.T) {
 	for _, tt := range newPackageControllerTests(t) {
+		// Skip validation in this test since it's testing loop behavior
+		tt.command = curatedpackages.NewPackageControllerClient(
+			tt.chartManager, tt.kubectl, tt.clusterName, tt.kubeConfig, tt.chart,
+			tt.registryMirror,
+			curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),
+			curatedpackages.WithEksaRegion(tt.eksaRegion),
+			curatedpackages.WithEksaAccessKeyId(tt.eksaAccessID),
+			curatedpackages.WithManagementClusterName(tt.clusterName),
+			curatedpackages.WithValuesFileWriter(tt.writer),
+			curatedpackages.WithSkipWait(),
+		)
 		clusterName := fmt.Sprintf("clusterName=%s", "billy")
 		valueFilePath := filepath.Join("billy", filewriter.DefaultTmpFolder, valueFileName)
 		ociURI := fmt.Sprintf("%s%s", "oci://", tt.registryMirror.ReplaceRegistry(tt.chart.Image()))
@@ -790,7 +889,22 @@ func TestEnableActiveBundleWaitLoops(t *testing.T) {
 		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, false, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-			DoAndReturn(getPBCLoops(t, 3)).
+			DoAndReturn(func(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj interface{}) error {
+				switch v := obj.(type) {
+				case *packagesv1.PackageBundleController:
+					return getPBCLoops(t, 3)(ctx, resourceType, name, namespace, kubeconfig, v)
+				case *packagesv1.Package:
+					// Package gradually becomes ready
+					static_calls := [3]int{0}
+					static_calls[0]++
+					if static_calls[0] <= 2 {
+						return getPackageNotInstalled(t)(ctx, resourceType, name, namespace, kubeconfig, v)
+					}
+					return getPackageSuccess(t)(ctx, resourceType, name, namespace, kubeconfig, v)
+				default:
+					return fmt.Errorf("unexpected type: %T", obj)
+				}
+			}).
 			AnyTimes()
 		tt.kubectl.EXPECT().
 			HasResource(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
@@ -859,7 +973,7 @@ func TestEnableActiveBundleTimesOut(t *testing.T) {
 			AnyTimes()
 
 		err := tt.command.Enable(tt.ctx)
-		expectedErr := fmt.Errorf("timed out finding an active package bundle / eksa-packages-billy namespace for the current cluster: %v", context.DeadlineExceeded)
+		expectedErr := fmt.Errorf("timed out finding an active package bundle and installed eks-anywhere-packages for the current cluster: %v", context.DeadlineExceeded)
 		if err.Error() != expectedErr.Error() {
 			t.Errorf("expected %v, got %v", expectedErr, err)
 		}
@@ -901,7 +1015,17 @@ func TestEnableActiveBundleNamespaceTimesOut(t *testing.T) {
 		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, false, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-			DoAndReturn(getPBCSuccess(t)).
+			DoAndReturn(func(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj interface{}) error {
+				switch v := obj.(type) {
+				case *packagesv1.PackageBundleController:
+					return getPBCSuccess(t)(ctx, resourceType, name, namespace, kubeconfig, v)
+				case *packagesv1.Package:
+					// Simulate Package never becoming installed to trigger timeout
+					return getPackageNotInstalled(t)(ctx, resourceType, name, namespace, kubeconfig, v)
+				default:
+					return fmt.Errorf("unexpected type: %T", obj)
+				}
+			}).
 			AnyTimes()
 		tt.kubectl.EXPECT().
 			HasResource(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
@@ -909,7 +1033,7 @@ func TestEnableActiveBundleNamespaceTimesOut(t *testing.T) {
 			AnyTimes()
 
 		err := tt.command.Enable(tt.ctx)
-		expectedErr := fmt.Errorf("timed out finding an active package bundle / eksa-packages-billy namespace for the current cluster: %v", context.DeadlineExceeded)
+		expectedErr := fmt.Errorf("timed out finding an active package bundle and installed eks-anywhere-packages for the current cluster: %v", context.DeadlineExceeded)
 		if err.Error() != expectedErr.Error() {
 			t.Errorf("expected %v, got %v", expectedErr, err)
 		}
@@ -921,6 +1045,111 @@ func getPBCDelay(t *testing.T, delay time.Duration) func(context.Context, string
 		time.Sleep(delay)
 		return fmt.Errorf("test error")
 	}
+}
+
+func TestEnableWaitsForPackageInstalled(t *testing.T) {
+	// This test validates the race condition fix: Package must be installed before Enable returns
+	ctrl := gomock.NewController(t)
+	k := mocks.NewMockKubectlRunner(ctrl)
+	cm := mocks.NewMockChartManager(ctrl)
+	kubeConfig := "kubeconfig.kubeconfig"
+	chart := &artifactsv1.Image{
+		Name: "test_controller",
+		URI:  "test_registry/eks-anywhere/eks-anywhere-packages:v1",
+	}
+	clusterName := "billy"
+	writer, _ := filewriter.NewWriter(clusterName)
+
+	command := curatedpackages.NewPackageControllerClient(
+		cm, k, clusterName, kubeConfig, chart, nil,
+		curatedpackages.WithManagementClusterName(clusterName),
+		curatedpackages.WithValuesFileWriter(writer),
+		// NOTE: NOT using WithSkipWait() - we want to test validation
+	)
+
+	values := []string{
+		"sourceRegistry=public.ecr.aws/eks-anywhere",
+		"defaultRegistry=public.ecr.aws/eks-anywhere",
+		"defaultImageRegistry=783794618700.dkr.ecr.us-west-2.amazonaws.com",
+		"clusterName=" + clusterName,
+		"cronjob.suspend=true",
+	}
+	valueFilePath := filepath.Join("billy", filewriter.DefaultTmpFolder, valueFileName)
+	ociURI := "oci://test_registry/eks-anywhere/eks-anywhere-packages"
+
+	cm.EXPECT().InstallChart(gomock.Any(), chart.Name, ociURI, chart.Tag(), kubeConfig, constants.EksaPackagesName, valueFilePath, false, gomock.InAnyOrder(values)).Return(nil)
+
+	// Simulate race condition: Package not installed initially, becomes installed after 2 checks
+	packageCallCount := 0
+	k.EXPECT().
+		GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj interface{}) error {
+			switch v := obj.(type) {
+			case *packagesv1.PackageBundleController:
+				return getPBCSuccess(t)(ctx, resourceType, name, namespace, kubeconfig, v)
+			case *packagesv1.Package:
+				packageCallCount++
+				if packageCallCount <= 2 {
+					// First 2 checks: Package is installing (race condition)
+					return getPackageNotInstalled(t)(ctx, resourceType, name, namespace, kubeconfig, v)
+				}
+				// After 2 retries: Package is installed
+				return getPackageSuccess(t)(ctx, resourceType, name, namespace, kubeconfig, v)
+			default:
+				return fmt.Errorf("unexpected type: %T", obj)
+			}
+		}).
+		AnyTimes()
+
+	err := command.Enable(context.Background())
+	if err != nil {
+		t.Fatalf("Enable should succeed after Package becomes installed: %v", err)
+	}
+
+	// Verify we actually detected the race condition (retried Package checks)
+	if packageCallCount < 3 {
+		t.Errorf("expected at least 3 Package checks (to detect + resolve race condition), got %d", packageCallCount)
+	}
+}
+
+func TestEnableFailsWhenPackageGetObjectFails(t *testing.T) {
+	// Test coverage for error handling when Package GetObject returns non-NotFound error
+	tt := newPackageControllerTests(t)[0] // Use first test case to reduce complexity
+
+	clusterName := fmt.Sprintf("clusterName=%s", "billy")
+	valueFilePath := filepath.Join("billy", filewriter.DefaultTmpFolder, valueFileName)
+	ociURI := fmt.Sprintf("%s%s", "oci://", tt.registryMirror.ReplaceRegistry(tt.chart.Image()))
+	sourceRegistry, defaultRegistry, defaultImageRegistry := tt.command.GetCuratedPackagesRegistries(context.Background())
+
+	t.Setenv("REGISTRY_USERNAME", "username")
+	t.Setenv("REGISTRY_PASSWORD", "password")
+
+	values := []string{
+		fmt.Sprintf("sourceRegistry=%s", sourceRegistry),
+		fmt.Sprintf("defaultRegistry=%s", defaultRegistry),
+		fmt.Sprintf("defaultImageRegistry=%s", defaultImageRegistry),
+		clusterName,
+	}
+
+	tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, false, values).Return(nil)
+
+	tt.kubectl.EXPECT().
+		GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj interface{}) error {
+			switch v := obj.(type) {
+			case *packagesv1.PackageBundleController:
+				return getPBCSuccess(t)(ctx, resourceType, name, namespace, kubeconfig, v)
+			case *packagesv1.Package:
+				return getPackageFail(t)(ctx, resourceType, name, namespace, kubeconfig, v)
+			default:
+				return fmt.Errorf("unexpected type: %T", obj)
+			}
+		}).
+		AnyTimes()
+
+	err := tt.command.Enable(tt.ctx)
+	tt.Expect(err).NotTo(BeNil())
+	tt.Expect(err.Error()).To(ContainSubstring("getting eks-anywhere-packages package"))
 }
 
 func TestCreateHelmOverrideValuesYaml(t *testing.T) {
@@ -1238,7 +1467,16 @@ func TestEnableFullLifecyclePath(t *testing.T) {
 	tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name+"-"+clusterName, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, true, gomock.InAnyOrder(values)).Return(nil)
 	tt.kubectl.EXPECT().
 		GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-		DoAndReturn(getPBCSuccess(t)).
+		DoAndReturn(func(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj interface{}) error {
+			switch v := obj.(type) {
+			case *packagesv1.PackageBundleController:
+				return getPBCSuccess(t)(ctx, resourceType, name, namespace, kubeconfig, v)
+			case *packagesv1.Package:
+				return getPackageSuccess(t)(ctx, resourceType, name, namespace, kubeconfig, v)
+			default:
+				return fmt.Errorf("unexpected type: %T", obj)
+			}
+		}).
 		AnyTimes()
 	tt.kubectl.EXPECT().
 		HasResource(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).

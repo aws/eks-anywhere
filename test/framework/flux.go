@@ -551,7 +551,7 @@ func (e *ClusterE2ETest) validateWorkerNodeMultiConfigUpdates(ctx context.Contex
 		}
 		vsphereMachineConfigs[workerName].Spec.DiskGiB = vsphereMachineConfigs[workerName].Spec.DiskGiB + 10
 		vsphereMachineConfigs[workerName].Spec.MemoryMiB = 10196
-		vsphereMachineConfigs[workerName].Spec.NumCPUs = 1
+		vsphereMachineConfigs[workerName].Spec.NumCPUs = 2
 
 		// update replica
 		clusterSpec, err := e.clusterSpecFromGit()
@@ -978,7 +978,10 @@ func (e *ClusterE2ETest) waitForWorkerScaling(name string, targetvalue int) erro
 			return err
 		}
 
-		r := int(md.Status.Replicas)
+		var r int
+		if md.Status.Replicas != nil {
+			r = int(*md.Status.Replicas)
+		}
 		if r != targetvalue {
 			e.T.Logf("Waiting for worker node MachineDeployment %s replicas to scale; target: %d, actual: %d", md.Name, targetvalue, r)
 			return fmt.Errorf(" MachineDeployment %s replicas are not at desired scale; target: %d, actual: %d", md.Name, targetvalue, r)

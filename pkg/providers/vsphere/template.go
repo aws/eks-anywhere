@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
-	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
 	"sigs.k8s.io/yaml"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -219,11 +219,11 @@ func buildTemplateMapCP(
 		"vsphereControlPlaneSshAuthorizedKey":  controlPlaneSSHKey,
 		"podCidrs":                             clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks,
 		"serviceCidrs":                         clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks,
-		"etcdExtraArgs":                        etcdExtraArgs.ToPartialYaml(),
+		"etcdExtraArgs":                        etcdExtraArgs,
 		"etcdCipherSuites":                     crypto.SecureCipherSuitesString(),
-		"apiserverExtraArgs":                   apiServerExtraArgs.ToPartialYaml(),
-		"controllerManagerExtraArgs":           controllerManagerExtraArgs.ToPartialYaml(),
-		"schedulerExtraArgs":                   sharedExtraArgs.ToPartialYaml(),
+		"apiserverExtraArgs":                   apiServerExtraArgs,
+		"controllerManagerExtraArgs":           controllerManagerExtraArgs,
+		"schedulerExtraArgs":                   sharedExtraArgs,
 		"format":                               format,
 		"externalEtcdVersion":                  versionsBundle.KubeDistro.EtcdVersion,
 		"etcdImage":                            versionsBundle.KubeDistro.EtcdImage.VersionedImage(),
@@ -260,6 +260,7 @@ func buildTemplateMapCP(
 		registryMirror := registrymirror.FromCluster(clusterSpec.Cluster)
 		values["registryMirrorMap"] = containerd.ToAPIEndpoints(registryMirror.NamespacedRegistryMap)
 		values["mirrorBase"] = registryMirror.BaseRegistry
+		values["mirrorBaseAPIEndpoint"] = containerd.ToAPIEndpoint(registryMirror.BaseRegistry)
 		values["insecureSkip"] = registryMirror.InsecureSkipVerify
 		values["publicMirror"] = containerd.ToAPIEndpoint(registryMirror.CoreEKSAMirror())
 		if len(registryMirror.CACertContent) > 0 {
@@ -351,7 +352,7 @@ func buildTemplateMapCP(
 		}
 	}
 
-	var bottlerocketKubernetesSettings *bootstrapv1.BottlerocketKubernetesSettings
+	var bottlerocketKubernetesSettings *bootstrapv1beta2.BottlerocketKubernetesSettings
 	if controlPlaneMachineSpec.OSFamily == anywherev1.Bottlerocket {
 		values["format"] = string(anywherev1.Bottlerocket)
 		values["pauseRepository"] = versionsBundle.KubeDistro.Pause.Image()
@@ -428,12 +429,12 @@ func buildTemplateMapCP(
 	} else {
 		kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
 			Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf))
-		values["kubeletExtraArgs"] = kubeletExtraArgs.ToPartialYaml()
+		values["kubeletExtraArgs"] = kubeletExtraArgs
 	}
 
 	nodeLabelArgs := clusterapi.ControlPlaneNodeLabelsExtraArgs(clusterSpec.Cluster.Spec.ControlPlaneConfiguration)
 	if len(nodeLabelArgs) != 0 {
-		values["nodeLabelArgs"] = nodeLabelArgs.ToPartialYaml()
+		values["nodeLabelArgs"] = nodeLabelArgs
 	}
 
 	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy != nil {
@@ -498,6 +499,7 @@ func buildTemplateMapMD(
 		registryMirror := registrymirror.FromCluster(clusterSpec.Cluster)
 		values["registryMirrorMap"] = containerd.ToAPIEndpoints(registryMirror.NamespacedRegistryMap)
 		values["mirrorBase"] = registryMirror.BaseRegistry
+		values["mirrorBaseAPIEndpoint"] = containerd.ToAPIEndpoint(registryMirror.BaseRegistry)
 		values["insecureSkip"] = registryMirror.InsecureSkipVerify
 		values["publicMirror"] = containerd.ToAPIEndpoint(registryMirror.CoreEKSAMirror())
 		if len(registryMirror.CACertContent) > 0 {
@@ -543,7 +545,7 @@ func buildTemplateMapMD(
 		values["noProxy"] = noProxyList
 	}
 
-	var bottlerocketKubernetesSettings *bootstrapv1.BottlerocketKubernetesSettings
+	var bottlerocketKubernetesSettings *bootstrapv1beta2.BottlerocketKubernetesSettings
 	if workerNodeGroupMachineSpec.OSFamily == anywherev1.Bottlerocket {
 		values["format"] = string(anywherev1.Bottlerocket)
 		values["pauseRepository"] = bundle.KubeDistro.Pause.Image()
@@ -605,12 +607,12 @@ func buildTemplateMapMD(
 	} else {
 		kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
 			Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf))
-		values["kubeletExtraArgs"] = kubeletExtraArgs.ToPartialYaml()
+		values["kubeletExtraArgs"] = kubeletExtraArgs
 	}
 
 	nodeLabelArgs := clusterapi.WorkerNodeLabelsExtraArgs(workerNodeGroupConfiguration)
 	if len(nodeLabelArgs) != 0 {
-		values["nodeLabelArgs"] = nodeLabelArgs.ToPartialYaml()
+		values["nodeLabelArgs"] = nodeLabelArgs
 	}
 
 	return values, nil

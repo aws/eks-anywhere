@@ -10,6 +10,7 @@ import (
 
 func runOIDCFlow(test *framework.ClusterE2ETest) {
 	test.GenerateClusterConfig()
+	test.GenerateSupportBundleOnCleanupIfTestFailed()
 	test.CreateCluster()
 	test.ValidateOIDC()
 	test.StopIfFailed()
@@ -19,6 +20,7 @@ func runOIDCFlow(test *framework.ClusterE2ETest) {
 func runTinkerbellOIDCFlow(test *framework.ClusterE2ETest) {
 	test.GenerateClusterConfig()
 	test.GenerateHardwareConfig()
+	test.GenerateSupportBundleOnCleanupIfTestFailed()
 	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
 	test.ValidateOIDC()
 	test.StopIfFailed()
@@ -28,6 +30,7 @@ func runTinkerbellOIDCFlow(test *framework.ClusterE2ETest) {
 
 func runUpgradeFlowWithOIDC(test *framework.ClusterE2ETest, updateVersion v1alpha1.KubernetesVersion, clusterOpts ...framework.ClusterE2ETestOpt) {
 	test.GenerateClusterConfig()
+	test.GenerateSupportBundleOnCleanupIfTestFailed()
 	test.CreateCluster()
 	test.ValidateOIDC()
 	test.UpgradeClusterWithNewConfig(clusterOpts)

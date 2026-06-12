@@ -15,11 +15,13 @@ import (
 	. "github.com/onsi/gomega"
 	apiv1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -58,45 +60,45 @@ type vsphereClusterReconcilerTest struct {
 	ipValidator *vspherereconcilermocks.MockIPValidator
 }
 
-func testKubeadmControlPlaneFromCluster(cluster *anywherev1.Cluster) *controlplanev1.KubeadmControlPlane {
+func testKubeadmControlPlaneFromCluster(cluster *anywherev1.Cluster) *controlplanev1beta2.KubeadmControlPlane {
 	k := controller.CAPIKubeadmControlPlaneKey(cluster)
-	return test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
+	return test.KubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
 		kcp.Name = k.Name
 		kcp.Namespace = k.Namespace
 		expectedReplicas := int32(cluster.Spec.ControlPlaneConfiguration.Count)
 
-		kcp.Status = controlplanev1.KubeadmControlPlaneStatus{
-			Replicas:        expectedReplicas,
-			UpdatedReplicas: expectedReplicas,
-			ReadyReplicas:   expectedReplicas,
-			Conditions: clusterv1.Conditions{
+		kcp.Status = controlplanev1beta2.KubeadmControlPlaneStatus{
+			Replicas:         &expectedReplicas,
+			UpToDateReplicas: &expectedReplicas,
+			ReadyReplicas:    &expectedReplicas,
+			Conditions: []metav1.Condition{
 				{
-					Type:   controlplanev1.ControlPlaneComponentsHealthyCondition,
-					Status: apiv1.ConditionStatus("True"),
+					Type:   controlplanev1beta2.KubeadmControlPlaneControlPlaneComponentsHealthyCondition,
+					Status: metav1.ConditionTrue,
 				},
 				{
-					Type:   controlplanev1.AvailableCondition,
-					Status: apiv1.ConditionStatus("True"),
+					Type:   clusterv1beta2.AvailableCondition,
+					Status: metav1.ConditionTrue,
 				},
 				{
-					Type:   clusterv1.ReadyCondition,
-					Status: apiv1.ConditionStatus("True"),
+					Type:   clusterv1beta2.ReadyCondition,
+					Status: metav1.ConditionTrue,
 				},
 			},
 		}
 	})
 }
 
-func machineDeploymentsFromCluster(cluster *anywherev1.Cluster) []clusterv1.MachineDeployment {
-	return []clusterv1.MachineDeployment{
-		*test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+func machineDeploymentsFromCluster(cluster *anywherev1.Cluster) []clusterv1beta2.MachineDeployment {
+	return []clusterv1beta2.MachineDeployment{
+		*test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 			md.ObjectMeta.Name = "md-0"
 			md.ObjectMeta.Labels = map[string]string{
-				clusterv1.ClusterNameLabel: cluster.Name,
+				clusterv1beta2.ClusterNameLabel: cluster.Name,
 			}
-			md.Status.Replicas = 1
-			md.Status.ReadyReplicas = 1
-			md.Status.UpdatedReplicas = 1
+			md.Status.Replicas = ptr.Int32(1)
+			md.Status.ReadyReplicas = ptr.Int32(1)
+			md.Status.UpToDateReplicas = ptr.Int32(1)
 		}),
 	}
 }
@@ -301,8 +303,8 @@ func TestClusterReconcilerReconcileConditions(t *testing.T) {
 		testName                string
 		skipCNIUpgrade          bool
 		cniUpgradeInProgress    bool
-		kcpStatus               controlplanev1.KubeadmControlPlaneStatus
-		machineDeploymentStatus clusterv1.MachineDeploymentStatus
+		kcpStatus               controlplanev1beta2.KubeadmControlPlaneStatus
+		machineDeploymentStatus clusterv1beta2.MachineDeploymentStatus
 		result                  ctrl.Result
 		wantConditions          []anywherev1.Condition
 	}{
@@ -310,15 +312,15 @@ func TestClusterReconcilerReconcileConditions(t *testing.T) {
 			testName:             "cluster not ready, control plane not initialized",
 			skipCNIUpgrade:       false,
 			cniUpgradeInProgress: false,
-			kcpStatus: controlplanev1.KubeadmControlPlaneStatus{
-				Conditions: clusterv1.Conditions{
+			kcpStatus: controlplanev1beta2.KubeadmControlPlaneStatus{
+				Conditions: []metav1.Condition{
 					{
-						Type:   controlplanev1.AvailableCondition,
-						Status: apiv1.ConditionStatus("False"),
+						Type:   clusterv1beta2.AvailableCondition,
+						Status: metav1.ConditionFalse,
 					},
 				},
 			},
-			machineDeploymentStatus: clusterv1.MachineDeploymentStatus{},
+			machineDeploymentStatus: clusterv1beta2.MachineDeploymentStatus{},
 			wantConditions: []anywherev1.Condition{
 				*v1beta1conditions.FalseCondition(anywherev1.ControlPlaneInitializedCondition, anywherev1.ControlPlaneInitializationInProgressReason, clusterv1.ConditionSeverityInfo, "%s", controlPlaneInitalizationInProgressReason),
 				*v1beta1conditions.FalseCondition(anywherev1.ControlPlaneReadyCondition, anywherev1.ControlPlaneInitializationInProgressReason, clusterv1.ConditionSeverityInfo, "%s", controlPlaneInitalizationInProgressReason),
@@ -332,19 +334,19 @@ func TestClusterReconcilerReconcileConditions(t *testing.T) {
 			testName:             "cluster not ready, control plane initialized",
 			skipCNIUpgrade:       false,
 			cniUpgradeInProgress: false,
-			kcpStatus: controlplanev1.KubeadmControlPlaneStatus{
-				Conditions: clusterv1.Conditions{
+			kcpStatus: controlplanev1beta2.KubeadmControlPlaneStatus{
+				Conditions: []metav1.Condition{
 					{
-						Type:   controlplanev1.AvailableCondition,
-						Status: apiv1.ConditionStatus("True"),
+						Type:   clusterv1beta2.AvailableCondition,
+						Status: metav1.ConditionTrue,
 					},
 					{
-						Type:   clusterv1.ReadyCondition,
-						Status: apiv1.ConditionStatus("False"),
+						Type:   clusterv1beta2.ReadyCondition,
+						Status: metav1.ConditionFalse,
 					},
 				},
 			},
-			machineDeploymentStatus: clusterv1.MachineDeploymentStatus{},
+			machineDeploymentStatus: clusterv1beta2.MachineDeploymentStatus{},
 			wantConditions: []anywherev1.Condition{
 				*v1beta1conditions.TrueCondition(anywherev1.ControlPlaneInitializedCondition),
 				*v1beta1conditions.FalseCondition(anywherev1.ControlPlaneReadyCondition, anywherev1.ScalingUpReason, clusterv1.ConditionSeverityInfo, "Scaling up control plane nodes, 1 expected (0 actual)"),
@@ -358,26 +360,26 @@ func TestClusterReconcilerReconcileConditions(t *testing.T) {
 			testName:             "cluster not ready, control plane ready",
 			skipCNIUpgrade:       false,
 			cniUpgradeInProgress: false,
-			kcpStatus: controlplanev1.KubeadmControlPlaneStatus{
-				ReadyReplicas:   1,
-				Replicas:        1,
-				UpdatedReplicas: 1,
-				Conditions: clusterv1.Conditions{
+			kcpStatus: controlplanev1beta2.KubeadmControlPlaneStatus{
+				ReadyReplicas:    ptr.Int32(1),
+				Replicas:         ptr.Int32(1),
+				UpToDateReplicas: ptr.Int32(1),
+				Conditions: []metav1.Condition{
 					{
-						Type:   controlplanev1.ControlPlaneComponentsHealthyCondition,
-						Status: apiv1.ConditionStatus("True"),
+						Type:   controlplanev1beta2.KubeadmControlPlaneControlPlaneComponentsHealthyCondition,
+						Status: metav1.ConditionTrue,
 					},
 					{
-						Type:   controlplanev1.AvailableCondition,
-						Status: apiv1.ConditionStatus("True"),
+						Type:   clusterv1beta2.AvailableCondition,
+						Status: metav1.ConditionTrue,
 					},
 					{
-						Type:   clusterv1.ReadyCondition,
-						Status: apiv1.ConditionStatus("True"),
+						Type:   clusterv1beta2.ReadyCondition,
+						Status: metav1.ConditionTrue,
 					},
 				},
 			},
-			machineDeploymentStatus: clusterv1.MachineDeploymentStatus{},
+			machineDeploymentStatus: clusterv1beta2.MachineDeploymentStatus{},
 			wantConditions: []anywherev1.Condition{
 				*v1beta1conditions.FalseCondition(anywherev1.ReadyCondition, anywherev1.ScalingUpReason, clusterv1.ConditionSeverityInfo, "Scaling up worker nodes, 1 expected (0 actual)"),
 				*v1beta1conditions.TrueCondition(anywherev1.ControlPlaneReadyCondition),
@@ -391,29 +393,29 @@ func TestClusterReconcilerReconcileConditions(t *testing.T) {
 			testName:             "cluster ready",
 			skipCNIUpgrade:       false,
 			cniUpgradeInProgress: false,
-			kcpStatus: controlplanev1.KubeadmControlPlaneStatus{
-				ReadyReplicas:   1,
-				Replicas:        1,
-				UpdatedReplicas: 1,
-				Conditions: clusterv1.Conditions{
+			kcpStatus: controlplanev1beta2.KubeadmControlPlaneStatus{
+				ReadyReplicas:    ptr.Int32(1),
+				Replicas:         ptr.Int32(1),
+				UpToDateReplicas: ptr.Int32(1),
+				Conditions: []metav1.Condition{
 					{
-						Type:   controlplanev1.ControlPlaneComponentsHealthyCondition,
-						Status: apiv1.ConditionStatus("True"),
+						Type:   controlplanev1beta2.KubeadmControlPlaneControlPlaneComponentsHealthyCondition,
+						Status: metav1.ConditionTrue,
 					},
 					{
-						Type:   controlplanev1.AvailableCondition,
-						Status: apiv1.ConditionStatus("True"),
+						Type:   clusterv1beta2.AvailableCondition,
+						Status: metav1.ConditionTrue,
 					},
 					{
-						Type:   clusterv1.ReadyCondition,
-						Status: apiv1.ConditionStatus("True"),
+						Type:   clusterv1beta2.ReadyCondition,
+						Status: metav1.ConditionTrue,
 					},
 				},
 			},
-			machineDeploymentStatus: clusterv1.MachineDeploymentStatus{
-				ReadyReplicas:   1,
-				Replicas:        1,
-				UpdatedReplicas: 1,
+			machineDeploymentStatus: clusterv1beta2.MachineDeploymentStatus{
+				ReadyReplicas:    ptr.Int32(1),
+				Replicas:         ptr.Int32(1),
+				UpToDateReplicas: ptr.Int32(1),
 			},
 			wantConditions: []anywherev1.Condition{
 				*v1beta1conditions.TrueCondition(anywherev1.ReadyCondition),
@@ -428,29 +430,29 @@ func TestClusterReconcilerReconcileConditions(t *testing.T) {
 			testName:             "cluster ready, skip upgrades for default cni",
 			skipCNIUpgrade:       true,
 			cniUpgradeInProgress: false,
-			kcpStatus: controlplanev1.KubeadmControlPlaneStatus{
-				ReadyReplicas:   1,
-				Replicas:        1,
-				UpdatedReplicas: 1,
-				Conditions: clusterv1.Conditions{
+			kcpStatus: controlplanev1beta2.KubeadmControlPlaneStatus{
+				ReadyReplicas:    ptr.Int32(1),
+				Replicas:         ptr.Int32(1),
+				UpToDateReplicas: ptr.Int32(1),
+				Conditions: []metav1.Condition{
 					{
-						Type:   controlplanev1.ControlPlaneComponentsHealthyCondition,
-						Status: apiv1.ConditionStatus("True"),
+						Type:   controlplanev1beta2.KubeadmControlPlaneControlPlaneComponentsHealthyCondition,
+						Status: metav1.ConditionTrue,
 					},
 					{
-						Type:   controlplanev1.AvailableCondition,
-						Status: apiv1.ConditionStatus("True"),
+						Type:   clusterv1beta2.AvailableCondition,
+						Status: metav1.ConditionTrue,
 					},
 					{
-						Type:   clusterv1.ReadyCondition,
-						Status: apiv1.ConditionStatus("True"),
+						Type:   clusterv1beta2.ReadyCondition,
+						Status: metav1.ConditionTrue,
 					},
 				},
 			},
-			machineDeploymentStatus: clusterv1.MachineDeploymentStatus{
-				ReadyReplicas:   1,
-				Replicas:        1,
-				UpdatedReplicas: 1,
+			machineDeploymentStatus: clusterv1beta2.MachineDeploymentStatus{
+				ReadyReplicas:    ptr.Int32(1),
+				Replicas:         ptr.Int32(1),
+				UpToDateReplicas: ptr.Int32(1),
 			},
 			wantConditions: []anywherev1.Condition{
 				*v1beta1conditions.TrueCondition(anywherev1.ReadyCondition),
@@ -465,29 +467,29 @@ func TestClusterReconcilerReconcileConditions(t *testing.T) {
 			testName:             "cluster not ready, default cni upgrade in progress",
 			skipCNIUpgrade:       false,
 			cniUpgradeInProgress: true,
-			kcpStatus: controlplanev1.KubeadmControlPlaneStatus{
-				ReadyReplicas:   1,
-				Replicas:        1,
-				UpdatedReplicas: 1,
-				Conditions: clusterv1.Conditions{
+			kcpStatus: controlplanev1beta2.KubeadmControlPlaneStatus{
+				ReadyReplicas:    ptr.Int32(1),
+				Replicas:         ptr.Int32(1),
+				UpToDateReplicas: ptr.Int32(1),
+				Conditions: []metav1.Condition{
 					{
-						Type:   controlplanev1.ControlPlaneComponentsHealthyCondition,
-						Status: apiv1.ConditionStatus("True"),
+						Type:   controlplanev1beta2.KubeadmControlPlaneControlPlaneComponentsHealthyCondition,
+						Status: metav1.ConditionTrue,
 					},
 					{
-						Type:   controlplanev1.AvailableCondition,
-						Status: apiv1.ConditionStatus("True"),
+						Type:   clusterv1beta2.AvailableCondition,
+						Status: metav1.ConditionTrue,
 					},
 					{
-						Type:   clusterv1.ReadyCondition,
-						Status: apiv1.ConditionStatus("True"),
+						Type:   clusterv1beta2.ReadyCondition,
+						Status: metav1.ConditionTrue,
 					},
 				},
 			},
-			machineDeploymentStatus: clusterv1.MachineDeploymentStatus{
-				ReadyReplicas:   1,
-				Replicas:        1,
-				UpdatedReplicas: 1,
+			machineDeploymentStatus: clusterv1beta2.MachineDeploymentStatus{
+				ReadyReplicas:    ptr.Int32(1),
+				Replicas:         ptr.Int32(1),
+				UpToDateReplicas: ptr.Int32(1),
 			},
 			wantConditions: []anywherev1.Condition{
 				*v1beta1conditions.FalseCondition(anywherev1.ReadyCondition, anywherev1.DefaultCNIUpgradeInProgressReason, clusterv1.ConditionSeverityInfo, "Cilium version upgrade needed"),
@@ -523,16 +525,16 @@ func TestClusterReconcilerReconcileConditions(t *testing.T) {
 			g := NewWithT(t)
 
 			objs := make([]runtime.Object, 0, 4+len(config.ChildObjects()))
-			kcp := test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
+			kcp := test.KubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
 				k := controller.CAPIKubeadmControlPlaneKey(config.Cluster)
 				kcp.Name = k.Name
 				kcp.Namespace = k.Namespace
 				kcp.Status = tt.kcpStatus
 			})
 
-			md1 := test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+			md1 := test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 				md.ObjectMeta.Labels = map[string]string{
-					clusterv1.ClusterNameLabel: config.Cluster.Name,
+					clusterv1beta2.ClusterNameLabel: config.Cluster.Name,
 				}
 				md.Status = tt.machineDeploymentStatus
 			})
@@ -563,9 +565,9 @@ func TestClusterReconcilerReconcileConditions(t *testing.T) {
 			iam.EXPECT().Reconcile(logCtx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(config.Cluster)).Return(controller.Result{}, nil)
 			providerReconciler.EXPECT().Reconcile(logCtx, gomock.AssignableToTypeOf(logr.Logger{}), sameName(config.Cluster)).Times(1).Do(
 				func(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) {
-					kcpReadyCondition := v1beta1conditions.Get(kcp, clusterv1.ReadyCondition)
+					kcpReadyCondition := meta.FindStatusCondition(kcp.Status.Conditions, clusterv1beta2.ReadyCondition)
 					if kcpReadyCondition == nil ||
-						(kcpReadyCondition.Status == "False") {
+						(kcpReadyCondition.Status == metav1.ConditionFalse) {
 						v1beta1conditions.MarkFalse(cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.ControlPlaneNotReadyReason, clusterv1.ConditionSeverityInfo, "")
 						return
 					}
@@ -619,26 +621,26 @@ func TestClusterReconcilerReconcileSelfManagedClusterConditions(t *testing.T) {
 	testCases := []struct {
 		testName                string
 		skipCNIUpgrade          bool
-		kcpStatus               controlplanev1.KubeadmControlPlaneStatus
-		machineDeploymentStatus clusterv1.MachineDeploymentStatus
+		kcpStatus               controlplanev1beta2.KubeadmControlPlaneStatus
+		machineDeploymentStatus clusterv1beta2.MachineDeploymentStatus
 		result                  ctrl.Result
 		wantConditions          []anywherev1.Condition
 	}{
 		{
 			testName: "cluster not ready, control plane not ready",
-			kcpStatus: controlplanev1.KubeadmControlPlaneStatus{
-				Conditions: clusterv1.Conditions{
+			kcpStatus: controlplanev1beta2.KubeadmControlPlaneStatus{
+				Conditions: []metav1.Condition{
 					{
-						Type:   controlplanev1.AvailableCondition,
-						Status: apiv1.ConditionStatus("True"),
+						Type:   clusterv1beta2.AvailableCondition,
+						Status: metav1.ConditionTrue,
 					},
 					{
-						Type:   clusterv1.ReadyCondition,
-						Status: apiv1.ConditionStatus("False"),
+						Type:   clusterv1beta2.ReadyCondition,
+						Status: metav1.ConditionFalse,
 					},
 				},
 			},
-			machineDeploymentStatus: clusterv1.MachineDeploymentStatus{},
+			machineDeploymentStatus: clusterv1beta2.MachineDeploymentStatus{},
 			skipCNIUpgrade:          false,
 			wantConditions: []anywherev1.Condition{
 				*v1beta1conditions.TrueCondition(anywherev1.ControlPlaneInitializedCondition),
@@ -651,26 +653,26 @@ func TestClusterReconcilerReconcileSelfManagedClusterConditions(t *testing.T) {
 		},
 		{
 			testName: "cluster not ready, control plane ready",
-			kcpStatus: controlplanev1.KubeadmControlPlaneStatus{
-				ReadyReplicas:   1,
-				Replicas:        1,
-				UpdatedReplicas: 1,
-				Conditions: clusterv1.Conditions{
+			kcpStatus: controlplanev1beta2.KubeadmControlPlaneStatus{
+				ReadyReplicas:    ptr.Int32(1),
+				Replicas:         ptr.Int32(1),
+				UpToDateReplicas: ptr.Int32(1),
+				Conditions: []metav1.Condition{
 					{
-						Type:   controlplanev1.ControlPlaneComponentsHealthyCondition,
-						Status: apiv1.ConditionStatus("True"),
+						Type:   controlplanev1beta2.KubeadmControlPlaneControlPlaneComponentsHealthyCondition,
+						Status: metav1.ConditionTrue,
 					},
 					{
-						Type:   controlplanev1.AvailableCondition,
-						Status: apiv1.ConditionStatus("True"),
+						Type:   clusterv1beta2.AvailableCondition,
+						Status: metav1.ConditionTrue,
 					},
 					{
-						Type:   clusterv1.ReadyCondition,
-						Status: apiv1.ConditionStatus("True"),
+						Type:   clusterv1beta2.ReadyCondition,
+						Status: metav1.ConditionTrue,
 					},
 				},
 			},
-			machineDeploymentStatus: clusterv1.MachineDeploymentStatus{},
+			machineDeploymentStatus: clusterv1beta2.MachineDeploymentStatus{},
 			skipCNIUpgrade:          false,
 			wantConditions: []anywherev1.Condition{
 				*v1beta1conditions.FalseCondition(anywherev1.ReadyCondition, anywherev1.ScalingUpReason, clusterv1.ConditionSeverityInfo, "Scaling up worker nodes, 1 expected (0 actual)"),
@@ -683,26 +685,26 @@ func TestClusterReconcilerReconcileSelfManagedClusterConditions(t *testing.T) {
 		},
 		{
 			testName: "cluster not ready, skip upgrades for default cni",
-			kcpStatus: controlplanev1.KubeadmControlPlaneStatus{
-				ReadyReplicas:   1,
-				Replicas:        1,
-				UpdatedReplicas: 1,
-				Conditions: clusterv1.Conditions{
+			kcpStatus: controlplanev1beta2.KubeadmControlPlaneStatus{
+				ReadyReplicas:    ptr.Int32(1),
+				Replicas:         ptr.Int32(1),
+				UpToDateReplicas: ptr.Int32(1),
+				Conditions: []metav1.Condition{
 					{
-						Type:   controlplanev1.ControlPlaneComponentsHealthyCondition,
-						Status: apiv1.ConditionStatus("True"),
+						Type:   controlplanev1beta2.KubeadmControlPlaneControlPlaneComponentsHealthyCondition,
+						Status: metav1.ConditionTrue,
 					},
 					{
-						Type:   controlplanev1.AvailableCondition,
-						Status: apiv1.ConditionStatus("True"),
+						Type:   clusterv1beta2.AvailableCondition,
+						Status: metav1.ConditionTrue,
 					},
 					{
-						Type:   clusterv1.ReadyCondition,
-						Status: apiv1.ConditionStatus("True"),
+						Type:   clusterv1beta2.ReadyCondition,
+						Status: metav1.ConditionTrue,
 					},
 				},
 			},
-			machineDeploymentStatus: clusterv1.MachineDeploymentStatus{},
+			machineDeploymentStatus: clusterv1beta2.MachineDeploymentStatus{},
 			skipCNIUpgrade:          true,
 			wantConditions: []anywherev1.Condition{
 				*v1beta1conditions.FalseCondition(anywherev1.ReadyCondition, anywherev1.ScalingUpReason, clusterv1.ConditionSeverityInfo, "Scaling up worker nodes, 1 expected (0 actual)"),
@@ -715,29 +717,29 @@ func TestClusterReconcilerReconcileSelfManagedClusterConditions(t *testing.T) {
 		},
 		{
 			testName: "cluster ready, skip default cni upgrades",
-			kcpStatus: controlplanev1.KubeadmControlPlaneStatus{
-				ReadyReplicas:   1,
-				Replicas:        1,
-				UpdatedReplicas: 1,
-				Conditions: clusterv1.Conditions{
+			kcpStatus: controlplanev1beta2.KubeadmControlPlaneStatus{
+				ReadyReplicas:    ptr.Int32(1),
+				Replicas:         ptr.Int32(1),
+				UpToDateReplicas: ptr.Int32(1),
+				Conditions: []metav1.Condition{
 					{
-						Type:   controlplanev1.ControlPlaneComponentsHealthyCondition,
-						Status: apiv1.ConditionStatus("True"),
+						Type:   controlplanev1beta2.KubeadmControlPlaneControlPlaneComponentsHealthyCondition,
+						Status: metav1.ConditionTrue,
 					},
 					{
-						Type:   controlplanev1.AvailableCondition,
-						Status: apiv1.ConditionStatus("True"),
+						Type:   clusterv1beta2.AvailableCondition,
+						Status: metav1.ConditionTrue,
 					},
 					{
-						Type:   clusterv1.ReadyCondition,
-						Status: apiv1.ConditionStatus("True"),
+						Type:   clusterv1beta2.ReadyCondition,
+						Status: metav1.ConditionTrue,
 					},
 				},
 			},
-			machineDeploymentStatus: clusterv1.MachineDeploymentStatus{
-				ReadyReplicas:   1,
-				Replicas:        1,
-				UpdatedReplicas: 1,
+			machineDeploymentStatus: clusterv1beta2.MachineDeploymentStatus{
+				ReadyReplicas:    ptr.Int32(1),
+				Replicas:         ptr.Int32(1),
+				UpToDateReplicas: ptr.Int32(1),
 			},
 			skipCNIUpgrade: true,
 			wantConditions: []anywherev1.Condition{
@@ -751,29 +753,29 @@ func TestClusterReconcilerReconcileSelfManagedClusterConditions(t *testing.T) {
 		},
 		{
 			testName: "cluster ready",
-			kcpStatus: controlplanev1.KubeadmControlPlaneStatus{
-				ReadyReplicas:   1,
-				Replicas:        1,
-				UpdatedReplicas: 1,
-				Conditions: clusterv1.Conditions{
+			kcpStatus: controlplanev1beta2.KubeadmControlPlaneStatus{
+				ReadyReplicas:    ptr.Int32(1),
+				Replicas:         ptr.Int32(1),
+				UpToDateReplicas: ptr.Int32(1),
+				Conditions: []metav1.Condition{
 					{
-						Type:   controlplanev1.ControlPlaneComponentsHealthyCondition,
-						Status: apiv1.ConditionStatus("True"),
+						Type:   controlplanev1beta2.KubeadmControlPlaneControlPlaneComponentsHealthyCondition,
+						Status: metav1.ConditionTrue,
 					},
 					{
-						Type:   controlplanev1.AvailableCondition,
-						Status: apiv1.ConditionStatus("True"),
+						Type:   clusterv1beta2.AvailableCondition,
+						Status: metav1.ConditionTrue,
 					},
 					{
-						Type:   clusterv1.ReadyCondition,
-						Status: apiv1.ConditionStatus("True"),
+						Type:   clusterv1beta2.ReadyCondition,
+						Status: metav1.ConditionTrue,
 					},
 				},
 			},
-			machineDeploymentStatus: clusterv1.MachineDeploymentStatus{
-				ReadyReplicas:   1,
-				Replicas:        1,
-				UpdatedReplicas: 1,
+			machineDeploymentStatus: clusterv1beta2.MachineDeploymentStatus{
+				ReadyReplicas:    ptr.Int32(1),
+				Replicas:         ptr.Int32(1),
+				UpToDateReplicas: ptr.Int32(1),
 			},
 			skipCNIUpgrade: false,
 			wantConditions: []anywherev1.Condition{
@@ -800,16 +802,16 @@ func TestClusterReconcilerReconcileSelfManagedClusterConditions(t *testing.T) {
 			g := NewWithT(t)
 
 			objs := make([]runtime.Object, 0, 4+len(config.ChildObjects()))
-			kcp := test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
+			kcp := test.KubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
 				k := controller.CAPIKubeadmControlPlaneKey(config.Cluster)
 				kcp.Name = k.Name
 				kcp.Namespace = k.Namespace
 				kcp.Status = tt.kcpStatus
 			})
 
-			md1 := test.MachineDeployment(func(md *clusterv1.MachineDeployment) {
+			md1 := test.MachineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 				md.ObjectMeta.Labels = map[string]string{
-					clusterv1.ClusterNameLabel: config.Cluster.Name,
+					clusterv1beta2.ClusterNameLabel: config.Cluster.Name,
 				}
 				md.Status = tt.machineDeploymentStatus
 			})
@@ -839,9 +841,9 @@ func TestClusterReconcilerReconcileSelfManagedClusterConditions(t *testing.T) {
 
 			providerReconciler.EXPECT().Reconcile(gomock.Any(), gomock.Any(), gomock.Any()).Times(1).Do(
 				func(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) {
-					kcpReadyCondition := v1beta1conditions.Get(kcp, clusterv1.ReadyCondition)
+					kcpReadyCondition := meta.FindStatusCondition(kcp.Status.Conditions, clusterv1beta2.ReadyCondition)
 					if kcpReadyCondition == nil ||
-						(kcpReadyCondition.Status == "False") {
+						(kcpReadyCondition.Status == metav1.ConditionFalse) {
 						v1beta1conditions.MarkFalse(cluster, anywherev1.DefaultCNIConfiguredCondition, anywherev1.ControlPlaneNotReadyReason, clusterv1.ConditionSeverityInfo, "")
 						return
 					}
@@ -1192,17 +1194,11 @@ func TestClusterReconcilerDeleteExistingCAPIClusterSuccess(t *testing.T) {
 		t.Fatalf("reconcile: (%v)", err)
 	}
 
-	apiCluster := &clusterv1.Cluster{}
+	apiCluster := &clusterv1beta2.Cluster{}
 
 	err = tt.client.Get(context.TODO(), req.NamespacedName, apiCluster)
 	if !apierrors.IsNotFound(err) {
 		t.Fatalf("expected apierrors.IsNotFound but got: (%v)", err)
-	}
-	if apiCluster.Status.FailureMessage != nil {
-		t.Errorf("Expected failure message to be nil. FailureMessage:%s", *apiCluster.Status.FailureMessage)
-	}
-	if apiCluster.Status.FailureReason != nil {
-		t.Errorf("Expected failure message to be nil. FailureReason:%s", *apiCluster.Status.FailureReason)
 	}
 }
 
@@ -2199,11 +2195,11 @@ func vsphereWorkerMachineConfig() *anywherev1.VSphereMachineConfig {
 	}
 }
 
-func newCAPICluster(name, namespace string) *clusterv1.Cluster {
-	return &clusterv1.Cluster{
+func newCAPICluster(name, namespace string) *clusterv1beta2.Cluster {
+	return &clusterv1beta2.Cluster{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Cluster",
-			APIVersion: clusterv1.GroupVersion.String(),
+			APIVersion: clusterv1beta2.GroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: namespace,
@@ -2394,6 +2390,12 @@ func vsphereCluster() *anywherev1.Cluster {
 		},
 		Spec: anywherev1.ClusterSpec{
 			ClusterNetwork: anywherev1.ClusterNetwork{
+				Pods: anywherev1.Pods{
+					CidrBlocks: []string{"192.168.0.0/16"},
+				},
+				Services: anywherev1.Services{
+					CidrBlocks: []string{"10.96.0.0/12"},
+				},
 				CNIConfig: &anywherev1.CNIConfig{
 					Cilium: &anywherev1.CiliumConfig{},
 				},
@@ -2453,6 +2455,12 @@ func vsphereClusterWithFailureDomains() *anywherev1.Cluster {
 		},
 		Spec: anywherev1.ClusterSpec{
 			ClusterNetwork: anywherev1.ClusterNetwork{
+				Pods: anywherev1.Pods{
+					CidrBlocks: []string{"192.168.0.0/16"},
+				},
+				Services: anywherev1.Services{
+					CidrBlocks: []string{"10.96.0.0/12"},
+				},
 				CNIConfig: &anywherev1.CNIConfig{
 					Cilium: &anywherev1.CiliumConfig{},
 				},

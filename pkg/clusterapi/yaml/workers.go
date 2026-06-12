@@ -3,8 +3,8 @@ package yaml
 import (
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
-	kubeadmv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/yamlutil"
@@ -61,12 +61,12 @@ func RegisterWorkerMappings(parser *yamlutil.Parser) error {
 	err := parser.RegisterMappings(
 		yamlutil.NewMapping(
 			machineDeploymentKind, func() yamlutil.APIObject {
-				return &clusterv1.MachineDeployment{}
+				return &clusterv1beta2.MachineDeployment{}
 			},
 		),
 		yamlutil.NewMapping(
 			"KubeadmConfigTemplate", func() yamlutil.APIObject {
-				return &kubeadmv1.KubeadmConfigTemplate{}
+				return &bootstrapv1beta2.KubeadmConfigTemplate{}
 			},
 		),
 	)
@@ -82,7 +82,7 @@ func ProcessWorkerObjects[M clusterapi.Object[M]](w *clusterapi.Workers[M], look
 	for _, obj := range lookup {
 		if obj.GetObjectKind().GroupVersionKind().Kind == machineDeploymentKind {
 			g := new(clusterapi.WorkerGroup[M])
-			g.MachineDeployment = obj.(*clusterv1.MachineDeployment)
+			g.MachineDeployment = obj.(*clusterv1beta2.MachineDeployment)
 			ProcessWorkerGroupObjects(g, lookup)
 			w.Groups = append(w.Groups, *g)
 		}
@@ -93,13 +93,25 @@ func ProcessWorkerObjects[M clusterapi.Object[M]](w *clusterapi.Workers[M], look
 // the provider machine template referenced in the MachineDeployment and sets them in the WorkerGroup.
 // MachineDeployment needs to be already set in the WorkerGroup.
 func ProcessWorkerGroupObjects[M clusterapi.Object[M]](g *clusterapi.WorkerGroup[M], lookup yamlutil.ObjectLookup) {
-	kubeadmConfigTemplate := lookup.GetFromRef(*g.MachineDeployment.Spec.Template.Spec.Bootstrap.ConfigRef)
+	kubeadmConfigTemplate := lookup.GetFromContractVersionedRef(g.MachineDeployment.Spec.Template.Spec.Bootstrap.ConfigRef)
 	if kubeadmConfigTemplate != nil {
-		g.KubeadmConfigTemplate = kubeadmConfigTemplate.(*kubeadmv1.KubeadmConfigTemplate)
+		g.KubeadmConfigTemplate = kubeadmConfigTemplate.(*bootstrapv1beta2.KubeadmConfigTemplate)
+		sortKCTExtraArgs(g.KubeadmConfigTemplate)
 	}
 
-	machineTemplate := lookup.GetFromRef(g.MachineDeployment.Spec.Template.Spec.InfrastructureRef)
+	machineTemplate := lookup.GetFromContractVersionedRef(g.MachineDeployment.Spec.Template.Spec.InfrastructureRef)
 	if machineTemplate != nil {
 		g.ProviderMachineTemplate = machineTemplate.(M)
+	}
+}
+
+// sortKCTExtraArgs sorts all ExtraArgs slices in a KubeadmConfigTemplate for deterministic comparison.
+func sortKCTExtraArgs(kct *bootstrapv1beta2.KubeadmConfigTemplate) {
+	if kct == nil {
+		return
+	}
+	spec := &kct.Spec.Template.Spec
+	if spec.JoinConfiguration.NodeRegistration.KubeletExtraArgs != nil {
+		clusterapi.SortArgs(spec.JoinConfiguration.NodeRegistration.KubeletExtraArgs)
 	}
 }

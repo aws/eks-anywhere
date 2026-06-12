@@ -9,9 +9,9 @@ import (
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	dockerv1beta2 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta2"
 	"sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -51,18 +51,17 @@ func TestReconcileControlPlaneUpdateAfterClusterCreation(t *testing.T) {
 	log := test.NewNullLogger()
 	cp := controlPlaneStackedEtcd(ns)
 
-	originalCPEndpoint := clusterv1.APIEndpoint{
+	originalCPEndpoint := clusterv1beta2.APIEndpoint{
 		Host: "my-server.example.com",
 		Port: 6443,
 	}
 	cp.Cluster.Spec.ControlPlaneEndpoint = originalCPEndpoint
-	cp.Cluster.Spec.ControlPlaneRef.Namespace = "" // this mimics what a lot of providers do
 
 	envtest.CreateObjs(ctx, t, c, cp.AllObjects()...)
 
 	// We never set the endpoint ourselves, so we mimic that here
 	// we want to test the original one set by capi is preserved
-	cp.Cluster.Spec.ControlPlaneEndpoint = clusterv1.APIEndpoint{}
+	cp.Cluster.Spec.ControlPlaneEndpoint = clusterv1beta2.APIEndpoint{}
 
 	g.Expect(clusters.ReconcileControlPlane(ctx, log, c, cp)).To(Equal(controller.Result{}))
 	api.ShouldEventuallyExist(ctx, cp.Cluster)
@@ -150,7 +149,7 @@ func TestReconcileControlPlaneExternalEtcdUpgradeWithDiff(t *testing.T) {
 		kcp,
 		func(g Gomega) {
 			g.Expect(kcp.Annotations).To(
-				HaveKeyWithValue(clusterv1.PausedAnnotation, "true"),
+				HaveKeyWithValue(clusterv1beta2.PausedAnnotation, "true"),
 				"kcp paused annotation should have been added",
 			)
 			g.Expect(kcp.Spec.Replicas).To(
@@ -212,7 +211,7 @@ func TestReconcileControlPlaneExternalEtcdReadyControlPlaneUpgrade(t *testing.T)
 	var oldCPReplicas int32 = 3
 	var newCPReplicas int32 = 4
 	cp.KubeadmControlPlane.Spec.Replicas = ptr.Int32(oldCPReplicas)
-	clientutil.AddAnnotation(cp.KubeadmControlPlane, clusterv1.PausedAnnotation, "true")
+	clientutil.AddAnnotation(cp.KubeadmControlPlane, clusterv1beta2.PausedAnnotation, "true")
 	// an existing kcp should already have etcd endpoints
 	cp.KubeadmControlPlane.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External.Endpoints = []string{"https://1.1.1.1:2379"}
 	envtest.CreateObjs(ctx, t, c, cp.AllObjects()...)
@@ -269,14 +268,14 @@ func TestReconcileControlPlaneExternalEtcdWithPlaceholderEndpoints(t *testing.T)
 	var oldCPReplicas int32 = 3
 	var newCPReplicas int32 = 4
 	cp.KubeadmControlPlane.Spec.Replicas = ptr.Int32(oldCPReplicas)
-	clientutil.AddAnnotation(cp.KubeadmControlPlane, clusterv1.PausedAnnotation, "true")
+	clientutil.AddAnnotation(cp.KubeadmControlPlane, clusterv1beta2.PausedAnnotation, "true")
 	// Set placeholder endpoint in existing kcp
 	cp.KubeadmControlPlane.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External.Endpoints = []string{constants.PlaceholderExternalEtcdEndpoint}
 	envtest.CreateObjs(ctx, t, c, cp.AllObjects()...)
 
 	cp.KubeadmControlPlane.Spec.Replicas = ptr.Int32(newCPReplicas)
-	// Desired kcp has empty endpoints
-	cp.KubeadmControlPlane.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External.Endpoints = []string{}
+	// Desired kcp has placeholder endpoints (matching actual provider behavior)
+	cp.KubeadmControlPlane.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External.Endpoints = []string{constants.PlaceholderExternalEtcdEndpoint}
 
 	g.Expect(clusters.ReconcileControlPlane(ctx, log, c, cp)).To(
 		Equal(controller.Result{}),
@@ -304,10 +303,11 @@ func TestReconcileControlPlaneExternalEtcdWithPlaceholderEndpoints(t *testing.T)
 				HaveValue(Equal(newCPReplicas)),
 				"kcp replicas should have been updated",
 			)
-			// When current endpoints are placeholder, they should NOT be preserved
+			// When current has placeholder and desired has placeholder, placeholder should stay
+			// (no real endpoints to preserve, placeholder is not overwritten)
 			g.Expect(kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External.Endpoints).To(
-				BeEmpty(),
-				"Placeholder etcd endpoints should not be preserved",
+				HaveExactElements(constants.PlaceholderExternalEtcdEndpoint),
+				"Placeholder etcd endpoints should be preserved when no real endpoints exist",
 			)
 		},
 	)
@@ -327,7 +327,7 @@ func TestReconcileControlPlaneExternalEtcdWithMultipleEndpoints(t *testing.T) {
 	var oldCPReplicas int32 = 3
 	var newCPReplicas int32 = 4
 	cp.KubeadmControlPlane.Spec.Replicas = ptr.Int32(oldCPReplicas)
-	clientutil.AddAnnotation(cp.KubeadmControlPlane, clusterv1.PausedAnnotation, "true")
+	clientutil.AddAnnotation(cp.KubeadmControlPlane, clusterv1beta2.PausedAnnotation, "true")
 	// Set multiple real etcd endpoints in existing kcp
 	multipleEndpoints := []string{"https://1.1.1.1:2379", "https://2.2.2.2:2379", "https://3.3.3.3:2379"}
 	cp.KubeadmControlPlane.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External.Endpoints = multipleEndpoints
@@ -386,14 +386,14 @@ func TestReconcileControlPlaneExternalEtcdWithEmptyEndpoints(t *testing.T) {
 	var oldCPReplicas int32 = 3
 	var newCPReplicas int32 = 4
 	cp.KubeadmControlPlane.Spec.Replicas = ptr.Int32(oldCPReplicas)
-	clientutil.AddAnnotation(cp.KubeadmControlPlane, clusterv1.PausedAnnotation, "true")
-	// Set empty endpoints in existing kcp
-	cp.KubeadmControlPlane.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External.Endpoints = []string{}
+	clientutil.AddAnnotation(cp.KubeadmControlPlane, clusterv1beta2.PausedAnnotation, "true")
+	// Set placeholder endpoints in existing kcp (v1beta2 requires non-empty endpoints)
+	cp.KubeadmControlPlane.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External.Endpoints = []string{constants.PlaceholderExternalEtcdEndpoint}
 	envtest.CreateObjs(ctx, t, c, cp.AllObjects()...)
 
 	cp.KubeadmControlPlane.Spec.Replicas = ptr.Int32(newCPReplicas)
-	// Desired kcp also has empty endpoints
-	cp.KubeadmControlPlane.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External.Endpoints = []string{}
+	// Desired kcp also has placeholder endpoints
+	cp.KubeadmControlPlane.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External.Endpoints = []string{constants.PlaceholderExternalEtcdEndpoint}
 
 	g.Expect(clusters.ReconcileControlPlane(ctx, log, c, cp)).To(
 		Equal(controller.Result{}),
@@ -421,10 +421,10 @@ func TestReconcileControlPlaneExternalEtcdWithEmptyEndpoints(t *testing.T) {
 				HaveValue(Equal(newCPReplicas)),
 				"kcp replicas should have been updated",
 			)
-			// Empty endpoints should remain empty
+			// Placeholder endpoints should be preserved when desired also has placeholder
 			g.Expect(kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External.Endpoints).To(
-				BeEmpty(),
-				"Empty etcd endpoints should remain empty",
+				HaveExactElements(constants.PlaceholderExternalEtcdEndpoint),
+				"Placeholder etcd endpoints should be preserved when desired also has placeholder",
 			)
 		},
 	)
@@ -438,7 +438,6 @@ func TestReconcileControlPlaneExternalEtcdUpgradeWithNoNamespace(t *testing.T) {
 	ns := env.CreateNamespaceForTest(ctx, t)
 	log := test.NewNullLogger()
 	cp := controlPlaneExternalEtcd(ns)
-	cp.Cluster.Spec.ManagedExternalEtcdRef.Namespace = ""
 	cp.EtcdCluster.Status.Ready = true
 	cp.EtcdCluster.Status.ObservedGeneration = 1
 	envtest.CreateObjs(ctx, t, c, cp.AllObjects()...)
@@ -455,41 +454,50 @@ func TestReconcileControlPlaneExternalEtcdUpgradeWithNoNamespace(t *testing.T) {
 func controlPlaneStackedEtcd(namespace string) *clusters.ControlPlane {
 	clusterName := "my-cluster"
 	return &clusters.ControlPlane{
-		Cluster: &clusterv1.Cluster{
+		Cluster: &clusterv1beta2.Cluster{
 			TypeMeta: metav1.TypeMeta{
-				APIVersion: "cluster.x-k8s.io/v1beta1",
+				APIVersion: "cluster.x-k8s.io/v1beta2",
 				Kind:       "Cluster",
 			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      clusterName,
 				Namespace: namespace,
 			},
-			Spec: clusterv1.ClusterSpec{
-				ControlPlaneRef: &corev1.ObjectReference{
-					Name:      clusterName,
-					Namespace: namespace,
+			Spec: clusterv1beta2.ClusterSpec{
+				ControlPlaneRef: clusterv1beta2.ContractVersionedObjectReference{
+					APIGroup: "controlplane.cluster.x-k8s.io",
+					Kind:     "KubeadmControlPlane",
+					Name:     clusterName,
 				},
-				InfrastructureRef: &corev1.ObjectReference{
-					APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
-					Kind:       "DockerCluster",
-					Name:       clusterName,
-					Namespace:  namespace,
+				InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
+					APIGroup: "infrastructure.cluster.x-k8s.io",
+					Kind:     "DockerCluster",
+					Name:     clusterName,
 				},
 			},
 		},
-		KubeadmControlPlane: &controlplanev1.KubeadmControlPlane{
+		KubeadmControlPlane: &controlplanev1beta2.KubeadmControlPlane{
 			TypeMeta: metav1.TypeMeta{
-				APIVersion: "controlplane.cluster.x-k8s.io/v1beta1",
+				APIVersion: "controlplane.cluster.x-k8s.io/v1beta2",
 				Kind:       "KubeadmControlPlane",
 			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      clusterName,
 				Namespace: namespace,
 			},
-			Spec: controlplanev1.KubeadmControlPlaneSpec{
+			Spec: controlplanev1beta2.KubeadmControlPlaneSpec{
 				Version: "v1.28.0",
-				KubeadmConfigSpec: v1beta1.KubeadmConfigSpec{
-					ClusterConfiguration: &v1beta1.ClusterConfiguration{},
+				MachineTemplate: controlplanev1beta2.KubeadmControlPlaneMachineTemplate{
+					Spec: controlplanev1beta2.KubeadmControlPlaneMachineTemplateSpec{
+						InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
+							APIGroup: "infrastructure.cluster.x-k8s.io",
+							Kind:     "DockerMachineTemplate",
+							Name:     clusterName + "-cp",
+						},
+					},
+				},
+				KubeadmConfigSpec: bootstrapv1beta2.KubeadmConfigSpec{
+					ClusterConfiguration: bootstrapv1beta2.ClusterConfiguration{},
 				},
 			},
 		},
@@ -531,7 +539,7 @@ func controlPlaneStackedEtcd(namespace string) *clusters.ControlPlane {
 
 func controlPlaneExternalEtcd(namespace string) *clusters.ControlPlane {
 	cp := controlPlaneStackedEtcd(namespace)
-	cp.KubeadmControlPlane.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External = &v1beta1.ExternalEtcd{
+	cp.KubeadmControlPlane.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External = bootstrapv1beta2.ExternalEtcd{
 		// Endpoints of etcd members. Required for ExternalEtcd.
 		Endpoints: []string{constants.PlaceholderExternalEtcdEndpoint},
 		CAFile:    "/etc/kubernetes/pki/etcd/ca.crt",
@@ -549,9 +557,10 @@ func controlPlaneExternalEtcd(namespace string) *clusters.ControlPlane {
 			Namespace: namespace,
 		},
 	}
-	cp.Cluster.Spec.ManagedExternalEtcdRef = &corev1.ObjectReference{
-		Name:      cp.EtcdCluster.Name,
-		Namespace: cp.EtcdCluster.Namespace,
+	cp.Cluster.Spec.ManagedExternalEtcdRef = &clusterv1beta2.ContractVersionedObjectReference{
+		APIGroup: "etcdcluster.cluster.x-k8s.io",
+		Kind:     "EtcdadmCluster",
+		Name:     cp.EtcdCluster.Name,
 	}
 
 	cp.EtcdMachineTemplate = &dockerv1beta2.DockerMachineTemplate{

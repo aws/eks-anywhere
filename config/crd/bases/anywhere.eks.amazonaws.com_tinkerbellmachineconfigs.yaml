@@ -41,11 +41,155 @@ spec:
             description: TinkerbellMachineConfigSpec defines the desired state of
               TinkerbellMachineConfig.
             properties:
+              hardwareAffinity:
+                description: |-
+                  HardwareAffinity allows advanced hardware selection using required
+                  and preferred affinity terms. Mutually exclusive with HardwareSelector.
+                properties:
+                  preferred:
+                    description: |-
+                      Preferred are the preferred hardware affinity terms. Hardware matching
+                      these terms are preferred according to the weights provided.
+                    items:
+                      description: WeightedHardwareAffinityTerm is a HardwareAffinityTerm
+                        with an associated weight.
+                      properties:
+                        hardwareAffinityTerm:
+                          description: HardwareAffinityTerm is the term associated
+                            with the weight.
+                          properties:
+                            labelSelector:
+                              description: LabelSelector is used to select hardware
+                                by labels.
+                              properties:
+                                matchExpressions:
+                                  description: matchExpressions is a list of label
+                                    selector requirements. The requirements are ANDed.
+                                  items:
+                                    description: |-
+                                      A label selector requirement is a selector that contains values, a key, and an operator that
+                                      relates the key and values.
+                                    properties:
+                                      key:
+                                        description: key is the label key that the
+                                          selector applies to.
+                                        type: string
+                                      operator:
+                                        description: |-
+                                          operator represents a key's relationship to a set of values.
+                                          Valid operators are In, NotIn, Exists and DoesNotExist.
+                                        type: string
+                                      values:
+                                        description: |-
+                                          values is an array of string values. If the operator is In or NotIn,
+                                          the values array must be non-empty. If the operator is Exists or DoesNotExist,
+                                          the values array must be empty. This array is replaced during a strategic
+                                          merge patch.
+                                        items:
+                                          type: string
+                                        type: array
+                                        x-kubernetes-list-type: atomic
+                                    required:
+                                    - key
+                                    - operator
+                                    type: object
+                                  type: array
+                                  x-kubernetes-list-type: atomic
+                                matchLabels:
+                                  additionalProperties:
+                                    type: string
+                                  description: |-
+                                    matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+                                    map is equivalent to an element of matchExpressions, whose key field is "key", the
+                                    operator is "In", and the values array contains only "value". The requirements are ANDed.
+                                  type: object
+                              type: object
+                              x-kubernetes-map-type: atomic
+                          required:
+                          - labelSelector
+                          type: object
+                        weight:
+                          description: Weight associated with matching the corresponding
+                            term, in range 1-100.
+                          format: int32
+                          maximum: 100
+                          minimum: 1
+                          type: integer
+                      required:
+                      - hardwareAffinityTerm
+                      - weight
+                      type: object
+                    type: array
+                  required:
+                    description: |-
+                      Required are the required hardware affinity terms. The terms are OR'd
+                      together - hardware must match at least one term to be considered.
+                      At least one required term must be specified.
+                    items:
+                      description: HardwareAffinityTerm defines a single hardware
+                        affinity term.
+                      properties:
+                        labelSelector:
+                          description: LabelSelector is used to select hardware by
+                            labels.
+                          properties:
+                            matchExpressions:
+                              description: matchExpressions is a list of label selector
+                                requirements. The requirements are ANDed.
+                              items:
+                                description: |-
+                                  A label selector requirement is a selector that contains values, a key, and an operator that
+                                  relates the key and values.
+                                properties:
+                                  key:
+                                    description: key is the label key that the selector
+                                      applies to.
+                                    type: string
+                                  operator:
+                                    description: |-
+                                      operator represents a key's relationship to a set of values.
+                                      Valid operators are In, NotIn, Exists and DoesNotExist.
+                                    type: string
+                                  values:
+                                    description: |-
+                                      values is an array of string values. If the operator is In or NotIn,
+                                      the values array must be non-empty. If the operator is Exists or DoesNotExist,
+                                      the values array must be empty. This array is replaced during a strategic
+                                      merge patch.
+                                    items:
+                                      type: string
+                                    type: array
+                                    x-kubernetes-list-type: atomic
+                                required:
+                                - key
+                                - operator
+                                type: object
+                              type: array
+                              x-kubernetes-list-type: atomic
+                            matchLabels:
+                              additionalProperties:
+                                type: string
+                              description: |-
+                                matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+                                map is equivalent to an element of matchExpressions, whose key field is "key", the
+                                operator is "In", and the values array contains only "value". The requirements are ANDed.
+                              type: object
+                          type: object
+                          x-kubernetes-map-type: atomic
+                      required:
+                      - labelSelector
+                      type: object
+                    type: array
+                required:
+                - required
+                type: object
               hardwareSelector:
                 additionalProperties:
                   type: string
-                description: HardwareSelector models a simple key-value selector used
-                  in Tinkerbell provisioning.
+                description: |-
+                  HardwareSelector is a simple key-value selector for hardware.
+                  Use this for straightforward single-label hardware selection.
+                  Mutually exclusive with HardwareAffinity.
                 type: object
               hostOSConfiguration:
                 description: HostOSConfiguration defines the configuration settings
@@ -299,7 +443,6 @@ spec:
                   type: object
                 type: array
             required:
-            - hardwareSelector
             - osFamily
             type: object
           status:

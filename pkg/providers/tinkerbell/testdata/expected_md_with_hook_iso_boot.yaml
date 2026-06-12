@@ -1,4 +1,4 @@
-apiVersion: cluster.x-k8s.io/v1beta1
+apiVersion: cluster.x-k8s.io/v1beta2
 kind: MachineDeployment
 metadata:
   labels:
@@ -19,19 +19,21 @@ spec:
     spec:
       bootstrap:
         configRef:
-          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          apiGroup: bootstrap.cluster.x-k8s.io
           kind: KubeadmConfigTemplate
           name: test-md-0-1
       clusterName: test
       infrastructureRef:
-        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        apiGroup: infrastructure.cluster.x-k8s.io
         kind: TinkerbellMachineTemplate
         name: test-md-0-1
       version: v1.21.2-eks-1-21-4
-  strategy:
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 0
+  rollout:
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 0
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: TinkerbellMachineTemplate
@@ -78,7 +80,7 @@ spec:
                             id: {{ (index .Hardware.Interfaces 0).DHCP.VLANID }}
                             link: mainif
                             addresses:
-                            - {{ (index .Hardware.Interfaces 0).DHCP.IP.Address }}/{{ netmaskToCIDR (index .Hardware.Interfaces 0).DHCP.IP.Netmask }}
+                            - {{ (index .Hardware.Interfaces 0).DHCP.IP.Address }}/{{ netmaskToPrefixLength (index .Hardware.Interfaces 0).DHCP.IP.Netmask }}
                             nameservers:
                                 addresses: [{{ range $i, $ns := (index .Hardware.Interfaces 0).DHCP.NameServers }}{{if $i}}, {{end}}{{$ns}}{{end}}]
                             {{- if (index .Hardware.Interfaces 0).DHCP.IP.Gateway }}
@@ -94,7 +96,7 @@ spec:
                             match:
                                 macaddress: {{ (index .Hardware.Interfaces 0).DHCP.MAC }}
                             addresses:
-                                - {{ (index .Hardware.Interfaces 0).DHCP.IP.Address }}/{{ netmaskToCIDR (index .Hardware.Interfaces 0).DHCP.IP.Netmask }}
+                                - {{ (index .Hardware.Interfaces 0).DHCP.IP.Address }}/{{ netmaskToPrefixLength (index .Hardware.Interfaces 0).DHCP.IP.Netmask }}
                             nameservers:
                                 addresses: [{{ range $i, $ns := (index .Hardware.Interfaces 0).DHCP.NameServers }}{{if $i}}, {{end}}{{$ns}}{{end}}]
                             routes:
@@ -128,7 +130,7 @@ spec:
               CONTENTS: |
                 datasource:
                   Ec2:
-                    metadata_urls: [http://0.0.0.0:50061,http://5.6.7.8:50061]
+                    metadata_urls: [http://0.0.0.0:7172,http://5.6.7.8:7172]
                     strict_id: false
                 manage_etc_hosts: localhost
                 warnings:
@@ -171,7 +173,7 @@ spec:
         version: "0.1"
         
 ---
-apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta2
 kind: KubeadmConfigTemplate
 metadata:
   name: test-md-0-1
@@ -182,10 +184,14 @@ spec:
       joinConfiguration:
         nodeRegistration:
           kubeletExtraArgs:
-            provider-id: PROVIDER_ID
-            read-only-port: "0"
-            anonymous-auth: "false"
-            tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+          - name: provider-id
+            value: "PROVIDER_ID"
+          - name: read-only-port
+            value: "0"
+          - name: anonymous-auth
+            value: "false"
+          - name: tls-cipher-suites
+            value: "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
       users:
       - name: ec2-user
         sshAuthorizedKeys:

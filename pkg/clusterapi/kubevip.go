@@ -5,21 +5,21 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
 // SetKubeVipInKubeadmControlPlane appends kube-vip manifest to kubeadmControlPlane's kubeadmConfigSpec files.
-func SetKubeVipInKubeadmControlPlane(kcp *controlplanev1.KubeadmControlPlane, address, image string) error {
+func SetKubeVipInKubeadmControlPlane(kcp *controlplanev1beta2.KubeadmControlPlane, address, image string) error {
 	b, err := yaml.Marshal(kubeVip(address, image))
 	if err != nil {
 		return fmt.Errorf("marshalling kube-vip pod: %v", err)
 	}
 
-	kcp.Spec.KubeadmConfigSpec.Files = append(kcp.Spec.KubeadmConfigSpec.Files, bootstrapv1.File{
+	kcp.Spec.KubeadmConfigSpec.Files = append(kcp.Spec.KubeadmConfigSpec.Files, bootstrapv1beta2.File{
 		Path:    "/etc/kubernetes/manifests/kube-vip.yaml",
 		Owner:   "root:root",
 		Content: string(b),

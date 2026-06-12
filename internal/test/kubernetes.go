@@ -3,7 +3,6 @@ package test
 import (
 	"context"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -11,7 +10,6 @@ import (
 	_ "github.com/aws/eks-anywhere/internal/test/envtest"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
-	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 // testKubeClient implements a kubernetes.Client that uses
@@ -22,27 +20,34 @@ type testKubeClient struct {
 	fakeClient client.Client
 }
 
-// ApplyServerSide creates or patches and object using server side logic.
-// Giving the limitations of the fake client, we implement a fake server side apply
-// using a simplified version, using a patch operation if the object exists and create
-// otherwise.
+// ApplyServerSide creates or patches an object using server side apply logic.
+// Uses client.Apply patch type like production code. Requires GVK to be set on object.
 func (t *testKubeClient) ApplyServerSide(ctx context.Context, fieldManager string, obj kubernetes.Object, opts ...kubernetes.ApplyServerSideOption) error {
 	o := &kubernetes.ApplyServerSideOptions{}
 	for _, opt := range opts {
 		opt.ApplyToApplyServerSide(o)
 	}
-	patchOpts := &client.PatchOptions{
-		FieldManager: fieldManager,
-	}
-	if o.ForceOwnership {
-		patchOpts.Force = ptr.Bool(true)
-	}
-	err := t.fakeClient.Patch(ctx, obj, client.MergeFrom(obj.DeepCopyObject().(client.Object)), patchOpts)
-	if apierrors.IsNotFound(err) {
-		return t.fakeClient.Create(ctx, obj)
+
+	// Ensure GVK is set - client.Apply requires it
+	if obj.GetObjectKind().GroupVersionKind().Empty() {
+		gvks, _, err := t.fakeClient.Scheme().ObjectKinds(obj)
+		if err != nil {
+			return err
+		}
+		if len(gvks) > 0 {
+			obj.GetObjectKind().SetGroupVersionKind(gvks[0])
+		}
 	}
 
-	return err
+	// Use client.Apply with proper options
+	patchOpts := []client.PatchOption{
+		client.FieldOwner(fieldManager),
+	}
+	if o.ForceOwnership {
+		patchOpts = append(patchOpts, client.ForceOwnership)
+	}
+
+	return t.fakeClient.Patch(ctx, obj, client.Apply, patchOpts...)
 }
 
 // NewKubeClient builds a new kubernetes.Client by using client.Client.

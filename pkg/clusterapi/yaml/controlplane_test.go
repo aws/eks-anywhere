@@ -7,9 +7,9 @@ import (
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
-	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
+	dockerv1beta2 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/aws/eks-anywhere/internal/test"
@@ -19,7 +19,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/yamlutil"
 )
 
-type dockerControlPlane = clusterapi.ControlPlane[*dockerv1.DockerCluster, *dockerv1.DockerMachineTemplate]
+type dockerControlPlane = clusterapi.ControlPlane[*dockerv1beta2.DockerCluster, *dockerv1beta2.DockerMachineTemplate]
 
 func TestNewControlPlaneParserAndBuilderSuccessParsing(t *testing.T) {
 	g := NewWithT(t)
@@ -27,36 +27,34 @@ func TestNewControlPlaneParserAndBuilderSuccessParsing(t *testing.T) {
 		test.NewNullLogger(),
 		yamlutil.NewMapping(
 			"DockerCluster",
-			func() *dockerv1.DockerCluster {
-				return &dockerv1.DockerCluster{}
+			func() *dockerv1beta2.DockerCluster {
+				return &dockerv1beta2.DockerCluster{}
 			},
 		),
 		yamlutil.NewMapping(
 			"DockerMachineTemplate",
-			func() *dockerv1.DockerMachineTemplate {
-				return &dockerv1.DockerMachineTemplate{}
+			func() *dockerv1beta2.DockerMachineTemplate {
+				return &dockerv1beta2.DockerMachineTemplate{}
 			},
 		),
 	)
 
 	g.Expect(err).To(Succeed())
 
-	yaml := []byte(`apiVersion: cluster.x-k8s.io/v1beta1
+	yaml := []byte(`apiVersion: cluster.x-k8s.io/v1beta2
 kind: Cluster
 metadata:
   name: cluster
   namespace: eksa-system
 spec:
   controlPlaneRef:
-    apiVersion: controlplane.clusterapi.k8s/v1beta1
+    apiGroup: controlplane.clusterapi.k8s
     kind: KubeadmControlPlane
     name: cp
-    namespace: eksa-system
   infrastructureRef:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    apiGroup: infrastructure.cluster.x-k8s.io
     kind: DockerCluster
     name: cluster
-    namespace: eksa-system
 `)
 
 	g.Expect(parser.Parse(yaml, builder)).To(Succeed())
@@ -69,14 +67,14 @@ func TestNewControlPlaneParserAndBuilderErrorFromMappings(t *testing.T) {
 		test.NewNullLogger(),
 		yamlutil.NewMapping(
 			"Cluster",
-			func() *dockerv1.DockerCluster {
-				return &dockerv1.DockerCluster{}
+			func() *dockerv1beta2.DockerCluster {
+				return &dockerv1beta2.DockerCluster{}
 			},
 		),
 		yamlutil.NewMapping(
 			"DockerMachineTemplate",
-			func() *dockerv1.DockerMachineTemplate {
-				return &dockerv1.DockerMachineTemplate{}
+			func() *dockerv1beta2.DockerMachineTemplate {
+				return &dockerv1beta2.DockerMachineTemplate{}
 			},
 		),
 	)
@@ -116,7 +114,7 @@ func TestProcessControlPlaneObjects(t *testing.T) {
 	etcdCluster := etcdCluster()
 	cluster.Spec.ManagedExternalEtcdRef = objectReference(etcdCluster)
 	etcdMachineTemplate := dockerMachineTemplate("etcd-mt")
-	etcdCluster.Spec.InfrastructureTemplate = *objectReference(etcdMachineTemplate)
+	etcdCluster.Spec.InfrastructureTemplate = *objectReferenceV1(etcdMachineTemplate)
 	lookup := yamlutil.NewObjectLookupBuilder().Add(
 		cluster,
 		providerCluster,
@@ -207,7 +205,7 @@ func TestProcessKubeadmControlPlaneWithControlPlaneAndMachineTemplate(t *testing
 	cp := &dockerControlPlane{}
 	cp.Cluster = capiCluster()
 	kubeadmControlPlane := kubeadmControlPlane()
-	mt := dockerMachineTemplate(kubeadmControlPlane.Spec.MachineTemplate.InfrastructureRef.Name)
+	mt := dockerMachineTemplate(kubeadmControlPlane.Spec.MachineTemplate.Spec.InfrastructureRef.Name)
 	lookup := yamlutil.NewObjectLookupBuilder().Add(
 		dockerCluster(),
 		kubeadmControlPlane,
@@ -262,7 +260,7 @@ func TestProcessEtcdClusterWithClusterAndMachineTemplate(t *testing.T) {
 	cp.Cluster = capiCluster()
 	etcdCluster := etcdCluster()
 	mt := dockerMachineTemplate("etcd-mt")
-	etcdCluster.Spec.InfrastructureTemplate = *objectReference(mt)
+	etcdCluster.Spec.InfrastructureTemplate = *objectReferenceV1(mt)
 	cp.Cluster.Spec.ManagedExternalEtcdRef = objectReference(etcdCluster)
 	lookup := yamlutil.NewObjectLookupBuilder().Add(
 		dockerCluster(),
@@ -275,35 +273,33 @@ func TestProcessEtcdClusterWithClusterAndMachineTemplate(t *testing.T) {
 	g.Expect(cp.EtcdMachineTemplate).To(Equal(mt))
 }
 
-func capiCluster() *clusterv1.Cluster {
-	return &clusterv1.Cluster{
+func capiCluster() *clusterv1beta2.Cluster {
+	return &clusterv1beta2.Cluster{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Cluster",
-			APIVersion: "cluster.x-k8s.io/v1beta1",
+			APIVersion: "cluster.x-k8s.io/v1beta2",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "cluster",
 			Namespace: constants.EksaSystemNamespace,
 		},
-		Spec: clusterv1.ClusterSpec{
-			InfrastructureRef: &corev1.ObjectReference{
-				Name:       "cluster",
-				Namespace:  constants.EksaSystemNamespace,
-				Kind:       "DockerCluster",
-				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+		Spec: clusterv1beta2.ClusterSpec{
+			InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
+				APIGroup: "infrastructure.cluster.x-k8s.io",
+				Kind:     "DockerCluster",
+				Name:     "cluster",
 			},
-			ControlPlaneRef: &corev1.ObjectReference{
-				Name:       "cp",
-				Namespace:  constants.EksaSystemNamespace,
-				Kind:       "KubeadmControlPlane",
-				APIVersion: "controlplane.clusterapi.k8s/v1beta1",
+			ControlPlaneRef: clusterv1beta2.ContractVersionedObjectReference{
+				APIGroup: "controlplane.clusterapi.k8s",
+				Kind:     "KubeadmControlPlane",
+				Name:     "cp",
 			},
 		},
 	}
 }
 
-func kubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
-	return &controlplanev1.KubeadmControlPlane{
+func kubeadmControlPlane() *controlplanev1beta2.KubeadmControlPlane {
+	return &controlplanev1beta2.KubeadmControlPlane{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "KubeadmControlPlane",
 			APIVersion: "controlplane.clusterapi.k8s/v1beta1",
@@ -312,24 +308,25 @@ func kubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
 			Name:      "cp",
 			Namespace: constants.EksaSystemNamespace,
 		},
-		Spec: controlplanev1.KubeadmControlPlaneSpec{
-			MachineTemplate: controlplanev1.KubeadmControlPlaneMachineTemplate{
-				InfrastructureRef: corev1.ObjectReference{
-					Name:       "cp-mt",
-					Namespace:  constants.EksaSystemNamespace,
-					Kind:       "DockerMachineTemplate",
-					APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+		Spec: controlplanev1beta2.KubeadmControlPlaneSpec{
+			MachineTemplate: controlplanev1beta2.KubeadmControlPlaneMachineTemplate{
+				Spec: controlplanev1beta2.KubeadmControlPlaneMachineTemplateSpec{
+					InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
+						Name:     "cp-mt",
+						Kind:     "DockerMachineTemplate",
+						APIGroup: "infrastructure.cluster.x-k8s.io",
+					},
 				},
 			},
 		},
 	}
 }
 
-func dockerCluster() *dockerv1.DockerCluster {
-	return &dockerv1.DockerCluster{
+func dockerCluster() *dockerv1beta2.DockerCluster {
+	return &dockerv1beta2.DockerCluster{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "DockerCluster",
-			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "cluster",
@@ -338,11 +335,11 @@ func dockerCluster() *dockerv1.DockerCluster {
 	}
 }
 
-func dockerMachineTemplate(name string) *dockerv1.DockerMachineTemplate {
-	return &dockerv1.DockerMachineTemplate{
+func dockerMachineTemplate(name string) *dockerv1beta2.DockerMachineTemplate {
+	return &dockerv1beta2.DockerMachineTemplate{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "DockerMachineTemplate",
-			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta2",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -364,7 +361,16 @@ func etcdCluster() *etcdv1.EtcdadmCluster {
 	}
 }
 
-func objectReference(obj client.Object) *corev1.ObjectReference {
+func objectReference(obj client.Object) *clusterv1beta2.ContractVersionedObjectReference {
+	gvk := obj.GetObjectKind().GroupVersionKind()
+	return &clusterv1beta2.ContractVersionedObjectReference{
+		APIGroup: gvk.Group,
+		Kind:     gvk.Kind,
+		Name:     obj.GetName(),
+	}
+}
+
+func objectReferenceV1(obj client.Object) *corev1.ObjectReference {
 	return &corev1.ObjectReference{
 		Kind:       obj.GetObjectKind().GroupVersionKind().Kind,
 		APIVersion: obj.GetObjectKind().GroupVersionKind().GroupVersion().String(),

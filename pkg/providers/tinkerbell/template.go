@@ -227,7 +227,7 @@ func buildTemplateMapCP(
 		"kubeVipImage":                  versionsBundle.Tinkerbell.KubeVip.VersionedImage(),
 		"podCidrs":                      clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks,
 		"serviceCidrs":                  clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks,
-		"apiserverExtraArgs":            apiServerExtraArgs.ToPartialYaml(),
+		"apiserverExtraArgs":            apiServerExtraArgs,
 		"baseRegistry":                  "", // TODO: need to get this values for creating template IMAGE_URL
 		"osDistro":                      "", // TODO: need to get this values for creating template IMAGE_URL
 		"osVersion":                     "", // TODO: need to get this values for creating template IMAGE_URL
@@ -239,6 +239,7 @@ func buildTemplateMapCP(
 		"externalEtcdVersion":           versionsBundle.KubeDistro.EtcdVersion,
 		"etcdCipherSuites":              crypto.SecureCipherSuitesString(),
 		"hardwareSelector":              controlPlaneMachineSpec.HardwareSelector,
+		"hardwareAffinity":              controlPlaneMachineSpec.HardwareAffinity,
 		"controlPlaneTaints":            clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints,
 		"workerNodeGroupConfigurations": clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations,
 		"skipLoadBalancerDeployment":    datacenterSpec.SkipLoadBalancerDeployment,
@@ -284,6 +285,7 @@ func buildTemplateMapCP(
 		values["etcdSshUsername"] = etcdMachineSpec.Users[0].Name
 		values["etcdTemplateOverride"] = etcdTemplateOverride
 		values["etcdHardwareSelector"] = etcdMachineSpec.HardwareSelector
+		values["etcdHardwareAffinity"] = etcdMachineSpec.HardwareAffinity
 		etcdURL, _ := common.GetExternalEtcdReleaseURL(clusterSpec.Cluster.Spec.EksaVersion, versionsBundle)
 		if etcdURL != "" {
 			values["externalEtcdReleaseUrl"] = etcdURL
@@ -344,12 +346,12 @@ func buildTemplateMapCP(
 		kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
 			Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf))
 
-		values["kubeletExtraArgs"] = kubeletExtraArgs.ToPartialYaml()
+		values["kubeletExtraArgs"] = kubeletExtraArgs
 	}
 
 	cpNodeLabelArgs := clusterapi.ControlPlaneNodeLabelsExtraArgs(clusterSpec.Cluster.Spec.ControlPlaneConfiguration)
 	if len(cpNodeLabelArgs) != 0 {
-		values["cpNodeLabelArgs"] = cpNodeLabelArgs.ToPartialYaml()
+		values["cpNodeLabelArgs"] = cpNodeLabelArgs
 	}
 
 	if !datacenterSpec.IsoBoot {
@@ -400,6 +402,7 @@ func buildTemplateMapMD(
 		"workerSshAuthorizedKey": workerNodeGroupMachineSpec.Users[0].SshAuthorizedKeys[0],
 		"workerSshUsername":      workerNodeGroupMachineSpec.Users[0].Name,
 		"hardwareSelector":       workerNodeGroupMachineSpec.HardwareSelector,
+		"hardwareAffinity":       workerNodeGroupMachineSpec.HardwareAffinity,
 		"workerNodeGroupTaints":  workerNodeGroupConfiguration.Taints,
 	}
 
@@ -470,12 +473,12 @@ func buildTemplateMapMD(
 	} else {
 		kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
 			Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf))
-		values["kubeletExtraArgs"] = kubeletExtraArgs.ToPartialYaml()
+		values["kubeletExtraArgs"] = kubeletExtraArgs
 	}
 
 	wnNodeLabelArgs := clusterapi.WorkerNodeLabelsExtraArgs(workerNodeGroupConfiguration)
 	if len(wnNodeLabelArgs) != 0 {
-		values["wnNodeLabelArgs"] = wnNodeLabelArgs.ToPartialYaml()
+		values["wnNodeLabelArgs"] = wnNodeLabelArgs
 	}
 
 	if !datacenterSpec.IsoBoot {
@@ -535,6 +538,7 @@ func populateRegistryMirrorValues(clusterSpec *cluster.Spec, values map[string]i
 	registryMirror := registrymirror.FromCluster(clusterSpec.Cluster)
 	values["registryMirrorMap"] = containerd.ToAPIEndpoints(registryMirror.NamespacedRegistryMap)
 	values["mirrorBase"] = registryMirror.BaseRegistry
+	values["mirrorBaseAPIEndpoint"] = containerd.ToAPIEndpoint(registryMirror.BaseRegistry)
 	values["insecureSkip"] = registryMirror.InsecureSkipVerify
 	values["publicMirror"] = containerd.ToAPIEndpoint(registryMirror.CoreEKSAMirror())
 	values["coreEKSAMirror"] = registryMirror.CoreEKSAMirror()

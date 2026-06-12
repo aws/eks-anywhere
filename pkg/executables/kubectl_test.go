@@ -21,8 +21,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/version"
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
-	addons "sigs.k8s.io/cluster-api/api/addons/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	addons "sigs.k8s.io/cluster-api/api/addons/v1beta2"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
@@ -58,7 +59,7 @@ var nutanixMachineConfigsJSON string
 //go:embed testdata/nutanix/datacenterConfigs.json
 var nutanixDatacenterConfigsJSON string
 
-var capiClustersResourceType = fmt.Sprintf("clusters.%s", clusterv1.GroupVersion.Group)
+var capiClustersResourceType = fmt.Sprintf("clusters.%s", clusterv1beta2.GroupVersion.Group)
 
 func newKubectl(t *testing.T) (*executables.Kubectl, context.Context, *types.Cluster, *mockexecutables.MockExecutable) {
 	kubeconfigFile := "c.kubeconfig"
@@ -2048,7 +2049,7 @@ func TestKubectlGetKubeadmControlPlane_V1Beta2Conversion(t *testing.T) {
 		jsonPayload   string
 		wantName      string
 		wantReplicas  int32
-		wantExtraArgs map[string]string
+		wantExtraArgs []bootstrapv1beta2.Arg
 	}{
 		{
 			testName: "v1beta2 KubeadmControlPlane with extraArgs",
@@ -2074,8 +2075,8 @@ func TestKubectlGetKubeadmControlPlane_V1Beta2Conversion(t *testing.T) {
 			}`,
 			wantName:     "test-cluster",
 			wantReplicas: 3,
-			wantExtraArgs: map[string]string{
-				"enable-admission-plugins": "NodeRestriction,PodSecurityPolicy",
+			wantExtraArgs: []bootstrapv1beta2.Arg{
+				{Name: "enable-admission-plugins", Value: ptr.String("NodeRestriction,PodSecurityPolicy")},
 			},
 		},
 	}
@@ -2280,7 +2281,7 @@ func TestKubectlGetClusterResourceSet(t *testing.T) {
 	resourceSetName := "Bundle-name"
 	wantResourceSet := &addons.ClusterResourceSet{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "addons.cluster.x-k8s.io/v1beta1",
+			APIVersion: "addons.cluster.x-k8s.io/v1beta2",
 			Kind:       "ClusterResourceSet",
 		},
 		Spec: addons.ClusterResourceSetSpec{
@@ -2575,7 +2576,7 @@ func TestKubectlGetObjectNotFound(t *testing.T) {
 				"get", "--ignore-not-found", "-o", "json", "--kubeconfig", tt.kubeconfig, tc.resourceType, "--namespace", tt.namespace, name,
 			).Return(bytes.Buffer{}, nil)
 
-			err := tt.k.GetObject(tt.ctx, tc.resourceType, name, tt.namespace, tt.kubeconfig, &clusterv1.Cluster{})
+			err := tt.k.GetObject(tt.ctx, tc.resourceType, name, tt.namespace, tt.kubeconfig, &clusterv1beta2.Cluster{})
 			tt.Expect(err).To(HaveOccurred())
 			tt.Expect(apierrors.IsNotFound(err)).To(BeTrue())
 		})
@@ -2592,7 +2593,7 @@ func TestKubectlGetObjectWithEMptyNamespace(t *testing.T) {
 		"get", "--ignore-not-found", "-o", "json", "--kubeconfig", tt.kubeconfig, "cluster", "--namespace", "default", name,
 	).Return(bytes.Buffer{}, nil)
 
-	err := tt.k.GetObject(tt.ctx, "cluster", name, emptyNamespace, tt.kubeconfig, &clusterv1.Cluster{})
+	err := tt.k.GetObject(tt.ctx, "cluster", name, emptyNamespace, tt.kubeconfig, &clusterv1beta2.Cluster{})
 	tt.Expect(err).To(HaveOccurred())
 	tt.Expect(apierrors.IsNotFound(err)).To(BeTrue())
 }
@@ -2762,7 +2763,7 @@ func TestKubectlGetClusterObjectNotFound(t *testing.T) {
 		"get", "--ignore-not-found", "-o", "json", "--kubeconfig", test.kubeconfig, "testresource", name,
 	).Return(bytes.Buffer{}, nil)
 
-	err := test.k.GetClusterObject(test.ctx, "testresource", name, test.kubeconfig, &clusterv1.Cluster{})
+	err := test.k.GetClusterObject(test.ctx, "testresource", name, test.kubeconfig, &clusterv1beta2.Cluster{})
 	test.Expect(err).To(HaveOccurred())
 	test.Expect(apierrors.IsNotFound(err)).To(BeTrue())
 }
@@ -3923,7 +3924,7 @@ func TestGetMachineDeploymentsForCluster(t *testing.T) {
 	}
 
 	params := []string{
-		"get", fmt.Sprintf("machinedeployments.%s", clusterv1.GroupVersion.Group), "-o", "json",
+		"get", fmt.Sprintf("machinedeployments.%s", clusterv1beta2.GroupVersion.Group), "-o", "json",
 		fmt.Sprintf("--selector=cluster.x-k8s.io/cluster-name=%s", clusterName),
 	}
 	e.EXPECT().Execute(ctx, gomock.Eq(params)).Return(*bytes.NewBufferString(""), nil).Return(*bytes.NewBufferString(fileContent), nil)
@@ -4145,27 +4146,7 @@ func TestKubectlValidateControlPlaneNodes(t *testing.T) {
 			}`,
 			execError:    nil,
 			wantError:    true,
-			errorMessage: "api server is not fully ready",
-		},
-		{
-			name: "error - unavailable replicas",
-			kcpJSON: `{
-				"apiVersion": "controlplane.cluster.x-k8s.io/v1beta1",
-				"kind": "KubeadmControlPlane",
-				"metadata": {
-					"name": "test-cluster",
-					"generation": 1
-				},
-				"status": {
-					"observedGeneration": 1,
-					"replicas": 3,
-					"readyReplicas": 3,
-					"unavailableReplicas": 1
-				}
-			}`,
-			execError:    nil,
-			wantError:    true,
-			errorMessage: "control plane replicas are unavailable",
+			errorMessage: "control plane is not fully ready",
 		},
 		{
 			name:         "error - kubectl execution fails",
@@ -4201,133 +4182,6 @@ func TestKubectlValidateControlPlaneNodes(t *testing.T) {
 				if tt.errorMessage != "" {
 					g.Expect(err.Error()).To(ContainSubstring(tt.errorMessage))
 				}
-			} else {
-				g.Expect(err).To(BeNil())
-			}
-		})
-	}
-}
-
-func TestKubectlConvertExtraArgsField(t *testing.T) {
-	t.Parallel()
-
-	// We'll test the convertExtraArgsField function indirectly through GetKubeadmControlPlane
-	// since it's a private method that gets called during the conversion process
-	tests := []struct {
-		name      string
-		kcpJSON   string
-		wantError bool
-	}{
-		{
-			name: "v1beta2 array format conversion",
-			kcpJSON: `{
-				"apiVersion": "controlplane.cluster.x-k8s.io/v1beta2",
-				"kind": "KubeadmControlPlane",
-				"metadata": {"name": "test-cluster"},
-				"spec": {
-					"replicas": 3,
-					"kubeadmConfigSpec": {
-						"clusterConfiguration": {
-							"apiServer": {
-								"extraArgs": [
-									{
-										"name": "enable-admission-plugins",
-										"value": "NodeRestriction,PodSecurityPolicy"
-									},
-									{
-										"name": "audit-log-maxage",
-										"value": "30"
-									}
-								]
-							}
-						}
-					}
-				}
-			}`,
-			wantError: false,
-		},
-		{
-			name: "v1beta1 map format - no conversion needed",
-			kcpJSON: `{
-				"apiVersion": "controlplane.cluster.x-k8s.io/v1beta1",
-				"kind": "KubeadmControlPlane",
-				"metadata": {"name": "test-cluster"},
-				"spec": {
-					"replicas": 3,
-					"kubeadmConfigSpec": {
-						"clusterConfiguration": {
-							"apiServer": {
-								"extraArgs": {
-									"enable-admission-plugins": "NodeRestriction,PodSecurityPolicy",
-									"audit-log-maxage": "30"
-								}
-							}
-						}
-					}
-				}
-			}`,
-			wantError: false,
-		},
-		{
-			name: "no extraArgs field",
-			kcpJSON: `{
-				"apiVersion": "controlplane.cluster.x-k8s.io/v1beta1",
-				"kind": "KubeadmControlPlane",
-				"metadata": {"name": "test-cluster"},
-				"spec": {
-					"replicas": 3,
-					"kubeadmConfigSpec": {
-						"clusterConfiguration": {
-							"apiServer": {}
-						}
-					}
-				}
-			}`,
-			wantError: false,
-		},
-		{
-			name: "invalid array format - missing name field",
-			kcpJSON: `{
-				"apiVersion": "controlplane.cluster.x-k8s.io/v1beta2",
-				"kind": "KubeadmControlPlane",
-				"metadata": {"name": "test-cluster"},
-				"spec": {
-					"replicas": 3,
-					"kubeadmConfigSpec": {
-						"clusterConfiguration": {
-							"apiServer": {
-								"extraArgs": [
-									{
-										"value": "NodeRestriction,PodSecurityPolicy"
-									}
-								]
-							}
-						}
-					}
-				}
-			}`,
-			wantError: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			g := NewWithT(t)
-			k, ctx, cluster, e := newKubectl(t)
-			clusterName := "test-cluster"
-
-			expectedParams := []string{
-				"get", "kubeadmcontrolplanes.controlplane.cluster.x-k8s.io", clusterName,
-				"-o", "json", "--kubeconfig", cluster.KubeconfigFile,
-				"--namespace", constants.EksaSystemNamespace,
-			}
-
-			e.EXPECT().Execute(ctx, gomock.Eq(expectedParams)).Return(*bytes.NewBufferString(tt.kcpJSON), nil)
-
-			_, err := k.GetKubeadmControlPlane(ctx, cluster, clusterName, executables.WithCluster(cluster), executables.WithNamespace(constants.EksaSystemNamespace))
-
-			if tt.wantError {
-				g.Expect(err).To(HaveOccurred())
 			} else {
 				g.Expect(err).To(BeNil())
 			}

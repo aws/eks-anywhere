@@ -1,4 +1,4 @@
-apiVersion: cluster.x-k8s.io/v1beta1
+apiVersion: cluster.x-k8s.io/v1beta2
 kind: MachineDeployment
 metadata:
   labels:
@@ -26,23 +26,25 @@ spec:
     spec:
       bootstrap:
         configRef:
-          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          apiGroup: bootstrap.cluster.x-k8s.io
           kind: KubeadmConfigTemplate
           name: {{.workloadkubeadmconfigTemplateName}}
       clusterName: {{.clusterName}}
       infrastructureRef:
-        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        apiGroup: infrastructure.cluster.x-k8s.io
         kind: TinkerbellMachineTemplate
         name: {{.workloadTemplateName}}
       version: {{.kubernetesVersion}}
 {{- if .upgradeRolloutStrategy }}
-  strategy:
+  rollout:
+    strategy:
 {{- if (eq .upgradeRolloutStrategyType "InPlace") }}
-    type: {{.upgradeRolloutStrategyType}}
+      type: {{.upgradeRolloutStrategyType}}
 {{- else}}
-    rollingUpdate:
-      maxSurge: {{.maxSurge}}
-      maxUnavailable: {{.maxUnavailable}}
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: {{.maxSurge}}
+        maxUnavailable: {{.maxUnavailable}}
 {{- end }}
 {{- end }}
 ---
@@ -56,11 +58,66 @@ spec:
     {{- if and .workertemplateOverride (ne .format "")}}
     spec:
       hardwareAffinity:
+{{- if .hardwareAffinity }}
+        {{- if .hardwareAffinity.Required }}
+        required:
+        {{- range .hardwareAffinity.Required }}
+        - labelSelector:
+            {{- if .LabelSelector.MatchLabels }}
+            matchLabels:
+              {{- range $key, $value := .LabelSelector.MatchLabels }}
+              {{ $key }}: {{ $value }}
+              {{- end }}
+            {{- end }}
+            {{- if .LabelSelector.MatchExpressions }}
+            matchExpressions:
+              {{- range .LabelSelector.MatchExpressions }}
+            - key: {{ .Key }}
+              operator: {{ .Operator }}
+              {{- if .Values }}
+              values:
+                {{- range .Values }}
+              - {{ . }}
+                {{- end }}
+              {{- end }}
+              {{- end }}
+            {{- end }}
+        {{- end }}
+        {{- end }}
+        {{- if .hardwareAffinity.Preferred }}
+        preferred:
+        {{- range .hardwareAffinity.Preferred }}
+        - weight: {{ .Weight }}
+          hardwareAffinityTerm:
+            labelSelector:
+              {{- if .HardwareAffinityTerm.LabelSelector.MatchLabels }}
+              matchLabels:
+                {{- range $key, $value := .HardwareAffinityTerm.LabelSelector.MatchLabels }}
+                {{ $key }}: {{ $value }}
+                {{- end }}
+              {{- end }}
+              {{- if .HardwareAffinityTerm.LabelSelector.MatchExpressions }}
+              matchExpressions:
+                {{- range .HardwareAffinityTerm.LabelSelector.MatchExpressions }}
+              - key: {{ .Key }}
+                operator: {{ .Operator }}
+                {{- if .Values }}
+                values:
+                  {{- range .Values }}
+                - {{ . }}
+                  {{- end }}
+                {{- end }}
+                {{- end }}
+              {{- end }}
+        {{- end }}
+        {{- end }}
+{{- else }}
         required:
         - labelSelector:
             matchLabels: {{ range $key, $value := .hardwareSelector}}
               {{ $key }}: {{ $value}}
             {{- end }}
+{{- end }}
       bootOptions:
         bootMode: {{.bootMode}}
         {{- if .isoUrl }}
@@ -73,7 +130,7 @@ spec:
     spec: {}
     {{- end }}
 ---
-apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta2
 kind: KubeadmConfigTemplate
 metadata:
   name: {{.workloadkubeadmconfigTemplateName}}
@@ -133,16 +190,19 @@ spec:
 {{- end }}
 {{- end }}
           kubeletExtraArgs:
-            provider-id: PROVIDER_ID
+          - name: provider-id
+            value: "PROVIDER_ID"
 {{- if not .kubeletConfiguration }}
-            read-only-port: "0"
-            anonymous-auth: "false"
+          - name: read-only-port
+            value: "0"
+          - name: anonymous-auth
+            value: "false"
 {{- if .kubeletExtraArgs }}
-{{ .kubeletExtraArgs.ToYaml | indent 12 }}
+{{ .kubeletExtraArgs.ToYaml | indent 10 }}
 {{- end }}
 {{- end }}
 {{- if .wnNodeLabelArgs }}
-{{ .wnNodeLabelArgs.ToYaml | indent 12 }}
+{{ .wnNodeLabelArgs.ToYaml | indent 10 }}
 {{- end }}
 {{- if or (and (ne .format "bottlerocket") (or .proxyConfig .registryMirrorMap)) .kubeletConfiguration }}
       files:
@@ -178,9 +238,10 @@ spec:
           path: "/etc/containerd/config_append.toml"
         - content: |
             server = "https://{{ .mirrorBase }}"
-            
-            [host."https://{{ .mirrorBase }}"]
+
+            [host."https://{{ .mirrorBaseAPIEndpoint }}"]
               capabilities = ["pull", "resolve"]
+              override_path = true
             {{- if or .registryCACert .insecureSkip }}
             {{- if .registryCACert }}
               ca = "/etc/containerd/certs.d/{{ .mirrorBase }}/ca.crt"
@@ -190,7 +251,7 @@ spec:
             {{- end }}
             {{- end }}
             {{- if .registryAuth }}
-              [host."https://{{ .mirrorBase }}".header]
+              [host."https://{{ .mirrorBaseAPIEndpoint }}".header]
                 authorization = "Basic {{ printf "%s:%s" .registryUsername .registryPassword | b64enc }}"
             {{- end }}
           owner: root:root
@@ -198,9 +259,10 @@ spec:
         {{- range $orig, $mirror := .registryMirrorMap }}
         - content: |
             server = "https://{{ $orig }}"
-            
+
             [host."https://{{ $mirror }}"]
               capabilities = ["pull", "resolve"]
+              override_path = true
             {{- if or $.registryCACert $.insecureSkip }}
             {{- if $.registryCACert }}
               ca = "/etc/containerd/certs.d/{{ $.mirrorBase }}/ca.crt"

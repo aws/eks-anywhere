@@ -13,7 +13,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -558,7 +558,7 @@ type MockClient struct {
 
 func (m *MockClient) List(ctx context.Context, list client.ObjectList, opts ...client.ListOption) error {
 	// Check if we're trying to list MachineList objects
-	if _, ok := list.(*clusterv1.MachineList); ok {
+	if _, ok := list.(*clusterv1beta2.MachineList); ok {
 		return fmt.Errorf("simulated client error during machine list operation")
 	}
 	// For all other list operations, delegate to the real client

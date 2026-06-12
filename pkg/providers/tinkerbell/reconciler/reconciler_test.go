@@ -14,9 +14,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -60,7 +60,7 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 
 	tt := newReconcilerTest(t)
 
-	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
+	capiCluster := test.CAPICluster(func(c *clusterv1beta2.Cluster) {
 		c.Name = tt.cluster.Name
 	})
 
@@ -207,7 +207,7 @@ func TestReconcilerReconcileControlPlaneScaleSuccess(t *testing.T) {
 	tt.Expect(tt.cluster.Status.FailureReason).To(BeZero())
 	tt.Expect(result).To(Equal(controller.Result{}))
 
-	kcp := &controlplanev1.KubeadmControlPlane{
+	kcp := &controlplanev1beta2.KubeadmControlPlane{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      workloadClusterName,
 			Namespace: constants.EksaSystemNamespace,
@@ -248,7 +248,7 @@ func TestReconcilerReconcileControlPlaneSuccess(t *testing.T) {
 		},
 	})
 
-	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
+	capiCluster := test.CAPICluster(func(c *clusterv1beta2.Cluster) {
 		c.Name = workloadClusterName
 	})
 	tt.ShouldEventuallyExist(tt.ctx, capiCluster)
@@ -292,7 +292,7 @@ func TestReconcilerReconcileControlPlaneSuccessRegistryMirrorAuthentication(t *t
 		},
 	})
 
-	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
+	capiCluster := test.CAPICluster(func(c *clusterv1beta2.Cluster) {
 		c.Name = workloadClusterName
 	})
 	tt.ShouldEventuallyExist(tt.ctx, capiCluster)
@@ -361,7 +361,7 @@ func TestReconcilerValidateClusterSpecValidationFailedOSFamily(t *testing.T) {
 func TestReconcilerReconcileWorkersScaleSuccess(t *testing.T) {
 	tt := newReconcilerTest(t)
 	tt.cluster.Name = "mgmt-cluster"
-	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
+	capiCluster := test.CAPICluster(func(c *clusterv1beta2.Cluster) {
 		c.Name = tt.cluster.Name
 	})
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
@@ -388,12 +388,12 @@ func TestReconcilerReconcileWorkersScaleSuccess(t *testing.T) {
 	tt.Expect(result).To(Equal(controller.Result{}))
 
 	tt.ShouldEventuallyExist(tt.ctx, mt)
-	md := &clusterv1.MachineDeployment{
+	md := &clusterv1beta2.MachineDeployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      tt.cluster.Name + "-md-0",
 			Namespace: constants.EksaSystemNamespace,
 		},
-		Spec: clusterv1.MachineDeploymentSpec{
+		Spec: clusterv1beta2.MachineDeploymentSpec{
 			Replicas: ptr.Int32(2),
 		},
 	}
@@ -407,7 +407,7 @@ func TestReconcilerReconcileWorkersScaleSuccess(t *testing.T) {
 func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
 	tt := newReconcilerTest(t)
 	tt.cluster.Name = "mgmt-cluster"
-	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
+	capiCluster := test.CAPICluster(func(c *clusterv1beta2.Cluster) {
 		c.Name = tt.cluster.Name
 	})
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
@@ -427,7 +427,7 @@ func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
 	tt.Expect(result).To(Equal(controller.Result{}))
 
 	tt.ShouldEventuallyExist(tt.ctx,
-		&clusterv1.MachineDeployment{
+		&clusterv1beta2.MachineDeployment{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      tt.cluster.Name + "-md-0",
 				Namespace: constants.EksaSystemNamespace,
@@ -436,7 +436,7 @@ func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
 	)
 
 	tt.ShouldEventuallyExist(tt.ctx,
-		&bootstrapv1.KubeadmConfigTemplate{
+		&bootstrapv1beta2.KubeadmConfigTemplate{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      tt.cluster.Name + "-md-0-1",
 				Namespace: constants.EksaSystemNamespace,
@@ -660,7 +660,7 @@ func TestReconcilerValidateRufioMachinesFail(t *testing.T) {
 	logger := test.NewNullLogger()
 
 	tt.cluster.Name = "invalidCluster"
-	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
+	capiCluster := test.CAPICluster(func(c *clusterv1beta2.Cluster) {
 		c.Name = tt.cluster.Name
 	})
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
@@ -824,7 +824,7 @@ func TestReconcilerDetectOperationK8sVersionUpgradeWorkerOnly(t *testing.T) {
 	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
 	kube123 := "v1.23.8"
 	scope.Workers = tinkWorker(tt.cluster.Name, func(w *tinkerbell.Workers) {
-		w.Groups[0].MachineDeployment.Spec.Template.Spec.Version = &kube123
+		w.Groups[0].MachineDeployment.Spec.Template.Spec.Version = kube123
 	})
 
 	tt.Expect(err).NotTo(HaveOccurred())
@@ -965,7 +965,7 @@ type reconcilerTest struct {
 	ipValidator               *tinkerbellreconcilermocks.MockIPValidator
 	cniReconciler             *tinkerbellreconcilermocks.MockCNIReconciler
 	remoteClientRegistry      *tinkerbellreconcilermocks.MockRemoteClientRegistry
-	kcp                       *controlplanev1.KubeadmControlPlane
+	kcp                       *controlplanev1beta2.KubeadmControlPlane
 }
 
 func newReconcilerTest(t testing.TB) *reconcilerTest {
@@ -1052,24 +1052,27 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 		c.Spec.EksaVersion = &version
 	})
 
-	kcp := test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
+	kcp := test.KubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
 		kcp.Name = cluster.Name
 		kcp.Namespace = constants.EksaSystemNamespace
-		kcp.Spec = controlplanev1.KubeadmControlPlaneSpec{
-			MachineTemplate: controlplanev1.KubeadmControlPlaneMachineTemplate{
-				InfrastructureRef: corev1.ObjectReference{
-					Name: fmt.Sprintf("%s-control-plane-1", cluster.Name),
+		kcp.Spec = controlplanev1beta2.KubeadmControlPlaneSpec{
+			MachineTemplate: controlplanev1beta2.KubeadmControlPlaneMachineTemplate{
+				Spec: controlplanev1beta2.KubeadmControlPlaneMachineTemplateSpec{
+					InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
+						Name: fmt.Sprintf("%s-control-plane-1", cluster.Name),
+					},
 				},
 			},
 			Version:  "v1.19.8",
 			Replicas: ptr.Int32(1),
 		}
-		kcp.Status = controlplanev1.KubeadmControlPlaneStatus{
-			Conditions: clusterv1.Conditions{
+		kcp.Status = controlplanev1beta2.KubeadmControlPlaneStatus{
+			Conditions: []metav1.Condition{
 				{
-					Type:               clusterapi.ReadyCondition,
-					Status:             corev1.ConditionTrue,
+					Type:               clusterv1beta2.ReadyCondition,
+					Status:             metav1.ConditionTrue,
 					LastTransitionTime: metav1.NewTime(time.Now()),
+					Reason:             "Ready",
 				},
 			},
 			ObservedGeneration: 2,
@@ -1108,12 +1111,12 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 
 func (tt *reconcilerTest) cleanup() {
 	tt.DeleteAndWait(tt.ctx, tt.allObjs()...)
-	tt.DeleteAllOfAndWait(tt.ctx, &bootstrapv1.KubeadmConfigTemplate{})
-	tt.DeleteAllOfAndWait(tt.ctx, &clusterv1.Cluster{})
-	tt.DeleteAllOfAndWait(tt.ctx, &controlplanev1.KubeadmControlPlane{})
+	tt.DeleteAllOfAndWait(tt.ctx, &bootstrapv1beta2.KubeadmConfigTemplate{})
+	tt.DeleteAllOfAndWait(tt.ctx, &clusterv1beta2.Cluster{})
+	tt.DeleteAllOfAndWait(tt.ctx, &controlplanev1beta2.KubeadmControlPlane{})
 	tt.DeleteAllOfAndWait(tt.ctx, &tinkerbellv1.TinkerbellCluster{})
 	tt.DeleteAllOfAndWait(tt.ctx, &tinkerbellv1.TinkerbellMachineTemplate{})
-	tt.DeleteAllOfAndWait(tt.ctx, &clusterv1.MachineDeployment{})
+	tt.DeleteAllOfAndWait(tt.ctx, &clusterv1beta2.MachineDeployment{})
 }
 
 type clusterOpt func(*anywherev1.Cluster)
@@ -1203,8 +1206,8 @@ func machineConfig(opts ...tinkerbellMachineOpt) *anywherev1.TinkerbellMachineCo
 	return m
 }
 
-func kubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
-	return &controlplanev1.KubeadmControlPlane{
+func kubeadmControlPlane() *controlplanev1beta2.KubeadmControlPlane {
+	return &controlplanev1beta2.KubeadmControlPlane{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      workloadClusterName,
 			Namespace: constants.EksaSystemNamespace,
@@ -1291,7 +1294,7 @@ tasks:
       DIRMODE: "0700"
       FS_TYPE: ext4
       GID: "0"
-      HEGEL_URLS: http://2.2.2.2:50061,http://2.2.2.2:50061
+      HEGEL_URLS: http://2.2.2.2:7172,http://2.2.2.2:7172
       MODE: "0644"
       UID: "0"
     image: 127.0.0.1/embedded/writefile
@@ -1331,170 +1334,166 @@ func tinkerbellCP(clusterName string, opts ...cpOpt) *tinkerbell.ControlPlane {
 	maxSurge := intstr.FromInt(1)
 	cp := &tinkerbell.ControlPlane{
 		BaseControlPlane: tinkerbell.BaseControlPlane{
-			Cluster: &clusterv1.Cluster{
+			Cluster: &clusterv1beta2.Cluster{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "Cluster",
-					APIVersion: "cluster.x-k8s.io/v1beta1",
+					APIVersion: "cluster.x-k8s.io/v1beta2",
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      clusterName,
 					Namespace: constants.EksaSystemNamespace,
 					Labels:    map[string]string{"cluster.x-k8s.io/cluster-name": workloadClusterName},
 				},
-				Spec: clusterv1.ClusterSpec{
-					ClusterNetwork: &clusterv1.ClusterNetwork{
-						Services: &clusterv1.NetworkRanges{
+				Spec: clusterv1beta2.ClusterSpec{
+					ClusterNetwork: clusterv1beta2.ClusterNetwork{
+						Services: clusterv1beta2.NetworkRanges{
 							CIDRBlocks: []string{"0.0.0.0"},
 						},
-						Pods: &clusterv1.NetworkRanges{
+						Pods: clusterv1beta2.NetworkRanges{
 							CIDRBlocks: []string{"0.0.0.0"},
 						},
 					},
-					ControlPlaneEndpoint: clusterv1.APIEndpoint{
+					ControlPlaneEndpoint: clusterv1beta2.APIEndpoint{
 						Host: "1.1.1.1",
 						Port: 6443,
 					},
-					ControlPlaneRef: &corev1.ObjectReference{
-						Kind:       "KubeadmControlPlane",
-						Name:       clusterName,
-						APIVersion: "controlplane.cluster.x-k8s.io/v1beta1",
+					ControlPlaneRef: clusterv1beta2.ContractVersionedObjectReference{
+						APIGroup: "controlplane.cluster.x-k8s.io",
+						Kind:     "KubeadmControlPlane",
+						Name:     clusterName,
 					},
-					InfrastructureRef: &corev1.ObjectReference{
-						Kind:       "TinkerbellCluster",
-						Name:       clusterName,
-						APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+					InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
+						APIGroup: "infrastructure.cluster.x-k8s.io",
+						Kind:     "TinkerbellCluster",
+						Name:     clusterName,
 					},
 				},
-				Status: clusterv1.ClusterStatus{},
+				Status: clusterv1beta2.ClusterStatus{},
 			},
-			KubeadmControlPlane: &controlplanev1.KubeadmControlPlane{
+			KubeadmControlPlane: &controlplanev1beta2.KubeadmControlPlane{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "KubeadmControlPlane",
-					APIVersion: "controlplane.cluster.x-k8s.io/v1beta1",
+					APIVersion: "controlplane.cluster.x-k8s.io/v1beta2",
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      clusterName,
 					Namespace: constants.EksaSystemNamespace,
 				},
-				Spec: controlplanev1.KubeadmControlPlaneSpec{
+				Spec: controlplanev1beta2.KubeadmControlPlaneSpec{
 					Replicas: ptr.Int32(1),
-					RolloutStrategy: &controlplanev1.RolloutStrategy{
-						RollingUpdate: &controlplanev1.RollingUpdate{
-							MaxSurge: &maxSurge,
+					Rollout: controlplanev1beta2.KubeadmControlPlaneRolloutSpec{
+						Strategy: controlplanev1beta2.KubeadmControlPlaneRolloutStrategy{
+							RollingUpdate: controlplanev1beta2.KubeadmControlPlaneRolloutStrategyRollingUpdate{
+								MaxSurge: &maxSurge,
+							},
+							Type: controlplanev1beta2.RollingUpdateStrategyType,
 						},
-						Type: controlplanev1.RollingUpdateStrategyType,
 					},
 					Version: "v1.19.8",
-					MachineTemplate: controlplanev1.KubeadmControlPlaneMachineTemplate{
-						InfrastructureRef: corev1.ObjectReference{
-							Kind:       "TinkerbellMachineTemplate",
-							Name:       "workload-cluster-control-plane-1",
-							Namespace:  "eksa-system",
-							APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+					MachineTemplate: controlplanev1beta2.KubeadmControlPlaneMachineTemplate{
+						Spec: controlplanev1beta2.KubeadmControlPlaneMachineTemplateSpec{
+							InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
+								APIGroup: "infrastructure.cluster.x-k8s.io",
+								Kind:     "TinkerbellMachineTemplate",
+								Name:     "workload-cluster-control-plane-1",
+							},
 						},
 					},
-					KubeadmConfigSpec: bootstrapv1.KubeadmConfigSpec{
-						ClusterConfiguration: &bootstrapv1.ClusterConfiguration{
+					KubeadmConfigSpec: bootstrapv1beta2.KubeadmConfigSpec{
+						ClusterConfiguration: bootstrapv1beta2.ClusterConfiguration{
 							ImageRepository: "public.ecr.aws/eks-distro/kubernetes",
-							Etcd: bootstrapv1.Etcd{
-								Local: &bootstrapv1.LocalEtcd{
-									ImageMeta: bootstrapv1.ImageMeta{
-										ImageRepository: "",
-										ImageTag:        "",
-									},
-									DataDir:        "",
-									ExtraArgs:      nil,
-									ServerCertSANs: nil,
-									PeerCertSANs:   nil,
+							Etcd: bootstrapv1beta2.Etcd{
+								Local: bootstrapv1beta2.LocalEtcd{
+									ImageRepository: "",
+									ImageTag:        "",
+									DataDir:         "",
+									ExtraArgs:       nil,
+									ServerCertSANs:  nil,
+									PeerCertSANs:    nil,
 								},
 							},
-							ControllerManager: bootstrapv1.ControlPlaneComponent{
-								ExtraVolumes: []bootstrapv1.HostPathMount{
+							ControllerManager: bootstrapv1beta2.ControllerManager{
+								ExtraVolumes: []bootstrapv1beta2.HostPathMount{
 									{
 										Name:      "kubeconfig",
 										HostPath:  "/var/lib/kubeadm/controller-manager.conf",
 										MountPath: "/etc/kubernetes/controller-manager.conf",
-										ReadOnly:  true,
+										ReadOnly:  ptr.Bool(true),
 										PathType:  "File",
 									},
 								},
 							},
-							Scheduler: bootstrapv1.ControlPlaneComponent{
-								ExtraVolumes: []bootstrapv1.HostPathMount{
+							Scheduler: bootstrapv1beta2.Scheduler{
+								ExtraVolumes: []bootstrapv1beta2.HostPathMount{
 									{
 										Name:      "kubeconfig",
 										HostPath:  "/var/lib/kubeadm/scheduler.conf",
 										MountPath: "/etc/kubernetes/scheduler.conf",
-										ReadOnly:  true,
+										ReadOnly:  ptr.Bool(true),
 										PathType:  "File",
 									},
 								},
 							},
-							APIServer: bootstrapv1.APIServer{
-								ControlPlaneComponent: bootstrapv1.ControlPlaneComponent{
-									ExtraArgs: map[string]string{
-										"audit-log-maxage":    "30",
-										"audit-log-maxbackup": "10",
-										"audit-log-maxsize":   "512",
-										"audit-log-path":      "/var/log/kubernetes/api-audit.log",
-										"audit-policy-file":   "/etc/kubernetes/audit-policy.yaml",
+							APIServer: bootstrapv1beta2.APIServer{
+								ExtraArgs: []bootstrapv1beta2.Arg{
+									{Name: "audit-log-maxage", Value: ptr.String("30")},
+									{Name: "audit-log-maxbackup", Value: ptr.String("10")},
+									{Name: "audit-log-maxsize", Value: ptr.String("512")},
+									{Name: "audit-log-path", Value: ptr.String("/var/log/kubernetes/api-audit.log")},
+									{Name: "audit-policy-file", Value: ptr.String("/etc/kubernetes/audit-policy.yaml")},
+								},
+								ExtraVolumes: []bootstrapv1beta2.HostPathMount{
+									{
+										HostPath:  "/var/lib/kubeadm/audit-policy.yaml",
+										MountPath: "/etc/kubernetes/audit-policy.yaml",
+										Name:      "audit-policy",
+										PathType:  "File",
+										ReadOnly:  ptr.Bool(true),
 									},
-									ExtraVolumes: []bootstrapv1.HostPathMount{
-										{
-											HostPath:  "/var/lib/kubeadm/audit-policy.yaml",
-											MountPath: "/etc/kubernetes/audit-policy.yaml",
-											Name:      "audit-policy",
-											PathType:  "File",
-											ReadOnly:  true,
-										},
-										{
-											HostPath:  "/var/log/kubernetes",
-											MountPath: "/var/log/kubernetes",
-											Name:      "audit-log-dir",
-											PathType:  "DirectoryOrCreate",
-											ReadOnly:  false,
-										},
+									{
+										HostPath:  "/var/log/kubernetes",
+										MountPath: "/var/log/kubernetes",
+										Name:      "audit-log-dir",
+										PathType:  "DirectoryOrCreate",
+										ReadOnly:  ptr.Bool(false),
 									},
 								},
 							},
 							CertificatesDir: "/var/lib/kubeadm/pki",
 						},
-						InitConfiguration: &bootstrapv1.InitConfiguration{
-							NodeRegistration: bootstrapv1.NodeRegistrationOptions{
-								KubeletExtraArgs: map[string]string{
-									"read-only-port":    "0",
-									"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-									"anonymous-auth":    "false",
-									"provider-id":       "PROVIDER_ID",
+						InitConfiguration: bootstrapv1beta2.InitConfiguration{
+							NodeRegistration: bootstrapv1beta2.NodeRegistrationOptions{
+								KubeletExtraArgs: []bootstrapv1beta2.Arg{
+									{Name: "anonymous-auth", Value: ptr.String("false")},
+									{Name: "provider-id", Value: ptr.String("PROVIDER_ID")},
+									{Name: "read-only-port", Value: ptr.String("0")},
+									{Name: "tls-cipher-suites", Value: ptr.String("TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256")},
 								},
 							},
 						},
-						JoinConfiguration: &bootstrapv1.JoinConfiguration{
-							NodeRegistration: bootstrapv1.NodeRegistrationOptions{
-								KubeletExtraArgs: map[string]string{
-									"anonymous-auth":    "false",
-									"provider-id":       "PROVIDER_ID",
-									"read-only-port":    "0",
-									"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+						JoinConfiguration: bootstrapv1beta2.JoinConfiguration{
+							NodeRegistration: bootstrapv1beta2.NodeRegistrationOptions{
+								KubeletExtraArgs: []bootstrapv1beta2.Arg{
+									{Name: "anonymous-auth", Value: ptr.String("false")},
+									{Name: "provider-id", Value: ptr.String("PROVIDER_ID")},
+									{Name: "read-only-port", Value: ptr.String("0")},
+									{Name: "tls-cipher-suites", Value: ptr.String("TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256")},
 								},
 								IgnorePreflightErrors: []string{"DirAvailable--etc-kubernetes-manifests"},
 							},
 							CACertPath:                            "",
-							Discovery:                             bootstrapv1.Discovery{},
+							Discovery:                             bootstrapv1beta2.Discovery{},
 							ControlPlane:                          nil,
 							SkipPhases:                            nil,
-							Patches:                               nil,
 							BottlerocketCustomBootstrapContainers: nil,
 						},
-						Files: []bootstrapv1.File{
+						Files: []bootstrapv1beta2.File{
 							{
 								Path:        "/etc/kubernetes/manifests/kube-vip.yaml",
 								Owner:       "root:root",
 								Permissions: "",
 								Encoding:    "",
-								Append:      false,
 								Content:     "apiVersion: v1\nkind: Pod\nmetadata:\n  creationTimestamp: null\n  name: kube-vip\n  namespace: kube-system\nspec:\n  containers:\n  - args:\n    - manager\n    env:\n    - name: vip_arp\n      value: \"true\"\n    - name: port\n      value: \"6443\"\n    - name: vip_cidr\n      value: \"32\"\n    - name: cp_enable\n      value: \"true\"\n    - name: cp_namespace\n      value: kube-system\n    - name: vip_ddns\n      value: \"false\"\n    - name: vip_leaderelection\n      value: \"true\"\n    - name: vip_leaseduration\n      value: \"15\"\n    - name: vip_renewdeadline\n      value: \"10\"\n    - name: vip_retryperiod\n      value: \"2\"\n    - name: address\n      value: 1.1.1.1\n    image: \n    imagePullPolicy: IfNotPresent\n    name: kube-vip\n    resources: {}\n    securityContext:\n      capabilities:\n        add:\n        - NET_ADMIN\n        - NET_RAW\n    volumeMounts:\n    - mountPath: /etc/kubernetes/admin.conf\n      name: kubeconfig\n  hostNetwork: true\n  volumes:\n  - hostPath:\n      path: /var/lib/kubeadm/admin.conf\n    name: kubeconfig\nstatus: {}\n",
-								ContentFrom: nil,
 							},
 							{
 								Path:  "/etc/kubernetes/audit-policy.yaml",
@@ -1657,10 +1656,10 @@ rules:
 `,
 							},
 						},
-						Users: []bootstrapv1.User{
+						Users: []bootstrapv1beta2.User{
 							{
 								Name:              "user",
-								Sudo:              ptr.String("ALL=(ALL) NOPASSWD:ALL"),
+								Sudo:              "ALL=(ALL) NOPASSWD:ALL",
 								SSHAuthorizedKeys: []string{"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC8ZEibIrz1AUBKDvmDiWLs9f5DnOerC4qPITiDtSOuPAsxgZbRMavBfVTxodMdAkYRYlXxK6PqNo0ve0qcOV2yvpxH1OogasMMetck6BlM/dIoo3vEY4ZoG9DuVRIf9Iry5gJKbpMDYWpx1IGZrDMOFcIM20ii2qLQQk5hfq9OqdqhToEJFixdgJt/y/zt6Koy3kix+XsnrVdAHgWAq4CZuwt1G6JUAqrpob3H8vPmL7aS+35ktf0pHBm6nYoxRhslnWMUb/7vpzWiq+fUBIm2LYqvrnm7t3fRqFx7p2sZqAm2jDNivyYXwRXkoQPR96zvGeMtuQ5BVGPpsDfVudSW21+pEXHI0GINtTbua7Ogz7wtpVywSvHraRgdFOeY9mkXPzvm2IhoqNrteck2GErwqSqb19mPz6LnHueK0u7i6WuQWJn0CUoCtyMGIrowXSviK8qgHXKrmfTWATmCkbtosnLskNdYuOw8bKxq5S4WgdQVhPps2TiMSZ bottlerocket@ip-10-2-0-6"},
 							},
 						},
@@ -1721,57 +1720,49 @@ func tinkWorker(clusterName string, opts ...workerOpt) *tinkerbell.Workers {
 	w := &tinkerbell.Workers{
 		Groups: []clusterapi.WorkerGroup[*tinkerbellv1.TinkerbellMachineTemplate]{
 			{
-				KubeadmConfigTemplate: &bootstrapv1.KubeadmConfigTemplate{
+				KubeadmConfigTemplate: &bootstrapv1beta2.KubeadmConfigTemplate{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "KubeadmConfigTemplate",
-						APIVersion: "bootstrap.cluster.x-k8s.io/v1beta1",
+						APIVersion: "bootstrap.cluster.x-k8s.io/v1beta2",
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      clusterName + "-md-0-1",
 						Namespace: constants.EksaSystemNamespace,
 					},
-					Spec: bootstrapv1.KubeadmConfigTemplateSpec{
-						Template: bootstrapv1.KubeadmConfigTemplateResource{
-							Spec: bootstrapv1.KubeadmConfigSpec{
-								Users: []bootstrapv1.User{
+					Spec: bootstrapv1beta2.KubeadmConfigTemplateSpec{
+						Template: bootstrapv1beta2.KubeadmConfigTemplateResource{
+							Spec: bootstrapv1beta2.KubeadmConfigSpec{
+								Users: []bootstrapv1beta2.User{
 									{
 										Name:              "user",
-										Sudo:              ptr.String("ALL=(ALL) NOPASSWD:ALL"),
+										Sudo:              "ALL=(ALL) NOPASSWD:ALL",
 										SSHAuthorizedKeys: []string{"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC8ZEibIrz1AUBKDvmDiWLs9f5DnOerC4qPITiDtSOuPAsxgZbRMavBfVTxodMdAkYRYlXxK6PqNo0ve0qcOV2yvpxH1OogasMMetck6BlM/dIoo3vEY4ZoG9DuVRIf9Iry5gJKbpMDYWpx1IGZrDMOFcIM20ii2qLQQk5hfq9OqdqhToEJFixdgJt/y/zt6Koy3kix+XsnrVdAHgWAq4CZuwt1G6JUAqrpob3H8vPmL7aS+35ktf0pHBm6nYoxRhslnWMUb/7vpzWiq+fUBIm2LYqvrnm7t3fRqFx7p2sZqAm2jDNivyYXwRXkoQPR96zvGeMtuQ5BVGPpsDfVudSW21+pEXHI0GINtTbua7Ogz7wtpVywSvHraRgdFOeY9mkXPzvm2IhoqNrteck2GErwqSqb19mPz6LnHueK0u7i6WuQWJn0CUoCtyMGIrowXSviK8qgHXKrmfTWATmCkbtosnLskNdYuOw8bKxq5S4WgdQVhPps2TiMSZ bottlerocket@ip-10-2-0-6"},
 									},
 								},
 								Format: "bottlerocket",
-								JoinConfiguration: &bootstrapv1.JoinConfiguration{
-									Pause: bootstrapv1.Pause{
-										ImageMeta: bootstrapv1.ImageMeta{
-											ImageRepository: "",
-											ImageTag:        "",
-										},
+								JoinConfiguration: bootstrapv1beta2.JoinConfiguration{
+									Pause: bootstrapv1beta2.Pause{
+										ImageRepository: "",
+										ImageTag:        "",
 									},
-									BottlerocketBootstrap: bootstrapv1.BottlerocketBootstrap{
-										ImageMeta: bootstrapv1.ImageMeta{
-											ImageRepository: "",
-											ImageTag:        "",
-										},
+									BottlerocketBootstrap: bootstrapv1beta2.BottlerocketBootstrap{
+										ImageRepository: "",
+										ImageTag:        "",
 									},
-									BottlerocketAdmin: bootstrapv1.BottlerocketAdmin{
-										ImageMeta: bootstrapv1.ImageMeta{
-											ImageRepository: "",
-											ImageTag:        "",
-										},
+									BottlerocketAdmin: bootstrapv1beta2.BottlerocketAdmin{
+										ImageRepository: "",
+										ImageTag:        "",
 									},
-									BottlerocketControl: bootstrapv1.BottlerocketControl{
-										ImageMeta: bootstrapv1.ImageMeta{
-											ImageRepository: "",
-											ImageTag:        "",
-										},
+									BottlerocketControl: bootstrapv1beta2.BottlerocketControl{
+										ImageRepository: "",
+										ImageTag:        "",
 									},
-									NodeRegistration: bootstrapv1.NodeRegistrationOptions{
-										KubeletExtraArgs: map[string]string{
-											"anonymous-auth":    "false",
-											"provider-id":       "PROVIDER_ID",
-											"read-only-port":    "0",
-											"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+									NodeRegistration: bootstrapv1beta2.NodeRegistrationOptions{
+										KubeletExtraArgs: []bootstrapv1beta2.Arg{
+											{Name: "anonymous-auth", Value: ptr.String("false")},
+											{Name: "provider-id", Value: ptr.String("PROVIDER_ID")},
+											{Name: "read-only-port", Value: ptr.String("0")},
+											{Name: "tls-cipher-suites", Value: ptr.String("TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256")},
 										},
 									},
 								},
@@ -1779,10 +1770,10 @@ func tinkWorker(clusterName string, opts ...workerOpt) *tinkerbell.Workers {
 						},
 					},
 				},
-				MachineDeployment: &clusterv1.MachineDeployment{
+				MachineDeployment: &clusterv1beta2.MachineDeployment{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "MachineDeployment",
-						APIVersion: "cluster.x-k8s.io/v1beta1",
+						APIVersion: "cluster.x-k8s.io/v1beta2",
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      clusterName + "-md-0",
@@ -1792,34 +1783,34 @@ func tinkWorker(clusterName string, opts ...workerOpt) *tinkerbell.Workers {
 							"cluster.x-k8s.io/cluster-name": clusterName,
 						},
 					},
-					Spec: clusterv1.MachineDeploymentSpec{
+					Spec: clusterv1beta2.MachineDeploymentSpec{
 						ClusterName: workloadClusterName,
 						Replicas:    ptr.Int32(1),
 						Selector: metav1.LabelSelector{
 							MatchLabels: map[string]string{},
 						},
-						Template: clusterv1.MachineTemplateSpec{
-							ObjectMeta: clusterv1.ObjectMeta{
+						Template: clusterv1beta2.MachineTemplateSpec{
+							ObjectMeta: clusterv1beta2.ObjectMeta{
 								Labels: map[string]string{
 									"pool":                          "md-0",
 									"cluster.x-k8s.io/cluster-name": clusterName,
 								},
 							},
-							Spec: clusterv1.MachineSpec{
+							Spec: clusterv1beta2.MachineSpec{
 								ClusterName: clusterName,
-								Bootstrap: clusterv1.Bootstrap{
-									ConfigRef: &corev1.ObjectReference{
-										Kind:       "KubeadmConfigTemplate",
-										Name:       clusterName + "-md-0-1",
-										APIVersion: "bootstrap.cluster.x-k8s.io/v1beta1",
+								Bootstrap: clusterv1beta2.Bootstrap{
+									ConfigRef: clusterv1beta2.ContractVersionedObjectReference{
+										Kind:     "KubeadmConfigTemplate",
+										Name:     clusterName + "-md-0-1",
+										APIGroup: "bootstrap.cluster.x-k8s.io",
 									},
 								},
-								InfrastructureRef: corev1.ObjectReference{
-									Kind:       "TinkerbellMachineTemplate",
-									Name:       clusterName + "-md-0-1",
-									APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+								InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
+									Kind:     "TinkerbellMachineTemplate",
+									Name:     clusterName + "-md-0-1",
+									APIGroup: "infrastructure.cluster.x-k8s.io",
 								},
-								Version: ptr.String("v1.19.8"),
+								Version: "v1.19.8",
 							},
 						},
 					},
@@ -1856,4 +1847,52 @@ func tinkWorker(clusterName string, opts ...workerOpt) *tinkerbell.Workers {
 		opt(w)
 	}
 	return w
+}
+
+func TestReconcilerValidateHardwareWorkerRollingUpdateMaxSurgeRespected(t *testing.T) {
+	tt := newReconcilerTest(t)
+
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tt.kcp)
+
+	// Create existing MachineDeployment with a DIFFERENT InfrastructureRef name
+	// to simulate a template change (e.g., from a previous version)
+	worker := tinkWorker(tt.cluster.Name, func(w *tinkerbell.Workers) {
+		w.Groups[0].MachineDeployment.Name = "workload-cluster-md-0"
+		w.Groups[0].MachineDeployment.Spec.Template.Spec.InfrastructureRef.Name = "workload-cluster-md-0-0"
+		w.Groups[0].ProviderMachineTemplate.Name = "workload-cluster-md-0-0"
+	})
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, worker.Groups[0].MachineDeployment)
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, worker.Groups[0].ProviderMachineTemplate)
+
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tinkHardware("hw1", "worker"))
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, tinkHardware("hw-cp", "cp"))
+
+	tt.withFakeClient()
+
+	logger := test.NewNullLogger()
+	scope := tt.buildScope()
+
+	scope.ClusterSpec.Config.Cluster.Spec.WorkerNodeGroupConfigurations[0].UpgradeRolloutStrategy = &anywherev1.WorkerNodesUpgradeRolloutStrategy{
+		Type: anywherev1.RollingUpdateStrategyType,
+		RollingUpdate: &anywherev1.WorkerNodesRollingUpdateParams{
+			MaxSurge:       3,
+			MaxUnavailable: 0,
+		},
+	}
+
+	wngRef := scope.ClusterSpec.Config.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
+	scope.ClusterSpec.Config.TinkerbellMachineConfigs[wngRef].Spec.OSImageURL = "new-os-image"
+
+	_, err := tt.reconciler().GenerateSpec(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+
+	_, err = tt.reconciler().DetectOperation(tt.ctx, logger, scope)
+	tt.Expect(err).NotTo(HaveOccurred())
+
+	result, err := tt.reconciler().ValidateHardware(tt.ctx, logger, scope)
+
+	tt.Expect(err).ToNot(BeNil())
+	tt.Expect(result).To(Equal(controller.Result{}))
+	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("minimum hardware count not met for selector"))
+	tt.Expect(tt.cluster.Status.FailureReason).To(HaveValue(Equal(anywherev1.HardwareInvalidReason)))
 }

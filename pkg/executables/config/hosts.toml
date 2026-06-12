@@ -2,6 +2,7 @@ server = "https://{{.Server}}"
 
 [host."https://{{.Host}}"]
   capabilities = ["pull", "resolve"]
+  override_path = true
 {{- if .CACertPath }}
   ca = "{{.CACertPath}}"
 {{- else }}

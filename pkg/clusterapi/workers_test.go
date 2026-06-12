@@ -7,9 +7,9 @@ import (
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	kubeadmv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
-	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
+	dockerv1beta2 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/aws/eks-anywhere/internal/test"
@@ -19,8 +19,8 @@ import (
 )
 
 type (
-	dockerGroup   = clusterapi.WorkerGroup[*dockerv1.DockerMachineTemplate]
-	dockerWorkers = clusterapi.Workers[*dockerv1.DockerMachineTemplate]
+	dockerGroup   = clusterapi.WorkerGroup[*dockerv1beta2.DockerMachineTemplate]
+	dockerWorkers = clusterapi.Workers[*dockerv1beta2.DockerMachineTemplate]
 )
 
 func TestWorkersUpdateImmutableObjectNamesError(t *testing.T) {
@@ -121,8 +121,8 @@ func TestWorkerGroupUpdateImmutableObjectNamesErrorUpdatingMachineTemplateName(t
 		ProviderMachineTemplate: dockerMachineTemplate(),
 		KubeadmConfigTemplate:   kubeadmConfigTemplate(),
 	}
-	group.MachineDeployment.Spec.Template.Spec.InfrastructureRef = *objectReference(group.ProviderMachineTemplate)
-	group.MachineDeployment.Spec.Template.Spec.Bootstrap.ConfigRef = objectReference(group.KubeadmConfigTemplate)
+	group.MachineDeployment.Spec.Template.Spec.InfrastructureRef = contractReference(group.ProviderMachineTemplate)
+	group.MachineDeployment.Spec.Template.Spec.Bootstrap.ConfigRef = contractReference(group.KubeadmConfigTemplate)
 	client := test.NewFakeKubeClient(group.MachineDeployment)
 
 	g.Expect(
@@ -138,9 +138,15 @@ func TestWorkerGroupUpdateImmutableObjectNamesErrorUpdatingKubeadmConfigTemplate
 		ProviderMachineTemplate: dockerMachineTemplate(),
 		KubeadmConfigTemplate:   kubeadmConfigTemplate(),
 	}
-	group.MachineDeployment.Spec.Template.Spec.InfrastructureRef = *objectReference(group.ProviderMachineTemplate)
+	group.MachineDeployment.Spec.Template.Spec.InfrastructureRef = contractReference(group.ProviderMachineTemplate)
+
+	// Set TypeMeta on the object being tested to get proper error message with Kind
+	group.KubeadmConfigTemplate.TypeMeta = metav1.TypeMeta{
+		Kind:       "KubeadmConfigTemplate",
+		APIVersion: "bootstrap.cluster.x-k8s.io/v1beta1",
+	}
 	group.KubeadmConfigTemplate.Name = "invalid-name"
-	group.MachineDeployment.Spec.Template.Spec.Bootstrap.ConfigRef = objectReference(group.KubeadmConfigTemplate)
+	group.MachineDeployment.Spec.Template.Spec.Bootstrap.ConfigRef = contractReference(group.KubeadmConfigTemplate)
 	client := test.NewFakeKubeClient(group.MachineDeployment, group.KubeadmConfigTemplate, group.ProviderMachineTemplate)
 	group.KubeadmConfigTemplate.Spec.Template.Spec.PostKubeadmCommands = []string{"ls"}
 
@@ -157,8 +163,8 @@ func TestWorkerGroupUpdateImmutableObjectNamesSuccess(t *testing.T) {
 		ProviderMachineTemplate: dockerMachineTemplate(),
 		KubeadmConfigTemplate:   kubeadmConfigTemplate(),
 	}
-	group.MachineDeployment.Spec.Template.Spec.InfrastructureRef = *objectReference(group.ProviderMachineTemplate)
-	group.MachineDeployment.Spec.Template.Spec.Bootstrap.ConfigRef = objectReference(group.KubeadmConfigTemplate)
+	group.MachineDeployment.Spec.Template.Spec.InfrastructureRef = contractReference(group.ProviderMachineTemplate)
+	group.MachineDeployment.Spec.Template.Spec.Bootstrap.ConfigRef = contractReference(group.KubeadmConfigTemplate)
 	client := test.NewFakeKubeClient(group.MachineDeployment, group.KubeadmConfigTemplate, group.ProviderMachineTemplate)
 	group.KubeadmConfigTemplate.Spec.Template.Spec.PostKubeadmCommands = []string{"ls"}
 
@@ -193,25 +199,25 @@ func TestGetKubeadmConfigTemplateError(t *testing.T) {
 func TestKubeadmConfigTemplateEqual(t *testing.T) {
 	tests := []struct {
 		name     string
-		new, old *kubeadmv1.KubeadmConfigTemplate
+		new, old *bootstrapv1beta2.KubeadmConfigTemplate
 		want     bool
 	}{
 		{
 			name: "equal",
-			new: &kubeadmv1.KubeadmConfigTemplate{
-				Spec: kubeadmv1.KubeadmConfigTemplateSpec{
-					Template: kubeadmv1.KubeadmConfigTemplateResource{
-						Spec: kubeadmv1.KubeadmConfigSpec{
-							JoinConfiguration: &kubeadmv1.JoinConfiguration{
-								NodeRegistration: kubeadmv1.NodeRegistrationOptions{
-									Taints: []corev1.Taint{
+			new: &bootstrapv1beta2.KubeadmConfigTemplate{
+				Spec: bootstrapv1beta2.KubeadmConfigTemplateSpec{
+					Template: bootstrapv1beta2.KubeadmConfigTemplateResource{
+						Spec: bootstrapv1beta2.KubeadmConfigSpec{
+							JoinConfiguration: bootstrapv1beta2.JoinConfiguration{
+								NodeRegistration: bootstrapv1beta2.NodeRegistrationOptions{
+									Taints: &[]corev1.Taint{
 										{
 											Key: "key",
 										},
 									},
 								},
 							},
-							Files: []kubeadmv1.File{
+							Files: []bootstrapv1beta2.File{
 								{
 									Owner: "me",
 								},
@@ -220,20 +226,20 @@ func TestKubeadmConfigTemplateEqual(t *testing.T) {
 					},
 				},
 			},
-			old: &kubeadmv1.KubeadmConfigTemplate{
-				Spec: kubeadmv1.KubeadmConfigTemplateSpec{
-					Template: kubeadmv1.KubeadmConfigTemplateResource{
-						Spec: kubeadmv1.KubeadmConfigSpec{
-							JoinConfiguration: &kubeadmv1.JoinConfiguration{
-								NodeRegistration: kubeadmv1.NodeRegistrationOptions{
-									Taints: []corev1.Taint{
+			old: &bootstrapv1beta2.KubeadmConfigTemplate{
+				Spec: bootstrapv1beta2.KubeadmConfigTemplateSpec{
+					Template: bootstrapv1beta2.KubeadmConfigTemplateResource{
+						Spec: bootstrapv1beta2.KubeadmConfigSpec{
+							JoinConfiguration: bootstrapv1beta2.JoinConfiguration{
+								NodeRegistration: bootstrapv1beta2.NodeRegistrationOptions{
+									Taints: &[]corev1.Taint{
 										{
 											Key: "key",
 										},
 									},
 								},
 							},
-							Files: []kubeadmv1.File{
+							Files: []bootstrapv1beta2.File{
 								{
 									Owner: "me",
 								},
@@ -246,16 +252,16 @@ func TestKubeadmConfigTemplateEqual(t *testing.T) {
 		},
 		{
 			name: "diff taints",
-			new: &kubeadmv1.KubeadmConfigTemplate{
-				Spec: kubeadmv1.KubeadmConfigTemplateSpec{
-					Template: kubeadmv1.KubeadmConfigTemplateResource{
-						Spec: kubeadmv1.KubeadmConfigSpec{
-							JoinConfiguration: &kubeadmv1.JoinConfiguration{
-								NodeRegistration: kubeadmv1.NodeRegistrationOptions{
-									Taints: []corev1.Taint{},
+			new: &bootstrapv1beta2.KubeadmConfigTemplate{
+				Spec: bootstrapv1beta2.KubeadmConfigTemplateSpec{
+					Template: bootstrapv1beta2.KubeadmConfigTemplateResource{
+						Spec: bootstrapv1beta2.KubeadmConfigSpec{
+							JoinConfiguration: bootstrapv1beta2.JoinConfiguration{
+								NodeRegistration: bootstrapv1beta2.NodeRegistrationOptions{
+									Taints: &[]corev1.Taint{},
 								},
 							},
-							Files: []kubeadmv1.File{
+							Files: []bootstrapv1beta2.File{
 								{
 									Owner: "me",
 								},
@@ -264,20 +270,20 @@ func TestKubeadmConfigTemplateEqual(t *testing.T) {
 					},
 				},
 			},
-			old: &kubeadmv1.KubeadmConfigTemplate{
-				Spec: kubeadmv1.KubeadmConfigTemplateSpec{
-					Template: kubeadmv1.KubeadmConfigTemplateResource{
-						Spec: kubeadmv1.KubeadmConfigSpec{
-							JoinConfiguration: &kubeadmv1.JoinConfiguration{
-								NodeRegistration: kubeadmv1.NodeRegistrationOptions{
-									Taints: []corev1.Taint{
+			old: &bootstrapv1beta2.KubeadmConfigTemplate{
+				Spec: bootstrapv1beta2.KubeadmConfigTemplateSpec{
+					Template: bootstrapv1beta2.KubeadmConfigTemplateResource{
+						Spec: bootstrapv1beta2.KubeadmConfigSpec{
+							JoinConfiguration: bootstrapv1beta2.JoinConfiguration{
+								NodeRegistration: bootstrapv1beta2.NodeRegistrationOptions{
+									Taints: &[]corev1.Taint{
 										{
 											Key: "key",
 										},
 									},
 								},
 							},
-							Files: []kubeadmv1.File{
+							Files: []bootstrapv1beta2.File{
 								{
 									Owner: "me",
 								},
@@ -290,20 +296,20 @@ func TestKubeadmConfigTemplateEqual(t *testing.T) {
 		},
 		{
 			name: "diff labels",
-			new: &kubeadmv1.KubeadmConfigTemplate{
-				Spec: kubeadmv1.KubeadmConfigTemplateSpec{
-					Template: kubeadmv1.KubeadmConfigTemplateResource{
-						Spec: kubeadmv1.KubeadmConfigSpec{
-							JoinConfiguration: &kubeadmv1.JoinConfiguration{
-								NodeRegistration: kubeadmv1.NodeRegistrationOptions{
-									KubeletExtraArgs: map[string]string{
+			new: &bootstrapv1beta2.KubeadmConfigTemplate{
+				Spec: bootstrapv1beta2.KubeadmConfigTemplateSpec{
+					Template: bootstrapv1beta2.KubeadmConfigTemplateResource{
+						Spec: bootstrapv1beta2.KubeadmConfigSpec{
+							JoinConfiguration: bootstrapv1beta2.JoinConfiguration{
+								NodeRegistration: bootstrapv1beta2.NodeRegistrationOptions{
+									KubeletExtraArgs: clusterapi.ExtraArgs{
 										"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
 										"cgroup-driver":     "cgroupfs",
 										"eviction-hard":     "nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%",
-									},
+									}.ToArgs(),
 								},
 							},
-							Files: []kubeadmv1.File{
+							Files: []bootstrapv1beta2.File{
 								{
 									Owner: "me",
 								},
@@ -312,21 +318,21 @@ func TestKubeadmConfigTemplateEqual(t *testing.T) {
 					},
 				},
 			},
-			old: &kubeadmv1.KubeadmConfigTemplate{
-				Spec: kubeadmv1.KubeadmConfigTemplateSpec{
-					Template: kubeadmv1.KubeadmConfigTemplateResource{
-						Spec: kubeadmv1.KubeadmConfigSpec{
-							JoinConfiguration: &kubeadmv1.JoinConfiguration{
-								NodeRegistration: kubeadmv1.NodeRegistrationOptions{
-									KubeletExtraArgs: map[string]string{
+			old: &bootstrapv1beta2.KubeadmConfigTemplate{
+				Spec: bootstrapv1beta2.KubeadmConfigTemplateSpec{
+					Template: bootstrapv1beta2.KubeadmConfigTemplateResource{
+						Spec: bootstrapv1beta2.KubeadmConfigSpec{
+							JoinConfiguration: bootstrapv1beta2.JoinConfiguration{
+								NodeRegistration: bootstrapv1beta2.NodeRegistrationOptions{
+									KubeletExtraArgs: clusterapi.ExtraArgs{
 										"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
 										"cgroup-driver":     "cgroupfs",
 										"eviction-hard":     "nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%",
 										"node-labels":       "foo-bar",
-									},
+									}.ToArgs(),
 								},
 							},
-							Files: []kubeadmv1.File{
+							Files: []bootstrapv1beta2.File{
 								{
 									Owner: "me",
 								},
@@ -339,11 +345,11 @@ func TestKubeadmConfigTemplateEqual(t *testing.T) {
 		},
 		{
 			name: "new JoinConfiguration nil",
-			new: &kubeadmv1.KubeadmConfigTemplate{
-				Spec: kubeadmv1.KubeadmConfigTemplateSpec{
-					Template: kubeadmv1.KubeadmConfigTemplateResource{
-						Spec: kubeadmv1.KubeadmConfigSpec{
-							Files: []kubeadmv1.File{
+			new: &bootstrapv1beta2.KubeadmConfigTemplate{
+				Spec: bootstrapv1beta2.KubeadmConfigTemplateSpec{
+					Template: bootstrapv1beta2.KubeadmConfigTemplateResource{
+						Spec: bootstrapv1beta2.KubeadmConfigSpec{
+							Files: []bootstrapv1beta2.File{
 								{
 									Owner: "me",
 								},
@@ -352,20 +358,20 @@ func TestKubeadmConfigTemplateEqual(t *testing.T) {
 					},
 				},
 			},
-			old: &kubeadmv1.KubeadmConfigTemplate{
-				Spec: kubeadmv1.KubeadmConfigTemplateSpec{
-					Template: kubeadmv1.KubeadmConfigTemplateResource{
-						Spec: kubeadmv1.KubeadmConfigSpec{
-							JoinConfiguration: &kubeadmv1.JoinConfiguration{
-								NodeRegistration: kubeadmv1.NodeRegistrationOptions{
-									Taints: []corev1.Taint{
+			old: &bootstrapv1beta2.KubeadmConfigTemplate{
+				Spec: bootstrapv1beta2.KubeadmConfigTemplateSpec{
+					Template: bootstrapv1beta2.KubeadmConfigTemplateResource{
+						Spec: bootstrapv1beta2.KubeadmConfigSpec{
+							JoinConfiguration: bootstrapv1beta2.JoinConfiguration{
+								NodeRegistration: bootstrapv1beta2.NodeRegistrationOptions{
+									Taints: &[]corev1.Taint{
 										{
 											Key: "key",
 										},
 									},
 								},
 							},
-							Files: []kubeadmv1.File{
+							Files: []bootstrapv1beta2.File{
 								{
 									Owner: "me",
 								},
@@ -374,24 +380,24 @@ func TestKubeadmConfigTemplateEqual(t *testing.T) {
 					},
 				},
 			},
-			want: true,
+			want: false,
 		},
 		{
 			name: "old JoinConfiguration nil",
-			new: &kubeadmv1.KubeadmConfigTemplate{
-				Spec: kubeadmv1.KubeadmConfigTemplateSpec{
-					Template: kubeadmv1.KubeadmConfigTemplateResource{
-						Spec: kubeadmv1.KubeadmConfigSpec{
-							JoinConfiguration: &kubeadmv1.JoinConfiguration{
-								NodeRegistration: kubeadmv1.NodeRegistrationOptions{
-									Taints: []corev1.Taint{
+			new: &bootstrapv1beta2.KubeadmConfigTemplate{
+				Spec: bootstrapv1beta2.KubeadmConfigTemplateSpec{
+					Template: bootstrapv1beta2.KubeadmConfigTemplateResource{
+						Spec: bootstrapv1beta2.KubeadmConfigSpec{
+							JoinConfiguration: bootstrapv1beta2.JoinConfiguration{
+								NodeRegistration: bootstrapv1beta2.NodeRegistrationOptions{
+									Taints: &[]corev1.Taint{
 										{
 											Key: "key",
 										},
 									},
 								},
 							},
-							Files: []kubeadmv1.File{
+							Files: []bootstrapv1beta2.File{
 								{
 									Owner: "me",
 								},
@@ -400,11 +406,11 @@ func TestKubeadmConfigTemplateEqual(t *testing.T) {
 					},
 				},
 			},
-			old: &kubeadmv1.KubeadmConfigTemplate{
-				Spec: kubeadmv1.KubeadmConfigTemplateSpec{
-					Template: kubeadmv1.KubeadmConfigTemplateResource{
-						Spec: kubeadmv1.KubeadmConfigSpec{
-							Files: []kubeadmv1.File{
+			old: &bootstrapv1beta2.KubeadmConfigTemplate{
+				Spec: bootstrapv1beta2.KubeadmConfigTemplateSpec{
+					Template: bootstrapv1beta2.KubeadmConfigTemplateResource{
+						Spec: bootstrapv1beta2.KubeadmConfigSpec{
+							Files: []bootstrapv1beta2.File{
 								{
 									Owner: "me",
 								},
@@ -417,20 +423,20 @@ func TestKubeadmConfigTemplateEqual(t *testing.T) {
 		},
 		{
 			name: "diff spec",
-			new: &kubeadmv1.KubeadmConfigTemplate{
-				Spec: kubeadmv1.KubeadmConfigTemplateSpec{
-					Template: kubeadmv1.KubeadmConfigTemplateResource{
-						Spec: kubeadmv1.KubeadmConfigSpec{
-							JoinConfiguration: &kubeadmv1.JoinConfiguration{
-								NodeRegistration: kubeadmv1.NodeRegistrationOptions{
-									Taints: []corev1.Taint{
+			new: &bootstrapv1beta2.KubeadmConfigTemplate{
+				Spec: bootstrapv1beta2.KubeadmConfigTemplateSpec{
+					Template: bootstrapv1beta2.KubeadmConfigTemplateResource{
+						Spec: bootstrapv1beta2.KubeadmConfigSpec{
+							JoinConfiguration: bootstrapv1beta2.JoinConfiguration{
+								NodeRegistration: bootstrapv1beta2.NodeRegistrationOptions{
+									Taints: &[]corev1.Taint{
 										{
 											Key: "key",
 										},
 									},
 								},
 							},
-							Files: []kubeadmv1.File{
+							Files: []bootstrapv1beta2.File{
 								{
 									Owner: "me",
 								},
@@ -439,20 +445,20 @@ func TestKubeadmConfigTemplateEqual(t *testing.T) {
 					},
 				},
 			},
-			old: &kubeadmv1.KubeadmConfigTemplate{
-				Spec: kubeadmv1.KubeadmConfigTemplateSpec{
-					Template: kubeadmv1.KubeadmConfigTemplateResource{
-						Spec: kubeadmv1.KubeadmConfigSpec{
-							JoinConfiguration: &kubeadmv1.JoinConfiguration{
-								NodeRegistration: kubeadmv1.NodeRegistrationOptions{
-									Taints: []corev1.Taint{
+			old: &bootstrapv1beta2.KubeadmConfigTemplate{
+				Spec: bootstrapv1beta2.KubeadmConfigTemplateSpec{
+					Template: bootstrapv1beta2.KubeadmConfigTemplateResource{
+						Spec: bootstrapv1beta2.KubeadmConfigSpec{
+							JoinConfiguration: bootstrapv1beta2.JoinConfiguration{
+								NodeRegistration: bootstrapv1beta2.NodeRegistrationOptions{
+									Taints: &[]corev1.Taint{
 										{
 											Key: "key",
 										},
 									},
 								},
 							},
-							Files: []kubeadmv1.File{
+							Files: []bootstrapv1beta2.File{
 								{
 									Owner: "you",
 								},
@@ -465,20 +471,20 @@ func TestKubeadmConfigTemplateEqual(t *testing.T) {
 		},
 		{
 			name: "diff spec files",
-			new: &kubeadmv1.KubeadmConfigTemplate{
-				Spec: kubeadmv1.KubeadmConfigTemplateSpec{
-					Template: kubeadmv1.KubeadmConfigTemplateResource{
-						Spec: kubeadmv1.KubeadmConfigSpec{
-							JoinConfiguration: &kubeadmv1.JoinConfiguration{
-								NodeRegistration: kubeadmv1.NodeRegistrationOptions{
-									Taints: []corev1.Taint{
+			new: &bootstrapv1beta2.KubeadmConfigTemplate{
+				Spec: bootstrapv1beta2.KubeadmConfigTemplateSpec{
+					Template: bootstrapv1beta2.KubeadmConfigTemplateResource{
+						Spec: bootstrapv1beta2.KubeadmConfigSpec{
+							JoinConfiguration: bootstrapv1beta2.JoinConfiguration{
+								NodeRegistration: bootstrapv1beta2.NodeRegistrationOptions{
+									Taints: &[]corev1.Taint{
 										{
 											Key: "key",
 										},
 									},
 								},
 							},
-							Files: []kubeadmv1.File{
+							Files: []bootstrapv1beta2.File{
 								{
 									Owner: "me",
 								},
@@ -487,13 +493,13 @@ func TestKubeadmConfigTemplateEqual(t *testing.T) {
 					},
 				},
 			},
-			old: &kubeadmv1.KubeadmConfigTemplate{
-				Spec: kubeadmv1.KubeadmConfigTemplateSpec{
-					Template: kubeadmv1.KubeadmConfigTemplateResource{
-						Spec: kubeadmv1.KubeadmConfigSpec{
-							JoinConfiguration: &kubeadmv1.JoinConfiguration{
-								NodeRegistration: kubeadmv1.NodeRegistrationOptions{
-									Taints: []corev1.Taint{
+			old: &bootstrapv1beta2.KubeadmConfigTemplate{
+				Spec: bootstrapv1beta2.KubeadmConfigTemplateSpec{
+					Template: bootstrapv1beta2.KubeadmConfigTemplateResource{
+						Spec: bootstrapv1beta2.KubeadmConfigSpec{
+							JoinConfiguration: bootstrapv1beta2.JoinConfiguration{
+								NodeRegistration: bootstrapv1beta2.NodeRegistrationOptions{
+									Taints: &[]corev1.Taint{
 										{
 											Key: "key",
 										},
@@ -526,20 +532,17 @@ func TestWorkerGroupDeepCopy(t *testing.T) {
 	g.Expect(group.DeepCopy()).To(Equal(group))
 }
 
-func kubeadmConfigTemplate() *kubeadmv1.KubeadmConfigTemplate {
-	return &kubeadmv1.KubeadmConfigTemplate{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "KubeadmConfigTemplate",
-			APIVersion: "bootstrap.cluster.x-k8s.io/v1beta1",
-		},
+func kubeadmConfigTemplate() *bootstrapv1beta2.KubeadmConfigTemplate {
+	return &bootstrapv1beta2.KubeadmConfigTemplate{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "template-1",
-			Namespace: constants.EksaSystemNamespace,
+			Name:            "template-1",
+			Namespace:       constants.EksaSystemNamespace,
+			ResourceVersion: "1",
 		},
-		Spec: kubeadmv1.KubeadmConfigTemplateSpec{
-			Template: kubeadmv1.KubeadmConfigTemplateResource{
-				Spec: kubeadmv1.KubeadmConfigSpec{
-					Files: []kubeadmv1.File{
+		Spec: bootstrapv1beta2.KubeadmConfigTemplateSpec{
+			Template: bootstrapv1beta2.KubeadmConfigTemplateResource{
+				Spec: bootstrapv1beta2.KubeadmConfigSpec{
+					Files: []bootstrapv1beta2.File{
 						{
 							Owner: "me",
 						},
@@ -550,11 +553,11 @@ func kubeadmConfigTemplate() *kubeadmv1.KubeadmConfigTemplate {
 	}
 }
 
-func machineDeployment() *clusterv1.MachineDeployment {
-	return &clusterv1.MachineDeployment{
+func machineDeployment() *clusterv1beta2.MachineDeployment {
+	return &clusterv1beta2.MachineDeployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "MachineDeployment",
-			APIVersion: "cluster.x-k8s.io/v1beta1",
+			APIVersion: "cluster.x-k8s.io/v1beta2",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "deployment",
@@ -569,5 +572,13 @@ func objectReference(obj client.Object) *corev1.ObjectReference {
 		APIVersion: obj.GetObjectKind().GroupVersionKind().Version,
 		Name:       obj.GetName(),
 		Namespace:  obj.GetNamespace(),
+	}
+}
+
+func contractReference(obj client.Object) clusterv1beta2.ContractVersionedObjectReference {
+	return clusterv1beta2.ContractVersionedObjectReference{
+		Kind:     obj.GetObjectKind().GroupVersionKind().Kind,
+		APIGroup: obj.GetObjectKind().GroupVersionKind().Group,
+		Name:     obj.GetName(),
 	}
 }

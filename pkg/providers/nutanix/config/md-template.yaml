@@ -1,5 +1,5 @@
 {{- if $.failureDomains -}}{{ range $fd := $.failureDomains -}}
-apiVersion: cluster.x-k8s.io/v1beta1
+apiVersion: cluster.x-k8s.io/v1beta2
 kind: MachineDeployment
 metadata:
   labels:
@@ -26,20 +26,22 @@ spec:
       failureDomain: "{{$fd.Name}}"
       bootstrap:
         configRef:
-          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          apiGroup: bootstrap.cluster.x-k8s.io
           kind: KubeadmConfigTemplate
           name: "{{$.workloadkubeadmconfigTemplateName}}"
       clusterName: "{{$.clusterName}}"
       infrastructureRef:
-        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        apiGroup: infrastructure.cluster.x-k8s.io
         kind: NutanixMachineTemplate
         name: "{{$.workloadTemplateName}}-{{$fd.Name}}"
       version: "{{$.kubernetesVersion}}"
 {{- if $.upgradeRolloutStrategy }}
-  strategy:
-    rollingUpdate:
-      maxSurge: {{$.maxSurge}}
-      maxUnavailable: {{$.maxUnavailable}}
+  rollout:
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: {{$.maxSurge}}
+        maxUnavailable: {{$.maxUnavailable}}
 {{- end }}
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
@@ -104,7 +106,7 @@ spec:
 ---
 {{ end -}}
 {{- else -}}
-apiVersion: cluster.x-k8s.io/v1beta1
+apiVersion: cluster.x-k8s.io/v1beta2
 kind: MachineDeployment
 metadata:
   labels:
@@ -130,20 +132,22 @@ spec:
     spec:
       bootstrap:
         configRef:
-          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          apiGroup: bootstrap.cluster.x-k8s.io
           kind: KubeadmConfigTemplate
           name: "{{.workloadkubeadmconfigTemplateName}}"
       clusterName: "{{.clusterName}}"
       infrastructureRef:
-        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        apiGroup: infrastructure.cluster.x-k8s.io
         kind: NutanixMachineTemplate
         name: "{{.workloadTemplateName}}"
       version: "{{.kubernetesVersion}}"
 {{- if .upgradeRolloutStrategy }}
-  strategy:
-    rollingUpdate:
-      maxSurge: {{.maxSurge}}
-      maxUnavailable: {{.maxUnavailable}}
+  rollout:
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: {{.maxSurge}}
+        maxUnavailable: {{.maxUnavailable}}
 {{- end }}
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
@@ -217,7 +221,7 @@ spec:
 {{- end }}
 ---
 {{ end -}}
-apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta2
 kind: KubeadmConfigTemplate
 metadata:
   name: "{{.workloadkubeadmconfigTemplateName}}"
@@ -241,18 +245,17 @@ spec:
 {{- end }}
         nodeRegistration:
           kubeletExtraArgs:
-            cloud-provider: external
-            # We have to pin the cgroupDriver to cgroupfs as kubeadm >=1.21 defaults to systemd
-            # kind will implement systemd support in: https://github.com/kubernetes-sigs/kind/issues/1726
-            #cgroup-driver: cgroupfs
+          - name: cloud-provider
+            value: "external"
 {{- if not .kubeletConfiguration }}
-            eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
+          - name: eviction-hard
+            value: "nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%"
 {{- if .kubeletExtraArgs }}
-{{ .kubeletExtraArgs.ToYaml | indent 12 }}
+{{ .kubeletExtraArgs.ToYaml | indent 10 }}
 {{- end }}
 {{- end }}
 {{- if .nodeLabelArgs }}
-{{ .nodeLabelArgs.ToYaml | indent 12 }}
+{{ .nodeLabelArgs.ToYaml | indent 10 }}
 {{- end }}
 {{- if .workerNodeGroupTaints }}
           taints:
@@ -305,9 +308,10 @@ spec:
         path: "/etc/containerd/config_append.toml"
       - content: |
           server = "https://{{ .mirrorBase }}"
-          
-          [host."https://{{ .mirrorBase }}"]
+
+          [host."https://{{ .mirrorBaseAPIEndpoint }}"]
             capabilities = ["pull", "resolve"]
+            override_path = true
           {{- if or .registryCACert .insecureSkip }}
           {{- if .registryCACert }}
             ca = "/etc/containerd/certs.d/{{ .mirrorBase }}/ca.crt"
@@ -317,7 +321,7 @@ spec:
           {{- end }}
           {{- end }}
           {{- if .registryAuth }}
-            [host."https://{{ .mirrorBase }}".header]
+            [host."https://{{ .mirrorBaseAPIEndpoint }}".header]
               authorization = "Basic {{ printf "%s:%s" .registryUsername .registryPassword | b64enc }}"
           {{- end }}
         owner: root:root
@@ -325,9 +329,10 @@ spec:
       {{- range $orig, $mirror := .registryMirrorMap }}
       - content: |
           server = "https://{{ $orig }}"
-          
+
           [host."https://{{ $mirror }}"]
             capabilities = ["pull", "resolve"]
+            override_path = true
           {{- if or $.registryCACert $.insecureSkip }}
           {{- if $.registryCACert }}
             ca = "/etc/containerd/certs.d/{{ $.mirrorBase }}/ca.crt"

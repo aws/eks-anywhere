@@ -402,8 +402,7 @@ func TestCloudStackMachineConfigSerialize(t *testing.T) {
 					},
 				},
 			},
-			expected: `metadata:
-  creationTimestamp: null
+			expected: `metadata: {}
 spec:
   computeOffering: {}
   diskOffering:
@@ -420,8 +419,7 @@ status: {}
 			machineConfig: v1alpha1.CloudStackMachineConfig{
 				Spec: v1alpha1.CloudStackMachineConfigSpec{},
 			},
-			expected: `metadata:
-  creationTimestamp: null
+			expected: `metadata: {}
 spec:
   computeOffering: {}
   template: {}

@@ -5,7 +5,7 @@ import (
 
 	etcdbootstrapv1 "github.com/aws/etcdadm-bootstrap-provider/api/v1beta1"
 	. "github.com/onsi/gomega"
-	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
@@ -14,14 +14,14 @@ import (
 var registryMirrorTests = []struct {
 	name                   string
 	registryMirrorConfig   *v1alpha1.RegistryMirrorConfiguration
-	wantFiles              []bootstrapv1.File
-	wantRegistryConfig     bootstrapv1.RegistryMirrorConfiguration
+	wantFiles              []bootstrapv1beta2.File
+	wantRegistryConfig     bootstrapv1beta2.RegistryMirrorConfiguration
 	wantRegistryConfigEtcd *etcdbootstrapv1.RegistryMirrorConfiguration
 }{
 	{
 		name:               "registry config nil",
-		wantFiles:          []bootstrapv1.File{},
-		wantRegistryConfig: bootstrapv1.RegistryMirrorConfiguration{},
+		wantFiles:          []bootstrapv1beta2.File{},
+		wantRegistryConfig: bootstrapv1beta2.RegistryMirrorConfiguration{},
 	},
 	{
 		name: "with ca cert and namespace mapping for eksa and curated packages",
@@ -40,25 +40,54 @@ var registryMirrorTests = []struct {
 				},
 			},
 		},
-		wantFiles: []bootstrapv1.File{
+		wantFiles: []bootstrapv1beta2.File{
 			{
 				Path:  "/etc/containerd/config_append.toml",
 				Owner: "root:root",
-				Content: `[plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."783794618700.dkr.ecr.us-west-2.amazonaws.com"]
-    endpoint = ["https://1.2.3.4:443/v2/curated-packages"]
-  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
-    endpoint = ["https://1.2.3.4:443/v2/eks-anywhere"]
-  [plugins."io.containerd.grpc.v1.cri".registry.configs."1.2.3.4:443".tls]
-    ca_file = "/etc/containerd/certs.d/1.2.3.4:443/ca.crt"`,
+				Content: `[plugins."io.containerd.grpc.v1.cri".registry]
+  config_path = "/etc/containerd/certs.d"
+`,
 			},
 			{
 				Path:    "/etc/containerd/certs.d/1.2.3.4:443/ca.crt",
 				Owner:   "root:root",
 				Content: "xyz",
 			},
+			{
+				Path:  "/etc/containerd/certs.d/1.2.3.4:443/hosts.toml",
+				Owner: "root:root",
+				Content: `server = "https://1.2.3.4:443"
+
+[host."https://1.2.3.4:443/v2"]
+  capabilities = ["pull", "resolve"]
+  override_path = true
+  ca = "/etc/containerd/certs.d/1.2.3.4:443/ca.crt"
+`,
+			},
+			{
+				Path:  "/etc/containerd/certs.d/783794618700.dkr.ecr.us-west-2.amazonaws.com/hosts.toml",
+				Owner: "root:root",
+				Content: `server = "https://783794618700.dkr.ecr.us-west-2.amazonaws.com"
+
+[host."https://1.2.3.4:443/v2/curated-packages"]
+  capabilities = ["pull", "resolve"]
+  override_path = true
+  ca = "/etc/containerd/certs.d/1.2.3.4:443/ca.crt"
+`,
+			},
+			{
+				Path:  "/etc/containerd/certs.d/public.ecr.aws/hosts.toml",
+				Owner: "root:root",
+				Content: `server = "https://public.ecr.aws"
+
+[host."https://1.2.3.4:443/v2/eks-anywhere"]
+  capabilities = ["pull", "resolve"]
+  override_path = true
+  ca = "/etc/containerd/certs.d/1.2.3.4:443/ca.crt"
+`,
+			},
 		},
-		wantRegistryConfig: bootstrapv1.RegistryMirrorConfiguration{
+		wantRegistryConfig: bootstrapv1beta2.RegistryMirrorConfiguration{
 			Endpoint: "1.2.3.4:443/v2/eks-anywhere",
 			CACert:   "xyz",
 		},
@@ -74,22 +103,42 @@ var registryMirrorTests = []struct {
 			Port:               "443",
 			InsecureSkipVerify: true,
 		},
-		wantFiles: []bootstrapv1.File{
+		wantFiles: []bootstrapv1beta2.File{
 			{
 				Path:  "/etc/containerd/config_append.toml",
 				Owner: "root:root",
-				Content: `[plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
-    endpoint = ["https://1.2.3.4:443"]
-  [plugins."io.containerd.grpc.v1.cri".registry.configs."1.2.3.4:443".tls]
-    insecure_skip_verify = true`,
+				Content: `[plugins."io.containerd.grpc.v1.cri".registry]
+  config_path = "/etc/containerd/certs.d"
+`,
+			},
+			{
+				Path:  "/etc/containerd/certs.d/1.2.3.4:443/hosts.toml",
+				Owner: "root:root",
+				Content: `server = "https://1.2.3.4:443"
+
+[host."https://1.2.3.4:443/v2"]
+  capabilities = ["pull", "resolve"]
+  override_path = true
+  skip_verify = true
+`,
+			},
+			{
+				Path:  "/etc/containerd/certs.d/public.ecr.aws/hosts.toml",
+				Owner: "root:root",
+				Content: `server = "https://public.ecr.aws"
+
+[host."https://1.2.3.4:443/v2"]
+  capabilities = ["pull", "resolve"]
+  override_path = true
+  skip_verify = true
+`,
 			},
 		},
-		wantRegistryConfig: bootstrapv1.RegistryMirrorConfiguration{
-			Endpoint: "1.2.3.4:443",
+		wantRegistryConfig: bootstrapv1beta2.RegistryMirrorConfiguration{
+			Endpoint: "1.2.3.4:443/v2",
 		},
 		wantRegistryConfigEtcd: &etcdbootstrapv1.RegistryMirrorConfiguration{
-			Endpoint: "1.2.3.4:443",
+			Endpoint: "1.2.3.4:443/v2",
 		},
 	},
 	{
@@ -100,29 +149,50 @@ var registryMirrorTests = []struct {
 			CACertContent:      "xyz",
 			InsecureSkipVerify: true,
 		},
-		wantFiles: []bootstrapv1.File{
+		wantFiles: []bootstrapv1beta2.File{
 			{
 				Path:  "/etc/containerd/config_append.toml",
 				Owner: "root:root",
-				Content: `[plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
-    endpoint = ["https://1.2.3.4:443"]
-  [plugins."io.containerd.grpc.v1.cri".registry.configs."1.2.3.4:443".tls]
-    ca_file = "/etc/containerd/certs.d/1.2.3.4:443/ca.crt"
-    insecure_skip_verify = true`,
+				Content: `[plugins."io.containerd.grpc.v1.cri".registry]
+  config_path = "/etc/containerd/certs.d"
+`,
 			},
 			{
 				Path:    "/etc/containerd/certs.d/1.2.3.4:443/ca.crt",
 				Owner:   "root:root",
 				Content: "xyz",
 			},
+			{
+				Path:  "/etc/containerd/certs.d/1.2.3.4:443/hosts.toml",
+				Owner: "root:root",
+				Content: `server = "https://1.2.3.4:443"
+
+[host."https://1.2.3.4:443/v2"]
+  capabilities = ["pull", "resolve"]
+  override_path = true
+  ca = "/etc/containerd/certs.d/1.2.3.4:443/ca.crt"
+  skip_verify = true
+`,
+			},
+			{
+				Path:  "/etc/containerd/certs.d/public.ecr.aws/hosts.toml",
+				Owner: "root:root",
+				Content: `server = "https://public.ecr.aws"
+
+[host."https://1.2.3.4:443/v2"]
+  capabilities = ["pull", "resolve"]
+  override_path = true
+  ca = "/etc/containerd/certs.d/1.2.3.4:443/ca.crt"
+  skip_verify = true
+`,
+			},
 		},
-		wantRegistryConfig: bootstrapv1.RegistryMirrorConfiguration{
-			Endpoint: "1.2.3.4:443",
+		wantRegistryConfig: bootstrapv1beta2.RegistryMirrorConfiguration{
+			Endpoint: "1.2.3.4:443/v2",
 			CACert:   "xyz",
 		},
 		wantRegistryConfigEtcd: &etcdbootstrapv1.RegistryMirrorConfiguration{
-			Endpoint: "1.2.3.4:443",
+			Endpoint: "1.2.3.4:443/v2",
 			CACert:   "xyz",
 		},
 	},
@@ -148,9 +218,12 @@ func TestSetRegistryMirrorInKubeadmControlPlaneUbuntu(t *testing.T) {
 			g := newApiBuilerTest(t)
 			got := wantKubeadmControlPlane()
 			g.Expect(clusterapi.SetRegistryMirrorInKubeadmControlPlaneForUbuntu(got, tt.registryMirrorConfig)).To(Succeed())
-			want := wantKubeadmControlPlane()
-			want.Spec.KubeadmConfigSpec.Files = tt.wantFiles
-			g.Expect(got).To(Equal(want))
+
+			// Verify file count and membership (order may vary due to map iteration)
+			g.Expect(got.Spec.KubeadmConfigSpec.Files).To(HaveLen(len(tt.wantFiles)))
+			for _, wantFile := range tt.wantFiles {
+				g.Expect(got.Spec.KubeadmConfigSpec.Files).To(ContainElement(wantFile))
+			}
 		})
 	}
 }
@@ -174,9 +247,12 @@ func TestSetRegistryMirrorInKubeadmConfigTemplateUbuntu(t *testing.T) {
 			g := newApiBuilerTest(t)
 			got := wantKubeadmConfigTemplate()
 			g.Expect(clusterapi.SetRegistryMirrorInKubeadmConfigTemplateForUbuntu(got, tt.registryMirrorConfig)).To(Succeed())
-			want := wantKubeadmConfigTemplate()
-			want.Spec.Template.Spec.Files = tt.wantFiles
-			g.Expect(got).To(Equal(want))
+
+			// Verify file count and membership (order may vary due to map iteration)
+			g.Expect(got.Spec.Template.Spec.Files).To(HaveLen(len(tt.wantFiles)))
+			for _, wantFile := range tt.wantFiles {
+				g.Expect(got.Spec.Template.Spec.Files).To(ContainElement(wantFile))
+			}
 		})
 	}
 }

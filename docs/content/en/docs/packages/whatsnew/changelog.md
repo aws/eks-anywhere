@@ -5,6 +5,21 @@ weight: 7
 description: >
   Changelog for Curated packages release
 ---
+## Package Bundle Release (03-12-2026)
+#### Changed
+- Cert-Manager `1.18.2` to `1.19.3`
+- Cluster-Autoscaler chart to `9.55.0`
+- Harbor `2.12.2` to `v2.14.2`
+- Credential-Provider-Package to `0.4.15`
+- Metrics-Server `0.8.0` to `0.8.1`
+
+## Package Bundle Release (12-29-2025)
+#### Changed
+- ADOT `0.43.1` to `0.45.1`
+- Emissary `3.9.1` to `3.10.0`
+- Metrics-Server `3.12.2` to `3.13.0`
+- Prometheus `2.55.1` to `3.8.0`
+
 ## Package Bundle Release (11-08-2025)
 #### Changed
 - Fix Critical CVEs in all curated packages

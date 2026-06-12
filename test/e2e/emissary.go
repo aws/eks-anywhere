@@ -4,6 +4,7 @@
 package e2e
 
 import (
+	"context"
 	"time"
 
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -41,6 +42,11 @@ func runCuratedPackageEmissaryRemoteClusterInstallSimpleFlow(test *framework.Mul
 		e.ValidateClusterState()
 		e.VerifyPackageControllerNotInstalled()
 		test.ManagementCluster.SetPackageBundleActive()
+		if err := WaitForPackageNamespace(test.ManagementCluster, context.Background(),
+			kubeconfig.FromClusterName(test.ManagementCluster.ClusterName),
+			e.ClusterName, 5*time.Minute); err != nil {
+			e.T.Fatalf("package namespace not created on management cluster: %v", err)
+		}
 		packageFile := e.BuildPackageConfigFile(emissaryPackageName, emissaryPackagePrefix, EksaPackagesNamespace)
 		test.ManagementCluster.InstallCuratedPackageFile(packageFile, kubeconfig.FromClusterName(test.ManagementCluster.ClusterName))
 		e.VerifyEmissaryPackageInstalled(emissaryPackagePrefix+"-"+emissaryPackageName, withCluster(test.ManagementCluster))

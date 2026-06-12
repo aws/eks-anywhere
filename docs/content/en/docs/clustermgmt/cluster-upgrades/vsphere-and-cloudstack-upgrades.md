@@ -72,7 +72,7 @@ To the format output in json, add `-o json` to the end of the command line.
 
 To perform a cluster upgrade you can modify your cluster specification `kubernetesVersion` field to the desired version.
 
-As an example, to upgrade a cluster with version 1.32 to 1.33 you would change your spec
+As an example, to upgrade a cluster with version 1.34 to 1.35 you would change your spec
 
 ```
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
@@ -88,7 +88,7 @@ spec:
       kind: VSphereMachineConfig
       name: dev
       ...
-  kubernetesVersion: "1.33"
+  kubernetesVersion: "1.35"
       ...
 ```
 
@@ -196,6 +196,13 @@ After finishing the task, make sure you resume the cluster reconciliation by rem
 ```bash
 kubectl annotate clusters.anywhere.eks.amazonaws.com ${CLUSTER_NAME} -n ${CLUSTER_NAMESPACE} anywhere.eks.amazonaws.com/paused-
 ```
+
+>**_NOTE:_** During management cluster upgrades, the CLI temporarily pauses all workload cluster CAPI resources (`clusters.cluster.x-k8s.io`) and resumes them after the upgrade completes. If you have manually paused workload clusters, the management cluster upgrade will unpause the CAPI cluster resource even though the EKS Anywhere cluster annotation (`anywhere.eks.amazonaws.com/paused`) remains unchanged. After the management cluster upgrade completes, re-pause any workload clusters that need to remain paused:
+>
+>```bash
+>kubectl patch clusters.cluster.x-k8s.io ${CLUSTER_NAME} -n eksa-system \
+>  --type merge -p '{"spec":{"paused": true}}' --kubeconfig ${MGMT_KUBECONFIG}
+>```
 
 >**_NOTE (vSphere only):_** If you are upgrading a vSphere cluster created using EKS Anywhere version prior to `v0.16.0` that has the vSphere CSI Driver installed in it, please refer to the additional steps listed [here]({{< relref "../storage/vsphere-storage#vsphere-csi-driver-cleanup-for-upgrades" >}}) before attempting an upgrade.
 

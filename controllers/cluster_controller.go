@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
 	v1beta1patch "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/patch"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -256,7 +257,7 @@ func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager, log logr.Logger) 
 // +kubebuilder:rbac:groups="",resources=events,verbs=create;patch;update
 // +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;create;delete;update;patch
 // +kubebuilder:rbac:groups="",namespace=eksa-system,resources=secrets,verbs=patch;update
-// +kubebuilder:rbac:groups="",resources=namespaces,verbs=get;list;create;delete
+// +kubebuilder:rbac:groups="",resources=namespaces,verbs=get;list;create;delete;patch;update
 // +kubebuilder:rbac:groups="",resources=nodes,verbs=list
 // +kubebuilder:rbac:groups=addons.cluster.x-k8s.io,resources=clusterresourcesets,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=clusters;gitopsconfigs;snowmachineconfigs;snowdatacenterconfigs;snowippools;vspheredatacenterconfigs;vspheremachineconfigs;dockerdatacenterconfigs;tinkerbellmachineconfigs;tinkerbelltemplateconfigs;tinkerbelldatacenterconfigs;cloudstackdatacenterconfigs;cloudstackmachineconfigs;nutanixdatacenterconfigs;nutanixmachineconfigs;oidcconfigs;fluxconfigs,verbs=get;list;watch;update;patch
@@ -632,7 +633,7 @@ func (r *ClusterReconciler) reconcileDelete(ctx context.Context, log logr.Logger
 		}
 	}
 
-	capiCluster := &clusterv1.Cluster{}
+	capiCluster := &clusterv1beta2.Cluster{}
 	capiClusterName := types.NamespacedName{Namespace: constants.EksaSystemNamespace, Name: cluster.Name}
 	log.Info("Deleting", "name", cluster.Name)
 	err := r.client.Get(ctx, capiClusterName, capiCluster)

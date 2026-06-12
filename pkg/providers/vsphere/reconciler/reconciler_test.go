@@ -14,10 +14,10 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
-	addonsv1 "sigs.k8s.io/cluster-api/api/addons/v1beta1"
-	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	addonsv1 "sigs.k8s.io/cluster-api/api/addons/v1beta2"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -26,7 +26,6 @@ import (
 	"github.com/aws/eks-anywhere/internal/test/envtest"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	clusterspec "github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller"
@@ -59,10 +58,18 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 	logger := test.NewNullLogger()
 	remoteClient := env.Client()
 
+	// Clone objects without TypeMeta for mock expectations (fake client doesn't populate it)
+	dcConfigNoType := tt.datacenterConfig.DeepCopy()
+	dcConfigNoType.TypeMeta = metav1.TypeMeta{}
+	machineConfigCPNoType := tt.machineConfigControlPlane.DeepCopy()
+	machineConfigCPNoType.TypeMeta = metav1.TypeMeta{}
+	machineConfigWNNoType := tt.machineConfigWorker.DeepCopy()
+	machineConfigWNNoType.TypeMeta = metav1.TypeMeta{}
+
 	tt.ipValidator.EXPECT().ValidateControlPlaneIP(tt.ctx, logger, tt.buildSpec()).Return(controller.Result{}, nil)
-	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(tt.ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
-	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(tt.ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
-	tt.govcClient.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, gomock.Any()).Return("test", nil)
+	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(tt.ctx, dcConfigNoType, machineConfigCPNoType, gomock.Any()).Return(nil)
+	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(tt.ctx, dcConfigNoType, machineConfigWNNoType, gomock.Any()).Return(nil)
+	tt.govcClient.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, machineConfigCPNoType).Return("test", nil)
 	tt.govcClient.EXPECT().GetTags(tt.ctx, tt.machineConfigControlPlane.Spec.Template).Return([]string{"os:ubuntu", fmt.Sprintf("eksdRelease:%s", tt.bundle.Spec.VersionsBundles[0].EksD.Name)}, nil)
 	tt.govcClient.EXPECT().ListTags(tt.ctx).Return([]executables.Tag{}, nil)
 
@@ -87,9 +94,17 @@ func TestReconcilerFailToSetUpMachineConfigCP(t *testing.T) {
 	logger := test.NewNullLogger()
 	tt.withFakeClient()
 
-	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(tt.ctx, tt.datacenterConfig, tt.machineConfigControlPlane, gomock.Any()).Return(fmt.Errorf("error"))
-	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(tt.ctx, tt.datacenterConfig, tt.machineConfigWorker, gomock.Any()).Return(nil).MaxTimes(1)
-	tt.govcClient.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, tt.machineConfigControlPlane).Return("test", nil).Times(0)
+	// Clone objects without TypeMeta for mock expectations (fake client doesn't populate it)
+	dcConfigNoType := tt.datacenterConfig.DeepCopy()
+	dcConfigNoType.TypeMeta = metav1.TypeMeta{}
+	machineConfigCPNoType := tt.machineConfigControlPlane.DeepCopy()
+	machineConfigCPNoType.TypeMeta = metav1.TypeMeta{}
+	machineConfigWNNoType := tt.machineConfigWorker.DeepCopy()
+	machineConfigWNNoType.TypeMeta = metav1.TypeMeta{}
+
+	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(tt.ctx, dcConfigNoType, machineConfigCPNoType, gomock.Any()).Return(fmt.Errorf("error"))
+	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(tt.ctx, dcConfigNoType, machineConfigWNNoType, gomock.Any()).Return(nil).MaxTimes(1)
+	tt.govcClient.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, machineConfigCPNoType).Return("test", nil).Times(0)
 	tt.govcClient.EXPECT().GetTags(tt.ctx, tt.machineConfigControlPlane.Spec.Template).Return([]string{"os:ubuntu", fmt.Sprintf("eksdRelease:%s", tt.bundle.Spec.VersionsBundles[0].EksD.Name)}, nil).Times(0)
 
 	result, err := tt.reconciler().ValidateMachineConfigs(tt.ctx, logger, tt.buildSpec())
@@ -117,11 +132,11 @@ func TestReconcilerControlPlaneIsNotReady(t *testing.T) {
 	t.Skip("Flaky (https://github.com/aws/eks-anywhere/issues/7000)")
 
 	tt := newReconcilerTest(t)
-	tt.kcp.Status = controlplanev1.KubeadmControlPlaneStatus{
-		Conditions: clusterv1.Conditions{
+	tt.kcp.Status = controlplanev1beta2.KubeadmControlPlaneStatus{
+		Conditions: []metav1.Condition{
 			{
-				Type:               clusterapi.ReadyCondition,
-				Status:             corev1.ConditionFalse,
+				Type:               clusterv1beta2.ReadyCondition,
+				Status:             metav1.ConditionFalse,
 				LastTransitionTime: metav1.NewTime(time.Now()),
 			},
 		},
@@ -133,10 +148,18 @@ func TestReconcilerControlPlaneIsNotReady(t *testing.T) {
 
 	logger := test.NewNullLogger()
 
+	// Clone objects without TypeMeta for mock expectations (fake client doesn't populate it)
+	dcConfigNoType := tt.datacenterConfig.DeepCopy()
+	dcConfigNoType.TypeMeta = metav1.TypeMeta{}
+	machineConfigCPNoType := tt.machineConfigControlPlane.DeepCopy()
+	machineConfigCPNoType.TypeMeta = metav1.TypeMeta{}
+	machineConfigWNNoType := tt.machineConfigWorker.DeepCopy()
+	machineConfigWNNoType.TypeMeta = metav1.TypeMeta{}
+
 	tt.ipValidator.EXPECT().ValidateControlPlaneIP(tt.ctx, logger, tt.buildSpec()).Return(controller.Result{}, nil)
-	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(tt.ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
-	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(tt.ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
-	tt.govcClient.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, gomock.Any()).Return("test", nil)
+	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(tt.ctx, dcConfigNoType, machineConfigCPNoType, gomock.Any()).Return(nil)
+	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(tt.ctx, dcConfigNoType, machineConfigWNNoType, gomock.Any()).Return(nil)
+	tt.govcClient.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, machineConfigCPNoType).Return("test", nil)
 	tt.govcClient.EXPECT().GetTags(tt.ctx, tt.machineConfigControlPlane.Spec.Template).Return([]string{"os:ubuntu", fmt.Sprintf("eksdRelease:%s", tt.bundle.Spec.VersionsBundles[0].EksD.Name)}, nil)
 	tt.govcClient.EXPECT().ListTags(tt.ctx).Return([]executables.Tag{}, nil)
 
@@ -150,7 +173,7 @@ func TestReconcilerControlPlaneIsNotReady(t *testing.T) {
 
 func TestReconcilerReconcileWorkersSuccess(t *testing.T) {
 	tt := newReconcilerTest(t)
-	tt.eksaSupportObjs = append(tt.eksaSupportObjs, test.CAPICluster(func(c *clusterv1.Cluster) {
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, test.CAPICluster(func(c *clusterv1beta2.Cluster) {
 		c.Name = tt.cluster.Name
 	}))
 	tt.createAllObjs()
@@ -334,7 +357,7 @@ func TestReconcilerReconcileControlPlaneSuccess(t *testing.T) {
 	)
 
 	tt.ShouldEventuallyExist(tt.ctx,
-		&controlplanev1.KubeadmControlPlane{
+		&controlplanev1beta2.KubeadmControlPlane{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      tt.cluster.Name,
 				Namespace: "eksa-system",
@@ -351,7 +374,7 @@ func TestReconcilerReconcileControlPlaneSuccess(t *testing.T) {
 		},
 	)
 
-	capiCluster := test.CAPICluster(func(c *clusterv1.Cluster) {
+	capiCluster := test.CAPICluster(func(c *clusterv1beta2.Cluster) {
 		c.Name = tt.cluster.Name
 	})
 	tt.ShouldEventuallyExist(tt.ctx, capiCluster)
@@ -380,7 +403,7 @@ type reconcilerTest struct {
 	machineConfigControlPlane *anywherev1.VSphereMachineConfig
 	machineConfigWorker       *anywherev1.VSphereMachineConfig
 	ipValidator               *vspherereconcilermocks.MockIPValidator
-	kcp                       *controlplanev1.KubeadmControlPlane
+	kcp                       *controlplanev1beta2.KubeadmControlPlane
 	vsphereDeploymentZone     *vspherev1.VSphereDeploymentZone
 }
 
@@ -469,20 +492,22 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 		c.Spec.EksaVersion = &version
 	})
 
-	kcp := test.KubeadmControlPlane(func(kcp *controlplanev1.KubeadmControlPlane) {
+	kcp := test.KubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
 		kcp.Name = cluster.Name
-		kcp.Spec = controlplanev1.KubeadmControlPlaneSpec{
-			MachineTemplate: controlplanev1.KubeadmControlPlaneMachineTemplate{
-				InfrastructureRef: corev1.ObjectReference{
-					Name: fmt.Sprintf("%s-control-plane-1", cluster.Name),
+		kcp.Spec = controlplanev1beta2.KubeadmControlPlaneSpec{
+			MachineTemplate: controlplanev1beta2.KubeadmControlPlaneMachineTemplate{
+				Spec: controlplanev1beta2.KubeadmControlPlaneMachineTemplateSpec{
+					InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
+						Name: fmt.Sprintf("%s-control-plane-1", cluster.Name),
+					},
 				},
 			},
 		}
-		kcp.Status = controlplanev1.KubeadmControlPlaneStatus{
-			Conditions: clusterv1.Conditions{
+		kcp.Status = controlplanev1beta2.KubeadmControlPlaneStatus{
+			Conditions: []metav1.Condition{
 				{
-					Type:               clusterapi.ReadyCondition,
-					Status:             corev1.ConditionTrue,
+					Type:               clusterv1beta2.ReadyCondition,
+					Status:             metav1.ConditionTrue,
 					LastTransitionTime: metav1.NewTime(time.Now()),
 				},
 			},
@@ -531,9 +556,9 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 func (tt *reconcilerTest) cleanup() {
 	tt.DeleteAndWait(tt.ctx, tt.allObjs()...)
 
-	tt.DeleteAllOfAndWait(tt.ctx, &bootstrapv1.KubeadmConfigTemplate{})
+	tt.DeleteAllOfAndWait(tt.ctx, &bootstrapv1beta2.KubeadmConfigTemplate{})
 	tt.DeleteAllOfAndWait(tt.ctx, &vspherev1.VSphereMachineTemplate{})
-	tt.DeleteAllOfAndWait(tt.ctx, &clusterv1.MachineDeployment{})
+	tt.DeleteAllOfAndWait(tt.ctx, &clusterv1beta2.MachineDeployment{})
 }
 
 func (tt *reconcilerTest) buildSpec() *clusterspec.Spec {

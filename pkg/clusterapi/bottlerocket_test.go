@@ -5,42 +5,36 @@ import (
 
 	etcdbootstrapv1 "github.com/aws/etcdadm-bootstrap-provider/api/v1beta1"
 	. "github.com/onsi/gomega"
+	"k8s.io/utils/ptr"
 	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 )
 
-var pause = bootstrapv1.Pause{
-	ImageMeta: bootstrapv1.ImageMeta{
-		ImageRepository: "public.ecr.aws/eks-distro/kubernetes/pause",
-		ImageTag:        "0.0.1",
-	},
+var pause = bootstrapv1beta2.Pause{
+	ImageRepository: "public.ecr.aws/eks-distro/kubernetes/pause",
+	ImageTag:        "0.0.1",
 }
 
-var bootstrap = bootstrapv1.BottlerocketBootstrap{
-	ImageMeta: bootstrapv1.ImageMeta{
-		ImageRepository: "public.ecr.aws/eks-anywhere/bottlerocket-bootstrap",
-		ImageTag:        "0.0.1",
-	},
+var bootstrap = bootstrapv1beta2.BottlerocketBootstrap{
+	ImageRepository: "public.ecr.aws/eks-anywhere/bottlerocket-bootstrap",
+	ImageTag:        "0.0.1",
 }
 
-var adminContainer = bootstrapv1.BottlerocketAdmin{
-	ImageMeta: bootstrapv1.ImageMeta{
-		ImageRepository: "public.ecr.aws/eks-anywhere/bottlerocket-admin",
-		ImageTag:        "0.0.1",
-	},
+var adminContainer = bootstrapv1beta2.BottlerocketAdmin{
+	ImageRepository: "public.ecr.aws/eks-anywhere/bottlerocket-admin",
+	ImageTag:        "0.0.1",
 }
 
-var controlContainer = bootstrapv1.BottlerocketControl{
-	ImageMeta: bootstrapv1.ImageMeta{
-		ImageRepository: "public.ecr.aws/eks-anywhere/bottlerocket-control",
-		ImageTag:        "0.0.1",
-	},
+var controlContainer = bootstrapv1beta2.BottlerocketControl{
+	ImageRepository: "public.ecr.aws/eks-anywhere/bottlerocket-control",
+	ImageTag:        "0.0.1",
 }
 
-var kernel = &bootstrapv1.BottlerocketSettings{
-	Kernel: &bootstrapv1.BottlerocketKernelSettings{
+var kernel = &bootstrapv1beta2.BottlerocketSettings{
+	Kernel: &bootstrapv1beta2.BottlerocketKernelSettings{
 		SysctlSettings: map[string]string{
 			"foo": "bar",
 			"abc": "def",
@@ -58,21 +52,21 @@ func TestSetBottlerocketInKubeadmControlPlane(t *testing.T) {
 	want.Spec.KubeadmConfigSpec.JoinConfiguration.BottlerocketBootstrap = bootstrap
 	want.Spec.KubeadmConfigSpec.JoinConfiguration.Pause = pause
 	want.Spec.KubeadmConfigSpec.ClusterConfiguration.ControllerManager.ExtraVolumes = append(want.Spec.KubeadmConfigSpec.ClusterConfiguration.ControllerManager.ExtraVolumes,
-		bootstrapv1.HostPathMount{
+		bootstrapv1beta2.HostPathMount{
 			HostPath:  "/var/lib/kubeadm/controller-manager.conf",
 			MountPath: "/etc/kubernetes/controller-manager.conf",
 			Name:      "kubeconfig",
 			PathType:  "File",
-			ReadOnly:  true,
+			ReadOnly:  ptr.To(true),
 		},
 	)
 	want.Spec.KubeadmConfigSpec.ClusterConfiguration.Scheduler.ExtraVolumes = append(want.Spec.KubeadmConfigSpec.ClusterConfiguration.Scheduler.ExtraVolumes,
-		bootstrapv1.HostPathMount{
+		bootstrapv1beta2.HostPathMount{
 			HostPath:  "/var/lib/kubeadm/scheduler.conf",
 			MountPath: "/etc/kubernetes/scheduler.conf",
 			Name:      "kubeconfig",
 			PathType:  "File",
-			ReadOnly:  true,
+			ReadOnly:  ptr.To(true),
 		},
 	)
 	want.Spec.KubeadmConfigSpec.ClusterConfiguration.CertificatesDir = "/var/lib/kubeadm/pki"
@@ -210,7 +204,7 @@ func TestSetBottlerocketHostConfigInKubeadmControlPlane(t *testing.T) {
 
 	clusterapi.SetBottlerocketHostConfigInKubeadmControlPlane(got, &anywherev1.HostOSConfiguration{
 		BottlerocketConfiguration: &anywherev1.BottlerocketConfiguration{
-			Kernel: &bootstrapv1.BottlerocketKernelSettings{
+			Kernel: &bootstrapv1beta2.BottlerocketKernelSettings{
 				SysctlSettings: map[string]string{
 					"foo": "bar",
 					"abc": "def",
@@ -229,7 +223,7 @@ func TestSetBottlerocketHostConfigInKubeadmConfigTemplate(t *testing.T) {
 
 	clusterapi.SetBottlerocketHostConfigInKubeadmConfigTemplate(got, &anywherev1.HostOSConfiguration{
 		BottlerocketConfiguration: &anywherev1.BottlerocketConfiguration{
-			Kernel: &bootstrapv1.BottlerocketKernelSettings{
+			Kernel: &bootstrapv1beta2.BottlerocketKernelSettings{
 				SysctlSettings: map[string]string{
 					"foo": "bar",
 					"abc": "def",
@@ -258,7 +252,7 @@ func TestSetBottlerocketKernelSettingsInEtcdCluster(t *testing.T) {
 
 	clusterapi.SetBottlerocketHostConfigInEtcdCluster(got, &anywherev1.HostOSConfiguration{
 		BottlerocketConfiguration: &anywherev1.BottlerocketConfiguration{
-			Kernel: &bootstrapv1.BottlerocketKernelSettings{
+			Kernel: &bootstrapv1beta2.BottlerocketKernelSettings{
 				SysctlSettings: map[string]string{
 					"foo": "bar",
 					"abc": "def",
@@ -273,8 +267,8 @@ func TestSetBottlerocketBootSettingsInKubeadmControlPlane(t *testing.T) {
 	g := newApiBuilerTest(t)
 	got := wantKubeadmControlPlane()
 	want := got.DeepCopy()
-	want.Spec.KubeadmConfigSpec.ClusterConfiguration.Bottlerocket = &bootstrapv1.BottlerocketSettings{
-		Boot: &bootstrapv1.BottlerocketBootSettings{
+	want.Spec.KubeadmConfigSpec.ClusterConfiguration.Bottlerocket = &bootstrapv1beta2.BottlerocketSettings{
+		Boot: &bootstrapv1beta2.BottlerocketBootSettings{
 			BootKernelParameters: map[string][]string{
 				"foo": {
 					"abc",
@@ -283,8 +277,8 @@ func TestSetBottlerocketBootSettingsInKubeadmControlPlane(t *testing.T) {
 			},
 		},
 	}
-	want.Spec.KubeadmConfigSpec.JoinConfiguration.Bottlerocket = &bootstrapv1.BottlerocketSettings{
-		Boot: &bootstrapv1.BottlerocketBootSettings{
+	want.Spec.KubeadmConfigSpec.JoinConfiguration.Bottlerocket = &bootstrapv1beta2.BottlerocketSettings{
+		Boot: &bootstrapv1beta2.BottlerocketBootSettings{
 			BootKernelParameters: map[string][]string{
 				"foo": {
 					"abc",
@@ -296,7 +290,7 @@ func TestSetBottlerocketBootSettingsInKubeadmControlPlane(t *testing.T) {
 
 	clusterapi.SetBottlerocketHostConfigInKubeadmControlPlane(got, &anywherev1.HostOSConfiguration{
 		BottlerocketConfiguration: &anywherev1.BottlerocketConfiguration{
-			Boot: &bootstrapv1.BottlerocketBootSettings{
+			Boot: &bootstrapv1beta2.BottlerocketBootSettings{
 				BootKernelParameters: map[string][]string{
 					"foo": {
 						"abc",
@@ -313,14 +307,14 @@ func TestSetBottlerocketBootSettingsInKubeadmConfigTemplate(t *testing.T) {
 	g := newApiBuilerTest(t)
 	got := wantKubeadmConfigTemplate()
 	want := got.DeepCopy()
-	want.Spec.Template.Spec.JoinConfiguration.Bottlerocket = &bootstrapv1.BottlerocketSettings{
-		Kernel: &bootstrapv1.BottlerocketKernelSettings{
+	want.Spec.Template.Spec.JoinConfiguration.Bottlerocket = &bootstrapv1beta2.BottlerocketSettings{
+		Kernel: &bootstrapv1beta2.BottlerocketKernelSettings{
 			SysctlSettings: map[string]string{
 				"foo": "bar",
 				"abc": "def",
 			},
 		},
-		Boot: &bootstrapv1.BottlerocketBootSettings{
+		Boot: &bootstrapv1beta2.BottlerocketBootSettings{
 			BootKernelParameters: map[string][]string{
 				"foo": {
 					"abc",
@@ -332,7 +326,7 @@ func TestSetBottlerocketBootSettingsInKubeadmConfigTemplate(t *testing.T) {
 
 	clusterapi.SetBottlerocketHostConfigInKubeadmConfigTemplate(got, &anywherev1.HostOSConfiguration{
 		BottlerocketConfiguration: &anywherev1.BottlerocketConfiguration{
-			Boot: &bootstrapv1.BottlerocketBootSettings{
+			Boot: &bootstrapv1beta2.BottlerocketBootSettings{
 				BootKernelParameters: map[string][]string{
 					"foo": {
 						"abc",
@@ -340,7 +334,7 @@ func TestSetBottlerocketBootSettingsInKubeadmConfigTemplate(t *testing.T) {
 					},
 				},
 			},
-			Kernel: &bootstrapv1.BottlerocketKernelSettings{
+			Kernel: &bootstrapv1beta2.BottlerocketKernelSettings{
 				SysctlSettings: map[string]string{
 					"foo": "bar",
 					"abc": "def",
@@ -377,7 +371,7 @@ func TestSetBottlerocketBootSettingsInEtcdCluster(t *testing.T) {
 
 	clusterapi.SetBottlerocketHostConfigInEtcdCluster(got, &anywherev1.HostOSConfiguration{
 		BottlerocketConfiguration: &anywherev1.BottlerocketConfiguration{
-			Boot: &bootstrapv1.BottlerocketBootSettings{
+			Boot: &bootstrapv1beta2.BottlerocketBootSettings{
 				BootKernelParameters: map[string][]string{
 					"foo": {
 						"abc",
@@ -385,7 +379,7 @@ func TestSetBottlerocketBootSettingsInEtcdCluster(t *testing.T) {
 					},
 				},
 			},
-			Kernel: &bootstrapv1.BottlerocketKernelSettings{
+			Kernel: &bootstrapv1beta2.BottlerocketKernelSettings{
 				SysctlSettings: map[string]string{
 					"foo": "bar",
 					"abc": "def",

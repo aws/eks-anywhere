@@ -21,6 +21,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -30,9 +31,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
-	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/controllers/external"
 	"sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/cluster-api/util/patch"
@@ -43,6 +44,7 @@ import (
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	eksasemver "github.com/aws/eks-anywhere/pkg/semver"
 )
 
 // controlPlaneUpgradeFinalizerName is the finalizer added to NodeUpgrade objects to handle deletion.
@@ -74,6 +76,7 @@ func NewControlPlaneUpgradeReconciler(client client.Client, remoteClientRegistry
 //+kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=controlplaneupgrades/finalizers,verbs=update
 //+kubebuilder:rbac:groups=bootstrap.cluster.x-k8s.io,resources=kubeadmconfigs,verbs=get;list;watch;update;patch
 //+kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=tinkerbellmachines;vspheremachines,verbs=get;list;update;patch
+//+kubebuilder:rbac:groups=apiextensions.k8s.io,resources=customresourcedefinitions,verbs=get;list;watch
 
 // Reconcile reconciles a ControlPlaneUpgrade object.
 // nolint:gocyclo
@@ -287,7 +290,7 @@ func (r *ControlPlaneUpgradeReconciler) updateResources(ctx context.Context, log
 	}
 
 	// Update the machine k8s version and update the KubeadmClusterConfiguration annotation
-	machine.Spec.Version = &nodeUpgrade.Spec.KubernetesVersion
+	machine.Spec.Version = nodeUpgrade.Spec.KubernetesVersion
 	annotations.AddAnnotations(machine, map[string]string{kubeadmClusterConfigurationAnnotation: string(kcc)})
 
 	if err := machinePatchHelper.Patch(ctx, machine); err != nil {
@@ -305,13 +308,13 @@ func (r *ControlPlaneUpgradeReconciler) updateResources(ctx context.Context, log
 	return nil
 }
 
-func (r *ControlPlaneUpgradeReconciler) updateKubeadmConfig(ctx context.Context, log logr.Logger, kcpSpec *controlplanev1.KubeadmControlPlaneSpec, machine *clusterv1.Machine) error {
+func (r *ControlPlaneUpgradeReconciler) updateKubeadmConfig(ctx context.Context, log logr.Logger, kcpSpec *controlplanev1beta2.KubeadmControlPlaneSpec, machine *clusterv1beta2.Machine) error {
 	bootstrapRef := machine.Spec.Bootstrap.ConfigRef
-	if bootstrapRef == nil {
-		return fmt.Errorf("bootstrap config for machine %s is nil", machine.Name)
+	if bootstrapRef.Name == "" {
+		return fmt.Errorf("bootstrap config for machine %s is not set", machine.Name)
 	}
 
-	kc := &bootstrapv1.KubeadmConfig{}
+	kc := &bootstrapv1beta2.KubeadmConfig{}
 	if err := r.client.Get(ctx, types.NamespacedName{Name: bootstrapRef.Name, Namespace: machine.Namespace}, kc); err != nil {
 		return fmt.Errorf("retrieving bootstrap config for machine %s: %v", machine.Name, err)
 	}
@@ -320,17 +323,24 @@ func (r *ControlPlaneUpgradeReconciler) updateKubeadmConfig(ctx context.Context,
 	if err != nil {
 		return fmt.Errorf("initializing patch helper for KubeadmConfig %s: %v", kc.Name, err)
 	}
-
 	kcSpec := kcpSpec.KubeadmConfigSpec.DeepCopy()
-	if kc.Spec.InitConfiguration == nil {
-		kcSpec.InitConfiguration = nil
+	if reflect.ValueOf(kc.Spec.InitConfiguration).IsZero() {
+		kcSpec.InitConfiguration = bootstrapv1beta2.InitConfiguration{}
 	}
 
-	if kc.Spec.JoinConfiguration == nil {
-		kcSpec.JoinConfiguration = nil
+	if reflect.ValueOf(kc.Spec.JoinConfiguration).IsZero() {
+		kcSpec.JoinConfiguration = bootstrapv1beta2.JoinConfiguration{}
 	}
 
 	kc.Spec = *kcSpec
+
+	// Apply CAPI's runtime-computed default FeatureGates for the target Kubernetes version.
+	// CAPI's KCP controller adds ControlPlaneKubeletLocalMode for K8s 1.31-1.35 via
+	// DefaultFeatureGates() during KubeadmConfig creation, but this gate is not stored in the
+	// KCP spec. Since CAPI v1.12+ compares the full KubeadmConfig (including ClusterConfiguration),
+	// the gate must be present to avoid the UpToDate condition remaining False.
+	applyCAPIDefaultFeatureGates(kc, kcpSpec.Version)
+
 	log.Info("Patching KubeadmConfig", "KubeadmConfig", kc.Name)
 	if err := patchHelper.Patch(ctx, kc); err != nil {
 		return fmt.Errorf("patching KubeadmConfig %s for Machine %s: %v", kc.Name, machine.Name, err)
@@ -339,8 +349,27 @@ func (r *ControlPlaneUpgradeReconciler) updateKubeadmConfig(ctx context.Context,
 	return nil
 }
 
-func (r *ControlPlaneUpgradeReconciler) updateInfraMachine(ctx context.Context, log logr.Logger, kcpSpec *controlplanev1.KubeadmControlPlaneSpec, machine *clusterv1.Machine) error {
-	infraMachineObj, err := external.Get(ctx, r.client, &machine.Spec.InfrastructureRef)
+// applyCAPIDefaultFeatureGates applies the same default FeatureGates that CAPI's KCP controller
+// adds at runtime via DefaultFeatureGates().
+// FeatureGates already present in the KubeadmConfig (from the KCP spec) take precedence.
+func applyCAPIDefaultFeatureGates(kc *bootstrapv1beta2.KubeadmConfig, kubernetesVersion string) {
+	v, err := eksasemver.New(kubernetesVersion)
+	if err != nil {
+		return
+	}
+	if v.Minor < 31 || v.Minor >= 36 {
+		return
+	}
+	if kc.Spec.ClusterConfiguration.FeatureGates == nil {
+		kc.Spec.ClusterConfiguration.FeatureGates = make(map[string]bool)
+	}
+	if _, exists := kc.Spec.ClusterConfiguration.FeatureGates["ControlPlaneKubeletLocalMode"]; !exists {
+		kc.Spec.ClusterConfiguration.FeatureGates["ControlPlaneKubeletLocalMode"] = true
+	}
+}
+
+func (r *ControlPlaneUpgradeReconciler) updateInfraMachine(ctx context.Context, log logr.Logger, kcpSpec *controlplanev1beta2.KubeadmControlPlaneSpec, machine *clusterv1beta2.Machine) error {
+	infraMachineObj, err := external.GetObjectFromContractVersionedRef(ctx, r.client, machine.Spec.InfrastructureRef, machine.Namespace)
 	if err != nil {
 		return fmt.Errorf("retrieving infra machine %s for machine %s: %v", machine.Spec.InfrastructureRef.Name, machine.Name, err)
 	}
@@ -348,13 +377,13 @@ func (r *ControlPlaneUpgradeReconciler) updateInfraMachine(ctx context.Context, 
 	if err != nil {
 		return err
 	}
-	log.Info("Updating infra machine template annotation in infra machine", "InfrastructureRef.Name", kcpSpec.MachineTemplate.InfrastructureRef.Name)
+	log.Info("Updating infra machine template annotation in infra machine", "InfrastructureRef.Name", kcpSpec.MachineTemplate.Spec.InfrastructureRef.Name)
 	// Update the cloned-from-name annotation to match the updated infra machine template name in KubeadmControlPlane
 	annotations := infraMachineObj.GetAnnotations()
 	if annotations == nil {
 		annotations = make(map[string]string)
 	}
-	annotations[cloneFromNameAnnotationInfraMachine] = kcpSpec.MachineTemplate.InfrastructureRef.Name
+	annotations[cloneFromNameAnnotationInfraMachine] = kcpSpec.MachineTemplate.Spec.InfrastructureRef.Name
 	infraMachineObj.SetAnnotations(annotations)
 
 	if err := patchHelper.Patch(ctx, infraMachineObj); err != nil {
@@ -363,8 +392,8 @@ func (r *ControlPlaneUpgradeReconciler) updateInfraMachine(ctx context.Context, 
 	return nil
 }
 
-func decodeAndUnmarshalKcpSpecData(kcpSpecData string) (*controlplanev1.KubeadmControlPlaneSpec, error) {
-	kcpSpec := &controlplanev1.KubeadmControlPlaneSpec{}
+func decodeAndUnmarshalKcpSpecData(kcpSpecData string) (*controlplanev1beta2.KubeadmControlPlaneSpec, error) {
+	kcpSpec := &controlplanev1beta2.KubeadmControlPlaneSpec{}
 	decodedKcpSpec, err := base64.StdEncoding.DecodeString(kcpSpecData)
 	if err != nil {
 		return nil, fmt.Errorf("decoding cpUpgrade.Spec.ControlPlaneSpec: %v", err)
@@ -375,8 +404,8 @@ func decodeAndUnmarshalKcpSpecData(kcpSpecData string) (*controlplanev1.KubeadmC
 	return kcpSpec, nil
 }
 
-func getCapiMachine(ctx context.Context, client client.Client, nodeUpgrade *anywherev1.NodeUpgrade) (*clusterv1.Machine, error) {
-	machine := &clusterv1.Machine{}
+func getCapiMachine(ctx context.Context, client client.Client, nodeUpgrade *anywherev1.NodeUpgrade) (*clusterv1beta2.Machine, error) {
+	machine := &clusterv1beta2.Machine{}
 	if err := client.Get(ctx, GetNamespacedNameType(nodeUpgrade.Spec.Machine.Name, nodeUpgrade.Spec.Machine.Namespace), machine); err != nil {
 		return nil, fmt.Errorf("getting machine %s: %v", nodeUpgrade.Spec.Machine.Name, err)
 	}

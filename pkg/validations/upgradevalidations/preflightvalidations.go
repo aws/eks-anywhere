@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validation"
@@ -76,7 +77,7 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) []validat
 		func() *validations.ValidationResult {
 			return &validations.ValidationResult{
 				Name:        "cluster object present on workload cluster",
-				Remediation: fmt.Sprintf("ensure that the CAPI cluster object %s representing cluster %s is present", clusterv1.GroupVersion, u.Opts.WorkloadCluster.Name),
+				Remediation: fmt.Sprintf("ensure that the CAPI cluster object %s representing cluster %s is present", clusterv1beta2.GroupVersion, u.Opts.WorkloadCluster.Name),
 				Err:         ValidateClusterObjectExists(ctx, k, u.Opts.ManagementCluster),
 			}
 		},
@@ -127,6 +128,14 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) []validat
 				Name:        "validate extended kubernetes version support is supported",
 				Remediation: "ensure you have a valid license for extended Kubernetes version support",
 				Err:         validations.ValidateExtendedKubernetesVersionSupport(ctx, *u.Opts.Spec.Cluster, u.Opts.ManifestReader, u.Opts.KubeClient, u.Opts.BundlesOverride),
+			}
+		},
+		func() *validations.ValidationResult {
+			return &validations.ValidationResult{
+				Name:        "validate kubernetes version 1.36 support",
+				Remediation: fmt.Sprintf("ensure %v env variable is set", features.K8s136SupportEnvVar),
+				Err:         validations.ValidateK8s136Support(u.Opts.Spec),
+				Silent:      true,
 			}
 		},
 	}

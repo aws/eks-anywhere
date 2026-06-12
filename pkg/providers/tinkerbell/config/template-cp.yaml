@@ -1,5 +1,5 @@
 {{- $kube_minor_version := (index (splitList "." (trimPrefix "v" .kubernetesVersion)) 1) -}}
-apiVersion: cluster.x-k8s.io/v1beta1
+apiVersion: cluster.x-k8s.io/v1beta2
 kind: Cluster
 metadata:
   labels:
@@ -16,21 +16,21 @@ spec:
     host: {{.controlPlaneEndpointIp}}
     port: 6443
   controlPlaneRef:
-    apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+    apiGroup: controlplane.cluster.x-k8s.io
     kind: KubeadmControlPlane
     name: {{.clusterName}}
   infrastructureRef:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    apiGroup: infrastructure.cluster.x-k8s.io
     kind: TinkerbellCluster
     name: {{.clusterName}}
 {{- if .externalEtcd }}
   managedExternalEtcdRef:
-    apiVersion: etcdcluster.cluster.x-k8s.io/v1beta1
+    apiGroup: etcdcluster.cluster.x-k8s.io
     kind: EtcdadmCluster
     name: {{.clusterName}}-etcd
 {{- end }}
 ---
-apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+apiVersion: controlplane.cluster.x-k8s.io/v1beta2
 kind: KubeadmControlPlane
 metadata:
   name: {{.clusterName}}
@@ -109,13 +109,18 @@ spec:
           value: /etc/kubernetes/admission-plugin-exclusion-rules.json
 {{- end }}
         extraArgs:
-          audit-policy-file: /etc/kubernetes/audit-policy.yaml
-          audit-log-path: /var/log/kubernetes/api-audit.log
-          audit-log-maxage: "30"
-          audit-log-maxbackup: "10"
-          audit-log-maxsize: "512"
+        - name: audit-policy-file
+          value: "/etc/kubernetes/audit-policy.yaml"
+        - name: audit-log-path
+          value: "/var/log/kubernetes/api-audit.log"
+        - name: audit-log-maxage
+          value: "30"
+        - name: audit-log-maxbackup
+          value: "10"
+        - name: audit-log-maxsize
+          value: "512"
 {{- if .apiserverExtraArgs }}
-{{ .apiserverExtraArgs.ToYaml | indent 10 }}
+{{ .apiserverExtraArgs.ToYaml | indent 8 }}
 {{- end }}
         extraVolumes:
 {{- if (eq .format "bottlerocket") }}
@@ -179,16 +184,19 @@ spec:
 {{- end }}
       nodeRegistration:
         kubeletExtraArgs:
-          provider-id: PROVIDER_ID
+        - name: provider-id
+          value: "PROVIDER_ID"
 {{- if not .kubeletConfiguration }}
-          read-only-port: "0"
-          anonymous-auth: "false"
+        - name: read-only-port
+          value: "0"
+        - name: anonymous-auth
+          value: "false"
 {{- if .kubeletExtraArgs }}
-{{ .kubeletExtraArgs.ToYaml | indent 10 }}
+{{ .kubeletExtraArgs.ToYaml | indent 8 }}
 {{- end }}
 {{- end }}
 {{- if .cpNodeLabelArgs }}
-{{ .cpNodeLabelArgs.ToYaml | indent 10 }}
+{{ .cpNodeLabelArgs.ToYaml | indent 8 }}
 {{- end }}
 {{- if not .workerNodeGroupConfigurations }}
         taints: []
@@ -247,16 +255,19 @@ spec:
         ignorePreflightErrors:
         - DirAvailable--etc-kubernetes-manifests
         kubeletExtraArgs:
-          provider-id: PROVIDER_ID
+        - name: provider-id
+          value: "PROVIDER_ID"
 {{- if not .kubeletConfiguration }}
-          read-only-port: "0"
-          anonymous-auth: "false"
+        - name: read-only-port
+          value: "0"
+        - name: anonymous-auth
+          value: "false"
 {{- if .kubeletExtraArgs }}
-{{ .kubeletExtraArgs.ToYaml | indent 10 }}
+{{ .kubeletExtraArgs.ToYaml | indent 8 }}
 {{- end }}
 {{- end }}
 {{- if .cpNodeLabelArgs }}
-{{ .cpNodeLabelArgs.ToYaml | indent 10 }}
+{{ .cpNodeLabelArgs.ToYaml | indent 8 }}
 {{- end }}
 {{- if not .workerNodeGroupConfigurations }}
         taints: []
@@ -419,9 +430,10 @@ spec:
         path: "/etc/containerd/config_append.toml"
       - content: |
           server = "https://{{ .mirrorBase }}"
-          
-          [host."https://{{ .mirrorBase }}"]
+
+          [host."https://{{ .mirrorBaseAPIEndpoint }}"]
             capabilities = ["pull", "resolve"]
+            override_path = true
           {{- if or .registryCACert .insecureSkip }}
           {{- if .registryCACert }}
             ca = "/etc/containerd/certs.d/{{ .mirrorBase }}/ca.crt"
@@ -431,7 +443,7 @@ spec:
           {{- end }}
           {{- end }}
           {{- if .registryAuth }}
-            [host."https://{{ .mirrorBase }}".header]
+            [host."https://{{ .mirrorBaseAPIEndpoint }}".header]
               authorization = "Basic {{ printf "%s:%s" .registryUsername .registryPassword | b64enc }}"
           {{- end }}
         owner: root:root
@@ -439,9 +451,10 @@ spec:
       {{- range $orig, $mirror := .registryMirrorMap }}
       - content: |
           server = "https://{{ $orig }}"
-          
+
           [host."https://{{ $mirror }}"]
             capabilities = ["pull", "resolve"]
+            override_path = true
           {{- if or $.registryCACert $.insecureSkip }}
           {{- if $.registryCACert }}
             ca = "/etc/containerd/certs.d/{{ $.mirrorBase }}/ca.crt"
@@ -486,25 +499,27 @@ spec:
       sudo: ALL=(ALL) NOPASSWD:ALL
     format: {{.format}}
   machineTemplate:
-    infrastructureRef:
-      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-      kind: TinkerbellMachineTemplate
-      name: {{.controlPlaneTemplateName}}
-      namespace: {{.eksaSystemNamespace}}
+    spec:
+      infrastructureRef:
+        apiGroup: infrastructure.cluster.x-k8s.io
+        kind: TinkerbellMachineTemplate
+        name: {{.controlPlaneTemplateName}}
   replicas: {{.controlPlaneReplicas}}
 {{- if .upgradeRolloutStrategy }}
-  rolloutStrategy:
+  rollout:
+    strategy:
 {{- if (eq .upgradeRolloutStrategyType "InPlace") }}
-    type: {{.upgradeRolloutStrategyType}}
+      type: {{.upgradeRolloutStrategyType}}
 {{- else}}
-    rollingUpdate:
-      maxSurge: {{.maxSurge}}
+      rollingUpdate:
+        maxSurge: {{.maxSurge}}
 {{- end }}
 {{- else }}
-  rolloutStrategy:
-    rollingUpdate:
-      maxSurge: 1
-    type: RollingUpdate
+  rollout:
+    strategy:
+      rollingUpdate:
+        maxSurge: 1
+      type: RollingUpdate
 {{- end }}
   version: {{.kubernetesVersion}}
 ---
@@ -577,11 +592,66 @@ spec:
     {{- if and .etcdTemplateOverride (ne .format "")}}
     spec:
       hardwareAffinity:
+{{- if .etcdHardwareAffinity }}
+        {{- if .etcdHardwareAffinity.Required }}
+        required:
+        {{- range .etcdHardwareAffinity.Required }}
+        - labelSelector:
+            {{- if .LabelSelector.MatchLabels }}
+            matchLabels:
+              {{- range $key, $value := .LabelSelector.MatchLabels }}
+              {{ $key }}: {{ $value }}
+              {{- end }}
+            {{- end }}
+            {{- if .LabelSelector.MatchExpressions }}
+            matchExpressions:
+              {{- range .LabelSelector.MatchExpressions }}
+            - key: {{ .Key }}
+              operator: {{ .Operator }}
+              {{- if .Values }}
+              values:
+                {{- range .Values }}
+              - {{ . }}
+                {{- end }}
+              {{- end }}
+              {{- end }}
+            {{- end }}
+        {{- end }}
+        {{- end }}
+        {{- if .etcdHardwareAffinity.Preferred }}
+        preferred:
+        {{- range .etcdHardwareAffinity.Preferred }}
+        - weight: {{ .Weight }}
+          hardwareAffinityTerm:
+            labelSelector:
+              {{- if .HardwareAffinityTerm.LabelSelector.MatchLabels }}
+              matchLabels:
+                {{- range $key, $value := .HardwareAffinityTerm.LabelSelector.MatchLabels }}
+                {{ $key }}: {{ $value }}
+                {{- end }}
+              {{- end }}
+              {{- if .HardwareAffinityTerm.LabelSelector.MatchExpressions }}
+              matchExpressions:
+                {{- range .HardwareAffinityTerm.LabelSelector.MatchExpressions }}
+              - key: {{ .Key }}
+                operator: {{ .Operator }}
+                {{- if .Values }}
+                values:
+                  {{- range .Values }}
+                - {{ . }}
+                  {{- end }}
+                {{- end }}
+                {{- end }}
+              {{- end }}
+        {{- end }}
+        {{- end }}
+{{- else }}
         required:
         - labelSelector:
             matchLabels: {{ range $key, $value := .etcdHardwareSelector}}
               {{ $key }}: {{ $value}}
             {{- end }}
+{{- end }}
       bootOptions:
         bootMode: {{.bootMode}}
         {{- if .isoUrl }}
@@ -605,11 +675,66 @@ spec:
     {{- if and .controlPlanetemplateOverride (ne .format "")}}
     spec:
       hardwareAffinity:
+{{- if .hardwareAffinity }}
+        {{- if .hardwareAffinity.Required }}
+        required:
+        {{- range .hardwareAffinity.Required }}
+        - labelSelector:
+            {{- if .LabelSelector.MatchLabels }}
+            matchLabels:
+              {{- range $key, $value := .LabelSelector.MatchLabels }}
+              {{ $key }}: {{ $value }}
+              {{- end }}
+            {{- end }}
+            {{- if .LabelSelector.MatchExpressions }}
+            matchExpressions:
+              {{- range .LabelSelector.MatchExpressions }}
+            - key: {{ .Key }}
+              operator: {{ .Operator }}
+              {{- if .Values }}
+              values:
+                {{- range .Values }}
+              - {{ . }}
+                {{- end }}
+              {{- end }}
+              {{- end }}
+            {{- end }}
+        {{- end }}
+        {{- end }}
+        {{- if .hardwareAffinity.Preferred }}
+        preferred:
+        {{- range .hardwareAffinity.Preferred }}
+        - weight: {{ .Weight }}
+          hardwareAffinityTerm:
+            labelSelector:
+              {{- if .HardwareAffinityTerm.LabelSelector.MatchLabels }}
+              matchLabels:
+                {{- range $key, $value := .HardwareAffinityTerm.LabelSelector.MatchLabels }}
+                {{ $key }}: {{ $value }}
+                {{- end }}
+              {{- end }}
+              {{- if .HardwareAffinityTerm.LabelSelector.MatchExpressions }}
+              matchExpressions:
+                {{- range .HardwareAffinityTerm.LabelSelector.MatchExpressions }}
+              - key: {{ .Key }}
+                operator: {{ .Operator }}
+                {{- if .Values }}
+                values:
+                  {{- range .Values }}
+                - {{ . }}
+                  {{- end }}
+                {{- end }}
+                {{- end }}
+              {{- end }}
+        {{- end }}
+        {{- end }}
+{{- else }}
         required:
         - labelSelector:
             matchLabels: {{ range $key, $value := .hardwareSelector}}
               {{ $key }}: {{ $value}}
             {{- end }}
+{{- end }}
       bootOptions:
         bootMode: {{.bootMode}}
         {{- if .isoUrl }}

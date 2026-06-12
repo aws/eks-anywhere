@@ -50,7 +50,7 @@ spec:
   datacenterRef:
     kind: TinkerbellDatacenterConfig
     name: my-cluster-name
-  kubernetesVersion: "1.31"
+  kubernetesVersion: "1.35"
   managementCluster:
     name: my-cluster-name
   workerNodeGroupConfigurations:
@@ -128,7 +128,7 @@ A list of taints to apply to the control plane nodes of the cluster.
 
 Replaces the default control plane taint (For k8s versions prior to 1.24, `node-role.kubernetes.io/master`. For k8s versions 1.24+, `node-role.kubernetes.io/control-plane`). The default control plane components will tolerate the provided taints.
 
-Modifying the taints associated with the control plane configuration will cause new nodes to be rolled-out, replacing the existing nodes.
+>**NOTE:** Taints are immutable for bare metal clusters and cannot be modified after cluster creation.
 
 >**_NOTE:_** The taints provided will be used instead of the default control plane taint.
 Any pods that you run on the control plane nodes must tolerate the taints you provide in the control plane configuration.
@@ -138,8 +138,7 @@ Any pods that you run on the control plane nodes must tolerate the taints you pr
 A list of labels to apply to the control plane nodes of the cluster. This is in addition to the labels that
 EKS Anywhere will add by default.
 
-Modifying the labels associated with the control plane configuration will cause new nodes to be rolled out, replacing
-the existing nodes.
+>**NOTE:** Labels are immutable for bare metal clusters and cannot be modified after cluster creation.
 
 #### controlPlaneConfiguration.upgradeRolloutStrategy (optional)
 Configuration parameters for upgrade strategy.
@@ -212,7 +211,7 @@ Maximum number of nodes for this node group's autoscaling configuration.
 ### workerNodeGroupConfigurations[*].taints (optional)
 A list of taints to apply to the nodes in the worker node group.
 
-Modifying the taints associated with a worker node group configuration will cause new nodes to be rolled-out, replacing the existing nodes associated with the configuration.
+>**NOTE:** Taints are immutable for bare metal clusters and cannot be modified after cluster creation.
 
 At least one node group must not have `NoSchedule` or `NoExecute` taints applied to it.
 
@@ -220,8 +219,7 @@ At least one node group must not have `NoSchedule` or `NoExecute` taints applied
 A list of labels to apply to the nodes in the worker node group. This is in addition to the labels that
 EKS Anywhere will add by default.
 
-Modifying the labels associated with a worker node group configuration will cause new nodes to be rolled out, replacing
-the existing nodes associated with the configuration.
+>**NOTE:** Labels are immutable for bare metal clusters and cannot be modified after cluster creation.
 
 ### workerNodeGroupConfigurations[*].kubernetesVersion (optional)
 The Kubernetes version you want to use for this worker node group. The Kubernetes versions supported by your EKS Anywhere version are tabulated in [this]({{< relref "../../concepts/support-versions/#kubernetes-versions" >}}) section.
@@ -273,7 +271,7 @@ When separate management and workload clusters are supported in Bare Metal, the 
 
 ### osImageURL (required)
 Required field to set the operating system. In order to use Ubuntu or RHEL see [building baremetal node images]({{< relref "../../osmgmt/artifacts/#build-bare-metal-node-images" >}}). This field is also useful if you want to provide a customized operating system image or simply host the standard image locally. To upgrade a node or group of nodes to a new operating system version (ie. RHEL 8.7 to RHEL 8.8), modify this field to point to the new operating system image URL and run [upgrade cluster command]({{< relref "../../clustermgmt/cluster-upgrades/baremetal-upgrades/#upgrade-cluster-command" >}}).
-The `osImageURL` must contain the `Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` version (in case of modular upgrade). For example, if the Kubernetes version is 1.31, the `osImageURL` name should include 1.31, 1_31, 1-31 or 131.
+The `osImageURL` must contain the `Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` version (in case of modular upgrade). For example, if the Kubernetes version is 1.35, the `osImageURL` name should include 1.35, 1_35, 1-35 or 135.
 
 >**_NOTE:_** osImageURL field cannot be set both in the `TinkerbellDatacenterConfig` and `TinkerbellMachineConfig` objects. If this value is set for `TinkerbellDatacenterConfig`, osImageURL has to be set to empty string `""` for all the `TinkerbellMachineConfigs`.
 
@@ -291,6 +289,21 @@ See [Boot Modes]({{< relref "customize/bare-metal-boot-modes/#iso-boot" >}}) for
 Optional field (string URL) to override the default AWS hosted location for the HookOS ISO.
 Use this field to host the HookOS ISO locally.
 See [Boot Modes]({{< relref "customize/bare-metal-boot-modes/#iso-boot" >}}) for details.
+
+{{% alert title="Important: HTTP Server Requirements for Hosting HookOS" color="warning" %}}
+When hosting HookOS images locally, your HTTP server **must support HTTP Range requests** (RFC 7233). BMC virtual media uses Range requests to stream the ISO in chunks.
+
+**Servers that work:** Apache, nginx, or any server that returns `206 Partial Content` for Range requests.
+
+**Servers that do NOT work:** Python's built-in `python3 -m http.server` (returns `200 OK` for Range requests, ignoring the Range header).
+
+If ISO boot fails with no clear error, verify your server supports Range requests:
+```bash
+curl -I -H "Range: bytes=0-1000" http://your-server/hook.iso
+# Should return: HTTP/1.1 206 Partial Content
+# NOT: HTTP/1.1 200 OK
+```
+{{% /alert %}}
 
 #### Example `TinkerbellDatacenterConfig.spec`
 ```yaml
@@ -327,8 +340,8 @@ In the example, there are `TinkerbellMachineConfig` sections for control plane (
 The following fields identify information needed to configure the nodes in each of those groups.
 >**_NOTE:_** Currently, you can only have one machine group for all machines in the control plane, although you can have multiple machine groups for the workers.
 >
-### hardwareSelector (required)
-Use fields under `hardwareSelector` to add key/value pair labels to match particular machines that you identified in the CSV file where you defined the machines in your cluster.
+### hardwareSelector (optional)
+Use `hardwareSelector` to add key/value pair labels to match particular machines that you identified in the CSV file where you defined the machines in your cluster.
 Choose any label name you like.
 For example, if you had added the label `node=cp-machine` to the machines listed in your CSV file that you want to be control plane nodes, the following `hardwareSelector` field would cause those machines to be added to the control plane:
 ```yaml
@@ -341,11 +354,115 @@ spec:
   hardwareSelector:
     node: "cp-machine"
 ```
+
+>**_NOTE:_** Either `hardwareSelector` or `hardwareAffinity` must be specified, but not both. Use `hardwareSelector` for simple single-label matching, or `hardwareAffinity` for advanced selection with multiple terms and weighted preferences.
+
+### hardwareAffinity (optional)
+Use `hardwareAffinity` for advanced hardware selection when you need more control than `hardwareSelector` provides. This field allows you to specify required and preferred affinity terms using Kubernetes-style label selectors.
+
+The `hardwareAffinity` field has two sub-fields:
+- `required`: A list of hardware affinity terms that are OR'd together. Hardware must match at least one term to be considered. At least one required term must be specified.
+- `preferred`: A list of weighted hardware affinity terms. Hardware matching these terms are preferred according to the weights provided (1-100), but are not required.
+
+#### hardwareAffinity.required
+Required hardware affinity terms. Each term contains a `labelSelector` with `matchLabels` and/or `matchExpressions`. Multiple terms in the `required` array are implicitly OR'd together - hardware must match at least one term to be eligible for selection.
+
+#### hardwareAffinity.preferred
+Preferred hardware affinity terms with weights. Each term contains:
+- `weight`: A value from 1-100 indicating preference strength
+- `hardwareAffinityTerm`: The affinity term with a `labelSelector`
+
+#### Example: Simple required affinity
+```yaml
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: TinkerbellMachineConfig
+metadata:
+  name: my-cluster-name-cp
+spec:
+  hardwareAffinity:
+    required:
+    - labelSelector:
+        matchLabels:
+          node: "cp-machine"
+  osFamily: ubuntu
+```
+
+#### Example: Multiple required terms (OR'd together)
+When you specify multiple items in the `required` array, they are implicitly OR'd together. Hardware must match at least one of the terms to be eligible. In this example, hardware in either `rack-1` OR `rack-2` will be selected:
+```yaml
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: TinkerbellMachineConfig
+metadata:
+  name: my-cluster-name-cp
+spec:
+  hardwareAffinity:
+    required:
+    - labelSelector:
+        matchLabels:
+          rack: "rack-1"
+    - labelSelector:
+        matchLabels:
+          rack: "rack-2"
+  osFamily: ubuntu
+```
+
+#### Example: Required with preferred terms
+```yaml
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: TinkerbellMachineConfig
+metadata:
+  name: my-cluster-name-workers
+spec:
+  hardwareAffinity:
+    required:
+    - labelSelector:
+        matchLabels:
+          role: "worker"
+    preferred:
+    - weight: 100
+      hardwareAffinityTerm:
+        labelSelector:
+          matchLabels:
+            gpu: "true"
+    - weight: 50
+      hardwareAffinityTerm:
+        labelSelector:
+          matchLabels:
+            ssd: "true"
+  osFamily: ubuntu
+```
+
+#### Example: Using matchExpressions for complex selection
+```yaml
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: TinkerbellMachineConfig
+metadata:
+  name: my-cluster-name-cp
+spec:
+  hardwareAffinity:
+    required:
+    - labelSelector:
+        matchExpressions:
+        - key: rack
+          operator: In
+          values:
+          - rack-1
+          - rack-2
+          - rack-3
+  osFamily: ubuntu
+```
+
+>**_NOTE:_** Either `hardwareSelector` or `hardwareAffinity` must be specified, but not both. Use `hardwareSelector` for simple single-label matching, or `hardwareAffinity` for advanced selection with multiple terms and weighted preferences.
+
 ### osFamily (required)
 Operating system on the machine. Permitted values: `ubuntu` and `redhat` (Default: `ubuntu`).
 
 ### osImageURL (required)
-Required field to set the operating system. In order to use Ubuntu or RHEL see [building baremetal node images]({{< relref "../../osmgmt/artifacts/#build-bare-metal-node-images" >}}). This field is also useful if you want to provide a customized operating system image or simply host the standard image locally. To upgrade a node or group of nodes to a new operating system version (ie. RHEL 8.7 to RHEL 8.8), modify this field to point to the new operating system image URL and run [upgrade cluster command]({{< relref "../../clustermgmt/cluster-upgrades/baremetal-upgrades/#upgrade-cluster-command" >}}). The `osImageURL` must contain the `Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` version (in case of modular upgrade). For example, if the Kubernetes version is 1.31, the `osImageURL` name should include 1.31, 1_31, 1-31 or 131.
+Required field to set the operating system. In order to use Ubuntu or RHEL see [building baremetal node images]({{< relref "../../osmgmt/artifacts/#build-bare-metal-node-images" >}}). This field is also useful if you want to provide a customized operating system image or simply host the standard image locally. To upgrade a node or group of nodes to a new operating system version (ie. RHEL 8.7 to RHEL 8.8), modify this field to point to the new operating system image URL and run [upgrade cluster command]({{< relref "../../clustermgmt/cluster-upgrades/baremetal-upgrades/#upgrade-cluster-command" >}}). The `osImageURL` must contain the `Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` version (in case of modular upgrade). For example, if the Kubernetes version is 1.35, the `osImageURL` name should include 1.35, 1_35, 1-35 or 135.
 
 >**_NOTE:_** If this value is set for a single `TinkerbellMachineConfig`, osImageURL has to be set for all the `TinkerbellMachineConfigs`. osImageURL field cannot be set both in the `TinkerbellDatacenterConfig` and `TinkerbellMachineConfig` objects. If set for `TinkerbellMachineConfig`, the value must be set to empty string `""` for `TinkerbellDatacenterConfig`
 

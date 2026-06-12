@@ -4,8 +4,10 @@
 package e2e
 
 import (
+	"context"
 	"time"
 
+	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -23,6 +25,11 @@ func runCertManagerRemoteClusterInstallSimpleFlow(test *framework.MulticlusterE2
 		e.ValidateClusterState()
 		e.VerifyPackageControllerNotInstalled()
 		test.ManagementCluster.SetPackageBundleActive()
+		if err := WaitForPackageNamespace(test.ManagementCluster, context.Background(),
+			kubeconfig.FromClusterName(test.ManagementCluster.ClusterName),
+			e.ClusterName, 5*time.Minute); err != nil {
+			e.T.Fatalf("package namespace not created on management cluster: %v", err)
+		}
 		packageName := "cert-manager"
 		packagePrefix := "test"
 		test.ManagementCluster.InstallCertManagerPackageWithAwsCredentials(packagePrefix, packageName, EksaPackagesNamespace, e.ClusterName)

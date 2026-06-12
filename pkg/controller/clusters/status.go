@@ -6,9 +6,11 @@ import (
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
-	v1 "k8s.io/api/core/v1"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
+	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -90,7 +92,7 @@ func UpdateClusterCertificateStatus(ctx context.Context, client client.Client, l
 }
 
 // updateConditionsForEtcdAndControlPlane updates the ControlPlaneReady condition if etcdadm cluster is not ready.
-func updateConditionsForEtcdAndControlPlane(cluster *anywherev1.Cluster, kcp *controlplanev1.KubeadmControlPlane, etcdadmCluster *etcdv1.EtcdadmCluster) {
+func updateConditionsForEtcdAndControlPlane(cluster *anywherev1.Cluster, kcp *controlplanev1beta2.KubeadmControlPlane, etcdadmCluster *etcdv1.EtcdadmCluster) {
 	// Make sure etcd cluster is ready before marking ControlPlaneReady status to true
 	// This condition happens while creating a workload cluster from the management cluster using controller
 	// where it tries to get the etcdadm cluster for the first time before it generates the resources.
@@ -108,7 +110,7 @@ func updateConditionsForEtcdAndControlPlane(cluster *anywherev1.Cluster, kcp *co
 
 // updateControlPlaneReadyCondition updates the ControlPlaneReady condition, after checking the state of the control plane
 // in the cluster.
-func updateControlPlaneReadyCondition(cluster *anywherev1.Cluster, kcp *controlplanev1.KubeadmControlPlane) {
+func updateControlPlaneReadyCondition(cluster *anywherev1.Cluster, kcp *controlplanev1beta2.KubeadmControlPlane) {
 	initializedCondition := v1beta1conditions.Get(cluster, anywherev1.ControlPlaneInitializedCondition)
 	if initializedCondition.Status != "True" {
 		v1beta1conditions.MarkFalse(cluster, anywherev1.ControlPlaneReadyCondition, initializedCondition.Reason, initializedCondition.Severity, "%s", initializedCondition.Message)
@@ -129,12 +131,18 @@ func updateControlPlaneReadyCondition(cluster *anywherev1.Cluster, kcp *controlp
 	// equal to the ready number of nodes in the cluster and they're all of the right version specified.
 
 	expected := cluster.Spec.ControlPlaneConfiguration.Count
-	totalReplicas := int(kcp.Status.Replicas)
+	var totalReplicas int
+	if kcp.Status.Replicas != nil {
+		totalReplicas = int(*kcp.Status.Replicas)
+	}
 
 	// First, in the case of a rolling upgrade, we get the number of outdated nodes, and as long as there are some,
 	// we want to reflect in the message that the Cluster is in progress updating the old nodes with the
 	// new machine spec.
-	updatedReplicas := int(kcp.Status.UpdatedReplicas)
+	var updatedReplicas int
+	if kcp.Status.UpToDateReplicas != nil {
+		updatedReplicas = int(*kcp.Status.UpToDateReplicas)
+	}
 	totalOutdated := totalReplicas - updatedReplicas
 
 	if totalOutdated > 0 {
@@ -160,7 +168,10 @@ func updateControlPlaneReadyCondition(cluster *anywherev1.Cluster, kcp *controlp
 		return
 	}
 
-	readyReplicas := int(kcp.Status.ReadyReplicas)
+	var readyReplicas int
+	if kcp.Status.ReadyReplicas != nil {
+		readyReplicas = int(*kcp.Status.ReadyReplicas)
+	}
 	if readyReplicas != expected {
 		v1beta1conditions.MarkFalse(cluster, anywherev1.ControlPlaneReadyCondition, anywherev1.NodesNotReadyReason, clusterv1.ConditionSeverityInfo, "Control plane nodes not ready yet, %d expected (%d ready)", expected, readyReplicas)
 		return
@@ -168,16 +179,16 @@ func updateControlPlaneReadyCondition(cluster *anywherev1.Cluster, kcp *controlp
 
 	// We check the condition signifying the overall health of the control plane components. Usually, the control plane should be healthy
 	// at this point but if that is not the case, we report it as an error.
-	kcpControlPlaneHealthyCondition := v1beta1conditions.Get(kcp, controlplanev1.ControlPlaneComponentsHealthyCondition)
-	if kcpControlPlaneHealthyCondition != nil && kcpControlPlaneHealthyCondition.Status == v1.ConditionFalse {
+	kcpControlPlaneHealthyCondition := meta.FindStatusCondition(kcp.GetConditions(), controlplanev1beta2.KubeadmControlPlaneControlPlaneComponentsHealthyCondition)
+	if kcpControlPlaneHealthyCondition != nil && kcpControlPlaneHealthyCondition.Status == metav1.ConditionFalse {
 		v1beta1conditions.MarkFalse(cluster, anywherev1.ControlPlaneReadyCondition, anywherev1.ControlPlaneComponentsUnhealthyReason, clusterv1.ConditionSeverityError, "%s", kcpControlPlaneHealthyCondition.Message)
 		return
 	}
 
-	// We check for the Ready condition on the kubeadm control plane as a final validation. Usually, the kcp objects
-	// should be ready at this point but if that is not the case, we report it as an error.
-	kubeadmControlPlaneReadyCondition := v1beta1conditions.Get(kcp, clusterv1.ReadyCondition)
-	if kubeadmControlPlaneReadyCondition != nil && kubeadmControlPlaneReadyCondition.Status == v1.ConditionFalse {
+	// We check for the Available condition on the kubeadm control plane as a final validation. Usually, the kcp objects
+	// should be available at this point but if that is not the case, we report it as an error.
+	kubeadmControlPlaneAvailableCondition := meta.FindStatusCondition(kcp.GetConditions(), clusterv1beta2.AvailableCondition)
+	if kubeadmControlPlaneAvailableCondition != nil && kubeadmControlPlaneAvailableCondition.Status == metav1.ConditionFalse {
 		v1beta1conditions.MarkFalse(cluster, anywherev1.ControlPlaneReadyCondition, anywherev1.KubeadmControlPlaneNotReadyReason, clusterv1.ConditionSeverityError, "Kubeadm control plane %s not ready yet", kcp.ObjectMeta.Name)
 		return
 	}
@@ -186,7 +197,7 @@ func updateControlPlaneReadyCondition(cluster *anywherev1.Cluster, kcp *controlp
 
 // updateControlPlaneInitializedCondition updates the ControlPlaneInitialized condition if it hasn't already been set.
 // This condition should be set only once.
-func updateControlPlaneInitializedCondition(cluster *anywherev1.Cluster, kcp *controlplanev1.KubeadmControlPlane) {
+func updateControlPlaneInitializedCondition(cluster *anywherev1.Cluster, kcp *controlplanev1beta2.KubeadmControlPlane) {
 	// Return early if the ControlPlaneInitializedCondition is already "True"
 	if v1beta1conditions.IsTrue(cluster, anywherev1.ControlPlaneInitializedCondition) {
 		return
@@ -205,7 +216,7 @@ func updateControlPlaneInitializedCondition(cluster *anywherev1.Cluster, kcp *co
 
 	// Then, we'll check explicitly for that the control plane is available. This way, we do not rely on CAPI
 	// to implicitly to fill out our v1beta1conditions reasons, and we can have custom messages.
-	available := v1beta1conditions.IsTrue(kcp, controlplanev1.AvailableCondition)
+	available := meta.IsStatusConditionTrue(kcp.GetConditions(), clusterv1beta2.AvailableCondition)
 	if !available {
 		v1beta1conditions.Set(cluster, controlPlaneInitializationInProgressCondition())
 		return
@@ -216,7 +227,7 @@ func updateControlPlaneInitializedCondition(cluster *anywherev1.Cluster, kcp *co
 
 // updateWorkersReadyCondition updates the WorkersReadyCondition condition after checking the state of the worker node groups
 // in the cluster.
-func updateWorkersReadyCondition(cluster *anywherev1.Cluster, machineDeployments []clusterv1.MachineDeployment) {
+func updateWorkersReadyCondition(cluster *anywherev1.Cluster, machineDeployments []clusterv1beta2.MachineDeployment) {
 	initializedCondition := v1beta1conditions.Get(cluster, anywherev1.ControlPlaneInitializedCondition)
 	if initializedCondition.Status != "True" {
 		v1beta1conditions.MarkFalse(cluster, anywherev1.WorkersReadyCondition, anywherev1.ControlPlaneNotInitializedReason, clusterv1.ConditionSeverityInfo, "")
@@ -254,9 +265,15 @@ func updateWorkersReadyCondition(cluster *anywherev1.Cluster, machineDeployments
 			}
 		}
 
-		totalReadyReplicas += int(md.Status.ReadyReplicas)
-		totalUpdatedReplicas += int(md.Status.UpdatedReplicas)
-		totalReplicas += int(md.Status.Replicas)
+		if md.Status.ReadyReplicas != nil {
+			totalReadyReplicas += int(*md.Status.ReadyReplicas)
+		}
+		if md.Status.UpToDateReplicas != nil {
+			totalUpdatedReplicas += int(*md.Status.UpToDateReplicas)
+		}
+		if md.Status.Replicas != nil {
+			totalReplicas += int(*md.Status.Replicas)
+		}
 	}
 
 	// There may be worker nodes that are not up to date yet in the case of a rolling upgrade,
@@ -298,7 +315,10 @@ func updateWorkersReadyCondition(cluster *anywherev1.Cluster, machineDeployments
 		if wng, exists := wngWithAutoScalingConfigurationMap[md.ObjectMeta.Name]; exists {
 			minCount := wng.MinCount
 			maxCount := wng.MaxCount
-			replicas := int(md.Status.Replicas)
+			var replicas int
+			if md.Status.Replicas != nil {
+				replicas = int(*md.Status.Replicas)
+			}
 			if replicas < minCount || replicas > maxCount {
 				v1beta1conditions.MarkFalse(cluster, anywherev1.WorkersReadyCondition, anywherev1.AutoscalerConstraintNotMetReason, clusterv1.ConditionSeverityInfo, "Worker nodes count for %s not between %d and %d yet (%d actual)", md.Name, minCount, maxCount, replicas)
 				return
@@ -309,17 +329,17 @@ func updateWorkersReadyCondition(cluster *anywherev1.Cluster, machineDeployments
 	// We check for the Ready condition on the machine deployments as a final validation. Usually, the md objects
 	// should be ready at this point but if that is not the case, we report it as an error.
 	for _, md := range machineDeployments {
-		mdv1beta1conditions := md.GetConditions()
-		if mdv1beta1conditions == nil {
+		mdConditions := md.GetConditions()
+		if mdConditions == nil {
 			continue
 		}
-		var machineDeploymentReadyCondition *clusterv1.Condition
-		for _, condition := range mdv1beta1conditions {
-			if condition.Type == clusterv1.ReadyCondition {
-				machineDeploymentReadyCondition = &condition
+		var machineDeploymentReadyCondition *metav1.Condition
+		for i := range mdConditions {
+			if mdConditions[i].Type == string(clusterv1beta2.ReadyCondition) {
+				machineDeploymentReadyCondition = &mdConditions[i]
 			}
 		}
-		if machineDeploymentReadyCondition != nil && machineDeploymentReadyCondition.Status == v1.ConditionFalse {
+		if machineDeploymentReadyCondition != nil && machineDeploymentReadyCondition.Status == metav1.ConditionFalse {
 			v1beta1conditions.MarkFalse(cluster, anywherev1.WorkersReadyCondition, anywherev1.MachineDeploymentNotReadyReason, clusterv1.ConditionSeverityError, "Machine deployment %s not ready yet", md.ObjectMeta.Name)
 			return
 		}

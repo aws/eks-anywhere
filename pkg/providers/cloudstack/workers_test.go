@@ -12,8 +12,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta3"
-	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -68,10 +68,10 @@ func TestWorkersSpec(t *testing.T) {
 						ProviderMachineTemplate: machineTemplate(),
 					},
 					{
-						KubeadmConfigTemplate: kubeadmConfigTemplate(func(kct *bootstrapv1.KubeadmConfigTemplate) {
+						KubeadmConfigTemplate: kubeadmConfigTemplate(func(kct *bootstrapv1beta2.KubeadmConfigTemplate) {
 							kct.Name = "test-md-1-1"
 						}),
-						MachineDeployment: machineDeployment(func(md *clusterv1.MachineDeployment) {
+						MachineDeployment: machineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 							md.Name = "test-md-1"
 							md.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "test-md-1-1"
 							md.Spec.Template.Spec.InfrastructureRef.Name = "test-md-1-1"
@@ -97,8 +97,8 @@ func TestWorkersSpec(t *testing.T) {
 			Expect: func() []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate] {
 				return []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
 					{
-						KubeadmConfigTemplate: kubeadmConfigTemplate(func(kct *bootstrapv1.KubeadmConfigTemplate) {
-							kct.Spec.Template.Spec.JoinConfiguration.NodeRegistration.Taints = []corev1.Taint{
+						KubeadmConfigTemplate: kubeadmConfigTemplate(func(kct *bootstrapv1beta2.KubeadmConfigTemplate) {
+							kct.Spec.Template.Spec.JoinConfiguration.NodeRegistration.Taints = &[]corev1.Taint{
 								{
 									Key:    "test-taint",
 									Value:  "value",
@@ -156,7 +156,7 @@ func TestWorkersSpec(t *testing.T) {
 			Expect: func() []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate] {
 				return []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
 					{
-						KubeadmConfigTemplate: kubeadmConfigTemplate(func(kct *bootstrapv1.KubeadmConfigTemplate) {
+						KubeadmConfigTemplate: kubeadmConfigTemplate(func(kct *bootstrapv1beta2.KubeadmConfigTemplate) {
 							kct.Spec.Template.Spec.PreKubeadmCommands = append(
 								kct.Spec.Template.Spec.PreKubeadmCommands,
 								"if [ ! -L foo ] ;\n  then\n    mv foo foo-$(tr -dc A-Za-z0-9 \u003c /dev/urandom | head -c 10) ;\n    mkdir -p bar \u0026\u0026 ln -s bar foo ;\n  else echo \"foo already symlnk\" ;\nfi",
@@ -220,8 +220,8 @@ func TestWorkersSpec(t *testing.T) {
 			Exists: func() []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate] {
 				return []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
 					{
-						KubeadmConfigTemplate: kubeadmConfigTemplate(func(kct *bootstrapv1.KubeadmConfigTemplate) {
-							kct.Spec.Template.Spec.JoinConfiguration.NodeRegistration.Taints = []corev1.Taint{
+						KubeadmConfigTemplate: kubeadmConfigTemplate(func(kct *bootstrapv1beta2.KubeadmConfigTemplate) {
+							kct.Spec.Template.Spec.JoinConfiguration.NodeRegistration.Taints = &[]corev1.Taint{
 								{
 									Key:    "test-taint",
 									Value:  "value",
@@ -237,9 +237,9 @@ func TestWorkersSpec(t *testing.T) {
 			Expect: func() []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate] {
 				return []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
 					{
-						KubeadmConfigTemplate: kubeadmConfigTemplate(func(kct *bootstrapv1.KubeadmConfigTemplate) {
+						KubeadmConfigTemplate: kubeadmConfigTemplate(func(kct *bootstrapv1beta2.KubeadmConfigTemplate) {
 							kct.Name = "test-md-0-2"
-							kct.Spec.Template.Spec.JoinConfiguration.NodeRegistration.Taints = []corev1.Taint{
+							kct.Spec.Template.Spec.JoinConfiguration.NodeRegistration.Taints = &[]corev1.Taint{
 								{
 									Key:    "change-taint",
 									Value:  "value",
@@ -247,7 +247,7 @@ func TestWorkersSpec(t *testing.T) {
 								},
 							}
 						}),
-						MachineDeployment: machineDeployment(func(md *clusterv1.MachineDeployment) {
+						MachineDeployment: machineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 							md.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "test-md-0-2"
 						}),
 						ProviderMachineTemplate: machineTemplate(),
@@ -274,10 +274,10 @@ func TestWorkersSpec(t *testing.T) {
 			Expect: func() []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate] {
 				return []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
 					{
-						KubeadmConfigTemplate: kubeadmConfigTemplate(func(kct *bootstrapv1.KubeadmConfigTemplate) {
+						KubeadmConfigTemplate: kubeadmConfigTemplate(func(kct *bootstrapv1beta2.KubeadmConfigTemplate) {
 							kct.Name = "test-md-0-1"
 						}),
-						MachineDeployment: machineDeployment(func(md *clusterv1.MachineDeployment) {
+						MachineDeployment: machineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 							md.Spec.Template.Spec.InfrastructureRef.Name = "test-md-0-2"
 							md.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "test-md-0-1"
 						}),
@@ -315,7 +315,7 @@ func TestWorkersSpec(t *testing.T) {
 				return []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
 					{
 						KubeadmConfigTemplate: kubeadmConfigTemplate(),
-						MachineDeployment: machineDeployment(func(md *clusterv1.MachineDeployment) {
+						MachineDeployment: machineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 							md.Spec.Template.Spec.InfrastructureRef.Name = "test-md-0-2"
 						}),
 						ProviderMachineTemplate: machineTemplate(func(csmt *cloudstackv1.CloudStackMachineTemplate) {
@@ -353,14 +353,14 @@ func TestWorkersSpec(t *testing.T) {
 			Expect: func() []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate] {
 				return []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
 					{
-						KubeadmConfigTemplate: kubeadmConfigTemplate(func(kct *bootstrapv1.KubeadmConfigTemplate) {
+						KubeadmConfigTemplate: kubeadmConfigTemplate(func(kct *bootstrapv1beta2.KubeadmConfigTemplate) {
 							kct.Name = "test-md-0-2"
 							kct.Spec.Template.Spec.PreKubeadmCommands = append(
 								kct.Spec.Template.Spec.PreKubeadmCommands,
 								"if [ ! -L foo ] ;\n  then\n    mv foo foo-$(tr -dc A-Za-z0-9 \u003c /dev/urandom | head -c 10) ;\n    mkdir -p bar \u0026\u0026 ln -s bar foo ;\n  else echo \"foo already symlnk\" ;\nfi",
 							)
 						}),
-						MachineDeployment: machineDeployment(func(md *clusterv1.MachineDeployment) {
+						MachineDeployment: machineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 							md.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "test-md-0-2"
 						}),
 						ProviderMachineTemplate: machineTemplate(func(csmt *cloudstackv1.CloudStackMachineTemplate) {
@@ -388,7 +388,7 @@ func TestWorkersSpec(t *testing.T) {
 				return []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
 					{
 						KubeadmConfigTemplate: kubeadmConfigTemplate(),
-						MachineDeployment: machineDeployment(func(md *clusterv1.MachineDeployment) {
+						MachineDeployment: machineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 							md.Spec.Template.Spec.InfrastructureRef.Name = "test-md-0-2"
 						}),
 						ProviderMachineTemplate: machineTemplate(func(csmt *cloudstackv1.CloudStackMachineTemplate) {
@@ -419,7 +419,7 @@ func TestWorkersSpec(t *testing.T) {
 				return []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
 					{
 						KubeadmConfigTemplate: kubeadmConfigTemplate(),
-						MachineDeployment: machineDeployment(func(md *clusterv1.MachineDeployment) {
+						MachineDeployment: machineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 							md.Spec.Template.Spec.InfrastructureRef.Name = "test-md-0-2"
 						}),
 						ProviderMachineTemplate: machineTemplate(func(csmt *cloudstackv1.CloudStackMachineTemplate) {
@@ -441,7 +441,7 @@ func TestWorkersSpec(t *testing.T) {
 				return []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
 					{
 						KubeadmConfigTemplate: kubeadmConfigTemplate(),
-						MachineDeployment: machineDeployment(func(md *clusterv1.MachineDeployment) {
+						MachineDeployment: machineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 							md.Spec.Template.Spec.InfrastructureRef.Name = "test-md-0-2"
 						}),
 						ProviderMachineTemplate: machineTemplate(func(csmt *cloudstackv1.CloudStackMachineTemplate) {
@@ -465,7 +465,7 @@ func TestWorkersSpec(t *testing.T) {
 				return []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
 					{
 						KubeadmConfigTemplate: kubeadmConfigTemplate(),
-						MachineDeployment: machineDeployment(func(md *clusterv1.MachineDeployment) {
+						MachineDeployment: machineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 							md.Spec.Template.Spec.InfrastructureRef.Name = "test-md-0-3"
 						}),
 						ProviderMachineTemplate: machineTemplate(func(csmt *cloudstackv1.CloudStackMachineTemplate) {
@@ -483,14 +483,14 @@ func TestWorkersSpec(t *testing.T) {
 			Exists: func() []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate] {
 				return []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
 					{
-						KubeadmConfigTemplate: kubeadmConfigTemplate(func(kct *bootstrapv1.KubeadmConfigTemplate) {
+						KubeadmConfigTemplate: kubeadmConfigTemplate(func(kct *bootstrapv1beta2.KubeadmConfigTemplate) {
 							kct.Name = "test-md-0-2"
 							kct.Spec.Template.Spec.PreKubeadmCommands = append(
 								kct.Spec.Template.Spec.PreKubeadmCommands,
 								"if [ ! -L foo ] ;\n  then\n    mv foo foo-$(tr -dc A-Za-z0-9 \u003c /dev/urandom | head -c 10) ;\n    mkdir -p bar \u0026\u0026 ln -s bar foo ;\n  else echo \"foo already symlnk\" ;\nfi",
 							)
 						}),
-						MachineDeployment: machineDeployment(func(md *clusterv1.MachineDeployment) {
+						MachineDeployment: machineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 							md.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "test-md-0-2"
 						}),
 						ProviderMachineTemplate: machineTemplate(func(csmt *cloudstackv1.CloudStackMachineTemplate) {
@@ -502,10 +502,10 @@ func TestWorkersSpec(t *testing.T) {
 			Expect: func() []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate] {
 				return []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
 					{
-						KubeadmConfigTemplate: kubeadmConfigTemplate(func(kct *bootstrapv1.KubeadmConfigTemplate) {
+						KubeadmConfigTemplate: kubeadmConfigTemplate(func(kct *bootstrapv1beta2.KubeadmConfigTemplate) {
 							kct.Name = "test-md-0-2"
 						}),
-						MachineDeployment: machineDeployment(func(md *clusterv1.MachineDeployment) {
+						MachineDeployment: machineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 							md.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "test-md-0-2"
 						}),
 						ProviderMachineTemplate: machineTemplate(),
@@ -533,7 +533,7 @@ func TestWorkersSpec(t *testing.T) {
 				return []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
 					{
 						KubeadmConfigTemplate: kubeadmConfigTemplate(),
-						MachineDeployment: machineDeployment(func(md *clusterv1.MachineDeployment) {
+						MachineDeployment: machineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 							md.Spec.Template.Spec.InfrastructureRef.Name = "test-md-0-2"
 						}),
 						ProviderMachineTemplate: machineTemplate(func(csmt *cloudstackv1.CloudStackMachineTemplate) {
@@ -564,7 +564,7 @@ func TestWorkersSpec(t *testing.T) {
 				return []clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
 					{
 						KubeadmConfigTemplate: kubeadmConfigTemplate(),
-						MachineDeployment: machineDeployment(func(md *clusterv1.MachineDeployment) {
+						MachineDeployment: machineDeployment(func(md *clusterv1beta2.MachineDeployment) {
 							md.Spec.Template.Spec.InfrastructureRef.Name = "test-md-0-2"
 						}),
 						ProviderMachineTemplate: machineTemplate(func(csmt *cloudstackv1.CloudStackMachineTemplate) {
@@ -649,7 +649,7 @@ func TestWorkersSpecRegistryMirrorConfiguration(t *testing.T) {
 	tests := []struct {
 		name         string
 		mirrorConfig *anywherev1.RegistryMirrorConfiguration
-		files        []bootstrapv1.File
+		files        []bootstrapv1beta2.File
 	}{
 		{
 			name:         "insecure skip verify",
@@ -672,7 +672,7 @@ func TestWorkersSpecRegistryMirrorConfiguration(t *testing.T) {
 			g.Expect(workers.Groups).To(HaveLen(2))
 			g.Expect(workers.Groups).To(ConsistOf(
 				clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
-					KubeadmConfigTemplate: kubeadmConfigTemplate(func(kct *bootstrapv1.KubeadmConfigTemplate) {
+					KubeadmConfigTemplate: kubeadmConfigTemplate(func(kct *bootstrapv1beta2.KubeadmConfigTemplate) {
 						kct.Spec.Template.Spec.Files = append(kct.Spec.Template.Spec.Files, tt.files...)
 						preKubeadmCommands := append([]string{"swapoff -a"}, test.RegistryMirrorSudoPreKubeadmCommands()...)
 						kct.Spec.Template.Spec.PreKubeadmCommands = append(preKubeadmCommands, kct.Spec.Template.Spec.PreKubeadmCommands[1:]...)
@@ -682,7 +682,7 @@ func TestWorkersSpecRegistryMirrorConfiguration(t *testing.T) {
 				},
 				clusterapi.WorkerGroup[*cloudstackv1.CloudStackMachineTemplate]{
 					KubeadmConfigTemplate: kubeadmConfigTemplate(
-						func(kct *bootstrapv1.KubeadmConfigTemplate) {
+						func(kct *bootstrapv1beta2.KubeadmConfigTemplate) {
 							kct.Name = "test-md-1-1"
 							kct.Spec.Template.Spec.Files = append(kct.Spec.Template.Spec.Files, tt.files...)
 							preKubeadmCommands := append([]string{"swapoff -a"}, test.RegistryMirrorSudoPreKubeadmCommands()...)
@@ -690,7 +690,7 @@ func TestWorkersSpecRegistryMirrorConfiguration(t *testing.T) {
 						},
 					),
 					MachineDeployment: machineDeployment(
-						func(md *clusterv1.MachineDeployment) {
+						func(md *clusterv1beta2.MachineDeployment) {
 							md.Name = "test-md-1"
 							md.Spec.Template.Spec.InfrastructureRef.Name = "test-md-1-1"
 							md.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "test-md-1-1"
@@ -732,11 +732,12 @@ func TestWorkersSpecUpgradeRolloutStrategy(t *testing.T) {
 	g.Expect(err).NotTo(HaveOccurred())
 	g.Expect(workers).NotTo(BeNil())
 	g.Expect(workers.Groups).To(HaveLen(1))
-	g.Expect(workers.Groups[0].MachineDeployment).To(Equal(machineDeployment(func(m *clusterv1.MachineDeployment) {
+	g.Expect(workers.Groups[0].MachineDeployment).To(Equal(machineDeployment(func(m *clusterv1beta2.MachineDeployment) {
 		maxSurge := intstr.FromInt(1)
 		maxUnavailable := intstr.FromInt(0)
-		m.Spec.Strategy = &clusterv1.MachineDeploymentStrategy{
-			RollingUpdate: &clusterv1.MachineRollingUpdateDeployment{
+		m.Spec.Rollout.Strategy = clusterv1beta2.MachineDeploymentRolloutStrategy{
+			Type: clusterv1beta2.RollingUpdateMachineDeploymentStrategyType,
+			RollingUpdate: clusterv1beta2.MachineDeploymentRolloutStrategyRollingUpdate{
 				MaxSurge:       &maxSurge,
 				MaxUnavailable: &maxUnavailable,
 			},
@@ -744,42 +745,42 @@ func TestWorkersSpecUpgradeRolloutStrategy(t *testing.T) {
 	})))
 }
 
-func machineDeployment(opts ...func(*clusterv1.MachineDeployment)) *clusterv1.MachineDeployment {
-	o := &clusterv1.MachineDeployment{
+func machineDeployment(opts ...func(*clusterv1beta2.MachineDeployment)) *clusterv1beta2.MachineDeployment {
+	o := &clusterv1beta2.MachineDeployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "MachineDeployment",
-			APIVersion: "cluster.x-k8s.io/v1beta1",
+			APIVersion: "cluster.x-k8s.io/v1beta2",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-md-0",
 			Namespace: "eksa-system",
 			Labels:    map[string]string{"cluster.x-k8s.io/cluster-name": "test"},
 		},
-		Spec: clusterv1.MachineDeploymentSpec{
+		Spec: clusterv1beta2.MachineDeploymentSpec{
 			ClusterName: "test",
 			Replicas:    ptr.Int32(3),
 			Selector: metav1.LabelSelector{
 				MatchLabels: map[string]string{},
 			},
-			Template: clusterv1.MachineTemplateSpec{
-				ObjectMeta: clusterv1.ObjectMeta{
+			Template: clusterv1beta2.MachineTemplateSpec{
+				ObjectMeta: clusterv1beta2.ObjectMeta{
 					Labels: map[string]string{"cluster.x-k8s.io/cluster-name": "test"},
 				},
-				Spec: clusterv1.MachineSpec{
+				Spec: clusterv1beta2.MachineSpec{
 					ClusterName: "test",
-					Bootstrap: clusterv1.Bootstrap{
-						ConfigRef: &corev1.ObjectReference{
-							Kind:       "KubeadmConfigTemplate",
-							Name:       "test-md-0-1",
-							APIVersion: "bootstrap.cluster.x-k8s.io/v1beta1",
+					Bootstrap: clusterv1beta2.Bootstrap{
+						ConfigRef: clusterv1beta2.ContractVersionedObjectReference{
+							Kind:     "KubeadmConfigTemplate",
+							Name:     "test-md-0-1",
+							APIGroup: "bootstrap.cluster.x-k8s.io",
 						},
 					},
-					InfrastructureRef: corev1.ObjectReference{
-						Kind:       "CloudStackMachineTemplate",
-						Name:       "test-md-0-1",
-						APIVersion: "infrastructure.cluster.x-k8s.io/v1beta3",
+					InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
+						Kind:     "CloudStackMachineTemplate",
+						Name:     "test-md-0-1",
+						APIGroup: "infrastructure.cluster.x-k8s.io",
 					},
-					Version: ptr.String("v1.21.2-eks-1-21-4"),
+					Version: "v1.21.2-eks-1-21-4",
 				},
 			},
 		},
@@ -792,24 +793,24 @@ func machineDeployment(opts ...func(*clusterv1.MachineDeployment)) *clusterv1.Ma
 	return o
 }
 
-func kubeadmConfigTemplate(opts ...func(*bootstrapv1.KubeadmConfigTemplate)) *bootstrapv1.KubeadmConfigTemplate {
-	o := &bootstrapv1.KubeadmConfigTemplate{
+func kubeadmConfigTemplate(opts ...func(*bootstrapv1beta2.KubeadmConfigTemplate)) *bootstrapv1beta2.KubeadmConfigTemplate {
+	o := &bootstrapv1beta2.KubeadmConfigTemplate{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "KubeadmConfigTemplate",
-			APIVersion: "bootstrap.cluster.x-k8s.io/v1beta1",
+			APIVersion: "bootstrap.cluster.x-k8s.io/v1beta2",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-md-0-1",
 			Namespace: "eksa-system",
 		},
-		Spec: bootstrapv1.KubeadmConfigTemplateSpec{
-			Template: bootstrapv1.KubeadmConfigTemplateResource{
-				Spec: bootstrapv1.KubeadmConfigSpec{
-					JoinConfiguration: &bootstrapv1.JoinConfiguration{
-						NodeRegistration: bootstrapv1.NodeRegistrationOptions{
+		Spec: bootstrapv1beta2.KubeadmConfigTemplateSpec{
+			Template: bootstrapv1beta2.KubeadmConfigTemplateResource{
+				Spec: bootstrapv1beta2.KubeadmConfigSpec{
+					JoinConfiguration: bootstrapv1beta2.JoinConfiguration{
+						NodeRegistration: bootstrapv1beta2.NodeRegistrationOptions{
 							Name:      "{{ ds.meta_data.hostname }}",
 							CRISocket: "/var/run/containerd/containerd.sock",
-							Taints: []corev1.Taint{
+							Taints: &[]corev1.Taint{
 								{
 									Key:       "key2",
 									Value:     "val2",
@@ -817,12 +818,12 @@ func kubeadmConfigTemplate(opts ...func(*bootstrapv1.KubeadmConfigTemplate)) *bo
 									TimeAdded: nil,
 								},
 							},
-							KubeletExtraArgs: map[string]string{
+							KubeletExtraArgs: clusterapi.ExtraArgs{
 								"anonymous-auth":    "false",
 								"provider-id":       "cloudstack:///'{{ ds.meta_data.instance_id }}'",
 								"read-only-port":    "0",
 								"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-							},
+							}.ToArgs(),
 						},
 					},
 					PreKubeadmCommands: []string{
@@ -833,14 +834,14 @@ func kubeadmConfigTemplate(opts ...func(*bootstrapv1.KubeadmConfigTemplate)) *bo
 						`echo "127.0.0.1   {{ ds.meta_data.hostname }}" >>/etc/hosts`,
 						`echo "{{ ds.meta_data.hostname }}" >/etc/hostname`,
 					},
-					Users: []bootstrapv1.User{
+					Users: []bootstrapv1beta2.User{
 						{
 							Name:              "mySshUsername",
-							Sudo:              ptr.String("ALL=(ALL) NOPASSWD:ALL"),
+							Sudo:              "ALL=(ALL) NOPASSWD:ALL",
 							SSHAuthorizedKeys: []string{"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ=="},
 						},
 					},
-					Format: bootstrapv1.Format("cloud-config"),
+					Format: bootstrapv1beta2.Format("cloud-config"),
 				},
 			},
 		},

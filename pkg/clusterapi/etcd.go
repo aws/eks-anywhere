@@ -3,10 +3,9 @@ package clusterapi
 import (
 	etcdbootstrapv1 "github.com/aws/etcdadm-bootstrap-provider/api/v1beta1"
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
-	v1 "k8s.io/api/core/v1"
-	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -28,22 +27,21 @@ func SetUbuntuConfigInEtcdCluster(etcd *etcdv1.EtcdadmCluster, versionsBundle *c
 }
 
 // SetEtcdConfigInCluster sets up the etcd config in CAPI Cluster.
-func setUnstackedEtcdConfigInCluster(cluster *clusterv1.Cluster, unstackedEtcdObject APIObject) {
-	cluster.Spec.ManagedExternalEtcdRef = &v1.ObjectReference{
-		APIVersion: unstackedEtcdObject.GetObjectKind().GroupVersionKind().GroupVersion().String(),
-		Kind:       unstackedEtcdObject.GetObjectKind().GroupVersionKind().Kind,
-		Name:       unstackedEtcdObject.GetName(),
-		Namespace:  constants.EksaSystemNamespace,
+func setUnstackedEtcdConfigInCluster(cluster *clusterv1beta2.Cluster, unstackedEtcdObject APIObject) {
+	cluster.Spec.ManagedExternalEtcdRef = &clusterv1beta2.ContractVersionedObjectReference{
+		APIGroup: unstackedEtcdObject.GetObjectKind().GroupVersionKind().Group,
+		Kind:     unstackedEtcdObject.GetObjectKind().GroupVersionKind().Kind,
+		Name:     unstackedEtcdObject.GetName(),
 	}
 }
 
 // SetUnstackedEtcdConfigInKubeadmControlPlaneForBottlerocket sets up unstacked etcd configuration in kubeadmControlPlane for bottlerocket.
-func SetUnstackedEtcdConfigInKubeadmControlPlaneForBottlerocket(kcp *controlplanev1.KubeadmControlPlane, externalEtcdConfig *v1alpha1.ExternalEtcdConfiguration) {
+func SetUnstackedEtcdConfigInKubeadmControlPlaneForBottlerocket(kcp *controlplanev1beta2.KubeadmControlPlane, externalEtcdConfig *v1alpha1.ExternalEtcdConfiguration) {
 	if externalEtcdConfig == nil {
 		return
 	}
 
-	kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External = &bootstrapv1.ExternalEtcd{
+	kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External = bootstrapv1beta2.ExternalEtcd{
 		Endpoints: []string{constants.PlaceholderExternalEtcdEndpoint},
 		CAFile:    "/var/lib/kubeadm/pki/etcd/ca.crt",
 		CertFile:  "/var/lib/kubeadm/pki/server-etcd-client.crt",
@@ -52,12 +50,12 @@ func SetUnstackedEtcdConfigInKubeadmControlPlaneForBottlerocket(kcp *controlplan
 }
 
 // SetUnstackedEtcdConfigInKubeadmControlPlaneForUbuntu sets up unstacked etcd configuration in kubeadmControlPlane for ubuntu.
-func SetUnstackedEtcdConfigInKubeadmControlPlaneForUbuntu(kcp *controlplanev1.KubeadmControlPlane, externalEtcdConfig *v1alpha1.ExternalEtcdConfiguration) {
+func SetUnstackedEtcdConfigInKubeadmControlPlaneForUbuntu(kcp *controlplanev1beta2.KubeadmControlPlane, externalEtcdConfig *v1alpha1.ExternalEtcdConfiguration) {
 	if externalEtcdConfig == nil {
 		return
 	}
 
-	kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External = &bootstrapv1.ExternalEtcd{
+	kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External = bootstrapv1beta2.ExternalEtcd{
 		Endpoints: []string{constants.PlaceholderExternalEtcdEndpoint},
 		CAFile:    "/etc/kubernetes/pki/etcd/ca.crt",
 		CertFile:  "/etc/kubernetes/pki/apiserver-etcd-client.crt",
@@ -66,12 +64,10 @@ func SetUnstackedEtcdConfigInKubeadmControlPlaneForUbuntu(kcp *controlplanev1.Ku
 }
 
 // setStackedEtcdConfigInKubeadmControlPlane sets up stacked etcd configuration in kubeadmControlPlane.
-func setStackedEtcdConfigInKubeadmControlPlane(kcp *controlplanev1.KubeadmControlPlane, etcd cluster.VersionedRepository) {
-	kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.Local = &bootstrapv1.LocalEtcd{
-		ImageMeta: bootstrapv1.ImageMeta{
-			ImageRepository: etcd.Repository,
-			ImageTag:        etcd.Tag,
-		},
-		ExtraArgs: SecureEtcdTlsCipherSuitesExtraArgs(),
+func setStackedEtcdConfigInKubeadmControlPlane(kcp *controlplanev1beta2.KubeadmControlPlane, etcd cluster.VersionedRepository) {
+	kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.Local = bootstrapv1beta2.LocalEtcd{
+		ImageRepository: etcd.Repository,
+		ImageTag:        etcd.Tag,
+		ExtraArgs:       SecureEtcdTlsCipherSuitesExtraArgs().ToArgs(),
 	}
 }

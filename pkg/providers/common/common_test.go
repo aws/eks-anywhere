@@ -10,7 +10,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/utils/ptr"
-	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -64,7 +64,7 @@ func TestGetCAPIBottlerocketSettingsConfig(t *testing.T) {
 		name           string
 		config         *v1alpha1.HostOSConfiguration
 		expected       string
-		brKubeSettings *bootstrapv1.BottlerocketKubernetesSettings
+		brKubeSettings *bootstrapv1beta2.BottlerocketKubernetesSettings
 	}{
 		{
 			name:           "nil config",
@@ -91,7 +91,7 @@ func TestGetCAPIBottlerocketSettingsConfig(t *testing.T) {
 			config: &v1alpha1.HostOSConfiguration{
 				BottlerocketConfiguration: &v1alpha1.BottlerocketConfiguration{},
 			},
-			brKubeSettings: &bootstrapv1.BottlerocketKubernetesSettings{},
+			brKubeSettings: &bootstrapv1beta2.BottlerocketKubernetesSettings{},
 			expected:       emptyKubernetesConfig,
 		},
 		{
@@ -99,7 +99,7 @@ func TestGetCAPIBottlerocketSettingsConfig(t *testing.T) {
 			config: &v1alpha1.HostOSConfiguration{
 				BottlerocketConfiguration: &v1alpha1.BottlerocketConfiguration{},
 			},
-			brKubeSettings: &bootstrapv1.BottlerocketKubernetesSettings{
+			brKubeSettings: &bootstrapv1beta2.BottlerocketKubernetesSettings{
 				AllowedUnsafeSysctls: []string{"foo", "bar"},
 			},
 			expected: allowedUnsafeSysctlsConfig,
@@ -109,7 +109,7 @@ func TestGetCAPIBottlerocketSettingsConfig(t *testing.T) {
 			config: &v1alpha1.HostOSConfiguration{
 				BottlerocketConfiguration: &v1alpha1.BottlerocketConfiguration{},
 			},
-			brKubeSettings: &bootstrapv1.BottlerocketKubernetesSettings{
+			brKubeSettings: &bootstrapv1beta2.BottlerocketKubernetesSettings{
 				ClusterDNSIPs: []string{"1.2.3.4", "5.6.7.8"},
 			},
 			expected: clusterDNSIPsConfig,
@@ -119,7 +119,7 @@ func TestGetCAPIBottlerocketSettingsConfig(t *testing.T) {
 			config: &v1alpha1.HostOSConfiguration{
 				BottlerocketConfiguration: &v1alpha1.BottlerocketConfiguration{},
 			},
-			brKubeSettings: &bootstrapv1.BottlerocketKubernetesSettings{
+			brKubeSettings: &bootstrapv1beta2.BottlerocketKubernetesSettings{
 				MaxPods:     100,
 				CPUCFSQuota: ptr.To(false),
 				CPUManagerReconcilePeriod: &v1.Duration{
@@ -141,7 +141,7 @@ func TestGetCAPIBottlerocketSettingsConfig(t *testing.T) {
 			name: "with kernel sysctl config",
 			config: &v1alpha1.HostOSConfiguration{
 				BottlerocketConfiguration: &v1alpha1.BottlerocketConfiguration{
-					Kernel: &bootstrapv1.BottlerocketKernelSettings{
+					Kernel: &bootstrapv1beta2.BottlerocketKernelSettings{
 						SysctlSettings: map[string]string{
 							"foo": "bar",
 						},
@@ -155,7 +155,7 @@ func TestGetCAPIBottlerocketSettingsConfig(t *testing.T) {
 			name: "with boot kernel parameters",
 			config: &v1alpha1.HostOSConfiguration{
 				BottlerocketConfiguration: &v1alpha1.BottlerocketConfiguration{
-					Boot: &bootstrapv1.BottlerocketBootSettings{
+					Boot: &bootstrapv1beta2.BottlerocketBootSettings{
 						BootKernelParameters: map[string][]string{
 							"foo": {
 								"abc",
@@ -245,7 +245,7 @@ func TestValidateBottlerocketKC(t *testing.T) {
 		name   string
 		subErr error
 		spec   *unstructured.Unstructured
-		br     *bootstrapv1.BottlerocketKubernetesSettings
+		br     *bootstrapv1beta2.BottlerocketKubernetesSettings
 	}{
 		{
 			name: "cp config",

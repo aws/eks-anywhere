@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
 	v1beta1patch "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/patch"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -85,7 +86,7 @@ func (r *NodeUpgradeReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, err
 	}
 
-	machineToBeUpgraded := &clusterv1.Machine{}
+	machineToBeUpgraded := &clusterv1beta2.Machine{}
 	if err := r.client.Get(ctx, GetNamespacedNameType(nodeUpgrade.Spec.Machine.Name, nodeUpgrade.Spec.Machine.Namespace), machineToBeUpgraded); err != nil {
 		return ctrl.Result{}, err
 	}
@@ -95,7 +96,7 @@ func (r *NodeUpgradeReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, err
 	}
 
-	if machineToBeUpgraded.Status.NodeRef == nil {
+	if !machineToBeUpgraded.Status.NodeRef.IsDefined() {
 		return ctrl.Result{}, fmt.Errorf("machine %s is missing nodeRef", machineToBeUpgraded.Name)
 	}
 
@@ -145,7 +146,7 @@ func (r *NodeUpgradeReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	return r.reconcile(ctx, log, machineToBeUpgraded, nodeUpgrade, rClient)
 }
 
-func (r *NodeUpgradeReconciler) reconcile(ctx context.Context, log logr.Logger, machineToBeUpgraded *clusterv1.Machine, nodeUpgrade *anywherev1.NodeUpgrade, remoteClient client.Client) (ctrl.Result, error) {
+func (r *NodeUpgradeReconciler) reconcile(ctx context.Context, log logr.Logger, machineToBeUpgraded *clusterv1beta2.Machine, nodeUpgrade *anywherev1.NodeUpgrade, remoteClient client.Client) (ctrl.Result, error) {
 	node := &corev1.Node{}
 	if err := remoteClient.Get(ctx, types.NamespacedName{Name: machineToBeUpgraded.Status.NodeRef.Name}, node); err != nil {
 		return reconcile.Result{}, err

@@ -5,8 +5,8 @@ import (
 
 	etcdbootstrapv1 "github.com/aws/etcdadm-bootstrap-provider/api/v1beta1"
 	. "github.com/onsi/gomega"
-	v1 "k8s.io/api/core/v1"
-	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1"
+	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
@@ -53,11 +53,10 @@ func TestClusterUnstackedEtcd(t *testing.T) {
 	}
 	got := clusterapi.Cluster(tt.clusterSpec, tt.providerCluster, tt.controlPlane, tt.unstackedEtcdCluster)
 	want := wantCluster()
-	want.Spec.ManagedExternalEtcdRef = &v1.ObjectReference{
-		APIVersion: "etcdcluster.cluster.x-k8s.io/v1beta1",
-		Kind:       "UnstackedEtcdCluster",
-		Name:       "unstacked-etcd-cluster",
-		Namespace:  "eksa-system",
+	want.Spec.ManagedExternalEtcdRef = &clusterv1beta2.ContractVersionedObjectReference{
+		APIGroup: "etcdcluster.cluster.x-k8s.io",
+		Kind:     "UnstackedEtcdCluster",
+		Name:     "unstacked-etcd-cluster",
 	}
 	tt.Expect(got).To(Equal(want))
 }
@@ -68,7 +67,7 @@ func TestSetUnstackedEtcdConfigInKubeadmControlPlaneForBottlerocket(t *testing.T
 		Count: 3,
 	}
 	got := wantKubeadmControlPlane()
-	got.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External = &bootstrapv1.ExternalEtcd{
+	got.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External = bootstrapv1beta2.ExternalEtcd{
 		Endpoints: []string{constants.PlaceholderExternalEtcdEndpoint},
 		CAFile:    "/var/lib/kubeadm/pki/etcd/ca.crt",
 		CertFile:  "/var/lib/kubeadm/pki/server-etcd-client.crt",
@@ -85,7 +84,7 @@ func TestSetUnstackedEtcdConfigInKubeadmControlPlaneForUbuntu(t *testing.T) {
 		Count: 3,
 	}
 	got := wantKubeadmControlPlane()
-	got.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External = &bootstrapv1.ExternalEtcd{
+	got.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.External = bootstrapv1beta2.ExternalEtcd{
 		Endpoints: []string{constants.PlaceholderExternalEtcdEndpoint},
 		CAFile:    "/etc/kubernetes/pki/etcd/ca.crt",
 		CertFile:  "/etc/kubernetes/pki/apiserver-etcd-client.crt",
@@ -99,14 +98,12 @@ func TestSetUnstackedEtcdConfigInKubeadmControlPlaneForUbuntu(t *testing.T) {
 func TestSetStackedEtcdConfigInKubeadmControlPlane(t *testing.T) {
 	tt := newApiBuilerTest(t)
 	want := wantKubeadmControlPlane()
-	want.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.Local = &bootstrapv1.LocalEtcd{
-		ImageMeta: bootstrapv1.ImageMeta{
-			ImageRepository: "public.ecr.aws/eks-distro/etcd-io",
-			ImageTag:        "v3.4.16-eks-1-21-9",
-		},
-		ExtraArgs: map[string]string{
+	want.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.Local = bootstrapv1beta2.LocalEtcd{
+		ImageRepository: "public.ecr.aws/eks-distro/etcd-io",
+		ImageTag:        "v3.4.16-eks-1-21-9",
+		ExtraArgs: clusterapi.ExtraArgs{
 			"cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-		},
+		}.ToArgs(),
 	}
 	got, err := clusterapi.KubeadmControlPlane(tt.clusterSpec, tt.providerMachineTemplate)
 	tt.Expect(err).To(Succeed())

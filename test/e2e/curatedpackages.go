@@ -113,6 +113,20 @@ func runCuratedPackageInstallSimpleFlowRegistryMirror(test *framework.ClusterE2E
 	runCuratedPackageInstall(test)
 }
 
+func WaitForPackageNamespace(test *framework.ClusterE2ETest, ctx context.Context, mgmtKubeconfig string, workloadClusterName string, timeout time.Duration) error {
+	ns := fmt.Sprintf("%s-%s", EksaPackagesNamespace, workloadClusterName)
+	end := time.Now().Add(timeout)
+	for time.Now().Before(end) {
+		_, err := test.KubectlClient.Execute(ctx, "get", "namespace", ns,
+			"--kubeconfig="+mgmtKubeconfig)
+		if err == nil {
+			return nil
+		}
+		time.Sleep(5 * time.Second)
+	}
+	return fmt.Errorf("timed out waiting for namespace %s to be created on management cluster (timeout: %s)", ns, timeout)
+}
+
 func runCuratedPackageRemoteClusterInstallSimpleFlow(test *framework.MulticlusterE2ETest) {
 	licenseToken := framework.GetLicenseToken2()
 	test.CreateManagementClusterWithConfig()
@@ -123,6 +137,11 @@ func runCuratedPackageRemoteClusterInstallSimpleFlow(test *framework.Multicluste
 		e.ValidateClusterState()
 		e.VerifyPackageControllerNotInstalled()
 		test.ManagementCluster.SetPackageBundleActive()
+		if err := WaitForPackageNamespace(test.ManagementCluster, context.Background(),
+			kubeconfig.FromClusterName(test.ManagementCluster.ClusterName),
+			e.ClusterName, 5*time.Minute); err != nil {
+			e.T.Fatalf("package namespace not created on management cluster: %v", err)
+		}
 		packageName := "hello-eks-anywhere"
 		packagePrefix := "test"
 		packageFile := e.BuildPackageConfigFile(packageName, packagePrefix, EksaPackagesNamespace)

@@ -12,7 +12,7 @@ We strongly advise performing regular cluster backups of all the EKS Anywhere cl
 
 ## Etcd backup
 
-For optimal cluster maintenance, it is crucial to perform regular etcd backups on all your EKS Anywhere management and workload clusters. **Always** take an etcd backup before performing an upgrade so it can be used to restore the cluster to a previous state in the event of a cluster upgrade failure. To create an etcd backup for your cluster, follow the guidelines provided in the [External etcd backup and restore]({{< relref "../etcd-backup-restore/etcdbackup" >}}) section.
+For optimal cluster maintenance, it is crucial to perform regular etcd backups on all your EKS Anywhere management and workload clusters. **Always** take an etcd backup before performing an upgrade so it can be used to restore the cluster to a previous state in the event of a cluster upgrade failure. To create an etcd backup for your cluster, follow the guidelines provided in the [External etcd backup and restore]({{< relref "../etcd-backup-restore/external-etcd-backup" >}}) section.
 
 
 ## Cluster API backup
@@ -50,7 +50,7 @@ BACKUP_DIRECTORY=backup-mgmt
 mkdir -p ${BACKUP_DIRECTORY}
 
 # Substitute the EKS Anywhere release version with whatever CLI version you are using
-EKSA_RELEASE_VERSION=v0.23.0
+EKSA_RELEASE_VERSION=v0.25.0
 BUNDLE_MANIFEST_URL=$(curl -s https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$EKSA_RELEASE_VERSION\").bundleManifestUrl")
 CLI_TOOLS_IMAGE=$(curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[0].eksa.cliTools.uri")
 

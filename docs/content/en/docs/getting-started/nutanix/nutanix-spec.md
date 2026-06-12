@@ -53,7 +53,7 @@ spec:
    machineGroupRef:
      kind: NutanixMachineConfig
      name: mgmt-etcd
- kubernetesVersion: "1.31"
+ kubernetesVersion: "1.35"
  workerNodeGroupConfigurations:
    - count: 3
      machineGroupRef:
@@ -118,7 +118,7 @@ spec:
    name: nx-cluster-01
    type: name
  image:
-   name: eksa-ubuntu-2004-kube-v1.31
+   name: eksa-ubuntu-2204-kube-v1.35
    type: name
  memorySize: 4Gi
  osFamily: ubuntu
@@ -150,7 +150,7 @@ spec:
    name: nx-cluster-01
    type: name
  image:
-   name: eksa-ubuntu-2004-kube-v1.31
+   name: eksa-ubuntu-2204-kube-v1.35
    type: name
  memorySize: 4Gi
  osFamily: ubuntu
@@ -179,7 +179,7 @@ spec:
    name: nx-cluster-01
    type: name
  image:
-   name: eksa-ubuntu-2004-kube-v1.31
+   name: eksa-ubuntu-2204-kube-v1.35
    type: name
  memorySize: 4Gi
  osFamily: ubuntu
@@ -361,11 +361,11 @@ Type to identify the OS image. (Permitted values: `name` or `uuid`)
 
 ### image.name (`image.name` or `image.uuid` required)
 Name of the image
-The `image.name` must contain the `Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` version (in case of modular upgrade). For example, if the Kubernetes version is 1.31, `image.name` must include 1.31, 1_31, 1-31 or 131.
+The `image.name` must contain the `Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` version (in case of modular upgrade). For example, if the Kubernetes version is 1.35, `image.name` must include 1.35, 1_35, 1-35 or 135.
 
 ### image.uuid (`image.name` or `image.uuid` required)
 UUID of the image
-The name of the image associated with the `uuid` must contain the `Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` version (in case of modular upgrade). For example, if the Kubernetes version is 1.31, the name associated with `image.uuid` field must include 1.31, 1_31, 1-31 or 131.
+The name of the image associated with the `uuid` must contain the `Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` version (in case of modular upgrade). For example, if the Kubernetes version is 1.35, the name associated with `image.uuid` field must include 1.35, 1_35, 1-35 or 135.
 
 ### memorySize (optional)
 Size of RAM on virtual machines (Default: `4Gi`)

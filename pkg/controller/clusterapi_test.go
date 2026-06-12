@@ -8,8 +8,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	controlplanev1 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
+	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	_ "github.com/aws/eks-anywhere/internal/test/envtest"
@@ -104,7 +104,7 @@ func TestGetMachineDeploymentsSuccess(t *testing.T) {
 	md1.Name = "md-1"
 
 	md1.Labels = map[string]string{
-		clusterv1.ClusterNameLabel: eksaCluster.Name,
+		clusterv1beta2.ClusterNameLabel: eksaCluster.Name,
 	}
 
 	md2 := md1.DeepCopy()
@@ -112,7 +112,7 @@ func TestGetMachineDeploymentsSuccess(t *testing.T) {
 
 	client := fake.NewClientBuilder().WithObjects(eksaCluster, md1, md2).Build()
 
-	g.Expect(controller.GetMachineDeployments(ctx, client, eksaCluster)).To(Equal([]clusterv1.MachineDeployment{*md1, *md2}))
+	g.Expect(controller.GetMachineDeployments(ctx, client, eksaCluster)).To(Equal([]clusterv1beta2.MachineDeployment{*md1, *md2}))
 }
 
 func TestGetMachineDeploymentsMachineDeploymentsInDifferentClusters(t *testing.T) {
@@ -122,18 +122,18 @@ func TestGetMachineDeploymentsMachineDeploymentsInDifferentClusters(t *testing.T
 	machineDeployment1 := machineDeployment()
 	machineDeployment1.Name = "md-1"
 	machineDeployment1.Labels = map[string]string{
-		clusterv1.ClusterNameLabel: eksaCluster.Name,
+		clusterv1beta2.ClusterNameLabel: eksaCluster.Name,
 	}
 
 	machineDeployment2 := machineDeployment()
 	machineDeployment2.Name = "md-2"
 	machineDeployment2.Labels = map[string]string{
-		clusterv1.ClusterNameLabel: "other-cluster",
+		clusterv1beta2.ClusterNameLabel: "other-cluster",
 	}
 
 	client := fake.NewClientBuilder().WithObjects(eksaCluster, machineDeployment1, machineDeployment2).Build()
 
-	g.Expect(controller.GetMachineDeployments(ctx, client, eksaCluster)).To(Equal([]clusterv1.MachineDeployment{*machineDeployment1}))
+	g.Expect(controller.GetMachineDeployments(ctx, client, eksaCluster)).To(Equal([]clusterv1beta2.MachineDeployment{*machineDeployment1}))
 }
 
 func TestGetMachineDeploymentsError(t *testing.T) {
@@ -172,22 +172,24 @@ func TestGetCapiClusterObjectKey(t *testing.T) {
 
 func eksaCluster() *anywherev1.Cluster {
 	return &anywherev1.Cluster{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       anywherev1.ClusterKind,
-			APIVersion: anywherev1.GroupVersion.String(),
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "my-cluster",
 		},
 	}
 }
 
-func capiCluster() *clusterv1.Cluster {
-	return &clusterv1.Cluster{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Cluster",
-			APIVersion: clusterv1.GroupVersion.String(),
+func capiCluster() *clusterv1beta2.Cluster {
+	return &clusterv1beta2.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "my-cluster",
+			Namespace:       "eksa-system",
+			ResourceVersion: "999",
 		},
+	}
+}
+
+func kubeadmControlPlane() *controlplanev1beta2.KubeadmControlPlane {
+	return &controlplanev1beta2.KubeadmControlPlane{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-cluster",
 			Namespace: "eksa-system",
@@ -195,25 +197,8 @@ func capiCluster() *clusterv1.Cluster {
 	}
 }
 
-func kubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
-	return &controlplanev1.KubeadmControlPlane{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "KubeadmControlPlane",
-			APIVersion: controlplanev1.GroupVersion.String(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "my-cluster",
-			Namespace: "eksa-system",
-		},
-	}
-}
-
-func machineDeployment() *clusterv1.MachineDeployment {
-	return &clusterv1.MachineDeployment{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "MachineDeployment",
-			APIVersion: clusterv1.GroupVersion.String(),
-		},
+func machineDeployment() *clusterv1beta2.MachineDeployment {
+	return &clusterv1beta2.MachineDeployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-cluster",
 			Namespace: "eksa-system",

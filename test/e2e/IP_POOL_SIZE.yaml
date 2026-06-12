@@ -1,0 +1,76 @@
+# IP pool size requirements for e2e tests.
+# Each entry maps a regex pattern to the number of IPs that should be
+# reserved for tests matching that pattern. The first matching pattern wins.
+# Tests that don't match any pattern default to 1 IP.
+#
+# IMPORTANT: More specific patterns MUST come before generic catch-all patterns.
+# Version numbers in test names (e.g., "133", "134to135") are wildcarded
+# with \d+ so that Kubernetes version bumps don't require YAML changes.
+
+# === High IP count tests (most specific first) ===
+
+# VSphere MulticlusterWorkloadClusterAPI: 1 mgmt + 4 workload = 5 IPs
+- pattern: "^TestVSphereKubernetes\\d+MulticlusterWorkloadClusterAPI$"
+  ipPoolSize: 5
+
+# VSphere MulticlusterWorkloadClusterGitHubFluxAPI: 1 mgmt + 3 workload = 4 IPs
+- pattern: "^TestVSphereKubernetes\\d+MulticlusterWorkloadClusterGitHubFluxAPI$"
+  ipPoolSize: 4
+
+# VSphere InPlaceUpgradeMulticluster: 1 mgmt + 3 workload = 4 IPs
+- pattern: "^TestVSphereInPlaceUpgradeMulticluster"
+  ipPoolSize: 4
+
+# CloudStack MulticlusterWorkloadCluster API variants: 1 mgmt + 2 workload = 3 IPs
+- pattern: "^TestCloudStack.*MulticlusterWorkloadCluster.*API"
+  ipPoolSize: 3
+
+# === Provider-specific multicluster tests (2 IPs: 1 mgmt + 1 workload) ===
+
+# VSphere-specific
+- pattern: "^TestVSphere.*UpgradeLabelsTaints.*API$"
+  ipPoolSize: 2
+- pattern: "^TestVSphere.*UpgradeWorkerNodeGroups.*API$"
+  ipPoolSize: 2
+- pattern: "^TestVSphere.*Cilium.*API$"
+  ipPoolSize: 2
+- pattern: "^TestVSphereUpgradeKubernetes\\d+Cilium"
+  ipPoolSize: 2
+- pattern: "^TestVSphere.*UpgradeFromLatestMinorRelease.*API$"
+  ipPoolSize: 2
+- pattern: "^TestVSphere.*UpgradeManagementComponents$"
+  ipPoolSize: 2
+- pattern: "^TestVSphere.*BottlerocketLabelsUpgradeFlow$"
+  ipPoolSize: 2
+- pattern: "^TestVSphere.*CuratedPackagesClusterAutoscaler"
+  ipPoolSize: 2
+- pattern: "^TestVSphereKubernetes\\d+AWSIamAuth$"
+  ipPoolSize: 2
+
+# CloudStack-specific
+- pattern: "^TestCloudStack.*RedhatProxyConfigAPI$"
+  ipPoolSize: 2
+- pattern: "^TestCloudStackKubernetes\\d+RedhatProxyConfig$"
+  ipPoolSize: 2
+- pattern: "^TestCloudStack.*KubeletConfiguration"
+  ipPoolSize: 2
+
+# Docker-specific
+- pattern: "^TestDockerInstall.*FluxDuringUpgrade$"
+  ipPoolSize: 2
+- pattern: "^TestDocker.*UpgradeFromLatestMinorRelease.*API$"
+  ipPoolSize: 2
+
+# === Generic catch-all patterns (MUST be last) ===
+
+# Any test with "Multicluster" in the name
+- pattern: "Multicluster"
+  ipPoolSize: 2
+
+# Any test with "WorkloadCluster" in the name (all are multicluster)
+- pattern: "WorkloadCluster"
+  ipPoolSize: 2
+
+# Any test with "CiliumSkipUpgrade" in the name
+- pattern: "CiliumSkipUpgrade"
+  ipPoolSize: 2
