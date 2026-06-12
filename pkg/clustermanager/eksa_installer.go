@@ -170,7 +170,7 @@ func (i *EKSAInstaller) applyBundles(ctx context.Context, log logr.Logger, clust
 	}
 
 	log.V(1).Info("Applying Bundles to cluster")
-	if err := i.client.ApplyKubeSpecFromBytes(ctx, cluster, bundleObj); err != nil {
+	if err := i.client.ApplyKubeSpecFromBytesServerSide(ctx, cluster, bundleObj); err != nil {
 		return fmt.Errorf("applying bundle spec: %v", err)
 	}
 

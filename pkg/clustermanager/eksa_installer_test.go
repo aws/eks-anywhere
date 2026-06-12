@@ -86,7 +86,8 @@ func TestEKSAInstallerInstallSuccessWithRealManifest(t *testing.T) {
 	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.AssignableToTypeOf(&appsv1.Deployment{}))
 	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.Any()).Times(expectedObjectCount)
 	tt.client.EXPECT().WaitForDeployment(tt.ctx, tt.cluster, "30m0s", "Available", "eksa-controller-manager", "eksa-system")
-	tt.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, gomock.Any()).Times(2)
+	tt.client.EXPECT().ApplyKubeSpecFromBytesServerSide(tt.ctx, tt.cluster, gomock.Any())
+	tt.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, gomock.Any())
 	tt.client.EXPECT().GetConfigMap(tt.ctx, tt.cluster.KubeconfigFile, gomock.Any(), gomock.Any()).Return(nil, errors.New("NotFound"))
 
 	tt.Expect(tt.installer.Install(tt.ctx, test.NewNullLogger(), tt.cluster, tt.newManagementComponents, tt.newSpec)).To(Succeed())
@@ -135,7 +136,7 @@ func TestEKSAInstallerInstallFailBundles(t *testing.T) {
 	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.AssignableToTypeOf(&appsv1.Deployment{}))
 	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.Any()).Times(expectedObjectCount)
 	tt.client.EXPECT().WaitForDeployment(tt.ctx, tt.cluster, "30m0s", "Available", "eksa-controller-manager", "eksa-system")
-	tt.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, gomock.Any()).Return(errors.New("test"))
+	tt.client.EXPECT().ApplyKubeSpecFromBytesServerSide(tt.ctx, tt.cluster, gomock.Any()).Return(errors.New("test"))
 
 	err = tt.installer.Install(tt.ctx, test.NewNullLogger(), tt.cluster, tt.newManagementComponents, tt.newSpec)
 	tt.Expect(err.Error()).To(ContainSubstring("applying bundle spec"))
@@ -156,7 +157,7 @@ func TestEKSAInstallerInstallFailEKSARelease(t *testing.T) {
 	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.AssignableToTypeOf(&appsv1.Deployment{}))
 	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.Any()).Times(expectedObjectCount)
 	tt.client.EXPECT().WaitForDeployment(tt.ctx, tt.cluster, "30m0s", "Available", "eksa-controller-manager", "eksa-system")
-	tt.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, gomock.Any())
+	tt.client.EXPECT().ApplyKubeSpecFromBytesServerSide(tt.ctx, tt.cluster, gomock.Any())
 	tt.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, gomock.Any()).Return(errors.New("test"))
 	tt.client.EXPECT().GetConfigMap(tt.ctx, tt.cluster.KubeconfigFile, gomock.Any(), gomock.Any()).Return(nil, errors.New("NotFound"))
 
@@ -240,7 +241,8 @@ func TestEKSAInstallerInstallSuccessWithTestManifest(t *testing.T) {
 	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, wantDeployment)
 	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, wantNamespace)
 	tt.client.EXPECT().WaitForDeployment(tt.ctx, tt.cluster, "30m0s", "Available", "eksa-controller-manager", "eksa-system")
-	tt.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, gomock.Any()).Times(2)
+	tt.client.EXPECT().ApplyKubeSpecFromBytesServerSide(tt.ctx, tt.cluster, gomock.Any())
+	tt.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, gomock.Any())
 	tt.client.EXPECT().GetConfigMap(tt.ctx, tt.cluster.KubeconfigFile, gomock.Any(), gomock.Any()).Return(configMap, nil)
 	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, configMap)
 
@@ -260,7 +262,8 @@ func TestEKSAInstallerInstallSuccessWithNoTimeout(t *testing.T) {
 	expectedObjectCount := strings.Count(manifest, "\n---\n") + 1
 	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.Any()).Times(expectedObjectCount)
 	tt.client.EXPECT().WaitForDeployment(tt.ctx, tt.cluster, maxTime.String(), "Available", "eksa-controller-manager", "eksa-system")
-	tt.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, gomock.Any()).Times(2)
+	tt.client.EXPECT().ApplyKubeSpecFromBytesServerSide(tt.ctx, tt.cluster, gomock.Any())
+	tt.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, gomock.Any())
 	tt.client.EXPECT().GetConfigMap(tt.ctx, tt.cluster.KubeconfigFile, gomock.Any(), gomock.Any()).Return(nil, errors.New("NotFound"))
 
 	tt.Expect(tt.installer.Install(tt.ctx, test.NewNullLogger(), tt.cluster, newManagementComponents, tt.newSpec)).To(Succeed())
@@ -457,7 +460,7 @@ func TestEKSAInstallerNewUpgraderConfigMap(t *testing.T) {
 	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.AssignableToTypeOf(&appsv1.Deployment{}))
 	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.Any()).Times(expectedObjectCount)
 	tt.client.EXPECT().WaitForDeployment(tt.ctx, tt.cluster, "30m0s", "Available", "eksa-controller-manager", "eksa-system")
-	tt.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, gomock.Any())
+	tt.client.EXPECT().ApplyKubeSpecFromBytesServerSide(tt.ctx, tt.cluster, gomock.Any())
 	tt.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, gomock.Any())
 	tt.client.EXPECT().GetConfigMap(tt.ctx, tt.cluster.KubeconfigFile, gomock.Any(), gomock.Any()).Return(nil, errors.New("NotFound"))
 
@@ -480,7 +483,7 @@ func TestEKSAInstallerNewUpgraderConfigMapFailure(t *testing.T) {
 	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.AssignableToTypeOf(&appsv1.Deployment{}))
 	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.Any()).Times(expectedObjectCount)
 	tt.client.EXPECT().WaitForDeployment(tt.ctx, tt.cluster, "30m0s", "Available", "eksa-controller-manager", "eksa-system")
-	tt.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, gomock.Any())
+	tt.client.EXPECT().ApplyKubeSpecFromBytesServerSide(tt.ctx, tt.cluster, gomock.Any())
 	tt.client.EXPECT().GetConfigMap(tt.ctx, tt.cluster.KubeconfigFile, gomock.Any(), gomock.Any()).Return(nil, errors.New(""))
 	err = tt.installer.Install(tt.ctx, test.NewNullLogger(), tt.cluster, tt.newManagementComponents, tt.newSpec)
 
@@ -515,7 +518,7 @@ func TestEKSAInstallerFailureApplyUpgraderConfigMap(t *testing.T) {
 	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.AssignableToTypeOf(&appsv1.Deployment{}))
 	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, gomock.Any()).Times(expectedObjectCount)
 	tt.client.EXPECT().WaitForDeployment(tt.ctx, tt.cluster, "30m0s", "Available", "eksa-controller-manager", "eksa-system")
-	tt.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, gomock.Any())
+	tt.client.EXPECT().ApplyKubeSpecFromBytesServerSide(tt.ctx, tt.cluster, gomock.Any())
 	tt.client.EXPECT().GetConfigMap(tt.ctx, tt.cluster.KubeconfigFile, gomock.Any(), gomock.Any()).Return(configMap, nil)
 	tt.client.EXPECT().Apply(tt.ctx, tt.cluster.KubeconfigFile, configMap).Return(errors.New(""))
 

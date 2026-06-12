@@ -346,6 +346,21 @@ func (k *Kubectl) ApplyKubeSpecFromBytesForce(ctx context.Context, cluster *type
 	return nil
 }
 
+
+// ApplyKubeSpecFromBytesServerSide applies a kubernetes spec using server-side apply.
+// This avoids the 262144 byte annotation limit for large resources like Bundles.
+func (k *Kubectl) ApplyKubeSpecFromBytesServerSide(ctx context.Context, cluster *types.Cluster, data []byte) error {
+	params := []string{"apply", "-f", "-", "--server-side", "--force-conflicts"}
+	if cluster.KubeconfigFile != "" {
+		params = append(params, "--kubeconfig", cluster.KubeconfigFile)
+	}
+	_, err := k.ExecuteWithStdin(ctx, data, params...)
+	if err != nil {
+		return fmt.Errorf("executing server-side apply: %v", err)
+	}
+	return nil
+}
+
 // DeleteManifest uses client-side logic to delete objects defined in a yaml manifest.
 func (k *Kubectl) DeleteManifest(ctx context.Context, kubeconfigPath, manifestPath string, opts ...KubectlOpt) error {
 	params := []string{

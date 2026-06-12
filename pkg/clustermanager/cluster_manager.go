@@ -643,7 +643,7 @@ func (c *ClusterManager) ApplyBundles(ctx context.Context, clusterSpec *cluster.
 		return fmt.Errorf("outputting bundle yaml: %v", err)
 	}
 	logger.V(1).Info("Applying Bundles to cluster")
-	err = c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, bundleObj)
+	err = c.clusterClient.ApplyKubeSpecFromBytesServerSide(ctx, cluster, bundleObj)
 	if err != nil {
 		return fmt.Errorf("applying bundle spec: %v", err)
 	}
