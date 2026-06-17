@@ -16,7 +16,7 @@ package v1alpha1
 
 // Manifests returns a map of manifests for different components in a VersionsBundle.
 func (vb *VersionsBundle) Manifests() map[string][]*string {
-	return map[string][]*string{
+	m := map[string][]*string{
 		"core-cluster-api": {
 			&vb.ClusterAPI.Components.URI,
 			&vb.ClusterAPI.Metadata.URI,
@@ -41,10 +41,6 @@ func (vb *VersionsBundle) Manifests() map[string][]*string {
 			&vb.VSphere.Components.URI,
 			&vb.VSphere.ClusterTemplate.URI,
 			&vb.VSphere.Metadata.URI,
-		},
-		"cluster-api-provider-cloudstack": {
-			&vb.CloudStack.Components.URI,
-			&vb.CloudStack.Metadata.URI,
 		},
 		"cluster-api-provider-tinkerbell": {
 			&vb.Tinkerbell.Components.URI,
@@ -79,6 +75,16 @@ func (vb *VersionsBundle) Manifests() map[string][]*string {
 			&vb.EksD.EksDReleaseUrl,
 		},
 	}
+
+	// CloudStack is deprecated — only include manifests if URIs are non-empty/non-placeholder.
+	if vb.CloudStack.Components.URI != "" && vb.CloudStack.Components.URI != "<placeholder>" {
+		m["cluster-api-provider-cloudstack"] = []*string{
+			&vb.CloudStack.Components.URI,
+			&vb.CloudStack.Metadata.URI,
+		}
+	}
+
+	return m
 }
 
 // Ovas returns a list of OVA archives in a VersionsBundle.
@@ -89,12 +95,19 @@ func (vb *VersionsBundle) Ovas() []Archive {
 }
 
 // CloudStackImages returns images needed for the CloudStack provider in a VersionsBundle.
+// Images with empty or placeholder URIs are skipped since CloudStack has been deprecated.
 func (vb *VersionsBundle) CloudStackImages() []Image {
-	return []Image{
+	images := make([]Image, 0, 3)
+	for _, img := range []Image{
 		vb.CloudStack.ClusterAPIController,
 		vb.CloudStack.KubeRbacProxy,
 		vb.CloudStack.KubeVip,
+	} {
+		if img.URI != "" && img.URI != "<placeholder>" {
+			images = append(images, img)
+		}
 	}
+	return images
 }
 
 // VsphereImages returns images needed for the vSphere provider in a VersionsBundle.

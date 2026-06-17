@@ -171,6 +171,70 @@ func TestClusterctlInitInfrastructure(t *testing.T) {
 	}
 }
 
+// TestClusterctlInitInfrastructureCloudStackPlaceholder verifies that when CloudStack bundle
+// URIs are placeholders (post-deprecation), the generated clusterctl config omits the
+// infrastructure-cloudstack image override entries.
+func TestClusterctlInitInfrastructureCloudStackPlaceholder(t *testing.T) {
+	_, writer := test.NewWriter(t)
+	clusterObj := &types.Cluster{Name: "cluster-name"}
+	defer func() {
+		if !t.Failed() {
+			os.RemoveAll(clusterObj.Name)
+		}
+	}()
+
+	ctrl := gomock.NewController(t)
+	reader := files.NewReader()
+	e := mockexecutables.NewMockExecutable(ctrl)
+	provider := mockproviders.NewMockProvider(ctrl)
+	ct := executables.NewClusterctl(e, writer, reader)
+
+	// Build management components with placeholder CloudStack URIs.
+	mc := cluster.ManagementComponentsFromBundles(clusterSpec.Bundles)
+	mc.CloudStack.ClusterAPIController.URI = "<placeholder>"
+	mc.CloudStack.KubeRbacProxy.URI = "<placeholder>"
+
+	env := map[string]string{"ENV_VAR1": "VALUE1"}
+	wantExecArgs := []interface{}{
+		"init", "--core", "cluster-api:v0.3.19", "--bootstrap", "kubeadm:v0.3.19",
+		"--control-plane", "kubeadm:v0.3.19", "--infrastructure", "vsphere:v0.7.8",
+		"--config", test.OfType("string"),
+		"--bootstrap", "etcdadm-bootstrap:v0.1.0", "--bootstrap", "etcdadm-controller:v0.1.0",
+	}
+
+	provider.EXPECT().Name().Return("vsphere")
+	provider.EXPECT().Version(mc).Return(versionBundle.VSphere.Version)
+	provider.EXPECT().EnvMap(mc, clusterSpec).Return(env, nil)
+	provider.EXPECT().GetInfrastructureBundle(mc).Return(&types.InfrastructureBundle{})
+
+	gotConfig := ""
+	e.EXPECT().ExecuteWithEnv(context.Background(), env, wantExecArgs...).Return(bytes.Buffer{}, nil).Times(1).Do(
+		func(ctx context.Context, envs map[string]string, args ...string) (bytes.Buffer, error) {
+			gotConfig = args[10]
+			tw := templater.New(writer)
+			path, err := os.Getwd()
+			if err != nil {
+				t.Fatalf("Error getting local folder: %v", err)
+			}
+			data := map[string]string{"dir": path}
+			template, err := os.ReadFile("testdata/clusterctl_expected_cloudstack_placeholder.yaml")
+			if err != nil {
+				t.Fatalf("Error reading expected config: %v", err)
+			}
+			filePath, err := tw.WriteToFile(string(template), data, "file_placeholder.tmp")
+			if err != nil {
+				t.Fatalf("Error writing expected config: %v", err)
+			}
+			test.AssertFilesEquals(t, gotConfig, filePath)
+			return bytes.Buffer{}, nil
+		},
+	)
+
+	if err := ct.InitInfrastructure(context.Background(), mc, clusterSpec, clusterObj, provider); err != nil {
+		t.Fatalf("Clusterctl.InitInfrastructure() error = %v, want nil", err)
+	}
+}
+
 func TestClusterctlInitInfrastructureEnvMapError(t *testing.T) {
 	cluster := &types.Cluster{Name: "cluster-name"}
 	defer func() {
