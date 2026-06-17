@@ -4,6 +4,11 @@ linkTitle: "Overview"
 weight: 10
 ---
 
+{{% alert title="Important: AWS CloudStack Availability" color="warning" %}}
+ Starting with upcoming EKS-A minor release v0.26, EKS-A will no longer include Cluster API providers for CloudStack or AWS Snow, and AWS will no longer support these providers. Users are encouraged to find alternative support.
+
+{{% /alert %}}
+
 ### What is EKS Anywhere?
 EKS Anywhere is container management software built by AWS that makes it easier to run and manage Kubernetes clusters on-premises and at the edge. EKS Anywhere is built on [EKS Distro](https://distro.eks.amazonaws.com/), which is the same reliable and secure Kubernetes distribution used by [Amazon Elastic Kubernetes Service (EKS)](https://docs.aws.amazon.com/eks/latest/userguide/what-is-eks.html) in AWS Cloud. EKS Anywhere simplifies Kubernetes cluster management through the automation of undifferentiated heavy lifting such as infrastructure setup and Kubernetes cluster lifecycle operations.
 
