@@ -1,3 +1,6 @@
+# AL2023 AMI with cgroup v2 support for Kubernetes 1.35+
+# Built from: eks-anywhere-build-tooling/projects/aws/eks-a-admin-image
+# AMI ID: ami-0344caed7e3017472 (us-west-2)
 AMI_OWNER_ID_FILTER=857151390494
-AMI_NAME_FILTER=eksa-integration-test-AL2-*
-AMI_DESCRIPTION_FILTER="*Kernel version 5.X*"
+AMI_NAME_FILTER=eksa-integration-test-AL2023-*
+AMI_DESCRIPTION_FILTER="*cgroup v2*"
