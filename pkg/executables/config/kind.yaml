@@ -40,14 +40,6 @@ kubeadmConfigPatches:
             readOnly: false
             pathType: DirectoryOrCreate
 {{- if (ge (atoi $kube_minor_version) 31) }}
-    controllerManager:
-        extraArgs:
-          feature-gates: "FailCgroupV1=false"
-    scheduler:
-        extraArgs:
-          feature-gates: "FailCgroupV1=false"
-{{- end }}
-{{- if (ge (atoi $kube_minor_version) 31) }}
   - |
     kind: InitConfiguration
     nodeRegistration:
