@@ -12,8 +12,13 @@ kubeadmConfigPatches:
       imageTag: {{.CorednsVersion}}
     etcd:
       local:
+{{- if (ge (atoi $kube_minor_version) 36) }}
+        imageRepository: registry.k8s.io
+        imageTag: 3.6.8-0
+{{- else }}
         imageRepository: {{.EtcdRepository}}
         imageTag: {{.EtcdVersion}}
+{{- end }}
     imageRepository: {{.KubernetesRepository}}
     kubernetesVersion: {{.KubernetesVersion}}
     apiServer:
@@ -24,7 +29,6 @@ kubeadmConfigPatches:
           audit-log-maxsize: "512"
           audit-log-path: /var/log/kubernetes/api-audit.log
           audit-policy-file: /etc/kubernetes/policies/audit-policy.yaml
-
         # mount new files / directories on the control plane
         extraVolumes:
           - name: audit-policies
