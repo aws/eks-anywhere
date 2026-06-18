@@ -7,7 +7,7 @@ description: >
 ---
 
 {{% alert title="Important: AWS CloudStack Availability" color="warning" %}}
- Starting with upcoming EKS-A minor release v0.26, EKS-A will no longer include Cluster API providers for CloudStack or AWS Snow, and AWS will no longer support these providers. Users are encouraged to find alternative support.
+Effective with EKS Anywhere release v0.26, AWS will remove the Cluster API providers for CloudStack and AWS Snow from the EKS Anywhere distribution. Following this release, these providers will no longer be maintained, updated, or supported by AWS. Customers currently using these providers are encouraged to find alternative solutions.
 
 {{% /alert %}}
 
