@@ -142,37 +142,19 @@ spec:
       version: v1.19.4-1
     cloudStack:
       clusterAPIController:
-        arch:
-        - amd64
-        - arm64
-        description: Container image for cluster-api-provider-cloudstack image
-        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-cloudstack
-        os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.6.1-eks-a-v0.0.0-dev-build.1
+        uri: <placeholder>
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.6.1/infrastructure-components.yaml
+        uri: <placeholder>
       kubeRbacProxy:
-        arch:
-        - amd64
-        - arm64
-        description: Container image for kube-rbac-proxy image
-        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
-        os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.20.2-eks-a-v0.0.0-dev-build.1
+        uri: <placeholder>
       kubeVip:
-        arch:
-        - amd64
-        - arm64
-        description: Container image for kube-vip image
-        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
-        os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v1.0.4-eks-a-v0.0.0-dev-build.1
+        uri: <placeholder>
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.6.1/metadata.yaml
-      version: v0.6.1+abcdef1
+        uri: <placeholder>
+      version: deprecated
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.13.2/core-components.yaml
@@ -914,37 +896,19 @@ spec:
       version: v1.19.4-1
     cloudStack:
       clusterAPIController:
-        arch:
-        - amd64
-        - arm64
-        description: Container image for cluster-api-provider-cloudstack image
-        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-cloudstack
-        os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.6.1-eks-a-v0.0.0-dev-build.1
+        uri: <placeholder>
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.6.1/infrastructure-components.yaml
+        uri: <placeholder>
       kubeRbacProxy:
-        arch:
-        - amd64
-        - arm64
-        description: Container image for kube-rbac-proxy image
-        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
-        os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.20.2-eks-a-v0.0.0-dev-build.1
+        uri: <placeholder>
       kubeVip:
-        arch:
-        - amd64
-        - arm64
-        description: Container image for kube-vip image
-        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
-        os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v1.0.4-eks-a-v0.0.0-dev-build.1
+        uri: <placeholder>
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.6.1/metadata.yaml
-      version: v0.6.1+abcdef1
+        uri: <placeholder>
+      version: deprecated
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.13.2/core-components.yaml
@@ -1686,37 +1650,19 @@ spec:
       version: v1.19.4-1
     cloudStack:
       clusterAPIController:
-        arch:
-        - amd64
-        - arm64
-        description: Container image for cluster-api-provider-cloudstack image
-        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-cloudstack
-        os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.6.1-eks-a-v0.0.0-dev-build.1
+        uri: <placeholder>
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.6.1/infrastructure-components.yaml
+        uri: <placeholder>
       kubeRbacProxy:
-        arch:
-        - amd64
-        - arm64
-        description: Container image for kube-rbac-proxy image
-        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
-        os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.20.2-eks-a-v0.0.0-dev-build.1
+        uri: <placeholder>
       kubeVip:
-        arch:
-        - amd64
-        - arm64
-        description: Container image for kube-vip image
-        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
-        os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v1.0.4-eks-a-v0.0.0-dev-build.1
+        uri: <placeholder>
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.6.1/metadata.yaml
-      version: v0.6.1+abcdef1
+        uri: <placeholder>
+      version: deprecated
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.13.2/core-components.yaml
@@ -2458,37 +2404,19 @@ spec:
       version: v1.19.4-1
     cloudStack:
       clusterAPIController:
-        arch:
-        - amd64
-        - arm64
-        description: Container image for cluster-api-provider-cloudstack image
-        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-cloudstack
-        os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.6.1-eks-a-v0.0.0-dev-build.1
+        uri: <placeholder>
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.6.1/infrastructure-components.yaml
+        uri: <placeholder>
       kubeRbacProxy:
-        arch:
-        - amd64
-        - arm64
-        description: Container image for kube-rbac-proxy image
-        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
-        os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.20.2-eks-a-v0.0.0-dev-build.1
+        uri: <placeholder>
       kubeVip:
-        arch:
-        - amd64
-        - arm64
-        description: Container image for kube-vip image
-        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
-        os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v1.0.4-eks-a-v0.0.0-dev-build.1
+        uri: <placeholder>
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.6.1/metadata.yaml
-      version: v0.6.1+abcdef1
+        uri: <placeholder>
+      version: deprecated
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.13.2/core-components.yaml
@@ -3230,37 +3158,19 @@ spec:
       version: v1.19.4-1
     cloudStack:
       clusterAPIController:
-        arch:
-        - amd64
-        - arm64
-        description: Container image for cluster-api-provider-cloudstack image
-        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-cloudstack
-        os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.6.1-eks-a-v0.0.0-dev-build.1
+        uri: <placeholder>
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.6.1/infrastructure-components.yaml
+        uri: <placeholder>
       kubeRbacProxy:
-        arch:
-        - amd64
-        - arm64
-        description: Container image for kube-rbac-proxy image
-        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
-        os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.20.2-eks-a-v0.0.0-dev-build.1
+        uri: <placeholder>
       kubeVip:
-        arch:
-        - amd64
-        - arm64
-        description: Container image for kube-vip image
-        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
-        os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v1.0.4-eks-a-v0.0.0-dev-build.1
+        uri: <placeholder>
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.6.1/metadata.yaml
-      version: v0.6.1+abcdef1
+        uri: <placeholder>
+      version: deprecated
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.13.2/core-components.yaml
@@ -4002,37 +3912,19 @@ spec:
       version: v1.19.4-1
     cloudStack:
       clusterAPIController:
-        arch:
-        - amd64
-        - arm64
-        description: Container image for cluster-api-provider-cloudstack image
-        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-cloudstack
-        os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.6.1-eks-a-v0.0.0-dev-build.1
+        uri: <placeholder>
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.6.1/infrastructure-components.yaml
+        uri: <placeholder>
       kubeRbacProxy:
-        arch:
-        - amd64
-        - arm64
-        description: Container image for kube-rbac-proxy image
-        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
-        os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.20.2-eks-a-v0.0.0-dev-build.1
+        uri: <placeholder>
       kubeVip:
-        arch:
-        - amd64
-        - arm64
-        description: Container image for kube-vip image
-        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
-        os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v1.0.4-eks-a-v0.0.0-dev-build.1
+        uri: <placeholder>
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.6.1/metadata.yaml
-      version: v0.6.1+abcdef1
+        uri: <placeholder>
+      version: deprecated
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.13.2/core-components.yaml
@@ -4774,37 +4666,19 @@ spec:
       version: v1.19.4-1
     cloudStack:
       clusterAPIController:
-        arch:
-        - amd64
-        - arm64
-        description: Container image for cluster-api-provider-cloudstack image
-        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-cloudstack
-        os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.6.1-eks-a-v0.0.0-dev-build.1
+        uri: <placeholder>
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.6.1/infrastructure-components.yaml
+        uri: <placeholder>
       kubeRbacProxy:
-        arch:
-        - amd64
-        - arm64
-        description: Container image for kube-rbac-proxy image
-        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
-        os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.20.2-eks-a-v0.0.0-dev-build.1
+        uri: <placeholder>
       kubeVip:
-        arch:
-        - amd64
-        - arm64
-        description: Container image for kube-vip image
-        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
-        os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v1.0.4-eks-a-v0.0.0-dev-build.1
+        uri: <placeholder>
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.6.1/metadata.yaml
-      version: v0.6.1+abcdef1
+        uri: <placeholder>
+      version: deprecated
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.13.2/core-components.yaml
@@ -5546,37 +5420,19 @@ spec:
       version: v1.19.4-1
     cloudStack:
       clusterAPIController:
-        arch:
-        - amd64
-        - arm64
-        description: Container image for cluster-api-provider-cloudstack image
-        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-cloudstack
-        os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.6.1-eks-a-v0.0.0-dev-build.1
+        uri: <placeholder>
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.6.1/infrastructure-components.yaml
+        uri: <placeholder>
       kubeRbacProxy:
-        arch:
-        - amd64
-        - arm64
-        description: Container image for kube-rbac-proxy image
-        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
-        os: linux
-        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.20.2-eks-a-v0.0.0-dev-build.1
+        uri: <placeholder>
       kubeVip:
-        arch:
-        - amd64
-        - arm64
-        description: Container image for kube-vip image
-        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
-        os: linux
-        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v1.0.4-eks-a-v0.0.0-dev-build.1
+        uri: <placeholder>
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.6.1/metadata.yaml
-      version: v0.6.1+abcdef1
+        uri: <placeholder>
+      version: deprecated
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.13.2/core-components.yaml
