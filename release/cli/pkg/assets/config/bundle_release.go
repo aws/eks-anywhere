@@ -203,29 +203,7 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 			},
 		},
 	},
-	// Cluster-api-provider-cloudstack artifacts
-	{
-		ProjectName: "cluster-api-provider-cloudstack",
-		ProjectPath: "projects/kubernetes-sigs/cluster-api-provider-cloudstack",
-		Images: []*assettypes.Image{
-			{
-				RepoName:  "manager",
-				AssetName: "cluster-api-provider-cloudstack",
-			},
-		},
-		ImageRepoPrefix: "kubernetes-sigs/cluster-api-provider-cloudstack/release",
-		ImageTagOptions: []string{
-			"gitTag",
-			"projectPath",
-		},
-		Manifests: []*assettypes.ManifestComponent{
-			{
-				Name:          "infrastructure-cloudstack",
-				ManifestFiles: []string{"infrastructure-components.yaml", "metadata.yaml"},
-			},
-		},
-		UsesKubeRbacProxy: true,
-	},
+	// Cluster-api-provider-cloudstack has been deprecated and removed from the bundle release pipeline.
 	// Cluster-api-provider-docker artifacts
 	{
 		ProjectName: "cluster-api-provider-docker",
