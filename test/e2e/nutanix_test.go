@@ -13,10 +13,10 @@ import (
 )
 
 // Curated Packages
-func TestNutanixKubernetes129UbuntuCuratedPackagesSimpleFlow(t *testing.T) {
+func TestNutanixKubernetes136UbuntuCuratedPackagesSimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
-		framework.NewNutanix(t, framework.WithUbuntu2204Kubernetes129Nutanix()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
+		framework.NewNutanix(t, framework.WithUbuntu2204136Nutanix()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube136)),
 	)
 	runCuratedPackageInstallSimpleFlow(test)
 }
@@ -70,11 +70,11 @@ func TestNutanixKubernetes135UbuntuCuratedPackagesSimpleFlow(t *testing.T) {
 }
 
 // Emissary
-func TestNutanixKubernetes129UbuntuCuratedPackagesEmissarySimpleFlow(t *testing.T) {
+func TestNutanixKubernetes136UbuntuCuratedPackagesEmissarySimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
-		framework.NewNutanix(t, framework.WithUbuntu2204Kubernetes129Nutanix()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
+		framework.NewNutanix(t, framework.WithUbuntu2204136Nutanix()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube136)),
 	)
 	runCuratedPackageEmissaryInstallSimpleFlow(test)
 }
@@ -134,11 +134,11 @@ func TestNutanixKubernetes135UbuntuCuratedPackagesEmissarySimpleFlow(t *testing.
 }
 
 // ADOT
-func TestNutanixKubernetes129UbuntuCuratedPackagesAdotSimpleFlow(t *testing.T) {
+func TestNutanixKubernetes136UbuntuCuratedPackagesAdotSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
-		framework.NewNutanix(t, framework.WithUbuntu2204Kubernetes129Nutanix()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
+		framework.NewNutanix(t, framework.WithUbuntu2204136Nutanix()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube136)),
 	)
 	runCuratedPackagesAdotInstallSimpleFlow(test)
 }
@@ -198,11 +198,11 @@ func TestNutanixKubernetes135UbuntuCuratedPackagesAdotSimpleFlow(t *testing.T) {
 }
 
 // Prometheus
-func TestNutanixKubernetes129UbuntuCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
+func TestNutanixKubernetes136UbuntuCuratedPackagesPrometheusSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
-		framework.NewNutanix(t, framework.WithUbuntu2204Kubernetes129Nutanix()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
+		framework.NewNutanix(t, framework.WithUbuntu2204136Nutanix()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube136)),
 	)
 	runCuratedPackagesPrometheusInstallSimpleFlow(test)
 }
@@ -262,13 +262,13 @@ func TestNutanixKubernetes135UbuntuCuratedPackagesPrometheusSimpleFlow(t *testin
 }
 
 // Cluster Autoscaler
-func TestNutanixKubernetes129UbuntuCuratedPackagesClusterAutoscalerSimpleFlow(t *testing.T) {
+func TestNutanixKubernetes136UbuntuCuratedPackagesClusterAutoscalerSimpleFlow(t *testing.T) {
 	minNodes := 1
 	maxNodes := 2
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
-		framework.NewNutanix(t, framework.WithUbuntu2204Kubernetes129Nutanix()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129), api.WithWorkerNodeCount(minNodes), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
+		framework.NewNutanix(t, framework.WithUbuntu2204136Nutanix()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube136), api.WithWorkerNodeCount(minNodes), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
 	)
 	runAutoscalerWithMetricsServerSimpleFlow(test)
 }
@@ -340,10 +340,10 @@ func TestNutanixKubernetes135UbuntuCuratedPackagesClusterAutoscalerSimpleFlow(t 
 }
 
 // Harbor
-func TestNutanixKubernetes129UbuntuCuratedPackagesHarborSimpleFlow(t *testing.T) {
+func TestNutanixKubernetes136UbuntuCuratedPackagesHarborSimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
-		framework.NewNutanix(t, framework.WithUbuntu2204Kubernetes129Nutanix()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
+		framework.NewNutanix(t, framework.WithUbuntu2204136Nutanix()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube136)),
 	)
 	runCuratedPackageHarborInstallSimpleFlowLocalStorageProvisioner(test)
 }
@@ -397,11 +397,11 @@ func TestNutanixKubernetes135UbuntuCuratedPackagesHarborSimpleFlow(t *testing.T)
 }
 
 // Simple Flow
-func TestNutanixKubernetes129Ubuntu2204SimpleFlowWithName(t *testing.T) {
+func TestNutanixKubernetes136Ubuntu2204SimpleFlowWithName(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewNutanix(t, framework.WithUbuntu2204Kubernetes129Nutanix()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
+		framework.NewNutanix(t, framework.WithUbuntu2204136Nutanix()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube136)),
 	)
 	runSimpleFlow(test)
 }
@@ -460,15 +460,6 @@ func TestNutanixKubernetes135Ubuntu2204SimpleFlowWithName(t *testing.T) {
 	runSimpleFlow(test)
 }
 
-func TestNutanixKubernetes129RedHat8SimpleFlowWithName(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewNutanix(t, framework.WithRedHat129Nutanix()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
-	)
-	runSimpleFlow(test)
-}
-
 func TestNutanixKubernetes130RedHat8SimpleFlowWithName(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -487,11 +478,11 @@ func TestNutanixKubernetes131RedHat8SimpleFlowWithName(t *testing.T) {
 	runSimpleFlow(test)
 }
 
-func TestNutanixKubernetes129RedHat9SimpleFlowWithName(t *testing.T) {
+func TestNutanixKubernetes136RedHat9SimpleFlowWithName(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewNutanix(t, framework.WithRedHat9Kubernetes129Nutanix()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
+		framework.NewNutanix(t, framework.WithRedHat9Kubernetes136Nutanix()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube136)),
 	)
 	runSimpleFlow(test)
 }
@@ -532,13 +523,13 @@ func TestNutanixKubernetes133RedHat9SimpleFlowWithName(t *testing.T) {
 	runSimpleFlow(test)
 }
 
-func TestNutanixKubernetes129Ubuntu2204SimpleFlowWithUUID(t *testing.T) {
+func TestNutanixKubernetes136Ubuntu2204SimpleFlowWithUUID(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewNutanix(t, framework.WithUbuntu2204Kubernetes129NutanixUUID(),
+		framework.NewNutanix(t, framework.WithUbuntu2204136NutanixUUID(),
 			framework.WithPrismElementClusterUUID(),
 			framework.WithNutanixSubnetUUID()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube136)),
 	)
 	runSimpleFlow(test)
 }
@@ -609,13 +600,13 @@ func TestNutanixKubernetes135Ubuntu2204SimpleFlowWithUUID(t *testing.T) {
 	runSimpleFlow(test)
 }
 
-func TestNutanixKubernetes129RedHatSimpleFlowWithUUID(t *testing.T) {
+func TestNutanixKubernetes136RedHat9SimpleFlowWithUUID(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewNutanix(t, framework.WithRedHat129NutanixUUID(),
+		framework.NewNutanix(t, framework.WithRedHat9Kubernetes136NutanixUUID(),
 			framework.WithPrismElementClusterUUID(),
 			framework.WithNutanixSubnetUUID()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube136)),
 	)
 	runSimpleFlow(test)
 }
@@ -638,17 +629,6 @@ func TestNutanixKubernetes131RedHatSimpleFlowWithUUID(t *testing.T) {
 			framework.WithPrismElementClusterUUID(),
 			framework.WithNutanixSubnetUUID()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube131)),
-	)
-	runSimpleFlow(test)
-}
-
-func TestNutanixKubernetes129RedHat9SimpleFlowWithUUID(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewNutanix(t, framework.WithRedHat9Kubernetes129NutanixUUID(),
-			framework.WithPrismElementClusterUUID(),
-			framework.WithNutanixSubnetUUID()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
 	)
 	runSimpleFlow(test)
 }
@@ -738,19 +718,19 @@ func TestNutanixKubernetes135RedHat9SimpleFlowWithUUID(t *testing.T) {
 }
 
 // Upgrade
-func TestNutanixKubernetes129To130StackedEtcdUbuntu2204Upgrade(t *testing.T) {
-	provider := framework.NewNutanix(t, framework.WithUbuntu2204Kubernetes129Nutanix())
+func TestNutanixKubernetes135To136StackedEtcdUbuntu2204Upgrade(t *testing.T) {
+	provider := framework.NewNutanix(t, framework.WithUbuntu2204135Nutanix())
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube135)),
 		framework.WithClusterFiller(api.WithStackedEtcdTopology()),
 	)
 	runSimpleUpgradeFlow(
 		test,
-		v1alpha1.Kube130,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube130)),
-		provider.WithProviderUpgrade(provider.Ubuntu2204Kubernetes130Template()),
+		v1alpha1.Kube136,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube136)),
+		provider.WithProviderUpgrade(provider.Ubuntu2204Kubernetes136Template()),
 	)
 }
 
@@ -834,19 +814,19 @@ func TestNutanixKubernetes134To135StackedEtcdUbuntu2204Upgrade(t *testing.T) {
 	)
 }
 
-func TestNutanixKubernetes129To130Ubuntu2204Upgrade(t *testing.T) {
-	provider := framework.NewNutanix(t, framework.WithUbuntu2204Kubernetes129Nutanix())
+func TestNutanixKubernetes135To136Ubuntu2204Upgrade(t *testing.T) {
+	provider := framework.NewNutanix(t, framework.WithUbuntu2204135Nutanix())
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube135)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 	)
 	runSimpleUpgradeFlow(
 		test,
-		v1alpha1.Kube130,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube130)),
-		provider.WithProviderUpgrade(provider.Ubuntu2204Kubernetes130Template()),
+		v1alpha1.Kube136,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube136)),
+		provider.WithProviderUpgrade(provider.Ubuntu2204Kubernetes136Template()),
 	)
 }
 
@@ -930,21 +910,21 @@ func TestNutanixKubernetes134To135Ubuntu2204Upgrade(t *testing.T) {
 	)
 }
 
-func TestNutanixKubernetes129to130RedHatUpgrade(t *testing.T) {
-	provider := framework.NewNutanix(t, framework.WithRedHat129Nutanix())
+func TestNutanixKubernetes135to136RedHat9Upgrade(t *testing.T) {
+	provider := framework.NewNutanix(t, framework.WithRedHat9Kubernetes135Nutanix())
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube135)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 	)
 	runSimpleUpgradeFlow(
 		test,
-		v1alpha1.Kube130,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube130)),
-		provider.WithProviderUpgrade(provider.RedHat130Template()),
+		v1alpha1.Kube136,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube136)),
+		provider.WithProviderUpgrade(provider.RedHat9Kubernetes136Template()),
 	)
 }
 
@@ -966,21 +946,21 @@ func TestNutanixKubernetes130to131RedHatUpgrade(t *testing.T) {
 	)
 }
 
-func TestNutanixKubernetes129to130RedHat9Upgrade(t *testing.T) {
-	provider := framework.NewNutanix(t, framework.WithRedHat9Kubernetes129Nutanix())
+func TestNutanixKubernetes135to136StackedEtcdRedHat9Upgrade(t *testing.T) {
+	provider := framework.NewNutanix(t, framework.WithRedHat9Kubernetes135Nutanix())
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube135)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithStackedEtcdTopology()),
 	)
 	runSimpleUpgradeFlow(
 		test,
-		v1alpha1.Kube130,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube130)),
-		provider.WithProviderUpgrade(provider.RedHat9Kubernetes130Template()),
+		v1alpha1.Kube136,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube136)),
+		provider.WithProviderUpgrade(provider.RedHat9Kubernetes136Template()),
 	)
 }
 
@@ -1628,11 +1608,11 @@ func TestNutanixKubernetes135RedHat9ControlPlaneNodeScaleDown3To1(t *testing.T) 
 }
 
 // Ubuntu 24.04 Simple Flow tests
-func TestNutanixKubernetes129Ubuntu2404SimpleFlowWithName(t *testing.T) {
+func TestNutanixKubernetes136Ubuntu2404SimpleFlowWithName(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewNutanix(t, framework.WithUbuntu2404Kubernetes129Nutanix()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
+		framework.NewNutanix(t, framework.WithUbuntu2404136Nutanix()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube136)),
 	)
 	runSimpleFlow(test)
 }
@@ -1692,13 +1672,13 @@ func TestNutanixKubernetes135Ubuntu2404SimpleFlowWithName(t *testing.T) {
 }
 
 // Ubuntu 24.04 Simple Flow tests with UUID
-func TestNutanixKubernetes129Ubuntu2404SimpleFlowWithUUID(t *testing.T) {
+func TestNutanixKubernetes136Ubuntu2404SimpleFlowWithUUID(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewNutanix(t, framework.WithUbuntu2404Kubernetes129NutanixUUID(),
+		framework.NewNutanix(t, framework.WithUbuntu2404136NutanixUUID(),
 			framework.WithPrismElementClusterUUID(),
 			framework.WithNutanixSubnetUUID()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube136)),
 	)
 	runSimpleFlow(test)
 }
@@ -1770,19 +1750,19 @@ func TestNutanixKubernetes135Ubuntu2404SimpleFlowWithUUID(t *testing.T) {
 }
 
 // Ubuntu 24.04 Upgrade tests
-func TestNutanixKubernetes129To130Ubuntu2404Upgrade(t *testing.T) {
-	provider := framework.NewNutanix(t, framework.WithUbuntu2404Kubernetes129Nutanix())
+func TestNutanixKubernetes135To136Ubuntu2404Upgrade(t *testing.T) {
+	provider := framework.NewNutanix(t, framework.WithUbuntu2404135Nutanix())
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube135)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 	)
 	runSimpleUpgradeFlow(
 		test,
-		v1alpha1.Kube130,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube130)),
-		provider.WithProviderUpgrade(provider.Ubuntu2404Kubernetes130Template()),
+		v1alpha1.Kube136,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube136)),
+		provider.WithProviderUpgrade(provider.Ubuntu2404Kubernetes136Template()),
 	)
 }
 
@@ -1867,19 +1847,19 @@ func TestNutanixKubernetes134To135Ubuntu2404Upgrade(t *testing.T) {
 }
 
 // Ubuntu 24.04 Stacked Etcd Upgrade tests
-func TestNutanixKubernetes129To130StackedEtcdUbuntu2404Upgrade(t *testing.T) {
-	provider := framework.NewNutanix(t, framework.WithUbuntu2404Kubernetes129Nutanix())
+func TestNutanixKubernetes135To136StackedEtcdUbuntu2404Upgrade(t *testing.T) {
+	provider := framework.NewNutanix(t, framework.WithUbuntu2404135Nutanix())
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube129)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube135)),
 		framework.WithClusterFiller(api.WithStackedEtcdTopology()),
 	)
 	runSimpleUpgradeFlow(
 		test,
-		v1alpha1.Kube130,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube130)),
-		provider.WithProviderUpgrade(provider.Ubuntu2404Kubernetes130Template()),
+		v1alpha1.Kube136,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube136)),
+		provider.WithProviderUpgrade(provider.Ubuntu2404Kubernetes136Template()),
 	)
 }
 

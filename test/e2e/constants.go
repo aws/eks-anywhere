@@ -48,5 +48,5 @@ const (
 )
 
 var (
-	KubeVersions = []v1alpha1.KubernetesVersion{v1alpha1.Kube128, v1alpha1.Kube129, v1alpha1.Kube130, v1alpha1.Kube131, v1alpha1.Kube132, v1alpha1.Kube133, v1alpha1.Kube134}
+	KubeVersions = []v1alpha1.KubernetesVersion{v1alpha1.Kube130, v1alpha1.Kube131, v1alpha1.Kube132, v1alpha1.Kube133, v1alpha1.Kube134, v1alpha1.Kube135}
 )
