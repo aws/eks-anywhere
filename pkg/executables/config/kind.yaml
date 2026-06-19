@@ -58,11 +58,18 @@ kubeadmConfigPatches:
       kubeletExtraArgs:
         fail-cgroupv1: "false"
 {{- end }}
-{{- if (ne .RegistryConfigDir "") }}
+{{- if or (ge (atoi $kube_minor_version) 36) (ne .RegistryConfigDir "") }}
 containerdConfigPatches:
+{{- if (ge (atoi $kube_minor_version) 36) }}
+  - |
+    [plugins."io.containerd.grpc.v1.cri"]
+      sandbox_image = "{{.KubernetesRepository}}/pause:{{.KubernetesVersion}}"
+{{- end }}
+{{- if (ne .RegistryConfigDir "") }}
   - |
     [plugins."io.containerd.grpc.v1.cri".registry]
       config_path = "/etc/containerd/certs.d"
+{{- end }}
 {{- end }}
 nodes:
 - role: control-plane
