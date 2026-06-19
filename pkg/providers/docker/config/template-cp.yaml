@@ -63,6 +63,11 @@ spec:
   kubeadmConfigSpec:
     clusterConfiguration:
       imageRepository: {{.kubernetesRepository}}
+{{- if .pauseRepository }}
+      pause:
+        imageRepository: {{.pauseRepository}}
+        imageTag: {{.pauseTag}}
+{{- end }}
       etcd:
 {{- if .externalEtcd }}
         external:
@@ -180,8 +185,15 @@ spec:
 {{- end }}
 {{- if .registryMirrorMap }}
     - content: |
+{{- if .pauseRepository }}
+        [plugins."io.containerd.grpc.v1.cri"]
+          sandbox_image = "{{.pauseRepository}}:{{.pauseTag}}"
         [plugins."io.containerd.grpc.v1.cri".registry]
           config_path = "/etc/containerd/certs.d"
+{{- else }}
+        [plugins."io.containerd.grpc.v1.cri".registry]
+          config_path = "/etc/containerd/certs.d"
+{{- end }}
       owner: root:root
       path: "/etc/containerd/config_append.toml"
     - content: |
@@ -227,6 +239,13 @@ spec:
       path: "/etc/containerd/certs.d/{{ $orig }}/hosts.toml"
     {{- end }}
 {{- end }}
+{{- if and .pauseRepository (not .registryMirrorMap) }}
+    - content: |
+        [plugins."io.containerd.grpc.v1.cri"]
+          sandbox_image = "{{.pauseRepository}}:{{.pauseTag}}"
+      owner: root:root
+      path: "/etc/containerd/config_append.toml"
+{{- end }}
 {{- if .awsIamAuth}}
     - content: |
         # clusters refers to the remote service.
@@ -266,11 +285,15 @@ spec:
 {{- end}}
     initConfiguration:
 {{- if .kubeletConfiguration }}
-      patches: 
+      patches:
         directory: /etc/kubernetes/patches
 {{- end }}
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
+{{- if .pauseRepository }}
+        ignorePreflightErrors:
+        - ImagePull
+{{- end }}
 {{- if not .kubeletConfiguration }}
         kubeletExtraArgs:
         - name: eviction-hard
@@ -297,11 +320,15 @@ spec:
 {{- end }}
     joinConfiguration:
 {{- if .kubeletConfiguration }}
-      patches: 
+      patches:
         directory: /etc/kubernetes/patches
 {{- end }}
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
+{{- if .pauseRepository }}
+        ignorePreflightErrors:
+        - ImagePull
+{{- end }}
 {{- if not .kubeletConfiguration }}
         kubeletExtraArgs:
         - name: eviction-hard
@@ -326,7 +353,7 @@ spec:
 {{- end }}
         {{- end }}
 {{- end }}
-{{- if .registryMirrorMap }}
+{{- if or .registryMirrorMap .pauseRepository }}
     preKubeadmCommands:
     - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
     - systemctl daemon-reload

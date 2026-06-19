@@ -8,11 +8,15 @@ spec:
     spec:
       joinConfiguration:
 {{- if .kubeletConfiguration }}
-        patches: 
+        patches:
           directory: /etc/kubernetes/patches
 {{- end }}
         nodeRegistration:
           criSocket: /var/run/containerd/containerd.sock
+{{- if .pauseRepository }}
+          ignorePreflightErrors:
+          - ImagePull
+{{- end }}
 {{- if .workerNodeGroupTaints }}
           taints:{{ range .workerNodeGroupTaints}}
             - key: {{ .Key }}
@@ -36,7 +40,7 @@ spec:
 {{- if .nodeLabelArgs }}
 {{ .nodeLabelArgs.ToYaml | indent 10 }}
 {{- end }}
-{{- if or .registryMirrorMap .kubeletConfiguration }}
+{{- if or .registryMirrorMap .kubeletConfiguration .pauseRepository }}
       files:
 {{- end }}
 {{- if .kubeletConfiguration }}
@@ -54,8 +58,15 @@ spec:
 {{- end }}
 {{- if .registryMirrorMap }}
       - content: |
+{{- if .pauseRepository }}
+          [plugins."io.containerd.grpc.v1.cri"]
+            sandbox_image = "{{.pauseRepository}}:{{.pauseTag}}"
           [plugins."io.containerd.grpc.v1.cri".registry]
             config_path = "/etc/containerd/certs.d"
+{{- else }}
+          [plugins."io.containerd.grpc.v1.cri".registry]
+            config_path = "/etc/containerd/certs.d"
+{{- end }}
         owner: root:root
         path: "/etc/containerd/config_append.toml"
       - content: |
@@ -100,6 +111,17 @@ spec:
         owner: root:root
         path: "/etc/containerd/certs.d/{{ $orig }}/hosts.toml"
       {{- end }}
+      preKubeadmCommands:
+      - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
+      - systemctl daemon-reload
+      - systemctl restart containerd
+{{- end }}
+{{- if and .pauseRepository (not .registryMirrorMap) }}
+      - content: |
+          [plugins."io.containerd.grpc.v1.cri"]
+            sandbox_image = "{{.pauseRepository}}:{{.pauseTag}}"
+        owner: root:root
+        path: "/etc/containerd/config_append.toml"
       preKubeadmCommands:
       - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
       - systemctl daemon-reload

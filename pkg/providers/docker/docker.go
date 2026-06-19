@@ -300,6 +300,19 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 		"apiServerCertSANs":             clusterSpec.Cluster.Spec.ControlPlaneConfiguration.CertSANs,
 	}
 
+	clusterKubeVersion, err := v1alpha1.KubeVersionToSemver(clusterSpec.Cluster.Spec.KubernetesVersion)
+	if err != nil {
+		return nil, fmt.Errorf("converting kubeVersion %v to semver: %v", clusterSpec.Cluster.Spec.KubernetesVersion, err)
+	}
+	kube136Semver, err := v1alpha1.KubeVersionToSemver(v1alpha1.Kube136)
+	if err != nil {
+		return nil, fmt.Errorf("converting kubeVersion %v to semver: %v", v1alpha1.Kube136, err)
+	}
+	if clusterKubeVersion.Compare(kube136Semver) >= 0 {
+		values["pauseRepository"] = versionsBundle.KubeDistro.Pause.Image()
+		values["pauseTag"] = versionsBundle.KubeDistro.Pause.Tag()
+	}
+
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
 		values["externalEtcd"] = true
 		values["externalEtcdReplicas"] = clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.Count
@@ -424,6 +437,23 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupConfiguration 
 		"workerNodeGroupName":   fmt.Sprintf("%s-%s", clusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name),
 		"workerNodeGroupTaints": workerNodeGroupConfiguration.Taints,
 		"autoscalingConfig":     workerNodeGroupConfiguration.AutoScalingConfiguration,
+	}
+
+	kubeVersion := clusterSpec.Cluster.Spec.KubernetesVersion
+	if workerNodeGroupConfiguration.KubernetesVersion != nil {
+		kubeVersion = *workerNodeGroupConfiguration.KubernetesVersion
+	}
+	workerKubeVersion, err := v1alpha1.KubeVersionToSemver(kubeVersion)
+	if err != nil {
+		return nil, fmt.Errorf("converting kubeVersion %v to semver: %v", kubeVersion, err)
+	}
+	kube136Semver, err := v1alpha1.KubeVersionToSemver(v1alpha1.Kube136)
+	if err != nil {
+		return nil, fmt.Errorf("converting kubeVersion %v to semver: %v", v1alpha1.Kube136, err)
+	}
+	if workerKubeVersion.Compare(kube136Semver) >= 0 {
+		values["pauseRepository"] = versionsBundle.KubeDistro.Pause.Image()
+		values["pauseTag"] = versionsBundle.KubeDistro.Pause.Tag()
 	}
 
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
