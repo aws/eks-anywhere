@@ -41,6 +41,11 @@ kubeadmConfigPatches:
             mountPath: /var/log/kubernetes
             readOnly: false
             pathType: DirectoryOrCreate
+{{- if (ge (atoi $kube_minor_version) 36) }}
+  - |
+    kind: KubeletConfiguration
+    sandboxImage: {{.KubernetesRepository}}/pause:{{.KubernetesVersion}}
+{{- end }}
 {{- if (ge (atoi $kube_minor_version) 31) }}
   - |
     kind: InitConfiguration
