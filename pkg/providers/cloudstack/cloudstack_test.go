@@ -67,6 +67,19 @@ func givenClusterSpec(t *testing.T, fileName string) *cluster.Spec {
 	return test.NewFullClusterSpec(t, path.Join(testDataDir, fileName))
 }
 
+// populateCloudStackBundle sets real (non-placeholder) URIs on the CloudStack bundle in the
+// cluster spec. Tests that exercise non-deprecation behavior call this so they pass the
+// bundle-image validation in SetupAndValidateCreateCluster.
+func populateCloudStackBundle(spec *cluster.Spec) {
+	for _, vb := range spec.VersionsBundles {
+		vb.CloudStack.ClusterAPIController.URI = "public.ecr.aws/j9l9l0k3/cluster-api-provider-capc:latest"
+		vb.CloudStack.KubeRbacProxy.URI = "public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-test"
+		vb.CloudStack.KubeVip.URI = "public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-test"
+		vb.CloudStack.Components.URI = "https://example.com/infrastructure-components.yaml"
+		vb.CloudStack.Metadata.URI = "https://example.com/metadata.yaml"
+	}
+}
+
 // TODO: Validate against validator operations instead of using wildcard, now that it's mocked. https://github.com/aws/eks-anywhere/issues/3944
 func givenWildcardValidator(mockCtrl *gomock.Controller, clusterSpec *cluster.Spec) *MockProviderValidator {
 	validator := NewMockProviderValidator(mockCtrl)
@@ -391,6 +404,7 @@ func TestSetupAndValidateCreateCluster(t *testing.T) {
 	ctx := context.Background()
 	provider := givenProvider(t)
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	populateCloudStackBundle(clusterSpec)
 	setupContext(t)
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
@@ -403,6 +417,7 @@ func TestSetupAndValidateCreateWorkloadClusterSuccess(t *testing.T) {
 	ctx := context.Background()
 	provider := givenProvider(t)
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	populateCloudStackBundle(clusterSpec)
 	clusterSpec.Cluster.SetManagedBy("management-cluster")
 	clusterSpec.ManagementCluster = &types.Cluster{
 		Name:           "management-cluster",
@@ -435,6 +450,7 @@ func TestSetupAndValidateCreateWorkloadClusterFailsIfMachineExists(t *testing.T)
 	ctx := context.Background()
 	provider := givenProvider(t)
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	populateCloudStackBundle(clusterSpec)
 	clusterSpec.Cluster.SetManagedBy("management-cluster")
 	clusterSpec.ManagementCluster = &types.Cluster{
 		Name:           "management-cluster",
@@ -472,6 +488,7 @@ func TestSetupAndValidateSelfManagedClusterSkipMachineNameValidateSuccess(t *tes
 	ctx := context.Background()
 	provider := givenProvider(t)
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	populateCloudStackBundle(clusterSpec)
 	setupContext(t)
 
 	mockCtrl := gomock.NewController(t)
@@ -496,6 +513,7 @@ func TestSetupAndValidateCreateWorkloadClusterFailsIfDatacenterExists(t *testing
 	ctx := context.Background()
 	provider := givenProvider(t)
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	populateCloudStackBundle(clusterSpec)
 	clusterSpec.Cluster.SetManagedBy("management-cluster")
 	clusterSpec.ManagementCluster = &types.Cluster{
 		Name:           "management-cluster",
@@ -526,6 +544,7 @@ func TestSetupAndValidateSelfManagedClusterSkipDatacenterNameValidateSuccess(t *
 	ctx := context.Background()
 	provider := givenProvider(t)
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	populateCloudStackBundle(clusterSpec)
 	setupContext(t)
 
 	mockCtrl := gomock.NewController(t)
@@ -628,6 +647,7 @@ func TestPreCAPIInstallOnBootstrap(t *testing.T) {
 func TestSetupAndValidateSSHAuthorizedKeyEmptyCP(t *testing.T) {
 	ctx := context.Background()
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	populateCloudStackBundle(clusterSpec)
 	provider := givenProvider(t)
 	controlPlaneMachineConfigName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
 	clusterSpec.CloudStackMachineConfigs[controlPlaneMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] = ""
@@ -645,6 +665,7 @@ func TestSetupAndValidateSSHAuthorizedKeyEmptyCP(t *testing.T) {
 func TestSetupAndValidateSSHAuthorizedKeyEmptyWorker(t *testing.T) {
 	ctx := context.Background()
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	populateCloudStackBundle(clusterSpec)
 	provider := givenProvider(t)
 	workerNodeMachineConfigName := clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
 	clusterSpec.CloudStackMachineConfigs[workerNodeMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] = ""
@@ -662,6 +683,7 @@ func TestSetupAndValidateSSHAuthorizedKeyEmptyWorker(t *testing.T) {
 func TestSetupAndValidateSSHAuthorizedKeyEmptyEtcd(t *testing.T) {
 	ctx := context.Background()
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	populateCloudStackBundle(clusterSpec)
 	provider := givenProvider(t)
 	etcdMachineConfigName := clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
 	clusterSpec.CloudStackMachineConfigs[etcdMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] = ""
@@ -679,6 +701,7 @@ func TestSetupAndValidateSSHAuthorizedKeyEmptyEtcd(t *testing.T) {
 func TestSetupAndValidateSSHAuthorizedKeyEmptyAllMachineConfigs(t *testing.T) {
 	ctx := context.Background()
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	populateCloudStackBundle(clusterSpec)
 	provider := givenProvider(t)
 	controlPlaneMachineConfigName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
 	clusterSpec.CloudStackMachineConfigs[controlPlaneMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] = ""
@@ -726,6 +749,55 @@ func TestGetInfrastructureBundleSuccess(t *testing.T) {
 	assert.Equal(t, wantInfraBundle.FolderName, infraBundle.FolderName, "Incorrect folder name")
 	assert.Equal(t, len(infraBundle.Manifests), 2, "Wrong number of files in the infrastructure bundle")
 	assert.Equal(t, wantInfraBundle.Manifests, infraBundle.Manifests, "Incorrect manifests")
+}
+
+func TestGetInfrastructureBundlePlaceholderReturnsNil(t *testing.T) {
+	p := givenProvider(t)
+
+	managementComponents := givenManagementComponents()
+	managementComponents.CloudStack.Components.URI = "<placeholder>"
+
+	infraBundle := p.GetInfrastructureBundle(managementComponents)
+	assert.Nil(t, infraBundle, "Expected nil bundle for placeholder URI")
+}
+
+func TestGetInfrastructureBundleEmptyURIReturnsNil(t *testing.T) {
+	p := givenProvider(t)
+
+	managementComponents := givenManagementComponents()
+	managementComponents.CloudStack.Components.URI = ""
+
+	infraBundle := p.GetInfrastructureBundle(managementComponents)
+	assert.Nil(t, infraBundle, "Expected nil bundle for empty URI")
+}
+
+func TestSetupAndValidateCreateClusterPlaceholderBundleErrors(t *testing.T) {
+	ctx := context.Background()
+	provider := givenProvider(t)
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	setupContext(t)
+	// bundles.yaml now has placeholder URIs by default — no populateCloudStackBundle call
+
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	assert.ErrorContains(t, err, "CloudStack provider images are not available in the bundle")
+}
+
+func TestSetupAndValidateCreateClusterKubeVipPlaceholderErrors(t *testing.T) {
+	ctx := context.Background()
+	provider := givenProvider(t)
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	// Provide real controller/components URIs but leave kube-vip as placeholder
+	for _, vb := range clusterSpec.VersionsBundles {
+		vb.CloudStack.ClusterAPIController.URI = "public.ecr.aws/j9l9l0k3/cluster-api-provider-capc:latest"
+		vb.CloudStack.Components.URI = "https://example.com/infrastructure-components.yaml"
+		vb.CloudStack.Metadata.URI = "https://example.com/metadata.yaml"
+		vb.CloudStack.KubeVip.URI = "<placeholder>"
+	}
+	os.Unsetenv(features.CloudStackKubeVipDisabledEnvVar)
+	setupContext(t)
+
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	assert.ErrorContains(t, err, "kube-vip image is not available")
 }
 
 func TestGetDatacenterConfig(t *testing.T) {
@@ -964,6 +1036,7 @@ func TestProviderUpdateSecrets(t *testing.T) {
 			if provider == nil {
 				t.Fatalf("provider object is nil")
 			}
+			populateCloudStackBundle(clusterSpec)
 			saveContext(t, test.configPath)
 			expectedSecretsYaml, err := configFS.ReadFile(test.expectedSecretsYamlPath)
 			if err != nil {

@@ -126,10 +126,7 @@ func GetVersionsBundles(r *releasetypes.ReleaseConfig, imageDigests releasetypes
 		return nil, errors.Wrapf(err, "Error getting bundle for Tinkerbell infrastructure provider")
 	}
 
-	cloudStackBundle, err := GetCloudStackBundle(r, imageDigests)
-	if err != nil {
-		return nil, errors.Wrapf(err, "Error getting bundle for CloudStack infrastructure provider")
-	}
+	cloudStackBundle := GetDeprecatedCloudStackBundle()
 
 	nutanixBundle, err := GetNutanixBundle(r, imageDigests)
 	if err != nil {

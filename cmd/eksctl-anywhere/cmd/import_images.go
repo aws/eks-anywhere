@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -69,6 +70,8 @@ func (c ImportImagesCommand) Call(ctx context.Context) error {
 		return err
 	}
 
+	registryHost, _ := splitRegistryHostNamespace(c.RegistryEndpoint)
+
 	factory := dependencies.NewFactory()
 	deps, err := factory.
 		WithManifestReader().
@@ -116,7 +119,7 @@ func (c ImportImagesCommand) Call(ctx context.Context) error {
 	deps, err = factory.
 		WithExecutableMountDirs(dirsToMount...).
 		WithRegistryMirror(&registrymirror.RegistryMirror{
-			BaseRegistry: c.RegistryEndpoint,
+			BaseRegistry: registryHost,
 			NamespacedRegistryMap: map[string]string{
 				constants.DefaultCoreEKSARegistry:        c.RegistryEndpoint,
 				constants.DefaultCuratedPackagesRegistry: c.RegistryEndpoint,
@@ -150,4 +153,14 @@ func (c ImportImagesCommand) Call(ctx context.Context) error {
 	}
 
 	return importArtifacts.Run(context.WithValue(ctx, types.InsecureRegistry, c.insecure))
+}
+
+// splitRegistryHostNamespace separates a registry endpoint like "host:port/namespace"
+// into host ("host:port") and namespace ("namespace") components.
+func splitRegistryHostNamespace(registry string) (host, namespace string) {
+	slashIdx := strings.Index(registry, "/")
+	if slashIdx == -1 {
+		return registry, ""
+	}
+	return registry[:slashIdx], registry[slashIdx+1:]
 }

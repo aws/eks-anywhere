@@ -285,8 +285,9 @@ var registryMirrorTests = []struct {
 				Owner: "root:root",
 				Content: `server = "https://1.2.3.4:443"
 
-[host."https://1.2.3.4:443"]
+[host."https://1.2.3.4:443/v2"]
   capabilities = ["pull", "resolve"]
+  override_path = true
   ca = "/etc/containerd/certs.d/1.2.3.4:443/ca.crt"
 `,
 			},
@@ -297,6 +298,7 @@ var registryMirrorTests = []struct {
 
 [host."https://1.2.3.4:443/v2/eks-anywhere"]
   capabilities = ["pull", "resolve"]
+  override_path = true
   ca = "/etc/containerd/certs.d/1.2.3.4:443/ca.crt"
 `,
 			},
@@ -341,8 +343,9 @@ var registryMirrorTests = []struct {
 				Owner: "root:root",
 				Content: `server = "https://1.2.3.4:443"
 
-[host."https://1.2.3.4:443"]
+[host."https://1.2.3.4:443/v2"]
   capabilities = ["pull", "resolve"]
+  override_path = true
   ca = "/etc/containerd/certs.d/1.2.3.4:443/ca.crt"
 `,
 			},
@@ -353,6 +356,7 @@ var registryMirrorTests = []struct {
 
 [host."https://1.2.3.4:443/v2/curated-packages"]
   capabilities = ["pull", "resolve"]
+  override_path = true
   ca = "/etc/containerd/certs.d/1.2.3.4:443/ca.crt"
 `,
 			},
@@ -363,6 +367,7 @@ var registryMirrorTests = []struct {
 
 [host."https://1.2.3.4:443/v2/eks-anywhere"]
   capabilities = ["pull", "resolve"]
+  override_path = true
   ca = "/etc/containerd/certs.d/1.2.3.4:443/ca.crt"
 `,
 			},
@@ -392,8 +397,9 @@ var registryMirrorTests = []struct {
 				Owner: "root:root",
 				Content: `server = "https://1.2.3.4:443"
 
-[host."https://1.2.3.4:443"]
+[host."https://1.2.3.4:443/v2"]
   capabilities = ["pull", "resolve"]
+  override_path = true
   skip_verify = true
 `,
 			},
@@ -402,14 +408,15 @@ var registryMirrorTests = []struct {
 				Owner: "root:root",
 				Content: `server = "https://public.ecr.aws"
 
-[host."https://1.2.3.4:443"]
+[host."https://1.2.3.4:443/v2"]
   capabilities = ["pull", "resolve"]
+  override_path = true
   skip_verify = true
 `,
 			},
 		},
 		wantRegistryConfig: bootstrapv1beta2.RegistryMirrorConfiguration{
-			Endpoint: "1.2.3.4:443",
+			Endpoint: "1.2.3.4:443/v2",
 		},
 	},
 	{
@@ -431,8 +438,9 @@ var registryMirrorTests = []struct {
 				Owner: "root:root",
 				Content: `server = "https://1.2.3.4:443"
 
-[host."https://1.2.3.4:443"]
+[host."https://1.2.3.4:443/v2"]
   capabilities = ["pull", "resolve"]
+  override_path = true
 `,
 			},
 			{
@@ -440,13 +448,14 @@ var registryMirrorTests = []struct {
 				Owner: "root:root",
 				Content: `server = "https://public.ecr.aws"
 
-[host."https://1.2.3.4:443"]
+[host."https://1.2.3.4:443/v2"]
   capabilities = ["pull", "resolve"]
+  override_path = true
 `,
 			},
 		},
 		wantRegistryConfig: bootstrapv1beta2.RegistryMirrorConfiguration{
-			Endpoint: "1.2.3.4:443",
+			Endpoint: "1.2.3.4:443/v2",
 		},
 	},
 	{
@@ -475,8 +484,9 @@ var registryMirrorTests = []struct {
 				Owner: "root:root",
 				Content: `server = "https://1.2.3.4:443"
 
-[host."https://1.2.3.4:443"]
+[host."https://1.2.3.4:443/v2"]
   capabilities = ["pull", "resolve"]
+  override_path = true
   ca = "/etc/containerd/certs.d/1.2.3.4:443/ca.crt"
   skip_verify = true
 `,
@@ -486,15 +496,16 @@ var registryMirrorTests = []struct {
 				Owner: "root:root",
 				Content: `server = "https://public.ecr.aws"
 
-[host."https://1.2.3.4:443"]
+[host."https://1.2.3.4:443/v2"]
   capabilities = ["pull", "resolve"]
+  override_path = true
   ca = "/etc/containerd/certs.d/1.2.3.4:443/ca.crt"
   skip_verify = true
 `,
 			},
 		},
 		wantRegistryConfig: bootstrapv1beta2.RegistryMirrorConfiguration{
-			Endpoint: "1.2.3.4:443",
+			Endpoint: "1.2.3.4:443/v2",
 			CACert:   "xyz",
 		},
 	},
