@@ -78,6 +78,15 @@ func TestDockerKubernetes135GithubFlux(t *testing.T) {
 	runFluxFlow(test)
 }
 
+func TestDockerKubernetes136GithubFlux(t *testing.T) {
+	test := framework.NewClusterE2ETest(t,
+		framework.NewDocker(t),
+		framework.WithFluxGithub(),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube136)),
+	)
+	runFluxFlow(test)
+}
+
 func TestDockerKubernetes133GitFlux(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewDocker(t),
@@ -101,6 +110,15 @@ func TestDockerKubernetes135GitFlux(t *testing.T) {
 		framework.NewDocker(t),
 		framework.WithFluxGit(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube135)),
+	)
+	runFluxFlow(test)
+}
+
+func TestDockerKubernetes136GitFlux(t *testing.T) {
+	test := framework.NewClusterE2ETest(t,
+		framework.NewDocker(t),
+		framework.WithFluxGit(),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube136)),
 	)
 	runFluxFlow(test)
 }
@@ -274,6 +292,44 @@ func TestDockerKubernetes135UpgradeWorkloadClusterWithGithubFlux(t *testing.T) {
 		test,
 		framework.WithClusterUpgradeGit(
 			api.WithKubernetesVersion(v1alpha1.Kube135),
+			api.WithControlPlaneCount(2),
+			api.WithWorkerNodeCount(2),
+		),
+		// Needed in order to replace the DockerDatacenterConfig namespace field with the value specified
+		// compared to when it was initially created without it.
+		provider.WithProviderUpgradeGit(),
+	)
+}
+
+func TestDockerKubernetes136UpgradeWorkloadClusterWithGithubFlux(t *testing.T) {
+	provider := framework.NewDocker(t)
+	test := framework.NewMulticlusterE2ETest(
+		t,
+		framework.NewClusterE2ETest(
+			t,
+			provider,
+			framework.WithFluxGithub(),
+			framework.WithClusterFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube135),
+				api.WithControlPlaneCount(1),
+				api.WithWorkerNodeCount(1),
+			),
+		),
+		framework.NewClusterE2ETest(
+			t,
+			provider,
+			framework.WithFluxGithub(),
+			framework.WithClusterFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube135),
+				api.WithControlPlaneCount(1),
+				api.WithWorkerNodeCount(1),
+			),
+		),
+	)
+	runWorkloadClusterFlowWithGitOps(
+		test,
+		framework.WithClusterUpgradeGit(
+			api.WithKubernetesVersion(v1alpha1.Kube136),
 			api.WithControlPlaneCount(2),
 			api.WithWorkerNodeCount(2),
 		),
@@ -746,6 +802,15 @@ func TestDockerKubernetes135AWSIamAuth(t *testing.T) {
 	runAWSIamAuthFlow(test)
 }
 
+func TestDockerKubernetes136AWSIamAuth(t *testing.T) {
+	test := framework.NewClusterE2ETest(t,
+		framework.NewDocker(t),
+		framework.WithAWSIam(),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube136)),
+	)
+	runAWSIamAuthFlow(test)
+}
+
 // OIDC
 func TestDockerKubernetes129OIDC(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
@@ -810,6 +875,15 @@ func TestDockerKubernetes135OIDC(t *testing.T) {
 	runOIDCFlow(test)
 }
 
+func TestDockerKubernetes136OIDC(t *testing.T) {
+	test := framework.NewClusterE2ETest(t,
+		framework.NewDocker(t),
+		framework.WithOIDC(),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube136)),
+	)
+	runOIDCFlow(test)
+}
+
 // Registry Mirror
 func TestDockerKubernetes131RegistryMirrorAndCert(t *testing.T) {
 	test := framework.NewClusterE2ETest(
@@ -829,6 +903,17 @@ func TestDockerKubernetes131AirgappedRegistryMirrorAndCert(t *testing.T) {
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube131)),
 		framework.WithRegistryMirrorEndpointAndCert(constants.DockerProviderName),
+	)
+	runDockerAirgapConfigFlow(test)
+}
+
+func TestDockerKubernetes136AirgappedRegistryMirrorAndCertOciNamespaces(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewDocker(t),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube136)),
+		framework.WithRegistryMirrorOciNamespaces(constants.DockerProviderName),
 	)
 	runDockerAirgapConfigFlow(test)
 }
@@ -904,6 +989,17 @@ func TestDockerKubernetes135RegistryMirrorInsecureSkipVerify(t *testing.T) {
 	runRegistryMirrorConfigFlow(test)
 }
 
+func TestDockerKubernetes136RegistryMirrorInsecureSkipVerify(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewDocker(t),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube136)),
+		framework.WithRegistryMirrorInsecureSkipVerify(constants.DockerProviderName),
+	)
+	runRegistryMirrorConfigFlow(test)
+}
+
 // Simple Flow
 func TestDockerKubernetes129SimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
@@ -964,6 +1060,15 @@ func TestDockerKubernetes135SimpleFlow(t *testing.T) {
 		t,
 		framework.NewDocker(t),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube135)),
+	)
+	runSimpleFlow(test)
+}
+
+func TestDockerKubernetes136SimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewDocker(t),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube136)),
 	)
 	runSimpleFlow(test)
 }
@@ -1084,6 +1189,35 @@ func TestDockerKubernetes135Taints(t *testing.T) {
 	runTaintsUpgradeFlow(
 		test,
 		v1alpha1.Kube135,
+		framework.WithClusterUpgrade(
+			api.WithWorkerNodeGroup(worker0, api.WithTaint(framework.NoExecuteTaint())),
+			api.WithWorkerNodeGroup(worker1, api.WithTaint(framework.NoExecuteTaint())),
+			api.WithWorkerNodeGroup(worker2, api.WithNoTaints()),
+			api.WithControlPlaneTaints([]corev1.Taint{framework.PreferNoScheduleTaint()}),
+		),
+	)
+}
+
+func TestDockerKubernetes136Taints(t *testing.T) {
+	provider := framework.NewDocker(t)
+
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube136),
+			api.WithExternalEtcdTopology(1),
+			api.WithControlPlaneCount(1),
+			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
+			api.WithWorkerNodeGroup(worker0, api.WithTaint(framework.NoScheduleTaint()), api.WithCount(2)),
+			api.WithWorkerNodeGroup(worker1, api.WithCount(1)),
+			api.WithWorkerNodeGroup(worker2, api.WithTaint(framework.PreferNoScheduleTaint()), api.WithCount(1)),
+		),
+	)
+
+	runTaintsUpgradeFlow(
+		test,
+		v1alpha1.Kube136,
 		framework.WithClusterUpgrade(
 			api.WithWorkerNodeGroup(worker0, api.WithTaint(framework.NoExecuteTaint())),
 			api.WithWorkerNodeGroup(worker1, api.WithTaint(framework.NoExecuteTaint())),
@@ -1577,6 +1711,90 @@ func TestDockerUpgradeKubernetes133to134WorkloadClusterScaleupGitHubFluxAPI(t *t
 	)
 }
 
+func TestDockerUpgradeKubernetes134to135WorkloadClusterScaleupGitHubFluxAPI(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	licenseToken2 := framework.GetLicenseToken2()
+	provider := framework.NewDocker(t)
+	managementCluster := framework.NewClusterE2ETest(
+		t, provider, framework.WithFluxGithubEnvVarCheck(), framework.WithFluxGithubCleanup(),
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube134),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+			api.WithExternalEtcdTopology(1),
+			api.WithLicenseToken(licenseToken),
+		),
+		framework.WithFluxGithubConfig(),
+	)
+	test := framework.NewMulticlusterE2ETest(t, managementCluster)
+	test.WithWorkloadClusters(
+		framework.NewClusterE2ETest(
+			t, provider, framework.WithClusterName(test.NewWorkloadClusterName()),
+		).WithClusterConfig(
+			api.ClusterToConfigFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube134),
+				api.WithManagementCluster(managementCluster.ClusterName),
+				api.WithControlPlaneCount(1),
+				api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
+				api.WithWorkerNodeGroup("worker-0", api.WithCount(1)),
+				api.WithStackedEtcdTopology(),
+				api.WithLicenseToken(licenseToken2),
+			),
+		),
+	)
+	runWorkloadClusterUpgradeFlowAPIWithFlux(
+		test,
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube135),
+			api.WithControlPlaneCount(3),
+			api.WithWorkerNodeGroup("worker-0", api.WithCount(2)),
+		),
+	)
+}
+
+func TestDockerUpgradeKubernetes135to136WorkloadClusterScaleupGitHubFluxAPI(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	licenseToken2 := framework.GetLicenseToken2()
+	provider := framework.NewDocker(t)
+	managementCluster := framework.NewClusterE2ETest(
+		t, provider, framework.WithFluxGithubEnvVarCheck(), framework.WithFluxGithubCleanup(),
+	).WithClusterConfig(
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube135),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+			api.WithExternalEtcdTopology(1),
+			api.WithLicenseToken(licenseToken),
+		),
+		framework.WithFluxGithubConfig(),
+	)
+	test := framework.NewMulticlusterE2ETest(t, managementCluster)
+	test.WithWorkloadClusters(
+		framework.NewClusterE2ETest(
+			t, provider, framework.WithClusterName(test.NewWorkloadClusterName()),
+		).WithClusterConfig(
+			api.ClusterToConfigFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube135),
+				api.WithManagementCluster(managementCluster.ClusterName),
+				api.WithControlPlaneCount(1),
+				api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
+				api.WithWorkerNodeGroup("worker-0", api.WithCount(1)),
+				api.WithStackedEtcdTopology(),
+				api.WithLicenseToken(licenseToken2),
+			),
+		),
+	)
+	runWorkloadClusterUpgradeFlowAPIWithFlux(
+		test,
+		api.ClusterToConfigFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube136),
+			api.WithControlPlaneCount(3),
+			api.WithWorkerNodeGroup("worker-0", api.WithCount(2)),
+		),
+	)
+}
+
 func TestDockerKubernetes132UpgradeWorkloadClusterLabelsAndTaintsGitHubFluxAPI(t *testing.T) {
 	licenseToken := framework.GetLicenseToken()
 	licenseToken2 := framework.GetLicenseToken2()
@@ -2040,6 +2258,36 @@ func TestDockerKubernetes134To135ExternalEtcdUpgrade(t *testing.T) {
 	)
 }
 
+func TestDockerKubernetes135To136StackedEtcdUpgrade(t *testing.T) {
+	provider := framework.NewDocker(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithStackedEtcdTopology()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube135)),
+	)
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube136,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube136)),
+	)
+}
+
+func TestDockerKubernetes135To136ExternalEtcdUpgrade(t *testing.T) {
+	provider := framework.NewDocker(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube135)),
+	)
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube136,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube136)),
+	)
+}
+
 func TestDockerKubernetes132to133UpgradeFromLatestMinorRelease(t *testing.T) {
 	licenseToken := framework.GetLicenseToken()
 	release := latestMinorRelease(t)
@@ -2166,6 +2414,48 @@ func TestDockerKubernetes134to135GithubFluxEnabledUpgradeFromLatestMinorRelease(
 	)
 }
 
+func TestDockerKubernetes135to136UpgradeFromLatestMinorRelease(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	release := latestMinorRelease(t)
+	provider := framework.NewDocker(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube135)),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+	)
+	runUpgradeFromReleaseFlow(
+		test,
+		release,
+		v1alpha1.Kube136,
+		framework.WithClusterUpgrade(
+			api.WithKubernetesVersion(v1alpha1.Kube136),
+			api.WithLicenseToken(licenseToken),
+		),
+	)
+}
+
+func TestDockerKubernetes135to136GithubFluxEnabledUpgradeFromLatestMinorRelease(t *testing.T) {
+	release := latestMinorRelease(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewDocker(t),
+		framework.WithFluxGithub(),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube135)),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+	)
+	runUpgradeWithFluxFromReleaseFlow(
+		test,
+		release,
+		v1alpha1.Kube136,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube136)),
+	)
+}
+
 func TestDockerKubernetes133WithOIDCManagementClusterUpgradeFromLatestSideEffects(t *testing.T) {
 	provider := framework.NewDocker(t)
 	runTestManagementClusterUpgradeSideEffects(t, provider, framework.DockerOS, v1alpha1.Kube133)
@@ -2179,6 +2469,11 @@ func TestDockerKubernetes134WithOIDCManagementClusterUpgradeFromLatestSideEffect
 func TestDockerKubernetes135WithOIDCManagementClusterUpgradeFromLatestSideEffects(t *testing.T) {
 	provider := framework.NewDocker(t)
 	runTestManagementClusterUpgradeSideEffects(t, provider, framework.DockerOS, v1alpha1.Kube135)
+}
+
+func TestDockerKubernetes136WithOIDCManagementClusterUpgradeFromLatestSideEffects(t *testing.T) {
+	provider := framework.NewDocker(t)
+	runTestManagementClusterUpgradeSideEffects(t, provider, framework.DockerOS, v1alpha1.Kube136)
 }
 
 func TestDockerKubernetes132to133EtcdScaleUp(t *testing.T) {
@@ -2445,6 +2740,94 @@ func TestDockerKubernetes135EtcdScaleDown(t *testing.T) {
 	)
 }
 
+func TestDockerKubernetes135to136EtcdScaleUp(t *testing.T) {
+	provider := framework.NewDocker(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube135),
+			api.WithExternalEtcdTopology(1),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+		),
+	)
+
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube136,
+		framework.WithClusterUpgrade(
+			api.WithKubernetesVersion(v1alpha1.Kube136),
+			api.WithExternalEtcdTopology(3),
+		),
+	)
+}
+
+func TestDockerKubernetes135to136EtcdScaleDown(t *testing.T) {
+	provider := framework.NewDocker(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube135),
+			api.WithExternalEtcdTopology(3),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+		),
+	)
+
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube136,
+		framework.WithClusterUpgrade(
+			api.WithKubernetesVersion(v1alpha1.Kube136),
+			api.WithExternalEtcdTopology(1),
+		),
+	)
+}
+
+func TestDockerKubernetes136EtcdScaleUp(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewDocker(t),
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube136),
+			api.WithExternalEtcdTopology(1),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+		),
+	)
+
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube136,
+		framework.WithClusterUpgrade(
+			api.WithExternalEtcdTopology(3),
+		),
+	)
+}
+
+func TestDockerKubernetes136EtcdScaleDown(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewDocker(t),
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube136),
+			api.WithExternalEtcdTopology(3),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+		),
+	)
+
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube136,
+		framework.WithClusterUpgrade(
+			api.WithExternalEtcdTopology(1),
+		),
+	)
+}
+
 // Kubelet Configuration tests
 func TestDockerKubernetes129KubeletConfigurationSimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
@@ -2511,6 +2894,16 @@ func TestDockerKubernetes135KubeletConfigurationSimpleFlow(t *testing.T) {
 		t,
 		framework.NewDocker(t),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube135)),
+		framework.WithKubeletConfig(),
+	)
+	runKubeletConfigurationFlow(test)
+}
+
+func TestDockerKubernetes136KubeletConfigurationSimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewDocker(t),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube136)),
 		framework.WithKubeletConfig(),
 	)
 	runKubeletConfigurationFlow(test)

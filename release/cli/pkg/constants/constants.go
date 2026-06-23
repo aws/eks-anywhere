@@ -28,7 +28,6 @@ const (
 
 	// Project paths.
 	CapasProjectPath                    = "projects/aws/cluster-api-provider-aws-snow"
-	CapcProjectPath                     = "projects/kubernetes-sigs/cluster-api-provider-cloudstack"
 	CapiProjectPath                     = "projects/kubernetes-sigs/cluster-api"
 	CaptProjectPath                     = "projects/tinkerbell/cluster-api-provider-tinkerbell"
 	CapvProjectPath                     = "projects/kubernetes-sigs/cluster-api-provider-vsphere"

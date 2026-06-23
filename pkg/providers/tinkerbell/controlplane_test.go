@@ -876,19 +876,21 @@ spec:
       path: /etc/containerd/config_append.toml
     - content: |
         server = "https://:"
-        
-        [host."https://:"]
+
+        [host."https://:/v2"]
           capabilities = ["pull", "resolve"]
-          [host."https://:".header]
+          override_path = true
+          [host."https://:/v2".header]
             authorization = "Basic dXNlcm5hbWU6cGFzc3dvcmQ="
       owner: root:root
       path: /etc/containerd/certs.d/:/hosts.toml
     - content: |
         server = "https://public.ecr.aws"
-        
-        [host."https://:"]
+
+        [host."https://:/v2"]
           capabilities = ["pull", "resolve"]
-          [host."https://:".header]
+          override_path = true
+          [host."https://:/v2".header]
             authorization = "Basic dXNlcm5hbWU6cGFzc3dvcmQ="
       owner: root:root
       path: /etc/containerd/certs.d/public.ecr.aws/hosts.toml

@@ -118,9 +118,12 @@ func (c *Clusterctl) buildOverridesLayer(managementComponents *cluster.Managemen
 		},
 	}
 
-	infraBundles = append(infraBundles, *provider.GetInfrastructureBundle(managementComponents))
-	for _, infraBundle := range infraBundles {
-		if err := c.writeInfrastructureBundle(prefix, &infraBundle); err != nil {
+	infraBundle := provider.GetInfrastructureBundle(managementComponents)
+	if infraBundle != nil {
+		infraBundles = append(infraBundles, *infraBundle)
+	}
+	for _, ib := range infraBundles {
+		if err := c.writeInfrastructureBundle(prefix, &ib); err != nil {
 			return err
 		}
 	}
@@ -279,10 +282,6 @@ func (c *Clusterctl) buildConfig(managementComponents *anywherecluster.Managemen
 		"ClusterApiVSphereControllerTag":                  managementComponents.VSphere.ClusterAPIController.Tag(),
 		"ClusterApiNutanixControllerRepository":           imageRepository(managementComponents.Nutanix.ClusterAPIController),
 		"ClusterApiNutanixControllerTag":                  managementComponents.Nutanix.ClusterAPIController.Tag(),
-		"ClusterApiCloudStackManagerRepository":           imageRepository(managementComponents.CloudStack.ClusterAPIController),
-		"ClusterApiCloudStackManagerTag":                  managementComponents.CloudStack.ClusterAPIController.Tag(),
-		"ClusterApiCloudStackKubeRbacProxyRepository":     imageRepository(managementComponents.CloudStack.KubeRbacProxy),
-		"ClusterApiCloudStackKubeRbacProxyTag":            managementComponents.CloudStack.KubeRbacProxy.Tag(),
 		"ClusterApiVSphereKubeRbacProxyRepository":        imageRepository(managementComponents.VSphere.KubeProxy),
 		"ClusterApiVSphereKubeRbacProxyTag":               managementComponents.VSphere.KubeProxy.Tag(),
 		"DockerKubeRbacProxyRepository":                   imageRepository(managementComponents.Docker.KubeProxy),
@@ -309,6 +308,16 @@ func (c *Clusterctl) buildConfig(managementComponents *anywherecluster.Managemen
 		"EtcdadmBootstrapProviderVersion":                 managementComponents.ExternalEtcdBootstrap.Version,
 		"EtcdadmControllerProviderVersion":                managementComponents.ExternalEtcdController.Version,
 		"dir":                                             path + "/" + clusterName + capiPrefix,
+	}
+
+	// CloudStack is deprecated — only set image overrides if URIs are non-empty/non-placeholder.
+	if managementComponents.CloudStack.ClusterAPIController.URI != "" && managementComponents.CloudStack.ClusterAPIController.URI != "<placeholder>" {
+		data["ClusterApiCloudStackManagerRepository"] = imageRepository(managementComponents.CloudStack.ClusterAPIController)
+		data["ClusterApiCloudStackManagerTag"] = managementComponents.CloudStack.ClusterAPIController.Tag()
+	}
+	if managementComponents.CloudStack.KubeRbacProxy.URI != "" && managementComponents.CloudStack.KubeRbacProxy.URI != "<placeholder>" {
+		data["ClusterApiCloudStackKubeRbacProxyRepository"] = imageRepository(managementComponents.CloudStack.KubeRbacProxy)
+		data["ClusterApiCloudStackKubeRbacProxyTag"] = managementComponents.CloudStack.KubeRbacProxy.Tag()
 	}
 
 	filePath, err := t.WriteToFile(clusterctlConfigTemplate, data, clusterctlConfigFile)
