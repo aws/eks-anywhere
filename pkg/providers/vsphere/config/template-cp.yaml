@@ -597,6 +597,12 @@ spec:
 {{- if and (ge (atoi $kube_minor_version) 29) (ne .format "bottlerocket") }}
     - "if [ -f /run/kubeadm/kubeadm.yaml ]; then sed -i 's#path: /etc/kubernetes/admin.conf#path: /etc/kubernetes/super-admin.conf#' /etc/kubernetes/manifests/kube-vip.yaml; fi"
 {{- end }}
+{{- if and (ge (atoi $kube_minor_version) 36) (ne .format "bottlerocket") }}
+    - |
+      (while [ ! -f /etc/kubernetes/manifests/etcd.yaml ]; do sleep 0.5; done
+      sed -i '/--feature-gates/d' /etc/kubernetes/manifests/etcd.yaml
+      sed -i '/--watch-progress-notify-interval/d' /etc/kubernetes/manifests/etcd.yaml) &
+{{- end }}
     users:
     - name: {{.controlPlaneSshUsername}}
       sshAuthorizedKeys:

@@ -1,3 +1,7 @@
+{{- $kube_minor_version := "0" -}}
+{{- if .kubernetesVersion -}}
+  {{- $kube_minor_version = (index (splitList "." (trimPrefix "v" .kubernetesVersion)) 1) -}}
+{{- end -}}
 apiVersion: cluster.x-k8s.io/v1beta2
 kind: Cluster
 metadata:
@@ -326,11 +330,19 @@ spec:
 {{- end }}
         {{- end }}
 {{- end }}
-{{- if .registryMirrorMap }}
+{{- if or .registryMirrorMap (ge (atoi $kube_minor_version) 36) }}
     preKubeadmCommands:
+{{- if .registryMirrorMap }}
     - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
     - systemctl daemon-reload
     - systemctl restart containerd
+{{- end }}
+{{- if (ge (atoi $kube_minor_version) 36) }}
+    - |
+      (while [ ! -f /etc/kubernetes/manifests/etcd.yaml ]; do sleep 0.5; done
+      sed -i '/--feature-gates/d' /etc/kubernetes/manifests/etcd.yaml
+      sed -i '/--watch-progress-notify-interval/d' /etc/kubernetes/manifests/etcd.yaml) &
+{{- end }}
 {{- end }}
   replicas: {{.control_plane_replicas}}
 {{- if .upgradeRolloutStrategy }}
