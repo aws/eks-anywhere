@@ -6,6 +6,11 @@ description: >
   Create a cluster on CloudStack
 ---
 
+{{% alert title="Important: AWS CloudStack Availability" color="warning" %}}
+Effective with EKS Anywhere release v0.26, AWS will remove the Cluster API providers for CloudStack and AWS Snow from the EKS Anywhere distribution. Following this release, these providers will no longer be maintained, updated, or supported by AWS. Customers currently using these providers are encouraged to find alternative solutions.
+
+{{% /alert %}}
+
 EKS Anywhere supports a CloudStack provider for EKS Anywhere deployments.
 This document walks you through setting up EKS Anywhere on CloudStack in a way that:
 
