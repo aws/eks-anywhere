@@ -456,6 +456,7 @@ spec:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.6.1/metadata.yaml
       version: v1.6.1+abcdef1
     packageController:
+      crdChart: {}
       credentialProviderPackage:
         arch:
         - amd64
@@ -1210,6 +1211,7 @@ spec:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.6.1/metadata.yaml
       version: v1.6.1+abcdef1
     packageController:
+      crdChart: {}
       credentialProviderPackage:
         arch:
         - amd64
@@ -1964,6 +1966,7 @@ spec:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.6.1/metadata.yaml
       version: v1.6.1+abcdef1
     packageController:
+      crdChart: {}
       credentialProviderPackage:
         arch:
         - amd64
@@ -2718,6 +2721,7 @@ spec:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.6.1/metadata.yaml
       version: v1.6.1+abcdef1
     packageController:
+      crdChart: {}
       credentialProviderPackage:
         arch:
         - amd64
@@ -3472,6 +3476,7 @@ spec:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.6.1/metadata.yaml
       version: v1.6.1+abcdef1
     packageController:
+      crdChart: {}
       credentialProviderPackage:
         arch:
         - amd64
@@ -4226,6 +4231,7 @@ spec:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.6.1/metadata.yaml
       version: v1.6.1+abcdef1
     packageController:
+      crdChart: {}
       credentialProviderPackage:
         arch:
         - amd64
@@ -4980,6 +4986,7 @@ spec:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.6.1/metadata.yaml
       version: v1.6.1+abcdef1
     packageController:
+      crdChart: {}
       credentialProviderPackage:
         arch:
         - amd64
@@ -5734,6 +5741,7 @@ spec:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.6.1/metadata.yaml
       version: v1.6.1+abcdef1
     packageController:
+      crdChart: {}
       credentialProviderPackage:
         arch:
         - amd64
