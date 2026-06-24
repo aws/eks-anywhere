@@ -1465,12 +1465,6 @@ spec:
                                   type: string
                               type: object
                           type: object
-                      required:
-                      - channel
-                      - gitCommit
-                      - kubeVersion
-                      - manifestUrl
-                      - name
                       type: object
                     eksa:
                       description: EksaBundle defines EKS Anywhere-specific images
