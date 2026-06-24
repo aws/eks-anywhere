@@ -795,7 +795,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: bottlerocket-bootstrap-multi-network
         os: linux
-        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-multi-network:v1-30-55-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-multi-network:v1-30-56-eks-a-v0.0.0-dev-build.1
     bottlerocketHostContainers:
       admin:
         arch:
@@ -821,7 +821,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: bottlerocket-bootstrap
         os: linux
-        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-30-55-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-30-56-eks-a-v0.0.0-dev-build.1
     certManager:
       acmesolver:
         arch:
@@ -1033,10 +1033,10 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kind-node
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.30.14-eks-d-1-30-55-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.30.14-eks-d-1-30-56-eks-a-v0.0.0-dev-build.1
       kubeVersion: v1.30.14
-      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-30/kubernetes-1-30-eks-55.yaml
-      name: kubernetes-1-30-eks-55
+      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-30/kubernetes-1-30-eks-56.yaml
+      name: kubernetes-1-30-eks-56
       ova:
         bottlerocket: {}
       raw:
@@ -1252,7 +1252,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: bottlerocket-bootstrap-snow
         os: linux
-        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-snow:v1-30-55-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-snow:v1-30-56-eks-a-v0.0.0-dev-build.1
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.3.1/infrastructure-components.yaml
       kubeVip:
@@ -1471,7 +1471,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: upgrader
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/upgrader:v1-30-55-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/upgrader:v1-30-56-eks-a-v0.0.0-dev-build.1
     vSphere:
       clusterAPIController:
         arch:
@@ -1549,7 +1549,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: bottlerocket-bootstrap-multi-network
         os: linux
-        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-multi-network:v1-31-44-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-multi-network:v1-31-45-eks-a-v0.0.0-dev-build.1
     bottlerocketHostContainers:
       admin:
         arch:
@@ -1575,7 +1575,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: bottlerocket-bootstrap
         os: linux
-        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-31-44-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-31-45-eks-a-v0.0.0-dev-build.1
     certManager:
       acmesolver:
         arch:
@@ -1787,10 +1787,10 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kind-node
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.31.14-eks-d-1-31-44-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.31.14-eks-d-1-31-45-eks-a-v0.0.0-dev-build.1
       kubeVersion: v1.31.14
-      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-31/kubernetes-1-31-eks-44.yaml
-      name: kubernetes-1-31-eks-44
+      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-31/kubernetes-1-31-eks-45.yaml
+      name: kubernetes-1-31-eks-45
       ova:
         bottlerocket: {}
       raw:
@@ -2006,7 +2006,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: bottlerocket-bootstrap-snow
         os: linux
-        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-snow:v1-31-44-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-snow:v1-31-45-eks-a-v0.0.0-dev-build.1
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.3.1/infrastructure-components.yaml
       kubeVip:
@@ -2225,7 +2225,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: upgrader
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/upgrader:v1-31-44-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/upgrader:v1-31-45-eks-a-v0.0.0-dev-build.1
     vSphere:
       clusterAPIController:
         arch:
@@ -2303,7 +2303,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: bottlerocket-bootstrap-multi-network
         os: linux
-        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-multi-network:v1-32-37-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-multi-network:v1-32-38-eks-a-v0.0.0-dev-build.1
     bottlerocketHostContainers:
       admin:
         arch:
@@ -2329,7 +2329,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: bottlerocket-bootstrap
         os: linux
-        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-32-37-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-32-38-eks-a-v0.0.0-dev-build.1
     certManager:
       acmesolver:
         arch:
@@ -2541,10 +2541,10 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kind-node
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.32.13-eks-d-1-32-37-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.32.13-eks-d-1-32-38-eks-a-v0.0.0-dev-build.1
       kubeVersion: v1.32.13
-      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-32/kubernetes-1-32-eks-37.yaml
-      name: kubernetes-1-32-eks-37
+      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-32/kubernetes-1-32-eks-38.yaml
+      name: kubernetes-1-32-eks-38
       ova:
         bottlerocket: {}
       raw:
@@ -2760,7 +2760,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: bottlerocket-bootstrap-snow
         os: linux
-        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-snow:v1-32-37-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-snow:v1-32-38-eks-a-v0.0.0-dev-build.1
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.3.1/infrastructure-components.yaml
       kubeVip:
@@ -2979,7 +2979,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: upgrader
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/upgrader:v1-32-37-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/upgrader:v1-32-38-eks-a-v0.0.0-dev-build.1
     vSphere:
       clusterAPIController:
         arch:
@@ -3057,7 +3057,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: bottlerocket-bootstrap-multi-network
         os: linux
-        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-multi-network:v1-33-27-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-multi-network:v1-33-28-eks-a-v0.0.0-dev-build.1
     bottlerocketHostContainers:
       admin:
         arch:
@@ -3083,7 +3083,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: bottlerocket-bootstrap
         os: linux
-        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-33-27-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-33-28-eks-a-v0.0.0-dev-build.1
     certManager:
       acmesolver:
         arch:
@@ -3295,10 +3295,10 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kind-node
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.33.11-eks-d-1-33-27-eks-a-v0.0.0-dev-build.1
-      kubeVersion: v1.33.11
-      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-33/kubernetes-1-33-eks-27.yaml
-      name: kubernetes-1-33-eks-27
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.33.12-eks-d-1-33-28-eks-a-v0.0.0-dev-build.1
+      kubeVersion: v1.33.12
+      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-33/kubernetes-1-33-eks-28.yaml
+      name: kubernetes-1-33-eks-28
       ova:
         bottlerocket: {}
       raw:
@@ -3514,7 +3514,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: bottlerocket-bootstrap-snow
         os: linux
-        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-snow:v1-33-27-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-snow:v1-33-28-eks-a-v0.0.0-dev-build.1
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.3.1/infrastructure-components.yaml
       kubeVip:
@@ -3733,7 +3733,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: upgrader
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/upgrader:v1-33-27-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/upgrader:v1-33-28-eks-a-v0.0.0-dev-build.1
     vSphere:
       clusterAPIController:
         arch:
@@ -3811,7 +3811,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: bottlerocket-bootstrap-multi-network
         os: linux
-        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-multi-network:v1-34-18-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-multi-network:v1-34-19-eks-a-v0.0.0-dev-build.1
     bottlerocketHostContainers:
       admin:
         arch:
@@ -3837,7 +3837,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: bottlerocket-bootstrap
         os: linux
-        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-34-18-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-34-19-eks-a-v0.0.0-dev-build.1
     certManager:
       acmesolver:
         arch:
@@ -4049,10 +4049,10 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kind-node
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.34.7-eks-d-1-34-18-eks-a-v0.0.0-dev-build.1
-      kubeVersion: v1.34.7
-      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-34/kubernetes-1-34-eks-18.yaml
-      name: kubernetes-1-34-eks-18
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.34.8-eks-d-1-34-19-eks-a-v0.0.0-dev-build.1
+      kubeVersion: v1.34.8
+      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-34/kubernetes-1-34-eks-19.yaml
+      name: kubernetes-1-34-eks-19
       ova:
         bottlerocket: {}
       raw:
@@ -4268,7 +4268,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: bottlerocket-bootstrap-snow
         os: linux
-        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-snow:v1-34-18-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-snow:v1-34-19-eks-a-v0.0.0-dev-build.1
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.3.1/infrastructure-components.yaml
       kubeVip:
@@ -4487,7 +4487,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: upgrader
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/upgrader:v1-34-18-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/upgrader:v1-34-19-eks-a-v0.0.0-dev-build.1
     vSphere:
       clusterAPIController:
         arch:
@@ -4565,7 +4565,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: bottlerocket-bootstrap-multi-network
         os: linux
-        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-multi-network:v1-35-9-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-multi-network:v1-35-10-eks-a-v0.0.0-dev-build.1
     bottlerocketHostContainers:
       admin:
         arch:
@@ -4591,7 +4591,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: bottlerocket-bootstrap
         os: linux
-        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-35-9-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-35-10-eks-a-v0.0.0-dev-build.1
     certManager:
       acmesolver:
         arch:
@@ -4803,10 +4803,10 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kind-node
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.35.4-eks-d-1-35-9-eks-a-v0.0.0-dev-build.1
-      kubeVersion: v1.35.4
-      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-35/kubernetes-1-35-eks-9.yaml
-      name: kubernetes-1-35-eks-9
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.35.5-eks-d-1-35-10-eks-a-v0.0.0-dev-build.1
+      kubeVersion: v1.35.5
+      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-35/kubernetes-1-35-eks-10.yaml
+      name: kubernetes-1-35-eks-10
       ova:
         bottlerocket: {}
       raw:
@@ -5022,7 +5022,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: bottlerocket-bootstrap-snow
         os: linux
-        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-snow:v1-35-9-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-snow:v1-35-10-eks-a-v0.0.0-dev-build.1
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.3.1/infrastructure-components.yaml
       kubeVip:
@@ -5241,7 +5241,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: upgrader
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/upgrader:v1-35-9-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/upgrader:v1-35-10-eks-a-v0.0.0-dev-build.1
     vSphere:
       clusterAPIController:
         arch:
@@ -5319,7 +5319,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: bottlerocket-bootstrap-multi-network
         os: linux
-        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-multi-network:v1-36-2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-multi-network:v1-36-4-eks-a-v0.0.0-dev-build.1
     bottlerocketHostContainers:
       admin:
         arch:
@@ -5345,7 +5345,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: bottlerocket-bootstrap
         os: linux
-        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-36-2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-36-4-eks-a-v0.0.0-dev-build.1
     certManager:
       acmesolver:
         arch:
@@ -5557,10 +5557,10 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kind-node
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.36.0-eks-d-1-36-2-eks-a-v0.0.0-dev-build.1
-      kubeVersion: v1.36.0
-      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-36/kubernetes-1-36-eks-2.yaml
-      name: kubernetes-1-36-eks-2
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.36.1-eks-d-1-36-4-eks-a-v0.0.0-dev-build.1
+      kubeVersion: v1.36.1
+      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-36/kubernetes-1-36-eks-4.yaml
+      name: kubernetes-1-36-eks-4
       ova:
         bottlerocket: {}
       raw:
@@ -5776,7 +5776,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: bottlerocket-bootstrap-snow
         os: linux
-        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-snow:v1-36-2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap-snow:v1-36-4-eks-a-v0.0.0-dev-build.1
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.3.1/infrastructure-components.yaml
       kubeVip:
@@ -5995,7 +5995,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: upgrader
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/upgrader:v1-36-2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/upgrader:v1-36-4-eks-a-v0.0.0-dev-build.1
     vSphere:
       clusterAPIController:
         arch:
