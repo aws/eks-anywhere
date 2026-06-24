@@ -91,12 +91,6 @@ spec:
                             uri:
                               description: The URI where the asset is located
                               type: string
-                          required:
-                          - description
-                          - name
-                          - sha256
-                          - sha512
-                          - uri
                           type: object
                         linux:
                           description: EKS Anywhere Linux binary
@@ -132,12 +126,6 @@ spec:
                             uri:
                               description: The URI where the asset is located
                               type: string
-                          required:
-                          - description
-                          - name
-                          - sha256
-                          - sha512
-                          - uri
                           type: object
                       required:
                       - darwin
@@ -185,12 +173,6 @@ spec:
                                 uri:
                                   description: The URI where the asset is located
                                   type: string
-                              required:
-                              - description
-                              - name
-                              - sha256
-                              - sha512
-                              - uri
                               type: object
                             arm64:
                               description: |-
@@ -228,12 +210,6 @@ spec:
                                 uri:
                                   description: The URI where the asset is located
                                   type: string
-                              required:
-                              - description
-                              - name
-                              - sha256
-                              - sha512
-                              - uri
                               type: object
                           required:
                           - amd64
@@ -278,12 +254,6 @@ spec:
                                 uri:
                                   description: The URI where the asset is located
                                   type: string
-                              required:
-                              - description
-                              - name
-                              - sha256
-                              - sha512
-                              - uri
                               type: object
                             arm64:
                               description: |-
@@ -321,12 +291,6 @@ spec:
                                 uri:
                                   description: The URI where the asset is located
                                   type: string
-                              required:
-                              - description
-                              - name
-                              - sha256
-                              - sha512
-                              - uri
                               type: object
                           required:
                           - amd64
