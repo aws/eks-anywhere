@@ -20,7 +20,6 @@ import (
 	internalmocks "github.com/aws/eks-anywhere/internal/test/mocks"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/manifests"
 	"github.com/aws/eks-anywhere/pkg/manifests/releases"
 	"github.com/aws/eks-anywhere/pkg/providers"
@@ -1471,17 +1470,3 @@ spec:
 	g.Expect(err.Error()).To(ContainSubstring("unmarshalling eksd release manifest from URL"))
 }
 
-func TestValidateK8s136Support(t *testing.T) {
-	tt := newTest(t)
-	tt.clusterSpec.Cluster.Spec.KubernetesVersion = anywherev1.Kube136
-	tt.Expect(validations.ValidateK8s136Support(tt.clusterSpec)).To(
-		MatchError(ContainSubstring("kubernetes version 1.36 is not enabled. Please set the env variable K8S_1_36_SUPPORT")))
-}
-
-func TestValidateK8s136SupportActive(t *testing.T) {
-	tt := newTest(t)
-	tt.clusterSpec.Cluster.Spec.KubernetesVersion = anywherev1.Kube136
-	features.ClearCache()
-	os.Setenv(features.K8s136SupportEnvVar, "true")
-	tt.Expect(validations.ValidateK8s136Support(tt.clusterSpec)).To(Succeed())
-}
