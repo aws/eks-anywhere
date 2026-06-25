@@ -2082,14 +2082,14 @@ func TestVSphereInstallGitFluxDuringUpgrade(t *testing.T) {
 	)
 }
 
-func TestVSphereKubernetes135UbuntuLabelsUpgradeFlow(t *testing.T) {
-	provider := ubuntu135ProviderWithLabels(t)
+func TestVSphereKubernetes130UbuntuLabelsUpgradeFlow(t *testing.T) {
+	provider := ubuntu130ProviderWithLabels(t)
 
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
 		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube135),
+			api.WithKubernetesVersion(v1alpha1.Kube130),
 			api.WithExternalEtcdTopology(1),
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
@@ -2098,7 +2098,7 @@ func TestVSphereKubernetes135UbuntuLabelsUpgradeFlow(t *testing.T) {
 
 	runLabelsUpgradeFlow(
 		test,
-		v1alpha1.Kube135,
+		v1alpha1.Kube130,
 		framework.WithClusterUpgrade(
 			api.WithWorkerNodeGroup(worker0, api.WithLabel(key1, val1)),
 			api.WithWorkerNodeGroup(worker1, api.WithLabel(key2, val2)),
@@ -2108,9 +2108,8 @@ func TestVSphereKubernetes135UbuntuLabelsUpgradeFlow(t *testing.T) {
 	)
 }
 
-
 func TestVSphereKubernetes136UbuntuLabelsUpgradeFlow(t *testing.T) {
-	provider := ubuntu135ProviderWithLabels(t)
+	provider := ubuntu136ProviderWithLabels(t)
 
 	test := framework.NewClusterE2ETest(
 		t,
@@ -2135,14 +2134,14 @@ func TestVSphereKubernetes136UbuntuLabelsUpgradeFlow(t *testing.T) {
 	)
 }
 
-func TestVSphereKubernetes135BottlerocketLabelsUpgradeFlow(t *testing.T) {
-	provider := bottlerocket135ProviderWithLabels(t)
+func TestVSphereKubernetes130BottlerocketLabelsUpgradeFlow(t *testing.T) {
+	provider := bottlerocket130ProviderWithLabels(t)
 
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
 		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube135),
+			api.WithKubernetesVersion(v1alpha1.Kube130),
 			api.WithExternalEtcdTopology(1),
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
@@ -2151,7 +2150,7 @@ func TestVSphereKubernetes135BottlerocketLabelsUpgradeFlow(t *testing.T) {
 
 	runLabelsUpgradeFlow(
 		test,
-		v1alpha1.Kube135,
+		v1alpha1.Kube130,
 		framework.WithClusterUpgrade(
 			api.WithWorkerNodeGroup(worker0, api.WithLabel(key1, val1)),
 			api.WithWorkerNodeGroup(worker1, api.WithLabel(key2, val2)),
@@ -2161,9 +2160,8 @@ func TestVSphereKubernetes135BottlerocketLabelsUpgradeFlow(t *testing.T) {
 	)
 }
 
-
 func TestVSphereKubernetes136BottlerocketLabelsUpgradeFlow(t *testing.T) {
-	provider := bottlerocket135ProviderWithLabels(t)
+	provider := bottlerocket136ProviderWithLabels(t)
 
 	test := framework.NewClusterE2ETest(
 		t,
@@ -4580,14 +4578,14 @@ func TestVSphereKubernetes136StackedEtcdUbuntu(t *testing.T) {
 	runStackedEtcdFlow(test)
 }
 
-func TestVSphereKubernetes135UbuntuTaintsUpgradeFlow(t *testing.T) {
-	provider := ubuntu135ProviderWithTaints(t)
+func TestVSphereKubernetes130UbuntuTaintsUpgradeFlow(t *testing.T) {
+	provider := ubuntu130ProviderWithTaints(t)
 
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
 		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube135),
+			api.WithKubernetesVersion(v1alpha1.Kube130),
 			api.WithExternalEtcdTopology(1),
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
@@ -4596,7 +4594,7 @@ func TestVSphereKubernetes135UbuntuTaintsUpgradeFlow(t *testing.T) {
 
 	runTaintsUpgradeFlow(
 		test,
-		v1alpha1.Kube135,
+		v1alpha1.Kube130,
 		framework.WithClusterUpgrade(
 			api.WithWorkerNodeGroup(worker0, api.WithTaint(framework.NoExecuteTaint())),
 			api.WithWorkerNodeGroup(worker1, api.WithTaint(framework.NoExecuteTaint())),
@@ -4606,9 +4604,8 @@ func TestVSphereKubernetes135UbuntuTaintsUpgradeFlow(t *testing.T) {
 	)
 }
 
-
 func TestVSphereKubernetes136UbuntuTaintsUpgradeFlow(t *testing.T) {
-	provider := ubuntu135ProviderWithTaints(t)
+	provider := ubuntu136ProviderWithTaints(t)
 
 	test := framework.NewClusterE2ETest(
 		t,
@@ -4633,14 +4630,14 @@ func TestVSphereKubernetes136UbuntuTaintsUpgradeFlow(t *testing.T) {
 	)
 }
 
-func TestVSphereKubernetes135BottlerocketTaintsUpgradeFlow(t *testing.T) {
-	provider := bottlerocket135ProviderWithTaints(t)
+func TestVSphereKubernetes130BottlerocketTaintsUpgradeFlow(t *testing.T) {
+	provider := bottlerocket130ProviderWithTaints(t)
 
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
 		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube135),
+			api.WithKubernetesVersion(v1alpha1.Kube130),
 			api.WithExternalEtcdTopology(1),
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
@@ -4649,7 +4646,7 @@ func TestVSphereKubernetes135BottlerocketTaintsUpgradeFlow(t *testing.T) {
 
 	runTaintsUpgradeFlow(
 		test,
-		v1alpha1.Kube135,
+		v1alpha1.Kube130,
 		framework.WithClusterUpgrade(
 			api.WithWorkerNodeGroup(worker0, api.WithTaint(framework.NoExecuteTaint())),
 			api.WithWorkerNodeGroup(worker1, api.WithTaint(framework.NoExecuteTaint())),
@@ -4659,9 +4656,8 @@ func TestVSphereKubernetes135BottlerocketTaintsUpgradeFlow(t *testing.T) {
 	)
 }
 
-
 func TestVSphereKubernetes136BottlerocketTaintsUpgradeFlow(t *testing.T) {
-	provider := bottlerocket135ProviderWithTaints(t)
+	provider := bottlerocket136ProviderWithTaints(t)
 
 	test := framework.NewClusterE2ETest(
 		t,
@@ -8056,7 +8052,7 @@ func TestVSphereKubernetes134BottlerocketKubeletConfiguration(t *testing.T) {
 	runKubeletConfigurationFlow(test)
 }
 
-func ubuntu135ProviderWithLabels(t *testing.T) *framework.VSphere {
+func ubuntu130ProviderWithLabels(t *testing.T) *framework.VSphere {
 	return framework.NewVSphere(t,
 		framework.WithVSphereWorkerNodeGroup(
 			worker0,
@@ -8072,11 +8068,11 @@ func ubuntu135ProviderWithLabels(t *testing.T) *framework.VSphere {
 			framework.WithWorkerNodeGroup(worker2, api.WithCount(1),
 				api.WithLabel(key2, val2)),
 		),
-		framework.WithUbuntu2204135(),
+		framework.WithUbuntu2204130(),
 	)
 }
 
-func bottlerocket135ProviderWithLabels(t *testing.T) *framework.VSphere {
+func ubuntu136ProviderWithLabels(t *testing.T) *framework.VSphere {
 	return framework.NewVSphere(t,
 		framework.WithVSphereWorkerNodeGroup(
 			worker0,
@@ -8092,11 +8088,51 @@ func bottlerocket135ProviderWithLabels(t *testing.T) *framework.VSphere {
 			framework.WithWorkerNodeGroup(worker2, api.WithCount(1),
 				api.WithLabel(key2, val2)),
 		),
-		framework.WithBottleRocket135(),
+		framework.WithUbuntu2204136(),
 	)
 }
 
-func ubuntu135ProviderWithTaints(t *testing.T) *framework.VSphere {
+func bottlerocket130ProviderWithLabels(t *testing.T) *framework.VSphere {
+	return framework.NewVSphere(t,
+		framework.WithVSphereWorkerNodeGroup(
+			worker0,
+			framework.WithWorkerNodeGroup(worker0, api.WithCount(2),
+				api.WithLabel(key1, val2)),
+		),
+		framework.WithVSphereWorkerNodeGroup(
+			worker1,
+			framework.WithWorkerNodeGroup(worker1, api.WithCount(1)),
+		),
+		framework.WithVSphereWorkerNodeGroup(
+			worker2,
+			framework.WithWorkerNodeGroup(worker2, api.WithCount(1),
+				api.WithLabel(key2, val2)),
+		),
+		framework.WithBottleRocket130(),
+	)
+}
+
+func bottlerocket136ProviderWithLabels(t *testing.T) *framework.VSphere {
+	return framework.NewVSphere(t,
+		framework.WithVSphereWorkerNodeGroup(
+			worker0,
+			framework.WithWorkerNodeGroup(worker0, api.WithCount(2),
+				api.WithLabel(key1, val2)),
+		),
+		framework.WithVSphereWorkerNodeGroup(
+			worker1,
+			framework.WithWorkerNodeGroup(worker1, api.WithCount(1)),
+		),
+		framework.WithVSphereWorkerNodeGroup(
+			worker2,
+			framework.WithWorkerNodeGroup(worker2, api.WithCount(1),
+				api.WithLabel(key2, val2)),
+		),
+		framework.WithBottleRocket136(),
+	)
+}
+
+func ubuntu130ProviderWithTaints(t *testing.T) *framework.VSphere {
 	return framework.NewVSphere(t,
 		framework.WithVSphereWorkerNodeGroup(
 			worker0,
@@ -8110,11 +8146,11 @@ func ubuntu135ProviderWithTaints(t *testing.T) *framework.VSphere {
 			worker2,
 			framework.PreferNoScheduleWorkerNodeGroup(worker2, 1),
 		),
-		framework.WithUbuntu2204135(),
+		framework.WithUbuntu2204130(),
 	)
 }
 
-func bottlerocket135ProviderWithTaints(t *testing.T) *framework.VSphere {
+func ubuntu136ProviderWithTaints(t *testing.T) *framework.VSphere {
 	return framework.NewVSphere(t,
 		framework.WithVSphereWorkerNodeGroup(
 			worker0,
@@ -8128,7 +8164,43 @@ func bottlerocket135ProviderWithTaints(t *testing.T) *framework.VSphere {
 			worker2,
 			framework.PreferNoScheduleWorkerNodeGroup(worker2, 1),
 		),
-		framework.WithBottleRocket135(),
+		framework.WithUbuntu2204136(),
+	)
+}
+
+func bottlerocket130ProviderWithTaints(t *testing.T) *framework.VSphere {
+	return framework.NewVSphere(t,
+		framework.WithVSphereWorkerNodeGroup(
+			worker0,
+			framework.NoScheduleWorkerNodeGroup(worker0, 2),
+		),
+		framework.WithVSphereWorkerNodeGroup(
+			worker1,
+			framework.WithWorkerNodeGroup(worker1, api.WithCount(1)),
+		),
+		framework.WithVSphereWorkerNodeGroup(
+			worker2,
+			framework.PreferNoScheduleWorkerNodeGroup(worker2, 1),
+		),
+		framework.WithBottleRocket130(),
+	)
+}
+
+func bottlerocket136ProviderWithTaints(t *testing.T) *framework.VSphere {
+	return framework.NewVSphere(t,
+		framework.WithVSphereWorkerNodeGroup(
+			worker0,
+			framework.NoScheduleWorkerNodeGroup(worker0, 2),
+		),
+		framework.WithVSphereWorkerNodeGroup(
+			worker1,
+			framework.WithWorkerNodeGroup(worker1, api.WithCount(1)),
+		),
+		framework.WithVSphereWorkerNodeGroup(
+			worker2,
+			framework.PreferNoScheduleWorkerNodeGroup(worker2, 1),
+		),
+		framework.WithBottleRocket136(),
 	)
 }
 
