@@ -3424,30 +3424,6 @@ func TestTinkerbellKubernetes136Ubuntu2204To2404Upgrade(t *testing.T) {
 	)
 }
 
-func TestTinkerbellKubernetes136Ubuntu2204To2404RTOSUpgrade(t *testing.T) {
-	licenseToken := framework.GetLicenseToken()
-	provider := framework.NewTinkerbell(t)
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithControlPlaneHardware(2),
-		framework.WithWorkerHardware(2),
-	).WithClusterConfig(
-		provider.WithKubeVersionAndOS(v1alpha1.Kube136, framework.Ubuntu2204, nil),
-		api.ClusterToConfigFiller(
-			api.WithLicenseToken(licenseToken),
-		),
-	)
-	runSimpleUpgradeFlowForBaremetalWithoutClusterConfigGeneration(
-		test,
-		v1alpha1.Kube136,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube136)),
-		provider.WithProviderUpgrade(framework.Ubuntu2404Kubernetes136RTOSImage()),
-	)
-}
-
 func TestTinkerbellKubernetes136Ubuntu2204To2404GenericUpgrade(t *testing.T) {
 	licenseToken := framework.GetLicenseToken()
 	provider := framework.NewTinkerbell(t)
@@ -3871,23 +3847,6 @@ func TestTinkerbellKubernetes136Ubuntu2404SimpleFlow(t *testing.T) {
 		framework.WithWorkerHardware(1),
 	).WithClusterConfig(
 		provider.WithKubeVersionAndOS(v1alpha1.Kube136, framework.Ubuntu2404, nil),
-		api.ClusterToConfigFiller(
-			api.WithLicenseToken(licenseToken),
-		),
-	)
-	runTinkerbellSimpleFlowWithoutClusterConfigGeneration(test)
-}
-
-func TestTinkerbellKubernetes136Ubuntu2404RTOSSimpleFlow(t *testing.T) {
-	licenseToken := framework.GetLicenseToken()
-	provider := framework.NewTinkerbell(t)
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithControlPlaneHardware(1),
-		framework.WithWorkerHardware(1),
-	).WithClusterConfig(
-		provider.WithKubeVersionAndOS(v1alpha1.Kube136, framework.Ubuntu2404, nil, "rtos"),
 		api.ClusterToConfigFiller(
 			api.WithLicenseToken(licenseToken),
 		),

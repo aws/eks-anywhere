@@ -56,8 +56,6 @@ const (
 	tinkerbellImageUbuntu2404Kubernetes135EnvVar        = "T_TINKERBELL_IMAGE_UBUNTU_2404_1_35"
 	tinkerbellImageRedHat9135EnvVar                     = "T_TINKERBELL_IMAGE_REDHAT_9_1_35"
 	tinkerbellImageUbuntu2204Kubernetes136EnvVar        = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_36"
-	tinkerbellImageUbuntu2204Kubernetes136RTOSEnvVar    = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_36_RTOS"
-	tinkerbellImageUbuntu2404Kubernetes136RTOSEnvVar    = "T_TINKERBELL_IMAGE_UBUNTU_2404_1_36_RTOS"
 	tinkerbellImageUbuntu2204Kubernetes136GenericEnvVar = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_36_GENERIC"
 	tinkerbellImageUbuntu2404Kubernetes136GenericEnvVar = "T_TINKERBELL_IMAGE_UBUNTU_2404_1_36_GENERIC"
 	tinkerbellImageUbuntu2404Kubernetes136EnvVar        = "T_TINKERBELL_IMAGE_UBUNTU_2404_1_36"
@@ -111,8 +109,6 @@ var requiredTinkerbellEnvVars = []string{
 	tinkerbellImageUbuntu2404Kubernetes135EnvVar,
 	tinkerbellImageRedHat9135EnvVar,
 	tinkerbellImageUbuntu2204Kubernetes136EnvVar,
-	tinkerbellImageUbuntu2204Kubernetes136RTOSEnvVar,
-	tinkerbellImageUbuntu2404Kubernetes136RTOSEnvVar,
 	tinkerbellImageUbuntu2204Kubernetes136GenericEnvVar,
 	tinkerbellImageUbuntu2404Kubernetes136GenericEnvVar,
 	tinkerbellImageUbuntu2404Kubernetes136EnvVar,
@@ -641,11 +637,6 @@ func Ubuntu136ImageForWorker() api.TinkerbellFiller {
 // Ubuntu2404Kubernetes136Image represents a Ubuntu 24.04 raw image corresponding to Kubernetes 1.36.
 func Ubuntu2404Kubernetes136Image() api.TinkerbellFiller {
 	return imageForKubeVersionAndOS(anywherev1.Kube136, Ubuntu2404, "")
-}
-
-// Ubuntu2404Kubernetes136RTOSImage represents a Ubuntu 24.04 RTOS raw image corresponding to Kubernetes 1.36.
-func Ubuntu2404Kubernetes136RTOSImage() api.TinkerbellFiller {
-	return imageForKubeVersionAndOS(anywherev1.Kube136, Ubuntu2404, "", "RTOS")
 }
 
 // Ubuntu2404Kubernetes136GenericImage represents a Ubuntu 24.04 Generic raw image corresponding to Kubernetes 1.36.
