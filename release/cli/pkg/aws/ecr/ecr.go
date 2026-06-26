@@ -17,7 +17,6 @@ package ecr
 import (
 	"encoding/base64"
 	"fmt"
-	"reflect"
 	"strings"
 	"time"
 
@@ -152,10 +151,10 @@ func imageTagFilter(details []*ecr.ImageDetail, substring string) []*ecr.ImageDe
 
 // getLatestOCIShaTag is used to find the tag/sha of the latest pushed OCI image from a list.
 func getLatestOCIShaTag(details []*ecr.ImageDetail, branchName string, isHelmChart bool) (string, string, error) {
-	latest := &ecr.ImageDetail{}
-	latest.ImagePushedAt = &time.Time{}
+	var latest *ecr.ImageDetail
+	var latestPushedAt time.Time
 	for _, detail := range details {
-		if len(details) < 1 || detail.ImagePushedAt == nil || detail.ImageDigest == nil || detail.ImageTags == nil || len(detail.ImageTags) == 0 {
+		if detail.ImagePushedAt == nil || detail.ImageDigest == nil || detail.ImageTags == nil || len(detail.ImageTags) == 0 {
 			continue
 		}
 
@@ -174,23 +173,25 @@ func getLatestOCIShaTag(details []*ecr.ImageDetail, branchName string, isHelmCha
 				}
 			} else {
 				// Exclude image if none of the tags contain the branchName
+				found := false
 				for _, tag := range detail.ImageTags {
 					if strings.Contains(*tag, branchName) {
-						skip = true
+						found = true
 						break
 					}
 				}
-				if !skip {
+				if !found {
 					continue
 				}
 			}
 		}
 
-		if detail.ImagePushedAt != nil && latest.ImagePushedAt.Before(*detail.ImagePushedAt) {
+		if detail.ImagePushedAt.After(latestPushedAt) {
 			latest = detail
+			latestPushedAt = *detail.ImagePushedAt
 		}
 	}
-	if reflect.DeepEqual(latest, ecr.ImageDetail{}) {
+	if latest == nil {
 		return "", "", fmt.Errorf("no images found")
 	}
 	return *latest.ImageTags[0], *latest.ImageDigest, nil
