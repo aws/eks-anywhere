@@ -125,6 +125,44 @@ func (mr *MockChartUninstallerMockRecorder) Delete(ctx, kubeconfigFilePath, inst
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockChartUninstaller)(nil).Delete), ctx, kubeconfigFilePath, installName, namespace)
 }
 
+// MockChartTemplater is a mock of ChartTemplater interface.
+type MockChartTemplater struct {
+	ctrl     *gomock.Controller
+	recorder *MockChartTemplaterMockRecorder
+}
+
+// MockChartTemplaterMockRecorder is the mock recorder for MockChartTemplater.
+type MockChartTemplaterMockRecorder struct {
+	mock *MockChartTemplater
+}
+
+// NewMockChartTemplater creates a new mock instance.
+func NewMockChartTemplater(ctrl *gomock.Controller) *MockChartTemplater {
+	mock := &MockChartTemplater{ctrl: ctrl}
+	mock.recorder = &MockChartTemplaterMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockChartTemplater) EXPECT() *MockChartTemplaterMockRecorder {
+	return m.recorder
+}
+
+// TemplateChart mocks base method.
+func (m *MockChartTemplater) TemplateChart(ctx context.Context, chart, ociURI, version, namespace, valueFilePath string, skipCRDs bool, values []string) ([]byte, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "TemplateChart", ctx, chart, ociURI, version, namespace, valueFilePath, skipCRDs, values)
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// TemplateChart indicates an expected call of TemplateChart.
+func (mr *MockChartTemplaterMockRecorder) TemplateChart(ctx, chart, ociURI, version, namespace, valueFilePath, skipCRDs, values interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TemplateChart", reflect.TypeOf((*MockChartTemplater)(nil).TemplateChart), ctx, chart, ociURI, version, namespace, valueFilePath, skipCRDs, values)
+}
+
 // MockChartManager is a mock of ChartManager interface.
 type MockChartManager struct {
 	ctrl     *gomock.Controller
@@ -188,6 +226,21 @@ func (m *MockChartManager) RegistryLogin(ctx context.Context, registry, username
 func (mr *MockChartManagerMockRecorder) RegistryLogin(ctx, registry, username, password interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegistryLogin", reflect.TypeOf((*MockChartManager)(nil).RegistryLogin), ctx, registry, username, password)
+}
+
+// TemplateChart mocks base method.
+func (m *MockChartManager) TemplateChart(ctx context.Context, chart, ociURI, version, namespace, valueFilePath string, skipCRDs bool, values []string) ([]byte, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "TemplateChart", ctx, chart, ociURI, version, namespace, valueFilePath, skipCRDs, values)
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// TemplateChart indicates an expected call of TemplateChart.
+func (mr *MockChartManagerMockRecorder) TemplateChart(ctx, chart, ociURI, version, namespace, valueFilePath, skipCRDs, values interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TemplateChart", reflect.TypeOf((*MockChartManager)(nil).TemplateChart), ctx, chart, ociURI, version, namespace, valueFilePath, skipCRDs, values)
 }
 
 // MockKubeDeleter is a mock of KubeDeleter interface.

@@ -46,6 +46,7 @@ type PackageControllerClientOpt func(client *PackageControllerClient)
 type PackageControllerClient struct {
 	kubeConfig string
 	chart      *releasev1.Image
+	crdChart   *releasev1.Image
 	// chartManager installs and deletes helm charts.
 	chartManager          ChartManager
 	clusterName           string
@@ -95,10 +96,16 @@ type ChartUninstaller interface {
 	Delete(ctx context.Context, kubeconfigFilePath, installName, namespace string) error
 }
 
-// ChartManager installs and uninstalls helm charts.
+// ChartTemplater renders helm charts to YAML manifests without installing.
+type ChartTemplater interface {
+	TemplateChart(ctx context.Context, chart, ociURI, version, namespace, valueFilePath string, skipCRDs bool, values []string) ([]byte, error)
+}
+
+// ChartManager installs, uninstalls, and templates helm charts.
 type ChartManager interface {
 	ChartInstaller
 	ChartUninstaller
+	ChartTemplater
 	RegistryLogin(ctx context.Context, registry, username, password string) error
 }
 
@@ -221,13 +228,12 @@ func (pc *PackageControllerClient) Enable(ctx context.Context) error {
 		return err
 	}
 
-	skipCRDs := false
+	skipCRDs := true
 	chartName := pc.chart.Name
 	if pc.managementClusterName != pc.clusterName {
 		values = append(values, "workloadPackageOnly=true")
 		values = append(values, "managementClusterName="+pc.managementClusterName)
 		chartName = chartName + "-" + pc.clusterName
-		skipCRDs = true
 	}
 
 	if err := pc.chartManager.InstallChart(ctx, chartName, ociURI, pc.chart.Tag(), pc.kubeConfig, constants.EksaPackagesName, valueFilePath, skipCRDs, values); err != nil {
@@ -589,6 +595,36 @@ func (pc *PackageControllerClient) ReconcileDelete(ctx context.Context, logger l
 	logger.Info("Removed curated packages installation", "clusterName")
 
 	return nil
+}
+
+// InstallCRDs installs the curated packages CRDs by templating the CRD chart
+// and applying the manifests via kubectl. This separates CRD lifecycle from the
+// Helm release lifecycle, so CRDs persist even if the Helm release is deleted.
+func (pc *PackageControllerClient) InstallCRDs(ctx context.Context) error {
+	if pc.crdChart == nil {
+		return fmt.Errorf("CRD chart reference is nil")
+	}
+	ociURI := fmt.Sprintf("oci://%s", pc.registryMirror.ReplaceRegistry(pc.crdChart.Image()))
+	manifests, err := pc.chartManager.TemplateChart(ctx,
+		pc.crdChart.Name, ociURI, pc.crdChart.Tag(),
+		constants.EksaPackagesName, "", false, nil)
+	if err != nil {
+		return fmt.Errorf("templating package CRDs chart: %w", err)
+	}
+	_, err = pc.kubectl.ExecuteFromYaml(ctx, manifests,
+		"apply", "--server-side", "--force-conflicts", "-f", "-",
+		"--kubeconfig", pc.kubeConfig)
+	if err != nil {
+		return fmt.Errorf("applying package CRDs: %w", err)
+	}
+	return nil
+}
+
+// WithCRDChart sets the CRD chart reference for separate CRD installation.
+func WithCRDChart(chart *releasev1.Image) func(client *PackageControllerClient) {
+	return func(config *PackageControllerClient) {
+		config.crdChart = chart
+	}
 }
 
 func WithEksaAccessKeyId(eksaAccessKeyId string) func(client *PackageControllerClient) {

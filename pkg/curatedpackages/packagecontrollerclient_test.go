@@ -316,7 +316,7 @@ func TestEnableSuccess(t *testing.T) {
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
-		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, false, values).Return(nil)
+		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, true, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(func(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj interface{}) error {
@@ -520,7 +520,7 @@ func TestEnableWithProxy(t *testing.T) {
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
-		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, false, values).Return(nil)
+		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, true, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(func(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj interface{}) error {
@@ -580,7 +580,7 @@ func TestEnableWithEmptyProxy(t *testing.T) {
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
-		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, false, values).Return(nil)
+		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, true, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(func(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj interface{}) error {
@@ -638,7 +638,7 @@ func TestEnableWithSkipWait(t *testing.T) {
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
-		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, false, values).Return(nil)
+		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, true, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(func(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj interface{}) error {
@@ -681,7 +681,7 @@ func TestEnableFail(t *testing.T) {
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
-		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, false, values).Return(errors.New("login failed"))
+		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, true, values).Return(errors.New("login failed"))
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(func(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj interface{}) error {
@@ -720,7 +720,7 @@ func TestEnableFailNoActiveBundle(t *testing.T) {
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
-		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, false, values).Return(nil)
+		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, true, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(getPBCFail(t)).
@@ -750,7 +750,7 @@ func TestEnableSuccessWhenCronJobFails(t *testing.T) {
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
-		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, false, values).Return(nil)
+		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, true, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(func(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj interface{}) error {
@@ -832,7 +832,7 @@ func TestEnableActiveBundleCustomTimeout(t *testing.T) {
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
-		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, false, values).Return(nil)
+		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, true, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(func(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj interface{}) error {
@@ -886,7 +886,7 @@ func TestEnableActiveBundleWaitLoops(t *testing.T) {
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
-		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, false, values).Return(nil)
+		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, true, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(func(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj interface{}) error {
@@ -966,7 +966,7 @@ func TestEnableActiveBundleTimesOut(t *testing.T) {
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
-		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, false, values).Return(nil)
+		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, true, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(getPBCDelay(t, time.Second)).
@@ -1012,7 +1012,7 @@ func TestEnableActiveBundleNamespaceTimesOut(t *testing.T) {
 		if (tt.eksaAccessID == "" || tt.eksaAccessKey == "") && tt.registryMirror == nil {
 			values = append(values, "cronjob.suspend=true")
 		}
-		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, false, values).Return(nil)
+		tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, true, values).Return(nil)
 		tt.kubectl.EXPECT().
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(func(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj interface{}) error {
@@ -1077,7 +1077,7 @@ func TestEnableWaitsForPackageInstalled(t *testing.T) {
 	valueFilePath := filepath.Join("billy", filewriter.DefaultTmpFolder, valueFileName)
 	ociURI := "oci://test_registry/eks-anywhere/eks-anywhere-packages"
 
-	cm.EXPECT().InstallChart(gomock.Any(), chart.Name, ociURI, chart.Tag(), kubeConfig, constants.EksaPackagesName, valueFilePath, false, gomock.InAnyOrder(values)).Return(nil)
+	cm.EXPECT().InstallChart(gomock.Any(), chart.Name, ociURI, chart.Tag(), kubeConfig, constants.EksaPackagesName, valueFilePath, true, gomock.InAnyOrder(values)).Return(nil)
 
 	// Simulate race condition: Package not installed initially, becomes installed after 2 checks
 	packageCallCount := 0
@@ -1131,7 +1131,7 @@ func TestEnableFailsWhenPackageGetObjectFails(t *testing.T) {
 		clusterName,
 	}
 
-	tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, false, values).Return(nil)
+	tt.chartManager.EXPECT().InstallChart(tt.ctx, tt.chart.Name, ociURI, tt.chart.Tag(), tt.kubeConfig, constants.EksaPackagesName, valueFilePath, true, values).Return(nil)
 
 	tt.kubectl.EXPECT().
 		GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
