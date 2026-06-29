@@ -161,3 +161,26 @@ func taintsToPtr(t []corev1.Taint) *[]corev1.Taint {
 	}
 	return &t
 }
+
+// DefaultControlPlaneTaint returns the default taint for control plane nodes.
+// This taint prevents workloads from being scheduled on control plane nodes unless they
+// explicitly tolerate it.
+func DefaultControlPlaneTaint() corev1.Taint {
+	return corev1.Taint{
+		Key:    "node-role.kubernetes.io/control-plane",
+		Effect: corev1.TaintEffectNoSchedule,
+	}
+}
+
+// ControlPlaneTaintsToPtr returns a pointer to the taints slice for control plane nodes.
+// If the input slice is nil, it returns a pointer to a slice containing the default
+// control-plane NoSchedule taint. This ensures that control plane nodes always have
+// explicit taints specified, which is required by CAPI v1.13+ for the
+// NodeKubeadmLabelsAndTaintsSet readiness gate to work correctly.
+func ControlPlaneTaintsToPtr(t []corev1.Taint) *[]corev1.Taint {
+	if t == nil {
+		defaultTaints := []corev1.Taint{DefaultControlPlaneTaint()}
+		return &defaultTaints
+	}
+	return &t
+}
