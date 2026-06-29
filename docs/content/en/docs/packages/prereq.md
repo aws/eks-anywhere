@@ -29,7 +29,7 @@ Before installing any curated packages for EKS Anywhere, do the following:
      eksctl anywhere install packagecontroller -f $CLUSTER_NAME.yaml
      ```
 
-To request a free trial, talk to your Amazon representative or connect with one [here](https://aws.amazon.com/contact-us/sales-support-eks/).
+For subscription details, talk to your Amazon representative or connect with one [here](https://aws.amazon.com/contact-us/sales-support-eks/).
 
 ### Identify AWS account ID for ECR packages registry
 
