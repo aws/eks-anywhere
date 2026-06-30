@@ -362,6 +362,10 @@ spec:
         - name: cloud-provider
           value: "external"
         name: '{{ ds.meta_data.hostname }}'
+        taints:
+          - key: node-role.kubernetes.io/control-plane
+            value: 
+            effect: NoSchedule
     joinConfiguration:
       patches: 
         directory: /etc/kubernetes/patches
@@ -371,6 +375,10 @@ spec:
         - name: cloud-provider
           value: "external"
         name: '{{ ds.meta_data.hostname }}'
+        taints:
+          - key: node-role.kubernetes.io/control-plane
+            value: 
+            effect: NoSchedule
     preKubeadmCommands:
     - hostname "{{ ds.meta_data.hostname }}"
     - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
@@ -707,6 +715,9 @@ data:
             key: node-role.kubernetes.io/control-plane
           - effect: NoSchedule
             key: node.kubernetes.io/not-ready
+          - key: node-role.kubernetes.io/control-plane
+            value: 
+            effect: NoSchedule
           volumes:
           - configMap:
               name: vsphere-cloud-config
