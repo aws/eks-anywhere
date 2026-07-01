@@ -638,3 +638,15 @@ func TestControlPlaneTaintsToPtr(t *testing.T) {
 		})
 	}
 }
+
+func TestDefaultControlPlaneLabels(t *testing.T) {
+	g := NewWithT(t)
+	labels := clusterapi.DefaultControlPlaneLabels()
+	g.Expect(labels).To(HaveKeyWithValue("node-role.kubernetes.io/control-plane", ""))
+	g.Expect(labels).To(HaveLen(1))
+}
+
+func TestControlPlaneNodeRoleLabelConstant(t *testing.T) {
+	g := NewWithT(t)
+	g.Expect(clusterapi.ControlPlaneNodeRoleLabel).To(Equal("node-role.kubernetes.io/control-plane"))
+}

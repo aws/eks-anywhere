@@ -184,3 +184,20 @@ func ControlPlaneTaintsToPtr(t []corev1.Taint) *[]corev1.Taint {
 	}
 	return &t
 }
+
+// ControlPlaneNodeRoleLabel is the standard Kubernetes label for identifying control plane nodes.
+// This label is used by kubectl to display the ROLES column and is expected by CAPI v1.13+
+// for the NodeKubeadmLabelsAndTaintsSet readiness gate to be satisfied.
+// The CAPI Machine controller syncs labels in the node-role.kubernetes.io/ prefix from
+// Machine to Node, so this label must be set on the Machine template.
+const ControlPlaneNodeRoleLabel = "node-role.kubernetes.io/control-plane"
+
+// DefaultControlPlaneLabels returns the default labels for control plane machines.
+// These labels are synced from the Machine to the Node by the CAPI Machine controller.
+// The node-role.kubernetes.io/control-plane label is required by CAPI v1.13+ for the
+// NodeKubeadmLabelsAndTaintsSet readiness gate condition to pass.
+func DefaultControlPlaneLabels() map[string]string {
+	return map[string]string{
+		ControlPlaneNodeRoleLabel: "",
+	}
+}
