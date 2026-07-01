@@ -173,14 +173,14 @@ func KubeadmControlPlane(clusterSpec *cluster.Spec, infrastructureObject APIObje
 					NodeRegistration: bootstrapv1beta2.NodeRegistrationOptions{
 						KubeletExtraArgs: SecureTlsCipherSuitesExtraArgs().
 							Append(ControlPlaneNodeLabelsExtraArgs(clusterSpec.Cluster.Spec.ControlPlaneConfiguration)).ToArgs(),
-						Taints: taintsToPtr(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints),
+						Taints: ControlPlaneTaintsToPtr(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints),
 					},
 				},
 				JoinConfiguration: bootstrapv1beta2.JoinConfiguration{
 					NodeRegistration: bootstrapv1beta2.NodeRegistrationOptions{
 						KubeletExtraArgs: SecureTlsCipherSuitesExtraArgs().
 							Append(ControlPlaneNodeLabelsExtraArgs(clusterSpec.Cluster.Spec.ControlPlaneConfiguration)).ToArgs(),
-						Taints: taintsToPtr(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints),
+						Taints: ControlPlaneTaintsToPtr(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints),
 					},
 				},
 				PreKubeadmCommands:  []string{},

@@ -168,6 +168,7 @@ func wantKubeadmControlPlane(kubeVersion v1alpha1.KubernetesVersion) *controlpla
 								{Name: "provider-id", Value: &pid},
 							}
 						}(),
+						Taints: &[]v1.Taint{{Key: "node-role.kubernetes.io/control-plane", Effect: v1.TaintEffectNoSchedule}},
 					},
 				},
 				JoinConfiguration: bootstrapv1beta2.JoinConfiguration{
@@ -180,6 +181,7 @@ func wantKubeadmControlPlane(kubeVersion v1alpha1.KubernetesVersion) *controlpla
 								{Name: "provider-id", Value: &pid},
 							}
 						}(),
+						Taints: &[]v1.Taint{{Key: "node-role.kubernetes.io/control-plane", Effect: v1.TaintEffectNoSchedule}},
 					},
 				},
 				PreKubeadmCommands: []string{
