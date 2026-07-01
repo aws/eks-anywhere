@@ -558,3 +558,30 @@ func TestEtcdadmCluster(t *testing.T) {
 	want := wantEtcdCluster()
 	tt.Expect(got).To(Equal(want))
 }
+
+func TestKubeadmControlPlaneWithNilTaints(t *testing.T) {
+	tt := newApiBuilerTest(t)
+	// Set taints to nil to test the default taint behavior
+	tt.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints = nil
+
+	got, err := clusterapi.KubeadmControlPlane(tt.clusterSpec, tt.providerMachineTemplate)
+	tt.Expect(err).To(Succeed())
+
+	// Verify that the default control-plane taint is set when taints are nil
+	expectedTaint := v1.Taint{
+		Key:    "node-role.kubernetes.io/control-plane",
+		Effect: v1.TaintEffectNoSchedule,
+	}
+
+	// Check InitConfiguration NodeRegistration Taints
+	initTaints := got.Spec.KubeadmConfigSpec.InitConfiguration.NodeRegistration.Taints
+	tt.Expect(initTaints).NotTo(BeNil())
+	tt.Expect(*initTaints).To(HaveLen(1))
+	tt.Expect((*initTaints)[0]).To(Equal(expectedTaint))
+
+	// Check JoinConfiguration NodeRegistration Taints
+	joinTaints := got.Spec.KubeadmConfigSpec.JoinConfiguration.NodeRegistration.Taints
+	tt.Expect(joinTaints).NotTo(BeNil())
+	tt.Expect(*joinTaints).To(HaveLen(1))
+	tt.Expect((*joinTaints)[0]).To(Equal(expectedTaint))
+}
