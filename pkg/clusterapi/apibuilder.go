@@ -142,7 +142,7 @@ func KubeadmControlPlane(clusterSpec *cluster.Spec, infrastructureObject APIObje
 		},
 		Spec: controlplanev1beta2.KubeadmControlPlaneSpec{
 			MachineTemplate: controlplanev1beta2.KubeadmControlPlaneMachineTemplate{
-				ObjectMeta: clusterv1.ObjectMeta{
+				ObjectMeta: clusterv1beta2.ObjectMeta{
 					Labels: DefaultControlPlaneLabels(),
 				},
 				Spec: controlplanev1beta2.KubeadmControlPlaneMachineTemplateSpec{
