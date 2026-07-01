@@ -24,6 +24,9 @@ kubeadmConfigPatches:
           audit-log-maxsize: "512"
           audit-log-path: /var/log/kubernetes/api-audit.log
           audit-policy-file: /etc/kubernetes/policies/audit-policy.yaml
+{{- if (ge (atoi $kube_minor_version) 31) }}
+          feature-gates: "FailCgroupV1=false"
+{{- end }}
         # mount new files / directories on the control plane
         extraVolumes:
           - name: audit-policies
@@ -36,6 +39,14 @@ kubeadmConfigPatches:
             mountPath: /var/log/kubernetes
             readOnly: false
             pathType: DirectoryOrCreate
+{{- if (ge (atoi $kube_minor_version) 31) }}
+    controllerManager:
+        extraArgs:
+          feature-gates: "FailCgroupV1=false"
+    scheduler:
+        extraArgs:
+          feature-gates: "FailCgroupV1=false"
+{{- end }}
 {{- if (ge (atoi $kube_minor_version) 31) }}
   - |
     kind: InitConfiguration
