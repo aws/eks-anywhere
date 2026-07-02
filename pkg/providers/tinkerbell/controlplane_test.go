@@ -554,6 +554,9 @@ spec:
       rollingUpdate:
         maxSurge: 1
   machineTemplate:
+    metadata:
+      labels:
+        node-role.kubernetes.io/control-plane: ""
     spec:
       infrastructureRef:
         apiGroup: infrastructure.cluster.x-k8s.io
@@ -933,6 +936,9 @@ spec:
       rollingUpdate:
         maxSurge: 1
   machineTemplate:
+    metadata:
+      labels:
+        node-role.kubernetes.io/control-plane: ""
     spec:
       infrastructureRef:
         apiGroup: infrastructure.cluster.x-k8s.io

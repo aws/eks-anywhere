@@ -120,6 +120,9 @@ func wantKubeadmControlPlane(kubeVersion v1alpha1.KubernetesVersion) *controlpla
 		},
 		Spec: controlplanev1beta2.KubeadmControlPlaneSpec{
 			MachineTemplate: controlplanev1beta2.KubeadmControlPlaneMachineTemplate{
+				ObjectMeta: clusterv1beta2.ObjectMeta{
+					Labels: clusterapi.DefaultControlPlaneLabels(),
+				},
 				Spec: controlplanev1beta2.KubeadmControlPlaneMachineTemplateSpec{
 					InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
 						APIGroup: "infrastructure.cluster.x-k8s.io",

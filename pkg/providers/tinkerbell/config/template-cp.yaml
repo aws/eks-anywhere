@@ -499,6 +499,9 @@ spec:
       sudo: ALL=(ALL) NOPASSWD:ALL
     format: {{.format}}
   machineTemplate:
+    metadata:
+      labels:
+        node-role.kubernetes.io/control-plane: ""
     spec:
       infrastructureRef:
         apiGroup: infrastructure.cluster.x-k8s.io

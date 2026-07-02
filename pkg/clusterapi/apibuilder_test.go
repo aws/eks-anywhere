@@ -285,6 +285,9 @@ func wantKubeadmControlPlane(opts ...kubeadmControlPlaneOpt) *controlplanev1beta
 		},
 		Spec: controlplanev1beta2.KubeadmControlPlaneSpec{
 			MachineTemplate: controlplanev1beta2.KubeadmControlPlaneMachineTemplate{
+				ObjectMeta: clusterv1beta2.ObjectMeta{
+					Labels: clusterapi.DefaultControlPlaneLabels(),
+				},
 				Spec: controlplanev1beta2.KubeadmControlPlaneMachineTemplateSpec{
 					InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
 						APIGroup: "infrastructure.cluster.x-k8s.io",
@@ -584,4 +587,19 @@ func TestKubeadmControlPlaneWithNilTaints(t *testing.T) {
 	tt.Expect(joinTaints).NotTo(BeNil())
 	tt.Expect(*joinTaints).To(HaveLen(1))
 	tt.Expect((*joinTaints)[0]).To(Equal(expectedTaint))
+}
+
+func TestKubeadmControlPlaneHasControlPlaneLabel(t *testing.T) {
+	tt := newApiBuilerTest(t)
+
+	got, err := clusterapi.KubeadmControlPlane(tt.clusterSpec, tt.providerMachineTemplate)
+	tt.Expect(err).To(Succeed())
+
+	// Verify that the machineTemplate has the control-plane label
+	// This label is required by CAPI v1.13+ for the NodeKubeadmLabelsAndTaintsSet
+	// readiness gate condition to pass. The CAPI Machine controller syncs labels
+	// in the node-role.kubernetes.io/ prefix from Machine to Node.
+	labels := got.Spec.MachineTemplate.ObjectMeta.Labels
+	tt.Expect(labels).NotTo(BeNil())
+	tt.Expect(labels).To(HaveKeyWithValue("node-role.kubernetes.io/control-plane", ""))
 }
