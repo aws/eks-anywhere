@@ -590,6 +590,9 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 		kcp.ObjectMeta.Generation = 2
 		kcp.Spec = controlplanev1beta2.KubeadmControlPlaneSpec{
 			MachineTemplate: controlplanev1beta2.KubeadmControlPlaneMachineTemplate{
+				ObjectMeta: clusterv1beta2.ObjectMeta{
+					Labels: map[string]string{"node-role.kubernetes.io/control-plane": ""},
+				},
 				Spec: controlplanev1beta2.KubeadmControlPlaneMachineTemplateSpec{
 					InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
 						Name: fmt.Sprintf("%s-control-plane-1", cluster.Name),
