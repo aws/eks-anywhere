@@ -216,7 +216,7 @@ To use `image-builder`, you must meet the following prerequisites:
 
 #### System requirements
 
-`image-builder` has been tested on Ubuntu (20.04, 21.04, 22.04), RHEL 8 and Amazon Linux 2 machines. The following system requirements should be met for the machine on which `image-builder` is run:
+`image-builder` has been tested on Ubuntu (22.04 and 24.04), RHEL 8, RHEL 9 and Amazon Linux 2 machines. The following system requirements should be met for the machine on which `image-builder` is run:
 * AMD 64-bit architecture
 * 50 GB disk space
 * 2 vCPUs
