@@ -507,6 +507,8 @@ spec:
         apiGroup: infrastructure.cluster.x-k8s.io
         kind: TinkerbellMachineTemplate
         name: {{.controlPlaneTemplateName}}
+      deletion:
+        nodeDeletionTimeoutSeconds: 30
   replicas: {{.controlPlaneReplicas}}
 {{- if .upgradeRolloutStrategy }}
   rollout:
