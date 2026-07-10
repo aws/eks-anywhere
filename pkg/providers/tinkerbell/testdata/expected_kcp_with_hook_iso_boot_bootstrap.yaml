@@ -314,6 +314,8 @@ spec:
         apiGroup: infrastructure.cluster.x-k8s.io
         kind: TinkerbellMachineTemplate
         name: <no value>
+      deletion:
+        nodeDeletionTimeoutSeconds: 30
   replicas: 1
   rollout:
     strategy:
