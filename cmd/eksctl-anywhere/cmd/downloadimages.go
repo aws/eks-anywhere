@@ -45,6 +45,7 @@ func init() {
 	downloadImagesCmd.Flag("include-packages").Deprecated = "use copy packages command"
 	downloadImagesCmd.Flags().StringVarP(&downloadImagesRunner.bundlesOverride, "bundles-override", "", "", "Override default Bundles manifest (not recommended)")
 	downloadImagesCmd.Flags().BoolVar(&downloadImagesRunner.insecure, "insecure", false, "Flag to indicate skipping TLS verification while downloading helm charts")
+	downloadImagesCmd.Flags().StringVar(&downloadImagesRunner.platform, "platform", "", "Platform (e.g. linux/amd64) of the images to download. Defaults to the platform of the machine running the command. Use this to download images for clusters with a different architecture than the machine running the command, for example downloading amd64 images from an arm64 Mac")
 }
 
 var downloadImagesRunner = downloadImagesCommand{}
@@ -54,6 +55,7 @@ type downloadImagesCommand struct {
 	bundlesOverride string
 	includePackages bool
 	insecure        bool
+	platform        string
 }
 
 func (c downloadImagesCommand) Run(ctx context.Context) error {
@@ -78,15 +80,20 @@ func (c downloadImagesCommand) Run(ctx context.Context) error {
 	imagesFile := filepath.Join(downloadFolder, imagesTarFile)
 	eksaToolsImageFile := filepath.Join(downloadFolder, eksaToolsImageTarFile)
 
+	var sourceOpts []docker.OriginalRegistrySourceOption
+	if c.platform != "" {
+		sourceOpts = append(sourceOpts, docker.WithOriginalRegistrySourcePlatform(c.platform))
+	}
+
 	downloadArtifacts := artifacts.Download{
 		Reader:     deps.ManifestReader,
 		FileReader: deps.FileReader,
 		BundlesImagesDownloader: docker.NewImageMover(
-			docker.NewOriginalRegistrySource(dockerClient),
+			docker.NewOriginalRegistrySource(dockerClient, sourceOpts...),
 			docker.NewDiskDestination(dockerClient, imagesFile),
 		),
 		EksaToolsImageDownloader: docker.NewImageMover(
-			docker.NewOriginalRegistrySource(dockerClient),
+			docker.NewOriginalRegistrySource(dockerClient, sourceOpts...),
 			docker.NewDiskDestination(dockerClient, eksaToolsImageFile),
 		),
 		ChartDownloader:    helm.NewChartRegistryDownloader(deps.Helm, downloadFolder),

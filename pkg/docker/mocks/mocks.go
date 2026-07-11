@@ -165,17 +165,22 @@ func (m *MockImagePuller) EXPECT() *MockImagePullerMockRecorder {
 }
 
 // PullImage mocks base method.
-func (m *MockImagePuller) PullImage(ctx context.Context, image string) error {
+func (m *MockImagePuller) PullImage(ctx context.Context, image string, platform ...string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PullImage", ctx, image)
+	varargs := []interface{}{ctx, image}
+	for _, a := range platform {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PullImage", varargs...)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // PullImage indicates an expected call of PullImage.
-func (mr *MockImagePullerMockRecorder) PullImage(ctx, image interface{}) *gomock.Call {
+func (mr *MockImagePullerMockRecorder) PullImage(ctx, image interface{}, platform ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PullImage", reflect.TypeOf((*MockImagePuller)(nil).PullImage), ctx, image)
+	varargs := append([]interface{}{ctx, image}, platform...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PullImage", reflect.TypeOf((*MockImagePuller)(nil).PullImage), varargs...)
 }
 
 // MockDockerClient is a mock of DockerClient interface.
@@ -216,17 +221,22 @@ func (mr *MockDockerClientMockRecorder) LoadFromFile(ctx, filepath interface{}) 
 }
 
 // PullImage mocks base method.
-func (m *MockDockerClient) PullImage(ctx context.Context, image string) error {
+func (m *MockDockerClient) PullImage(ctx context.Context, image string, platform ...string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PullImage", ctx, image)
+	varargs := []interface{}{ctx, image}
+	for _, a := range platform {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PullImage", varargs...)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // PullImage indicates an expected call of PullImage.
-func (mr *MockDockerClientMockRecorder) PullImage(ctx, image interface{}) *gomock.Call {
+func (mr *MockDockerClientMockRecorder) PullImage(ctx, image interface{}, platform ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PullImage", reflect.TypeOf((*MockDockerClient)(nil).PullImage), ctx, image)
+	varargs := append([]interface{}{ctx, image}, platform...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PullImage", reflect.TypeOf((*MockDockerClient)(nil).PullImage), varargs...)
 }
 
 // SaveToFile mocks base method.

@@ -22,7 +22,7 @@ type ImageTaggerPusher interface {
 }
 
 type ImagePuller interface {
-	PullImage(ctx context.Context, image string) error
+	PullImage(ctx context.Context, image string, platform ...string) error
 }
 
 type DockerClient interface {

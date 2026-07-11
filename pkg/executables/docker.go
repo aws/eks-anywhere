@@ -35,13 +35,20 @@ func (d *Docker) GetDockerLBPort(ctx context.Context, clusterName string) (port 
 	}
 }
 
-func (d *Docker) PullImage(ctx context.Context, image string) error {
+// PullImage pulls an image from a registry into the local docker cache. An
+// optional platform (e.g. linux/amd64) can be provided to pull the image for
+// a specific platform instead of the platform of the host running the command.
+func (d *Docker) PullImage(ctx context.Context, image string, platform ...string) error {
 	logger.V(2).Info("Pulling docker image", "image", image)
-	if _, err := d.Execute(ctx, "pull", image); err != nil {
-		return err
-	} else {
-		return nil
+	args := []string{"pull"}
+	if len(platform) > 0 && platform[0] != "" {
+		args = append(args, "--platform", platform[0])
 	}
+	args = append(args, image)
+	if _, err := d.Execute(ctx, args...); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (d *Docker) Version(ctx context.Context) (int, error) {

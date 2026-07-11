@@ -48,6 +48,22 @@ func TestDockerPullImage(t *testing.T) {
 	}
 }
 
+func TestDockerPullImageWithPlatform(t *testing.T) {
+	image := "test_image"
+	platform := "linux/amd64"
+
+	ctx := context.Background()
+	mockCtrl := gomock.NewController(t)
+
+	executable := mockexecutables.NewMockExecutable(mockCtrl)
+	executable.EXPECT().Execute(ctx, "pull", "--platform", platform, image).Return(bytes.Buffer{}, nil)
+	d := executables.NewDocker(executable)
+	err := d.PullImage(ctx, image, platform)
+	if err != nil {
+		t.Fatalf("Docker.PullImage() error = %v, want nil", err)
+	}
+}
+
 func TestDockerVersion(t *testing.T) {
 	version := "1.234"
 	wantVersion := 1

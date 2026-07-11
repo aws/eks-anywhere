@@ -128,6 +128,23 @@ func TestNewOriginalRegistrySource(t *testing.T) {
 	g.Expect(dstLoader.Load(ctx, images...)).To(Succeed())
 }
 
+func TestNewOriginalRegistrySourceWithPlatform(t *testing.T) {
+	g := NewWithT(t)
+	ctrl := gomock.NewController(t)
+	client := mocks.NewMockDockerClient(ctrl)
+
+	platform := "linux/amd64"
+	images := []string{"image1:1", "image2:2"}
+	ctx := context.Background()
+	dstLoader := docker.NewOriginalRegistrySource(client, docker.WithOriginalRegistrySourcePlatform(platform))
+	dstLoader.Retrier = *retrier.NewWithMaxRetries(1, 0)
+	for _, i := range images {
+		client.EXPECT().PullImage(test.AContext(), i, platform)
+	}
+
+	g.Expect(dstLoader.Load(ctx, images...)).To(Succeed())
+}
+
 func TestOriginalRegistrySourceError(t *testing.T) {
 	g := NewWithT(t)
 	ctrl := gomock.NewController(t)
