@@ -81,8 +81,10 @@ func (c downloadImagesCommand) Run(ctx context.Context) error {
 	eksaToolsImageFile := filepath.Join(downloadFolder, eksaToolsImageTarFile)
 
 	var sourceOpts []docker.OriginalRegistrySourceOption
+	var destOpts []docker.DiskDestinationOption
 	if c.platform != "" {
 		sourceOpts = append(sourceOpts, docker.WithOriginalRegistrySourcePlatform(c.platform))
+		destOpts = append(destOpts, docker.WithDiskDestinationPlatform(c.platform))
 	}
 
 	downloadArtifacts := artifacts.Download{
@@ -90,11 +92,11 @@ func (c downloadImagesCommand) Run(ctx context.Context) error {
 		FileReader: deps.FileReader,
 		BundlesImagesDownloader: docker.NewImageMover(
 			docker.NewOriginalRegistrySource(dockerClient, sourceOpts...),
-			docker.NewDiskDestination(dockerClient, imagesFile),
+			docker.NewDiskDestination(dockerClient, imagesFile, destOpts...),
 		),
 		EksaToolsImageDownloader: docker.NewImageMover(
 			docker.NewOriginalRegistrySource(dockerClient, sourceOpts...),
-			docker.NewDiskDestination(dockerClient, eksaToolsImageFile),
+			docker.NewDiskDestination(dockerClient, eksaToolsImageFile, destOpts...),
 		),
 		ChartDownloader:    helm.NewChartRegistryDownloader(deps.Helm, downloadFolder),
 		Version:            version.Get(),

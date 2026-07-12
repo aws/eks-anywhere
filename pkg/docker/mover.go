@@ -13,7 +13,7 @@ type ImageDiskLoader interface {
 }
 
 type ImageDiskWriter interface {
-	SaveToFile(ctx context.Context, filepath string, images ...string) error
+	SaveToFile(ctx context.Context, filepath string, platform string, images ...string) error
 }
 
 type ImageTaggerPusher interface {

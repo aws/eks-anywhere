@@ -111,9 +111,16 @@ func (d *Docker) LoadFromFile(ctx context.Context, filepath string) error {
 	return nil
 }
 
-func (d *Docker) SaveToFile(ctx context.Context, filepath string, images ...string) error {
-	params := make([]string, 0, 3+len(images))
+// SaveToFile writes images from the local docker cache into a tarball at filepath.
+// An optional platform (e.g. linux/amd64) selects a single platform to export,
+// which is required when using the containerd image store to avoid exporting a
+// multi-arch index whose non-host manifests were never pulled.
+func (d *Docker) SaveToFile(ctx context.Context, filepath string, platform string, images ...string) error {
+	params := make([]string, 0, 5+len(images))
 	params = append(params, "save", "-o", filepath)
+	if platform != "" {
+		params = append(params, "--platform", platform)
+	}
 	params = append(params, images...)
 
 	if _, err := d.Execute(ctx, params...); err != nil {

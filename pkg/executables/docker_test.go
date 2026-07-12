@@ -126,7 +126,22 @@ func TestDockerSaveToFileMultipleImages(t *testing.T) {
 	executable.EXPECT().Execute(ctx, "save", "-o", file, image1, image2, image3).Return(bytes.Buffer{}, nil)
 	d := executables.NewDocker(executable)
 
-	g.Expect(d.SaveToFile(ctx, file, image1, image2, image3)).To(Succeed())
+	g.Expect(d.SaveToFile(ctx, file, "", image1, image2, image3)).To(Succeed())
+}
+
+func TestDockerSaveToFileWithPlatform(t *testing.T) {
+	file := "file"
+	image1 := "image1:tag1"
+
+	g := NewWithT(t)
+	ctx := context.Background()
+	mockCtrl := gomock.NewController(t)
+
+	executable := mockexecutables.NewMockExecutable(mockCtrl)
+	executable.EXPECT().Execute(ctx, "save", "-o", file, "--platform", "linux/amd64", image1).Return(bytes.Buffer{}, nil)
+	d := executables.NewDocker(executable)
+
+	g.Expect(d.SaveToFile(ctx, file, "linux/amd64", image1)).To(Succeed())
 }
 
 func TestDockerSaveToFileNoImages(t *testing.T) {
@@ -140,7 +155,7 @@ func TestDockerSaveToFileNoImages(t *testing.T) {
 	executable.EXPECT().Execute(ctx, "save", "-o", file).Return(bytes.Buffer{}, nil)
 	d := executables.NewDocker(executable)
 
-	g.Expect(d.SaveToFile(ctx, file)).To(Succeed())
+	g.Expect(d.SaveToFile(ctx, file, "")).To(Succeed())
 }
 
 func TestDockerRunBasicSucess(t *testing.T) {

@@ -72,9 +72,9 @@ func (m *MockImageDiskWriter) EXPECT() *MockImageDiskWriterMockRecorder {
 }
 
 // SaveToFile mocks base method.
-func (m *MockImageDiskWriter) SaveToFile(ctx context.Context, filepath string, images ...string) error {
+func (m *MockImageDiskWriter) SaveToFile(ctx context.Context, filepath, platform string, images ...string) error {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, filepath}
+	varargs := []interface{}{ctx, filepath, platform}
 	for _, a := range images {
 		varargs = append(varargs, a)
 	}
@@ -84,9 +84,9 @@ func (m *MockImageDiskWriter) SaveToFile(ctx context.Context, filepath string, i
 }
 
 // SaveToFile indicates an expected call of SaveToFile.
-func (mr *MockImageDiskWriterMockRecorder) SaveToFile(ctx, filepath interface{}, images ...interface{}) *gomock.Call {
+func (mr *MockImageDiskWriterMockRecorder) SaveToFile(ctx, filepath, platform interface{}, images ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, filepath}, images...)
+	varargs := append([]interface{}{ctx, filepath, platform}, images...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveToFile", reflect.TypeOf((*MockImageDiskWriter)(nil).SaveToFile), varargs...)
 }
 
@@ -240,9 +240,9 @@ func (mr *MockDockerClientMockRecorder) PullImage(ctx, image interface{}, platfo
 }
 
 // SaveToFile mocks base method.
-func (m *MockDockerClient) SaveToFile(ctx context.Context, filepath string, images ...string) error {
+func (m *MockDockerClient) SaveToFile(ctx context.Context, filepath, platform string, images ...string) error {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, filepath}
+	varargs := []interface{}{ctx, filepath, platform}
 	for _, a := range images {
 		varargs = append(varargs, a)
 	}
@@ -252,9 +252,9 @@ func (m *MockDockerClient) SaveToFile(ctx context.Context, filepath string, imag
 }
 
 // SaveToFile indicates an expected call of SaveToFile.
-func (mr *MockDockerClientMockRecorder) SaveToFile(ctx, filepath interface{}, images ...interface{}) *gomock.Call {
+func (mr *MockDockerClientMockRecorder) SaveToFile(ctx, filepath, platform interface{}, images ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, filepath}, images...)
+	varargs := append([]interface{}{ctx, filepath, platform}, images...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveToFile", reflect.TypeOf((*MockDockerClient)(nil).SaveToFile), varargs...)
 }
 
