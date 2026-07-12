@@ -15,7 +15,7 @@ import (
 
 type DockerClient interface {
 	Login(ctx context.Context, endpoint, username, password string) error
-	PullImage(ctx context.Context, image string) error
+	PullImage(ctx context.Context, image string, platform ...string) error
 	Execute(ctx context.Context, args ...string) (stdout bytes.Buffer, err error)
 }
 
