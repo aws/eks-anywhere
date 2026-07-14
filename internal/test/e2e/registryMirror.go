@@ -61,6 +61,19 @@ func (e *E2ESession) setupRegistryMirrorEnv(testRegex string) error {
 		}
 	}
 
+	// Bottlerocket authenticated tests use a separate registry, mount its cert too.
+	re = regexp.MustCompile(`^.*VSphere.*Bottlerocket.*Authenticated.*$`)
+	if re.MatchString(testRegex) {
+		brEndpoint := e.testEnvVars[e2etests.PrivateRegistryEndpointBottlerocketVar]
+		brPort := e.testEnvVars[e2etests.PrivateRegistryPortBottlerocketVar]
+		brCaCert := e.testEnvVars[e2etests.PrivateRegistryCACertBottlerocketVar]
+		if brEndpoint != "" && brPort != "" && brCaCert != "" {
+			if err := e.mountRegistryCert(brCaCert, net.JoinHostPort(brEndpoint, brPort)); err != nil {
+				return err
+			}
+		}
+	}
+
 	re = regexp.MustCompile(`^.*Docker.*Airgapped.*$`)
 	if re.MatchString(testRegex) {
 		err := os.Setenv("DEFAULT_SECURITY_GROUP", e.testEnvVars[e2etests.RegistryMirrorDefaultSecurityGroup])
