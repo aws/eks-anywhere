@@ -44,8 +44,12 @@ func (e *E2ESession) setupRegistryMirrorEnv(testRegex string) error {
 	}
 
 	// Since Authenticated tests needs to use separate harbor registries.
-	re = regexp.MustCompile(`^.*(VSphere|CloudStack).*Authenticated.*$`)
+	re = regexp.MustCompile(`^.*(VSphere|CloudStack).*Bottlerocket.*Authenticated.*$`)
 	if re.MatchString(testRegex) {
+		endpoint = e.testEnvVars[e2etests.PrivateRegistryEndpointBottlerocketVar]
+		port = e.testEnvVars[e2etests.PrivateRegistryPortBottlerocketVar]
+		caCert = e.testEnvVars[e2etests.PrivateRegistryCACertBottlerocketVar]
+	} else if re = regexp.MustCompile(`^.*(VSphere|CloudStack).*Authenticated.*$`); re.MatchString(testRegex) {
 		endpoint = e.testEnvVars[e2etests.PrivateRegistryEndpointVar]
 		port = e.testEnvVars[e2etests.PrivateRegistryPortVar]
 		caCert = e.testEnvVars[e2etests.PrivateRegistryCACertVar]
