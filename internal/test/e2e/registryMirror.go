@@ -62,7 +62,7 @@ func (e *E2ESession) setupRegistryMirrorEnv(testRegex string) error {
 	}
 
 	// Bottlerocket authenticated tests use a separate registry, mount its cert too.
-	re = regexp.MustCompile(`^.*(VSphere|CloudStack).*Bottlerocket.*Authenticated.*$`)
+	re = regexp.MustCompile(`^.*VSphere.*Bottlerocket.*Authenticated.*$`)
 	if re.MatchString(testRegex) {
 		brEndpoint := e.testEnvVars[e2etests.PrivateRegistryEndpointBottlerocketVar]
 		brPort := e.testEnvVars[e2etests.PrivateRegistryPortBottlerocketVar]

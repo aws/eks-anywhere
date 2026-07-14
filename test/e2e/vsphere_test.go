@@ -2948,7 +2948,7 @@ func TestVSphereKubernetes134BottlerocketAuthenticatedRegistryMirror(t *testing.
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube134)),
-		framework.WithBottlerocketAuthenticatedRegistryMirror(constants.VSphereProviderName),
+		framework.WithAuthenticatedRegistryMirror(constants.VSphereProviderName),
 	)
 	runRegistryMirrorConfigFlow(test)
 }
@@ -3000,7 +3000,7 @@ func TestVSphereKubernetes133BottlerocketAuthenticatedRegistryMirror(t *testing.
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133)),
-		framework.WithBottlerocketAuthenticatedRegistryMirror(constants.VSphereProviderName),
+		framework.WithAuthenticatedRegistryMirror(constants.VSphereProviderName),
 	)
 	runRegistryMirrorConfigFlow(test)
 }
@@ -3013,7 +3013,7 @@ func TestVSphereKubernetes135BottlerocketAuthenticatedRegistryMirror(t *testing.
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube135)),
-		framework.WithBottlerocketAuthenticatedRegistryMirror(constants.VSphereProviderName),
+		framework.WithAuthenticatedRegistryMirror(constants.VSphereProviderName),
 	)
 	runRegistryMirrorConfigFlow(test)
 }
@@ -3027,7 +3027,7 @@ func TestVSphereKubernetes136BottlerocketAuthenticatedRegistryMirror(t *testing.
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube136)),
-		framework.WithBottlerocketAuthenticatedRegistryMirror(constants.VSphereProviderName),
+		framework.WithAuthenticatedRegistryMirror(constants.VSphereProviderName),
 	)
 	runRegistryMirrorConfigFlow(test)
 }
