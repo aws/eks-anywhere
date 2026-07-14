@@ -9,6 +9,7 @@ description: >
 ---
 
 {{% alert title="Announcements" color="warning" %}}
+* Starting with EKS Anywhere release `v0.26.0`, the CloudStack provider has been removed. EKS Anywhere no longer includes the Cluster API provider for CloudStack, and AWS will no longer support this provider. Users currently relying on this provider are encouraged to find alternative support.
 * If you are upgrading your management cluster to `v0.22.x` patch versions prior to `v0.22.3`, you may encounter a bug related to extended Kubernetes versions support that blocks lifecycle management (LCM) operations on workload clusters running versions prior to `v0.22.0`. To avoid this issue, we recommend upgrading your management cluster directly to `v0.22.3` before performing any workload cluster LCM operations.
 * If you are running EKS Anywhere versions `v0.22.0` or `v0.22.1` in an air-gapped environment with proxy enabled, you may be affected by a Helm `v3.17.1` bug that impacts proxy functionality in air-gapped environments. To resolve this, we recommend upgrading to EKS Anywhere `v0.22.2` or above. More details can be found [here](https://github.com/aws/eks-anywhere-build-tooling/pull/4497)
 * Due to a bug in Cilium introduced in 1.14, which is present in `v0.21.0`-`v0.21.6`, we recommend that you upgrade to `v0.21.7` or above to fix an issue when using hostport. More details listed [here](https://github.com/aws/eks-anywhere-build-tooling/pull/4330)
@@ -40,6 +41,82 @@ description: >
 {{% alert title="General Information" color="info" %}}
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
+
+## [v0.26.0](https://github.com/aws/eks-anywhere/releases/tag/v0.26.0)
+
+### Must read before upgrade
+
+- **CloudStack provider has been removed.** Starting with this release, EKS Anywhere no longer includes the Cluster API provider for CloudStack. Users currently on this provider should migrate to an alternative before upgrading to v0.26.0.
+- **Kubernetes v1.29 has been dropped.** Clusters running Kubernetes v1.29 must upgrade to a supported version (v1.30 or above) before upgrading to EKS Anywhere v0.26.0.
+
+### Planned updates to supported kubernetes versions
+- Kubernetes 1.33 reaches end of standard support on August 31, 2026
+  - Extended support continues until August 31, 2027 for clusters with valid license tokens
+  - Clusters will continue to function but will not receive CVE patches or bug fixes after standard support ends
+- Kubernetes 1.30 reaches end of extended support on August 31, 2026
+  - No further patches will be available after this date
+  - Existing clusters will continue to function but upgrading is strongly recommended
+
+For complete version support details, see the [Kubernetes version support table](https://anywhere.eks.amazonaws.com/docs/concepts/support-versions/#kubernetes-versions).
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----:|
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |  ✔   |
+|    Ubuntu 24.04     |    ✔    |     ✔      |    ✔    |  —   |
+| Bottlerocket 1.62.0 |    ✔    |     —      |    —    |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |  —   |
+|      RHEL 9.x       |    ✔    |     ✔      |    ✔    |  —   |
+
+\* RHEL 8's kernel version (4.18) is not supported by kubeadm for Kubernetes versions 1.32 and above (see Kubernetes GitHub issue [#129462](https://github.com/kubernetes/kubernetes/issues/129462)). As a result, EKS Anywhere does not support using RHEL 8 as the node operating system for Kubernetes versions 1.32 and above.
+
+### Added
+- Support for Kubernetes v1.36 ([#10804](https://github.com/aws/eks-anywhere/pull/10804), [#10827](https://github.com/aws/eks-anywhere/pull/10827))
+
+### Changed
+- EKS Distro:
+  - [`v1-36-eks-4`](https://distro.eks.amazonaws.com/releases/1-36/4/)
+  - [`v1-35-eks-10`](https://distro.eks.amazonaws.com/releases/1-35/10/)
+  - [`v1-34-eks-19`](https://distro.eks.amazonaws.com/releases/1-34/19/)
+  - [`v1-33-eks-28`](https://distro.eks.amazonaws.com/releases/1-33/28/)
+  - [`v1-32-eks-38`](https://distro.eks.amazonaws.com/releases/1-32/38/)
+  - [`v1-31-eks-45`](https://distro.eks.amazonaws.com/releases/1-31/45/)
+  - [`v1-30-eks-56`](https://distro.eks.amazonaws.com/releases/1-30/56/)
+- New EKS-Distro base images
+- Bottlerocket: `v1.56.0` to `v1.62.0`
+- Cert-manager: `v1.19.3` to `v1.20.2`
+- Cilium: `v1.18.5` to `v1.19.4`
+- Cluster API (CAPI): `v1.12.2` to `v1.13.2`
+- Cluster API Provider vSphere (CAPV): `v1.15.2` to `v1.16.1`
+- Cluster API Provider AWS Snow (CAPAS): `v0.2.9` to `v0.3.1`
+- cloud-provider-vsphere 1-36: `v1.36.0`
+- cloud-provider-nutanix: `v0.5.5` to `v0.6.1`
+- containerd (1-36): `v2.3.1`
+- Cri-tools: `v1.35.0` to `v1.36.0`
+- etcdadm-controller: `v1.0.27` to `v1.0.28`
+- etcdadm-bootstrap-provider: `v1.0.19` to `v1.0.22`
+- fluxcd/flux2: `v2.7.5` to `v2.8.8`
+- fluxcd/helm-controller: `v1.4.5` to `v1.6.0`
+- fluxcd/kustomize-controller: `v1.7.3` to `v1.9.0`
+- fluxcd/notification-controller: `v1.7.5` to `v1.9.0`
+- fluxcd/source-controller: `v1.7.4` to `v1.9.0`
+- Helm: `v4.1.4` to `v4.2.0`
+- Kind: `v0.31.0` to `v0.32.0`
+- kube-vip: `v1.0.4` to `v1.2.0`
+- rancher/local-path-provisioner: `v0.0.35` to `v0.0.36`
+- replicatedhq/troubleshoot: `v0.123.18` to `v0.130.0`
+
+### Fixed
+- Fix registry mirror `hosts.toml` double `/v2/` regression from containerd v2 migration ([#10765](https://github.com/aws/eks-anywhere/pull/10765))
+- Fix `import images` command failing with OCI namespace in `--registry` flag ([#10800](https://github.com/aws/eks-anywhere/pull/10800))
+- Use server-side apply for Bundles to avoid 256KB annotation limit ([#10807](https://github.com/aws/eks-anywhere/pull/10807))
+- Fix missing control-plane toleration for kube-vip DaemonSet ([#10828](https://github.com/aws/eks-anywhere/pull/10828))
+- Fix control plane taint not set for CAPI v1.13+ readiness gate ([#10838](https://github.com/aws/eks-anywhere/pull/10838))
+- Fix control plane label not set for CAPI v1.13+ readiness gate ([#10840](https://github.com/aws/eks-anywhere/pull/10840))
+
+### Removed
+- Dropped Kubernetes v1.29 support ([#5521](https://github.com/aws/eks-anywhere-build-tooling/pull/5521))
+- Removed CloudStack provider ([#10786](https://github.com/aws/eks-anywhere/pull/10786), [#10814](https://github.com/aws/eks-anywhere/pull/10814))
 
 ## [v0.25.2](https://github.com/aws/eks-anywhere/releases/tag/v0.25.2)
 
