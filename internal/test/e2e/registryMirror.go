@@ -44,12 +44,8 @@ func (e *E2ESession) setupRegistryMirrorEnv(testRegex string) error {
 	}
 
 	// Since Authenticated tests needs to use separate harbor registries.
-	re = regexp.MustCompile(`^.*(VSphere|CloudStack).*Bottlerocket.*Authenticated.*$`)
+	re = regexp.MustCompile(`^.*(VSphere|CloudStack).*Authenticated.*$`)
 	if re.MatchString(testRegex) {
-		endpoint = e.testEnvVars[e2etests.PrivateRegistryEndpointBottlerocketVar]
-		port = e.testEnvVars[e2etests.PrivateRegistryPortBottlerocketVar]
-		caCert = e.testEnvVars[e2etests.PrivateRegistryCACertBottlerocketVar]
-	} else if re = regexp.MustCompile(`^.*(VSphere|CloudStack).*Authenticated.*$`); re.MatchString(testRegex) {
 		endpoint = e.testEnvVars[e2etests.PrivateRegistryEndpointVar]
 		port = e.testEnvVars[e2etests.PrivateRegistryPortVar]
 		caCert = e.testEnvVars[e2etests.PrivateRegistryCACertVar]
@@ -62,6 +58,19 @@ func (e *E2ESession) setupRegistryMirrorEnv(testRegex string) error {
 	if endpoint != "" && port != "" && caCert != "" {
 		if err := e.mountRegistryCert(caCert, net.JoinHostPort(endpoint, port)); err != nil {
 			return err
+		}
+	}
+
+	// Bottlerocket authenticated tests use a separate registry, mount its cert too.
+	re = regexp.MustCompile(`^.*(VSphere|CloudStack).*Bottlerocket.*Authenticated.*$`)
+	if re.MatchString(testRegex) {
+		brEndpoint := e.testEnvVars[e2etests.PrivateRegistryEndpointBottlerocketVar]
+		brPort := e.testEnvVars[e2etests.PrivateRegistryPortBottlerocketVar]
+		brCaCert := e.testEnvVars[e2etests.PrivateRegistryCACertBottlerocketVar]
+		if brEndpoint != "" && brPort != "" && brCaCert != "" {
+			if err := e.mountRegistryCert(brCaCert, net.JoinHostPort(brEndpoint, brPort)); err != nil {
+				return err
+			}
 		}
 	}
 
