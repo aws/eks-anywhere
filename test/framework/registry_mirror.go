@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"net"
 	"os"
+	"strings"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -116,61 +117,30 @@ func WithAuthenticatedRegistryMirror(providerName string, optNamespaces ...v1alp
 				port = os.Getenv(PrivateRegistryPortTinkerbellVar)
 			}
 		default:
-			checkRequiredEnvVars(e.T, privateRegistryMirrorRequiredEnvVars)
-			endpoint = os.Getenv(PrivateRegistryEndpointVar)
-			hostPort = net.JoinHostPort(endpoint, os.Getenv(PrivateRegistryPortVar))
-			username = os.Getenv(PrivateRegistryUsernameVar)
-			password = os.Getenv(PrivateRegistryPasswordVar)
-			registryCert = os.Getenv(PrivateRegistryCACertVar)
-			if os.Getenv(PrivateRegistryPortVar) != "" {
-				port = os.Getenv(PrivateRegistryPortVar)
+			if strings.Contains(e.T.Name(), "BottlerocketAuthenticatedRegistryMirror") {
+				checkRequiredEnvVars(e.T, privateRegistryMirrorBottlerocketRequiredEnvVars)
+				endpoint = os.Getenv(PrivateRegistryEndpointBottlerocketVar)
+				hostPort = net.JoinHostPort(endpoint, os.Getenv(PrivateRegistryPortBottlerocketVar))
+				username = os.Getenv(PrivateRegistryUsernameVar)
+				password = os.Getenv(PrivateRegistryPasswordVar)
+				registryCert = os.Getenv(PrivateRegistryCACertBottlerocketVar)
+				if os.Getenv(PrivateRegistryPortBottlerocketVar) != "" {
+					port = os.Getenv(PrivateRegistryPortBottlerocketVar)
+				}
+			} else {
+				checkRequiredEnvVars(e.T, privateRegistryMirrorRequiredEnvVars)
+				endpoint = os.Getenv(PrivateRegistryEndpointVar)
+				hostPort = net.JoinHostPort(endpoint, os.Getenv(PrivateRegistryPortVar))
+				username = os.Getenv(PrivateRegistryUsernameVar)
+				password = os.Getenv(PrivateRegistryPasswordVar)
+				registryCert = os.Getenv(PrivateRegistryCACertVar)
+				if os.Getenv(PrivateRegistryPortVar) != "" {
+					port = os.Getenv(PrivateRegistryPortVar)
+				}
 			}
 		}
 
 		// Set env vars for helm login/push
-		err := os.Setenv("REGISTRY_USERNAME", username)
-		if err != nil {
-			e.T.Fatalf("unable to set REGISTRY_USERNAME: %v", err)
-		}
-		err = os.Setenv("REGISTRY_PASSWORD", password)
-		if err != nil {
-			e.T.Fatalf("unable to set REGISTRY_PASSWORD: %v", err)
-		}
-
-		err = buildDocker(e.T).Login(context.Background(), hostPort, username, password)
-		if err != nil {
-			e.T.Fatalf("error logging into docker registry %s: %v", hostPort, err)
-		}
-
-		var ociNamespaces []v1alpha1.OCINamespace
-		if len(optNamespaces) > 0 {
-			ociNamespaces = append(DefaultOciNamespaces(e), optNamespaces...)
-		}
-
-		certificate, err := base64.StdEncoding.DecodeString(registryCert)
-		if err == nil {
-			e.clusterFillers = append(e.clusterFillers,
-				api.WithRegistryMirror(endpoint, port, string(certificate), true, false, ociNamespaces...),
-			)
-		}
-	}
-}
-
-// WithBottlerocketAuthenticatedRegistryMirror sets up e2e for authenticated registry mirrors using Bottlerocket-specific endpoint.
-func WithBottlerocketAuthenticatedRegistryMirror(providerName string, optNamespaces ...v1alpha1.OCINamespace) ClusterE2ETestOpt {
-	return func(e *ClusterE2ETest) {
-		checkRequiredEnvVars(e.T, privateRegistryMirrorBottlerocketRequiredEnvVars)
-		endpoint := os.Getenv(PrivateRegistryEndpointBottlerocketVar)
-		port := os.Getenv(PrivateRegistryPortBottlerocketVar)
-		hostPort := net.JoinHostPort(endpoint, port)
-		username := os.Getenv(PrivateRegistryUsernameVar)
-		password := os.Getenv(PrivateRegistryPasswordVar)
-		registryCert := os.Getenv(PrivateRegistryCACertBottlerocketVar)
-
-		if port == "" {
-			port = "443"
-		}
-
 		err := os.Setenv("REGISTRY_USERNAME", username)
 		if err != nil {
 			e.T.Fatalf("unable to set REGISTRY_USERNAME: %v", err)
