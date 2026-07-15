@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"net"
 	"os"
+	"strings"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -24,11 +25,14 @@ const (
 	RegistryCACertTinkerbellVar          = "T_REGISTRY_MIRROR_CA_CERT_TINKERBELL"
 	RegistryMirrorDefaultSecurityGroup   = "T_REGISTRY_MIRROR_DEFAULT_SECURITY_GROUP"
 	RegistryMirrorAirgappedSecurityGroup = "T_REGISTRY_MIRROR_AIRGAPPED_SECURITY_GROUP"
-	PrivateRegistryEndpointVar           = "T_PRIVATE_REGISTRY_MIRROR_ENDPOINT"
-	PrivateRegistryPortVar               = "T_PRIVATE_REGISTRY_MIRROR_PORT"
-	PrivateRegistryUsernameVar           = "T_PRIVATE_REGISTRY_MIRROR_USERNAME"
-	PrivateRegistryPasswordVar           = "T_PRIVATE_REGISTRY_MIRROR_PASSWORD"
-	PrivateRegistryCACertVar             = "T_PRIVATE_REGISTRY_MIRROR_CA_CERT"
+	PrivateRegistryEndpointVar              = "T_PRIVATE_REGISTRY_MIRROR_ENDPOINT"
+	PrivateRegistryPortVar                  = "T_PRIVATE_REGISTRY_MIRROR_PORT"
+	PrivateRegistryUsernameVar              = "T_PRIVATE_REGISTRY_MIRROR_USERNAME"
+	PrivateRegistryPasswordVar              = "T_PRIVATE_REGISTRY_MIRROR_PASSWORD"
+	PrivateRegistryCACertVar                = "T_PRIVATE_REGISTRY_MIRROR_CA_CERT"
+	PrivateRegistryEndpointBottlerocketVar  = "T_PRIVATE_REGISTRY_MIRROR_ENDPOINT_BOTTLEROCKET"
+	PrivateRegistryPortBottlerocketVar      = "T_PRIVATE_REGISTRY_MIRROR_PORT_BOTTLEROCKET"
+	PrivateRegistryCACertBottlerocketVar    = "T_PRIVATE_REGISTRY_MIRROR_CA_CERT_BOTTLEROCKET"
 	PrivateRegistryEndpointTinkerbellVar = "T_PRIVATE_REGISTRY_MIRROR_ENDPOINT_TINKERBELL"
 	PrivateRegistryPortTinkerbellVar     = "T_PRIVATE_REGISTRY_MIRROR_PORT_TINKERBELL"
 	PrivateRegistryUsernameTinkerbellVar = "T_PRIVATE_REGISTRY_MIRROR_USERNAME_TINKERBELL"
@@ -45,7 +49,8 @@ var (
 	registryMirrorRequiredEnvVars                  = []string{RegistryEndpointVar, RegistryPortVar, RegistryUsernameVar, RegistryPasswordVar, RegistryCACertVar}
 	registryMirrorTinkerbellRequiredEnvVars        = []string{RegistryEndpointTinkerbellVar, RegistryPortTinkerbellVar, RegistryUsernameTinkerbellVar, RegistryPasswordTinkerbellVar, RegistryCACertTinkerbellVar}
 	registryMirrorDockerAirgappedRequiredEnvVars   = []string{RegistryMirrorDefaultSecurityGroup, RegistryMirrorAirgappedSecurityGroup}
-	privateRegistryMirrorRequiredEnvVars           = []string{PrivateRegistryEndpointVar, PrivateRegistryPortVar, PrivateRegistryUsernameVar, PrivateRegistryPasswordVar, PrivateRegistryCACertVar}
+	privateRegistryMirrorRequiredEnvVars              = []string{PrivateRegistryEndpointVar, PrivateRegistryPortVar, PrivateRegistryUsernameVar, PrivateRegistryPasswordVar, PrivateRegistryCACertVar}
+	privateRegistryMirrorBottlerocketRequiredEnvVars = []string{PrivateRegistryEndpointBottlerocketVar, PrivateRegistryPortBottlerocketVar, PrivateRegistryUsernameVar, PrivateRegistryPasswordVar, PrivateRegistryCACertBottlerocketVar}
 	privateRegistryMirrorTinkerbellRequiredEnvVars = []string{PrivateRegistryEndpointTinkerbellVar, PrivateRegistryPortTinkerbellVar, PrivateRegistryUsernameTinkerbellVar, PrivateRegistryPasswordTinkerbellVar, PrivateRegistryCACertTinkerbellVar}
 	registryMirrorOciNamespacesRequiredEnvVars     = []string{RegistryMirrorOciNamespacesRegistry1Var, RegistryMirrorOciNamespacesNamespace1Var}
 )
@@ -112,14 +117,26 @@ func WithAuthenticatedRegistryMirror(providerName string, optNamespaces ...v1alp
 				port = os.Getenv(PrivateRegistryPortTinkerbellVar)
 			}
 		default:
-			checkRequiredEnvVars(e.T, privateRegistryMirrorRequiredEnvVars)
-			endpoint = os.Getenv(PrivateRegistryEndpointVar)
-			hostPort = net.JoinHostPort(endpoint, os.Getenv(PrivateRegistryPortVar))
-			username = os.Getenv(PrivateRegistryUsernameVar)
-			password = os.Getenv(PrivateRegistryPasswordVar)
-			registryCert = os.Getenv(PrivateRegistryCACertVar)
-			if os.Getenv(PrivateRegistryPortVar) != "" {
-				port = os.Getenv(PrivateRegistryPortVar)
+			if strings.Contains(e.T.Name(), "BottlerocketAuthenticatedRegistryMirror") {
+				checkRequiredEnvVars(e.T, privateRegistryMirrorBottlerocketRequiredEnvVars)
+				endpoint = os.Getenv(PrivateRegistryEndpointBottlerocketVar)
+				hostPort = net.JoinHostPort(endpoint, os.Getenv(PrivateRegistryPortBottlerocketVar))
+				username = os.Getenv(PrivateRegistryUsernameVar)
+				password = os.Getenv(PrivateRegistryPasswordVar)
+				registryCert = os.Getenv(PrivateRegistryCACertBottlerocketVar)
+				if os.Getenv(PrivateRegistryPortBottlerocketVar) != "" {
+					port = os.Getenv(PrivateRegistryPortBottlerocketVar)
+				}
+			} else {
+				checkRequiredEnvVars(e.T, privateRegistryMirrorRequiredEnvVars)
+				endpoint = os.Getenv(PrivateRegistryEndpointVar)
+				hostPort = net.JoinHostPort(endpoint, os.Getenv(PrivateRegistryPortVar))
+				username = os.Getenv(PrivateRegistryUsernameVar)
+				password = os.Getenv(PrivateRegistryPasswordVar)
+				registryCert = os.Getenv(PrivateRegistryCACertVar)
+				if os.Getenv(PrivateRegistryPortVar) != "" {
+					port = os.Getenv(PrivateRegistryPortVar)
+				}
 			}
 		}
 
@@ -156,6 +173,7 @@ func RequiredRegistryMirrorEnvVars() []string {
 	registryMirrorRequiredEnvVars = append(registryMirrorRequiredEnvVars, registryMirrorTinkerbellRequiredEnvVars...)
 	registryMirrorRequiredEnvVars = append(registryMirrorRequiredEnvVars, privateRegistryMirrorRequiredEnvVars...)
 	registryMirrorRequiredEnvVars = append(registryMirrorRequiredEnvVars, privateRegistryMirrorTinkerbellRequiredEnvVars...)
+	registryMirrorRequiredEnvVars = append(registryMirrorRequiredEnvVars, privateRegistryMirrorBottlerocketRequiredEnvVars...)
 	return append(registryMirrorRequiredEnvVars, registryMirrorDockerAirgappedRequiredEnvVars...)
 }
 
