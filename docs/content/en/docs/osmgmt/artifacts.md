@@ -77,7 +77,7 @@ EKSA_RELEASE_VERSION=<EKS-A version>
 ```
 
 ```bash
-KUBEVERSION=1.35 # Replace this with the Kubernetes version you wish to use
+KUBEVERSION=1.36 # Replace this with the Kubernetes version you wish to use
 
 BUNDLE_MANIFEST_URL=$(curl -sL https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$EKSA_RELEASE_VERSION\").bundleManifestUrl")
 curl -s $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[] | select(.kubeVersion==\"$KUBEVERSION\").eksD.ova.bottlerocket.uri"
@@ -108,7 +108,7 @@ EKSA_RELEASE_VERSION=<EKS-A version>
 ```
 
 ```bash
-KUBEVERSION=1.35 # Replace this with the Kubernetes version you wish to use
+KUBEVERSION=1.36 # Replace this with the Kubernetes version you wish to use
 
 BUNDLE_MANIFEST_URL=$(curl -sL https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml | yq ".spec.releases[] | select(.version==\"$EKSA_RELEASE_VERSION\").bundleManifestUrl")
 curl -sL $BUNDLE_MANIFEST_URL | yq ".spec.versionsBundles[] | select(.kubeVersion==\"$KUBEVERSION\").eksD.name"
@@ -130,9 +130,9 @@ CARGO_NET_GIT_FETCH_WITH_CLI=true cargo install --force tuftool
 curl -O "https://cache.bottlerocket.aws/root.json"
 sha512sum -c <<< "4fcb272345fd6adb94d4c04834400548178fecb57407ca79bc2c3d20e0428fc9ed3a82cea268d7f9c667b5803524a4f465acd701a86953d5d732bf6ecb064888  root.json"
 ```
-4. Export the desired Kubernetes version. EKS Anywhere currently supports 1.29, 1.30, 1.31, 1.32, 1.33, 1.34, and 1.35.
+4. Export the desired Kubernetes version. EKS Anywhere currently supports 1.30, 1.31, 1.32, 1.33, 1.34, 1.35, and 1.36.
 ```bash
-export KUBEVERSION="1.35"
+export KUBEVERSION="1.36"
 ```
 5. Programmatically retrieve the Bottlerocket version corresponding to this release of EKS-A and Kubernetes version and export it.
 
@@ -525,7 +525,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
       * `--vsphere-config`: vSphere configuration file (`vsphere.json` in this example)
 
       ```bash
-      image-builder build --os ubuntu --hypervisor vsphere --release-channel 1.35 --vsphere-config vsphere.json
+      image-builder build --os ubuntu --hypervisor vsphere --release-channel 1.36 --vsphere-config vsphere.json
       ```
 
    **Red Hat Enterprise Linux**
@@ -539,7 +539,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
       * `--vsphere-config`: vSphere configuration file (`vsphere.json` in this example)
 
       ```bash
-      image-builder build --os redhat --hypervisor vsphere --release-channel 1.35 --vsphere-config vsphere.json
+      image-builder build --os redhat --hypervisor vsphere --release-channel 1.36 --vsphere-config vsphere.json
       ```
 
 2. Create an Ubuntu or Red Hat image with vsphere-clone builder:
@@ -566,7 +566,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
       * `--firmware`: Desired firmware for image build, can be `bios` or `efi`, defaults to `bios`
 
       ```bash
-      image-builder build --os ubuntu --hypervisor vsphere --builder clone --release-channel 1.35 --vsphere-config vsphere.json
+      image-builder build --os ubuntu --hypervisor vsphere --builder clone --release-channel 1.36 --vsphere-config vsphere.json
       ```
 
    **Red Hat Enterprise Linux**
@@ -582,7 +582,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
       * `--firmware`: Desired firmware for image build, can be `bios` or `efi`, defaults to `bios`
 
       ```bash
-      image-builder build --os redhat --hypervisor vsphere --builder clone --release-channel 1.35 --vsphere-config vsphere.json
+      image-builder build --os redhat --hypervisor vsphere --builder clone --release-channel 1.36 --vsphere-config vsphere.json
       ```
 
 ### Build Bare Metal node images
@@ -662,7 +662,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
       * `--baremetal-config`: baremetal config file if using proxy
 
       ```bash
-      image-builder build --os ubuntu --hypervisor baremetal --release-channel 1.35
+      image-builder build --os ubuntu --hypervisor baremetal --release-channel 1.36
       ```
 
    **Red Hat Enterprise Linux (RHEL)**
@@ -694,7 +694,7 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
    Image builder only supports building RHEL 9 raw images with EFI firmware. Refer to [UEFI Support]({{< relref "#uefi-support">}}) to enable image builds with EFI firmware.
 
       ```bash
-      image-builder build --os redhat --hypervisor baremetal --release-channel 1.35 --baremetal-config baremetal.json
+      image-builder build --os redhat --hypervisor baremetal --release-channel 1.36 --baremetal-config baremetal.json
       ```
 1. To consume the image, serve it from an accessible web server, then create the [bare metal cluster spec]({{< relref "../getting-started/baremetal/bare-spec/" >}})
    configuring the `osImageURL` field URL of the image. For example:
@@ -789,7 +789,7 @@ These steps use `image-builder` to create a RHEL-based image for CloudStack. Bef
       * `--cloudstack-config`: CloudStack configuration file (`cloudstack.json` in this example)
 
       ```bash
-      image-builder build --os redhat --hypervisor cloudstack --release-channel 1.35 --cloudstack-config cloudstack.json
+      image-builder build --os redhat --hypervisor cloudstack --release-channel 1.36 --cloudstack-config cloudstack.json
       ```
 1. To consume the resulting RHEL-based image, add it as a template to your CloudStack setup as described in [Preparing CloudStack]({{< relref "../getting-started/cloudstack/cloudstack-preparation" >}}).
 
@@ -912,7 +912,7 @@ These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (
    * `--ami-config`: AMI configuration file (`ami.json` in this example)
 
    ```bash
-   image-builder build --os ubuntu --hypervisor ami --release-channel 1.35 --ami-config ami.json
+   image-builder build --os ubuntu --hypervisor ami --release-channel 1.36 --ami-config ami.json
    ```
 1. After the build, the Ubuntu AMI will be available in your AWS account in the AWS region specified in your AMI configuration file. If you wish to export it as a raw image, you can achieve this using the AWS CLI.
    ```
@@ -1019,7 +1019,7 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
       * `--nutanix-config`: Nutanix configuration file (`nutanix.json` in this example)
 
       ```bash
-      image-builder build --os ubuntu --hypervisor nutanix --release-channel 1.35 --nutanix-config nutanix.json
+      image-builder build --os ubuntu --hypervisor nutanix --release-channel 1.36 --nutanix-config nutanix.json
       ```
 
    **Red Hat Enterprise Linux**
@@ -1033,7 +1033,7 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
       * `--nutanix-config`: Nutanix configuration file (`nutanix.json` in this example)
 
       ```bash
-      image-builder build --os redhat --hypervisor nutanix --release-channel 1.35 --nutanix-config nutanix.json
+      image-builder build --os redhat --hypervisor nutanix --release-channel 1.36 --nutanix-config nutanix.json
       ```
 
 ### Configuring OS version
@@ -1130,9 +1130,9 @@ In both these above approaches, the artifacts embedded into the images will be o
 
 `image-builder` supports UEFI-enabled images for Ubuntu OVA, Ubuntu Raw and RHEL 9 Raw images. UEFI is turned on by default for Ubuntu Raw image builds, but the default firmware for Ubuntu OVAs and RHEL Raw images is BIOS. This can be toggled with the `firmware` option.
 
-For example, to build a Kubernetes v1.35 Ubuntu 22.04 OVA with UEFI enabled, you can run the following command.
+For example, to build a Kubernetes v1.36 Ubuntu 22.04 OVA with UEFI enabled, you can run the following command.
    ```bash
-   image-builder build --os ubuntu --hypervisor vsphere --os-version 22.04 --release-channel 1.35 --vsphere-config config.json --firmware efi
+   image-builder build --os ubuntu --hypervisor vsphere --os-version 22.04 --release-channel 1.36 --vsphere-config config.json --firmware efi
    ```
 
 The table below shows the possible firmware options for the hypervisor and OS combinations that `image-builder` supports.
@@ -1247,7 +1247,7 @@ For example, if you want the Red Hat minor version to remain `9.4`, add the foll
 4. Artifacts server should have the ability to host and serve, standalone artifacts and Ubuntu OS packages
 
 #### Building node images in an air-gapped environment
-1. Identify the EKS-D release channel (generally aligning with Kubernetes version) to build. For example, 1.34 or 1.35
+1. Identify the EKS-D release channel (generally aligning with Kubernetes version) to build. For example, 1.35 or 1.36
 2. Identify the latest release of EKS-A from [changelog]({{< ref "/docs/whatsnew/changelog" >}}). For example, <EKS-A version>
 3. Run `image-builder` CLI to download manifests in an environment with internet connectivity
    ```bash
