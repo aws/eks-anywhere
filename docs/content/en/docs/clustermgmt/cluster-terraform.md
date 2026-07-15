@@ -9,7 +9,7 @@ description: >
   Use Terraform to manage EKS Anywhere Clusters
 ---
 
->**_NOTE_**: Support for using Terraform to manage and modify an EKS Anywhere cluster is available for vSphere, Snow, Bare metal, Nutanix and CloudStack clusters.
+>**_NOTE_**: Support for using Terraform to manage and modify an EKS Anywhere cluster is available for vSphere, Snow, Bare metal, and Nutanix clusters.
 >
 
 ## Using Terraform to manage an EKS Anywhere Cluster (Optional)
@@ -210,7 +210,7 @@ Follow these steps if you want to use your initial cluster to create and manage 
    terraform apply
    ```
 
-For a comprehensive list of upgradeable fields for VSphere, Snow, and Nutanix, see the [upgradeable attributes section]({{< relref "./cluster-upgrades/vsphere-and-cloudstack-upgrades.md#upgradeable-cluster-attributes" >}}).
+For a comprehensive list of upgradeable fields for VSphere, Snow, and Nutanix, see the [upgradeable attributes section]({{< relref "./cluster-upgrades/vsphere-upgrades.md#upgradeable-cluster-attributes" >}}).
  
 ### Delete cluster using Terraform
 

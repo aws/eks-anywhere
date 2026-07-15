@@ -26,5 +26,5 @@ If the previous steps succeeded, all of the required EKS Anywhere dependencies a
 
 ### Next Steps
 - [Build upgraded node operating system images for your cluster]({{< relref "../../osmgmt/artifacts/#building-images-for-a-specific-eks-anywhere-version" >}})
-- [Upgrade a cluster on vSphere, Snow, Cloudstack, or Nutanix]({{< relref "./vsphere-and-cloudstack-upgrades" >}})
+- [Upgrade a cluster on vSphere, Snow, or Nutanix]({{< relref "./vsphere-upgrades" >}})
 - [Upgrade a cluster on bare metal]({{< relref "./baremetal-upgrades" >}})
