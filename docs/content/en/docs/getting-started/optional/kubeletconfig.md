@@ -11,13 +11,13 @@ description: >
 ## Kubelet Configuration Support
 
 #### Provider support details
-|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
-|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
-|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
-|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
-| Bottlerocket        |    ✔    |     —      |    —    |     —      |  —   |
-|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
-|      RHEL 9.x       |    —    |     —      |    ✔    |     ✔      |  —   |
+|                     | vSphere | Bare Metal | Nutanix | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |  —   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |  —   |
+| Bottlerocket        |    ✔    |     —      |    —    |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |  —   |
+|      RHEL 9.x       |    —    |     —      |    ✔    |  —   |
 
 
 You can configure EKS Anywhere to specify Kubelet settings and configure those for control plane and/or worker nodes starting from `v0.20.0`. This can be done using `kubeletConfiguration`.

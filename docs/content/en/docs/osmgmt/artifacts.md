@@ -12,7 +12,7 @@ EKS Anywhere supports three different node operating systems:
 
 * Bottlerocket: For vSphere and Bare Metal providers
 * Ubuntu: For vSphere, Bare Metal, Nutanix, and Snow providers
-* Red Hat Enterprise Linux (RHEL): For vSphere, CloudStack, Nutanix, and Bare Metal providers
+* Red Hat Enterprise Linux (RHEL): For vSphere, Nutanix, and Bare Metal providers
 
 Bottlerocket OVAs and images are distributed by the EKS Anywhere project.
 To build your own Ubuntu-based or RHEL-based EKS Anywhere node, see [Building node images]({{< relref "#building-node-images">}}).
@@ -194,10 +194,9 @@ When you run `image-builder`, it will pull in all components needed to build ima
 When building an image using this tool, you get to choose:
 
 * Operating system type (for example, ubuntu, redhat) and version (Ubuntu only)
-* Provider (vsphere, cloudstack, baremetal, ami, nutanix)
+* Provider (vsphere, baremetal, ami, nutanix)
 * Release channel for EKS Distro (generally aligning with Kubernetes releases)
 * **vSphere only:** configuration file providing information needed to access your vSphere setup
-* **CloudStack only:** configuration file providing information needed to access your CloudStack setup
 * **Snow AMI only:** configuration file providing information needed to customize your Snow AMI build parameters
 * **Nutanix only:** configuration file providing information needed to access Nutanix Prism Central
 
@@ -205,10 +204,10 @@ Because `image-builder` creates images in the same way that the EKS Anywhere pro
 
 The table below shows the support matrix for the hypervisor and OS combinations that `image-builder` supports.
 
-|            | vSphere | Baremetal | CloudStack | Nutanix | Snow |
-|:----------:|:-------:|:---------:|:----------:|:-------:|:----:|
-| **Ubuntu** |    ✓    |     ✓     |            |    ✓    |   ✓  |
-|  **RHEL**  |    ✓    |     ✓     |     ✓      |    ✓    |      |
+|            | vSphere | Baremetal | Nutanix | Snow |
+|:----------:|:-------:|:---------:|:-------:|:----:|
+| **Ubuntu** |    ✓    |     ✓     |    ✓    |   ✓  |
+|  **RHEL**  |    ✓    |     ✓     |    ✓    |      |
 
 ### Prerequisites
 
@@ -239,7 +238,6 @@ In addition to the requirements in [Tools section]({{< relref "../getting-starte
 * releases.hashicorp.com (to download Packer binary for image builds)
 * galaxy.ansible.com (to download Ansible packages from Ansible Galaxy)
 * **vSphere only:** VMware vCenter endpoint
-* **CloudStack only:** Apache CloudStack endpoint
 * **Nutanix only:** Nutanix Prism Central endpoint
 * **Red Hat only:** dl.fedoraproject.org (to download RPMs and GPG keys for RHEL image builds)
 * **Ubuntu only:** cdimage.ubuntu.com (to download Ubuntu server ISOs for Ubuntu image builds)
@@ -316,9 +314,6 @@ The following example creates a role with object-level permission on a Datastore
 4. Right click on the datastore, then click `Add Permissions` and select the user created in step 1 and the role created in step 2.
 
 Object-level permission can be configured on `Network`, `Datastore` and `Resource Pool` objects.
-
-#### CloudStack requirements
-Refer to the [CloudStack Permissions for CAPC](https://github.com/kubernetes-sigs/cluster-api-provider-cloudstack/blob/main/docs/book/src/topics/cloudstack-permissions.md) doc for required CloudStack user permissions.
 
 #### Snow AMI requirements
 Packer will require prior authentication with your AWS account to launch EC2 instances for the Snow AMI build. Refer to the [Authentication guide for Amazon EBS Packer builder](https://developer.hashicorp.com/packer/plugins/builders/amazon#authentication) for possible modes of authentication. We recommend that you run `image-builder` on a pre-existing Ubuntu EC2 instance and use an [IAM instance role with the required permissions](https://developer.hashicorp.com/packer/plugins/builders/amazon#iam-task-or-instance-role).
@@ -705,94 +700,6 @@ These steps use `image-builder` to create an Ubuntu-based or RHEL-based image fo
 
    See descriptions of [`osImageURL`]({{< relref "../getting-started/baremetal/bare-spec/#osimageurl-required" >}}) for further information.
 
-### Build CloudStack node images
-
-These steps use `image-builder` to create a RHEL-based image for CloudStack. Before proceeding, ensure that the above system-level, network-level and CloudStack-specific [prerequisites]({{< relref "#prerequisites">}}) have been met.
-
-1. Create a Linux user for running image-builder.
-   ```bash
-   sudo adduser image-builder
-   ```
-   Follow the prompt to provide a password for the image-builder user.
-1. Add image-builder user to the sudo group and change user as image-builder providing in the password from previous step when prompted.
-   ```bash
-   sudo usermod -aG sudo image-builder
-   su image-builder
-   cd /home/$USER
-   ```
-1. Install packages and prepare environment:
-   {{< tabpane >}}
-
-   {{< tab header="Ubuntu" lang="bash" >}}
-   sudo apt update -y
-   sudo apt install jq make qemu-kvm libvirt-daemon-system libvirt-clients virtinst cpu-checker libguestfs-tools libosinfo-bin unzip -y
-   sudo snap install yq
-   sudo usermod -a -G kvm $USER
-   sudo chmod 666 /dev/kvm
-   sudo chown root:kvm /dev/kvm
-   mkdir -p /home/$USER/.ssh
-   echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
-   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
-   sudo chmod 600 /home/$USER/.ssh/config
-   {{< /tab >}}
-
-   {{< tab header="RHEL" lang="bash" >}}
-   sudo dnf update -y
-   sudo dnf install jq make qemu-kvm libvirt virtinst cpu-checker libguestfs-tools libosinfo unzip wget -y
-   sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
-   sudo usermod -a -G kvm $USER
-   sudo chmod 666 /dev/kvm
-   sudo chown root:kvm /dev/kvm
-   mkdir -p /home/$USER/.ssh
-   echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
-   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
-   sudo chmod 600 /home/$USER/.ssh/config
-   {{< /tab >}}
-
-   {{< tab header="Amazon Linux" lang="bash" >}}
-   sudo yum update -y
-   sudo yum install jq make qemu-kvm libvirt libvirt-clients libguestfs-tools unzip wget -y
-   sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
-   sudo usermod -a -G kvm $USER
-   sudo chmod 666 /dev/kvm
-   sudo chown root:kvm /dev/kvm
-   mkdir -p /home/$USER/.ssh
-   echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
-   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
-   sudo chmod 600 /home/$USER/.ssh/config
-   {{< /tab >}}
-
-   {{< /tabpane >}}
-
-   * Starting with `image-builder` version `v0.3.0`, the minimum required Python version is Python 3.9. However, many Linux distros ship only up to Python 3.8, so you will need to install Python 3.9 from external sources. Refer to the `pyenv` [installation](https://github.com/pyenv/pyenv#installation) and [usage](https://github.com/pyenv/pyenv#usage) documentation to install Python 3.9 and make it the default Python version.
-   * Once you have Python 3.9, you can install Ansible using `pip`.
-     ```bash
-     python3 -m pip install --user "ansible-core==<Ansible version from required dependency file>"
-     ```
-1. Create a CloudStack configuration file (for example, `cloudstack.json`) to provide the location of a Red Hat Enterprise Linux 8 ISO image and related checksum and Red Hat subscription information:
-   ```json
-   {
-     "iso_url": "<https://endpoint to RHEL ISO endpoint or path to file>",
-     "iso_checksum": "<for example: ea5f349d492fed819e5086d351de47261c470fc794f7124805d176d69ddf1fcd>",
-     "iso_checksum_type": "<for example: sha256>",
-     "rhel_username": "<RHSM username>",
-     "rhel_password": "<RHSM password>"
-   }
-   ```
-   >**_NOTE_**: To build the RHEL-based image, `image-builder` temporarily consumes a Red Hat subscription. That subscription is removed once the image is built.
-1. To create a RHEL-based image, run `image-builder` with the following options:
-
-      * `--os`: `redhat`
-      * `--os-version`: `8` (default: `8`)
-      * `--hypervisor`: For CloudStack use `cloudstack`
-      * `--release-channel`: Supported EKS Distro releases include 1-27, 1-28, 1-29, 1-30 and 1-31.
-      * `--cloudstack-config`: CloudStack configuration file (`cloudstack.json` in this example)
-
-      ```bash
-      image-builder build --os redhat --hypervisor cloudstack --release-channel 1.35 --cloudstack-config cloudstack.json
-      ```
-1. To consume the resulting RHEL-based image, add it as a template to your CloudStack setup as described in [Preparing CloudStack]({{< relref "../getting-started/cloudstack/cloudstack-preparation" >}}).
-
 ### Build Snow node images
 
 These steps use `image-builder` to create an Ubuntu-based Amazon Machine Image (AMI) that is backed by EBS volumes for Snow. Before proceeding, ensure that the above system-level, network-level and AMI-specific [prerequisites]({{< relref "#prerequisites">}}) have been met
@@ -1056,7 +963,7 @@ These steps use `image-builder` to create a Ubuntu-based image for Nutanix AHV a
             <td>20.04.6</td>
             <td>20.04</td>
             <td rowspan=2>20.04</td>
-            <td rowspan=2>All hypervisors except CloudStack</td>
+            <td rowspan=2>All hypervisors</td>
         </tr>
         <tr>
             <td>22.04.3</td>
@@ -1137,10 +1044,10 @@ For example, to build a Kubernetes v1.35 Ubuntu 22.04 OVA with UEFI enabled, you
 
 The table below shows the possible firmware options for the hypervisor and OS combinations that `image-builder` supports.
 
-|            |       vSphere       |          Bare Metal          | CloudStack | Nutanix | Snow |
-|:----------:|:-------------------:|:---------------------------:|:----------:|:-------:|:----:|
-| **Ubuntu** | bios (default), efi |             efi             |    bios    |   bios  | bios |
-|  **RHEL**  |         bios        | bios (RHEL 8), efi (RHEL 9) |    bios    |   bios  | bios |
+|            |       vSphere       |          Bare Metal          | Nutanix | Snow |
+|:----------:|:-------------------:|:---------------------------:|:-------:|:----:|
+| **Ubuntu** | bios (default), efi |             efi             |   bios  | bios |
+|  **RHEL**  |         bios        | bios (RHEL 8), efi (RHEL 9) |   bios  | bios |
 
 ### Mounting additional files
 

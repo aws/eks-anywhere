@@ -11,9 +11,9 @@ description: >
 ## Registry Mirror Support (optional)
 
 #### Provider support details
-|                | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
-|:--------------:|:-------:|:----------:|:-------:|:----------:|:----:|
-| **Supported?** |   ✓	    |     ✓      |   	 ✓   |     ✓      |  ✓   |
+|                | vSphere | Bare Metal | Nutanix | Snow |
+|:--------------:|:-------:|:----------:|:-------:|:----:|
+| **Supported?** |   ✓	    |     ✓      |   	 ✓   |  ✓   |
 
 You can configure EKS Anywhere to use a local registry mirror for its dependencies. When a registry mirror is configured in the EKS Anywhere cluster specification, EKS Anywhere will use it instead of defaulting to Amazon ECR for its dependencies. For details on how to configure your local registry mirror for EKS Anywhere, see the [Configure local registry mirror]({{< relref "./registrymirror/#configure-local-registry-mirror" >}}) section.
 

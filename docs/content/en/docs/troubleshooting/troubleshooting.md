@@ -40,7 +40,6 @@ Here are examples of what you may see depending on which infrastrurcture you are
 
 * capi-system (General)
 * capv-system (vSphere) 
-* capc-system (CloudStack) 
 * capv-system (Nutanix) 
 * capd-system (Docker) 
 * capt-system (Tinkerbell) 
@@ -645,7 +644,6 @@ This can happen when the workload environment does not have proper network acces
 To fix it, make sure to validate the network/firewall settings from the workload cluster to the infrastructure provider environment. Read through the `Requirements` page, especially around the networking requirements in each provider before retrying the cluster provisioning:
 * [Requirements for EKS Anywhere on VMware vSphere]({{< relref "../getting-started/vsphere/vsphere-prereq" >}})
 * [Network Requirements for EKS Anywhere on Bare Metal]({{< relref "../getting-started/baremetal/bare-prereq" >}})
-* [Requirements for EKS Anywhere on CloudStack]({{< relref "../getting-started/cloudstack/cloudstack-prereq" >}})
 * [Prerequisite Checklist for EKS Anywhere on Snow]({{< relref "../getting-started/snow/snow-getstarted/#prerequisite-checklist" >}})
 * [Requirements for EKS Anywhere on Nutanix Cloud Infrastructure]({{< relref "../getting-started/nutanix/nutanix-prereq" >}})
 
@@ -1001,7 +999,7 @@ If no VMs are created, check the `capi-controller-manager`, `capv-controller-man
 
 If a VM is created, check to see if it has an IPv4 IP assigned. For example, in BottleRocket machine boot logs, you might see `Failed to read current IP data`.
 
-If there are no IPv4 IPs assigned to VMs, this is most likely because you don't have a DHCP server configured for the `network` configured in the cluster config yaml, OR there are not enough IP addresses available in the DHCP pool to assign to the VMs. Ensure that you have a DHCP server running with [enough IP addresses to create a cluster]({{< relref "../clustermgmt/cluster-upgrades/vsphere-and-cloudstack-upgrades/#prepare-dhcp-ip-addresses-pool" >}}) before running the create or upgrade command again.
+If there are no IPv4 IPs assigned to VMs, this is most likely because you don't have a DHCP server configured for the `network` configured in the cluster config yaml, OR there are not enough IP addresses available in the DHCP pool to assign to the VMs. Ensure that you have a DHCP server running with [enough IP addresses to create a cluster]({{< relref "../clustermgmt/cluster-upgrades/vsphere-upgrades/#prepare-dhcp-ip-addresses-pool" >}}) before running the create or upgrade command again.
 
 To confirm this is a DHCP issue, you could create a new VM in the same network to validate if an IPv4 IP is assigned correctly.
 
