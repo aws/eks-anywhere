@@ -36,6 +36,10 @@ func WithPerMachineWaitTimeout(timeout string) CommandOpt {
 	return appendOpt("--per-machine-wait-timeout", timeout)
 }
 
+func WithNoTimeouts() CommandOpt {
+	return appendOpt("--no-timeouts")
+}
+
 func ExecuteWithEksaRelease(release *releasev1alpha1.EksARelease) CommandOpt {
 	return executeWithBinaryCommandOpt(func() (string, error) {
 		return getBinary(release)
