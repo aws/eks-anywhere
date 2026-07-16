@@ -113,6 +113,10 @@ const (
 	DefaultNodeStartupTimeout = 10 * time.Minute
 	// DefaultTinkerbellNodeStartupTimeout is the default node start up timeout for Tinkerbell.
 	DefaultTinkerbellNodeStartupTimeout = 20 * time.Minute
+	// MaxMachineHealthCheckTimeout is the maximum timeout for machine health checks.
+	// Used by --no-timeouts to effectively disable health check timeouts while
+	// staying within the int32 seconds range required by the CAPI v1beta2 API.
+	MaxMachineHealthCheckTimeout = 24 * 365 * time.Hour // 1 year
 	// DefaultMaxUnhealthy is the default maxUnhealthy value for machine health checks.
 	DefaultMaxUnhealthy = "100%"
 	// DefaultWorkerMaxUnhealthy is the default maxUnhealthy value for worker node machine health checks.
