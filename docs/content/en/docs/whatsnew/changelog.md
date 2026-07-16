@@ -84,6 +84,7 @@ For complete version support details, see the [Kubernetes version support table]
   - [`v1-30-eks-56`](https://distro.eks.amazonaws.com/releases/1-30/56/)
 - New EKS-Distro base images
 - Bottlerocket: `v1.56.0` to `v1.62.0`
+- govmomi: `v0.53.0` to `v0.54.1` ([#5342](https://github.com/aws/eks-anywhere-build-tooling/pull/5342))
 - Cert-manager: `v1.19.3` to `v1.20.2`
 - Cilium: `v1.18.5` to `v1.19.4`
 - Cluster API (CAPI): `v1.12.2` to `v1.13.2`
@@ -108,11 +109,12 @@ For complete version support details, see the [Kubernetes version support table]
 
 ### Fixed
 - Fix registry mirror `hosts.toml` double `/v2/` regression from containerd v2 migration ([#10765](https://github.com/aws/eks-anywhere/pull/10765))
+- Increase Tinkerbell pod memory limit from 128Mi to 256Mi to prevent OOMKill during upgrades ([#5578](https://github.com/aws/eks-anywhere-build-tooling/pull/5578))
+- Disabled unnecessary Tinkerbell UI component ([#5520](https://github.com/aws/eks-anywhere-build-tooling/pull/5520))
 - Fix `import images` command failing with OCI namespace in `--registry` flag ([#10800](https://github.com/aws/eks-anywhere/pull/10800))
 - Use server-side apply for Bundles to avoid 256KB annotation limit ([#10807](https://github.com/aws/eks-anywhere/pull/10807))
 - Fix missing control-plane toleration for kube-vip DaemonSet ([#10828](https://github.com/aws/eks-anywhere/pull/10828))
-- Fix control plane taint not set for CAPI v1.13+ readiness gate ([#10838](https://github.com/aws/eks-anywhere/pull/10838))
-- Fix control plane label not set for CAPI v1.13+ readiness gate ([#10840](https://github.com/aws/eks-anywhere/pull/10840))
+- Fix control plane taint and label not set for CAPI v1.13+ readiness gate ([#10838](https://github.com/aws/eks-anywhere/pull/10838), [#10840](https://github.com/aws/eks-anywhere/pull/10840))
 
 ### Removed
 - Dropped Kubernetes v1.29 support ([#5521](https://github.com/aws/eks-anywhere-build-tooling/pull/5521))
