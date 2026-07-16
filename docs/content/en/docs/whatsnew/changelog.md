@@ -68,8 +68,6 @@ For complete version support details, see the [Kubernetes version support table]
 |      RHEL 8.x       |    ✔    |     ✔      |    ✔    |  —   |
 |      RHEL 9.x       |    ✔    |     ✔      |    ✔    |  —   |
 
-\* RHEL 8's kernel version (4.18) is not supported by kubeadm for Kubernetes versions 1.32 and above (see Kubernetes GitHub issue [#129462](https://github.com/kubernetes/kubernetes/issues/129462)). As a result, EKS Anywhere does not support using RHEL 8 as the node operating system for Kubernetes versions 1.32 and above.
-
 ### Added
 - Support for Kubernetes v1.36 ([#10804](https://github.com/aws/eks-anywhere/pull/10804), [#10827](https://github.com/aws/eks-anywhere/pull/10827))
 
@@ -90,9 +88,7 @@ For complete version support details, see the [Kubernetes version support table]
 - Cluster API (CAPI): `v1.12.2` to `v1.13.2`
 - Cluster API Provider vSphere (CAPV): `v1.15.2` to `v1.16.1`
 - Cluster API Provider AWS Snow (CAPAS): `v0.2.9` to `v0.3.1`
-- cloud-provider-vsphere 1-36: `v1.36.0`
 - cloud-provider-nutanix: `v0.5.5` to `v0.6.1`
-- containerd (1-36): `v2.3.1`
 - Cri-tools: `v1.35.0` to `v1.36.0`
 - etcdadm-controller: `v1.0.27` to `v1.0.28`
 - etcdadm-bootstrap-provider: `v1.0.19` to `v1.0.22`
@@ -110,7 +106,7 @@ For complete version support details, see the [Kubernetes version support table]
 ### Fixed
 - Fix registry mirror `hosts.toml` double `/v2/` regression from containerd v2 migration ([#10765](https://github.com/aws/eks-anywhere/pull/10765), [#58](https://github.com/aws/etcdadm-bootstrap-provider/pull/58))
 - Increase Tinkerbell pod memory limit from 128Mi to 256Mi to prevent OOMKill during upgrades ([#5578](https://github.com/aws/eks-anywhere-build-tooling/pull/5578))
-- Disabled unnecessary Tinkerbell UI component ([#5520](https://github.com/aws/eks-anywhere-build-tooling/pull/5520))
+- Disable unused tinkerbell UI component ([#5520](https://github.com/aws/eks-anywhere-build-tooling/pull/5520))
 - Fix `import images` command failing with OCI namespace in `--registry` flag ([#10800](https://github.com/aws/eks-anywhere/pull/10800))
 - Use server-side apply for Bundles to avoid 256KB annotation limit ([#10807](https://github.com/aws/eks-anywhere/pull/10807))
 - Fix missing control-plane toleration for kube-vip DaemonSet ([#10828](https://github.com/aws/eks-anywhere/pull/10828))
