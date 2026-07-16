@@ -108,7 +108,7 @@ For complete version support details, see the [Kubernetes version support table]
 - replicatedhq/troubleshoot: `v0.123.18` to `v0.130.0`
 
 ### Fixed
-- Fix registry mirror `hosts.toml` double `/v2/` regression from containerd v2 migration ([#10765](https://github.com/aws/eks-anywhere/pull/10765))
+- Fix registry mirror `hosts.toml` double `/v2/` regression from containerd v2 migration ([#10765](https://github.com/aws/eks-anywhere/pull/10765), [#58](https://github.com/aws/etcdadm-bootstrap-provider/pull/58))
 - Increase Tinkerbell pod memory limit from 128Mi to 256Mi to prevent OOMKill during upgrades ([#5578](https://github.com/aws/eks-anywhere-build-tooling/pull/5578))
 - Disabled unnecessary Tinkerbell UI component ([#5520](https://github.com/aws/eks-anywhere-build-tooling/pull/5520))
 - Fix `import images` command failing with OCI namespace in `--registry` flag ([#10800](https://github.com/aws/eks-anywhere/pull/10800))
