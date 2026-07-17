@@ -82,7 +82,7 @@ For complete version support details, see the [Kubernetes version support table]
   - [`v1-30-eks-56`](https://distro.eks.amazonaws.com/releases/1-30/56/)
 - New EKS-Distro base images
 - Bottlerocket: `v1.56.0` to `v1.62.0`
-- govmomi: `v0.53.0` to `v0.54.1` ([#5342](https://github.com/aws/eks-anywhere-build-tooling/pull/5342))
+- govmomi: `v0.53.0` to `v0.54.1`
 - Cert-manager: `v1.19.3` to `v1.20.2`
 - Cilium: `v1.18.5` to `v1.19.4`
 - Cluster API (CAPI): `v1.12.2` to `v1.13.2`
