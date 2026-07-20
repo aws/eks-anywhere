@@ -50,6 +50,24 @@ func TestDockerKubernetesLabels(t *testing.T) {
 	)
 }
 
+// MachineHealthCheck
+func TestDockerKubernetes135NoTimeoutsCreateCluster(t *testing.T) {
+	provider := framework.NewDocker(t)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube135),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+		),
+	)
+	test.GenerateClusterConfig()
+	test.CreateCluster(framework.WithNoTimeouts())
+	test.ValidateCluster(v1alpha1.Kube135)
+	test.DeleteCluster()
+}
+
 // Flux
 func TestDockerKubernetes133GithubFlux(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,

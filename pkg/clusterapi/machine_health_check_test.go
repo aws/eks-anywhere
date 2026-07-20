@@ -1,6 +1,7 @@
 package clusterapi_test
 
 import (
+	"math"
 	"testing"
 	"time"
 
@@ -87,7 +88,16 @@ func TestMachineHealthCheckForControlPlaneWithMaxUnhealthyOverride(t *testing.T)
 }
 
 func durationSecondsInt32(d time.Duration) *int32 {
-	s := int32(d.Seconds())
+	seconds := math.Trunc(d.Seconds())
+	if seconds > math.MaxInt32 {
+		s := int32(math.MaxInt32)
+		return &s
+	}
+	if seconds < 0 {
+		s := int32(0)
+		return &s
+	}
+	s := int32(seconds)
 	return &s
 }
 

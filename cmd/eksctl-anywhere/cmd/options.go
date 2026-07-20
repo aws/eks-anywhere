@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"math"
 	"os"
 	"path/filepath"
 	"strings"
@@ -270,9 +269,8 @@ func buildCreateCliConfig(clusterOptions *createClusterOptions) (*config.CreateC
 	createCliConfig := &config.CreateClusterCLIConfig{}
 	createCliConfig.SkipCPIPCheck = clusterOptions.skipIpCheck
 	if clusterOptions.noTimeouts {
-		maxTime := time.Duration(math.MaxInt64)
-		createCliConfig.NodeStartupTimeout = maxTime
-		createCliConfig.UnhealthyMachineTimeout = maxTime
+		createCliConfig.NodeStartupTimeout = constants.MaxMachineHealthCheckTimeout
+		createCliConfig.UnhealthyMachineTimeout = constants.MaxMachineHealthCheckTimeout
 
 		return createCliConfig, nil
 	}
@@ -298,9 +296,8 @@ func buildCreateCliConfig(clusterOptions *createClusterOptions) (*config.CreateC
 func buildUpgradeCliConfig(clusterOptions *upgradeClusterOptions) (*config.UpgradeClusterCLIConfig, error) {
 	upgradeCliConfig := config.UpgradeClusterCLIConfig{}
 	if clusterOptions.noTimeouts {
-		maxTime := time.Duration(math.MaxInt64)
-		upgradeCliConfig.NodeStartupTimeout = maxTime
-		upgradeCliConfig.UnhealthyMachineTimeout = maxTime
+		upgradeCliConfig.NodeStartupTimeout = constants.MaxMachineHealthCheckTimeout
+		upgradeCliConfig.UnhealthyMachineTimeout = constants.MaxMachineHealthCheckTimeout
 
 		return &upgradeCliConfig, nil
 	}
