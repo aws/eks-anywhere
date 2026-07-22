@@ -11,8 +11,8 @@ or
 #
 # The makefile will include the .env file and export all the vars to the environment for you
 #
-# By default the local-e2e target will run TestDockerKubernetes135SimpleFlow. You can either 
-#   override LOCAL_E2E_TESTS in your .env file or pass it on the cli every time (i.e LOCAL_E2E_TESTS=TestDockerKubernetes135SimpleFlow)
+# By default the local-e2e target will run TestDockerKubernetes136SimpleFlow. You can either 
+#   override LOCAL_E2E_TESTS in your .env file or pass it on the cli every time (i.e LOCAL_E2E_TESTS=TestDockerKubernetes136SimpleFlow)
 make local-e2e
 ```
 or
@@ -128,32 +128,6 @@ ip_address,gateway,nameservers,netmask,mac,hostname,vendor,bmc_ip,bmc_username,b
 10.24.32.111,10.24.32.1,8.8.8.8,,255.255.255.0,3c:ec:ef:6e:a5:7c,eksa-node02,supermicro,10.24.32.11,admin,password,type=worker,/dev/sda
 ```
 
-## CloudStack tests requisites
-
-The following env variables need to be set:
-```
-T_CLOUDSTACK_DOMAIN
-T_CLOUDSTACK_ZONE
-T_CLOUDSTACK_ZONE_2
-T_CLOUDSTACK_CREDENTIALS
-T_CLOUDSTACK_CREDENTIALS_2
-T_CLOUDSTACK_ACCOUNT
-T_CLOUDSTACK_NETWORK
-T_CLOUDSTACK_NETWORK_2
-T_CLOUDSTACK_MANAGEMENT_SERVER
-T_CLOUDSTACK_MANAGEMENT_SERVER_2
-T_CLOUDSTACK_SSH_AUTHORIZED_KEY
-T_CLOUDSTACK_TEMPLATE_REDHAT_1_22
-T_CLOUDSTACK_TEMPLATE_REDHAT_1_23
-T_CLOUDSTACK_COMPUTE_OFFERING_LARGE
-T_CLOUDSTACK_COMPUTE_OFFERING_LARGER
-T_CLOUDSTACK_POD_CIDR
-T_CLOUDSTACK_SERVICE_CIDR
-T_CLOUDSTACK_CLUSTER_IP_POOL # Comma separated list of control plane IP's
-
-EKSA_CLOUDSTACK_B64ENCODED_SECRET
-```
-
 ## Snow tests requisites
 
 The following env variables need to be set (required):
@@ -219,13 +193,6 @@ For VSphere proxy:
 T_HTTP_PROXY_VSPHERE
 T_HTTPS_PROXY_VSPHERE
 T_NO_PROXY_VSPHERE
-```
-
-For CloudStack proxy:
-```sh
-T_HTTP_PROXY_CLOUDSTACK
-T_HTTPS_PROXY_CLOUDSTACK
-T_NO_PROXY_CLOUDSTACK
 ```
 
 ## Registry test requisites

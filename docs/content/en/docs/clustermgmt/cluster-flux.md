@@ -382,7 +382,7 @@ Follow these steps if you want to use your initial cluster to create and manage 
       git push origin main
       ```
 
-For a comprehensive list of upgradeable fields for VSphere, Snow, and Nutanix, see the [upgradeable attributes section]({{< relref "./cluster-upgrades/vsphere-and-cloudstack-upgrades.md#upgradeable-cluster-attributes" >}}).
+For a comprehensive list of upgradeable fields for VSphere, Snow, and Nutanix, see the [upgradeable attributes section]({{< relref "./cluster-upgrades/vsphere-upgrades.md#upgradeable-cluster-attributes" >}}).
       
 ### Delete cluster using Gitops
 

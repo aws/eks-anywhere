@@ -49,7 +49,7 @@ spec:
   memorySize: 8192      # increase this number to add memory to your VM
 ```
 
-Once you have made configuration updates, you can use `eksctl`, `kubectl`, GitOps, or Terraform specified in the [upgrade cluster command]({{< relref "../cluster-upgrades/vsphere-and-cloudstack-upgrades/#upgrade-cluster-command" >}}) to apply those changes.
+Once you have made configuration updates, you can use `eksctl`, `kubectl`, GitOps, or Terraform specified in the [upgrade cluster command]({{< relref "../cluster-upgrades/vsphere-upgrades/#upgrade-cluster-command" >}}) to apply those changes.
 If you are adding or removing a node, only the terminated nodes will be affected.
 If you are vertically scaling your nodes, then all nodes will be replaced one at a time.
 
