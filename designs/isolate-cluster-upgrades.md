@@ -46,7 +46,7 @@ However, it's with defaults where this issue becomes more relevant. Not necessar
 ### Has this happened before?
 There have been a few times where a change in the CAPI "generation logic" caused unwanted rollouts in workload clusters.
 
-For example, we made a change to the logic that generates the [KCP for Cloudstack](https://github.com/aws/eks-anywhere/pull/3566) in order to set correctly the hostname. Although a valid and useful addition, this change affects the bootstrap data which requires a machine rollout in order to reconcile the change.
+For example, we made a change to the logic that generates the [KCP for vSphere](https://github.com/aws/eks-anywhere/pull/3566) in order to set correctly the hostname. Although a valid and useful addition, this change affects the bootstrap data which requires a machine rollout in order to reconcile the change.
 
 Another example could be [this](https://github.com/aws/eks-anywhere/pull/3402) (although it was fixed pre-release so the bug was never shipped). This time, we wanted to change the content of one of the files we copy to the machines. An API version changed in between Kubernetes versions and we just updated to newest one. Again, since this file is part of the bootstrap data, new machines needed to be rolled out to reconcile the changes.
 
@@ -273,4 +273,4 @@ Testing if the implemented solution solves the stated problem, outside of unit/i
 
 It's possible to use one of the drawbacks of the solution, drift detection, to test that *it's working*. However, this means testing the implementation and not the behavior, so we discourage this option.
 
-We recommend building robust unit tests, using the highest level possible entity (the controller). We also propose to extend the existing `TestCloudStackKubernetes123ManagementClusterUpgradeFromLatest` test to all providers. This test performs a management cluster upgrade from the previous minor version to the new one and verifies in a loop that none of the machines in the workload clusters change.
+We recommend building robust unit tests, using the highest level possible entity (the controller). We also propose to extend the existing `TestVSphereKubernetes123ManagementClusterUpgradeFromLatest` test to all providers. This test performs a management cluster upgrade from the previous minor version to the new one and verifies in a loop that none of the machines in the workload clusters change.

@@ -10,7 +10,7 @@ description: >
 ---
 
 {{% alert title="Note" color="warning" %}}
-External etcd topology is supported for vSphere, CloudStack, Snow and Nutanix clusters, but not yet for Bare Metal clusters.
+External etcd topology is supported for vSphere, Snow, and Nutanix clusters, but not yet for Bare Metal clusters.
 {{% /alert %}}
 
 This page contains steps for backing up a cluster by taking an etcd snapshot, and restoring the cluster from a snapshot. These steps are for an EKS Anywhere cluster provisioned using the external etcd topology (selected by default) with Ubuntu OS.
@@ -25,7 +25,7 @@ EKS-Anywhere clusters use etcd as the backing store. Taking a snapshot of etcd b
 Etcd offers a built-in snapshot mechanism. You can take a snapshot using the `etcdctl snapshot save` or `etcdutl snapshot save` command by following the steps given below. 
 
 {{% alert title="Note" color="warning" %}}
-The following commands use ec2-user as the username. For EKS Anywhere on vSphere, Bare Metal, and Snow, the default username is ec2-user. For EKS Anywhere on Apache CloudStack, the default username is capc. 
+The following commands use ec2-user as the username. For EKS Anywhere on vSphere, Bare Metal, and Snow, the default username is ec2-user. 
 For EKS Anywhere on Nutanix, the default username is eksa. The default username cannot be changed.
 {{% /alert %}}
 

@@ -11,9 +11,9 @@ description: >
 As of EKS Anywhere version v0.20.0, you can pass additional flags to configure the Kubernetes API server in your EKS Anywhere clusters.
 
 #### Provider support details
-|                | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
-|:--------------:|:-------:|:----------:|:-------:|:----------:|:----:|
-| **Supported?** |   ✓	    |     ✓      |   	 ✓   |     ✓      |  ✓   |
+|                | vSphere | Bare Metal | Nutanix | Snow |
+|:--------------:|:-------:|:----------:|:-------:|:----:|
+| **Supported?** |   ✓	    |     ✓      |   	 ✓   |  ✓   |
 
 In order to configure a cluster with API Server extra args, you need to configure your cluster by updating the cluster configuration file to include the details below. The feature flag `API_SERVER_EXTRA_ARGS_ENABLED=true` needs to be set as an environment variable.
 
