@@ -121,9 +121,17 @@ func (i *EKSAInstaller) Upgrade(ctx context.Context, log logr.Logger, c *types.C
 		log.V(1).Info("Skipping EKS-A components upgrade, not a self-managed cluster")
 		return nil, nil
 	}
+
 	changeDiff := EksaChangeDiff(currentManagementComponents, newManagementComponents)
 	if changeDiff == nil {
 		log.V(1).Info("Nothing to upgrade for controller and CRDs")
+		// The components are not re-created, so setManagerEnvVars won't run. Reconcile the
+		// feature-flag driven env vars directly so an existing management cluster stays in
+		// sync with the locally enabled feature flags (e.g. API_SERVER_EXTRA_ARGS_ENABLED)
+		// without requiring a version bump.
+		if err := i.reconcileManagerFeatureFlags(ctx, log, c); err != nil {
+			return nil, err
+		}
 		return nil, nil
 	}
 	log.V(1).Info("Starting EKS-A components upgrade")
@@ -134,6 +142,39 @@ func (i *EKSAInstaller) Upgrade(ctx context.Context, log logr.Logger, c *types.C
 	}
 
 	return changeDiff, nil
+}
+
+// managerFeatureFlagEnvVars are the feature-flag driven env vars that
+// gate eksa-controller-manager behavior.
+//
+// TODO: remove APIServerExtraArgsEnabled when we support API server flags, and VSphereInPlaceUpgradeEnabled
+// if we decide to support in-place upgrades for the vSphere provider.
+var managerFeatureFlagEnvVars = []struct {
+	envVar  string
+	feature func() features.Feature
+}{
+	{features.APIServerExtraArgsEnabledEnvVar, features.APIServerExtraArgsEnabled},
+	{features.VSphereInPlaceEnvVar, features.VSphereInPlaceUpgradeEnabled},
+}
+
+// reconcileManagerFeatureFlags sets the feature-flag driven env vars on the eksa-controller-manager
+// deployment. It is used on same-version upgrades, where the components are not re-created and
+// setManagerEnvVars would otherwise not run. When the components version changes, createEKSAComponents
+// (via setManagerEnvVars) already sets these env vars, so this must not be called on that path to
+// avoid a redundant deployment update and controller restart.
+func (i *EKSAInstaller) reconcileManagerFeatureFlags(ctx context.Context, log logr.Logger, c *types.Cluster) error {
+	for _, f := range managerFeatureFlagEnvVars {
+		if !features.IsActive(f.feature()) {
+			continue
+		}
+
+		log.V(1).Info("Ensuring feature flag is set on eksa-controller-manager", "envVar", f.envVar)
+		if err := i.client.SetEksaControllerEnvVar(ctx, f.envVar, "true", c.KubeconfigFile); err != nil {
+			return fmt.Errorf("setting %s on eksa controller: %v", f.envVar, err)
+		}
+	}
+
+	return nil
 }
 
 // createEKSAComponents creates eksa components and applies the objects to the cluster.
@@ -238,14 +279,10 @@ func setManagerEnvVars(d *appsv1.Deployment, spec *cluster.Spec) {
 		}
 	}
 
-	// TODO: remove this feature flag if we decide to support in-place upgrades for vSphere provider.
-	if features.IsActive(features.VSphereInPlaceUpgradeEnabled()) {
-		envVars = append(envVars, v1.EnvVar{Name: features.VSphereInPlaceEnvVar, Value: "true"})
-	}
-
-	// TODO: remove this feature flag when we support API server flags.
-	if features.IsActive(features.APIServerExtraArgsEnabled()) {
-		envVars = append(envVars, v1.EnvVar{Name: features.APIServerExtraArgsEnabledEnvVar, Value: "true"})
+	for _, f := range managerFeatureFlagEnvVars {
+		if features.IsActive(f.feature()) {
+			envVars = append(envVars, v1.EnvVar{Name: f.envVar, Value: "true"})
+		}
 	}
 
 	d.Spec.Template.Spec.Containers[0].Env = envVars
