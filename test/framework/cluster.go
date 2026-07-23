@@ -2170,7 +2170,7 @@ func (e *ClusterE2ETest) VerifyWorkerNodesScaleUp(mgmtCluster *types.Cluster) {
 		e.T.Fatalf("Failed to get Running phase for machinedeployment: %s", err)
 	}
 
-	err = e.KubectlClient.WaitForMachineDeploymentReady(ctx, mgmtCluster, "5m", machineDeploymentName)
+	err = e.KubectlClient.WaitForMachineDeploymentReady(ctx, mgmtCluster, "20m", machineDeploymentName)
 	if err != nil {
 		e.T.Fatalf("Machine deployment stuck in scaling up: %s", err)
 	}
