@@ -1763,8 +1763,7 @@ func (e *ClusterE2ETest) VerifyCertManagerPackageInstalled(prefix, namespace, pa
 	deployments := []string{"cert-manager", "cert-manager-cainjector", "cert-manager-webhook"}
 
 	var wg sync.WaitGroup
-	errCh := make(chan error, 1)
-	okCh := make(chan string, 1)
+	errCh := make(chan error, len(deployments))
 
 	e.T.Log("Waiting for Package", packageName, "To be installed")
 
@@ -1795,28 +1794,24 @@ func (e *ClusterE2ETest) VerifyCertManagerPackageInstalled(prefix, namespace, pa
 		}(name)
 	}
 
+	// Wait for the cert-manager deployments (including the webhook) to be Available
+	// before applying any Issuer/Certificate. Applying an Issuer triggers the
+	// cert-manager validating webhook; if we apply before the webhook is ready the
+	// apply fails with "failed calling webhook ... connect: connection refused".
+	wg.Wait()
+	close(errCh)
+	if err := <-errCh; err != nil {
+		e.T.Fatalf("cert-manager package deployments did not become healthy: %s", err)
+	}
+
 	e.T.Log("Waiting for Self Signed certificate to be issued")
-	err = e.verifySelfSignedCertificate()
-	if err != nil {
-		errCh <- err
+	if err := e.verifySelfSignedCertificate(); err != nil {
+		e.T.Fatalf("self-signed certificate verification failed: %s", err)
 	}
 
 	e.T.Log("Waiting for Let's Encrypt certificate to be issued")
-	err = e.verifyLetsEncryptCert()
-	if err != nil {
-		errCh <- err
-	}
-
-	go func() {
-		wg.Wait()
-		okCh <- "completed"
-	}()
-
-	select {
-	case err := <-errCh:
-		e.T.Fatal(err)
-	case <-okCh:
-		return
+	if err := e.verifyLetsEncryptCert(); err != nil {
+		e.T.Fatalf("lets-encrypt certificate verification failed: %s", err)
 	}
 }
 
