@@ -17,9 +17,8 @@ import (
 var oidcconfiglog = logf.Log.WithName("oidcconfig-resource")
 
 func (r *OIDCConfig) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(r).
-		WithValidator(r).
+	return ctrl.NewWebhookManagedBy(mgr, r).
+		WithCustomValidator(r).
 		Complete()
 }
 

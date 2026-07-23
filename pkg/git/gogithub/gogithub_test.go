@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	"github.com/google/go-github/v35/github"
+	"github.com/google/go-github/v74/github"
 	. "github.com/onsi/gomega"
 
 	"github.com/aws/eks-anywhere/pkg/git"

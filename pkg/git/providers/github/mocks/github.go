@@ -10,7 +10,7 @@ import (
 
 	git "github.com/aws/eks-anywhere/pkg/git"
 	gomock "github.com/golang/mock/gomock"
-	github "github.com/google/go-github/v35/github"
+	github "github.com/google/go-github/v74/github"
 )
 
 // MockGithubClient is a mock of GithubClient interface.

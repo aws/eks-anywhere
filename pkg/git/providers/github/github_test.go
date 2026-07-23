@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	goGithub "github.com/google/go-github/v35/github"
+	goGithub "github.com/google/go-github/v74/github"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"

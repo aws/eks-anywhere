@@ -31,8 +31,8 @@ var _ webhook.CustomValidator = &TinkerbellMachine{}
 
 // SetupWebhookWithManager sets up and registers the webhook with the manager.
 func (m *TinkerbellMachine) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).For(m).
-		WithValidator(m).Complete() //nolint:wrapcheck
+	return ctrl.NewWebhookManagedBy(mgr, m).
+		WithCustomValidator(m).Complete() //nolint:wrapcheck
 }
 
 // ValidateCreate implements webhook.CustomValidator so a webhook will be registered for the type.

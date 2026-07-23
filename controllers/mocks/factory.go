@@ -14,6 +14,7 @@ import (
 	meta "k8s.io/apimachinery/pkg/api/meta"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	rest "k8s.io/client-go/rest"
+	events "k8s.io/client-go/tools/events"
 	record "k8s.io/client-go/tools/record"
 	cache "sigs.k8s.io/controller-runtime/pkg/cache"
 	client "sigs.k8s.io/controller-runtime/pkg/client"
@@ -21,6 +22,7 @@ import (
 	healthz "sigs.k8s.io/controller-runtime/pkg/healthz"
 	manager "sigs.k8s.io/controller-runtime/pkg/manager"
 	webhook "sigs.k8s.io/controller-runtime/pkg/webhook"
+	conversion "sigs.k8s.io/controller-runtime/pkg/webhook/conversion"
 )
 
 // MockManager is a mock of Manager interface.
@@ -184,6 +186,34 @@ func (m *MockManager) GetControllerOptions() config.Controller {
 func (mr *MockManagerMockRecorder) GetControllerOptions() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetControllerOptions", reflect.TypeOf((*MockManager)(nil).GetControllerOptions))
+}
+
+// GetConverterRegistry mocks base method.
+func (m *MockManager) GetConverterRegistry() conversion.Registry {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetConverterRegistry")
+	ret0, _ := ret[0].(conversion.Registry)
+	return ret0
+}
+
+// GetConverterRegistry indicates an expected call of GetConverterRegistry.
+func (mr *MockManagerMockRecorder) GetConverterRegistry() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConverterRegistry", reflect.TypeOf((*MockManager)(nil).GetConverterRegistry))
+}
+
+// GetEventRecorder mocks base method.
+func (m *MockManager) GetEventRecorder(arg0 string) events.EventRecorder {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEventRecorder", arg0)
+	ret0, _ := ret[0].(events.EventRecorder)
+	return ret0
+}
+
+// GetEventRecorder indicates an expected call of GetEventRecorder.
+func (mr *MockManagerMockRecorder) GetEventRecorder(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEventRecorder", reflect.TypeOf((*MockManager)(nil).GetEventRecorder), arg0)
 }
 
 // GetEventRecorderFor mocks base method.

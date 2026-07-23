@@ -17,9 +17,8 @@ import (
 var cloudstackmachineconfiglog = logf.Log.WithName("cloudstackmachineconfig-resource")
 
 func (r *CloudStackMachineConfig) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(r).
-		WithValidator(r).
+	return ctrl.NewWebhookManagedBy(mgr, r).
+		WithCustomValidator(r).
 		Complete()
 }
 
