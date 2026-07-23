@@ -41,6 +41,57 @@ description: >
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
 
+## [v0.25.3](https://github.com/aws/eks-anywhere/releases/tag/v0.25.3)
+
+### Planned updates to supported kubernetes versions
+- Kubernetes 1.33 reaches end of standard support on August 31, 2026
+  - Extended support continues until August 31, 2027 for clusters with valid license tokens
+  - Clusters will continue to function but will not receive CVE patches or bug fixes after standard support ends
+- Kubernetes 1.30 reaches end of extended support on August 31, 2026
+  - No further patches will be available after this date
+  - Existing clusters will continue to function but upgrading is strongly recommended
+
+For complete version support details, see the [Kubernetes version support table](https://anywhere.eks.amazonaws.com/docs/concepts/support-versions/#kubernetes-versions).
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+|    Ubuntu 24.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.56.0 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+
+\* Starting with EKS-A minor release v0.25.0, the bundled Kubernetes Image Builder will no longer support Ubuntu 20.04 LTS builds, as Ubuntu 20.04 LTS Standard Support has ended, and the upstream Kubernetes Image Builder no longer supports Ubuntu 20.04 LTS.
+\* RHEL 8's kernel version (4.18) is not supported by kubeadm for Kubernetes versions 1.32 and above (see Kubernetes GitHub issue [#129462](https://github.com/kubernetes/kubernetes/issues/129462)). As a result, EKS Anywhere does not support using RHEL 8 as the node operating system for Kubernetes versions 1.32 and above.
+
+### Changed
+- EKS Distro:
+  - [`v1-35-eks-11`](https://distro.eks.amazonaws.com/releases/1-35/11/)
+  - [`v1-34-eks-20`](https://distro.eks.amazonaws.com/releases/1-34/20/)
+  - [`v1-33-eks-29`](https://distro.eks.amazonaws.com/releases/1-33/29/)
+  - [`v1-32-eks-39`](https://distro.eks.amazonaws.com/releases/1-32/39/)
+  - [`v1-31-eks-46`](https://distro.eks.amazonaws.com/releases/1-31/46/)
+  - [`v1-30-eks-57`](https://distro.eks.amazonaws.com/releases/1-30/57/)
+- New EKS-Distro base images
+- Cilium: `v1.18.7` to `v1.18.9`
+- Cluster API Provider vSphere (CAPV): `v1.15.2` to `v1.15.3`
+- Cluster API Provider AWS Snow (CAPAS): `v0.2.9` to `v0.3.1`
+- cloud-provider-nutanix: `v0.5.5` to `v0.5.7`
+- Cert-manager: `v1.19.4` to `v1.19.5`
+- etcdadm-bootstrap-provider: `v1.0.19` to `v1.0.22` ([#5517](https://github.com/aws/eks-anywhere-build-tooling/pull/5517))
+- EKS Anywhere Packages controller: `v0.4.15` to `v0.4.17` for CVE fixes ([#5538](https://github.com/aws/eks-anywhere-build-tooling/pull/5538))
+
+### Fixed
+- Fix registry mirror `hosts.toml` double `/v2/` regression from containerd v2 migration ([#10779](https://github.com/aws/eks-anywhere/pull/10779))
+- Fix `import images` command failing with OCI namespace in `--registry` flag ([#10803](https://github.com/aws/eks-anywhere/pull/10803))
+- Fix missing control-plane toleration for kube-vip DaemonSet ([#10829](https://github.com/aws/eks-anywhere/pull/10829))
+- Fix MachineHealthCheck timeout duration overflow in v1beta2 conversion ([#10873](https://github.com/aws/eks-anywhere/pull/10873))
+- Increase Tinkerbell pod memory limit from 128Mi to 256Mi to prevent OOMKill during upgrades ([#5581](https://github.com/aws/eks-anywhere-build-tooling/pull/5581))
+- Disable unused tinkerbell UI component ([#5522](https://github.com/aws/eks-anywhere-build-tooling/pull/5522))
+- Allowlist certBundles during upgrades on Bottlerocket config ([#5382](https://github.com/aws/eks-anywhere-build-tooling/pull/5382))
+
 ## [v0.25.2](https://github.com/aws/eks-anywhere/releases/tag/v0.25.2)
 
 ### Planned updates to supported kubernetes versions
