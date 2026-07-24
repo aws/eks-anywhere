@@ -41,7 +41,7 @@ https://github.com/aws/aws-sdk-go-v2/service/ssooidc
 ** github.com/aws/aws-sdk-go-v2/service/sts; version v1.28.4 --
 https://github.com/aws/aws-sdk-go-v2/service/sts
 
-** github.com/aws/eks-anywhere; version 779515a8b818cbfe91886134257f8dafc2e441a9 --
+** github.com/aws/eks-anywhere; version e7da50d8b2defc8a3088505d955f3bed3f78fa52 --
 https://github.com/aws/eks-anywhere
 
 ** github.com/aws/eks-distro-build-tooling/release/api/v1alpha1; version v0.0.0-20211103003257-a7e2379eae5e --
@@ -161,10 +161,10 @@ https://github.com/vmware/govmomi
 ** github.com/xanzy/ssh-agent; version v0.3.3 --
 https://github.com/xanzy/ssh-agent
 
-** go.opentelemetry.io/otel; version v1.40.0 --
+** go.opentelemetry.io/otel; version v1.43.0 --
 https://github.com/open-telemetry/opentelemetry-go
 
-** go.opentelemetry.io/otel/trace; version v1.40.0 --
+** go.opentelemetry.io/otel/trace; version v1.43.0 --
 https://github.com/open-telemetry/opentelemetry-go
 
 ** go.yaml.in/yaml/v2; version v2.4.2 --
@@ -1407,38 +1407,38 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ------
 
-** golang.org/go; version go1.25.8 --
+** golang.org/go; version go1.25.11 --
 https://github.com/golang/go
 
-** golang.org/x/crypto; version v0.45.0 --
-https://golang.org/x/crypto
+** golang.org/x/crypto; version v0.53.0 --
+https://go.googlesource.com/crypto
 
 ** golang.org/x/exp; version v0.0.0-20240808152545-0cdaa3abc0fa --
-https://golang.org/x/exp
+https://go.googlesource.com/exp
 
-** golang.org/x/mod/semver; version v0.29.0 --
-https://golang.org/x/mod
+** golang.org/x/mod/semver; version v0.36.0 --
+https://go.googlesource.com/mod
 
-** golang.org/x/net; version v0.47.0 --
-https://golang.org/x/net
+** golang.org/x/net; version v0.55.0 --
+https://go.googlesource.com/net
 
 ** golang.org/x/oauth2; version v0.33.0 --
-https://golang.org/x/oauth2
+https://go.googlesource.com/oauth2
 
-** golang.org/x/sync; version v0.18.0 --
-https://golang.org/x/sync
+** golang.org/x/sync; version v0.21.0 --
+https://go.googlesource.com/sync
 
-** golang.org/x/sys; version v0.40.0 --
-https://golang.org/x/sys
+** golang.org/x/sys; version v0.46.0 --
+https://go.googlesource.com/sys
 
-** golang.org/x/term; version v0.37.0 --
-https://golang.org/x/term
+** golang.org/x/term; version v0.44.0 --
+https://go.googlesource.com/term
 
-** golang.org/x/text; version v0.31.0 --
-https://golang.org/x/text
+** golang.org/x/text; version v0.38.0 --
+https://go.googlesource.com/text
 
 ** golang.org/x/time/rate; version v0.12.0 --
-https://golang.org/x/time
+https://go.googlesource.com/time
 
 Copyright 2009 The Go Authors.
 
