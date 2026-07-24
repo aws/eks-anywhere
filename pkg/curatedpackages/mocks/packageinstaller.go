@@ -48,6 +48,20 @@ func (mr *MockPackageControllerMockRecorder) Enable(ctx interface{}) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Enable", reflect.TypeOf((*MockPackageController)(nil).Enable), ctx)
 }
 
+// InstallCRDs mocks base method.
+func (m *MockPackageController) InstallCRDs(ctx context.Context) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "InstallCRDs", ctx)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// InstallCRDs indicates an expected call of InstallCRDs.
+func (mr *MockPackageControllerMockRecorder) InstallCRDs(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallCRDs", reflect.TypeOf((*MockPackageController)(nil).InstallCRDs), ctx)
+}
+
 // IsInstalled mocks base method.
 func (m *MockPackageController) IsInstalled(ctx context.Context) bool {
 	m.ctrl.T.Helper()
