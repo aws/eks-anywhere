@@ -7,9 +7,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/golang/mock/gomock"
-	goGithub "github.com/google/go-github/v35/github"
+	goGithub "github.com/google/go-github/v74/github"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/git"

@@ -8,7 +8,7 @@ import (
 	"regexp"
 	"strings"
 
-	goGithub "github.com/google/go-github/v35/github"
+	goGithub "github.com/google/go-github/v74/github"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/git"

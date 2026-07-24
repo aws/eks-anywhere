@@ -7,7 +7,7 @@ import (
 	"os"
 	"testing"
 
-	gomock "github.com/golang/mock/gomock"
+	gomock "go.uber.org/mock/gomock"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 

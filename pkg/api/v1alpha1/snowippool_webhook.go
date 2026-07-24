@@ -18,9 +18,8 @@ var snowippoollog = logf.Log.WithName("snowippool-resource")
 
 // SetupWebhookWithManager sets up the webhook manager for SnowIPPool.
 func (r *SnowIPPool) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(r).
-		WithValidator(r).
+	return ctrl.NewWebhookManagedBy(mgr, r).
+		WithCustomValidator(r).
 		Complete()
 }
 

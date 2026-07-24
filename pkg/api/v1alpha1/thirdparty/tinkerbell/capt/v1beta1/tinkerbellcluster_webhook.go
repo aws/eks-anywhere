@@ -39,8 +39,8 @@ var (
 
 // SetupWebhookWithManager sets up and registers the webhook with the manager.
 func (c *TinkerbellCluster) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).For(c).WithDefaulter(c).
-		WithValidator(c).Complete() //nolint:wrapcheck
+	return ctrl.NewWebhookManagedBy(mgr, c).WithCustomDefaulter(c).
+		WithCustomValidator(c).Complete() //nolint:wrapcheck
 }
 
 // ValidateCreate implements webhook.CustomValidator so a webhook will be registered for the type.

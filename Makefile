@@ -20,7 +20,7 @@ SHELL := /bin/bash
 ARTIFACTS_BUCKET?=my-s3-bucket
 GIT_VERSION?=$(shell git describe --tag)
 GIT_TAG?=$(shell git tag -l "v*.*.*" --sort -v:refname | head -1)
-GOLANG_VERSION?="1.25"
+GOLANG_VERSION?="1.26"
 GO_PATH ?= $(shell source ./scripts/common.sh && build::common::get_go_path $(GOLANG_VERSION))
 GO ?= $(GO_PATH)/go
 GO_TEST ?= $(GO) test
@@ -445,7 +445,7 @@ else
 	  find . -depth -type d -regextype posix-egrep -regex '.*\/Test.*-[0-9]{10}[\/]?.*' -exec rm -rf {} \;
 endif
 	rm -rf ./manager/bin/*
-	rm -rf ./hack/tools/bin
+	rm -rf ./hack/tools/bin©
 	rm -rf vendor
 	rm -rf GIT_TAG
 	rm -rf _output
@@ -572,7 +572,7 @@ packages-e2e-test: build-all-test-binaries ## Run Curated Packages tests
 mocks: export PATH := $(GO_PATH):$(PATH)
 mocks: MOCKGEN := ${GOPATH}/bin/mockgen --build_flags=--mod=mod
 mocks: ## Generate mocks
-	$(GO) install github.com/golang/mock/mockgen@v1.6.0
+	$(GO) install go.uber.org/mock/mockgen@v0.6.0
 	${MOCKGEN} -destination=controllers/mocks/snow_machineconfig_controller.go -package=mocks -source "controllers/snow_machineconfig_controller.go"
 	${MOCKGEN} -destination=pkg/providers/mocks/providers.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers" Provider,DatacenterConfig,MachineConfig
 	${MOCKGEN} -destination=pkg/executables/mocks/executables.go -package=mocks "github.com/aws/eks-anywhere/pkg/executables" Executable,DockerClient,DockerContainer

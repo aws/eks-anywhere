@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/golang/mock/gomock"
+	"go.uber.org/mock/gomock"
 	"k8s.io/utils/pointer"
 
 	"github.com/aws/eks-anywhere/pkg/awsiamauth"

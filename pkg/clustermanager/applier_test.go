@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
+	"go.uber.org/mock/gomock"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	apitypes "k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -72,6 +72,12 @@ func (a *applierTest) markConditionWithJSONPatch(inputPatchData []byte) {
 	_ = a.client.Get(a.ctx, a.spec.Cluster.Name, a.spec.Cluster.Namespace, latest)
 	err := a.client.Patch(a.ctx, latest, client.RawPatch(apitypes.JSONPatchType, inputPatchData))
 	a.Expect(err).To(Succeed())
+	// Keep the spec's ResourceVersion in sync with the store. The controller-runtime
+	// fake client (v0.24+) enforces optimistic concurrency on server-side apply, so a
+	// stale ResourceVersion on a.spec.Cluster would make the subsequent apply conflict.
+	synced := &anywherev1.Cluster{}
+	a.Expect(a.client.Get(a.ctx, a.spec.Cluster.Name, a.spec.Cluster.Namespace, synced)).To(Succeed())
+	a.spec.Cluster.ResourceVersion = synced.ResourceVersion
 }
 
 func (a *applierTest) markCPReady(c *anywherev1.Cluster) {

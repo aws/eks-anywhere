@@ -494,11 +494,11 @@ func (e *ClusterE2ETest) GenerateClusterConfigForVersion(eksaVersion, licenseTok
 		// We will need the conditional check as long as the latest minor is 'v0.21.*'.
 		currentSemver, err := semver.New(eksaVersion)
 		if err != nil {
-			e.T.Fatalf("parsing eks-a version:", err)
+			e.T.Fatalf("parsing eks-a version: %s", err)
 		}
 		semverV022, err := semver.New(releaseV022)
 		if err != nil {
-			e.T.Fatalf("parsing eks-a version:", err)
+			e.T.Fatalf("parsing eks-a version: %s", err)
 		}
 
 		if currentSemver.Compare(semverV022) != -1 {

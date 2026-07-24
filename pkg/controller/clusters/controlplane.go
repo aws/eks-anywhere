@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/client-go/util/retry"
 	"k8s.io/klog/v2"
 	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
@@ -169,8 +170,17 @@ func reconcileEtcdChanges(ctx context.Context, log logr.Logger, c client.Client,
 	// etcd endpoints change.
 	if !annotations.HasPaused(currentKCP) {
 		log.Info("Pausing KCP before making any etcd changes", "kcp", klog.KObj(currentKCP))
-		clientutil.AddAnnotation(currentKCP, clusterv1beta2.PausedAnnotation, "true")
-		if err := c.Update(ctx, currentKCP); err != nil {
+		// currentKCP was read at the start of the reconcile from an informer-backed cache; its
+		// resourceVersion may be stale by now. Retry on conflict, re-reading the latest version
+		// each attempt, so we don't fail the reconcile with a transient 409.
+		if err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+			kcp := &controlplanev1beta2.KubeadmControlPlane{}
+			if err := c.Get(ctx, client.ObjectKeyFromObject(currentKCP), kcp); err != nil {
+				return errors.Wrap(err, "reading kubeadm control plane to pause")
+			}
+			clientutil.AddAnnotation(kcp, clusterv1beta2.PausedAnnotation, "true")
+			return c.Update(ctx, kcp)
+		}); err != nil {
 			return controller.Result{}, err
 		}
 	}
@@ -221,14 +231,20 @@ func reconcileControlPlaneNodeChanges(ctx context.Context, log logr.Logger, c cl
 	// If the KCP is paused, we read the last version (in case we just updated it) and unpause it
 	// so the cp nodes are reconciled.
 	if annotations.HasPaused(currentKCP) {
-		kcp := &controlplanev1beta2.KubeadmControlPlane{}
-		if err := c.Get(ctx, client.ObjectKeyFromObject(currentKCP), kcp); err != nil {
-			return controller.Result{}, errors.Wrap(err, "reading updates kubeadm control plane to unpause")
-		}
+		// The client is backed by an informer cache, and the server-side apply above (plus the
+		// real KCP controller) can bump the object's resourceVersion between our Get and Update.
+		// Retry on conflict, re-reading the latest version each attempt, so we don't fail the
+		// reconcile with a transient 409.
+		if err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+			kcp := &controlplanev1beta2.KubeadmControlPlane{}
+			if err := c.Get(ctx, client.ObjectKeyFromObject(currentKCP), kcp); err != nil {
+				return errors.Wrap(err, "reading updates kubeadm control plane to unpause")
+			}
 
-		delete(kcp.Annotations, clusterv1beta2.PausedAnnotation)
-		log.Info("Unpausing KCP after update to start reconciliation", klog.KObj(currentKCP))
-		if err := c.Update(ctx, kcp); err != nil {
+			delete(kcp.Annotations, clusterv1beta2.PausedAnnotation)
+			log.Info("Unpausing KCP after update to start reconciliation", klog.KObj(currentKCP))
+			return c.Update(ctx, kcp)
+		}); err != nil {
 			return controller.Result{}, err
 		}
 	}
