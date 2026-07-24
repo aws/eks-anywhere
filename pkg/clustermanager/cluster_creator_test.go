@@ -7,8 +7,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
+	"go.uber.org/mock/gomock"
 	"k8s.io/utils/pointer"
 
 	"github.com/aws/eks-anywhere/internal/test"

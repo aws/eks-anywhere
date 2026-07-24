@@ -8,10 +8,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
 	tinkv1alpha1 "github.com/tinkerbell/tink/api/v1alpha1"
+	"go.uber.org/mock/gomock"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"

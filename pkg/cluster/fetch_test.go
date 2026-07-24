@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	eksdv1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
-	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
+	"go.uber.org/mock/gomock"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 

@@ -9,7 +9,7 @@ import (
 	reflect "reflect"
 
 	certificates "github.com/aws/eks-anywhere/pkg/certificates"
-	gomock "github.com/golang/mock/gomock"
+	gomock "go.uber.org/mock/gomock"
 	ssh "golang.org/x/crypto/ssh"
 )
 
