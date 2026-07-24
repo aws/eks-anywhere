@@ -115,7 +115,7 @@ Q: Would cp node lose connection with etcd nodes after etcd nodes were recreated
 A: Yes, cp nodes would lost connection if etcd node’s IP changed. But KCP (kubeadm-control-plane) would watch etcd endpoints, and roll out new cp nodes when it detects any etcd endpoint change.
 
 Q: Do you have proof that apiserver-etcd-client key stays the same after etcd and cp nodes recreated
-A: Yes. I have done experiment with CloudStack. The following graph shows that the apiserver-kube-client.crt has longer expiration time than the apiserver-etcd-client.crt.  And the apiserver-etcd-client.crt’s expiration time always stays the same as long as the secret doesn’t change.
+A: Yes. I have done experiment with a test cluster. The following graph shows that the apiserver-kube-client.crt has longer expiration time than the apiserver-etcd-client.crt.  And the apiserver-etcd-client.crt’s expiration time always stays the same as long as the secret doesn’t change.
 Q: Should we fix the stale apiserver-etcd-client bug in kubeadm controller, aka, renew the cert in kubeadm controller?
 A: 1) Ownership: apiserver-etcd-client cert is created by etcdadm controller and owned by it, it’s more etcdadm’s business logic to renew it. 2) Flexibility, etcdadm controller should work with any controlplane controller, not bundling with KCP controller. 3) Simplicity, refreshing apiserver-etcd-client cert can be done in a few lines in etcdadm controller’s health checker 4) Responsibility, EKSA team owns etcdadm controller but not kubeadm controller
 

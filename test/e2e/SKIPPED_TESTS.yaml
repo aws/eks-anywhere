@@ -1,42 +1,5 @@
 skipped_tests:
 
-# CloudStack
-# Airgapped tests due to an airgapped network not being setup properly on the cloudstack CI env.
-- TestCloudStackKubernetes132RedhatAirgappedProxy
-- TestCloudStackKubernetes133RedhatAirgappedProxy
-- TestCloudStackKubernetes134RedhatAirgappedProxy
-- TestCloudStackKubernetes135RedhatAirgappedProxy
-
-# Proxy API tests skipped due to being unable to run in cloudstack CI env. We should probably revisit these and see if we can unskip them now
-# as we have a proxy env set up in the cloudstack CI env now.
-
-# MultiEndpoint
-- TestCloudStackKubernetes129MultiEndpointSimpleFlow
-- TestCloudStackKubernetes130MultiEndpointSimpleFlow
-- TestCloudStackKubernetes131MultiEndpointSimpleFlow
-- TestCloudStackKubernetes132MultiEndpointSimpleFlow
-- TestCloudStackKubernetes133MultiEndpointSimpleFlow
-- TestCloudStackKubernetes134MultiEndpointSimpleFlow
-- TestCloudStackKubernetes135MultiEndpointSimpleFlow
-
-# Packages
-- TestCloudStackKubernetes129RedhatCuratedPackagesSimpleFlow
-- TestCloudStackKubernetes129RedhatCuratedPackagesEmissarySimpleFlow
-- TestCloudStackKubernetes129RedhatCuratedPackagesHarborSimpleFlow
-- TestCloudStackKubernetes129RedhatCuratedPackagesCertManagerSimpleFlow
-- TestCloudStackKubernetes129RedhatCuratedPackagesAdotSimpleFlow
-- TestCloudStackKubernetes129RedhatCuratedPackagesAdotUpdateFlow
-- TestCloudStackKubernetes129RedHatCuratedPackagesClusterAutoscalerSimpleFlow
-- TestCloudStackKubernetes129RedhatCuratedPackagesPrometheusSimpleFlow
-- TestCloudStackKubernetes130RedhatCuratedPackagesSimpleFlow
-- TestCloudStackKubernetes130RedhatCuratedPackagesEmissarySimpleFlow
-- TestCloudStackKubernetes130RedhatCuratedPackagesHarborSimpleFlow
-- TestCloudStackKubernetes130RedhatCuratedPackagesCertManagerSimpleFlow
-- TestCloudStackKubernetes130RedhatCuratedPackagesAdotSimpleFlow
-- TestCloudStackKubernetes130RedhatCuratedPackagesAdotUpdateFlow
-- TestCloudStackKubernetes130RedHatCuratedPackagesClusterAutoscalerSimpleFlow
-- TestCloudStackKubernetes130RedhatCuratedPackagesPrometheusSimpleFlow
-
 # Nutanix
 
 # Snow
@@ -49,28 +12,29 @@ skipped_tests:
 - TestTinkerbellKubernetes134UbuntuAddWorkerNodeGroupWithAPI
 # Skipping skip power action tests - Not going to work because e2e test powers on CP and worker node at the same time and worker node times out early waiting for ipxe
 # Skipping a few redundant tests
-# For Ubuntu 22.04, RHEL 8 and RHEL 9 Tinkerbell tests, only enable test case for latest kubernetes version 1.35 due to limited testing resources.
-- TestTinkerbellKubernetes129RedHatSimpleFlow
+# For Ubuntu 22.04, RHEL 8 and RHEL 9 Tinkerbell tests, only enable test case for latest kubernetes version 1.36 due to limited testing resources.
 - TestTinkerbellKubernetes130RedHatSimpleFlow
 - TestTinkerbellKubernetes131RedHatSimpleFlow
-- TestTinkerbellKubernetes129RedHat9SimpleFlow
 - TestTinkerbellKubernetes130RedHat9SimpleFlow
 - TestTinkerbellKubernetes131RedHat9SimpleFlow
 - TestTinkerbellKubernetes132RedHat9SimpleFlow
 - TestTinkerbellKubernetes133RedHat9SimpleFlow
 - TestTinkerbellKubernetes134RedHat9SimpleFlow
-- TestTinkerbellKubernetes129Ubuntu2204SimpleFlow
+- TestTinkerbellKubernetes135RedHat9SimpleFlow
 - TestTinkerbellKubernetes130Ubuntu2204SimpleFlow
 - TestTinkerbellKubernetes131Ubuntu2204SimpleFlow
 - TestTinkerbellKubernetes132Ubuntu2204SimpleFlow
 - TestTinkerbellKubernetes133Ubuntu2204SimpleFlow
 - TestTinkerbellKubernetes134Ubuntu2204SimpleFlow
+- TestTinkerbellKubernetes135Ubuntu2204SimpleFlow
 - TestTinkerbellKubernetes133Ubuntu2204GenericSimpleFlow
 - TestTinkerbellKubernetes134Ubuntu2204GenericSimpleFlow
+- TestTinkerbellKubernetes135Ubuntu2204GenericSimpleFlow
 - TestTinkerbellKubernetes133Ubuntu2204RTOSSimpleFlow
 - TestTinkerbellKubernetes134Ubuntu2204RTOSSimpleFlow
+- TestTinkerbellKubernetes135Ubuntu2204RTOSSimpleFlow
 
-# Skip single K8s version simple flow tests as it is covered by 1.35
+# Skip single K8s version simple flow tests as it is covered by 1.36
 - TestTinkerbellKubernetes132UbuntuSingleNodeSimpleFlow
 - TestTinkerbellKubernetes132UbuntuThreeControlPlaneReplicasSimpleFlow
 - TestTinkerbellKubernetes132UbuntuThreeWorkersSimpleFlow
@@ -82,8 +46,15 @@ skipped_tests:
 - TestTinkerbellKubernetes133Ubuntu2404RTOSSimpleFlow
 - TestTinkerbellKubernetes133Ubuntu2404GenericSimpleFlow
 - TestTinkerbellKubernetes133RedHat9SimpleFlow
+- TestTinkerbellKubernetes135UbuntuSingleNodeSimpleFlow
+- TestTinkerbellKubernetes135UbuntuThreeControlPlaneReplicasSimpleFlow
+- TestTinkerbellKubernetes135UbuntuThreeWorkersSimpleFlow
+- TestTinkerbellKubernetes135Ubuntu2404SimpleFlow
+- TestTinkerbellKubernetes135Ubuntu2404RTOSSimpleFlow
+- TestTinkerbellKubernetes135Ubuntu2404GenericSimpleFlow
+- TestTinkerbellKubernetes135RedHat9SimpleFlow
 
-# Skip workload cluster tests as it is covered by 1.35
+# Skip workload cluster tests as it is covered by 1.36
 - TestTinkerbellKubernetes132UbuntuWorkloadCluster
 - TestTinkerbellKubernetes132UbuntuWorkloadClusterWithAPI
 - TestTinkerbellKubernetes132UbuntuWorkloadClusterGitFluxWithAPI
@@ -99,28 +70,41 @@ skipped_tests:
 - TestTinkerbellKubernetes134UbuntuWorkloadClusterGitFluxWithAPI
 - TestTinkerbellKubernetes134UbuntuSingleNodeWorkloadCluster
 - TestTinkerbellKubernetes134UbuntuSingleNodeWorkloadClusterWithAPI
+- TestTinkerbellKubernetes135UbuntuWorkloadCluster
+- TestTinkerbellKubernetes135UbuntuWorkloadClusterWithAPI
+- TestTinkerbellKubernetes135UbuntuWorkloadClusterGitFluxWithAPI
+- TestTinkerbellKubernetes135UbuntuSingleNodeWorkloadCluster
+- TestTinkerbellKubernetes135UbuntuSingleNodeWorkloadClusterWithAPI
 - TestTinkerbellUpgrade132MulticlusterWorkloadClusterWorkerScaleupGitFluxWithAPI
 - TestTinkerbellUpgrade132MulticlusterWorkloadClusterCPScaleup
 - TestTinkerbellUpgradeMulticlusterWorkloadClusterK8sUpgrade131To132
 - TestTinkerbellUpgrade133MulticlusterWorkloadClusterWorkerScaleupGitFluxWithAPI
 - TestTinkerbellUpgrade133MulticlusterWorkloadClusterCPScaleup
 - TestTinkerbellUpgradeMulticlusterWorkloadClusterK8sUpgrade132To133
+- TestTinkerbellUpgrade135MulticlusterWorkloadClusterWorkerScaleupGitFluxWithAPI
+- TestTinkerbellUpgrade135MulticlusterWorkloadClusterCPScaleup
+- TestTinkerbellUpgradeMulticlusterWorkloadClusterK8sUpgrade134To135
 
-# Skip OIDC and registry mirror tests as it is covered by 1.35
+# Skip OIDC and registry mirror tests as it is covered by 1.36
 - TestTinkerbellKubernetes132OIDC
 - TestTinkerbellKubernetes132UbuntuRegistryMirror
 - TestTinkerbellKubernetes132UbuntuInsecureSkipVerifyRegistryMirror
 - TestTinkerbellKubernetes133OIDC
 - TestTinkerbellKubernetes133UbuntuRegistryMirror
 - TestTinkerbellKubernetes133UbuntuInsecureSkipVerifyRegistryMirror
+- TestTinkerbellKubernetes135OIDC
+- TestTinkerbellKubernetes135UbuntuRegistryMirror
+- TestTinkerbellKubernetes135UbuntuInsecureSkipVerifyRegistryMirror
 
-# Skip inplace upgrade tests as the same is covered by 1.35 to save on hardware resources and running time
+# Skip inplace upgrade tests as the same is covered by 1.36 to save on hardware resources and running time
 - TestTinkerbellKubernetes131UbuntuTo132InPlaceUpgrade_1CP_1Worker
 - TestTinkerbellKubernetes131UbuntuTo132SingleNodeInPlaceUpgrade
 - TestTinkerbellKubernetes132UbuntuTo133InPlaceUpgrade_1CP_1Worker
 - TestTinkerbellKubernetes132UbuntuTo133SingleNodeInPlaceUpgrade
+- TestTinkerbellKubernetes134UbuntuTo135InPlaceUpgrade_1CP_1Worker
+- TestTinkerbellKubernetes134UbuntuTo135SingleNodeInPlaceUpgrade
 
-# Skip scaling tests as it is covered by 1.35
+# Skip scaling tests as it is covered by 1.36
 - TestTinkerbellKubernetes132UbuntuControlPlaneScaleUp
 - TestTinkerbellKubernetes132UbuntuWorkerNodeScaleUp
 - TestTinkerbellKubernetes132UbuntuWorkerNodeScaleDown
@@ -133,8 +117,12 @@ skipped_tests:
 - TestTinkerbellKubernetes134UbuntuWorkerNodeScaleUp
 - TestTinkerbellKubernetes134UbuntuWorkerNodeScaleDown
 - TestTinkerbellKubernetes134UbuntuControlPlaneScaleDown
+- TestTinkerbellKubernetes135UbuntuControlPlaneScaleUp
+- TestTinkerbellKubernetes135UbuntuWorkerNodeScaleUp
+- TestTinkerbellKubernetes135UbuntuWorkerNodeScaleDown
+- TestTinkerbellKubernetes135UbuntuControlPlaneScaleDown
 
-# Skip taints, OOB and proxy tests as it is covered by 1.35
+# Skip taints, OOB and proxy tests as it is covered by 1.36
 - TestTinkerbellKubernetes132UbuntuWorkerNodeGroupsTaintsAndLabels
 - TestTinkerbellAirgappedKubernetes132UbuntuProxyConfigFlow
 - TestTinkerbellKubernetes132UbuntuOOB
@@ -143,21 +131,21 @@ skipped_tests:
 - TestTinkerbellAirgappedKubernetes133UbuntuProxyConfigFlow
 - TestTinkerbellKubernetes133UbuntuOOB
 - TestTinkerbellK8sUpgrade132to133WithUbuntuOOB
+- TestTinkerbellKubernetes135UbuntuWorkerNodeGroupsTaintsAndLabels
+- TestTinkerbellAirgappedKubernetes135UbuntuProxyConfigFlow
+- TestTinkerbellKubernetes135UbuntuOOB
+- TestTinkerbellK8sUpgrade134to135WithUbuntuOOB
 
-# Skip CP upgrade and kubelet tests as it is covered by 1.35
+# Skip CP upgrade and kubelet tests as it is covered by 1.36
 - TestTinkerbellSingleNode131To132UbuntuManagementCPUpgradeAPI
 - TestTinkerbellKubernetes132KubeletConfigurationSimpleFlow
 - TestTinkerbellSingleNode132To133UbuntuManagementCPUpgradeAPI
 - TestTinkerbellKubernetes133KubeletConfigurationSimpleFlow
+- TestTinkerbellSingleNode134To135UbuntuManagementCPUpgradeAPI
+- TestTinkerbellKubernetes135KubeletConfigurationSimpleFlow
 
 # Tinkerbell Packages
-# Skip test cases for packages other than hello-eks-anywhere and not for K8s 1.35.
-- TestTinkerbellKubernetes129UbuntuSingleNodeCuratedPackagesFlow
-- TestTinkerbellKubernetes129UbuntuSingleNodeCuratedPackagesEmissaryFlow
-- TestTinkerbellKubernetes129UbuntuSingleNodeCuratedPackagesHarborFlow
-- TestTinkerbellKubernetes129UbuntuCuratedPackagesAdotSimpleFlow
-- TestTinkerbellKubernetes129UbuntuCuratedPackagesPrometheusSimpleFlow
-- TestTinkerbellKubernetes129UbuntuCuratedPackagesClusterAutoscalerSimpleFlow
+# Skip test cases for packages other than hello-eks-anywhere and not for K8s 1.36.
 - TestTinkerbellKubernetes132UbuntuSingleNodeCuratedPackagesFlow
 - TestTinkerbellKubernetes132UbuntuSingleNodeCuratedPackagesEmissaryFlow
 - TestTinkerbellKubernetes132UbuntuSingleNodeCuratedPackagesHarborFlow
@@ -170,39 +158,38 @@ skipped_tests:
 - TestTinkerbellKubernetes133UbuntuCuratedPackagesAdotSimpleFlow
 - TestTinkerbellKubernetes133UbuntuCuratedPackagesPrometheusSimpleFlow
 - TestTinkerbellKubernetes133UbuntuCuratedPackagesClusterAutoscalerSimpleFlow
+- TestTinkerbellKubernetes135UbuntuSingleNodeCuratedPackagesFlow
+- TestTinkerbellKubernetes135UbuntuSingleNodeCuratedPackagesEmissaryFlow
+- TestTinkerbellKubernetes135UbuntuSingleNodeCuratedPackagesHarborFlow
+- TestTinkerbellKubernetes135UbuntuCuratedPackagesAdotSimpleFlow
+- TestTinkerbellKubernetes135UbuntuCuratedPackagesPrometheusSimpleFlow
+- TestTinkerbellKubernetes135UbuntuCuratedPackagesClusterAutoscalerSimpleFlow
 
-# Skip K8s 1.29 extended features - covered by 1.35
-- TestTinkerbellKubernetes129AWSIamAuth
-- TestTinkerbellKubernetes129OIDC
-- TestTinkerbellKubernetes129UbuntuInsecureSkipVerifyRegistryMirror
-- TestTinkerbellKubernetes129UbuntuRegistryMirror
-- TestTinkerbellKubernetes129UbuntuOOB
-- TestTinkerbellKubernetes129UbuntuSingleNodeSimpleFlow
-- TestTinkerbellKubernetes129UbuntuThreeWorkersSimpleFlow
-- TestTinkerbellKubernetes129UbuntuThreeControlPlaneReplicasSimpleFlow
-- TestTinkerbellKubernetes129UbuntuWorkerNodeGroupsTaintsAndLabels
-- TestTinkerbellAirgappedKubernetes129UbuntuProxyConfigFlow
-- TestTinkerbellKubernetes129KubeletConfigurationSimpleFlow
-
-# Tinkerbell BottleRocket tests
-- TestTinkerbellKubernetes128BottleRocketSimpleFlow
-- TestTinkerbellKubernetes128BottlerocketWorkloadClusterSimpleFlow
-- TestTinkerbellKubernetes128BottlerocketWorkloadClusterWithAPI
+# Skip K8s 1.30 extended features - covered by 1.36
+- TestTinkerbellKubernetes130AWSIamAuth
+- TestTinkerbellKubernetes130OIDC
+- TestTinkerbellKubernetes130UbuntuInsecureSkipVerifyRegistryMirror
+- TestTinkerbellKubernetes130UbuntuRegistryMirror
+- TestTinkerbellKubernetes130UbuntuOOB
+- TestTinkerbellKubernetes130UbuntuSingleNodeSimpleFlow
+- TestTinkerbellKubernetes130UbuntuThreeWorkersSimpleFlow
+- TestTinkerbellKubernetes130UbuntuThreeControlPlaneReplicasSimpleFlow
+- TestTinkerbellKubernetes130UbuntuWorkerNodeGroupsTaintsAndLabels
+- TestTinkerbellAirgappedKubernetes130UbuntuProxyConfigFlow
+- TestTinkerbellKubernetes130KubeletConfigurationSimpleFlow
 
 # Tinkerbell conformance
-- TestTinkerbellKubernetes128ThreeReplicasTwoWorkersConformanceFlow
-- TestTinkerbellKubernetes129ThreeReplicasTwoWorkersConformanceFlow
 - TestTinkerbellKubernetes130ThreeReplicasTwoWorkersConformanceFlow
 - TestTinkerbellKubernetes131ThreeReplicasTwoWorkersConformanceFlow
 - TestTinkerbellKubernetes132ThreeReplicasTwoWorkersConformanceFlow
 
-# Vsphere 
+# Vsphere
 # Auto import tests fail from time to time if the underlying template doesn't go well with the content library.
 # Currently there's no fix for this and issue has been brought up with the BR team multiple times.
-- TestVSphereKubernetes129BottlerocketAutoimport
 - TestVSphereKubernetes130BottlerocketAutoimport
 - TestVSphereKubernetes131BottlerocketAutoimport
 - TestVSphereKubernetes132BottlerocketAutoimport
 - TestVSphereKubernetes133BottlerocketAutoimport
 - TestVSphereKubernetes134BottlerocketAutoimport
 - TestVSphereKubernetes135BottlerocketAutoimport
+- TestVSphereKubernetes136BottlerocketAutoimport

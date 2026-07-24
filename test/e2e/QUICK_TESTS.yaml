@@ -1,9 +1,7 @@
 quick_tests:
 # Docker
-- TestDocker.*135
+- TestDocker.*136
 # vSphere
-- ^TestVSphereKubernetes130To131RedHatUpgrade$
-- TestVSphereKubernetes130To131StackedEtcdRedHatUpgrade
 - ^TestVSphereKubernetes131To132RedHat9Upgrade$
 - TestVSphereKubernetes131To132StackedEtcdRedHat9Upgrade
 - ^TestVSphereKubernetes131UbuntuTo132Upgrade$
@@ -38,15 +36,15 @@ quick_tests:
 - TestVSphereKubernetes135Ubuntu2204To2404Upgrade
 - TestVSphereKubernetes134BottlerocketTo135Upgrade
 - TestVSphereKubernetes134BottlerocketTo135StackedEtcdUpgrade
-# CloudStack
-- TestCloudStackKubernetes131To132RedhatMultipleFieldsUpgrade
-- TestCloudStackKubernetes131To132StackedEtcdRedhatMultipleFieldsUpgrade
-- TestCloudStackKubernetes132To133RedhatMultipleFieldsUpgrade
-- TestCloudStackKubernetes132To133StackedEtcdRedhatMultipleFieldsUpgrade
-- TestCloudStackKubernetes133To134RedhatMultipleFieldsUpgrade
-- TestCloudStackKubernetes133To134StackedEtcdRedhatMultipleFieldsUpgrade
-- TestCloudStackKubernetes134To135RedhatMultipleFieldsUpgrade
-- TestCloudStackKubernetes134To135StackedEtcdRedhatMultipleFieldsUpgrade
+- ^TestVSphereKubernetes135To136RedHat9Upgrade$
+- TestVSphereKubernetes135To136StackedEtcdRedHat9Upgrade
+- ^TestVSphereKubernetes135UbuntuTo136Upgrade$
+- TestVSphereKubernetes135UbuntuTo136StackedEtcdUpgrade
+- TestVSphereKubernetes135To136Ubuntu2204Upgrade
+- TestVSphereKubernetes135To136Ubuntu2204StackedEtcdUpgrade
+- TestVSphereKubernetes136Ubuntu2204To2404Upgrade
+- TestVSphereKubernetes135BottlerocketTo136Upgrade
+- TestVSphereKubernetes135BottlerocketTo136StackedEtcdUpgrade
 # Nutanix
 - TestNutanixKubernetes133to134RedHat9Upgrade
 - TestNutanixKubernetes133to134StackedEtcdRedHat9Upgrade
@@ -56,10 +54,15 @@ quick_tests:
 - TestNutanixKubernetes134to135StackedEtcdRedHat9Upgrade
 - TestNutanixKubernetes134To135UbuntuUpgrade
 - TestNutanixKubernetes134To135StackedEtcdUbuntuUpgrade
+- TestNutanixKubernetes135to136RedHat9Upgrade
+- TestNutanixKubernetes135to136StackedEtcdRedHat9Upgrade
+- TestNutanixKubernetes135To136UbuntuUpgrade
+- TestNutanixKubernetes135To136StackedEtcdUbuntuUpgrade
 # Snow
 # - TestSnowKubernetes128SimpleFlow
 # - TestSnowKubernetes128StackedEtcdSimpleFlow
 # Tinkerbell
 - TestTinkerbellKubernetes133To134Ubuntu2204Upgrade
 - TestTinkerbellKubernetes134To135Ubuntu2204Upgrade
-- TestTinkerbellKubernetes135Ubuntu2204To2404Upgrade
+- TestTinkerbellKubernetes135To136Ubuntu2204Upgrade
+- TestTinkerbellKubernetes136Ubuntu2204To2404Upgrade

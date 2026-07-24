@@ -485,6 +485,9 @@ metadata:
   namespace: eksa-system
 spec:
   machineTemplate:
+    metadata:
+      labels:
+        node-role.kubernetes.io/control-plane: ""
     spec:
       infrastructureRef:
         apiGroup: infrastructure.cluster.x-k8s.io
@@ -771,6 +774,10 @@ spec:
         - name: tls-cipher-suites
           value: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         name: '{{ ds.meta_data.hostname }}'
+        taints:
+          - key: node-role.kubernetes.io/control-plane
+            value: ""
+            effect: NoSchedule
     joinConfiguration:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
@@ -784,6 +791,10 @@ spec:
         - name: tls-cipher-suites
           value: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         name: '{{ ds.meta_data.hostname }}'
+        taints:
+          - key: node-role.kubernetes.io/control-plane
+            value: ""
+            effect: NoSchedule
     preKubeadmCommands:
     - hostname "{{ ds.meta_data.hostname }}"
     - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts

@@ -73,6 +73,10 @@ optional:
       value: "true"
     enabled: true
     image: public.ecr.aws/eks-anywhere/kube-vip:latest
+    tolerations:
+    - effect: NoSchedule
+      key: node-role.kubernetes.io/control-plane
+      operator: Exists
 publicIP: 1.2.3.4
 service:
   lbClass: kube-vip.io/kube-vip-class

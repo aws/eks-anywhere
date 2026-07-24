@@ -582,3 +582,71 @@ func contractReference(obj client.Object) clusterv1beta2.ContractVersionedObject
 		Name:     obj.GetName(),
 	}
 }
+
+func TestDefaultControlPlaneTaint(t *testing.T) {
+	g := NewWithT(t)
+	taint := clusterapi.DefaultControlPlaneTaint()
+	g.Expect(taint.Key).To(Equal("node-role.kubernetes.io/control-plane"))
+	g.Expect(taint.Effect).To(Equal(corev1.TaintEffectNoSchedule))
+	g.Expect(taint.Value).To(BeEmpty())
+}
+
+func TestControlPlaneTaintsToPtr(t *testing.T) {
+	tests := []struct {
+		name   string
+		taints []corev1.Taint
+		want   *[]corev1.Taint
+	}{
+		{
+			name:   "nil taints should return default control-plane taint",
+			taints: nil,
+			want: &[]corev1.Taint{
+				{
+					Key:    "node-role.kubernetes.io/control-plane",
+					Effect: corev1.TaintEffectNoSchedule,
+				},
+			},
+		},
+		{
+			name:   "empty taints should return empty taints (not default)",
+			taints: []corev1.Taint{},
+			want:   &[]corev1.Taint{},
+		},
+		{
+			name: "custom taints should be preserved",
+			taints: []corev1.Taint{
+				{
+					Key:    "custom-key",
+					Value:  "custom-value",
+					Effect: corev1.TaintEffectNoExecute,
+				},
+			},
+			want: &[]corev1.Taint{
+				{
+					Key:    "custom-key",
+					Value:  "custom-value",
+					Effect: corev1.TaintEffectNoExecute,
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			got := clusterapi.ControlPlaneTaintsToPtr(tt.taints)
+			g.Expect(got).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestDefaultControlPlaneLabels(t *testing.T) {
+	g := NewWithT(t)
+	labels := clusterapi.DefaultControlPlaneLabels()
+	g.Expect(labels).To(HaveKeyWithValue("node-role.kubernetes.io/control-plane", ""))
+	g.Expect(labels).To(HaveLen(1))
+}
+
+func TestControlPlaneNodeRoleLabelConstant(t *testing.T) {
+	g := NewWithT(t)
+	g.Expect(clusterapi.ControlPlaneNodeRoleLabel).To(Equal("node-role.kubernetes.io/control-plane"))
+}

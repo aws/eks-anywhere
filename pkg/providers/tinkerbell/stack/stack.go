@@ -654,6 +654,13 @@ func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle
 			"kubevip": map[string]any{
 				"enabled": s.loadBalancer,
 				"image":   kubevipImageURI,
+				"tolerations": []map[string]any{
+					{
+						"key":      "node-role.kubernetes.io/control-plane",
+						"operator": "Exists",
+						"effect":   "NoSchedule",
+					},
+				},
 				"additionalEnv": []map[string]string{
 					{
 						"name":  "prometheus_server",

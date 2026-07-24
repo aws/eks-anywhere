@@ -120,6 +120,9 @@ func wantKubeadmControlPlane(kubeVersion v1alpha1.KubernetesVersion) *controlpla
 		},
 		Spec: controlplanev1beta2.KubeadmControlPlaneSpec{
 			MachineTemplate: controlplanev1beta2.KubeadmControlPlaneMachineTemplate{
+				ObjectMeta: clusterv1beta2.ObjectMeta{
+					Labels: clusterapi.DefaultControlPlaneLabels(),
+				},
 				Spec: controlplanev1beta2.KubeadmControlPlaneMachineTemplateSpec{
 					InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
 						APIGroup: "infrastructure.cluster.x-k8s.io",
@@ -168,6 +171,7 @@ func wantKubeadmControlPlane(kubeVersion v1alpha1.KubernetesVersion) *controlpla
 								{Name: "provider-id", Value: &pid},
 							}
 						}(),
+						Taints: &[]v1.Taint{{Key: "node-role.kubernetes.io/control-plane", Effect: v1.TaintEffectNoSchedule}},
 					},
 				},
 				JoinConfiguration: bootstrapv1beta2.JoinConfiguration{
@@ -180,6 +184,7 @@ func wantKubeadmControlPlane(kubeVersion v1alpha1.KubernetesVersion) *controlpla
 								{Name: "provider-id", Value: &pid},
 							}
 						}(),
+						Taints: &[]v1.Taint{{Key: "node-role.kubernetes.io/control-plane", Effect: v1.TaintEffectNoSchedule}},
 					},
 				},
 				PreKubeadmCommands: []string{

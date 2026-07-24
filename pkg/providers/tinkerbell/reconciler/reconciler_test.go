@@ -1391,6 +1391,9 @@ func tinkerbellCP(clusterName string, opts ...cpOpt) *tinkerbell.ControlPlane {
 					},
 					Version: "v1.19.8",
 					MachineTemplate: controlplanev1beta2.KubeadmControlPlaneMachineTemplate{
+						ObjectMeta: clusterv1beta2.ObjectMeta{
+							Labels: clusterapi.DefaultControlPlaneLabels(),
+						},
 						Spec: controlplanev1beta2.KubeadmControlPlaneMachineTemplateSpec{
 							InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
 								APIGroup: "infrastructure.cluster.x-k8s.io",

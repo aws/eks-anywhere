@@ -12,9 +12,9 @@ description: >
 You can configure certain host OS settings through EKS Anywhere.
 
 #### Provider support details
-|                | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
-|:--------------:|:-------:|:----------:|:-------:|:----------:|:----:|
-| **Supported?** |   ✓	    |     ✓      |   	     |            |      |
+|                | vSphere | Bare Metal | Nutanix | Snow |
+|:--------------:|:-------:|:----------:|:-------:|:----:|
+| **Supported?** |   ✓	    |     ✓      |   	     |      |
 
 {{% alert title="Note" color="primary" %}}
 Settings under `bottlerocketConfiguration` are only supported for `osFamily: bottlerocket`
