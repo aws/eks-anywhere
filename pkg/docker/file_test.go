@@ -34,7 +34,21 @@ func TestNewDiskDestination(t *testing.T) {
 	images := []string{"image1:1", "image2:2"}
 	ctx := context.Background()
 	dstLoader := docker.NewDiskDestination(client, file)
-	client.EXPECT().SaveToFile(ctx, file, images[0], images[1])
+	client.EXPECT().SaveToFile(ctx, file, "", images[0], images[1])
+
+	g.Expect(dstLoader.Write(ctx, images...)).To(Succeed())
+}
+
+func TestNewDiskDestinationWithPlatform(t *testing.T) {
+	g := NewWithT(t)
+	ctrl := gomock.NewController(t)
+	client := mocks.NewMockDockerClient(ctrl)
+
+	file := "file"
+	images := []string{"image1:1", "image2:2"}
+	ctx := context.Background()
+	dstLoader := docker.NewDiskDestination(client, file, docker.WithDiskDestinationPlatform("linux/amd64"))
+	client.EXPECT().SaveToFile(ctx, file, "linux/amd64", images[0], images[1])
 
 	g.Expect(dstLoader.Write(ctx, images...)).To(Succeed())
 }

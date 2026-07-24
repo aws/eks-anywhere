@@ -66,15 +66,32 @@ func (d *ImageRegistryDestination) Write(ctx context.Context, images ...string) 
 type ImageOriginalRegistrySource struct {
 	client    ImagePuller
 	processor *ConcurrentImageProcessor
+	platform  string
 	Retrier   retrier.Retrier
 }
 
-func NewOriginalRegistrySource(client ImagePuller) *ImageOriginalRegistrySource {
-	return &ImageOriginalRegistrySource{
+// OriginalRegistrySourceOption configures an ImageOriginalRegistrySource.
+type OriginalRegistrySourceOption func(*ImageOriginalRegistrySource)
+
+// WithOriginalRegistrySourcePlatform sets the platform (e.g. linux/amd64) of the
+// images pulled from the origin registry, overriding the default of pulling
+// images matching the platform of the host running the command.
+func WithOriginalRegistrySourcePlatform(platform string) OriginalRegistrySourceOption {
+	return func(s *ImageOriginalRegistrySource) {
+		s.platform = platform
+	}
+}
+
+func NewOriginalRegistrySource(client ImagePuller, opts ...OriginalRegistrySourceOption) *ImageOriginalRegistrySource {
+	s := &ImageOriginalRegistrySource{
 		client:    client,
 		processor: NewConcurrentImageProcessor(runtime.GOMAXPROCS(0)),
 		Retrier:   *retrier.NewWithMaxRetries(5, 200*time.Second),
 	}
+	for _, opt := range opts {
+		opt(s)
+	}
+	return s
 }
 
 // Load pulls images and tags from their original registry into the local docker cache.
@@ -82,8 +99,13 @@ func (s *ImageOriginalRegistrySource) Load(ctx context.Context, images ...string
 	logger.Info("Pulling images from origin, this might take a while")
 	logger.V(3).Info("Starting pull", "numberOfImages", len(images))
 
+	var platform []string
+	if s.platform != "" {
+		platform = append(platform, s.platform)
+	}
+
 	err := s.processor.Process(ctx, images, func(ctx context.Context, image string) error {
-		err := s.Retrier.Retry(func() error { return s.client.PullImage(ctx, image) })
+		err := s.Retrier.Retry(func() error { return s.client.PullImage(ctx, image, platform...) })
 		if err != nil {
 			return err
 		}

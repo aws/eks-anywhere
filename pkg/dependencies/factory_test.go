@@ -775,7 +775,7 @@ func TestFactoryBuildWithProviderTinkerbellWithNoTimeouts(t *testing.T) {
 
 type dummyDockerClient struct{}
 
-func (b dummyDockerClient) PullImage(ctx context.Context, image string) error {
+func (b dummyDockerClient) PullImage(ctx context.Context, image string, platform ...string) error {
 	return nil
 }
 
