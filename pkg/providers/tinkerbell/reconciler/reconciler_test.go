@@ -1400,6 +1400,9 @@ func tinkerbellCP(clusterName string, opts ...cpOpt) *tinkerbell.ControlPlane {
 								Kind:     "TinkerbellMachineTemplate",
 								Name:     "workload-cluster-control-plane-1",
 							},
+							Deletion: controlplanev1beta2.KubeadmControlPlaneMachineTemplateDeletionSpec{
+								NodeDeletionTimeoutSeconds: ptr.Int32(30),
+							},
 						},
 					},
 					KubeadmConfigSpec: bootstrapv1beta2.KubeadmConfigSpec{
@@ -1812,6 +1815,9 @@ func tinkWorker(clusterName string, opts ...workerOpt) *tinkerbell.Workers {
 									Kind:     "TinkerbellMachineTemplate",
 									Name:     clusterName + "-md-0-1",
 									APIGroup: "infrastructure.cluster.x-k8s.io",
+								},
+								Deletion: clusterv1beta2.MachineDeletionSpec{
+									NodeDeletionTimeoutSeconds: ptr.Int32(30),
 								},
 								Version: "v1.19.8",
 							},
