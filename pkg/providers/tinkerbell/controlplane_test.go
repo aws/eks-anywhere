@@ -559,6 +559,8 @@ spec:
         apiGroup: infrastructure.cluster.x-k8s.io
         kind: TinkerbellMachineTemplate
         name: test-control-plane-1
+      deletion:
+        nodeDeletionTimeoutSeconds: 30
   replicas: 1
   version: v1.21.2-eks-1-21-4`)
 	if err := yaml.UnmarshalStrict(b, &kcp); err != nil {
@@ -938,6 +940,8 @@ spec:
         apiGroup: infrastructure.cluster.x-k8s.io
         kind: TinkerbellMachineTemplate
         name: test-control-plane-1
+      deletion:
+        nodeDeletionTimeoutSeconds: 30
   replicas: 1
   version: v1.21.2-eks-1-21-4`)
 	if err := yaml.UnmarshalStrict(b, &kcp); err != nil {
