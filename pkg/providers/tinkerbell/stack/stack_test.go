@@ -240,6 +240,9 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 					"-e", "TINKERBELL_BACKEND_KUBE_CONFIG=/kubeconfig",
 					"-e", gomock.Any(), // TINKERBELL_BACKEND_KUBE_NAMESPACE
 					"-e", gomock.Any(), // TINKERBELL_PUBLIC_IPV4
+					// Listeners must bind to the same IP that is advertised to
+					// netbooting machines (multi-NIC admin machines).
+					"-e", "TINKERBELL_BIND_ADDRESS="+testIP,
 					"-e", gomock.Any(), // TINKERBELL_TRUSTED_PROXIES
 					// Enable flags
 					"-e", "TINKERBELL_ENABLE_SMEE=true",
@@ -260,6 +263,7 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 					"-e", gomock.Any(), // TINKERBELL_DHCP_IPXE_HTTP_SCRIPT_HOST
 					"-e", gomock.Any(), // TINKERBELL_DHCP_IPXE_HTTP_SCRIPT_PORT
 					// HTTP/iPXE settings
+					"-e", "TINKERBELL_IPXE_HTTP_SCRIPT_BIND_ADDR="+testIP,
 					"-e", gomock.Any(), // TINKERBELL_IPXE_HTTP_SCRIPT_BIND_PORT
 					"-e", gomock.Any(), // TINKERBELL_IPXE_HTTP_SCRIPT_OSIE_URL
 					"-e", gomock.Any(), // TINKERBELL_IPXE_HTTP_SCRIPT_EXTRA_KERNEL_ARGS
@@ -271,8 +275,10 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 					"-e", gomock.Any(), // TINKERBELL_ISO_UPSTREAM_URL
 					// TFTP settings
 					"-e", "TINKERBELL_TFTP_SERVER_ENABLED=true",
+					"-e", "TINKERBELL_TFTP_SERVER_BIND_ADDR="+testIP,
 					// Syslog settings
 					"-e", "TINKERBELL_SYSLOG_ENABLED=true",
+					"-e", "TINKERBELL_SYSLOG_BIND_ADDR="+testIP,
 				)
 
 			}

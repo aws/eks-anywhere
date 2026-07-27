@@ -172,6 +172,19 @@ func (t *Tinkerbell) Name() string {
 	return tinkerbellProviderName
 }
 
+// CPNetworkCIDR returns the Tinkerbell control plane network CIDR, i.e. the
+// provisioning network the bare metal hardware and the admin machine share.
+func (t *Tinkerbell) CPNetworkCIDR() string {
+	return t.cidr
+}
+
+// SetTinkerbellBootstrapIP sets the IP the CLI is given via
+// --tinkerbell-bootstrap-ip on cluster creation. It is scoped to the test
+// through t.Setenv, so the environment is restored when the test ends.
+func SetTinkerbellBootstrapIP(t *testing.T, ip string) {
+	t.Setenv(tinkerbellBootstrapIPEnvVar, ip)
+}
+
 func (t *Tinkerbell) Setup() {}
 
 // UpdateKubeConfig customizes generated kubeconfig for the provider.
@@ -201,6 +214,13 @@ func (t *Tinkerbell) WithProviderUpgrade(fillers ...api.TinkerbellFiller) Cluste
 
 // CleanupResources runs a clean up the Tinkerbell machines which simply powers them down.
 func (t *Tinkerbell) CleanupResources(_ string) error {
+	// Defensively remove any secondary network interface leaked by a previous
+	// hard-killed multi-NIC test run on this admin machine; its IP comes from
+	// the shared provisioning subnet pool and could conflict with IPs
+	// allocated to subsequent tests.
+	if err := DeleteSecondaryNetworkInterfaceIfExists(); err != nil {
+		t.t.Logf("WARN: failed deleting leftover secondary network interface: %v", err)
+	}
 	return cleanup.TinkerbellTestResources(t.inventoryCsvFilePath, true)
 }
 

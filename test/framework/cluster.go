@@ -2382,4 +2382,3 @@ func (e *ClusterE2ETest) CreateCloudStackCredentialsSecretFromEnvVar(name, profi
 func (e *ClusterE2ETest) addClusterConfigFillers(fillers ...api.ClusterConfigFiller) {
 	e.clusterConfigFillers = append(e.clusterConfigFillers, fillers...)
 }
-
