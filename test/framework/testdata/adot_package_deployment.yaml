@@ -6,6 +6,7 @@ spec:
   packageName: adot
   targetNamespace: observability
   config: |-
+    apiVersion: apps/v1
     mode: deployment
     clusterRole:
       create: true
