@@ -52,7 +52,6 @@ spec:
                   insecure_skip_verify: true
       processors:
         batch: {}
-        memory_limiter: null
       exporters:
         debug:
           verbosity: basic
