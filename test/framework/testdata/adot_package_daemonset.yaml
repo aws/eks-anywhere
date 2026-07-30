@@ -52,7 +52,6 @@ spec:
                   insecure_skip_verify: true
       processors:
         batch: {}
-        memory_limiter: null
       exporters:
         debug:
           verbosity: basic
@@ -62,6 +61,3 @@ spec:
             receivers: [prometheus]
             processors: [batch]
             exporters: [debug]
-        telemetry:
-          metrics:
-            address: 0.0.0.0:8888
