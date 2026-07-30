@@ -62,6 +62,3 @@ spec:
             receivers: [prometheus]
             processors: [batch]
             exporters: [debug]
-        telemetry:
-          metrics:
-            address: 0.0.0.0:8888
