@@ -128,7 +128,7 @@ CARGO_NET_GIT_FETCH_WITH_CLI=true cargo install --force tuftool
 3. Download the root role that will be used by `tuftool` to download the Bottlerocket images
 ```bash
 curl -O "https://cache.bottlerocket.aws/root.json"
-sha512sum -c <<< "4fcb272345fd6adb94d4c04834400548178fecb57407ca79bc2c3d20e0428fc9ed3a82cea268d7f9c667b5803524a4f465acd701a86953d5d732bf6ecb064888  root.json"
+sha512sum -c <<< "33eb2f01738391907a9380f74b6b2a84fada845b0474d3a30c5756f49067690e520c1d7a531a3e9d1877d3a2f05ec21d9093a8f7307e3fe5b61aa4584472dc9a  root.json"
 ```
 4. Export the desired Kubernetes version. EKS Anywhere currently supports 1.29, 1.30, 1.31, 1.32, 1.33, 1.34, and 1.35.
 ```bash
