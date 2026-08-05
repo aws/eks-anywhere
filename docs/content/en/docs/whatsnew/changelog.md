@@ -47,6 +47,7 @@ description: >
 ### Must read before upgrade
 
 - **CloudStack provider has been removed.** Starting with this release, EKS Anywhere no longer includes the Cluster API provider for CloudStack. Users currently on this provider should migrate to an alternative before upgrading to v0.26.0.
+- **AWS Snowball Edge is no longer available to new customers**
 - **Kubernetes v1.29 has been dropped.** Clusters running Kubernetes v1.29 must upgrade to a supported version (v1.30 or above) before upgrading to EKS Anywhere v0.26.0.
 
 ### Planned updates to supported kubernetes versions
