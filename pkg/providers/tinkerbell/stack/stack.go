@@ -252,6 +252,15 @@ func (s *Installer) installSmeeOnDocker(ctx context.Context, bundle releasev1alp
 		"-e", "TINKERBELL_BACKEND_KUBE_CONFIG=/kubeconfig",
 		"-e", fmt.Sprintf("TINKERBELL_BACKEND_KUBE_NAMESPACE=%s", s.namespace),
 		"-e", fmt.Sprintf("TINKERBELL_PUBLIC_IPV4=%s", tinkServerIP),
+		// TINKERBELL_PUBLIC_IPV4 and the TINKERBELL_DHCP_* vars below only control the
+		// IPs advertised to netbooting machines (DHCP next-server, iPXE URLs). The
+		// TFTP/HTTP/syslog listeners bind separately; without explicit bind addresses
+		// they default to the IP of the default-route interface (detectPublicIPv4 in
+		// the tinkerbell binary), which on multi-NIC admin machines can differ from
+		// tinkServerIP, leaving machines unable to reach the advertised endpoints.
+		// Set the global bind address and the per-service ones so listeners always
+		// bind to the same IP that is advertised.
+		"-e", fmt.Sprintf("TINKERBELL_BIND_ADDRESS=%s", tinkServerIP),
 		"-e", fmt.Sprintf("TINKERBELL_TRUSTED_PROXIES=%s", s.podCidrRange),
 		"-e", "TINKERBELL_ENABLE_SMEE=true",
 		"-e", "TINKERBELL_ENABLE_TOOTLES=false",
@@ -269,6 +278,7 @@ func (s *Installer) installSmeeOnDocker(ctx context.Context, bundle releasev1alp
 		"-e", fmt.Sprintf("TINKERBELL_DHCP_IPXE_HTTP_BINARY_PORT=%s", smeeHTTPPort),
 		"-e", fmt.Sprintf("TINKERBELL_DHCP_IPXE_HTTP_SCRIPT_HOST=%s", tinkServerIP),
 		"-e", fmt.Sprintf("TINKERBELL_DHCP_IPXE_HTTP_SCRIPT_PORT=%s", smeeHTTPPort),
+		"-e", fmt.Sprintf("TINKERBELL_IPXE_HTTP_SCRIPT_BIND_ADDR=%s", tinkServerIP),
 		"-e", fmt.Sprintf("TINKERBELL_IPXE_HTTP_SCRIPT_BIND_PORT=%s", smeeHTTPPort),
 		"-e", fmt.Sprintf("TINKERBELL_IPXE_HTTP_SCRIPT_OSIE_URL=%s", osiePath),
 		"-e", fmt.Sprintf("TINKERBELL_IPXE_HTTP_SCRIPT_EXTRA_KERNEL_ARGS=%s", extraKernelArgs),
@@ -278,7 +288,9 @@ func (s *Installer) installSmeeOnDocker(ctx context.Context, bundle releasev1alp
 		"-e", "TINKERBELL_ISO_STATIC_IPAM_ENABLED=true",
 		"-e", fmt.Sprintf("TINKERBELL_ISO_UPSTREAM_URL=%s", isoOverride),
 		"-e", "TINKERBELL_TFTP_SERVER_ENABLED=true",
+		"-e", fmt.Sprintf("TINKERBELL_TFTP_SERVER_BIND_ADDR=%s", tinkServerIP),
 		"-e", "TINKERBELL_SYSLOG_ENABLED=true",
+		"-e", fmt.Sprintf("TINKERBELL_SYSLOG_BIND_ADDR=%s", tinkServerIP),
 	}
 
 	// Mono-repo binary uses env vars only, no command line args

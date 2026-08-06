@@ -3722,3 +3722,31 @@ func TestTinkerbellCustomTemplateRefSimpleFlow(t *testing.T) {
 	)
 	runTinkerbellSimpleFlowWithoutClusterConfigGeneration(test)
 }
+
+// TestTinkerbellKubernetes135Ubuntu2404MultiNICBootstrapIPSimpleFlow validates cluster
+// creation on a multi-NIC admin machine: it creates a secondary network interface on the
+// admin machine with an IP from the Tinkerbell provisioning network and passes that IP as
+// --tinkerbell-bootstrap-ip. The default route stays on the primary interface, so the
+// Tinkerbell stack must bind its TFTP/HTTP/syslog listeners to the bootstrap IP explicitly
+// rather than auto-detecting the default-route NIC. Regression test for the smee
+// advertise-vs-bind IP mismatch on multi-NIC admin machines.
+func TestTinkerbellKubernetes135Ubuntu2404MultiNICBootstrapIPSimpleFlow(t *testing.T) {
+	licenseToken := framework.GetLicenseToken()
+	provider := framework.NewTinkerbell(t)
+	bootstrapIP := framework.CreateSecondaryNetworkInterface(t, provider.CPNetworkCIDR())
+	framework.SetTinkerbellBootstrapIP(t, bootstrapIP)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(1),
+	).WithClusterConfig(
+		provider.WithKubeVersionAndOS(v1alpha1.Kube135, framework.Ubuntu2404, nil),
+		api.ClusterToConfigFiller(
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+			api.WithLicenseToken(licenseToken),
+		),
+	)
+	runTinkerbellSimpleFlowWithoutClusterConfigGeneration(test)
+}
