@@ -7,7 +7,6 @@ description: >
 ---
 ## Package Bundle Release (08-06-2026)
 #### Changed
-- Add support for Kubernetes version `1.36` and remove support for Kubernetes version `1.29`
 - Fix critical CVEs in affected Curated Packages
 - EKS Anywhere Packages Controller and Credential-Provider-Package `0.4.15` to `0.4.17`
 - ADOT `0.45.1` to `0.49.0`
@@ -15,6 +14,7 @@ description: >
 - Emissary `3.10.0` to `4.1.0`
 - Metrics-Server `0.8.1-eksbuild.2` to `0.8.1-eksbuild.11`
 - MetalLB `0.15.2` to `0.16.1`
+  - Enable `frr-k8s` mode for BGP and BFD
 - Prometheus `3.8.0` to `3.12.0`
 
 ## Package Bundle Release (03-12-2026)
