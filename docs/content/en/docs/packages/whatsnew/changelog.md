@@ -5,6 +5,22 @@ weight: 7
 description: >
   Changelog for Curated packages release
 ---
+## Package Bundle Release (08-06-2026)
+#### Changed
+- Fix critical CVEs in affected Curated Packages
+- EKS Anywhere Packages Controller and Credential-Provider-Package `0.4.15` to `0.4.17`
+  - Avoid redundant Helm upgrades during package reconciliation
+- ADOT `0.45.1` to `0.49.0`
+- Cert-Manager `1.19.3` to `1.20.2-eksbuild.3`
+- Emissary `3.10.0` to `4.1.0`
+- Harbor
+  - Use `pg_isready` for the Harbor database health check
+- Metrics-Server `0.8.1-eksbuild.2` to `0.8.1-eksbuild.11`
+- MetalLB `0.15.2` to `0.16.1`
+  - Enable `frr-k8s` mode for BGP and BFD
+- Prometheus `3.8.0` to `3.12.0`
+  - Honor `spec.targetNamespace` when installing package resources
+
 ## Package Bundle Release (03-12-2026)
 #### Changed
 - Cert-Manager `1.18.2` to `1.19.3`
