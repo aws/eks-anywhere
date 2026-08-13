@@ -42,6 +42,51 @@ description: >
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
 
+## [v0.26.1](https://github.com/aws/eks-anywhere/releases/tag/v0.26.1)
+
+### Planned updates to supported kubernetes versions
+- Kubernetes 1.33 reaches end of standard support on August 31, 2026
+  - Extended support continues until August 31, 2027 for clusters with valid license tokens
+  - Clusters will continue to function but will not receive CVE patches or bug fixes after standard support ends
+- Kubernetes 1.30 reaches end of extended support on August 31, 2026
+  - No further patches will be available after this date
+  - Existing clusters will continue to function but upgrading is strongly recommended
+
+For complete version support details, see the [Kubernetes version support table](https://anywhere.eks.amazonaws.com/docs/concepts/support-versions/#kubernetes-versions).
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----:|
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |  ✔   |
+|    Ubuntu 24.04     |    ✔    |     ✔      |    ✔    |  —   |
+| Bottlerocket 1.64.0 |    ✔    |     —      |    —    |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |  —   |
+|      RHEL 9.x       |    ✔    |     ✔      |    ✔    |  —   |
+
+\* Bottlerocket `v1.64.0` applies to Kubernetes versions 1.33 through 1.36. Kubernetes versions 1.30 through 1.32 remain on Bottlerocket `v1.62.0`.
+
+### Added
+- `redhat_epel_rpm` and `epel_rpm_gpg_key` image-builder configuration options, allowing RHEL images to be built in networks that cannot reach the Fedora EPEL mirrors ([#5632](https://github.com/aws/eks-anywhere-build-tooling/pull/5632))
+
+### Changed
+- EKS Distro:
+  - [`v1-36-eks-6`](https://distro.eks.amazonaws.com/releases/1-36/6/)
+  - [`v1-35-eks-12`](https://distro.eks.amazonaws.com/releases/1-35/12/)
+  - [`v1-34-eks-21`](https://distro.eks.amazonaws.com/releases/1-34/21/)
+  - [`v1-33-eks-30`](https://distro.eks.amazonaws.com/releases/1-33/30/)
+  - [`v1-32-eks-40`](https://distro.eks.amazonaws.com/releases/1-32/40/)
+  - [`v1-31-eks-47`](https://distro.eks.amazonaws.com/releases/1-31/47/)
+  - [`v1-30-eks-58`](https://distro.eks.amazonaws.com/releases/1-30/58/)
+- Bottlerocket (Kubernetes 1.33-1.36): `v1.62.0` to `v1.64.0` ([#5626](https://github.com/aws/eks-anywhere-build-tooling/pull/5626))
+- Cluster API Provider AWS Snow (CAPAS): `v0.3.1` to `v0.3.3` ([#5606](https://github.com/aws/eks-anywhere-build-tooling/pull/5606))
+
+### Fixed
+- Fix registry mirror image pulls failing on Bottlerocket nodes running Kubernetes 1.33 and above, caused by a containerd v2 regression in Bottlerocket. Resolved by the Bottlerocket `v1.64.0` bump ([#5626](https://github.com/aws/eks-anywhere-build-tooling/pull/5626))
+- Fix Tinkerbell binding address ([#10921](https://github.com/aws/eks-anywhere/pull/10921))
+- Fix feature flags not propagating to the controller during an upgrade with no version difference ([#10907](https://github.com/aws/eks-anywhere/pull/10907))
+- Fix MachineHealthCheck timeout duration overflow in v1beta2 conversion ([#10874](https://github.com/aws/eks-anywhere/pull/10874))
+- Increase Tinkerbell node deletion timeout to 30s ([#10906](https://github.com/aws/eks-anywhere/pull/10906))
+
 ## [v0.26.0](https://github.com/aws/eks-anywhere/releases/tag/v0.26.0)
 
 ### Must read before upgrade
