@@ -16,6 +16,7 @@ package helm
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -209,6 +210,11 @@ func (d *helmDriver) HelmRegistryLogin(r *releasetypes.ReleaseConfig, remoteType
 		return fmt.Errorf("unknown remoteType: %s", remoteType)
 	}
 
+	remote, err := registryHost(remote)
+	if err != nil {
+		return fmt.Errorf("getting registry host: %w", err)
+	}
+
 	login := action.NewRegistryLogin(d.cfg)
 	if err := login.Run(os.Stdout, remote, authConfig.Username, authConfig.Password); err != nil {
 		return fmt.Errorf("running the Helm registry login command: %w", err)
@@ -231,12 +237,33 @@ func (d *helmDriver) HelmRegistryLogout(r *releasetypes.ReleaseConfig, remoteTyp
 		return fmt.Errorf("unknown remoteType: %s", remoteType)
 	}
 
+	remote, err := registryHost(remote)
+	if err != nil {
+		return fmt.Errorf("getting registry host: %w", err)
+	}
+
 	logout := action.NewRegistryLogout(d.cfg)
 	if err := logout.Run(os.Stdout, remote); err != nil {
 		return fmt.Errorf("running the Helm registry logout command: %w", err)
 	}
 
 	return nil
+}
+
+func registryHost(remote string) (string, error) {
+	if !strings.Contains(remote, "://") {
+		remote = "//" + remote
+	}
+
+	parsed, err := url.Parse(remote)
+	if err != nil {
+		return "", fmt.Errorf("parsing registry %q: %w", remote, err)
+	}
+	if parsed.Host == "" {
+		return "", fmt.Errorf("registry %q has no host", remote)
+	}
+
+	return parsed.Host, nil
 }
 
 // PullHelmChart will take in a a remote Helm URI and attempt to pull down the chart if it exists.
