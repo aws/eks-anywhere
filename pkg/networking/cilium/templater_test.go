@@ -169,6 +169,21 @@ func baseTemplateValues() map[string]interface{} {
 	}
 }
 
+// mergeMaps deep-merges src into a copy-free dst (src wins), mirroring the merge
+// semantics templateValues applies to helmValues on top of the EKS-A defaults.
+func mergeMaps(dst, src map[string]interface{}) map[string]interface{} {
+	for k, v := range src {
+		if srcMap, ok := v.(map[string]interface{}); ok {
+			if dstMap, ok := dst[k].(map[string]interface{}); ok {
+				mergeMaps(dstMap, srcMap)
+				continue
+			}
+		}
+		dst[k] = v
+	}
+	return dst
+}
+
 // withPreflightConfig modifies the values for preflight configuration.
 func withPreflightConfig(values map[string]interface{}) {
 	// Remove tunnelProtocol for preflight
@@ -305,10 +320,13 @@ func TestTemplaterGenerateManifestWithHelmValues(t *testing.T) {
 	// Set helmValues in the spec
 	tt.spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.HelmValues = toJSON(customHelmValues)
 
-	tt.expectHelmClientFactoryGet("", "")
-	tt.expectHelmTemplateWith(eqMap(customHelmValues), "1.22").Return(tt.manifest, nil)
+	// helmValues are merged on top of the EKS-A defaults.
+	wantValues := mergeMaps(baseTemplateValues(), customHelmValues)
 
-	tt.Expect(tt.t.GenerateManifest(tt.ctx, tt.spec)).To(Equal(tt.manifest), "templater.GenerateManifest() should use helmValues when provided")
+	tt.expectHelmClientFactoryGet("", "")
+	tt.expectHelmTemplateWith(eqMap(wantValues), "1.22").Return(tt.manifest, nil)
+
+	tt.Expect(tt.t.GenerateManifest(tt.ctx, tt.spec)).To(Equal(tt.manifest), "templater.GenerateManifest() should merge helmValues over EKS-A defaults")
 }
 
 // TestTemplaterGenerateManifestHelmValuesPrecedence tests that helmValues overrides deprecated fields.
@@ -328,8 +346,11 @@ func TestTemplaterGenerateManifestHelmValuesPrecedence(t *testing.T) {
 	tt.spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode = v1alpha1.CiliumPolicyModeAlways
 	tt.spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.EgressMasqueradeInterfaces = "deprecated-interface"
 
+	// helmValues win over both the EKS-A defaults and the deprecated typed fields.
+	wantValues := mergeMaps(baseTemplateValues(), customHelmValues)
+
 	tt.expectHelmClientFactoryGet("", "")
-	tt.expectHelmTemplateWith(eqMap(customHelmValues), "1.22").Return(tt.manifest, nil)
+	tt.expectHelmTemplateWith(eqMap(wantValues), "1.22").Return(tt.manifest, nil)
 
 	tt.Expect(tt.t.GenerateManifest(tt.ctx, tt.spec)).To(Equal(tt.manifest), "templater.GenerateManifest() should use helmValues over deprecated fields")
 }
@@ -413,10 +434,52 @@ func TestTemplaterGenerateManifestHelmValuesComplexStructure(t *testing.T) {
 
 	tt.spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.HelmValues = toJSON(complexHelmValues)
 
+	// Complex helmValues are merged on top of the EKS-A defaults; user-set nested
+	// keys (like ipam.mode) override defaults while unset defaults are preserved.
+	wantValues := mergeMaps(baseTemplateValues(), complexHelmValues)
+
 	tt.expectHelmClientFactoryGet("", "")
-	tt.expectHelmTemplateWith(eqMap(complexHelmValues), "1.22").Return(tt.manifest, nil)
+	tt.expectHelmTemplateWith(eqMap(wantValues), "1.22").Return(tt.manifest, nil)
 
 	tt.Expect(tt.t.GenerateManifest(tt.ctx, tt.spec)).To(Equal(tt.manifest), "templater.GenerateManifest() should handle complex nested helmValues")
+}
+
+// TestTemplaterGenerateManifestHelmValuesPreservesDefaults verifies the merge fix:
+// a minimal helmValues (only the fields the user wants to change) still receives
+// the EKS-A defaults for ipam.mode, cni.chainingMode, tunnelProtocol, image, etc.
+// Regression test for the "helmValues fully replaces defaults" behavior.
+func TestTemplaterGenerateManifestHelmValuesPreservesDefaults(t *testing.T) {
+	userHelmValues := map[string]interface{}{
+		"envoy": map[string]interface{}{
+			"enabled": false, // matches EKS-A default; still exercises the merge path
+		},
+		"hubble": map[string]interface{}{
+			"enabled": true,
+			"relay": map[string]interface{}{
+				"enabled": true,
+				"image": map[string]interface{}{
+					"repository": "quay.io/cilium/hubble-relay",
+					"tag":        "v1.17.12",
+				},
+			},
+			"ui": map[string]interface{}{
+				"enabled": true,
+			},
+		},
+	}
+
+	tt := newtemplaterTest(t)
+	tt.spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.HelmValues = toJSON(userHelmValues)
+
+	// EKS-A defaults (ipam.mode: kubernetes, cni.chainingMode: portmap,
+	// tunnelProtocol: geneve, image/operator.image, tolerations, etc.) must be
+	// preserved; the user's hubble and envoy blocks are layered on top.
+	wantValues := mergeMaps(baseTemplateValues(), userHelmValues)
+
+	tt.expectHelmClientFactoryGet("", "")
+	tt.expectHelmTemplateWith(eqMap(wantValues), "1.22").Return(tt.manifest, nil)
+
+	tt.Expect(tt.t.GenerateManifest(tt.ctx, tt.spec)).To(Equal(tt.manifest), "templater.GenerateManifest() should preserve EKS-A defaults when helmValues is minimal")
 }
 
 func TestTemplaterGenerateManifestCNIExclusiveTrue(t *testing.T) {
