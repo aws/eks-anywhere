@@ -5621,6 +5621,22 @@ func TestVSphereKubernetes130BottlerocketTo131Upgrade(t *testing.T) {
 	)
 }
 
+func TestVSphereKubernetes130BottlerocketTo131ThreeControlPlaneUpgrade(t *testing.T) {
+	provider := framework.NewVSphere(t, framework.WithBottleRocket130())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
+	)
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube131,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube131)),
+		provider.WithProviderUpgrade(provider.Bottlerocket131Template()),
+	)
+}
+
 func TestVSphereKubernetes131BottlerocketTo132Upgrade(t *testing.T) {
 	provider := framework.NewVSphere(t, framework.WithBottleRocket131())
 	test := framework.NewClusterE2ETest(
