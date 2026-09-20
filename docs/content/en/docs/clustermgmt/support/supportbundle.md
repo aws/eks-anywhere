@@ -54,10 +54,19 @@ Flags:
 ```
 
 ### Collecting and analyzing a bundle
+
 You only need to run a single command to generate a support bundle, collect information and analyze the output:
 `eksctl anywhere generate support-bundle -f my-cluster.yaml`
 
-This command will collect the information from your cluster
+If you have an airgapped Amazon EKS Anywhere installation with an authenticated private registry, you will need 
+to export the following registry authentication environment variables before generating the support bundle:
+
+```
+export REGISTRY_USERNAME=<username>
+export REGISTRY_PASSWORD=<password>
+```
+
+The `generate support-bundle` command will collect the information from your cluster
 and run an analysis of the collected information.
 
 The collected information will be saved to your local disk in an archive which can be used for 
