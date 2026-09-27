@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aws/eks-anywhere/pkg/retrier"
 	"golang.org/x/net/http/httpproxy"
 )
 
@@ -24,6 +25,7 @@ type Reader struct {
 	embedFS    embed.FS
 	httpClient *http.Client
 	userAgent  string
+	retrier    *retrier.Retrier
 }
 
 type ReaderOpt func(*Reader)
@@ -45,6 +47,14 @@ func WithUserAgent(userAgent string) ReaderOpt {
 // version should generally be a semver, but when not available, any string is valid.
 func WithEKSAUserAgent(eksAComponent, version string) ReaderOpt {
 	return WithUserAgent(eksaUserAgent(eksAComponent, version))
+}
+
+// WithRetrier allows to use a custom retrier for the http GET requests
+// performed when reading a file from a url. This is only for testing.
+func WithRetrier(retrier *retrier.Retrier) ReaderOpt {
+	return func(r *Reader) {
+		r.retrier = retrier
+	}
 }
 
 // WithRootCACerts configures the HTTP client's trusted CAs. Note that this will overwrite
@@ -99,6 +109,7 @@ func NewReader(opts ...ReaderOpt) *Reader {
 		embedFS:    embedFS,
 		httpClient: client,
 		userAgent:  eksaUserAgent("unknown", "no-version"),
+		retrier:    retrier.NewWithMaxRetries(5, 5*time.Second),
 	}
 
 	for _, o := range opts {
@@ -131,13 +142,18 @@ func (r *Reader) readHttpFile(uri string) ([]byte, error) {
 	}
 
 	request.Header.Set("User-Agent", r.userAgent)
-	resp, err := r.httpClient.Do(request)
-	if err != nil {
-		return nil, fmt.Errorf("failed reading file from url [%s]: %v", uri, err)
-	}
-	defer resp.Body.Close()
 
-	data, err := io.ReadAll(resp.Body)
+	var data []byte
+	err = r.retrier.Retry(func() error {
+		resp, err := r.httpClient.Do(request)
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
+
+		data, err = io.ReadAll(resp.Body)
+		return err
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed reading file from url [%s]: %v", uri, err)
 	}
