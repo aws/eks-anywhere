@@ -31,6 +31,7 @@ import (
 	"github.com/pkg/errors"
 	"sigs.k8s.io/yaml"
 
+	eksasemver "github.com/aws/eks-anywhere/pkg/semver"
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	assettypes "github.com/aws/eks-anywhere/release/cli/pkg/assets/types"
 	"github.com/aws/eks-anywhere/release/cli/pkg/aws/ecr"
@@ -136,6 +137,7 @@ func GetSourceImageURI(r *releasetypes.ReleaseConfig, name, repoName string, tag
 	var sourceImageUri string
 	var latestTag string
 	sourcedFromBranch := r.BuildRepoBranchName
+	sourceTagOptions := sourceImageTagOptions(tagOptions, imageTagConfiguration)
 	sourceContainerRegistry := r.SourceContainerRegistry
 	if packagesutils.NeedsPackagesAccountArtifacts(r) && (repoName == "eks-anywhere-packages" || repoName == "ecr-token-refresher" || repoName == "credential-provider-package") {
 		sourceContainerRegistry = r.PackagesSourceContainerRegistry
@@ -143,7 +145,7 @@ func GetSourceImageURI(r *releasetypes.ReleaseConfig, name, repoName string, tag
 	if r.DevRelease || r.ReleaseEnvironment == "development" {
 		latestTag = artifactutils.GetLatestUploadDestination(r.BuildRepoBranchName)
 		if imageTagConfiguration.NonProdSourceImageTagFormat != "" {
-			sourceImageTagPrefix := generateFormattedTagPrefix(imageTagConfiguration.NonProdSourceImageTagFormat, tagOptions)
+			sourceImageTagPrefix := generateFormattedTagPrefix(imageTagConfiguration.NonProdSourceImageTagFormat, sourceTagOptions)
 			sourceImageUri = fmt.Sprintf("%s/%s:%s-%s",
 				sourceContainerRegistry,
 				repoName,
@@ -176,16 +178,17 @@ func GetSourceImageURI(r *releasetypes.ReleaseConfig, name, repoName string, tag
 					if strings.Contains(name, "bottlerocket-bootstrap") {
 						gitTagFromMain = "non-existent"
 					} else {
-						gitTagPath := tagOptions["projectPath"]
+						gitTagPath := sourceTagOptions["projectPath"]
 						if hasSeparateTagPerReleaseBranch {
-							gitTagPath = filepath.Join(tagOptions["projectPath"], tagOptions["eksDReleaseChannel"])
+							gitTagPath = filepath.Join(sourceTagOptions["projectPath"], sourceTagOptions["eksDReleaseChannel"])
 						}
 						gitTagFromMain, err = filereader.ReadGitTag(gitTagPath, r.BuildRepoSource, "main")
 						if err != nil {
 							return "", "", errors.Cause(err)
 						}
 					}
-					sourceImageUri = strings.NewReplacer(r.BuildRepoBranchName, "latest", tagOptions["gitTag"], gitTagFromMain).Replace(sourceImageUri)
+					mainTagOptions := sourceImageTagOptions(map[string]string{"gitTag": gitTagFromMain}, imageTagConfiguration)
+					sourceImageUri = strings.NewReplacer(r.BuildRepoBranchName, "latest", sourceTagOptions["gitTag"], mainTagOptions["gitTag"]).Replace(sourceImageUri)
 					sourcedFromBranch = "main"
 				} else {
 					return "", "", errors.Cause(err)
@@ -194,7 +197,7 @@ func GetSourceImageURI(r *releasetypes.ReleaseConfig, name, repoName string, tag
 		}
 	} else if r.ReleaseEnvironment == "production" {
 		if imageTagConfiguration.ProdSourceImageTagFormat != "" {
-			sourceImageTagPrefix := generateFormattedTagPrefix(imageTagConfiguration.ProdSourceImageTagFormat, tagOptions)
+			sourceImageTagPrefix := generateFormattedTagPrefix(imageTagConfiguration.ProdSourceImageTagFormat, sourceTagOptions)
 			sourceImageUri = fmt.Sprintf("%s/%s:%s-eks-a-%d",
 				r.SourceContainerRegistry,
 				repoName,
@@ -205,7 +208,7 @@ func GetSourceImageURI(r *releasetypes.ReleaseConfig, name, repoName string, tag
 			sourceImageUri = fmt.Sprintf("%s/%s:%s-eks-a-%d",
 				r.SourceContainerRegistry,
 				repoName,
-				tagOptions["gitTag"],
+				sourceTagOptions["gitTag"],
 				r.BundleNumber,
 			)
 		}
@@ -215,6 +218,27 @@ func GetSourceImageURI(r *releasetypes.ReleaseConfig, name, repoName string, tag
 	}
 
 	return sourceImageUri, sourcedFromBranch, nil
+}
+
+func sourceImageTagOptions(tagOptions map[string]string, config assettypes.ImageTagConfiguration) map[string]string {
+	if !config.UseHelmCompatibleSourceTag {
+		return tagOptions
+	}
+
+	sourceTagOptions := make(map[string]string, len(tagOptions))
+	for key, value := range tagOptions {
+		sourceTagOptions[key] = value
+	}
+	sourceTagOptions["gitTag"] = helmCompatibleGitTag(sourceTagOptions["gitTag"])
+	return sourceTagOptions
+}
+
+func helmCompatibleGitTag(gitTag string) string {
+	normalizedTag := strings.TrimPrefix(gitTag, "v")
+	if _, err := eksasemver.New(normalizedTag); err == nil {
+		return normalizedTag
+	}
+	return "0.0.1-" + gitTag
 }
 
 func GetReleaseImageURI(r *releasetypes.ReleaseConfig, name, repoName string, tagOptions map[string]string, imageTagConfiguration assettypes.ImageTagConfiguration, trimVersionSignifier, hasSeparateTagPerReleaseBranch bool) (string, error) {

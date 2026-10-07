@@ -839,6 +839,7 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 				TrimVersionSignifier: true,
 				ImageTagConfiguration: assettypes.ImageTagConfiguration{
 					NonProdSourceImageTagFormat: "<gitTag>",
+					UseHelmCompatibleSourceTag:  true,
 				},
 			},
 		},
