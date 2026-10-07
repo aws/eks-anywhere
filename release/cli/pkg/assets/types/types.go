@@ -30,8 +30,8 @@ type ImageTagConfiguration struct {
 	NonProdSourceImageTagFormat string
 	ProdSourceImageTagFormat    string
 	ReleaseImageTagFormat       string
-	// UseHelmCompatibleSourceTag wraps non-SemVer Git tags for Helm lookup.
-	UseHelmCompatibleSourceTag bool
+	// UseHelmCompatibleTag wraps non-SemVer Git tags for Helm lookup and release.
+	UseHelmCompatibleTag bool
 }
 
 type Image struct {

@@ -706,7 +706,7 @@ spec:
           description: Helm chart for tinkerbell-crds
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-crds
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-crds:6e7d2775b7b9207d148352ba1582ee0c7cbd2f2e-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-crds:0.0.1-6e7d2775b7b9207d148352ba1582ee0c7cbd2f2e-eks-a-v0.0.0-dev-build.1
       version: c3ee56df719e83851e015fa3cac157324fddfbf0+abcdef1
     upgrader:
       upgrader:
@@ -1460,7 +1460,7 @@ spec:
           description: Helm chart for tinkerbell-crds
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-crds
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-crds:6e7d2775b7b9207d148352ba1582ee0c7cbd2f2e-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-crds:0.0.1-6e7d2775b7b9207d148352ba1582ee0c7cbd2f2e-eks-a-v0.0.0-dev-build.1
       version: c3ee56df719e83851e015fa3cac157324fddfbf0+abcdef1
     upgrader:
       upgrader:
@@ -2214,7 +2214,7 @@ spec:
           description: Helm chart for tinkerbell-crds
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-crds
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-crds:6e7d2775b7b9207d148352ba1582ee0c7cbd2f2e-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-crds:0.0.1-6e7d2775b7b9207d148352ba1582ee0c7cbd2f2e-eks-a-v0.0.0-dev-build.1
       version: c3ee56df719e83851e015fa3cac157324fddfbf0+abcdef1
     upgrader:
       upgrader:
@@ -2968,7 +2968,7 @@ spec:
           description: Helm chart for tinkerbell-crds
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-crds
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-crds:6e7d2775b7b9207d148352ba1582ee0c7cbd2f2e-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-crds:0.0.1-6e7d2775b7b9207d148352ba1582ee0c7cbd2f2e-eks-a-v0.0.0-dev-build.1
       version: c3ee56df719e83851e015fa3cac157324fddfbf0+abcdef1
     upgrader:
       upgrader:
@@ -3722,7 +3722,7 @@ spec:
           description: Helm chart for tinkerbell-crds
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-crds
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-crds:6e7d2775b7b9207d148352ba1582ee0c7cbd2f2e-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-crds:0.0.1-6e7d2775b7b9207d148352ba1582ee0c7cbd2f2e-eks-a-v0.0.0-dev-build.1
       version: c3ee56df719e83851e015fa3cac157324fddfbf0+abcdef1
     upgrader:
       upgrader:
@@ -4476,7 +4476,7 @@ spec:
           description: Helm chart for tinkerbell-crds
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-crds
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-crds:6e7d2775b7b9207d148352ba1582ee0c7cbd2f2e-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-crds:0.0.1-6e7d2775b7b9207d148352ba1582ee0c7cbd2f2e-eks-a-v0.0.0-dev-build.1
       version: c3ee56df719e83851e015fa3cac157324fddfbf0+abcdef1
     upgrader:
       upgrader:
@@ -5230,7 +5230,7 @@ spec:
           description: Helm chart for tinkerbell-crds
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-crds
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-crds:6e7d2775b7b9207d148352ba1582ee0c7cbd2f2e-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-crds:0.0.1-6e7d2775b7b9207d148352ba1582ee0c7cbd2f2e-eks-a-v0.0.0-dev-build.1
       version: c3ee56df719e83851e015fa3cac157324fddfbf0+abcdef1
     upgrader:
       upgrader:

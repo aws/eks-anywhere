@@ -49,44 +49,56 @@ func TestHelmCompatibleGitTag(t *testing.T) {
 	}
 }
 
-func TestGetSourceImageURIUsesHelmCompatibleTag(t *testing.T) {
+func TestHelmArtifactTagFormats(t *testing.T) {
 	releaseConfig := &releasetypes.ReleaseConfig{
-		BuildRepoBranchName:     "main",
-		SourceContainerRegistry: "source.example",
-		ReleaseEnvironment:      "development",
-		DevRelease:              true,
-		DryRun:                  true,
-		BuildRepoSource:         "build-tooling",
+		BuildRepoBranchName:      "main",
+		SourceContainerRegistry:  "source.example",
+		ReleaseContainerRegistry: "release.example",
+		ReleaseEnvironment:       "development",
+		DevRelease:               true,
+		Weekly:                   true,
+		DryRun:                   true,
+		BuildRepoSource:          "build-tooling",
+		DevReleaseUriVersion:     "v0.27.0-dev-build.20",
 	}
 	tagConfig := assettypes.ImageTagConfiguration{
 		NonProdSourceImageTagFormat: "<gitTag>",
-		UseHelmCompatibleSourceTag:  true,
+		UseHelmCompatibleTag:        true,
 	}
 
 	tests := map[string]struct {
-		gitTag string
-		want   string
+		gitTag      string
+		wantSource  string
+		wantRelease string
 	}{
 		"release tag": {
-			gitTag: "v0.26.0",
-			want:   "source.example/tinkerbell/tinkerbell-crds:0.26.0-latest-helm",
+			gitTag:      "v0.26.0",
+			wantSource:  "source.example/tinkerbell/tinkerbell-crds:0.26.0-latest-helm",
+			wantRelease: "release.example/tinkerbell/tinkerbell-crds:0.26.0-eks-a-v0.27.0-dev-build.20",
+		},
+		"prerelease tag": {
+			gitTag:      "v0.26.0-rc.1",
+			wantSource:  "source.example/tinkerbell/tinkerbell-crds:0.26.0-rc.1-latest-helm",
+			wantRelease: "release.example/tinkerbell/tinkerbell-crds:0.26.0-rc.1-eks-a-v0.27.0-dev-build.20",
 		},
 		"commit SHA": {
-			gitTag: "0123456789abcdef",
-			want:   "source.example/tinkerbell/tinkerbell-crds:0.0.1-0123456789abcdef-latest-helm",
+			gitTag:      "0123456789abcdef",
+			wantSource:  "source.example/tinkerbell/tinkerbell-crds:0.0.1-0123456789abcdef-latest-helm",
+			wantRelease: "release.example/tinkerbell/tinkerbell-crds:0.0.1-0123456789abcdef-eks-a-v0.27.0-dev-build.20",
 		},
 	}
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			tagOptions := map[string]string{
+				"gitTag":      test.gitTag,
+				"projectPath": "projects/tinkerbell/tinkerbell-crds",
+			}
 			got, branch, err := GetSourceImageURI(
 				releaseConfig,
 				"tinkerbell-crds-helm",
 				"tinkerbell/tinkerbell-crds",
-				map[string]string{
-					"gitTag":      test.gitTag,
-					"projectPath": "projects/tinkerbell/tinkerbell-crds",
-				},
+				tagOptions,
 				tagConfig,
 				true,
 				false,
@@ -94,11 +106,18 @@ func TestGetSourceImageURIUsesHelmCompatibleTag(t *testing.T) {
 			if err != nil {
 				t.Fatalf("GetSourceImageURI() error = %v", err)
 			}
-			if got != test.want {
-				t.Fatalf("GetSourceImageURI() = %q, want %q", got, test.want)
+			if got != test.wantSource {
+				t.Fatalf("GetSourceImageURI() = %q, want %q", got, test.wantSource)
 			}
 			if branch != "main" {
 				t.Fatalf("GetSourceImageURI() branch = %q, want main", branch)
+			}
+			gotRelease, err := GetReleaseImageURI(releaseConfig, "tinkerbell-crds-helm", "tinkerbell/tinkerbell-crds", tagOptions, tagConfig, true, false)
+			if err != nil {
+				t.Fatalf("GetReleaseImageURI() error = %v", err)
+			}
+			if gotRelease != test.wantRelease {
+				t.Fatalf("GetReleaseImageURI() = %q, want %q", gotRelease, test.wantRelease)
 			}
 		})
 	}
