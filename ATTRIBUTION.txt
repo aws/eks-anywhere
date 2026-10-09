@@ -41,7 +41,7 @@ https://github.com/aws/aws-sdk-go-v2/service/ssooidc
 ** github.com/aws/aws-sdk-go-v2/service/sts; version v1.28.4 --
 https://github.com/aws/aws-sdk-go-v2/service/sts
 
-** github.com/aws/eks-anywhere; version b74ac24eea7643ef6b424df710102555247d3dea --
+** github.com/aws/eks-anywhere; version ba4c7be66f55de1b5e309738fa8096a9f5dd8043 --
 https://github.com/aws/eks-anywhere
 
 ** github.com/aws/eks-distro-build-tooling/release/api/v1alpha1; version v0.0.0-20211103003257-a7e2379eae5e --
@@ -62,10 +62,10 @@ https://github.com/docker/cli
 ** github.com/go-git/go-billy/v5; version v5.9.0 --
 https://github.com/go-git/go-billy/v5
 
-** github.com/go-git/go-git/v5; version v5.19.1 --
+** github.com/go-git/go-git/v5; version v5.19.2 --
 https://github.com/go-git/go-git/v5
 
-** github.com/go-logr/logr; version v1.4.3 --
+** github.com/go-logr/logr; version v1.4.4 --
 https://github.com/go-logr/logr
 
 ** github.com/go-logr/zapr; version v1.3.0 --
@@ -140,10 +140,10 @@ https://github.com/vmware/govmomi
 ** github.com/xanzy/ssh-agent; version v0.3.3 --
 https://github.com/xanzy/ssh-agent
 
-** go.opentelemetry.io/otel; version v1.43.0 --
+** go.opentelemetry.io/otel; version v1.45.0 --
 https://github.com/open-telemetry/opentelemetry-go
 
-** go.opentelemetry.io/otel/trace; version v1.43.0 --
+** go.opentelemetry.io/otel/trace; version v1.45.0 --
 https://github.com/open-telemetry/opentelemetry-go
 
 ** go.uber.org/mock/gomock; version v0.6.0 --
@@ -1262,16 +1262,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ** golang.org/go; version go1.26.5 --
 https://github.com/golang/go
 
-** golang.org/x/crypto; version v0.53.0 --
+** golang.org/x/crypto; version v0.56.0 --
 https://go.googlesource.com/crypto
 
 ** golang.org/x/exp; version v0.0.0-20260410095643-746e56fc9e2f --
 https://go.googlesource.com/exp
 
-** golang.org/x/mod/semver; version v0.37.0 --
+** golang.org/x/mod/semver; version v0.38.0 --
 https://go.googlesource.com/mod
 
-** golang.org/x/net; version v0.55.0 --
+** golang.org/x/net; version v0.58.0 --
 https://go.googlesource.com/net
 
 ** golang.org/x/oauth2; version v0.36.0 --
@@ -1280,13 +1280,13 @@ https://go.googlesource.com/oauth2
 ** golang.org/x/sync; version v0.22.0 --
 https://go.googlesource.com/sync
 
-** golang.org/x/sys; version v0.46.0 --
+** golang.org/x/sys; version v0.47.0 --
 https://go.googlesource.com/sys
 
-** golang.org/x/term; version v0.44.0 --
+** golang.org/x/term; version v0.45.0 --
 https://go.googlesource.com/term
 
-** golang.org/x/text; version v0.39.0 --
+** golang.org/x/text; version v0.41.0 --
 https://go.googlesource.com/text
 
 ** golang.org/x/time/rate; version v0.14.0 --
