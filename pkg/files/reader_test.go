@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -18,6 +19,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/files"
+	"github.com/aws/eks-anywhere/pkg/retrier"
 )
 
 //go:embed testdata
@@ -93,6 +95,69 @@ func TestReaderReadFileHTTPSSuccess(t *testing.T) {
 	got, err := r.ReadFile(uri)
 	g.Expect(err).To(BeNil())
 	test.AssertContentToFile(t, string(got), filePath)
+}
+
+func TestReaderReadFileHTTPSRetriesOnTransientError(t *testing.T) {
+	g := NewWithT(t)
+	filePath := "testdata/file.yaml"
+
+	var attempts int32
+	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if atomic.AddInt32(&attempts, 1) <= 2 {
+			// Simulate a transient network error by closing the connection
+			// before a response is sent back to the client.
+			hj, ok := w.(http.Hijacker)
+			g.Expect(ok).To(BeTrue())
+			conn, _, err := hj.Hijack()
+			g.Expect(err).To(BeNil())
+			conn.Close()
+			return
+		}
+
+		fileContent, err := os.ReadFile(filePath)
+		g.Expect(err).To(BeNil())
+		if _, err := w.Write(fileContent); err != nil {
+			t.Errorf("Failed writing response to http request: %s", err)
+		}
+	}))
+	t.Cleanup(func() { server.Close() })
+
+	uri := server.URL + "/" + filePath
+
+	r := files.NewReader(
+		files.WithRootCACerts(serverCerts(g, server)),
+		files.WithRetrier(retrier.NewWithMaxRetries(5, 0)),
+	)
+	got, err := r.ReadFile(uri)
+	g.Expect(err).To(BeNil())
+	test.AssertContentToFile(t, string(got), filePath)
+	g.Expect(atomic.LoadInt32(&attempts)).To(Equal(int32(3)))
+}
+
+func TestReaderReadFileHTTPSFailsAfterExhaustingRetries(t *testing.T) {
+	g := NewWithT(t)
+	filePath := "testdata/file.yaml"
+
+	var attempts int32
+	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		atomic.AddInt32(&attempts, 1)
+		hj, ok := w.(http.Hijacker)
+		g.Expect(ok).To(BeTrue())
+		conn, _, err := hj.Hijack()
+		g.Expect(err).To(BeNil())
+		conn.Close()
+	}))
+	t.Cleanup(func() { server.Close() })
+
+	uri := server.URL + "/" + filePath
+
+	r := files.NewReader(
+		files.WithRootCACerts(serverCerts(g, server)),
+		files.WithRetrier(retrier.NewWithMaxRetries(3, 0)),
+	)
+	_, err := r.ReadFile(uri)
+	g.Expect(err).NotTo(BeNil())
+	g.Expect(atomic.LoadInt32(&attempts)).To(Equal(int32(3)))
 }
 
 func TestReaderReadFileHTTPSProxySuccess(t *testing.T) {
