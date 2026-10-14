@@ -134,8 +134,8 @@ func validateK8sVersionInOSImageURLs(spec *ClusterSpec) error {
 		kvs := spec.Cluster.KubernetesVersions()
 		for _, v := range kvs {
 			if !containsK8sVersion(spec.DatacenterConfig.Spec.OSImageURL, string(v)) {
-				return fmt.Errorf("missing kube version from OSImageURL: url=%v, version=%v",
-					spec.DatacenterConfig.Spec.OSImageURL, v)
+				return fmt.Errorf("missing kube version from OSImageURL, the image url must include %v: url=%v, version=%v",
+					permutations(string(v), []string{"-", "_", ""}), spec.DatacenterConfig.Spec.OSImageURL, v)
 			}
 		}
 	} else {
@@ -152,8 +152,8 @@ func validateK8sVersionInOSImageURLs(spec *ClusterSpec) error {
 		}
 
 		if !containsK8sVersion(spec.ControlPlaneMachineConfig().Spec.OSImageURL, string(spec.Cluster.Spec.KubernetesVersion)) {
-			return fmt.Errorf("missing kube version from control plane machine config OSImageURL: url=%v, version=%v",
-				spec.ControlPlaneMachineConfig().Spec.OSImageURL, spec.Cluster.Spec.KubernetesVersion)
+			return fmt.Errorf("missing kube version from control plane machine config OSImageURL, the image url must include %v: url=%v, version=%v",
+				permutations(string(spec.Cluster.Spec.KubernetesVersion), []string{"-", "_", ""}), spec.ControlPlaneMachineConfig().Spec.OSImageURL, spec.Cluster.Spec.KubernetesVersion)
 		}
 
 		for _, wng := range spec.WorkerNodeGroupConfigurations() {
@@ -164,12 +164,80 @@ func validateK8sVersionInOSImageURLs(spec *ClusterSpec) error {
 			}
 
 			if !containsK8sVersion(url, string(version)) {
-				return fmt.Errorf("missing kube version from worker node group machine config OSImageURL: url=%v, version=%v",
-					url, version)
+				return fmt.Errorf("missing kube version from worker node group machine config OSImageURL, the image url must include %v: url=%v, version=%v",
+					permutations(string(version), []string{"-", "_", ""}), url, version)
 			}
 		}
 	}
 	return nil
+}
+
+// permutations takes a version in dot format and
+// returns a human readable string with the permutations of the version
+// using the passed in separators.
+//
+// For example, when v = 1.29 and separators = []string{"-", "_", ""}
+// the result will be "1.29, 1-29, 1_29, or 129".
+func permutations(v string, separators []string) string {
+	result := []string{v}
+	split := strings.Split(v, ".")
+	if len(split) == 1 {
+		return v
+	}
+
+	seps := remove(".", deduplicate(separators))
+	for idx, sep := range seps {
+		var elem string
+		for idx, s := range split {
+			if idx != len(split)-1 {
+				elem = elem + s + sep
+			} else {
+				elem = elem + s
+			}
+		}
+
+		if idx == len(seps)-1 {
+			result = append(result, "or")
+		} else if idx != len(seps)-2 {
+			elem = elem + ","
+		}
+		result = append(result, elem)
+	}
+
+	if len(seps) > 1 {
+		result[0] = result[0] + ","
+	}
+
+	return strings.Join(result, " ")
+}
+
+// deduplicate returns a new slice with duplicates values removed.
+func deduplicate(s []string) []string {
+	if len(s) <= 1 {
+		return s
+	}
+	result := []string{}
+	seen := make(map[string]struct{})
+	for _, val := range s {
+		val := strings.ToLower(val)
+		if _, ok := seen[val]; !ok {
+			result = append(result, val)
+			seen[val] = struct{}{}
+		}
+	}
+	return result
+}
+
+// removes all values equal to val from in.
+func remove(val string, in []string) []string {
+	result := []string{}
+	for _, i := range in {
+		if i != val {
+			result = append(result, i)
+		}
+	}
+
+	return result
 }
 
 func defaultBottlerocketOSImageURLs(spec *ClusterSpec) {
