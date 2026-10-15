@@ -703,7 +703,7 @@ method=ignore
 	}
 }
 
-func TestDefaultActionsIPv6SLAAC(t *testing.T) {
+func defaultActionsIPv6SLAAC() []tinkerbell.Action {
 	var actions []tinkerbell.Action
 	for _, opt := range DefaultActions(
 		&Cluster{},
@@ -714,15 +714,13 @@ func TestDefaultActionsIPv6SLAAC(t *testing.T) {
 	) {
 		opt(&actions)
 	}
+	return actions
+}
 
+func TestDefaultActionsIPv6SLAAC(t *testing.T) {
 	var netplan, metadata string
-	var streamNetwork string
-	for _, action := range actions {
+	for _, action := range defaultActionsIPv6SLAAC() {
 		switch action.Name {
-		case "stream image to disk":
-			if action.Namespaces != nil {
-				streamNetwork = action.Namespaces.Network
-			}
 		case "write netplan config":
 			netplan = action.Environment["CONTENTS"]
 		case "add cloud-init config":
@@ -733,8 +731,16 @@ func TestDefaultActionsIPv6SLAAC(t *testing.T) {
 	if !strings.Contains(netplan, "accept-ra: true") || strings.Contains(netplan, ".DHCP.IP.") {
 		t.Fatalf("expected addressless SLAAC netplan, got:\n%s", netplan)
 	}
-	if streamNetwork != "host" {
-		t.Fatalf("expected image download to use host networking, got %q", streamNetwork)
+	if !strings.Contains(metadata, "http://[2001:db8::10]:7172/tootles/instanceID/") ||
+		!strings.Contains(metadata, "{{ (index .Hardware.Interfaces 0).DHCP.MAC }}") {
+		t.Fatalf("expected bracketed instance-ID metadata URL, got:\n%s", metadata)
+	}
+}
+
+func TestDefaultActionsIPv6Namespaces(t *testing.T) {
+	actions := defaultActionsIPv6SLAAC()
+	if actions[0].Namespaces == nil || actions[0].Namespaces.Network != "host" {
+		t.Fatalf("expected image download to use host networking, got %+v", actions[0].Namespaces)
 	}
 	template := TinkerbellTemplateConfig{
 		Spec: TinkerbellTemplateConfigSpec{
@@ -763,10 +769,6 @@ func TestDefaultActionsIPv6SLAAC(t *testing.T) {
 	streamAction := workflow.Tasks[0].Actions[0]
 	if streamAction.Network != "" || streamAction.Namespaces.Network != "host" {
 		t.Fatalf("expected namespaces.network: host in the Tinkerbell template, got:\n%s", rendered)
-	}
-	if !strings.Contains(metadata, "http://[2001:db8::10]:7172/tootles/instanceID/") ||
-		!strings.Contains(metadata, "{{ (index .Hardware.Interfaces 0).DHCP.MAC }}") {
-		t.Fatalf("expected bracketed instance-ID metadata URL, got:\n%s", metadata)
 	}
 }
 

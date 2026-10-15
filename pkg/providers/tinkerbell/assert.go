@@ -34,48 +34,47 @@ func AssertDatacenterConfigValid(spec *ClusterSpec) error {
 
 // AssertIPFamilyValid ensures all Tinkerbell cluster addresses use one IP family.
 func AssertIPFamilyValid(spec *ClusterSpec) error {
+	ipv6, err := validateClusterAddressFamily(spec)
+	if err != nil {
+		return err
+	}
+	if !ipv6 && spec.DatacenterConfig.Spec.DHCPv6Config != nil {
+		return errors.New("dhcpv6Config is only supported for IPv6 clusters")
+	}
+	if ipv6 && !spec.DatacenterConfig.Spec.IsoBoot && spec.DatacenterConfig.Spec.DHCPv6Config == nil {
+		return errors.New("dhcpv6Config.derivedAddressPool is required for IPv6 netboot")
+	}
+	return validateCiliumRoutingFamily(spec, ipv6)
+}
+
+func validateClusterAddressFamily(spec *ClusterSpec) (bool, error) {
 	tinkerbellIP, err := netip.ParseAddr(spec.DatacenterConfig.Spec.TinkerbellIP)
 	if err != nil {
-		return fmt.Errorf("invalid tinkerbellIP %q: %w", spec.DatacenterConfig.Spec.TinkerbellIP, err)
+		return false, fmt.Errorf("invalid tinkerbellIP %q: %w", spec.DatacenterConfig.Spec.TinkerbellIP, err)
 	}
 
 	controlPlaneIP, err := netip.ParseAddr(spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host)
 	if err != nil {
-		return fmt.Errorf("invalid control plane endpoint %q: %w", spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host, err)
+		return false, fmt.Errorf("invalid control plane endpoint %q: %w", spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host, err)
 	}
 
 	podPrefix, err := netip.ParsePrefix(spec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks[0])
 	if err != nil {
-		return fmt.Errorf("invalid pod CIDR %q: %w", spec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks[0], err)
+		return false, fmt.Errorf("invalid pod CIDR %q: %w", spec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks[0], err)
 	}
 
 	servicePrefix, err := netip.ParsePrefix(spec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks[0])
 	if err != nil {
-		return fmt.Errorf("invalid service CIDR %q: %w", spec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks[0], err)
+		return false, fmt.Errorf("invalid service CIDR %q: %w", spec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks[0], err)
 	}
 
-	ipv6 := tinkerbellIP.Is6() && !tinkerbellIP.Is4In6()
+	ipv6 := addressIsIPv6(tinkerbellIP)
 	if addressIsIPv6(controlPlaneIP) != ipv6 ||
 		addressIsIPv6(podPrefix.Addr()) != ipv6 ||
 		addressIsIPv6(servicePrefix.Addr()) != ipv6 {
-		return errors.New("tinkerbellIP, control plane endpoint, pod CIDR, and service CIDR must use the same IP family")
+		return false, errors.New("tinkerbellIP, control plane endpoint, pod CIDR, and service CIDR must use the same IP family")
 	}
-
-	if !ipv6 {
-		if spec.DatacenterConfig.Spec.DHCPv6Config != nil {
-			return errors.New("dhcpv6Config is only supported for IPv6 clusters")
-		}
-		if err := validateCiliumRoutingFamily(spec, false); err != nil {
-			return err
-		}
-		return nil
-	}
-
-	if !spec.DatacenterConfig.Spec.IsoBoot && spec.DatacenterConfig.Spec.DHCPv6Config == nil {
-		return errors.New("dhcpv6Config.derivedAddressPool is required for IPv6 netboot")
-	}
-
-	return validateCiliumRoutingFamily(spec, true)
+	return ipv6, nil
 }
 
 func addressIsIPv6(address netip.Addr) bool {

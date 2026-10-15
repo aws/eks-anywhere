@@ -81,30 +81,38 @@ func RestoreTinkerbellHardwareAddresses(ctx context.Context, kubeconfig string, 
 		if !found {
 			return fmt.Errorf("moved Hardware %s not found", key)
 		}
-		addresses, err := hardwareAddresses(hw)
-		if err != nil {
+		if err := restoreHardwareAddresses(ctx, kubeconfig, snapshot, hw, client); err != nil {
 			return err
 		}
-		if len(addresses) != 0 {
-			continue
-		}
-		macs, err := hardwareMACs(hw)
-		if err != nil {
-			return err
-		}
-		if !reflect.DeepEqual(macs, snapshot.MACs) {
-			return fmt.Errorf("Hardware %s MAC addresses changed during move", key)
-		}
-		patch, err := json.Marshal(map[string]interface{}{
-			"metadata": map[string]string{"resourceVersion": hw.GetResourceVersion()},
-			"status":   map[string]interface{}{"addresses": snapshot.Addresses},
-		})
-		if err != nil {
-			return fmt.Errorf("encoding Hardware %s address status: %w", key, err)
-		}
-		if err := client.MergePatchResourceStatus(ctx, tinkerbellHardwareResource, snapshot.Name, string(patch), kubeconfig, snapshot.Namespace); err != nil {
-			return fmt.Errorf("restoring Hardware %s addresses: %w", key, err)
-		}
+	}
+	return nil
+}
+
+func restoreHardwareAddresses(ctx context.Context, kubeconfig string, snapshot HardwareAddressSnapshot, hw unstructured.Unstructured, client HardwareAddressClient) error {
+	addresses, err := hardwareAddresses(hw)
+	if err != nil {
+		return err
+	}
+	if len(addresses) != 0 {
+		return nil
+	}
+	macs, err := hardwareMACs(hw)
+	if err != nil {
+		return err
+	}
+	key := snapshot.Namespace + "/" + snapshot.Name
+	if !reflect.DeepEqual(macs, snapshot.MACs) {
+		return fmt.Errorf("Hardware %s MAC addresses changed during move", key)
+	}
+	patch, err := json.Marshal(map[string]interface{}{
+		"metadata": map[string]string{"resourceVersion": hw.GetResourceVersion()},
+		"status":   map[string]interface{}{"addresses": snapshot.Addresses},
+	})
+	if err != nil {
+		return fmt.Errorf("encoding Hardware %s address status: %w", key, err)
+	}
+	if err := client.MergePatchResourceStatus(ctx, tinkerbellHardwareResource, snapshot.Name, string(patch), kubeconfig, snapshot.Namespace); err != nil {
+		return fmt.Errorf("restoring Hardware %s addresses: %w", key, err)
 	}
 	return nil
 }

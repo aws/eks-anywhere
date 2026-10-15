@@ -64,115 +64,130 @@ func StaticMachineAssertions() MachineAssertion {
 
 func staticMachineAssertions(allowAddressless bool) MachineAssertion {
 	return func(m Machine) error {
-		addressless := m.IPAddress == "" && m.Gateway == "" && m.Netmask == ""
-		if !addressless {
-			if m.IPAddress == "" {
-				return newEmptyFieldError("IPAddress")
-			}
-
-			if err := networkutils.ValidateIP(m.IPAddress); err != nil {
-				return fmt.Errorf("IPAddress: %v", err)
-			}
-
-			if m.Gateway == "" {
-				return newEmptyFieldError("Gateway")
-			}
-
-			if err := networkutils.ValidateIP(m.Gateway); err != nil {
-				return fmt.Errorf("Gateway: %v", err)
-			}
-
-			if m.Netmask == "" {
-				return newEmptyFieldError("Netmask")
-			}
-		} else if !allowAddressless {
-			return newEmptyFieldError("IPAddress")
+		if err := validateMachineAddress(m, allowAddressless); err != nil {
+			return err
 		}
-
-		if len(m.Nameservers) == 0 {
-			return newEmptyFieldError("Nameservers")
-		}
-
-		for _, nameserver := range m.Nameservers {
-			if nameserver == "" {
-				return newMachineError("Nameservers contains an empty entry")
-			}
-			if err := networkutils.ValidateIP(nameserver); err != nil {
-				return fmt.Errorf("Nameservers: %v", err)
-			}
-		}
-
-		if m.MACAddress == "" {
-			return newEmptyFieldError("MACAddress")
-		}
-
-		if _, err := net.ParseMAC(m.MACAddress); err != nil {
-			return fmt.Errorf("MACAddress: %v", err)
-		}
-
-		if m.Hostname == "" {
-			return newEmptyFieldError("Hostname")
-		}
-
-		if errs := apimachineryvalidation.IsDNS1123Subdomain(m.Hostname); len(errs) > 0 {
-			return fmt.Errorf("invalid hostname: %v: %v", m.Hostname, errs)
-		}
-
-		if !linuxPathValidation.MatchString(m.Disk) {
-			return fmt.Errorf(
-				"disk must be a valid linux path (\"%v\")",
-				linuxPathRegex,
-			)
-		}
-
-		for key, value := range m.Labels {
-			if err := validateLabelKey(key); err != nil {
-				return err
-			}
-
-			if err := validateLabelValue(value); err != nil {
+		for _, assertion := range []MachineAssertion{
+			validateMachineNameservers,
+			validateMachineIdentity,
+			validateMachineLabels,
+			validateMachineBMC,
+			validateMachineVLAN,
+		} {
+			if err := assertion(m); err != nil {
 				return err
 			}
 		}
-
-		if m.HasBMC() {
-			if m.BMCIPAddress == "" {
-				return newEmptyFieldError("BMCIPAddress")
-			}
-
-			if err := networkutils.ValidateIP(m.BMCIPAddress); err != nil {
-				return fmt.Errorf("BMCIPAddress: %v", err)
-			}
-
-			if m.BMCOptions == nil || m.BMCOptions.RPC == nil {
-				if m.BMCUsername == "" {
-					return newEmptyFieldError("BMCUsername")
-				}
-
-				if m.BMCPassword == "" {
-					return newEmptyFieldError("BMCPassword")
-				}
-			}
-		}
-
-		if m.VLANID != "" {
-			i, err := strconv.Atoi(m.VLANID)
-			if err != nil {
-				return errors.New("VLANID: must be a string integer")
-			}
-
-			// valid VLAN IDs are between 1 and 4094 - https://en.m.wikipedia.org/wiki/VLAN#IEEE_802.1Q
-			const (
-				maxVLANID = 4094
-				minVLANID = 1
-			)
-			if i < minVLANID || i > maxVLANID {
-				return errors.New("VLANID: must be between 1 and 4094")
-			}
-		}
-
 		return nil
 	}
+}
+
+func validateMachineAddress(m Machine, allowAddressless bool) error {
+	if allowAddressless && m.IPAddress == "" && m.Gateway == "" && m.Netmask == "" {
+		return nil
+	}
+	for _, field := range []struct{ name, value string }{
+		{"IPAddress", m.IPAddress},
+		{"Gateway", m.Gateway},
+	} {
+		if field.value == "" {
+			return newEmptyFieldError(field.name)
+		}
+		if err := networkutils.ValidateIP(field.value); err != nil {
+			return fmt.Errorf("%s: %v", field.name, err)
+		}
+	}
+	if m.Netmask == "" {
+		return newEmptyFieldError("Netmask")
+	}
+	return nil
+}
+
+func validateMachineNameservers(m Machine) error {
+	if len(m.Nameservers) == 0 {
+		return newEmptyFieldError("Nameservers")
+	}
+	for _, nameserver := range m.Nameservers {
+		if nameserver == "" {
+			return newMachineError("Nameservers contains an empty entry")
+		}
+		if err := networkutils.ValidateIP(nameserver); err != nil {
+			return fmt.Errorf("Nameservers: %v", err)
+		}
+	}
+	return nil
+}
+
+func validateMachineIdentity(m Machine) error {
+	if m.MACAddress == "" {
+		return newEmptyFieldError("MACAddress")
+	}
+	if _, err := net.ParseMAC(m.MACAddress); err != nil {
+		return fmt.Errorf("MACAddress: %v", err)
+	}
+	if m.Hostname == "" {
+		return newEmptyFieldError("Hostname")
+	}
+	if errs := apimachineryvalidation.IsDNS1123Subdomain(m.Hostname); len(errs) > 0 {
+		return fmt.Errorf("invalid hostname: %v: %v", m.Hostname, errs)
+	}
+	if !linuxPathValidation.MatchString(m.Disk) {
+		return fmt.Errorf("disk must be a valid linux path (\"%v\")", linuxPathRegex)
+	}
+	return nil
+}
+
+func validateMachineLabels(m Machine) error {
+	for key, value := range m.Labels {
+		if err := validateLabelKey(key); err != nil {
+			return err
+		}
+		if err := validateLabelValue(value); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func validateMachineBMC(m Machine) error {
+	if !m.HasBMC() {
+		return nil
+	}
+	if m.BMCIPAddress == "" {
+		return newEmptyFieldError("BMCIPAddress")
+	}
+	if err := networkutils.ValidateIP(m.BMCIPAddress); err != nil {
+		return fmt.Errorf("BMCIPAddress: %v", err)
+	}
+	if m.BMCOptions != nil && m.BMCOptions.RPC != nil {
+		return nil
+	}
+	if m.BMCUsername == "" {
+		return newEmptyFieldError("BMCUsername")
+	}
+	if m.BMCPassword == "" {
+		return newEmptyFieldError("BMCPassword")
+	}
+	return nil
+}
+
+func validateMachineVLAN(m Machine) error {
+	if m.VLANID == "" {
+		return nil
+	}
+	i, err := strconv.Atoi(m.VLANID)
+	if err != nil {
+		return errors.New("VLANID: must be a string integer")
+	}
+	// Valid VLAN IDs are between 1 and 4094.
+	const (
+		maxVLANID = 4094
+		minVLANID = 1
+	)
+	if i < minVLANID || i > maxVLANID {
+		return errors.New("VLANID: must be between 1 and 4094")
+	}
+	return nil
 }
 
 // UniqueIPAddress asserts a given Machine instance has a unique IPAddress field relative to previously seen Machine
