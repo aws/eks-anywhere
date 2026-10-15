@@ -42,6 +42,33 @@ description: >
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
 
+## [v0.26.3](https://github.com/aws/eks-anywhere/releases/tag/v0.26.3)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----:|
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |  ✔   |
+|    Ubuntu 24.04     |    ✔    |     ✔      |    ✔    |  —   |
+| Bottlerocket 1.64.0 |    ✔    |     —      |    —    |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |  —   |
+|      RHEL 9.x       |    ✔    |     ✔      |    ✔    |  —   |
+
+\* Bottlerocket `v1.64.0` applies to Kubernetes versions 1.33 through 1.36. Kubernetes versions 1.30 through 1.32 remain on Bottlerocket `v1.62.0`.
+
+### Changed
+- EKS Distro:
+  - [`v1-36-eks-9`](https://distro.eks.amazonaws.com/releases/1-36/9/)
+  - [`v1-35-eks-15`](https://distro.eks.amazonaws.com/releases/1-35/15/)
+  - [`v1-34-eks-24`](https://distro.eks.amazonaws.com/releases/1-34/24/)
+  - [`v1-33-eks-33`](https://distro.eks.amazonaws.com/releases/1-33/33/)
+  - [`v1-32-eks-43`](https://distro.eks.amazonaws.com/releases/1-32/43/)
+  - [`v1-31-eks-50`](https://distro.eks.amazonaws.com/releases/1-31/50/)
+- Cluster API (CAPI): `v1.13.2` to `v1.13.7` ([#5694](https://github.com/aws/eks-anywhere-build-tooling/pull/5694))
+
+### Fixed
+- Preserve EKS Anywhere default Cilium configuration when custom Helm values are provided ([#10964](https://github.com/aws/eks-anywhere/pull/10964))
+- Honor the kubeadm-selected kubelet API server endpoint during Bottlerocket control plane joins ([#5664](https://github.com/aws/eks-anywhere-build-tooling/pull/5664))
+
 ## [v0.26.2](https://github.com/aws/eks-anywhere/releases/tag/v0.26.2)
 
 ### Supported OS version details
