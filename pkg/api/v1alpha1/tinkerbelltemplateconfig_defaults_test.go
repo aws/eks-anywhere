@@ -2,9 +2,11 @@ package v1alpha1
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1/thirdparty/tinkerbell"
 )
@@ -696,6 +698,145 @@ method=ignore
 			}
 			if diff := cmp.Diff(givenActions, tt.wantActions); diff != "" {
 				t.Fatalf("Expected file mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestDefaultActionsIPv6SLAAC(t *testing.T) {
+	var actions []tinkerbell.Action
+	for _, opt := range DefaultActions(
+		&Cluster{},
+		"https://example.com/ubuntu-1.32.gz",
+		"2001:db8::10",
+		"2001:db8::20",
+		Ubuntu,
+	) {
+		opt(&actions)
+	}
+
+	var netplan, metadata string
+	var streamNetwork string
+	for _, action := range actions {
+		switch action.Name {
+		case "stream image to disk":
+			if action.Namespaces != nil {
+				streamNetwork = action.Namespaces.Network
+			}
+		case "write netplan config":
+			netplan = action.Environment["CONTENTS"]
+		case "add cloud-init config":
+			metadata = action.Environment["CONTENTS"]
+		}
+	}
+
+	if !strings.Contains(netplan, "accept-ra: true") || strings.Contains(netplan, ".DHCP.IP.") {
+		t.Fatalf("expected addressless SLAAC netplan, got:\n%s", netplan)
+	}
+	if streamNetwork != "host" {
+		t.Fatalf("expected image download to use host networking, got %q", streamNetwork)
+	}
+	template := TinkerbellTemplateConfig{
+		Spec: TinkerbellTemplateConfigSpec{
+			Template: tinkerbell.Workflow{
+				Tasks: []tinkerbell.Task{{Actions: actions}},
+			},
+		},
+	}
+	rendered, err := template.ToTemplateString()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var workflow struct {
+		Tasks []struct {
+			Actions []struct {
+				Network    string `json:"network"`
+				Namespaces struct {
+					Network string `json:"network"`
+				} `json:"namespaces"`
+			} `json:"actions"`
+		} `json:"tasks"`
+	}
+	if err := yaml.Unmarshal([]byte(rendered), &workflow); err != nil {
+		t.Fatal(err)
+	}
+	streamAction := workflow.Tasks[0].Actions[0]
+	if streamAction.Network != "" || streamAction.Namespaces.Network != "host" {
+		t.Fatalf("expected namespaces.network: host in the Tinkerbell template, got:\n%s", rendered)
+	}
+	if !strings.Contains(metadata, "http://[2001:db8::10]:7172/tootles/instanceID/") ||
+		!strings.Contains(metadata, "{{ (index .Hardware.Interfaces 0).DHCP.MAC }}") {
+		t.Fatalf("expected bracketed instance-ID metadata URL, got:\n%s", metadata)
+	}
+}
+
+func TestDefaultActionsCloudInitMetadata(t *testing.T) {
+	tests := []struct {
+		name      string
+		osFamily  OSFamily
+		localIP   string
+		loadBalIP string
+		wantURLs  []string
+	}{
+		{
+			name:      "Ubuntu IPv4",
+			osFamily:  Ubuntu,
+			localIP:   "192.0.2.10",
+			loadBalIP: "192.0.2.20",
+			wantURLs:  []string{"http://192.0.2.10:7172", "http://192.0.2.20:7172"},
+		},
+		{
+			name:      "Ubuntu IPv6",
+			osFamily:  Ubuntu,
+			localIP:   "2001:db8::10",
+			loadBalIP: "2001:db8::20",
+			wantURLs: []string{
+				"http://[2001:db8::10]:7172/tootles/instanceID/{{ (index .Hardware.Interfaces 0).DHCP.MAC }}",
+				"http://[2001:db8::20]:7172/tootles/instanceID/{{ (index .Hardware.Interfaces 0).DHCP.MAC }}",
+			},
+		},
+		{
+			name:      "RHEL IPv4",
+			osFamily:  RedHat,
+			localIP:   "192.0.2.10",
+			loadBalIP: "192.0.2.20",
+			wantURLs:  []string{"http://192.0.2.10:7172", "http://192.0.2.20:7172"},
+		},
+		{
+			name:      "RHEL IPv6",
+			osFamily:  RedHat,
+			localIP:   "2001:db8::10",
+			loadBalIP: "2001:db8::20",
+			wantURLs: []string{
+				"http://[2001:db8::10]:7172/tootles/instanceID/{{ (index .Hardware.Interfaces 0).DHCP.MAC }}",
+				"http://[2001:db8::20]:7172/tootles/instanceID/{{ (index .Hardware.Interfaces 0).DHCP.MAC }}",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var actions []tinkerbell.Action
+			for _, opt := range DefaultActions(&Cluster{}, "https://example.com/os.gz", tt.localIP, tt.loadBalIP, tt.osFamily) {
+				opt(&actions)
+			}
+			var metadata string
+			for _, action := range actions {
+				if action.Name == "add cloud-init config" {
+					metadata = action.Environment["CONTENTS"]
+				}
+			}
+			var config struct {
+				Datasource struct {
+					Ec2 struct {
+						MetadataURLs []string `json:"metadata_urls"`
+					} `json:"Ec2"`
+				} `json:"datasource"`
+			}
+			if err := yaml.Unmarshal([]byte(metadata), &config); err != nil {
+				t.Fatalf("invalid cloud-init metadata YAML: %v\n%s", err, metadata)
+			}
+			if diff := cmp.Diff(tt.wantURLs, config.Datasource.Ec2.MetadataURLs); diff != "" {
+				t.Fatalf("metadata URLs mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}

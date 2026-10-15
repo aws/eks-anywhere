@@ -16,6 +16,12 @@ import (
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
+func TestTinkerbellISOURL(t *testing.T) {
+	g := NewWithT(t)
+	g.Expect(tinkerbellISOURL("192.0.2.10")).To(Equal("http://192.0.2.10:7171/iso/hook.iso"))
+	g.Expect(tinkerbellISOURL("2001:db8::10")).To(Equal("http://[2001:db8::10]:7171/iso6/hook.iso"))
+}
+
 func TestGenerateTemplateBuilder(t *testing.T) {
 	g := NewWithT(t)
 	clusterSpec := test.NewFullClusterSpec(t, testClusterConfigFilename)

@@ -26,8 +26,13 @@ var _ MachineValidator = &DefaultMachineValidator{}
 
 // NewDefaultMachineValidator creates a machineValidator instance with default assertions registered.
 func NewDefaultMachineValidator() *DefaultMachineValidator {
+	return NewMachineValidator(false)
+}
+
+// NewMachineValidator creates a validator that can permit addressless hardware.
+func NewMachineValidator(allowAddressless bool) *DefaultMachineValidator {
 	validator := &DefaultMachineValidator{}
-	RegisterDefaultAssertions(validator)
+	RegisterAssertions(validator, allowAddressless)
 	return validator
 }
 
@@ -54,21 +59,34 @@ var (
 
 // StaticMachineAssertions defines all static data assertions performed on a Machine.
 func StaticMachineAssertions() MachineAssertion {
+	return staticMachineAssertions(false)
+}
+
+func staticMachineAssertions(allowAddressless bool) MachineAssertion {
 	return func(m Machine) error {
-		if m.IPAddress == "" {
+		addressless := m.IPAddress == "" && m.Gateway == "" && m.Netmask == ""
+		if !addressless {
+			if m.IPAddress == "" {
+				return newEmptyFieldError("IPAddress")
+			}
+
+			if err := networkutils.ValidateIP(m.IPAddress); err != nil {
+				return fmt.Errorf("IPAddress: %v", err)
+			}
+
+			if m.Gateway == "" {
+				return newEmptyFieldError("Gateway")
+			}
+
+			if err := networkutils.ValidateIP(m.Gateway); err != nil {
+				return fmt.Errorf("Gateway: %v", err)
+			}
+
+			if m.Netmask == "" {
+				return newEmptyFieldError("Netmask")
+			}
+		} else if !allowAddressless {
 			return newEmptyFieldError("IPAddress")
-		}
-
-		if err := networkutils.ValidateIP(m.IPAddress); err != nil {
-			return fmt.Errorf("IPAddress: %v", err)
-		}
-
-		if m.Gateway == "" {
-			return newEmptyFieldError("Gateway")
-		}
-
-		if err := networkutils.ValidateIP(m.Gateway); err != nil {
-			return fmt.Errorf("Gateway: %v", err)
 		}
 
 		if len(m.Nameservers) == 0 {
@@ -79,10 +97,9 @@ func StaticMachineAssertions() MachineAssertion {
 			if nameserver == "" {
 				return newMachineError("Nameservers contains an empty entry")
 			}
-		}
-
-		if m.Netmask == "" {
-			return newEmptyFieldError("Netmask")
+			if err := networkutils.ValidateIP(nameserver); err != nil {
+				return fmt.Errorf("Nameservers: %v", err)
+			}
 		}
 
 		if m.MACAddress == "" {
@@ -163,6 +180,9 @@ func StaticMachineAssertions() MachineAssertion {
 func UniqueIPAddress() MachineAssertion {
 	ips := make(map[string]struct{})
 	return func(m Machine) error {
+		if m.IPAddress == "" {
+			return nil
+		}
 		if _, seen := ips[m.IPAddress]; seen {
 			return fmt.Errorf("duplicate IPAddress: %v", m.IPAddress)
 		}
@@ -230,8 +250,13 @@ func UniqueBMCIPAddress() MachineAssertion {
 // RegisterDefaultAssertions applies a set of default assertions to validator. The default assertions
 // include UniqueHostnames and UniqueIDs.
 func RegisterDefaultAssertions(validator *DefaultMachineValidator) {
+	RegisterAssertions(validator, false)
+}
+
+// RegisterAssertions registers machine assertions with optional addressless inventory support.
+func RegisterAssertions(validator *DefaultMachineValidator, allowAddressless bool) {
 	validator.Register([]MachineAssertion{
-		StaticMachineAssertions(),
+		staticMachineAssertions(allowAddressless),
 		UniqueIPAddress(),
 		UniqueMACAddress(),
 		UniqueHostnames(),

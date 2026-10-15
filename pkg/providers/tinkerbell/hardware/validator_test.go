@@ -146,6 +146,17 @@ func TestStaticMachineAssertions_ValidMachine(t *testing.T) {
 	g.Expect(validate(machine)).ToNot(gomega.HaveOccurred())
 }
 
+func TestMachineValidatorAllowsAddresslessHardware(t *testing.T) {
+	g := gomega.NewWithT(t)
+	machine := NewValidMachine()
+	machine.IPAddress = ""
+	machine.Netmask = ""
+	machine.Gateway = ""
+	machine.Nameservers = []string{"2001:db8::53"}
+
+	g.Expect(hardware.NewMachineValidator(true).Validate(machine)).To(gomega.Succeed())
+}
+
 func TestStaticMachineAssertions_InvalidMachines(t *testing.T) {
 	g := gomega.NewWithT(t)
 
@@ -232,7 +243,7 @@ func NewValidMachine() hardware.Machine {
 	return hardware.Machine{
 		IPAddress:    "10.10.10.10",
 		Gateway:      "10.10.10.1",
-		Nameservers:  []string{"ns1"},
+		Nameservers:  []string{"192.0.2.53"},
 		MACAddress:   "00:00:00:00:00:00",
 		Netmask:      "255.255.255.255",
 		Hostname:     "localhost",
@@ -249,7 +260,7 @@ func NewMachineWithOptions() hardware.Machine {
 	return hardware.Machine{
 		IPAddress:    "10.10.10.10",
 		Gateway:      "10.10.10.1",
-		Nameservers:  []string{"ns1"},
+		Nameservers:  []string{"192.0.2.53"},
 		MACAddress:   "00:00:00:00:00:00",
 		Netmask:      "255.255.255.255",
 		Hostname:     "localhost",

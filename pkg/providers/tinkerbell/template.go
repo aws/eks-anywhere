@@ -6,6 +6,7 @@ import (
 	_ "embed"
 	"fmt"
 	"io"
+	"net"
 	"net/url"
 	"strings"
 	"time"
@@ -225,6 +226,7 @@ func buildTemplateMapCP(
 		"format":                        format,
 		"kubernetesVersion":             versionsBundle.KubeDistro.Kubernetes.Tag,
 		"kubeVipImage":                  versionsBundle.Tinkerbell.KubeVip.VersionedImage(),
+		"kubeVipCIDR":                   "32",
 		"podCidrs":                      clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks,
 		"serviceCidrs":                  clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks,
 		"apiserverExtraArgs":            apiServerExtraArgs,
@@ -244,6 +246,9 @@ func buildTemplateMapCP(
 		"workerNodeGroupConfigurations": clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations,
 		"skipLoadBalancerDeployment":    datacenterSpec.SkipLoadBalancerDeployment,
 		"cpSkipLoadBalancerDeployment":  clusterSpec.Cluster.Spec.ControlPlaneConfiguration.SkipLoadBalancerDeployment,
+	}
+	if addressStringIsIPv6(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host) {
+		values["kubeVipCIDR"] = "128"
 	}
 
 	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy != nil {
@@ -349,6 +354,10 @@ func buildTemplateMapCP(
 		values["kubeletExtraArgs"] = kubeletExtraArgs
 	}
 
+	if err := addIPv6NodeIPBootstrap(values, clusterSpec, datacenterSpec, controlPlaneMachineSpec.OSFamily); err != nil {
+		return nil, err
+	}
+
 	cpNodeLabelArgs := clusterapi.ControlPlaneNodeLabelsExtraArgs(clusterSpec.Cluster.Spec.ControlPlaneConfiguration)
 	if len(cpNodeLabelArgs) != 0 {
 		values["cpNodeLabelArgs"] = cpNodeLabelArgs
@@ -362,13 +371,7 @@ func buildTemplateMapCP(
 		if t := clusterSpec.Cluster.HasTinkerbellIPAnnotation(); t != "" {
 			tinkerbellIP = t
 		}
-		isoURL := url.URL{
-			Scheme: "http",
-			Host:   fmt.Sprintf("%s:%s", tinkerbellIP, SmeeHTTPPort),
-			// isoURL path is only served in the top level /iso path.
-			Path: "/iso/hook.iso",
-		}
-		values["isoUrl"] = isoURL.String()
+		values["isoUrl"] = tinkerbellISOURL(tinkerbellIP)
 	}
 
 	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.SkipAdmissionForSystemResources != nil &&
@@ -476,6 +479,10 @@ func buildTemplateMapMD(
 		values["kubeletExtraArgs"] = kubeletExtraArgs
 	}
 
+	if err := addIPv6NodeIPBootstrap(values, clusterSpec, datacenterSpec, workerNodeGroupMachineSpec.OSFamily); err != nil {
+		return nil, err
+	}
+
 	wnNodeLabelArgs := clusterapi.WorkerNodeLabelsExtraArgs(workerNodeGroupConfiguration)
 	if len(wnNodeLabelArgs) != 0 {
 		values["wnNodeLabelArgs"] = wnNodeLabelArgs
@@ -489,16 +496,23 @@ func buildTemplateMapMD(
 		if t := clusterSpec.Cluster.HasTinkerbellIPAnnotation(); t != "" {
 			tinkerbellIP = t
 		}
-		isoURL := url.URL{
-			Scheme: "http",
-			Host:   fmt.Sprintf("%s:%s", tinkerbellIP, SmeeHTTPPort),
-			// isoURL path is only served in the top level /iso path.
-			Path: "/iso/hook.iso",
-		}
-		values["isoUrl"] = isoURL.String()
+		values["isoUrl"] = tinkerbellISOURL(tinkerbellIP)
 	}
 
 	return values, nil
+}
+
+func tinkerbellISOURL(tinkerbellIP string) string {
+	isoPath := "/iso/hook.iso"
+	if addressStringIsIPv6(tinkerbellIP) {
+		isoPath = "/iso6/hook.iso"
+	}
+
+	return (&url.URL{
+		Scheme: "http",
+		Host:   net.JoinHostPort(tinkerbellIP, SmeeHTTPPort),
+		Path:   isoPath,
+	}).String()
 }
 
 // omitTinkerbellMachineTemplate removes TinkerbellMachineTemplate API objects from yml. yml is

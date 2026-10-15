@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/netip"
 
 	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 
@@ -29,6 +30,80 @@ func AssertMachineConfigsValid(spec *ClusterSpec) error {
 // AssertDatacenterConfigValid asserts the DatacenterConfig in spec is valid.
 func AssertDatacenterConfigValid(spec *ClusterSpec) error {
 	return spec.DatacenterConfig.Validate()
+}
+
+// AssertIPFamilyValid ensures all Tinkerbell cluster addresses use one IP family.
+func AssertIPFamilyValid(spec *ClusterSpec) error {
+	tinkerbellIP, err := netip.ParseAddr(spec.DatacenterConfig.Spec.TinkerbellIP)
+	if err != nil {
+		return fmt.Errorf("invalid tinkerbellIP %q: %w", spec.DatacenterConfig.Spec.TinkerbellIP, err)
+	}
+
+	controlPlaneIP, err := netip.ParseAddr(spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host)
+	if err != nil {
+		return fmt.Errorf("invalid control plane endpoint %q: %w", spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host, err)
+	}
+
+	podPrefix, err := netip.ParsePrefix(spec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks[0])
+	if err != nil {
+		return fmt.Errorf("invalid pod CIDR %q: %w", spec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks[0], err)
+	}
+
+	servicePrefix, err := netip.ParsePrefix(spec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks[0])
+	if err != nil {
+		return fmt.Errorf("invalid service CIDR %q: %w", spec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks[0], err)
+	}
+
+	ipv6 := tinkerbellIP.Is6() && !tinkerbellIP.Is4In6()
+	if addressIsIPv6(controlPlaneIP) != ipv6 ||
+		addressIsIPv6(podPrefix.Addr()) != ipv6 ||
+		addressIsIPv6(servicePrefix.Addr()) != ipv6 {
+		return errors.New("tinkerbellIP, control plane endpoint, pod CIDR, and service CIDR must use the same IP family")
+	}
+
+	if !ipv6 {
+		if spec.DatacenterConfig.Spec.DHCPv6Config != nil {
+			return errors.New("dhcpv6Config is only supported for IPv6 clusters")
+		}
+		if err := validateCiliumRoutingFamily(spec, false); err != nil {
+			return err
+		}
+		return nil
+	}
+
+	if !spec.DatacenterConfig.Spec.IsoBoot && spec.DatacenterConfig.Spec.DHCPv6Config == nil {
+		return errors.New("dhcpv6Config.derivedAddressPool is required for IPv6 netboot")
+	}
+
+	return validateCiliumRoutingFamily(spec, true)
+}
+
+func addressIsIPv6(address netip.Addr) bool {
+	return address.Is6() && !address.Is4In6()
+}
+
+func addressStringIsIPv6(address string) bool {
+	parsed, err := netip.ParseAddr(address)
+	return err == nil && addressIsIPv6(parsed)
+}
+
+func validateCiliumRoutingFamily(spec *ClusterSpec, ipv6 bool) error {
+	cniConfig := spec.Cluster.Spec.ClusterNetwork.CNIConfig
+	if cniConfig == nil || cniConfig.Cilium == nil || cniConfig.Cilium.RoutingMode != v1alpha1.CiliumRoutingModeDirect {
+		return nil
+	}
+
+	if ipv6 {
+		if cniConfig.Cilium.IPv6NativeRoutingCIDR == "" || cniConfig.Cilium.IPv4NativeRoutingCIDR != "" {
+			return errors.New("IPv6 direct routing requires only ipv6NativeRoutingCIDR")
+		}
+		return nil
+	}
+
+	if cniConfig.Cilium.IPv4NativeRoutingCIDR == "" || cniConfig.Cilium.IPv6NativeRoutingCIDR != "" {
+		return errors.New("IPv4 direct routing requires only ipv4NativeRoutingCIDR")
+	}
+	return nil
 }
 
 // AssertMachineConfigNamespaceMatchesDatacenterConfig ensures all machine configuration instances
@@ -177,6 +252,9 @@ func AssertHookRetrievableWithoutProxy(spec *ClusterSpec) error {
 func AssertPortsNotInUse(client networkutils.NetClient) ClusterSpecAssertion {
 	return func(spec *ClusterSpec) error {
 		host := "0.0.0.0"
+		if addressStringIsIPv6(spec.DatacenterConfig.Spec.TinkerbellIP) {
+			host = "::"
+		}
 		if err := validatePortsAvailable(client, host); err != nil {
 			return err
 		}

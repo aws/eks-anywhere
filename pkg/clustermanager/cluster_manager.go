@@ -2,6 +2,7 @@ package clustermanager
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
@@ -302,6 +303,7 @@ func (c *ClusterManager) MoveCAPI(ctx context.Context, from, to *types.Cluster, 
 	if err != nil {
 		return fmt.Errorf("building bootstrap cluster client: %w", err)
 	}
+	var hardwareAddresses []HardwareAddressSnapshot
 	if clusterSpec.Cluster.Spec.DatacenterRef.Kind == v1alpha1.TinkerbellDatacenterKind {
 		r := retrier.New(c.clusterctlMoveTimeout, retrier.WithRetryPolicy(clusterctlMoveRetryPolicy))
 		err = r.Retry(func() error {
@@ -309,6 +311,19 @@ func (c *ClusterManager) MoveCAPI(ctx context.Context, from, to *types.Cluster, 
 		})
 		if err != nil {
 			return fmt.Errorf("updating Tinkerbell IP in tinkerbell machine templates: %w", err)
+		}
+		hardwareAddresses, err = SnapshotTinkerbellHardwareAddresses(ctx, from.KubeconfigFile, c.clusterClient)
+		if err != nil {
+			return err
+		}
+		if len(hardwareAddresses) > 0 {
+			data, err := json.Marshal(hardwareAddresses)
+			if err != nil {
+				return fmt.Errorf("encoding Tinkerbell hardware address snapshot: %w", err)
+			}
+			if _, err := c.writer.Write("tinkerbell-hardware-addresses.json", data, filewriter.Permission0600, filewriter.PersistentFile); err != nil {
+				return fmt.Errorf("saving Tinkerbell hardware address snapshot: %w", err)
+			}
 		}
 	}
 
@@ -325,6 +340,15 @@ func (c *ClusterManager) MoveCAPI(ctx context.Context, from, to *types.Cluster, 
 	})
 	if err != nil {
 		return fmt.Errorf("moving CAPI management from source to target: %v", err)
+	}
+
+	if len(hardwareAddresses) > 0 {
+		logger.V(3).Info("Restoring observed Tinkerbell hardware addresses after move")
+		if err := c.retrier.Retry(func() error {
+			return RestoreTinkerbellHardwareAddresses(ctx, to.KubeconfigFile, hardwareAddresses, c.clusterClient)
+		}); err != nil {
+			return err
+		}
 	}
 
 	logger.V(3).Info("Waiting for workload cluster control plane to be ready after move")

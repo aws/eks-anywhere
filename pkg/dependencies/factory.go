@@ -829,6 +829,9 @@ func (f *Factory) WithHelm(opts ...helm.Opt) *Factory {
 	f.WithExecutableBuilder().WithProxyConfiguration()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.config.noTimeouts {
+			opts = append(opts, helm.WithNoTimeouts())
+		}
 		if f.registryMirror != nil {
 			opts = append(opts, helm.WithRegistryMirror(f.registryMirror))
 		}

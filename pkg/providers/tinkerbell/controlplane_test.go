@@ -9,6 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
 	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/yaml"
 
@@ -70,6 +71,19 @@ func TestControlPlaneSpecNewCluster(t *testing.T) {
 	g.Expect(cp.KubeadmControlPlane).To(Equal(kubeadmControlPlane()))
 	g.Expect(cp.ProviderCluster).To(Equal(tinkerbellCluster()))
 	g.Expect(cp.ControlPlaneMachineTemplate.Name).To(Equal("test-control-plane-1"))
+}
+
+func TestControlPlaneSpecIPv6Endpoint(t *testing.T) {
+	g := NewWithT(t)
+	spec := test.NewFullClusterSpec(t, testClusterConfigFilename)
+	spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host = "2001:db8::10"
+	spec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks = []string{"2001:db8:100::/56"}
+	spec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks = []string{"2001:db8:200::/112"}
+
+	cp, err := ControlPlaneSpec(context.Background(), test.NewNullLogger(), test.NewFakeKubeClient(), spec)
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(cp.ProviderCluster.Spec.ControlPlaneEndpoint.Host).To(Equal("2001:db8::10"))
+	g.Expect(cp.ProviderCluster.Spec.ControlPlaneEndpoint.Port).To(Equal(int32(6443)))
 }
 
 func TestControlPlaneSpecNoChangesMachineTemplates(t *testing.T) {
@@ -214,6 +228,10 @@ func tinkerbellCluster() *tinkerbellv1.TinkerbellCluster {
 			Namespace: constants.EksaSystemNamespace,
 		},
 		Spec: tinkerbellv1.TinkerbellClusterSpec{
+			ControlPlaneEndpoint: clusterv1beta1.APIEndpoint{
+				Host: "1.2.3.4",
+				Port: 6443,
+			},
 			ImageLookupFormat:       "--kube-v1.21.2-eks-1-21-4.raw.gz",
 			ImageLookupBaseRegistry: "/",
 		},

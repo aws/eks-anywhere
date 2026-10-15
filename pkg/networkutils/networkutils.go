@@ -63,3 +63,30 @@ func GetLocalIP() (net.IP, error) {
 
 	return conn.LocalAddr().(*net.UDPAddr).IP, nil
 }
+
+// InterfaceNameForIP returns the local interface that owns ip.
+func InterfaceNameForIP(ip net.IP) (string, error) {
+	interfaces, err := net.Interfaces()
+	if err != nil {
+		return "", fmt.Errorf("listing network interfaces: %w", err)
+	}
+	for _, iface := range interfaces {
+		addresses, err := iface.Addrs()
+		if err != nil {
+			return "", fmt.Errorf("listing addresses for interface %s: %w", iface.Name, err)
+		}
+		for _, address := range addresses {
+			var localIP net.IP
+			switch address := address.(type) {
+			case *net.IPNet:
+				localIP = address.IP
+			case *net.IPAddr:
+				localIP = address.IP
+			}
+			if localIP != nil && localIP.Equal(ip) {
+				return iface.Name, nil
+			}
+		}
+	}
+	return "", fmt.Errorf("no local network interface owns IP %s", ip)
+}

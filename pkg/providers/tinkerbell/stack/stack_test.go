@@ -19,6 +19,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	filewritermocks "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
+	"github.com/aws/eks-anywhere/pkg/helm"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/stack"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/stack/mocks"
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
@@ -243,6 +244,7 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 					// Listeners must bind to the same IP that is advertised to
 					// netbooting machines (multi-NIC admin machines).
 					"-e", "TINKERBELL_BIND_ADDRESS="+testIP,
+					"-e", "TINKERBELL_HTTP_PORT=7171",
 					"-e", gomock.Any(), // TINKERBELL_TRUSTED_PROXIES
 					// Enable flags
 					"-e", "TINKERBELL_ENABLE_SMEE=true",
@@ -263,8 +265,6 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 					"-e", gomock.Any(), // TINKERBELL_DHCP_IPXE_HTTP_SCRIPT_HOST
 					"-e", gomock.Any(), // TINKERBELL_DHCP_IPXE_HTTP_SCRIPT_PORT
 					// HTTP/iPXE settings
-					"-e", "TINKERBELL_IPXE_HTTP_SCRIPT_BIND_ADDR="+testIP,
-					"-e", gomock.Any(), // TINKERBELL_IPXE_HTTP_SCRIPT_BIND_PORT
 					"-e", gomock.Any(), // TINKERBELL_IPXE_HTTP_SCRIPT_OSIE_URL
 					"-e", gomock.Any(), // TINKERBELL_IPXE_HTTP_SCRIPT_EXTRA_KERNEL_ARGS
 					"-e", gomock.Any(), // TINKERBELL_IPXE_SCRIPT_TINK_SERVER_ADDR_PORT
@@ -297,6 +297,59 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 			assertYamlFilesEqual(t, stackTest.expectedFile, generatedOverridesPath)
 		})
 	}
+}
+
+func TestTinkerbellStackInstallIPv6(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	docker := mocks.NewMockDocker(mockCtrl)
+	helmClient := mocks.NewMockHelm(mockCtrl)
+	_, writer := test.NewWriter(t)
+	ctx := context.Background()
+	cluster := &types.Cluster{Name: "test", KubeconfigFile: "test.kubeconfig"}
+
+	helmClient.EXPECT().UpgradeInstallChartWithValuesFile(
+		ctx,
+		"stack",
+		"oci://public.ecr.aws/eks-anywhere/tinkerbell/stack",
+		helmChartVersion,
+		cluster.KubeconfigFile,
+		constants.EksaSystemNamespace,
+		gomock.Any(),
+		gomock.Any(),
+	).Do(func(_ context.Context, _, _, _, _, _, valuesPath string, _ ...helm.Opt) {
+		values := unmarshalYamlToObject(t, valuesPath)
+		assert.Equal(t, "2001:db8::10", values["publicIPv6"])
+		assert.NotContains(t, values, "publicIP")
+
+		envs := values["deployment"].(map[string]interface{})["envs"].(map[string]interface{})
+		globals := envs["globals"].(map[string]interface{})
+		assert.Equal(t, float64(7172), globals["httpPort"])
+		serviceHTTP := values["service"].(map[string]interface{})["ports"].(map[string]interface{})["http"].(map[string]interface{})
+		assert.Equal(t, globals["httpPort"], serviceHTTP["port"])
+		smeeValues := envs["smee"].(map[string]interface{})
+		assert.Equal(t, globals["httpPort"], smeeValues["dhcpv6IpxeHttpBinaryPort"])
+		assert.Equal(t, globals["httpPort"], smeeValues["dhcpv6IpxeHttpScriptPort"])
+		assert.Equal(t, true, smeeValues["dhcpv6Enabled"])
+		assert.Equal(t, "derived", smeeValues["dhcpv6Mode"])
+		assert.Equal(t, "2001:db8:1::/64", smeeValues["dhcpv6DerivedDirectAddressPool"])
+		assert.Equal(t, "[2001:db8::10]:42113", smeeValues["ipxeScriptTinkServerAddrPortV6"])
+		assert.Equal(t, false, smeeValues["isoStaticIPAMEnabled"])
+
+		tootlesValues := envs["tootles"].(map[string]interface{})
+		assert.Equal(t, true, tootlesValues["instanceEndpoint"])
+	})
+
+	s := stack.NewInstaller(docker, writer, helmClient, "", constants.EksaSystemNamespace, "fd00:10:244::/56", nil, nil)
+	err := s.Install(
+		ctx,
+		getTinkBundle(),
+		"2001:db8::10",
+		cluster.KubeconfigFile,
+		"",
+		stack.WithSmeeOnKubernetes(),
+		stack.WithDHCPv6Config(&v1alpha1.DHCPv6Config{DerivedAddressPool: "2001:db8:1::/64"}),
+	)
+	assert.NoError(t, err)
 }
 
 func TestTinkerbellStackUninstallLocalSucess(t *testing.T) {

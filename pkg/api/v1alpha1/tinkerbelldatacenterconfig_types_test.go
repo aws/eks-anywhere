@@ -30,6 +30,55 @@ func TestTinkerbellDatacenterConfigValidateFail(t *testing.T) {
 			wantErr: "invalid tinkerbell ip: ",
 		},
 		{
+			name: "Invalid DHCPv6 pool",
+			tinkDC: newTinkerbellDatacenterConfig(func(dc *v1alpha1.TinkerbellDatacenterConfig) {
+				dc.Spec.DHCPv6Config = &v1alpha1.DHCPv6Config{DerivedAddressPool: "192.0.2.0/24"}
+			}),
+			wantErr: "DHCPv6 derivedAddressPool must be a usable IPv6 unicast prefix between /1 and /64",
+		},
+		{
+			name: "DHCPv6 pool too narrow",
+			tinkDC: newTinkerbellDatacenterConfig(func(dc *v1alpha1.TinkerbellDatacenterConfig) {
+				dc.Spec.DHCPv6Config = &v1alpha1.DHCPv6Config{DerivedAddressPool: "2001:db8::/96"}
+			}),
+			wantErr: "DHCPv6 derivedAddressPool must be a usable IPv6 unicast prefix between /1 and /64",
+		},
+		{
+			name: "DHCPv6 pool overlaps multicast space",
+			tinkDC: newTinkerbellDatacenterConfig(func(dc *v1alpha1.TinkerbellDatacenterConfig) {
+				dc.Spec.DHCPv6Config = &v1alpha1.DHCPv6Config{DerivedAddressPool: "8000::/1"}
+			}),
+			wantErr: "DHCPv6 derivedAddressPool must be a usable IPv6 unicast prefix between /1 and /64",
+		},
+		{
+			name: "DHCPv6 zero pool",
+			tinkDC: newTinkerbellDatacenterConfig(func(dc *v1alpha1.TinkerbellDatacenterConfig) {
+				dc.Spec.DHCPv6Config = &v1alpha1.DHCPv6Config{DerivedAddressPool: "::/0"}
+			}),
+			wantErr: "DHCPv6 derivedAddressPool must be a usable IPv6 unicast prefix between /1 and /64",
+		},
+		{
+			name: "DHCPv6 link-local pool",
+			tinkDC: newTinkerbellDatacenterConfig(func(dc *v1alpha1.TinkerbellDatacenterConfig) {
+				dc.Spec.DHCPv6Config = &v1alpha1.DHCPv6Config{DerivedAddressPool: "fe80::/64"}
+			}),
+			wantErr: "DHCPv6 derivedAddressPool must be a usable IPv6 unicast prefix between /1 and /64",
+		},
+		{
+			name: "DHCPv6 multicast pool",
+			tinkDC: newTinkerbellDatacenterConfig(func(dc *v1alpha1.TinkerbellDatacenterConfig) {
+				dc.Spec.DHCPv6Config = &v1alpha1.DHCPv6Config{DerivedAddressPool: "ff00::/8"}
+			}),
+			wantErr: "DHCPv6 derivedAddressPool must be a usable IPv6 unicast prefix between /1 and /64",
+		},
+		{
+			name: "DHCPv6 IPv4-mapped pool",
+			tinkDC: newTinkerbellDatacenterConfig(func(dc *v1alpha1.TinkerbellDatacenterConfig) {
+				dc.Spec.DHCPv6Config = &v1alpha1.DHCPv6Config{DerivedAddressPool: "::ffff:0:0/64"}
+			}),
+			wantErr: "DHCPv6 derivedAddressPool must be a usable IPv6 unicast prefix between /1 and /64",
+		},
+		{
 			name: "Invalid OS Image URL",
 			tinkDC: newTinkerbellDatacenterConfig(func(dc *v1alpha1.TinkerbellDatacenterConfig) {
 				dc.Spec.OSImageURL = "test"
@@ -93,6 +142,15 @@ func TestTinkerbellDatacenterConfigIsoURLValidateSuccess(t *testing.T) {
 	tinkDC := createTinkerbellDatacenterConfig()
 	tinkDC.Spec.IsoBoot = true
 	tinkDC.Spec.HookIsoURL = "http://127.0.0.1:8080/hook.iso"
+
+	g := NewWithT(t)
+	g.Expect(tinkDC.Validate()).To(Succeed())
+}
+
+func TestTinkerbellDatacenterConfigDHCPv6ValidateSuccess(t *testing.T) {
+	tinkDC := createTinkerbellDatacenterConfig()
+	tinkDC.Spec.TinkerbellIP = "2001:db8::10"
+	tinkDC.Spec.DHCPv6Config = &v1alpha1.DHCPv6Config{DerivedAddressPool: "2001:db8:1::/64"}
 
 	g := NewWithT(t)
 	g.Expect(tinkDC.Validate()).To(Succeed())

@@ -3,6 +3,7 @@ package v1alpha1
 import (
 	"errors"
 	"fmt"
+	"net/netip"
 	"net/url"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -11,6 +12,14 @@ import (
 )
 
 const TinkerbellDatacenterKind = "TinkerbellDatacenterConfig"
+
+var unusableDHCPv6DerivedPrefixes = []netip.Prefix{
+	netip.MustParsePrefix("::/128"),
+	netip.MustParsePrefix("::1/128"),
+	netip.MustParsePrefix("::ffff:0:0/96"),
+	netip.MustParsePrefix("fe80::/10"),
+	netip.MustParsePrefix("ff00::/8"),
+}
 
 // Used for generating yaml for generate clusterconfig command.
 func NewTinkerbellDatacenterConfigGenerate(clusterName string) *TinkerbellDatacenterConfigGenerate {
@@ -74,6 +83,10 @@ func validateDatacenterConfig(config *TinkerbellDatacenterConfig) error {
 		return fmt.Errorf("TinkerbellDatacenterConfig: invalid tinkerbell ip: %v", err)
 	}
 
+	if err := validateDHCPv6Config(config.Spec.DHCPv6Config); err != nil {
+		return err
+	}
+
 	if config.Spec.IsoBoot {
 		if config.Spec.HookIsoURL != "" {
 			if _, err := url.ParseRequestURI(config.Spec.HookIsoURL); err != nil {
@@ -87,6 +100,39 @@ func validateDatacenterConfig(config *TinkerbellDatacenterConfig) error {
 	}
 
 	return nil
+}
+
+func validateDHCPv6Config(config *DHCPv6Config) error {
+	if config == nil {
+		return nil
+	}
+
+	prefix, err := netip.ParsePrefix(config.DerivedAddressPool)
+	if err != nil {
+		return fmt.Errorf("TinkerbellDatacenterConfig: invalid DHCPv6 derivedAddressPool: %v", err)
+	}
+
+	if !usableDHCPv6DerivedPrefix(prefix) {
+		return errors.New("TinkerbellDatacenterConfig: DHCPv6 derivedAddressPool must be a usable IPv6 unicast prefix between /1 and /64")
+	}
+
+	return nil
+}
+
+func usableDHCPv6DerivedPrefix(prefix netip.Prefix) bool {
+	address := prefix.Addr()
+	if !address.Is6() || address.Is4In6() || prefix.Bits() < 1 || prefix.Bits() > 64 {
+		return false
+	}
+
+	prefix = prefix.Masked()
+	for _, unusable := range unusableDHCPv6DerivedPrefixes {
+		if prefix.Contains(unusable.Addr()) || unusable.Contains(prefix.Addr()) {
+			return false
+		}
+	}
+
+	return true
 }
 
 func validateObjectMeta(meta metav1.ObjectMeta) error {

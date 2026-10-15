@@ -11,6 +11,9 @@ import (
 type TinkerbellDatacenterConfigSpec struct {
 	// TinkerbellIP is used to configure a VIP for hosting the Tinkerbell services.
 	TinkerbellIP string `json:"tinkerbellIP"`
+	// DHCPv6Config configures IPv6 netboot for SLAAC based clusters.
+	//+optional
+	DHCPv6Config *DHCPv6Config `json:"dhcpv6Config,omitempty"`
 	// OSImageURL can be used to override the default OS image path to pull from a local server.
 	// OSImageURL is a URL to the OS image used during provisioning. To perform modular upgrades
 	// the OSImageURL must be specified on the TinkerbellMachineConfig objects. You cannot specify
@@ -34,6 +37,12 @@ type TinkerbellDatacenterConfigSpec struct {
 	// It can be used to override the default Hook OS ISO image to pull from a local server.
 	//+optional
 	HookIsoURL string `json:"hookIsoURL,omitempty"`
+}
+
+// DHCPv6Config configures temporary DHCPv6 addressing used during netboot.
+type DHCPv6Config struct {
+	// DerivedAddressPool is the IPv6 prefix used to derive temporary boot addresses.
+	DerivedAddressPool string `json:"derivedAddressPool"`
 }
 
 // TinkerbellDatacenterConfigStatus defines the observed state of TinkerbellDatacenterConfig

@@ -41,6 +41,17 @@ spec:
             description: TinkerbellDatacenterConfigSpec defines the desired state
               of TinkerbellDatacenterConfig.
             properties:
+              dhcpv6Config:
+                description: DHCPv6Config configures IPv6 netboot for SLAAC based
+                  clusters.
+                properties:
+                  derivedAddressPool:
+                    description: DerivedAddressPool is the IPv6 prefix used to derive
+                      temporary boot addresses.
+                    type: string
+                required:
+                - derivedAddressPool
+                type: object
               hookImagesURLPath:
                 description: HookImagesURLPath can be used to override the default
                   Hook images path to pull from a local server.

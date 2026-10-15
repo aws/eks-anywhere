@@ -2689,6 +2689,42 @@ func TestValidateNetworking(t *testing.T) {
 			},
 		},
 		{
+			name:    "IPv6 node cidr mask default",
+			wantErr: nil,
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					DatacenterRef: Ref{Kind: TinkerbellDatacenterKind},
+					ClusterNetwork: ClusterNetwork{
+						Pods: Pods{
+							CidrBlocks: []string{"2001:db8:1::/48"},
+						},
+						Services: Services{
+							CidrBlocks: []string{"2001:db8:2::/108"},
+						},
+						CNI: Cilium,
+					},
+				},
+			},
+		},
+		{
+			name:    "mixed IP family CIDRs",
+			wantErr: errors.New("pods and services CIDR blocks must use the same IP family"),
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					DatacenterRef: Ref{Kind: TinkerbellDatacenterKind},
+					ClusterNetwork: ClusterNetwork{
+						Pods: Pods{
+							CidrBlocks: []string{"2001:db8:1::/48"},
+						},
+						Services: Services{
+							CidrBlocks: []string{"198.51.100.0/24"},
+						},
+						CNI: Cilium,
+					},
+				},
+			},
+		},
+		{
 			name:    "node cidr mask size invalid",
 			wantErr: fmt.Errorf("the size of pod subnet with mask 30 is smaller than or equal to the size of node subnet with mask 28"),
 			cluster: &Cluster{
@@ -3068,7 +3104,7 @@ func TestValidateCNIConfig(t *testing.T) {
 		},
 		{
 			name:    "directmode needs native routing CIDR",
-			wantErr: fmt.Errorf("validating cniConfig: direct routing mode requires IPv4NativeRoutingCIDR to be set"),
+			wantErr: fmt.Errorf("validating cniConfig: direct routing mode requires IPv4NativeRoutingCIDR or IPv6NativeRoutingCIDR to be set"),
 			clusterNetwork: &ClusterNetwork{
 				CNIConfig: &CNIConfig{
 					Cilium: &CiliumConfig{

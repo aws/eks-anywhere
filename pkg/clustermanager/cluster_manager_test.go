@@ -12,11 +12,13 @@ import (
 	"go.uber.org/mock/gomock"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clustermanager"
 	"github.com/aws/eks-anywhere/pkg/clustermanager/internal"
@@ -426,53 +428,77 @@ func TestClusterManagerBackupCAPIError(t *testing.T) {
 }
 
 func TestClusterManagerMoveCAPISuccess(t *testing.T) {
-	from := &types.Cluster{
-		Name: "from-cluster",
-	}
-	to := &types.Cluster{
-		Name: "to-cluster",
-	}
-	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.Cluster.Name = to.Name
-		s.Cluster.Spec.ControlPlaneConfiguration.Count = 3
-		s.Cluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{Count: ptr.Int(3), MachineGroupRef: &v1alpha1.Ref{Name: "test-wn"}}}
-	})
-	ctx := context.Background()
+	for _, providerKind := range []string{"vsphere", "tinkerbell"} {
+		t.Run(providerKind, func(t *testing.T) {
+			from := &types.Cluster{
+				Name: "from-cluster",
+			}
+			to := &types.Cluster{
+				Name: "to-cluster",
+			}
+			clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+				s.Cluster.Name = to.Name
+				s.Cluster.Spec.ControlPlaneConfiguration.Count = 3
+				s.Cluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{Count: ptr.Int(3), MachineGroupRef: &v1alpha1.Ref{Name: "test-wn"}}}
+			})
+			ctx := context.Background()
 
-	c, m := newClusterManager(t)
-	kcp, mds := getKcpAndMdsForNodeCount(0)
-	m.client.EXPECT().GetKubeadmControlPlane(ctx,
-		from,
-		to.Name,
-		gomock.AssignableToTypeOf(executables.WithCluster(from)),
-		gomock.AssignableToTypeOf(executables.WithNamespace(constants.EksaSystemNamespace)),
-	).Return(kcp, nil)
-	m.client.EXPECT().GetMachineDeploymentsForCluster(ctx,
-		to.Name,
-		gomock.AssignableToTypeOf(executables.WithCluster(from)),
-		gomock.AssignableToTypeOf(executables.WithNamespace(constants.EksaSystemNamespace)),
-	).Return(mds, nil)
-	m.client.EXPECT().GetMachines(ctx, from, to.Name)
-	m.client.EXPECT().WaitForClusterReady(ctx, from, "1h0m0s", to.Name)
-	m.client.EXPECT().MoveManagement(ctx, from, to, to.Name)
-	m.client.EXPECT().WaitForControlPlaneReady(ctx, to, "15m0s", to.Name)
-	m.client.EXPECT().ValidateControlPlaneNodes(ctx, to, to.Name)
-	m.client.EXPECT().CountMachineDeploymentReplicasReady(ctx, to.Name, to.KubeconfigFile)
-	m.client.EXPECT().GetKubeadmControlPlane(ctx,
-		to,
-		to.Name,
-		gomock.AssignableToTypeOf(executables.WithCluster(from)),
-		gomock.AssignableToTypeOf(executables.WithNamespace(constants.EksaSystemNamespace)),
-	).Return(kcp, nil)
-	m.client.EXPECT().GetMachineDeploymentsForCluster(ctx,
-		to.Name,
-		gomock.AssignableToTypeOf(executables.WithCluster(from)),
-		gomock.AssignableToTypeOf(executables.WithNamespace(constants.EksaSystemNamespace)),
-	).Return(mds, nil)
-	m.client.EXPECT().GetMachines(ctx, to, to.Name)
+			c, m := newClusterManager(t)
+			if providerKind == "tinkerbell" {
+				clusterSpec.Cluster.Spec.DatacenterRef.Kind = v1alpha1.TinkerbellDatacenterKind
+				clusterSpec.TinkerbellDatacenter = &v1alpha1.TinkerbellDatacenterConfig{
+					Spec: v1alpha1.TinkerbellDatacenterConfigSpec{TinkerbellIP: "2001:db8::5"},
+				}
+				readSource := m.client.EXPECT().ListObjects(ctx, "hardware.tinkerbell.org", constants.EksaSystemNamespace, from.KubeconfigFile, gomock.Any()).
+					DoAndReturn(func(_ context.Context, _, _, _ string, list kubernetes.ObjectList) error {
+						list.(*unstructured.UnstructuredList).Items = []unstructured.Unstructured{addressHardware("2001:db8::10")}
+						return nil
+					})
+				backup := m.writer.EXPECT().Write("tinkerbell-hardware-addresses.json", gomock.Any(), gomock.Any(), gomock.Any()).
+					Return("test-cluster/tinkerbell-hardware-addresses.json", nil)
+				readTarget := m.client.EXPECT().ListObjects(ctx, "hardware.tinkerbell.org", constants.EksaSystemNamespace, to.KubeconfigFile, gomock.Any()).
+					DoAndReturn(func(_ context.Context, _, _, _ string, list kubernetes.ObjectList) error {
+						list.(*unstructured.UnstructuredList).Items = []unstructured.Unstructured{addressHardware("")}
+						return nil
+					})
+				writeTarget := m.client.EXPECT().MergePatchResourceStatus(ctx, "hardware.tinkerbell.org", "test-hardware", gomock.Any(), to.KubeconfigFile, constants.EksaSystemNamespace)
+				gomock.InOrder(readSource, backup, readTarget, writeTarget)
+			}
+			kcp, mds := getKcpAndMdsForNodeCount(0)
+			m.client.EXPECT().GetKubeadmControlPlane(ctx,
+				from,
+				to.Name,
+				gomock.AssignableToTypeOf(executables.WithCluster(from)),
+				gomock.AssignableToTypeOf(executables.WithNamespace(constants.EksaSystemNamespace)),
+			).Return(kcp, nil)
+			m.client.EXPECT().GetMachineDeploymentsForCluster(ctx,
+				to.Name,
+				gomock.AssignableToTypeOf(executables.WithCluster(from)),
+				gomock.AssignableToTypeOf(executables.WithNamespace(constants.EksaSystemNamespace)),
+			).Return(mds, nil)
+			m.client.EXPECT().GetMachines(ctx, from, to.Name)
+			m.client.EXPECT().WaitForClusterReady(ctx, from, "1h0m0s", to.Name)
+			m.client.EXPECT().MoveManagement(ctx, from, to, to.Name)
+			m.client.EXPECT().WaitForControlPlaneReady(ctx, to, "15m0s", to.Name)
+			m.client.EXPECT().ValidateControlPlaneNodes(ctx, to, to.Name)
+			m.client.EXPECT().CountMachineDeploymentReplicasReady(ctx, to.Name, to.KubeconfigFile)
+			m.client.EXPECT().GetKubeadmControlPlane(ctx,
+				to,
+				to.Name,
+				gomock.AssignableToTypeOf(executables.WithCluster(from)),
+				gomock.AssignableToTypeOf(executables.WithNamespace(constants.EksaSystemNamespace)),
+			).Return(kcp, nil)
+			m.client.EXPECT().GetMachineDeploymentsForCluster(ctx,
+				to.Name,
+				gomock.AssignableToTypeOf(executables.WithCluster(from)),
+				gomock.AssignableToTypeOf(executables.WithNamespace(constants.EksaSystemNamespace)),
+			).Return(mds, nil)
+			m.client.EXPECT().GetMachines(ctx, to, to.Name)
 
-	if err := c.MoveCAPI(ctx, from, to, to.Name, clusterSpec); err != nil {
-		t.Errorf("ClusterManager.MoveCAPI() error = %v, wantErr nil", err)
+			if err := c.MoveCAPI(ctx, from, to, to.Name, clusterSpec); err != nil {
+				t.Errorf("ClusterManager.MoveCAPI() error = %v, wantErr nil", err)
+			}
+		})
 	}
 }
 

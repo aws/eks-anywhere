@@ -101,6 +101,91 @@ func TestAssertDatacenterConfigValidEmptyHookImagesURLPath(t *testing.T) {
 	g.Expect(tinkerbell.AssertDatacenterConfigValid(clusterSpec)).To(gomega.MatchError("parsing hookOverride: parse \"test\": invalid URI for request"))
 }
 
+func TestAssertIPFamilyValid(t *testing.T) {
+	tests := []struct {
+		name    string
+		mutate  func(*tinkerbell.ClusterSpec)
+		wantErr string
+	}{
+		{
+			name: "IPv4",
+			mutate: func(*tinkerbell.ClusterSpec) {
+			},
+		},
+		{
+			name: "IPv6 netboot",
+			mutate: func(spec *tinkerbell.ClusterSpec) {
+				spec.DatacenterConfig.Spec.TinkerbellIP = "2001:db8::10"
+				spec.DatacenterConfig.Spec.DHCPv6Config = &eksav1alpha1.DHCPv6Config{DerivedAddressPool: "2001:db8:1::/64"}
+				spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host = "2001:db8::20"
+				spec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks = []string{"2001:db8:2::/48"}
+				spec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks = []string{"2001:db8:3::/108"}
+			},
+		},
+		{
+			name: "mixed family",
+			mutate: func(spec *tinkerbell.ClusterSpec) {
+				spec.DatacenterConfig.Spec.TinkerbellIP = "2001:db8::10"
+				spec.DatacenterConfig.Spec.DHCPv6Config = &eksav1alpha1.DHCPv6Config{DerivedAddressPool: "2001:db8:1::/64"}
+			},
+			wantErr: "must use the same IP family",
+		},
+		{
+			name: "IPv6 netboot without derived pool",
+			mutate: func(spec *tinkerbell.ClusterSpec) {
+				spec.DatacenterConfig.Spec.TinkerbellIP = "2001:db8::10"
+				spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host = "2001:db8::20"
+				spec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks = []string{"2001:db8:2::/48"}
+				spec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks = []string{"2001:db8:3::/108"}
+			},
+			wantErr: "derivedAddressPool is required",
+		},
+		{
+			name: "invalid Tinkerbell IP",
+			mutate: func(spec *tinkerbell.ClusterSpec) {
+				spec.DatacenterConfig.Spec.TinkerbellIP = "invalid"
+			},
+			wantErr: "invalid tinkerbellIP",
+		},
+		{
+			name: "invalid control plane endpoint",
+			mutate: func(spec *tinkerbell.ClusterSpec) {
+				spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host = "invalid"
+			},
+			wantErr: "invalid control plane endpoint",
+		},
+		{
+			name: "invalid pod CIDR",
+			mutate: func(spec *tinkerbell.ClusterSpec) {
+				spec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks = []string{"invalid"}
+			},
+			wantErr: "invalid pod CIDR",
+		},
+		{
+			name: "invalid service CIDR",
+			mutate: func(spec *tinkerbell.ClusterSpec) {
+				spec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks = []string{"invalid"}
+			},
+			wantErr: "invalid service CIDR",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			spec := NewDefaultValidClusterSpecBuilder().Build()
+			tt.mutate(spec)
+
+			err := tinkerbell.AssertIPFamilyValid(spec)
+			if tt.wantErr == "" {
+				g.Expect(err).To(gomega.Succeed())
+			} else {
+				g.Expect(err).To(gomega.MatchError(gomega.ContainSubstring(tt.wantErr)))
+			}
+		})
+	}
+}
+
 func TestAssertMachineConfigNamespaceMatchesDatacenterConfig_Same(t *testing.T) {
 	g := gomega.NewWithT(t)
 	builder := NewDefaultValidClusterSpecBuilder()

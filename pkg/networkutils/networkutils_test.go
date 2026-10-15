@@ -109,6 +109,26 @@ func TestGetLocalIP(t *testing.T) {
 	}
 }
 
+func TestInterfaceNameForIPLoopback(t *testing.T) {
+	for _, address := range []string{"127.0.0.1", "::1"} {
+		t.Run(address, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			name, err := networkutils.InterfaceNameForIP(net.ParseIP(address))
+			g.Expect(err).To(gomega.Succeed())
+			iface, err := net.InterfaceByName(name)
+			g.Expect(err).To(gomega.Succeed())
+			g.Expect(iface.Flags & net.FlagLoopback).NotTo(gomega.BeZero())
+		})
+	}
+}
+
+func TestInterfaceNameForIPNotLocal(t *testing.T) {
+	g := gomega.NewWithT(t)
+	name, err := networkutils.InterfaceNameForIP(net.ParseIP("2001:db8:ffff::1234"))
+	g.Expect(err).To(gomega.MatchError("no local network interface owns IP 2001:db8:ffff::1234"))
+	g.Expect(name).To(gomega.BeEmpty())
+}
+
 // MockConn is a mock of NetClient interface. It is hand written.
 type MockConn struct {
 	ctrl     *gomock.Controller
