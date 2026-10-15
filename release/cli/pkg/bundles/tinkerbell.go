@@ -129,7 +129,7 @@ func GetTinkerbellBundle(r *releasetypes.ReleaseConfig, imageDigests releasetype
 	if err != nil {
 		return anywherev1alpha1.TinkerbellBundle{}, errors.Wrap(err, "Error getting version for cluster-api-provider-tinkerbell")
 	}
-	providerVersion, err := tinkerbellProviderVersion(captGitTag, captMetadata, componentChecksum)
+	providerVersion, err := tinkerbellProviderVersion(captGitTag, captMetadata, componentChecksum, r.DryRun)
 	if err != nil {
 		return anywherev1alpha1.TinkerbellBundle{}, errors.Wrapf(err, "Error getting version for cluster-api-provider-tinkerbell")
 	}
@@ -181,13 +181,17 @@ func GetTinkerbellBundle(r *releasetypes.ReleaseConfig, imageDigests releasetype
 	return bundle, nil
 }
 
-func tinkerbellProviderVersion(gitTag string, metadataArtifact *releasetypes.ManifestArtifact, checksum string) (string, error) {
+func tinkerbellProviderVersion(gitTag string, metadataArtifact *releasetypes.ManifestArtifact, checksum string, dryRun bool) (string, error) {
 	if _, err := utilversion.ParseSemantic(gitTag); err == nil {
 		return fmt.Sprintf("%s+%s", gitTag, checksum), nil
 	}
 
 	if sha, err := hex.DecodeString(gitTag); err != nil || len(sha) != 20 {
 		return "", fmt.Errorf("CAPT source version %q must be a semantic version or a full commit SHA", gitTag)
+	}
+	if dryRun {
+		// Dry-run generation must work without downloaded metadata.
+		return fmt.Sprintf("v0.0.0-dev-%s+%s", gitTag, checksum), nil
 	}
 	if metadataArtifact == nil {
 		return "", fmt.Errorf("CAPT metadata is required for commit %s", gitTag)

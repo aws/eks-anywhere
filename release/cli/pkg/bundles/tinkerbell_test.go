@@ -27,7 +27,7 @@ func TestGetTinkerbellBundleProviderVersion(t *testing.T) {
 		{name: "release tag", gitTag: "v0.6.6", expectedVersion: "v0.6.6"},
 		{name: "commit pin", gitTag: commit, expectedVersion: "v0.7.0-dev-" + commit},
 		{name: "release tag dry run", gitTag: "v0.6.6", expectedVersion: "v0.6.6", dryRun: true},
-		{name: "commit pin dry run", gitTag: commit, expectedVersion: "v0.7.0-dev-" + commit, dryRun: true},
+		{name: "commit pin dry run", gitTag: commit, expectedVersion: "v0.0.0-dev-" + commit, dryRun: true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -38,7 +38,9 @@ func TestGetTinkerbellBundleProviderVersion(t *testing.T) {
 			require.NoError(t, os.MkdirAll(projectDir, 0o700))
 			require.NoError(t, os.WriteFile(filepath.Join(projectDir, "GIT_TAG"), []byte(tt.gitTag), 0o600))
 			metadata := "releaseSeries:\n- major: 0\n  minor: 6\n- major: 0\n  minor: 7\n"
-			require.NoError(t, os.WriteFile(filepath.Join(artifactDir, "metadata.yaml"), []byte(metadata), 0o600))
+			if !tt.dryRun {
+				require.NoError(t, os.WriteFile(filepath.Join(artifactDir, "metadata.yaml"), []byte(metadata), 0o600))
+			}
 			imageURI := fmt.Sprintf("registry.example.com/capt:%s", tt.gitTag)
 			digest := "sha256:" + strings.Repeat("b", 64)
 			r := &releasetypes.ReleaseConfig{DryRun: tt.dryRun, BuildRepoSource: buildRepo}
@@ -72,7 +74,7 @@ func TestGetTinkerbellBundleProviderVersion(t *testing.T) {
 			assert.Equal(t, "https://artifacts.example.com/capt/"+tt.gitTag+"/metadata.yaml", bundle.Metadata.URI)
 			parsed, err := utilversion.ParseSemantic(bundle.Version)
 			require.NoError(t, err)
-			if tt.gitTag == commit {
+			if tt.gitTag == commit && !tt.dryRun {
 				assert.True(t, parsed.AtLeast(utilversion.MustParseSemantic("v0.6.6")))
 			}
 			t.Logf("tinkerbell.version=%s image=%s", bundle.Version, bundle.ClusterAPIController.URI)
@@ -100,12 +102,17 @@ func TestTinkerbellProviderVersionInvalidMetadata(t *testing.T) {
 			if gitTag == "" {
 				gitTag = strings.Repeat("a", 40)
 			}
-			_, err := tinkerbellProviderVersion(gitTag, artifact, "abcdef1")
+			_, err := tinkerbellProviderVersion(gitTag, artifact, "abcdef1", false)
 			require.ErrorContains(t, err, tt.want)
 		})
 	}
 	t.Run("missing metadata", func(t *testing.T) {
-		_, err := tinkerbellProviderVersion(strings.Repeat("a", 40), nil, "abcdef1")
+		_, err := tinkerbellProviderVersion(strings.Repeat("a", 40), nil, "abcdef1", false)
 		require.ErrorContains(t, err, "metadata is required")
+	})
+	t.Run("missing metadata file", func(t *testing.T) {
+		artifact := &releasetypes.ManifestArtifact{ArtifactPath: t.TempDir(), ReleaseName: "metadata.yaml"}
+		_, err := tinkerbellProviderVersion(strings.Repeat("a", 40), artifact, "abcdef1", false)
+		require.ErrorContains(t, err, "reading CAPT metadata")
 	})
 }
