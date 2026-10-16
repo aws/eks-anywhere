@@ -91,6 +91,10 @@ func validateCiliumRoutingFamily(spec *ClusterSpec, ipv6 bool) error {
 	if cniConfig == nil || cniConfig.Cilium == nil || cniConfig.Cilium.RoutingMode != v1alpha1.CiliumRoutingModeDirect {
 		return nil
 	}
+	// The Cilium templater ignores deprecated routing fields when HelmValues is set.
+	if cniConfig.Cilium.HelmValues != nil {
+		return nil
+	}
 
 	if ipv6 {
 		if cniConfig.Cilium.IPv6NativeRoutingCIDR == "" || cniConfig.Cilium.IPv4NativeRoutingCIDR != "" {
@@ -99,8 +103,8 @@ func validateCiliumRoutingFamily(spec *ClusterSpec, ipv6 bool) error {
 		return nil
 	}
 
-	if cniConfig.Cilium.IPv4NativeRoutingCIDR == "" || cniConfig.Cilium.IPv6NativeRoutingCIDR != "" {
-		return errors.New("IPv4 direct routing requires only ipv4NativeRoutingCIDR")
+	if cniConfig.Cilium.IPv4NativeRoutingCIDR == "" {
+		return errors.New("IPv4 direct routing requires ipv4NativeRoutingCIDR")
 	}
 	return nil
 }

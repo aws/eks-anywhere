@@ -93,6 +93,46 @@ func TestTinkerbellDatacenterConfigValidateFail(t *testing.T) {
 			wantErr: "isoURL can be set, only when isoBoot is set to true",
 		},
 		{
+			name: "BMC ISO URL without ISO boot",
+			tinkDC: newTinkerbellDatacenterConfig(func(dc *v1alpha1.TinkerbellDatacenterConfig) {
+				dc.Spec.IsoBootURL = "http://192.0.2.10:7172/iso6/hook.iso"
+			}),
+			wantErr: "isoBootURL can be set only when isoBoot is true",
+		},
+		{
+			name: "Relative BMC ISO URL",
+			tinkDC: newTinkerbellDatacenterConfig(func(dc *v1alpha1.TinkerbellDatacenterConfig) {
+				dc.Spec.IsoBoot = true
+				dc.Spec.IsoBootURL = "/iso6/hook.iso"
+			}),
+			wantErr: "isoBootURL must be an absolute HTTP or HTTPS URL",
+		},
+		{
+			name: "Non-HTTP BMC ISO URL",
+			tinkDC: newTinkerbellDatacenterConfig(func(dc *v1alpha1.TinkerbellDatacenterConfig) {
+				dc.Spec.IsoBoot = true
+				dc.Spec.IsoBootURL = "ftp://192.0.2.10/iso6/hook.iso"
+			}),
+			wantErr: "isoBootURL must be an absolute HTTP or HTTPS URL",
+		},
+		{
+			name: "IPv6 BMC ISO URL uses IPv4 handler",
+			tinkDC: newTinkerbellDatacenterConfig(func(dc *v1alpha1.TinkerbellDatacenterConfig) {
+				dc.Spec.TinkerbellIP = "2001:db8::10"
+				dc.Spec.IsoBoot = true
+				dc.Spec.IsoBootURL = "http://192.0.2.10:7172/iso/hook.iso"
+			}),
+			wantErr: "isoBootURL path must end with /iso6/hook.iso",
+		},
+		{
+			name: "IPv4 BMC ISO URL uses IPv6 handler",
+			tinkDC: newTinkerbellDatacenterConfig(func(dc *v1alpha1.TinkerbellDatacenterConfig) {
+				dc.Spec.IsoBoot = true
+				dc.Spec.IsoBootURL = "http://192.0.2.10:7172/iso6/hook.iso"
+			}),
+			wantErr: "isoBootURL path must end with /iso/hook.iso",
+		},
+		{
 			name: "Invalid ISO URL",
 			tinkDC: newTinkerbellDatacenterConfig(func(dc *v1alpha1.TinkerbellDatacenterConfig) {
 				dc.Spec.IsoBoot = true
@@ -154,6 +194,28 @@ func TestTinkerbellDatacenterConfigDHCPv6ValidateSuccess(t *testing.T) {
 
 	g := NewWithT(t)
 	g.Expect(tinkDC.Validate()).To(Succeed())
+}
+
+func TestTinkerbellDatacenterConfigISOBootURLValidateSuccess(t *testing.T) {
+	for _, address := range []string{
+		"http://192.0.2.10:7172/iso6/hook.iso",
+		"https://[2001:db8::10]:7443/iso6/hook.iso",
+	} {
+		t.Run(address, func(t *testing.T) {
+			tinkDC := createTinkerbellDatacenterConfig()
+			tinkDC.Spec.TinkerbellIP = "2001:db8::10"
+			tinkDC.Spec.IsoBoot = true
+			tinkDC.Spec.IsoBootURL = address
+			NewWithT(t).Expect(tinkDC.Validate()).To(Succeed())
+		})
+	}
+}
+
+func TestTinkerbellDatacenterConfigIPv4ISOBootURLValidateSuccess(t *testing.T) {
+	tinkDC := createTinkerbellDatacenterConfig()
+	tinkDC.Spec.IsoBoot = true
+	tinkDC.Spec.IsoBootURL = "http://192.0.2.10:7172/media/iso/hook.iso"
+	NewWithT(t).Expect(tinkDC.Validate()).To(Succeed())
 }
 
 func newTinkerbellDatacenterConfig(opts ...func(*v1alpha1.TinkerbellDatacenterConfig)) *v1alpha1.TinkerbellDatacenterConfig {

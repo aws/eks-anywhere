@@ -64,13 +64,26 @@ def set_kubeadm_node_ip(node_ip, config_dir=Path("/run/kubeadm")):
                     "InitConfiguration", "JoinConfiguration"):
                 continue
             registration = document.setdefault("nodeRegistration", {})
-            args = registration.get("kubeletExtraArgs") or []
+            args = registration.get("kubeletExtraArgs")
+            if args is None:
+                args = ({} if document.get("apiVersion") == "kubeadm.k8s.io/v1beta3"
+                        else [])
             if isinstance(args, dict):
                 args["node-ip"] = node_ip
             else:
                 args = [arg for arg in args if arg["name"] != "node-ip"]
                 args.append({"name": "node-ip", "value": node_ip})
             registration["kubeletExtraArgs"] = args
+            # Kubeadm selects API/etcd addresses independently of kubelet node-ip.
+            if document["kind"] == "InitConfiguration":
+                endpoint = document.setdefault("localAPIEndpoint", {})
+                endpoint["advertiseAddress"] = node_ip
+            elif "controlPlane" in document:
+                control_plane = document["controlPlane"]
+                if control_plane is None:
+                    control_plane = document["controlPlane"] = {}
+                endpoint = control_plane.setdefault("localAPIEndpoint", {})
+                endpoint["advertiseAddress"] = node_ip
             found = True
         if found:
             path.write_text(yaml.safe_dump_all(documents, sort_keys=False))

@@ -1,6 +1,8 @@
 package tinkerbell
 
 import (
+	"context"
+	"net/url"
 	"regexp"
 	"strings"
 	"testing"
@@ -17,9 +19,114 @@ import (
 )
 
 func TestTinkerbellISOURL(t *testing.T) {
+	for _, tc := range []struct {
+		name         string
+		tinkerbellIP string
+		bootstrapIP  string
+		isoBootURL   string
+		host         string
+		port         string
+		path         string
+		want         string
+	}{
+		{name: "IPv4 bootstrap", tinkerbellIP: "192.0.2.10", bootstrapIP: "192.0.2.20", host: "192.0.2.20", port: "7171", path: "/iso/hook.iso", want: "http://192.0.2.20:7171/iso/hook.iso"},
+		{name: "IPv4 workload", tinkerbellIP: "192.0.2.10", host: "192.0.2.10", port: "7172", path: "/iso/hook.iso", want: "http://192.0.2.10:7172/iso/hook.iso"},
+		{name: "IPv6 bootstrap", tinkerbellIP: "2001:db8::10", bootstrapIP: "2001:db8::20", host: "2001:db8::20", port: "7171", path: "/iso6/hook.iso", want: "http://[2001:db8::20]:7171/iso6/hook.iso"},
+		{name: "IPv6 workload", tinkerbellIP: "2001:db8::10", host: "2001:db8::10", port: "7172", path: "/iso6/hook.iso", want: "http://[2001:db8::10]:7172/iso6/hook.iso"},
+		{name: "IPv6 bootstrap with IPv4 media", tinkerbellIP: "2001:db8::10", bootstrapIP: "2001:db8::20", isoBootURL: "http://192.0.2.61:7172/iso6/hook.iso", host: "192.0.2.61", port: "7172", path: "/iso6/hook.iso", want: "http://192.0.2.61:7172/iso6/hook.iso"},
+		{name: "IPv6 workload with IPv4 media", tinkerbellIP: "2001:db8::10", isoBootURL: "http://192.0.2.61:7172/iso6/hook.iso", host: "192.0.2.61", port: "7172", path: "/iso6/hook.iso", want: "http://192.0.2.61:7172/iso6/hook.iso"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			g := NewWithT(t)
+			got := TinkerbellISOURL(v1alpha1.TinkerbellDatacenterConfigSpec{
+				TinkerbellIP: tc.tinkerbellIP,
+				IsoBootURL:   tc.isoBootURL,
+				HookIsoURL:   "http://example.invalid/source.iso",
+			}, tc.bootstrapIP)
+			g.Expect(got).To(Equal(tc.want))
+			parsed, err := url.ParseRequestURI(got)
+			g.Expect(err).NotTo(HaveOccurred())
+			g.Expect(parsed.Scheme).To(Equal("http"))
+			g.Expect(parsed.Hostname()).To(Equal(tc.host))
+			g.Expect(parsed.Port()).To(Equal(tc.port))
+			g.Expect(parsed.Path).To(Equal(tc.path))
+		})
+	}
+}
+
+type isoURLPhaseTestCase struct {
+	name           string
+	tinkerbellIP   string
+	bootstrapIP    string
+	controlPlaneIP string
+	ipv6           bool
+	isoBootURL     string
+	bootstrapURL   string
+	workloadURL    string
+}
+
+func TestTemplateBuilderISOURLPhases(t *testing.T) {
+	for _, family := range []isoURLPhaseTestCase{
+		{name: "IPv4", tinkerbellIP: "192.0.2.10", bootstrapIP: "192.0.2.20", controlPlaneIP: "192.0.2.30", bootstrapURL: "http://192.0.2.20:7171/iso/hook.iso", workloadURL: "http://192.0.2.10:7172/iso/hook.iso"},
+		{name: "IPv6", tinkerbellIP: "2001:db8::10", bootstrapIP: "2001:db8::20", controlPlaneIP: "2001:db8::30", ipv6: true, bootstrapURL: "http://[2001:db8::20]:7171/iso6/hook.iso", workloadURL: "http://[2001:db8::10]:7172/iso6/hook.iso"},
+		{name: "IPv6 with IPv4 media", tinkerbellIP: "2001:db8::10", bootstrapIP: "2001:db8::20", controlPlaneIP: "2001:db8::30", ipv6: true, isoBootURL: "http://192.0.2.61:7172/iso6/hook.iso", bootstrapURL: "http://192.0.2.61:7172/iso6/hook.iso", workloadURL: "http://192.0.2.61:7172/iso6/hook.iso"},
+	} {
+		for _, bootstrap := range []bool{true, false} {
+			for _, customTemplate := range []bool{false, true} {
+				name := family.name + "/workload/default"
+				if bootstrap {
+					name = family.name + "/bootstrap/default"
+				}
+				filename := "testdata/cluster_hook_iso_boot.yaml"
+				if customTemplate {
+					name = strings.TrimSuffix(name, "/default") + "/override"
+					filename = testClusterConfigFilename
+				}
+				t.Run(name, func(t *testing.T) {
+					testTemplateBuilderISOURLPhase(t, family, filename, bootstrap, customTemplate)
+				})
+			}
+		}
+	}
+}
+
+func testTemplateBuilderISOURLPhase(t *testing.T, family isoURLPhaseTestCase, filename string, bootstrap, customTemplate bool) {
+	t.Helper()
 	g := NewWithT(t)
-	g.Expect(tinkerbellISOURL("192.0.2.10")).To(Equal("http://192.0.2.10:7171/iso/hook.iso"))
-	g.Expect(tinkerbellISOURL("2001:db8::10")).To(Equal("http://[2001:db8::10]:7171/iso6/hook.iso"))
+	spec := test.NewFullClusterSpec(t, filename)
+	spec.TinkerbellDatacenter.Spec.TinkerbellIP = family.tinkerbellIP
+	spec.TinkerbellDatacenter.Spec.IsoBoot = true
+	spec.TinkerbellDatacenter.Spec.IsoBootURL = family.isoBootURL
+	spec.TinkerbellDatacenter.Spec.HookIsoURL = "http://example.invalid/source.iso"
+	spec.TinkerbellDatacenter.Spec.OSImageURL = "http://example.invalid/os.tgz"
+	spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host = family.controlPlaneIP
+	if family.ipv6 {
+		spec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks = []string{"2001:db8:100::/56"}
+		spec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks = []string{"2001:db8:200::/112"}
+	}
+	want := family.workloadURL
+	if bootstrap {
+		spec.Cluster.AddTinkerbellIPAnnotation(family.bootstrapIP)
+		want = family.bootstrapURL
+	}
+	ctx := context.Background()
+	client := test.NewFakeKubeClient()
+	cp, err := ControlPlaneSpec(ctx, test.NewNullLogger(), client, spec)
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(cp.ControlPlaneMachineTemplate.Spec.Template.Spec.BootOptions.ISOURL).To(Equal(want))
+	if family.isoBootURL != "" && !customTemplate {
+		g.Expect(cp.ControlPlaneMachineTemplate.Spec.Template.Spec.TemplateOverride).To(ContainSubstring("http://[2001:db8::10]:7172/tootles/instanceID/"))
+	}
+	workers, err := WorkersSpec(ctx, test.NewNullLogger(), client, spec)
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(workers.Groups).NotTo(BeEmpty())
+	for _, worker := range workers.Groups {
+		g.Expect(worker.ProviderMachineTemplate.Spec.Template.Spec.BootOptions.ISOURL).To(Equal(want))
+		if family.isoBootURL != "" && !customTemplate {
+			g.Expect(worker.ProviderMachineTemplate.Spec.Template.Spec.TemplateOverride).To(ContainSubstring("http://[2001:db8::10]:7172/tootles/instanceID/"))
+		}
+	}
+	g.Expect(spec.TinkerbellDatacenter.Spec.HookIsoURL).To(Equal("http://example.invalid/source.iso"))
 }
 
 func TestGenerateTemplateBuilder(t *testing.T) {

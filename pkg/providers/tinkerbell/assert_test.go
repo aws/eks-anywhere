@@ -10,6 +10,7 @@ import (
 	"github.com/onsi/gomega"
 	"github.com/tinkerbell/tink/api/v1alpha1"
 	"go.uber.org/mock/gomock"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
@@ -181,6 +182,91 @@ func TestAssertIPFamilyValid(t *testing.T) {
 				g.Expect(err).To(gomega.Succeed())
 			} else {
 				g.Expect(err).To(gomega.MatchError(gomega.ContainSubstring(tt.wantErr)))
+			}
+		})
+	}
+}
+
+func TestAssertIPFamilyValidCiliumRouting(t *testing.T) {
+	for _, tt := range []struct {
+		name    string
+		ipv6    bool
+		cilium  *eksav1alpha1.CiliumConfig
+		wantErr string
+	}{
+		{
+			name:   "IPv4 direct with IPv4 CIDR",
+			cilium: &eksav1alpha1.CiliumConfig{RoutingMode: eksav1alpha1.CiliumRoutingModeDirect, IPv4NativeRoutingCIDR: "192.0.2.0/24"},
+		},
+		{
+			name:   "IPv4 direct retains both legacy CIDRs",
+			cilium: &eksav1alpha1.CiliumConfig{RoutingMode: eksav1alpha1.CiliumRoutingModeDirect, IPv4NativeRoutingCIDR: "192.0.2.0/24", IPv6NativeRoutingCIDR: "2001:db8::/48"},
+		},
+		{
+			name:    "IPv4 direct missing CIDRs",
+			cilium:  &eksav1alpha1.CiliumConfig{RoutingMode: eksav1alpha1.CiliumRoutingModeDirect},
+			wantErr: "IPv4 direct routing requires ipv4NativeRoutingCIDR",
+		},
+		{
+			name:    "IPv4 direct with only IPv6 CIDR",
+			cilium:  &eksav1alpha1.CiliumConfig{RoutingMode: eksav1alpha1.CiliumRoutingModeDirect, IPv6NativeRoutingCIDR: "2001:db8::/48"},
+			wantErr: "IPv4 direct routing requires ipv4NativeRoutingCIDR",
+		},
+		{
+			name:   "IPv4 overlay",
+			cilium: &eksav1alpha1.CiliumConfig{RoutingMode: eksav1alpha1.CiliumRoutingModeOverlay},
+		},
+		{
+			name:   "IPv6 direct with IPv6 CIDR",
+			ipv6:   true,
+			cilium: &eksav1alpha1.CiliumConfig{RoutingMode: eksav1alpha1.CiliumRoutingModeDirect, IPv6NativeRoutingCIDR: "2001:db8::/48"},
+		},
+		{
+			name:    "IPv6 direct with both legacy CIDRs",
+			ipv6:    true,
+			cilium:  &eksav1alpha1.CiliumConfig{RoutingMode: eksav1alpha1.CiliumRoutingModeDirect, IPv4NativeRoutingCIDR: "192.0.2.0/24", IPv6NativeRoutingCIDR: "2001:db8::/48"},
+			wantErr: "IPv6 direct routing requires only ipv6NativeRoutingCIDR",
+		},
+		{
+			name:    "IPv6 direct missing CIDRs",
+			ipv6:    true,
+			cilium:  &eksav1alpha1.CiliumConfig{RoutingMode: eksav1alpha1.CiliumRoutingModeDirect},
+			wantErr: "IPv6 direct routing requires only ipv6NativeRoutingCIDR",
+		},
+		{
+			name:   "IPv4 HelmValues ignores deprecated IPv6-only CIDR",
+			cilium: &eksav1alpha1.CiliumConfig{RoutingMode: eksav1alpha1.CiliumRoutingModeDirect, IPv6NativeRoutingCIDR: "2001:db8::/48", HelmValues: &apiextensionsv1.JSON{Raw: []byte(`{"routingMode":"tunnel"}`)}},
+		},
+		{
+			name:   "IPv4 native HelmValues without deprecated CIDRs",
+			cilium: &eksav1alpha1.CiliumConfig{RoutingMode: eksav1alpha1.CiliumRoutingModeDirect, HelmValues: &apiextensionsv1.JSON{Raw: []byte(`{"routingMode":"native","ipv4NativeRoutingCIDR":"192.0.2.0/24"}`)}},
+		},
+		{
+			name:   "IPv6 HelmValues ignores deprecated IPv4 CIDR",
+			ipv6:   true,
+			cilium: &eksav1alpha1.CiliumConfig{RoutingMode: eksav1alpha1.CiliumRoutingModeDirect, IPv4NativeRoutingCIDR: "192.0.2.0/24", HelmValues: &apiextensionsv1.JSON{Raw: []byte(`{"routingMode":"native","ipv6NativeRoutingCIDR":"2001:db8::/48"}`)}},
+		},
+		{
+			name:   "empty HelmValues ignores deprecated routing fields",
+			cilium: &eksav1alpha1.CiliumConfig{RoutingMode: eksav1alpha1.CiliumRoutingModeDirect, HelmValues: &apiextensionsv1.JSON{Raw: []byte(`{}`)}},
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			spec := NewDefaultValidClusterSpecBuilder().Build()
+			spec.Cluster.Spec.ClusterNetwork.CNIConfig = &eksav1alpha1.CNIConfig{Cilium: tt.cilium}
+			if tt.ipv6 {
+				spec.DatacenterConfig.Spec.TinkerbellIP = "2001:db8::10"
+				spec.DatacenterConfig.Spec.DHCPv6Config = &eksav1alpha1.DHCPv6Config{DerivedAddressPool: "2001:db8:1::/64"}
+				spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host = "2001:db8::20"
+				spec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks = []string{"2001:db8:2::/48"}
+				spec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks = []string{"2001:db8:3::/108"}
+			}
+			err := tinkerbell.AssertIPFamilyValid(spec)
+			if tt.wantErr == "" {
+				g.Expect(err).To(gomega.Succeed())
+			} else {
+				g.Expect(err).To(gomega.MatchError(tt.wantErr))
 			}
 		})
 	}

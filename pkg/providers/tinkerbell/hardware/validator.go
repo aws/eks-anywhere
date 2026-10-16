@@ -29,10 +29,10 @@ func NewDefaultMachineValidator() *DefaultMachineValidator {
 	return NewMachineValidator(false)
 }
 
-// NewMachineValidator creates a validator that can permit addressless hardware.
-func NewMachineValidator(allowAddressless bool) *DefaultMachineValidator {
+// NewMachineValidator creates a validator for static or addressless IPv6 SLAAC hardware.
+func NewMachineValidator(ipv6SLAAC bool) *DefaultMachineValidator {
 	validator := &DefaultMachineValidator{}
-	RegisterAssertions(validator, allowAddressless)
+	RegisterAssertions(validator, ipv6SLAAC)
 	return validator
 }
 
@@ -62,9 +62,9 @@ func StaticMachineAssertions() MachineAssertion {
 	return staticMachineAssertions(false)
 }
 
-func staticMachineAssertions(allowAddressless bool) MachineAssertion {
+func staticMachineAssertions(ipv6SLAAC bool) MachineAssertion {
 	return func(m Machine) error {
-		if err := validateMachineAddress(m, allowAddressless); err != nil {
+		if err := validateMachineAddress(m, ipv6SLAAC); err != nil {
 			return err
 		}
 		for _, assertion := range []MachineAssertion{
@@ -82,8 +82,17 @@ func staticMachineAssertions(allowAddressless bool) MachineAssertion {
 	}
 }
 
-func validateMachineAddress(m Machine, allowAddressless bool) error {
-	if allowAddressless && m.IPAddress == "" && m.Gateway == "" && m.Netmask == "" {
+func validateMachineAddress(m Machine, ipv6SLAAC bool) error {
+	if ipv6SLAAC {
+		for _, field := range []struct{ name, value string }{
+			{"ip_address", m.IPAddress},
+			{"gateway", m.Gateway},
+			{"netmask", m.Netmask},
+		} {
+			if field.value != "" {
+				return newMachineError(fmt.Sprintf("%s must be empty for IPv6 SLAAC (hostname=%q)", field.name, m.Hostname))
+			}
+		}
 		return nil
 	}
 	for _, field := range []struct{ name, value string }{
@@ -268,10 +277,10 @@ func RegisterDefaultAssertions(validator *DefaultMachineValidator) {
 	RegisterAssertions(validator, false)
 }
 
-// RegisterAssertions registers machine assertions with optional addressless inventory support.
-func RegisterAssertions(validator *DefaultMachineValidator, allowAddressless bool) {
+// RegisterAssertions registers machine assertions for static or addressless IPv6 SLAAC hardware.
+func RegisterAssertions(validator *DefaultMachineValidator, ipv6SLAAC bool) {
 	validator.Register([]MachineAssertion{
-		staticMachineAssertions(allowAddressless),
+		staticMachineAssertions(ipv6SLAAC),
 		UniqueIPAddress(),
 		UniqueMACAddress(),
 		UniqueHostnames(),

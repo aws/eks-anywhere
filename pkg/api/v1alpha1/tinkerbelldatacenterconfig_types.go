@@ -32,6 +32,12 @@ type TinkerbellDatacenterConfigSpec struct {
 	// IsoBoot can be used to indicate that the hardware should boot using an ISO.
 	//+optional
 	IsoBoot bool `json:"isoBoot,omitempty"`
+	// IsoBootURL is the BMC-reachable URL served by the ISO boot handler.
+	// CAPT inserts the Hardware instance ID into its path. The endpoint must remain
+	// reachable during bootstrap and after management moves to the workload cluster.
+	// It overrides the generated boot URL, not the source image in HookIsoURL.
+	//+optional
+	IsoBootURL string `json:"isoBootURL,omitempty"`
 	// HookIsoURL is the URL of ISO image that will be used to provision the hardware
 	// during one time boot process.
 	// It can be used to override the default Hook OS ISO image to pull from a local server.

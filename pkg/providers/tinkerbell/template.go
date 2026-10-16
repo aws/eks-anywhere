@@ -6,8 +6,6 @@ import (
 	_ "embed"
 	"fmt"
 	"io"
-	"net"
-	"net/url"
 	"strings"
 	"time"
 
@@ -42,8 +40,6 @@ const (
 	defaultRegistry               = "public.ecr.aws"
 	netbootMode                   = "netboot"
 	isobootMode                   = "iso"
-	// SmeeHTTPPort is the port in Smee that serves HTTP requests.
-	SmeeHTTPPort = "7171"
 )
 
 type TemplateBuilder struct {
@@ -367,11 +363,7 @@ func buildTemplateMapCP(
 		values["bootMode"] = netbootMode
 	} else {
 		values["bootMode"] = isobootMode
-		tinkerbellIP := datacenterSpec.TinkerbellIP
-		if t := clusterSpec.Cluster.HasTinkerbellIPAnnotation(); t != "" {
-			tinkerbellIP = t
-		}
-		values["isoUrl"] = tinkerbellISOURL(tinkerbellIP)
+		values["isoUrl"] = TinkerbellISOURL(datacenterSpec, clusterSpec.Cluster.HasTinkerbellIPAnnotation())
 	}
 
 	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.SkipAdmissionForSystemResources != nil &&
@@ -492,27 +484,10 @@ func buildTemplateMapMD(
 		values["bootMode"] = netbootMode
 	} else {
 		values["bootMode"] = isobootMode
-		tinkerbellIP := datacenterSpec.TinkerbellIP
-		if t := clusterSpec.Cluster.HasTinkerbellIPAnnotation(); t != "" {
-			tinkerbellIP = t
-		}
-		values["isoUrl"] = tinkerbellISOURL(tinkerbellIP)
+		values["isoUrl"] = TinkerbellISOURL(datacenterSpec, clusterSpec.Cluster.HasTinkerbellIPAnnotation())
 	}
 
 	return values, nil
-}
-
-func tinkerbellISOURL(tinkerbellIP string) string {
-	isoPath := "/iso/hook.iso"
-	if addressStringIsIPv6(tinkerbellIP) {
-		isoPath = "/iso6/hook.iso"
-	}
-
-	return (&url.URL{
-		Scheme: "http",
-		Host:   net.JoinHostPort(tinkerbellIP, SmeeHTTPPort),
-		Path:   isoPath,
-	}).String()
 }
 
 // omitTinkerbellMachineTemplate removes TinkerbellMachineTemplate API objects from yml. yml is

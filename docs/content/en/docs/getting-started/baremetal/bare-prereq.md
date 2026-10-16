@@ -34,6 +34,8 @@ The compute hardware you need for your Bare Metal cluster must meet the followin
 
 If you intend on using a non-Bottlerocket OS you must build it using `image-builder`. See the [OS Management Artifacts]({{< relref "../../osmgmt/artifacts#bare-metal-artifacts" >}}) page for help building the OS.
 
+IPv6 bare-metal clusters require Ubuntu or RHEL images. Bottlerocket is unsupported for IPv6.
+
 ## Upgrade requirements
 If you are running a standalone cluster with only one control plane node, you will need at least one additional, temporary machine for each control plane node grouping. For cluster with multiple control plane nodes, you can perform a rolling upgrade with or without an extra temporary machine. For worker node upgrades, you can perform a rolling upgrade with or without an extra temporary machine.
 
@@ -117,6 +119,60 @@ When a machine attempts to PXE boot, you should see DHCP DISCOVER/REQUEST packet
   * Create an IP reservation for these addresses on your DHCP server. This is usually accomplished by adding a dummy mapping of this IP address to a non-existent mac address.
 
 * Ports must be open to the Admin machine and cluster machines as described in the [Cluster Networking documentation]({{< relref "../ports" >}}).
+
+## IPv6 network boot requirements
+
+The IPv6 release supports network boot with SLAAC (Stateless Address Autoconfiguration) for the installed operating system. IPv6 ISO boot is not qualified. The administrative machine and target machines must share the provisioning layer 2 network.
+
+Configure the router to advertise a `/64` prefix and a default route on that network. Router Advertisements must use the following flags:
+
+| Flag | Required value | Purpose |
+| --- | --- | --- |
+| Managed address configuration (`M`) | `0` | Installed operating systems use SLAAC for node addresses. |
+| Other configuration (`O`) | `1` | DHCPv6 provides other network information during boot. |
+| Autonomous address configuration (`A`) on the advertised prefix | `1` | Allows each installed operating system to form its SLAAC address. |
+
+Networks with `M=1` or `A=0` are unsupported for this release. The router must advertise a nonzero router lifetime so machines can learn a default route. Tinkerbell provides temporary boot addresses through `dhcpv6Config.derivedAddressPool`; it does not provide Router Advertisements or replace your router. See the [configuration reference]({{< relref "./bare-spec/#dhcpv6config-required-for-ipv6-network-boot" >}}).
+
+Meet these additional requirements:
+
+* Assign an IPv6 address to the administrative machine's provisioning interface. The control plane endpoint, Tinkerbell service IP, pod CIDR and service CIDR must use IPv6. Reserve distinct control plane and Tinkerbell virtual IPs that do not conflict with machine or boot addresses.
+* Put reachable IPv6 DNS server addresses in each hardware CSV row. The administrative machine, bootstrap cluster, HookOS and installed operating system must be able to resolve the names of the registries and artifact servers they use. Allow DNS over both UDP and TCP.
+* Allow IPv6 Neighbor Discovery, Router Advertisements and DHCPv6 traffic, including UDP ports 546 and 547 and the required link-local multicast traffic, on the provisioning segment.
+* Ensure the node running the Tinkerbell stack has access to the provisioning interface. The IPv6 stack uses host networking, so this node must also have the routes needed to reach each BMC.
+
+To inspect Router Advertisements and DHCPv6 traffic from the administrative machine:
+
+```bash
+sudo tcpdump -i any 'icmp6 or udp port 546 or udp port 547'
+```
+
+Use `--tinkerbell-bootstrap-ip` to select a particular administrative interface, for example:
+
+```bash
+eksctl anywhere create cluster -f cluster.yaml --hardware-csv hardware.csv \
+  --tinkerbell-bootstrap-ip "2001:db8:10::1"
+```
+
+Replace the example with an IPv6 address already assigned to the provisioning interface. The override must use the same address family as `tinkerbellIP`.
+
+### Reaching IPv4 BMCs
+
+An IPv6 cluster can use BMCs on a separate IPv4 management network. Provide IPv4 connectivity from the administrative machine and from the node hosting the Tinkerbell stack to those BMCs.
+
+If that connectivity requires a secondary IPv4 address or a specific BMC route on an installed node, configure it through your host or network management. EKS Anywhere's SLAAC provisioning does not allocate those IPv4 addresses or routes. Keep them separate from the node IPAM fields in the hardware CSV: `ip_address`, `netmask` and `gateway` remain empty for SLAAC hardware. The Kubernetes node address remains IPv6.
+
+### Testing a bootstrap image
+
+For development tests with a custom Kind bootstrap image, set `EKSA_BOOTSTRAP_KIND_IMAGE` to that image before running the CLI. The setting selects the bootstrap image without editing the bundle:
+
+```bash
+EKSA_BOOTSTRAP_KIND_IMAGE="registry.example.test/dev/kind-node:ipv6-dns" \
+  eksctl anywhere create cluster -f cluster.yaml --hardware-csv hardware.csv \
+  --tinkerbell-bootstrap-ip "2001:db8:10::1"
+```
+
+Replace the example image with your built image. Validate bootstrap DNS over IPv6 with the image under test. A development override run does not qualify the Kind image selected by a release bundle.
 
 ## Validated hardware
 

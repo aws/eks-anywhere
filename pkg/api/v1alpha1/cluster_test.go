@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/api/core/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/yaml"
@@ -3079,6 +3080,62 @@ func TestValidateNetworking(t *testing.T) {
 	}
 }
 
+func TestValidateNetworkingIPFamilySupport(t *testing.T) {
+	tests := []struct {
+		kind        string
+		ipv6Allowed bool
+	}{
+		{TinkerbellDatacenterKind, true},
+		{VSphereDatacenterKind, false},
+		{NutanixDatacenterKind, false},
+		{CloudStackDatacenterKind, false},
+		{DockerDatacenterKind, false},
+		{SnowDatacenterKind, false},
+	}
+	networks := []struct {
+		name     string
+		pods     string
+		services string
+		endpoint string
+		mask     int
+		ipv6     bool
+	}{
+		{"IPv4", "192.0.2.0/16", "198.51.100.0/24", "203.0.113.10", 28, false},
+		{"IPv6", "2001:db8:100::/48", "2001:db8:200::/112", "2001:db8::10", 64, true},
+	}
+	for _, tt := range tests {
+		for _, network := range networks {
+			for _, explicitMask := range []bool{false, true} {
+				t.Run(fmt.Sprintf("%s/%s/explicit-mask-%t", tt.kind, network.name, explicitMask), func(t *testing.T) {
+					config := &Cluster{
+						Spec: ClusterSpec{
+							DatacenterRef: Ref{Kind: tt.kind},
+							ControlPlaneConfiguration: ControlPlaneConfiguration{
+								Endpoint: &Endpoint{Host: network.endpoint},
+							},
+							ClusterNetwork: ClusterNetwork{
+								Pods:      Pods{CidrBlocks: []string{network.pods}},
+								Services:  Services{CidrBlocks: []string{network.services}},
+								CNIConfig: &CNIConfig{Cilium: &CiliumConfig{}},
+							},
+						},
+					}
+					if explicitMask {
+						config.Spec.ClusterNetwork.Nodes = &Nodes{CIDRMaskSize: &network.mask}
+					}
+					var wantErr error
+					if network.ipv6 && !tt.ipv6Allowed {
+						wantErr = errors.New("IPv6 networking is only supported for Tinkerbell clusters")
+					}
+					if got := validateNetworking(config); !reflect.DeepEqual(wantErr, got) {
+						t.Errorf("validateNetworking() got = %v, want %v", got, wantErr)
+					}
+				})
+			}
+		}
+	}
+}
+
 func TestValidateCNIConfig(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -3109,6 +3166,28 @@ func TestValidateCNIConfig(t *testing.T) {
 				CNIConfig: &CNIConfig{
 					Cilium: &CiliumConfig{
 						RoutingMode: CiliumRoutingModeDirect,
+					},
+				},
+			},
+		},
+		{
+			name: "directmode legacy fields ignored with HelmValues",
+			clusterNetwork: &ClusterNetwork{
+				CNIConfig: &CNIConfig{
+					Cilium: &CiliumConfig{
+						RoutingMode: CiliumRoutingModeDirect,
+						HelmValues:  &apiextensionsv1.JSON{Raw: []byte(`{"routingMode":"native","ipv4NativeRoutingCIDR":"192.0.2.0/24"}`)},
+					},
+				},
+			},
+		},
+		{
+			name: "empty HelmValues also overrides directmode legacy fields",
+			clusterNetwork: &ClusterNetwork{
+				CNIConfig: &CNIConfig{
+					Cilium: &CiliumConfig{
+						RoutingMode: CiliumRoutingModeDirect,
+						HelmValues:  &apiextensionsv1.JSON{Raw: []byte(`{}`)},
 					},
 				},
 			},

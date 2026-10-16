@@ -64,6 +64,55 @@ func GetLocalIP() (net.IP, error) {
 	return conn.LocalAddr().(*net.UDPAddr).IP, nil
 }
 
+// ResolveLocalIP validates an override or selects the source address for the route to destination.
+func ResolveLocalIP(client NetClient, destination, override string) (net.IP, error) {
+	destinationIP := net.ParseIP(destination)
+	if destinationIP == nil {
+		return nil, fmt.Errorf("invalid destination IP %q", destination)
+	}
+	if override != "" {
+		ip := net.ParseIP(override)
+		if ip == nil {
+			return nil, fmt.Errorf("invalid bootstrap IP %q", override)
+		}
+		if err := validateBootstrapIPFamily(ip, destinationIP); err != nil {
+			return nil, err
+		}
+		return ip, nil
+	}
+
+	return localIPForDestination(client, destinationIP)
+}
+
+func validateBootstrapIPFamily(ip, destinationIP net.IP) error {
+	if (ip.To4() == nil) != (destinationIP.To4() == nil) {
+		return fmt.Errorf("bootstrap IP %s and Tinkerbell IP %s must use the same IP family", ip, destinationIP)
+	}
+	return nil
+}
+
+func localIPForDestination(client NetClient, destinationIP net.IP) (net.IP, error) {
+	network := "udp4"
+	if destinationIP.To4() == nil {
+		network = "udp6"
+	}
+	// A UDP connect asks the kernel for the route's source address without sending a packet.
+	conn, err := client.DialTimeout(network, net.JoinHostPort(destinationIP.String(), "80"), 5*time.Second)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve local ip: %w", err)
+	}
+	defer conn.Close()
+
+	address, ok := conn.LocalAddr().(*net.UDPAddr)
+	if !ok || address.IP == nil {
+		return nil, errors.New("failed to retrieve local ip: missing UDP source address")
+	}
+	if err := validateBootstrapIPFamily(address.IP, destinationIP); err != nil {
+		return nil, err
+	}
+	return address.IP, nil
+}
+
 // InterfaceNameForIP returns the local interface that owns ip.
 func InterfaceNameForIP(ip net.IP) (string, error) {
 	interfaces, err := net.Interfaces()

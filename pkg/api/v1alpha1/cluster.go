@@ -764,6 +764,9 @@ func validateNetworking(clusterConfig *Cluster) error {
 	if podIPv6 != serviceIPv6 {
 		return errors.New("pods and services CIDR blocks must use the same IP family")
 	}
+	if podIPv6 && clusterConfig.Spec.DatacenterRef.Kind != TinkerbellDatacenterKind {
+		return errors.New("IPv6 networking is only supported for Tinkerbell clusters")
+	}
 
 	if clusterConfig.Spec.DatacenterRef.Kind == SnowDatacenterKind {
 		controlPlaneEndpoint := net.ParseIP(clusterConfig.Spec.ControlPlaneConfiguration.Endpoint.Host)
@@ -859,7 +862,7 @@ func validateCiliumConfig(cilium *CiliumConfig) error {
 		}
 	}
 
-	if cilium.RoutingMode == "direct" && cilium.IPv4NativeRoutingCIDR == "" && cilium.IPv6NativeRoutingCIDR == "" {
+	if cilium.HelmValues == nil && cilium.RoutingMode == "direct" && cilium.IPv4NativeRoutingCIDR == "" && cilium.IPv6NativeRoutingCIDR == "" {
 		return errors.New("direct routing mode requires IPv4NativeRoutingCIDR or IPv6NativeRoutingCIDR to be set")
 	}
 

@@ -3,8 +3,10 @@ package v1alpha1
 import (
 	"errors"
 	"fmt"
+	"net"
 	"net/netip"
 	"net/url"
+	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -87,18 +89,47 @@ func validateDatacenterConfig(config *TinkerbellDatacenterConfig) error {
 		return err
 	}
 
-	if config.Spec.IsoBoot {
-		if config.Spec.HookIsoURL != "" {
-			if _, err := url.ParseRequestURI(config.Spec.HookIsoURL); err != nil {
-				return fmt.Errorf("parsing hookIsoURL: %v, please provide a valid URL", err)
-			}
-		}
-	} else {
-		if config.Spec.HookIsoURL != "" {
-			return fmt.Errorf("isoURL can be set, only when isoBoot is set to true")
-		}
+	if err := validateISOBootURL(config.Spec.IsoBoot, config.Spec.IsoBootURL, net.ParseIP(config.Spec.TinkerbellIP).To4() == nil); err != nil {
+		return err
 	}
 
+	return validateHookISOURL(config.Spec.IsoBoot, config.Spec.HookIsoURL)
+}
+
+func validateHookISOURL(enabled bool, address string) error {
+	if address == "" {
+		return nil
+	}
+	if !enabled {
+		return errors.New("isoURL can be set, only when isoBoot is set to true")
+	}
+	if _, err := url.ParseRequestURI(address); err != nil {
+		return fmt.Errorf("parsing hookIsoURL: %v, please provide a valid URL", err)
+	}
+	return nil
+}
+
+func validateISOBootURL(enabled bool, address string, ipv6 bool) error {
+	if address == "" {
+		return nil
+	}
+	if !enabled {
+		return errors.New("isoBootURL can be set only when isoBoot is true")
+	}
+	parsed, err := url.ParseRequestURI(address)
+	if err != nil {
+		return fmt.Errorf("parsing isoBootURL: %w", err)
+	}
+	if (parsed.Scheme != "http" && parsed.Scheme != "https") || parsed.Hostname() == "" {
+		return errors.New("isoBootURL must be an absolute HTTP or HTTPS URL")
+	}
+	handlerPath := "/iso/hook.iso"
+	if ipv6 {
+		handlerPath = "/iso6/hook.iso"
+	}
+	if !strings.HasSuffix(parsed.Path, handlerPath) {
+		return fmt.Errorf("isoBootURL path must end with %s", handlerPath)
+	}
 	return nil
 }
 
