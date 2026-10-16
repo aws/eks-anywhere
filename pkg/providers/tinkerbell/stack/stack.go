@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"net/url"
 	"path/filepath"
 	"strings"
@@ -15,6 +16,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/helm"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/registrymirror"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -22,9 +24,10 @@ import (
 const (
 	overridesFileName = "tinkerbell-chart-overrides.yaml"
 
-	smee         = "smee"
-	smeeHTTPPort = "7171"
-	grpcPort     = "42113"
+	smee               = "smee"
+	smeeHTTPPort       = 7171
+	tinkerbellHTTPPort = 7172
+	grpcPort           = "42113"
 
 	// localTinkWorkerImage is the path to the tink-worker image embedded in HookOS.
 	localTinkWorkerImage         = "127.0.0.1/embedded/tink-worker"
@@ -76,6 +79,7 @@ type Installer struct {
 	loadBalancer          bool
 	stackService          bool
 	dhcpRelay             bool
+	dhcpv6Config          *v1alpha1.DHCPv6Config
 }
 
 type InstallOption func(s *Installer)
@@ -126,6 +130,13 @@ func WithStackServiceEnabled(enabled bool) InstallOption {
 func WithDHCPRelayEnabled(enabled bool) InstallOption {
 	return func(s *Installer) {
 		s.dhcpRelay = enabled
+	}
+}
+
+// WithDHCPv6Config configures the IPv6 boot path.
+func WithDHCPv6Config(config *v1alpha1.DHCPv6Config) InstallOption {
+	return func(s *Installer) {
+		s.dhcpv6Config = config
 	}
 }
 
@@ -251,16 +262,24 @@ func (s *Installer) installSmeeOnDocker(ctx context.Context, bundle releasev1alp
 		"-e", "TINKERBELL_BACKEND=kube",
 		"-e", "TINKERBELL_BACKEND_KUBE_CONFIG=/kubeconfig",
 		"-e", fmt.Sprintf("TINKERBELL_BACKEND_KUBE_NAMESPACE=%s", s.namespace),
-		"-e", fmt.Sprintf("TINKERBELL_PUBLIC_IPV4=%s", tinkServerIP),
-		// TINKERBELL_PUBLIC_IPV4 and the TINKERBELL_DHCP_* vars below only control the
-		// IPs advertised to netbooting machines (DHCP next-server, iPXE URLs). The
-		// TFTP/HTTP/syslog listeners bind separately; without explicit bind addresses
-		// they default to the IP of the default-route interface (detectPublicIPv4 in
-		// the tinkerbell binary), which on multi-NIC admin machines can differ from
-		// tinkServerIP, leaving machines unable to reach the advertised endpoints.
-		// Set the global bind address and the per-service ones so listeners always
-		// bind to the same IP that is advertised.
-		"-e", fmt.Sprintf("TINKERBELL_BIND_ADDRESS=%s", tinkServerIP),
+	}
+
+	ipv6 := isIPv6(tinkServerIP)
+	// Keep listeners reachable on the provisioning NIC: bind IPv4 to its
+	// selected address and IPv6 to all interfaces.
+	listenerAddress := tinkServerIP
+	if ipv6 {
+		listenerAddress = "::"
+	}
+	if ipv6 {
+		flags = append(flags, "-e", fmt.Sprintf("TINKERBELL_PUBLIC_IPV6=%s", tinkServerIP))
+	} else {
+		flags = append(flags, "-e", fmt.Sprintf("TINKERBELL_PUBLIC_IPV4=%s", tinkServerIP))
+	}
+
+	flags = append(flags,
+		"-e", fmt.Sprintf("TINKERBELL_BIND_ADDRESS=%s", listenerAddress),
+		"-e", fmt.Sprintf("TINKERBELL_HTTP_PORT=%d", smeeHTTPPort),
 		"-e", fmt.Sprintf("TINKERBELL_TRUSTED_PROXIES=%s", s.podCidrRange),
 		"-e", "TINKERBELL_ENABLE_SMEE=true",
 		"-e", "TINKERBELL_ENABLE_TOOTLES=false",
@@ -269,29 +288,77 @@ func (s *Installer) installSmeeOnDocker(ctx context.Context, bundle releasev1alp
 		"-e", "TINKERBELL_ENABLE_RUFIO_CONTROLLER=false",
 		"-e", "TINKERBELL_ENABLE_SECONDSTAR=false",
 		"-e", "TINKERBELL_ENABLE_CRD_MIGRATIONS=false",
-		"-e", "TINKERBELL_DHCP_ENABLED=true",
-		"-e", "TINKERBELL_DHCP_MODE=reservation",
-		"-e", fmt.Sprintf("TINKERBELL_DHCP_IP_FOR_PACKET=%s", tinkServerIP),
-		"-e", fmt.Sprintf("TINKERBELL_DHCP_SYSLOG_IP=%s", tinkServerIP),
-		"-e", fmt.Sprintf("TINKERBELL_DHCP_TFTP_IP=%s", tinkServerIP),
-		"-e", fmt.Sprintf("TINKERBELL_DHCP_IPXE_HTTP_BINARY_HOST=%s", tinkServerIP),
-		"-e", fmt.Sprintf("TINKERBELL_DHCP_IPXE_HTTP_BINARY_PORT=%s", smeeHTTPPort),
-		"-e", fmt.Sprintf("TINKERBELL_DHCP_IPXE_HTTP_SCRIPT_HOST=%s", tinkServerIP),
-		"-e", fmt.Sprintf("TINKERBELL_DHCP_IPXE_HTTP_SCRIPT_PORT=%s", smeeHTTPPort),
-		"-e", fmt.Sprintf("TINKERBELL_IPXE_HTTP_SCRIPT_BIND_ADDR=%s", tinkServerIP),
-		"-e", fmt.Sprintf("TINKERBELL_IPXE_HTTP_SCRIPT_BIND_PORT=%s", smeeHTTPPort),
-		"-e", fmt.Sprintf("TINKERBELL_IPXE_HTTP_SCRIPT_OSIE_URL=%s", osiePath),
+	)
+
+	if ipv6 {
+		bootstrapInterface, err := networkutils.InterfaceNameForIP(net.ParseIP(tinkServerIP))
+		if err != nil {
+			return fmt.Errorf("selecting bootstrap DHCPv6 interface: %w", err)
+		}
+		derivedAddressPool := ""
+		if s.dhcpv6Config != nil {
+			derivedAddressPool = s.dhcpv6Config.DerivedAddressPool
+		}
+		flags = append(flags,
+			"-e", "TINKERBELL_DHCP_ENABLED=false",
+			"-e", "TINKERBELL_DHCPV6_ENABLED=true",
+			"-e", "TINKERBELL_DHCPV6_MODE=derived",
+			"-e", fmt.Sprintf("TINKERBELL_DHCPV6_DERIVED_DIRECT_ADDRESS_POOL=%s", derivedAddressPool),
+			"-e", fmt.Sprintf("TINKERBELL_DHCPV6_BIND_ADDR=%s", listenerAddress),
+			"-e", fmt.Sprintf("TINKERBELL_DHCPV6_BIND_INTERFACE=%s", bootstrapInterface),
+			"-e", fmt.Sprintf("TINKERBELL_DHCPV6_SYSLOG_IP=%s", tinkServerIP),
+			"-e", fmt.Sprintf("TINKERBELL_DHCPV6_TFTP_IP=%s", tinkServerIP),
+			"-e", fmt.Sprintf("TINKERBELL_DHCPV6_IPXE_HTTP_BINARY_HOST=%s", tinkServerIP),
+			"-e", fmt.Sprintf("TINKERBELL_DHCPV6_IPXE_HTTP_BINARY_PORT=%d", smeeHTTPPort),
+			"-e", fmt.Sprintf("TINKERBELL_DHCPV6_IPXE_HTTP_SCRIPT_HOST=%s", tinkServerIP),
+			"-e", fmt.Sprintf("TINKERBELL_DHCPV6_IPXE_HTTP_SCRIPT_PORT=%d", smeeHTTPPort),
+		)
+	} else {
+		flags = append(flags,
+			"-e", "TINKERBELL_DHCP_ENABLED=true",
+			"-e", "TINKERBELL_DHCP_MODE=reservation",
+			"-e", fmt.Sprintf("TINKERBELL_DHCP_IP_FOR_PACKET=%s", tinkServerIP),
+			"-e", fmt.Sprintf("TINKERBELL_DHCP_SYSLOG_IP=%s", tinkServerIP),
+			"-e", fmt.Sprintf("TINKERBELL_DHCP_TFTP_IP=%s", tinkServerIP),
+			"-e", fmt.Sprintf("TINKERBELL_DHCP_IPXE_HTTP_BINARY_HOST=%s", tinkServerIP),
+			"-e", fmt.Sprintf("TINKERBELL_DHCP_IPXE_HTTP_BINARY_PORT=%d", smeeHTTPPort),
+			"-e", fmt.Sprintf("TINKERBELL_DHCP_IPXE_HTTP_SCRIPT_HOST=%s", tinkServerIP),
+			"-e", fmt.Sprintf("TINKERBELL_DHCP_IPXE_HTTP_SCRIPT_PORT=%d", smeeHTTPPort),
+		)
+	}
+
+	if ipv6 {
+		flags = append(flags, "-e", fmt.Sprintf("TINKERBELL_IPXE_HTTP_SCRIPT_OSIE_URL_V6=%s", osiePath))
+	} else {
+		flags = append(flags, "-e", fmt.Sprintf("TINKERBELL_IPXE_HTTP_SCRIPT_OSIE_URL=%s", osiePath))
+	}
+	flags = append(flags,
 		"-e", fmt.Sprintf("TINKERBELL_IPXE_HTTP_SCRIPT_EXTRA_KERNEL_ARGS=%s", extraKernelArgs),
-		"-e", fmt.Sprintf("TINKERBELL_IPXE_SCRIPT_TINK_SERVER_ADDR_PORT=%s:%s", tinkServerIP, grpcPort),
+	)
+	if ipv6 {
+		flags = append(flags, "-e", fmt.Sprintf("TINKERBELL_IPXE_SCRIPT_TINK_SERVER_ADDR_PORT_V6=%s", net.JoinHostPort(tinkServerIP, grpcPort)))
+	} else {
+		flags = append(flags, "-e", fmt.Sprintf("TINKERBELL_IPXE_SCRIPT_TINK_SERVER_ADDR_PORT=%s", net.JoinHostPort(tinkServerIP, grpcPort)))
+	}
+	flags = append(flags,
 		"-e", "TINKERBELL_IPXE_SCRIPT_TINK_SERVER_INSECURE_TLS=true",
 		"-e", "TINKERBELL_ISO_ENABLED=true",
-		"-e", "TINKERBELL_ISO_STATIC_IPAM_ENABLED=true",
+	)
+	if ipv6 {
+		flags = append(flags,
+			"-e", "TINKERBELL_ISO_STATIC_IPAM_ENABLED=false",
+			"-e", "TINKERBELL_TOOTLES_INSTANCE_ENDPOINT=true",
+		)
+	} else {
+		flags = append(flags, "-e", "TINKERBELL_ISO_STATIC_IPAM_ENABLED=true")
+	}
+	flags = append(flags,
 		"-e", fmt.Sprintf("TINKERBELL_ISO_UPSTREAM_URL=%s", isoOverride),
 		"-e", "TINKERBELL_TFTP_SERVER_ENABLED=true",
-		"-e", fmt.Sprintf("TINKERBELL_TFTP_SERVER_BIND_ADDR=%s", tinkServerIP),
+		"-e", fmt.Sprintf("TINKERBELL_TFTP_SERVER_BIND_ADDR=%s", listenerAddress),
 		"-e", "TINKERBELL_SYSLOG_ENABLED=true",
-		"-e", fmt.Sprintf("TINKERBELL_SYSLOG_BIND_ADDR=%s", tinkServerIP),
-	}
+		"-e", fmt.Sprintf("TINKERBELL_SYSLOG_BIND_ADDR=%s", listenerAddress),
+	)
 
 	// Mono-repo binary uses env vars only, no command line args
 	cmd := []string{}
@@ -564,6 +631,11 @@ func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle
 
 	tinkerbellImage, tinkerbellTag := parseImageURI(tinkerbellImageURI)
 
+	bootHTTPPort := tinkerbellHTTPPort
+	if s.smeeOnDocker {
+		bootHTTPPort = smeeHTTPPort
+	}
+
 	valuesMap := map[string]any{
 		"name":     "tinkerbell",
 		"publicIP": tinkerbellIP,
@@ -616,6 +688,7 @@ func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle
 					"enableRufioController": true,
 					"enableSecondstar":      false,
 					"enableCRDMigrations":   false,
+					"httpPort":              tinkerbellHTTPPort,
 				},
 				"smee": map[string]any{
 					"dhcpEnabled":                     true,
@@ -624,10 +697,9 @@ func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle
 					"dhcpSyslogIP":                    tinkerbellIP,
 					"dhcpTftpIP":                      tinkerbellIP,
 					"dhcpIpxeHttpBinaryHost":          tinkerbellIP,
-					"dhcpIpxeHttpBinaryPort":          7171,
+					"dhcpIpxeHttpBinaryPort":          bootHTTPPort,
 					"dhcpIpxeHttpScriptHost":          tinkerbellIP,
-					"dhcpIpxeHttpScriptPort":          7171,
-					"ipxeHttpScriptBindPort":          7171,
+					"dhcpIpxeHttpScriptPort":          bootHTTPPort,
 					"ipxeHttpScriptOsieURL":           osieURL,
 					"ipxeHttpScriptExtraKernelArgs":   bootEnv,
 					"ipxeScriptTinkServerAddrPort":    fmt.Sprintf("%s:%s", tinkerbellIP, grpcPort),
@@ -638,9 +710,7 @@ func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle
 					"tftpServerEnabled":               true,
 					"syslogEnabled":                   true,
 				},
-				"tootles": map[string]any{
-					"bindPort": 7172,
-				},
+				"tootles": map[string]any{},
 				"tinkServer": map[string]any{
 					"bindPort": 42113,
 				},
@@ -658,6 +728,9 @@ func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle
 			"type":           "LoadBalancer",
 			"loadBalancerIP": tinkerbellIP,
 			"lbClass":        "kube-vip.io/kube-vip-class",
+			"ports": map[string]any{
+				"http": map[string]any{"port": tinkerbellHTTPPort},
+			},
 		},
 		"optional": map[string]any{
 			"hookos": map[string]any{
@@ -687,6 +760,44 @@ func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle
 		},
 	}
 
+	if isIPv6(tinkerbellIP) {
+		derivedAddressPool := ""
+		if s.dhcpv6Config != nil {
+			derivedAddressPool = s.dhcpv6Config.DerivedAddressPool
+		}
+
+		delete(valuesMap, "publicIP")
+		valuesMap["publicIPv6"] = tinkerbellIP
+		valuesMap["artifactsFileServerV6"] = osieURL
+
+		envs := valuesMap["deployment"].(map[string]any)["envs"].(map[string]any)
+		globals := envs["globals"].(map[string]any)
+		globals["bindAddr"] = "::"
+		globals["publicIpv6"] = tinkerbellIP
+
+		smeeValues := envs["smee"].(map[string]any)
+		smeeValues["dhcpEnabled"] = false
+		smeeValues["dhcpv6Enabled"] = true
+		smeeValues["dhcpv6Mode"] = "derived"
+		smeeValues["dhcpv6DerivedDirectAddressPool"] = derivedAddressPool
+		smeeValues["dhcpv6BindAddr"] = "::"
+		if s.loadBalancerInterface != "" {
+			smeeValues["dhcpv6BindInterface"] = s.loadBalancerInterface
+		}
+		smeeValues["dhcpv6SyslogIP"] = tinkerbellIP
+		smeeValues["dhcpv6TftpIP"] = tinkerbellIP
+		smeeValues["dhcpv6IpxeHttpBinaryHost"] = tinkerbellIP
+		smeeValues["dhcpv6IpxeHttpBinaryPort"] = bootHTTPPort
+		smeeValues["dhcpv6IpxeHttpScriptHost"] = tinkerbellIP
+		smeeValues["dhcpv6IpxeHttpScriptPort"] = bootHTTPPort
+		smeeValues["ipxeHttpScriptOsieURLv6"] = osieURL
+		smeeValues["ipxeScriptTinkServerAddrPortV6"] = net.JoinHostPort(tinkerbellIP, grpcPort)
+		smeeValues["isoStaticIPAMEnabled"] = false
+
+		tootlesValues := envs["tootles"].(map[string]any)
+		tootlesValues["instanceEndpoint"] = true
+	}
+
 	// Set load balancer interface if specified
 	if loadBalancerInterface != "" {
 		valuesMap["optional"].(map[string]any)["kubevip"].(map[string]any)["interface"] = loadBalancerInterface
@@ -694,6 +805,11 @@ func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle
 	}
 
 	return valuesMap
+}
+
+func isIPv6(address string) bool {
+	ip := net.ParseIP(address)
+	return ip != nil && ip.To4() == nil
 }
 
 // parseImageURI splits an image URI into image and tag components.

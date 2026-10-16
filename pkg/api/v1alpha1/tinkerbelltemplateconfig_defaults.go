@@ -2,6 +2,7 @@ package v1alpha1
 
 import (
 	"fmt"
+	"net"
 	"strings"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1/thirdparty/tinkerbell"
@@ -28,14 +29,20 @@ warnings:
 
 // DefaultActions constructs a set of default actions for the given osFamily.
 func DefaultActions(clusterSpec *Cluster, osImageOverride, tinkerbellLocalIP, tinkerbellLBIP string, osFamily OSFamily) []ActionOpt {
+	ipv6 := isIPv6Address(tinkerbellLBIP)
+	metadataPath := ""
+	if ipv6 {
+		metadataPath = "/tootles/instanceID/{{ (index .Hardware.Interfaces 0).DHCP.MAC }}"
+	}
+
 	// The metadata string will have two URLs:
 	// 1. one that will be used initially for bootstrap and will point to tootles running on kind.
 	// 2. one that will be used when the workload cluster is up and will point to tootles running on
 	//    the workload cluster.
 	// Port 7172 is the tootles (metadata service) port in the mono-repo tinkerbell chart.
 	metadataURLs := []string{
-		fmt.Sprintf("http://%s:7172", tinkerbellLocalIP),
-		fmt.Sprintf("http://%s:7172", tinkerbellLBIP),
+		fmt.Sprintf("http://%s%s", net.JoinHostPort(tinkerbellLocalIP, "7172"), metadataPath),
+		fmt.Sprintf("http://%s%s", net.JoinHostPort(tinkerbellLBIP, "7172"), metadataPath),
 	}
 
 	additionalEnvVar := make(map[string]string)
@@ -61,7 +68,7 @@ func DefaultActions(clusterSpec *Cluster, osImageOverride, tinkerbellLocalIP, ti
 	devicePath := "{{ index .Hardware.Disks 0 }}"
 	paritionPathFmt := "{{ formatPartition ( index .Hardware.Disks 0 ) %s }}"
 
-	actions := []ActionOpt{withStreamImageAction(devicePath, osImageOverride, additionalEnvVar)}
+	actions := []ActionOpt{withStreamImageAction(devicePath, osImageOverride, additionalEnvVar, ipv6)}
 
 	switch osFamily {
 	case Bottlerocket:
@@ -72,7 +79,7 @@ func DefaultActions(clusterSpec *Cluster, osImageOverride, tinkerbellLocalIP, ti
 			withBottlerocketUserDataAction(partitionPath, strings.Join(metadataURLs, ",")),
 			// Order matters. This action needs to append to an existing user-data.toml file so
 			// must be after withBottlerocketUserDataAction().
-			withNetplanAction(partitionPath, osFamily),
+			withNetplanAction(partitionPath, osFamily, ipv6),
 			withRebootAction(),
 		)
 	case RedHat:
@@ -84,7 +91,7 @@ func DefaultActions(clusterSpec *Cluster, osImageOverride, tinkerbellLocalIP, ti
 		partitionPath := fmt.Sprintf(paritionPathFmt, "1")
 
 		actions = append(actions,
-			withNetworkManagerAction(partitionPath),
+			withNetworkManagerAction(partitionPath, ipv6),
 			withDisableCloudInitNetworkCapabilities(partitionPath),
 			withTinkCloudInitAction(partitionPath, strings.Join(mu, ",")),
 			withDsCloudInitAction(partitionPath),
@@ -92,9 +99,14 @@ func DefaultActions(clusterSpec *Cluster, osImageOverride, tinkerbellLocalIP, ti
 		)
 	default:
 		partitionPath := fmt.Sprintf(paritionPathFmt, "2")
+		if ipv6 {
+			for i, u := range metadataURLs {
+				metadataURLs[i] = fmt.Sprintf("%q", u)
+			}
+		}
 
 		actions = append(actions,
-			withNetplanAction(partitionPath, osFamily),
+			withNetplanAction(partitionPath, osFamily, ipv6),
 			withDisableCloudInitNetworkCapabilities(partitionPath),
 			withTinkCloudInitAction(partitionPath, strings.Join(metadataURLs, ",")),
 			withDsCloudInitAction(partitionPath),
@@ -105,7 +117,7 @@ func DefaultActions(clusterSpec *Cluster, osImageOverride, tinkerbellLocalIP, ti
 	return actions
 }
 
-func withStreamImageAction(disk, imageURL string, additionalEnvVar map[string]string) ActionOpt {
+func withStreamImageAction(disk, imageURL string, additionalEnvVar map[string]string, hostNetwork bool) ActionOpt {
 	return func(a *[]tinkerbell.Action) {
 		env := map[string]string{
 			"DEST_DISK":  disk,
@@ -117,16 +129,20 @@ func withStreamImageAction(disk, imageURL string, additionalEnvVar map[string]st
 			env[k] = v
 		}
 
-		*a = append(*a, tinkerbell.Action{
+		action := tinkerbell.Action{
 			Name:        "stream image to disk",
 			Image:       actionImage2Disk,
 			Timeout:     600,
 			Environment: env,
-		})
+		}
+		if hostNetwork {
+			action.Namespaces = &tinkerbell.ActionNamespaces{Network: "host"}
+		}
+		*a = append(*a, action)
 	}
 }
 
-func withNetplanAction(disk string, osFamily OSFamily) ActionOpt {
+func withNetplanAction(disk string, osFamily OSFamily, ipv6 bool) ActionOpt {
 	return func(a *[]tinkerbell.Action) {
 		netplanAction := tinkerbell.Action{
 			Name:    "write netplan config",
@@ -151,6 +167,49 @@ func withNetplanAction(disk string, osFamily OSFamily) ActionOpt {
 		} else {
 			// For other OS families (Ubuntu, etc.), use netplan configuration
 			netplanAction.Environment["DEST_PATH"] = "/etc/netplan/config.yaml"
+
+			if ipv6 {
+				netplanTemplate := `network:
+    version: 2
+    renderer: networkd
+    ethernets:
+        id0:
+            match:
+                macaddress: {{ (index .Hardware.Interfaces 0).DHCP.MAC }}
+            dhcp4: false
+            dhcp6: false
+            accept-ra: true
+            link-local: [ipv6]
+            nameservers:
+                addresses: [{{ range $i, $ns := (index .Hardware.Interfaces 0).DHCP.NameServers }}{{if $i}}, {{end}}{{$ns}}{{end}}]
+`
+				vlanTemplate := `network:
+    version: 2
+    renderer: networkd
+    ethernets:
+        mainif:
+            match:
+                macaddress: {{ (index .Hardware.Interfaces 0).DHCP.MAC }}
+            set-name: mainif
+            dhcp4: false
+            dhcp6: false
+            link-local: [ipv6]
+
+    vlans:
+        vlan{{ (index .Hardware.Interfaces 0).DHCP.VLANID }}:
+            id: {{ (index .Hardware.Interfaces 0).DHCP.VLANID }}
+            link: mainif
+            dhcp4: false
+            dhcp6: false
+            accept-ra: true
+            link-local: [ipv6]
+            nameservers:
+                addresses: [{{ range $i, $ns := (index .Hardware.Interfaces 0).DHCP.NameServers }}{{if $i}}, {{end}}{{$ns}}{{end}}]
+`
+				netplanAction.Environment["CONTENTS"] = `{{ if (index .Hardware.Interfaces 0).DHCP.VLANID }}` + vlanTemplate + `{{ else }}` + netplanTemplate + `{{ end }}`
+				*a = append(*a, netplanAction)
+				return
+			}
 
 			// Instead of using DHCP to get network information, use the hardware object directly
 			netplanTemplate := `network:
@@ -313,7 +372,7 @@ func withBottlerocketUserDataAction(disk, metadataURLs string) ActionOpt {
 	}
 }
 
-func withNetworkManagerAction(disk string) ActionOpt {
+func withNetworkManagerAction(disk string, ipv6 bool) ActionOpt {
 	return func(a *[]tinkerbell.Action) {
 		networkManagerAction := tinkerbell.Action{
 			Name:    "write network manager config",
@@ -329,6 +388,51 @@ func withNetworkManagerAction(disk string) ActionOpt {
 				"UID":       "0",
 			},
 			Pid: "host",
+		}
+
+		if ipv6 {
+			nmTemplate := `[connection]
+id=slaac-connection
+type=ethernet
+autoconnect=yes
+autoconnect-priority=10
+
+[ethernet]
+mac-address={{ (index .Hardware.Interfaces 0).DHCP.MAC }}
+
+[ipv4]
+method=disabled
+
+[ipv6]
+addr-gen-mode=stable-privacy
+dns={{ range $i, $ns := (index .Hardware.Interfaces 0).DHCP.NameServers }}{{if $i}};{{end}}{{$ns}}{{end}};
+method=auto
+`
+			nmVlanTemplate := `[connection]
+id=slaac-vlan-connection
+type=vlan
+autoconnect=yes
+autoconnect-priority=10
+
+[ethernet]
+mac-address={{ (index .Hardware.Interfaces 0).DHCP.MAC }}
+
+[vlan]
+flags=1
+id={{ (index .Hardware.Interfaces 0).DHCP.VLANID }}
+mac-address={{ (index .Hardware.Interfaces 0).DHCP.MAC }}
+
+[ipv4]
+method=disabled
+
+[ipv6]
+addr-gen-mode=stable-privacy
+dns={{ range $i, $ns := (index .Hardware.Interfaces 0).DHCP.NameServers }}{{if $i}};{{end}}{{$ns}}{{end}};
+method=auto
+`
+			networkManagerAction.Environment["CONTENTS"] = `{{ if (index .Hardware.Interfaces 0).DHCP.VLANID }}` + nmVlanTemplate + `{{ else }}` + nmTemplate + `{{ end }}`
+			*a = append(*a, networkManagerAction)
+			return
 		}
 
 		// NetworkManager configuration template for RedHat (no VLAN)
@@ -380,4 +484,9 @@ method=ignore
 		networkManagerAction.Environment["CONTENTS"] = `{{ if (index .Hardware.Interfaces 0).DHCP.VLANID }}` + nmVlanTemplate + `{{ else }}` + nmTemplate + `{{ end }}`
 		*a = append(*a, networkManagerAction)
 	}
+}
+
+func isIPv6Address(address string) bool {
+	ip := net.ParseIP(address)
+	return ip != nil && ip.To4() == nil
 }

@@ -73,6 +73,15 @@ spec:
                                 type: string
                               name:
                                 type: string
+                              namespaces:
+                                description: ActionNamespaces selects the namespaces
+                                  an action container runs in.
+                                properties:
+                                  network:
+                                    type: string
+                                  pid:
+                                    type: string
+                                type: object
                               on-failure:
                                 items:
                                   type: string

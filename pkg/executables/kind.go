@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
 
@@ -57,6 +58,7 @@ type kindExecConfig struct {
 	DisableDefaultCNI    bool
 	PodSubnet            string
 	ServiceSubnet        string
+	IPFamily             string
 	AuditPolicyPath      string
 }
 
@@ -106,6 +108,11 @@ func (k *Kind) CreateBootstrapCluster(ctx context.Context, clusterSpec *cluster.
 
 	if len(podCidrs) != 0 {
 		k.execConfig.PodSubnet = podCidrs[0]
+	}
+	if len(serviceCidrs) != 0 {
+		if ip, _, parseErr := net.ParseCIDR(serviceCidrs[0]); parseErr == nil && ip.To4() == nil {
+			k.execConfig.IPFamily = "ipv6"
+		}
 	}
 
 	err = k.buildConfigFile()
@@ -253,6 +260,10 @@ func (k *Kind) setupExecConfig(clusterSpec *cluster.Spec) error {
 		CorednsRepository:    registryMirror.ReplaceRegistry(versionsBundle.KubeDistro.CoreDNS.Repository),
 		CorednsVersion:       versionsBundle.KubeDistro.CoreDNS.Tag,
 		env:                  make(map[string]string),
+	}
+	if imageOverride := os.Getenv("EKSA_BOOTSTRAP_KIND_IMAGE"); imageOverride != "" {
+		k.execConfig.KindImage = registryMirror.ReplaceRegistry(imageOverride)
+		logger.V(4).Info("Using bootstrap Kind image override", "image", imageOverride)
 	}
 
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
