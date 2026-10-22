@@ -166,6 +166,43 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 			wantErr:     true,
 		},
 		{
+			testName: "valid 1.37",
+			fileName: "testdata/cluster_1_37.yaml",
+			wantCluster: &Cluster{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       ClusterKind,
+					APIVersion: SchemeBuilder.GroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "eksa-unit-test",
+				},
+				Spec: ClusterSpec{
+					KubernetesVersion: Kube137,
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						Count: 3,
+					},
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						Name:  "md-0",
+						Count: ptr.Int(3),
+					}},
+					ClusterNetwork: ClusterNetwork{
+						CNIConfig: &CNIConfig{Cilium: &CiliumConfig{}},
+						Pods: Pods{
+							CidrBlocks: []string{"192.168.0.0/16"},
+						},
+						Services: Services{
+							CidrBlocks: []string{"10.96.0.0/12"},
+						},
+					},
+					DatacenterRef: Ref{
+						Kind: DockerDatacenterKind,
+						Name: "eksa-unit-test",
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
 			testName: "valid 1.18",
 			fileName: "testdata/cluster_1_18.yaml",
 			wantCluster: &Cluster{
@@ -4037,7 +4074,7 @@ func TestValidateEksaVersion(t *testing.T) {
 
 func TestGetClusterDefaultKubernetesVersion(t *testing.T) {
 	g := NewWithT(t)
-	g.Expect(GetClusterDefaultKubernetesVersion()).To(Equal(Kube136))
+	g.Expect(GetClusterDefaultKubernetesVersion()).To(Equal(Kube137))
 }
 
 func TestClusterWorkerNodeConfigCount(t *testing.T) {

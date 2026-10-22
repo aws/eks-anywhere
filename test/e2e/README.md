@@ -11,8 +11,8 @@ or
 #
 # The makefile will include the .env file and export all the vars to the environment for you
 #
-# By default the local-e2e target will run TestDockerKubernetes136SimpleFlow. You can either 
-#   override LOCAL_E2E_TESTS in your .env file or pass it on the cli every time (i.e LOCAL_E2E_TESTS=TestDockerKubernetes136SimpleFlow)
+# By default the local-e2e target will run TestDockerKubernetes137SimpleFlow. You can either
+#   override LOCAL_E2E_TESTS in your .env file or pass it on the cli every time (i.e LOCAL_E2E_TESTS=TestDockerKubernetes137SimpleFlow)
 make local-e2e
 ```
 or
