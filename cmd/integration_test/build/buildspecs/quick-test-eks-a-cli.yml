@@ -59,7 +59,6 @@ env:
     TEST_RUNNER_GOVC_LIBRARY: "eks-a-templates"
     TEST_RUNNER_GOVC_TEMPLATE: "eks-a-admin-ci"
   secrets-manager:
-    T_TINKERBELL_HOOK_ISO_URL: "tinkerbell_ci:hook_iso_url"
     EKSA_AWS_REGION: "packages_ci_beta:aws_region"
     EKSA_GITHUB_TOKEN: "github-eks-anywhere-flux-bot:github-token"
     T_GITHUB_USER: "github-eks-anywhere-flux-bot:github-user"
@@ -235,6 +234,7 @@ env:
     TEST_RUNNER_GOVC_RESOURCE_POOL: "tinkerbell_ci:govc_resource_pool"
     TEST_RUNNER_GOVC_NETWORK: "tinkerbell_ci:govc_network"
     TEST_RUNNER_GOVC_FOLDER: "tinkerbell_ci:govc_folder"
+    T_TINKERBELL_HOOK_ISO_URL: "tinkerbell_ci:hook_iso_url"
     # Extended kubernetes version support secrets
     LICENSE_TOKEN: "extended_support:license_token"
     LICENSE_TOKEN2: "extended_support:license_token2"

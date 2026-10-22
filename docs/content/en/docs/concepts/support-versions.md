@@ -25,9 +25,6 @@ You can find details about each EKS Anywhere release in the [EKS Anywhere releas
 EKS Anywhere follows a 4-month release cadence for minor versions and a 2-week cadence for patch versions. Common vulnerabilities and exposures (CVE) patches and bug fixes, including those for the supported Kubernetes versions, are included in the latest EKS Anywhere minor version (version N). High and critical CVE patches and bug fixes are also backported to the penultimate EKS Anywhere minor version (version N-1), which follows a monthly patch release cadence.
 
 Reference the table below for release dates and patch support for each EKS Anywhere version. This table shows the Kubernetes versions that are supported in each EKS Anywhere version.
-
-The development build for EKS Anywhere `v0.27.0` adds Kubernetes `1.37` and uses it as the default for generated cluster configurations. Kubernetes `1.30` through `1.36` remain available in this development build. Release and support dates for Kubernetes `1.37` will be added to the tables when finalized.
-
 <!-- See /docs/data/version_support.yml -->
 {{< eksa_support >}}
 
