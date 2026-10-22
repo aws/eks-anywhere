@@ -1670,6 +1670,13 @@ func TestClusterValidateCreateValidCluster(t *testing.T) {
 				c.SetManagedBy("my-management-cluster")
 			}),
 		},
+		{
+			name: "Kubernetes 1.37 workload cluster",
+			cluster: newCluster(func(c *v1alpha1.Cluster) {
+				c.SetManagedBy("my-management-cluster")
+				c.Spec.KubernetesVersion = v1alpha1.Kube137
+			}),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -2058,6 +2065,51 @@ func TestClusterValidateUpdateVersionMinorVersionBump(t *testing.T) {
 	cNew.Spec.KubernetesVersion = "1.25"
 	g := NewWithT(t)
 	g.Expect(cNew.ValidateUpdate(context.TODO(), cOld, cNew)).Error().To(Succeed())
+}
+
+func TestClusterValidateUpdateKubernetes137(t *testing.T) {
+	tests := []struct {
+		name       string
+		oldVersion v1alpha1.KubernetesVersion
+		newVersion v1alpha1.KubernetesVersion
+		wantErr    string
+	}{
+		{
+			name:       "upgrade from 1.36 to 1.37",
+			oldVersion: v1alpha1.Kube136,
+			newVersion: v1alpha1.Kube137,
+		},
+		{
+			name:       "skip 1.36",
+			oldVersion: v1alpha1.Kube135,
+			newVersion: v1alpha1.Kube137,
+			wantErr:    "only +1 minor version skew is supported",
+		},
+		{
+			name:       "downgrade from 1.37",
+			oldVersion: v1alpha1.Kube137,
+			newVersion: v1alpha1.Kube136,
+			wantErr:    "kubernetes version downgrade is not supported",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			features.ClearCache()
+			oldCluster := baseCluster()
+			oldCluster.Spec.ManagementCluster.Name = "mgmt2"
+			oldCluster.Spec.KubernetesVersion = tt.oldVersion
+			newCluster := oldCluster.DeepCopy()
+			newCluster.Spec.KubernetesVersion = tt.newVersion
+			g := NewWithT(t)
+			warnings, err := newCluster.ValidateUpdate(context.TODO(), oldCluster, newCluster)
+			g.Expect(warnings).To(BeEmpty())
+			if tt.wantErr == "" {
+				g.Expect(err).To(Succeed())
+			} else {
+				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
+			}
+		})
+	}
 }
 
 func newCluster(opts ...func(*v1alpha1.Cluster)) *v1alpha1.Cluster {

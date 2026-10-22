@@ -26,7 +26,7 @@ func runUpgradeFlowWithAWSIamAuth(test *framework.ClusterE2ETest, updateVersion 
 	test.CreateCluster()
 	test.ValidateAWSIamAuth()
 	test.UpgradeClusterWithNewConfig(clusterOpts)
-	test.ValidateCluster(updateVersion)
+	test.ValidateClusterState()
 	test.ValidateAWSIamAuth()
 	test.StopIfFailed()
 	test.DeleteCluster()
@@ -62,12 +62,12 @@ func runUpgradeFlowAddAWSIamAuth(test *framework.ClusterE2ETest, updateVersion v
 	test.GenerateClusterConfig()
 	test.GenerateSupportBundleOnCleanupIfTestFailed()
 	test.CreateCluster()
-	test.ValidateCluster(updateVersion)
+	test.ValidateClusterState()
 	test.UpgradeClusterWithNewConfig([]framework.ClusterE2ETestOpt{
 		framework.WithAWSIam(),
 		framework.WithClusterUpgrade(api.WithAWSIamIdentityProviderRef("eksa-test")),
 	})
-	test.ValidateCluster(updateVersion)
+	test.ValidateClusterState()
 	test.ValidateAWSIamAuth()
 	test.StopIfFailed()
 	test.DeleteCluster()

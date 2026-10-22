@@ -40,7 +40,7 @@ func runUpgradeFromReleaseFlow(test *framework.ClusterE2ETest, latestRelease *re
 	// after creation, which makes the upgrade preflight validations fail
 	test.WaitForControlPlaneReady()
 	test.UpgradeClusterWithNewConfig(clusterOpts)
-	test.ValidateCluster(wantVersion)
+	test.ValidateClusterState()
 	test.StopIfFailed()
 	test.DeleteCluster()
 }
@@ -52,7 +52,7 @@ func runUpgradeWithFluxFromReleaseFlow(test *framework.ClusterE2ETest, latestRel
 	// after creation, which makes the upgrade preflight validations fail
 	test.WaitForControlPlaneReady()
 	test.UpgradeClusterWithNewConfig(clusterOpts)
-	test.ValidateCluster(wantVersion)
+	test.ValidateClusterState()
 	test.ValidateFlux()
 	test.StopIfFailed()
 	test.DeleteCluster()
@@ -96,7 +96,7 @@ func runMulticlusterUpgradeFromReleaseFlowAPI(test *framework.MulticlusterE2ETes
 	)
 	// 3. Upgrade management cluster to new Bundle and new Kubernetes version
 	test.ManagementCluster.UpgradeCluster()
-	test.ManagementCluster.ValidateCluster(test.ManagementCluster.ClusterConfig.Cluster.Spec.KubernetesVersion)
+	test.ManagementCluster.ValidateClusterState()
 	test.ManagementCluster.StopIfFailed()
 
 	cluster := test.ManagementCluster.GetEKSACluster()

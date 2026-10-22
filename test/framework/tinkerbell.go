@@ -60,6 +60,11 @@ const (
 	tinkerbellImageUbuntu2404Kubernetes136GenericEnvVar = "T_TINKERBELL_IMAGE_UBUNTU_2404_1_36_GENERIC"
 	tinkerbellImageUbuntu2404Kubernetes136EnvVar        = "T_TINKERBELL_IMAGE_UBUNTU_2404_1_36"
 	tinkerbellImageRedHat9136EnvVar                     = "T_TINKERBELL_IMAGE_REDHAT_9_1_36"
+	tinkerbellImageUbuntu2204Kubernetes137EnvVar        = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_37"
+	tinkerbellImageUbuntu2204Kubernetes137GenericEnvVar = "T_TINKERBELL_IMAGE_UBUNTU_2204_1_37_GENERIC"
+	tinkerbellImageUbuntu2404Kubernetes137GenericEnvVar = "T_TINKERBELL_IMAGE_UBUNTU_2404_1_37_GENERIC"
+	tinkerbellImageUbuntu2404Kubernetes137EnvVar        = "T_TINKERBELL_IMAGE_UBUNTU_2404_1_37"
+	tinkerbellImageRedHat9137EnvVar                     = "T_TINKERBELL_IMAGE_REDHAT_9_1_37"
 	tinkerbellInventoryCsvFilePathEnvVar                = "T_TINKERBELL_INVENTORY_CSV"
 	tinkerbellSSHAuthorizedKey                          = "T_TINKERBELL_SSH_AUTHORIZED_KEY"
 	tinkerbellCIEnvironmentEnvVar                       = "T_TINKERBELL_CI_ENVIRONMENT"
@@ -113,6 +118,11 @@ var requiredTinkerbellEnvVars = []string{
 	tinkerbellImageUbuntu2404Kubernetes136GenericEnvVar,
 	tinkerbellImageUbuntu2404Kubernetes136EnvVar,
 	tinkerbellImageRedHat9136EnvVar,
+	tinkerbellImageUbuntu2204Kubernetes137EnvVar,
+	tinkerbellImageUbuntu2204Kubernetes137GenericEnvVar,
+	tinkerbellImageUbuntu2404Kubernetes137GenericEnvVar,
+	tinkerbellImageUbuntu2404Kubernetes137EnvVar,
+	tinkerbellImageRedHat9137EnvVar,
 	tinkerbellInventoryCsvFilePathEnvVar,
 	tinkerbellSSHAuthorizedKey,
 	tinkerbellHookIsoURLEnvVar,
@@ -672,6 +682,56 @@ func RedHat9Kubernetes136Image() api.TinkerbellFiller {
 // WithRedHat9136Tinkerbell tink test with redhat9 efi 1.36.
 func WithRedHat9136Tinkerbell() TinkerbellOpt {
 	return withKubeVersionAndOS(anywherev1.Kube136, RedHat9, "", nil)
+}
+
+// Ubuntu2204Kubernetes137Image represents an Ubuntu 22.04 raw image for Kubernetes 1.37.
+func Ubuntu2204Kubernetes137Image() api.TinkerbellFiller {
+	return imageForKubeVersionAndOS(anywherev1.Kube137, Ubuntu2204, "")
+}
+
+// Ubuntu2204Kubernetes137GenericImage represents an Ubuntu 22.04 Generic raw image for Kubernetes 1.37.
+func Ubuntu2204Kubernetes137GenericImage() api.TinkerbellFiller {
+	return imageForKubeVersionAndOS(anywherev1.Kube137, Ubuntu2204, "", "GENERIC")
+}
+
+// WithUbuntu137Tinkerbell returns a TinkerbellOpt that adds API fillers to use a Ubuntu Tinkerbell template for k8s 1.37.
+func WithUbuntu137Tinkerbell() TinkerbellOpt {
+	return withKubeVersionAndOS(anywherev1.Kube137, Ubuntu2204, "", nil)
+}
+
+// Ubuntu137Image represents a Ubuntu raw image corresponding to Kubernetes 1.37.
+func Ubuntu137Image() api.TinkerbellFiller {
+	return imageForKubeVersionAndOS(anywherev1.Kube137, Ubuntu2204, "")
+}
+
+// Ubuntu137ImageForCP represents a Ubuntu raw image corresponding to Kubernetes 1.37 for control plane nodes.
+func Ubuntu137ImageForCP() api.TinkerbellFiller {
+	return imageForKubeVersionAndOS(anywherev1.Kube137, Ubuntu2204, controlPlaneIdentifier)
+}
+
+// Ubuntu137ImageForWorker represents a Ubuntu raw image corresponding to Kubernetes 1.37 for worker nodes.
+func Ubuntu137ImageForWorker() api.TinkerbellFiller {
+	return imageForKubeVersionAndOS(anywherev1.Kube137, Ubuntu2204, workerIdentifier)
+}
+
+// Ubuntu2404Kubernetes137Image represents a Ubuntu 24.04 raw image corresponding to Kubernetes 1.37.
+func Ubuntu2404Kubernetes137Image() api.TinkerbellFiller {
+	return imageForKubeVersionAndOS(anywherev1.Kube137, Ubuntu2404, "")
+}
+
+// Ubuntu2404Kubernetes137GenericImage represents a Ubuntu 24.04 Generic raw image corresponding to Kubernetes 1.37.
+func Ubuntu2404Kubernetes137GenericImage() api.TinkerbellFiller {
+	return imageForKubeVersionAndOS(anywherev1.Kube137, Ubuntu2404, "", "GENERIC")
+}
+
+// RedHat9Kubernetes137Image represents a RedHat 9 raw image corresponding to Kubernetes 1.37.
+func RedHat9Kubernetes137Image() api.TinkerbellFiller {
+	return imageForKubeVersionAndOS(anywherev1.Kube137, RedHat9, "")
+}
+
+// WithRedHat9137Tinkerbell tink test with redhat9 efi 1.37.
+func WithRedHat9137Tinkerbell() TinkerbellOpt {
+	return withKubeVersionAndOS(anywherev1.Kube137, RedHat9, "", nil)
 }
 
 // HookIsoURLOverride returns the Hook ISO URL from the environment variable.
