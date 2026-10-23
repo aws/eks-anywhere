@@ -10,7 +10,7 @@ spec:
   versionsBundles:
   - bootstrap:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.13.2/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.14.2/bootstrap-components.yaml
       controller:
         arch:
         - amd64
@@ -19,7 +19,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kubeadm-bootstrap-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/kubeadm-bootstrap-controller:v1.13.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/kubeadm-bootstrap-controller:v1.14.2-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -30,8 +30,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.20.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.13.2/metadata.yaml
-      version: v1.13.2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.14.2/metadata.yaml
+      version: v1.14.2+abcdef1
     bottlerocketBootstrapContainers:
       multiNetworkBootstrap:
         arch:
@@ -77,7 +77,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-acmesolver
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-acmesolver:v1.20.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-acmesolver:v1.21.2-eks-a-v0.0.0-dev-build.1
       cainjector:
         arch:
         - amd64
@@ -86,7 +86,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-cainjector
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-cainjector:v1.20.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-cainjector:v1.21.2-eks-a-v0.0.0-dev-build.1
       controller:
         arch:
         - amd64
@@ -95,9 +95,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-controller:v1.20.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-controller:v1.21.2-eks-a-v0.0.0-dev-build.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cert-manager/manifests/v1.20.2/cert-manager.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cert-manager/manifests/v1.21.2/cert-manager.yaml
       startupapicheck:
         arch:
         - amd64
@@ -106,8 +106,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-startupapicheck
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-startupapicheck:v1.20.2-eks-a-v0.0.0-dev-build.1
-      version: v1.20.2+abcdef1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-startupapicheck:v1.21.2-eks-a-v0.0.0-dev-build.1
+      version: v1.21.2+abcdef1
       webhook:
         arch:
         - amd64
@@ -116,7 +116,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-webhook
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-webhook:v1.20.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-webhook:v1.21.2-eks-a-v0.0.0-dev-build.1
     cilium:
       cilium:
         arch:
@@ -157,7 +157,7 @@ spec:
       version: deprecated
     clusterAPI:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.13.2/core-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.14.2/core-components.yaml
       controller:
         arch:
         - amd64
@@ -166,7 +166,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/cluster-api-controller:v1.13.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/cluster-api-controller:v1.14.2-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -177,11 +177,11 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.20.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.13.2/metadata.yaml
-      version: v1.13.2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.14.2/metadata.yaml
+      version: v1.14.2+abcdef1
     controlPlane:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/control-plane-kubeadm/v1.13.2/control-plane-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/control-plane-kubeadm/v1.14.2/control-plane-components.yaml
       controller:
         arch:
         - amd64
@@ -190,7 +190,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kubeadm-control-plane-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/kubeadm-control-plane-controller:v1.13.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/kubeadm-control-plane-controller:v1.14.2-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -201,13 +201,13 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.20.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/control-plane-kubeadm/v1.13.2/metadata.yaml
-      version: v1.13.2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/control-plane-kubeadm/v1.14.2/metadata.yaml
+      version: v1.14.2+abcdef1
     docker:
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.13.2/cluster-template-development.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.14.2/cluster-template-development.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.13.2/infrastructure-components-development.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.14.2/infrastructure-components-development.yaml
       kubeProxy:
         arch:
         - amd64
@@ -225,10 +225,10 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-docker
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/capd-manager:v1.13.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/capd-manager:v1.14.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.13.2/metadata.yaml
-      version: v1.13.2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.14.2/metadata.yaml
+      version: v1.14.2+abcdef1
     eksD:
       ami:
         bottlerocket: {}
@@ -764,7 +764,7 @@ spec:
       version: v1.16.1+abcdef1
   - bootstrap:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.13.2/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.14.2/bootstrap-components.yaml
       controller:
         arch:
         - amd64
@@ -773,7 +773,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kubeadm-bootstrap-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/kubeadm-bootstrap-controller:v1.13.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/kubeadm-bootstrap-controller:v1.14.2-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -784,8 +784,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.20.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.13.2/metadata.yaml
-      version: v1.13.2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.14.2/metadata.yaml
+      version: v1.14.2+abcdef1
     bottlerocketBootstrapContainers:
       multiNetworkBootstrap:
         arch:
@@ -831,7 +831,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-acmesolver
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-acmesolver:v1.20.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-acmesolver:v1.21.2-eks-a-v0.0.0-dev-build.1
       cainjector:
         arch:
         - amd64
@@ -840,7 +840,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-cainjector
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-cainjector:v1.20.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-cainjector:v1.21.2-eks-a-v0.0.0-dev-build.1
       controller:
         arch:
         - amd64
@@ -849,9 +849,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-controller:v1.20.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-controller:v1.21.2-eks-a-v0.0.0-dev-build.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cert-manager/manifests/v1.20.2/cert-manager.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cert-manager/manifests/v1.21.2/cert-manager.yaml
       startupapicheck:
         arch:
         - amd64
@@ -860,8 +860,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-startupapicheck
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-startupapicheck:v1.20.2-eks-a-v0.0.0-dev-build.1
-      version: v1.20.2+abcdef1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-startupapicheck:v1.21.2-eks-a-v0.0.0-dev-build.1
+      version: v1.21.2+abcdef1
       webhook:
         arch:
         - amd64
@@ -870,7 +870,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-webhook
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-webhook:v1.20.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-webhook:v1.21.2-eks-a-v0.0.0-dev-build.1
     cilium:
       cilium:
         arch:
@@ -911,7 +911,7 @@ spec:
       version: deprecated
     clusterAPI:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.13.2/core-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.14.2/core-components.yaml
       controller:
         arch:
         - amd64
@@ -920,7 +920,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/cluster-api-controller:v1.13.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/cluster-api-controller:v1.14.2-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -931,11 +931,11 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.20.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.13.2/metadata.yaml
-      version: v1.13.2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.14.2/metadata.yaml
+      version: v1.14.2+abcdef1
     controlPlane:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/control-plane-kubeadm/v1.13.2/control-plane-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/control-plane-kubeadm/v1.14.2/control-plane-components.yaml
       controller:
         arch:
         - amd64
@@ -944,7 +944,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kubeadm-control-plane-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/kubeadm-control-plane-controller:v1.13.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/kubeadm-control-plane-controller:v1.14.2-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -955,13 +955,13 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.20.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/control-plane-kubeadm/v1.13.2/metadata.yaml
-      version: v1.13.2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/control-plane-kubeadm/v1.14.2/metadata.yaml
+      version: v1.14.2+abcdef1
     docker:
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.13.2/cluster-template-development.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.14.2/cluster-template-development.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.13.2/infrastructure-components-development.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.14.2/infrastructure-components-development.yaml
       kubeProxy:
         arch:
         - amd64
@@ -979,10 +979,10 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-docker
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/capd-manager:v1.13.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/capd-manager:v1.14.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.13.2/metadata.yaml
-      version: v1.13.2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.14.2/metadata.yaml
+      version: v1.14.2+abcdef1
     eksD:
       ami:
         bottlerocket: {}
@@ -1518,7 +1518,7 @@ spec:
       version: v1.16.1+abcdef1
   - bootstrap:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.13.2/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.14.2/bootstrap-components.yaml
       controller:
         arch:
         - amd64
@@ -1527,7 +1527,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kubeadm-bootstrap-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/kubeadm-bootstrap-controller:v1.13.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/kubeadm-bootstrap-controller:v1.14.2-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -1538,8 +1538,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.20.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.13.2/metadata.yaml
-      version: v1.13.2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.14.2/metadata.yaml
+      version: v1.14.2+abcdef1
     bottlerocketBootstrapContainers:
       multiNetworkBootstrap:
         arch:
@@ -1585,7 +1585,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-acmesolver
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-acmesolver:v1.20.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-acmesolver:v1.21.2-eks-a-v0.0.0-dev-build.1
       cainjector:
         arch:
         - amd64
@@ -1594,7 +1594,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-cainjector
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-cainjector:v1.20.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-cainjector:v1.21.2-eks-a-v0.0.0-dev-build.1
       controller:
         arch:
         - amd64
@@ -1603,9 +1603,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-controller:v1.20.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-controller:v1.21.2-eks-a-v0.0.0-dev-build.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cert-manager/manifests/v1.20.2/cert-manager.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cert-manager/manifests/v1.21.2/cert-manager.yaml
       startupapicheck:
         arch:
         - amd64
@@ -1614,8 +1614,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-startupapicheck
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-startupapicheck:v1.20.2-eks-a-v0.0.0-dev-build.1
-      version: v1.20.2+abcdef1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-startupapicheck:v1.21.2-eks-a-v0.0.0-dev-build.1
+      version: v1.21.2+abcdef1
       webhook:
         arch:
         - amd64
@@ -1624,7 +1624,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-webhook
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-webhook:v1.20.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-webhook:v1.21.2-eks-a-v0.0.0-dev-build.1
     cilium:
       cilium:
         arch:
@@ -1665,7 +1665,7 @@ spec:
       version: deprecated
     clusterAPI:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.13.2/core-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.14.2/core-components.yaml
       controller:
         arch:
         - amd64
@@ -1674,7 +1674,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/cluster-api-controller:v1.13.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/cluster-api-controller:v1.14.2-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -1685,11 +1685,11 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.20.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.13.2/metadata.yaml
-      version: v1.13.2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.14.2/metadata.yaml
+      version: v1.14.2+abcdef1
     controlPlane:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/control-plane-kubeadm/v1.13.2/control-plane-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/control-plane-kubeadm/v1.14.2/control-plane-components.yaml
       controller:
         arch:
         - amd64
@@ -1698,7 +1698,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kubeadm-control-plane-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/kubeadm-control-plane-controller:v1.13.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/kubeadm-control-plane-controller:v1.14.2-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -1709,13 +1709,13 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.20.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/control-plane-kubeadm/v1.13.2/metadata.yaml
-      version: v1.13.2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/control-plane-kubeadm/v1.14.2/metadata.yaml
+      version: v1.14.2+abcdef1
     docker:
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.13.2/cluster-template-development.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.14.2/cluster-template-development.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.13.2/infrastructure-components-development.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.14.2/infrastructure-components-development.yaml
       kubeProxy:
         arch:
         - amd64
@@ -1733,10 +1733,10 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-docker
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/capd-manager:v1.13.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/capd-manager:v1.14.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.13.2/metadata.yaml
-      version: v1.13.2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.14.2/metadata.yaml
+      version: v1.14.2+abcdef1
     eksD:
       ami:
         bottlerocket: {}
@@ -2272,7 +2272,7 @@ spec:
       version: v1.16.1+abcdef1
   - bootstrap:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.13.2/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.14.2/bootstrap-components.yaml
       controller:
         arch:
         - amd64
@@ -2281,7 +2281,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kubeadm-bootstrap-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/kubeadm-bootstrap-controller:v1.13.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/kubeadm-bootstrap-controller:v1.14.2-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -2292,8 +2292,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.20.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.13.2/metadata.yaml
-      version: v1.13.2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.14.2/metadata.yaml
+      version: v1.14.2+abcdef1
     bottlerocketBootstrapContainers:
       multiNetworkBootstrap:
         arch:
@@ -2339,7 +2339,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-acmesolver
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-acmesolver:v1.20.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-acmesolver:v1.21.2-eks-a-v0.0.0-dev-build.1
       cainjector:
         arch:
         - amd64
@@ -2348,7 +2348,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-cainjector
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-cainjector:v1.20.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-cainjector:v1.21.2-eks-a-v0.0.0-dev-build.1
       controller:
         arch:
         - amd64
@@ -2357,9 +2357,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-controller:v1.20.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-controller:v1.21.2-eks-a-v0.0.0-dev-build.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cert-manager/manifests/v1.20.2/cert-manager.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cert-manager/manifests/v1.21.2/cert-manager.yaml
       startupapicheck:
         arch:
         - amd64
@@ -2368,8 +2368,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-startupapicheck
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-startupapicheck:v1.20.2-eks-a-v0.0.0-dev-build.1
-      version: v1.20.2+abcdef1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-startupapicheck:v1.21.2-eks-a-v0.0.0-dev-build.1
+      version: v1.21.2+abcdef1
       webhook:
         arch:
         - amd64
@@ -2378,7 +2378,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-webhook
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-webhook:v1.20.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-webhook:v1.21.2-eks-a-v0.0.0-dev-build.1
     cilium:
       cilium:
         arch:
@@ -2419,7 +2419,7 @@ spec:
       version: deprecated
     clusterAPI:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.13.2/core-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.14.2/core-components.yaml
       controller:
         arch:
         - amd64
@@ -2428,7 +2428,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/cluster-api-controller:v1.13.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/cluster-api-controller:v1.14.2-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -2439,11 +2439,11 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.20.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.13.2/metadata.yaml
-      version: v1.13.2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.14.2/metadata.yaml
+      version: v1.14.2+abcdef1
     controlPlane:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/control-plane-kubeadm/v1.13.2/control-plane-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/control-plane-kubeadm/v1.14.2/control-plane-components.yaml
       controller:
         arch:
         - amd64
@@ -2452,7 +2452,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kubeadm-control-plane-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/kubeadm-control-plane-controller:v1.13.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/kubeadm-control-plane-controller:v1.14.2-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -2463,13 +2463,13 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.20.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/control-plane-kubeadm/v1.13.2/metadata.yaml
-      version: v1.13.2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/control-plane-kubeadm/v1.14.2/metadata.yaml
+      version: v1.14.2+abcdef1
     docker:
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.13.2/cluster-template-development.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.14.2/cluster-template-development.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.13.2/infrastructure-components-development.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.14.2/infrastructure-components-development.yaml
       kubeProxy:
         arch:
         - amd64
@@ -2487,10 +2487,10 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-docker
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/capd-manager:v1.13.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/capd-manager:v1.14.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.13.2/metadata.yaml
-      version: v1.13.2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.14.2/metadata.yaml
+      version: v1.14.2+abcdef1
     eksD:
       ami:
         bottlerocket: {}
@@ -3026,7 +3026,7 @@ spec:
       version: v1.16.1+abcdef1
   - bootstrap:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.13.2/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.14.2/bootstrap-components.yaml
       controller:
         arch:
         - amd64
@@ -3035,7 +3035,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kubeadm-bootstrap-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/kubeadm-bootstrap-controller:v1.13.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/kubeadm-bootstrap-controller:v1.14.2-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -3046,8 +3046,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.20.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.13.2/metadata.yaml
-      version: v1.13.2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.14.2/metadata.yaml
+      version: v1.14.2+abcdef1
     bottlerocketBootstrapContainers:
       multiNetworkBootstrap:
         arch:
@@ -3093,7 +3093,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-acmesolver
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-acmesolver:v1.20.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-acmesolver:v1.21.2-eks-a-v0.0.0-dev-build.1
       cainjector:
         arch:
         - amd64
@@ -3102,7 +3102,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-cainjector
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-cainjector:v1.20.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-cainjector:v1.21.2-eks-a-v0.0.0-dev-build.1
       controller:
         arch:
         - amd64
@@ -3111,9 +3111,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-controller:v1.20.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-controller:v1.21.2-eks-a-v0.0.0-dev-build.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cert-manager/manifests/v1.20.2/cert-manager.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cert-manager/manifests/v1.21.2/cert-manager.yaml
       startupapicheck:
         arch:
         - amd64
@@ -3122,8 +3122,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-startupapicheck
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-startupapicheck:v1.20.2-eks-a-v0.0.0-dev-build.1
-      version: v1.20.2+abcdef1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-startupapicheck:v1.21.2-eks-a-v0.0.0-dev-build.1
+      version: v1.21.2+abcdef1
       webhook:
         arch:
         - amd64
@@ -3132,7 +3132,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-webhook
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-webhook:v1.20.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-webhook:v1.21.2-eks-a-v0.0.0-dev-build.1
     cilium:
       cilium:
         arch:
@@ -3173,7 +3173,7 @@ spec:
       version: deprecated
     clusterAPI:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.13.2/core-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.14.2/core-components.yaml
       controller:
         arch:
         - amd64
@@ -3182,7 +3182,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/cluster-api-controller:v1.13.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/cluster-api-controller:v1.14.2-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -3193,11 +3193,11 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.20.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.13.2/metadata.yaml
-      version: v1.13.2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.14.2/metadata.yaml
+      version: v1.14.2+abcdef1
     controlPlane:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/control-plane-kubeadm/v1.13.2/control-plane-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/control-plane-kubeadm/v1.14.2/control-plane-components.yaml
       controller:
         arch:
         - amd64
@@ -3206,7 +3206,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kubeadm-control-plane-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/kubeadm-control-plane-controller:v1.13.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/kubeadm-control-plane-controller:v1.14.2-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -3217,13 +3217,13 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.20.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/control-plane-kubeadm/v1.13.2/metadata.yaml
-      version: v1.13.2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/control-plane-kubeadm/v1.14.2/metadata.yaml
+      version: v1.14.2+abcdef1
     docker:
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.13.2/cluster-template-development.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.14.2/cluster-template-development.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.13.2/infrastructure-components-development.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.14.2/infrastructure-components-development.yaml
       kubeProxy:
         arch:
         - amd64
@@ -3241,10 +3241,10 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-docker
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/capd-manager:v1.13.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/capd-manager:v1.14.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.13.2/metadata.yaml
-      version: v1.13.2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.14.2/metadata.yaml
+      version: v1.14.2+abcdef1
     eksD:
       ami:
         bottlerocket: {}
@@ -3780,7 +3780,7 @@ spec:
       version: v1.16.1+abcdef1
   - bootstrap:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.13.2/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.14.2/bootstrap-components.yaml
       controller:
         arch:
         - amd64
@@ -3789,7 +3789,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kubeadm-bootstrap-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/kubeadm-bootstrap-controller:v1.13.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/kubeadm-bootstrap-controller:v1.14.2-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -3800,8 +3800,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.20.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.13.2/metadata.yaml
-      version: v1.13.2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.14.2/metadata.yaml
+      version: v1.14.2+abcdef1
     bottlerocketBootstrapContainers:
       multiNetworkBootstrap:
         arch:
@@ -3847,7 +3847,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-acmesolver
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-acmesolver:v1.20.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-acmesolver:v1.21.2-eks-a-v0.0.0-dev-build.1
       cainjector:
         arch:
         - amd64
@@ -3856,7 +3856,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-cainjector
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-cainjector:v1.20.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-cainjector:v1.21.2-eks-a-v0.0.0-dev-build.1
       controller:
         arch:
         - amd64
@@ -3865,9 +3865,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-controller:v1.20.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-controller:v1.21.2-eks-a-v0.0.0-dev-build.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cert-manager/manifests/v1.20.2/cert-manager.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cert-manager/manifests/v1.21.2/cert-manager.yaml
       startupapicheck:
         arch:
         - amd64
@@ -3876,8 +3876,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-startupapicheck
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-startupapicheck:v1.20.2-eks-a-v0.0.0-dev-build.1
-      version: v1.20.2+abcdef1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-startupapicheck:v1.21.2-eks-a-v0.0.0-dev-build.1
+      version: v1.21.2+abcdef1
       webhook:
         arch:
         - amd64
@@ -3886,7 +3886,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-webhook
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-webhook:v1.20.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-webhook:v1.21.2-eks-a-v0.0.0-dev-build.1
     cilium:
       cilium:
         arch:
@@ -3927,7 +3927,7 @@ spec:
       version: deprecated
     clusterAPI:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.13.2/core-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.14.2/core-components.yaml
       controller:
         arch:
         - amd64
@@ -3936,7 +3936,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/cluster-api-controller:v1.13.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/cluster-api-controller:v1.14.2-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -3947,11 +3947,11 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.20.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.13.2/metadata.yaml
-      version: v1.13.2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.14.2/metadata.yaml
+      version: v1.14.2+abcdef1
     controlPlane:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/control-plane-kubeadm/v1.13.2/control-plane-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/control-plane-kubeadm/v1.14.2/control-plane-components.yaml
       controller:
         arch:
         - amd64
@@ -3960,7 +3960,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kubeadm-control-plane-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/kubeadm-control-plane-controller:v1.13.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/kubeadm-control-plane-controller:v1.14.2-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -3971,13 +3971,13 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.20.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/control-plane-kubeadm/v1.13.2/metadata.yaml
-      version: v1.13.2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/control-plane-kubeadm/v1.14.2/metadata.yaml
+      version: v1.14.2+abcdef1
     docker:
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.13.2/cluster-template-development.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.14.2/cluster-template-development.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.13.2/infrastructure-components-development.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.14.2/infrastructure-components-development.yaml
       kubeProxy:
         arch:
         - amd64
@@ -3995,10 +3995,10 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-docker
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/capd-manager:v1.13.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/capd-manager:v1.14.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.13.2/metadata.yaml
-      version: v1.13.2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.14.2/metadata.yaml
+      version: v1.14.2+abcdef1
     eksD:
       ami:
         bottlerocket: {}
@@ -4534,7 +4534,7 @@ spec:
       version: v1.16.1+abcdef1
   - bootstrap:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.13.2/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.14.2/bootstrap-components.yaml
       controller:
         arch:
         - amd64
@@ -4543,7 +4543,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kubeadm-bootstrap-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/kubeadm-bootstrap-controller:v1.13.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/kubeadm-bootstrap-controller:v1.14.2-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -4554,8 +4554,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.20.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.13.2/metadata.yaml
-      version: v1.13.2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.14.2/metadata.yaml
+      version: v1.14.2+abcdef1
     bottlerocketBootstrapContainers:
       multiNetworkBootstrap:
         arch:
@@ -4601,7 +4601,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-acmesolver
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-acmesolver:v1.20.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-acmesolver:v1.21.2-eks-a-v0.0.0-dev-build.1
       cainjector:
         arch:
         - amd64
@@ -4610,7 +4610,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-cainjector
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-cainjector:v1.20.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-cainjector:v1.21.2-eks-a-v0.0.0-dev-build.1
       controller:
         arch:
         - amd64
@@ -4619,9 +4619,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-controller:v1.20.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-controller:v1.21.2-eks-a-v0.0.0-dev-build.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cert-manager/manifests/v1.20.2/cert-manager.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cert-manager/manifests/v1.21.2/cert-manager.yaml
       startupapicheck:
         arch:
         - amd64
@@ -4630,8 +4630,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-startupapicheck
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-startupapicheck:v1.20.2-eks-a-v0.0.0-dev-build.1
-      version: v1.20.2+abcdef1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-startupapicheck:v1.21.2-eks-a-v0.0.0-dev-build.1
+      version: v1.21.2+abcdef1
       webhook:
         arch:
         - amd64
@@ -4640,7 +4640,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-webhook
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-webhook:v1.20.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-webhook:v1.21.2-eks-a-v0.0.0-dev-build.1
     cilium:
       cilium:
         arch:
@@ -4681,7 +4681,7 @@ spec:
       version: deprecated
     clusterAPI:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.13.2/core-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.14.2/core-components.yaml
       controller:
         arch:
         - amd64
@@ -4690,7 +4690,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/cluster-api-controller:v1.13.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/cluster-api-controller:v1.14.2-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -4701,11 +4701,11 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.20.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.13.2/metadata.yaml
-      version: v1.13.2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.14.2/metadata.yaml
+      version: v1.14.2+abcdef1
     controlPlane:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/control-plane-kubeadm/v1.13.2/control-plane-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/control-plane-kubeadm/v1.14.2/control-plane-components.yaml
       controller:
         arch:
         - amd64
@@ -4714,7 +4714,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kubeadm-control-plane-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/kubeadm-control-plane-controller:v1.13.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/kubeadm-control-plane-controller:v1.14.2-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -4725,13 +4725,13 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.20.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/control-plane-kubeadm/v1.13.2/metadata.yaml
-      version: v1.13.2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/control-plane-kubeadm/v1.14.2/metadata.yaml
+      version: v1.14.2+abcdef1
     docker:
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.13.2/cluster-template-development.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.14.2/cluster-template-development.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.13.2/infrastructure-components-development.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.14.2/infrastructure-components-development.yaml
       kubeProxy:
         arch:
         - amd64
@@ -4749,10 +4749,10 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-docker
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/capd-manager:v1.13.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/capd-manager:v1.14.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.13.2/metadata.yaml
-      version: v1.13.2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.14.2/metadata.yaml
+      version: v1.14.2+abcdef1
     eksD:
       ami:
         bottlerocket: {}
@@ -5288,7 +5288,7 @@ spec:
       version: v1.16.1+abcdef1
   - bootstrap:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.13.2/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.14.2/bootstrap-components.yaml
       controller:
         arch:
         - amd64
@@ -5297,7 +5297,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kubeadm-bootstrap-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/kubeadm-bootstrap-controller:v1.13.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/kubeadm-bootstrap-controller:v1.14.2-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -5308,8 +5308,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.20.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.13.2/metadata.yaml
-      version: v1.13.2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/bootstrap-kubeadm/v1.14.2/metadata.yaml
+      version: v1.14.2+abcdef1
     bottlerocketBootstrapContainers:
       multiNetworkBootstrap:
         arch:
@@ -5355,7 +5355,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-acmesolver
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-acmesolver:v1.20.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-acmesolver:v1.21.2-eks-a-v0.0.0-dev-build.1
       cainjector:
         arch:
         - amd64
@@ -5364,7 +5364,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-cainjector
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-cainjector:v1.20.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-cainjector:v1.21.2-eks-a-v0.0.0-dev-build.1
       controller:
         arch:
         - amd64
@@ -5373,9 +5373,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-controller:v1.20.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-controller:v1.21.2-eks-a-v0.0.0-dev-build.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cert-manager/manifests/v1.20.2/cert-manager.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cert-manager/manifests/v1.21.2/cert-manager.yaml
       startupapicheck:
         arch:
         - amd64
@@ -5384,8 +5384,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-startupapicheck
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-startupapicheck:v1.20.2-eks-a-v0.0.0-dev-build.1
-      version: v1.20.2+abcdef1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-startupapicheck:v1.21.2-eks-a-v0.0.0-dev-build.1
+      version: v1.21.2+abcdef1
       webhook:
         arch:
         - amd64
@@ -5394,7 +5394,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-webhook
         os: linux
-        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-webhook:v1.20.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-webhook:v1.21.2-eks-a-v0.0.0-dev-build.1
     cilium:
       cilium:
         arch:
@@ -5435,7 +5435,7 @@ spec:
       version: deprecated
     clusterAPI:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.13.2/core-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.14.2/core-components.yaml
       controller:
         arch:
         - amd64
@@ -5444,7 +5444,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/cluster-api-controller:v1.13.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/cluster-api-controller:v1.14.2-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -5455,11 +5455,11 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.20.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.13.2/metadata.yaml
-      version: v1.13.2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.14.2/metadata.yaml
+      version: v1.14.2+abcdef1
     controlPlane:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/control-plane-kubeadm/v1.13.2/control-plane-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/control-plane-kubeadm/v1.14.2/control-plane-components.yaml
       controller:
         arch:
         - amd64
@@ -5468,7 +5468,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kubeadm-control-plane-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/kubeadm-control-plane-controller:v1.13.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/kubeadm-control-plane-controller:v1.14.2-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -5479,13 +5479,13 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.20.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/control-plane-kubeadm/v1.13.2/metadata.yaml
-      version: v1.13.2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/control-plane-kubeadm/v1.14.2/metadata.yaml
+      version: v1.14.2+abcdef1
     docker:
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.13.2/cluster-template-development.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.14.2/cluster-template-development.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.13.2/infrastructure-components-development.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.14.2/infrastructure-components-development.yaml
       kubeProxy:
         arch:
         - amd64
@@ -5503,10 +5503,10 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-docker
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/capd-manager:v1.13.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/capd-manager:v1.14.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.13.2/metadata.yaml
-      version: v1.13.2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/infrastructure-docker/v1.14.2/metadata.yaml
+      version: v1.14.2+abcdef1
     eksD:
       ami:
         bottlerocket: {}
