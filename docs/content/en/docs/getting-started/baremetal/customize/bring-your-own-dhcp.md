@@ -14,6 +14,12 @@ In environments where there is an existing DHCP service, this DHCP service can b
 
 > Note: Currently, Boots is responsible for more than just DHCP. So Boots can't be entirely avoided in the provisioning process.
 
+The reservation and `next server` examples on this page apply to IPv4. For IPv6 network boot, configure `dhcpv6Config.derivedAddressPool` and use the [IPv6 network boot requirements]({{< relref "../bare-prereq/#ipv6-network-boot-requirements" >}}). Your router must advertise a default route and a SLAAC prefix with `M=0`, `O=1` and `A=1`. Networks with `M=1` or `A=0` are unsupported for this release.
+
+The installed operating system uses SLAAC; leave its address, netmask and gateway empty in the [hardware CSV]({{< relref "../bare-preparation/#ipv6-hardware-inventory" >}}). DHCPv6 supplies the temporary boot address. Keep any existing DHCPv6 service from competing with Tinkerbell for the machines being provisioned.
+
+Use `--tinkerbell-bootstrap-ip` when you need to select a particular administrative interface. For an IPv6 cluster, pass an IPv6 address already assigned to that interface. IPv4 `next server` settings do not configure this IPv6 boot path.
+
 ## Additional Services in Boots
 
 - HTTP and TFTP servers for iPXE binaries

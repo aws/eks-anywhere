@@ -2044,6 +2044,15 @@ func (k *Kubectl) MergePatchResource(ctx context.Context, resource, name, patch,
 	return nil
 }
 
+// MergePatchResourceStatus patches a resource's status subresource.
+func (k *Kubectl) MergePatchResourceStatus(ctx context.Context, resource, name, patch, kubeconfig, namespace string) error {
+	_, err := k.Execute(ctx,
+		"patch", resource, name, "--type=merge", "--subresource=status", "-p", patch,
+		"--kubeconfig", kubeconfig, "--namespace", namespace,
+	)
+	return err
+}
+
 func (k *Kubectl) KubeconfigSecretAvailable(ctx context.Context, kubeconfig string, clusterName string, namespace string) (bool, error) {
 	return k.HasResource(ctx, "secret", fmt.Sprintf("%s-kubeconfig", clusterName), kubeconfig, namespace)
 }

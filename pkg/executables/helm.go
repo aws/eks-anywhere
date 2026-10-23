@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"math"
 	"strings"
+	"time"
 
 	"sigs.k8s.io/yaml"
 
@@ -243,6 +245,9 @@ func (h *Helm) UpgradeInstallChartWithValuesFile(ctx context.Context, chart, oci
 
 	params = h.addInsecureFlagIfProvided(params)
 	params = append(params, h.helmConfig.ExtraFlags...)
+	if h.helmConfig.NoTimeouts {
+		params = append(params, "--timeout", time.Duration(math.MaxInt64).String())
+	}
 	_, err := h.executable.Command(ctx, params...).WithEnvVars(h.env).Run()
 	return err
 }
@@ -264,6 +269,9 @@ func (h *Helm) Uninstall(ctx context.Context, chart, kubeconfigFilePath, namespa
 	}
 
 	params = append(params, h.helmConfig.ExtraFlags...)
+	if h.helmConfig.NoTimeouts {
+		params = append(params, "--timeout", time.Duration(math.MaxInt64).String())
+	}
 
 	logger.Info("Uninstalling helm chart on cluster", "chart", chart)
 	_, err := h.executable.Command(ctx, params...).WithEnvVars(h.env).Run()

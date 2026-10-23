@@ -26,6 +26,9 @@ func validateOsFamily(spec *ClusterSpec) error {
 	}
 
 	if controlPlaneOsFamily == v1alpha1.Bottlerocket {
+		if addressStringIsIPv6(spec.DatacenterConfig.Spec.TinkerbellIP) {
+			return errors.New("bottlerocket is not supported for IPv6 Tinkerbell clusters")
+		}
 		if err := validateK8sVersionForBottleRocketOS(string(spec.Cluster.Spec.KubernetesVersion)); err != nil {
 			return fmt.Errorf("machineGroupRef %s: %v", controlPlaneRef.Name, err)
 		}

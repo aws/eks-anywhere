@@ -41,7 +41,7 @@ func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *
 			return err
 		}
 
-		machineValidator := hardware.NewDefaultMachineValidator()
+		machineValidator := hardware.NewMachineValidator(addressStringIsIPv6(p.datacenterConfig.Spec.TinkerbellIP))
 
 		if err := hardware.TranslateAll(machines, machineCatalogueWriter, machineValidator); err != nil {
 			return err
@@ -548,6 +548,7 @@ func (p *Provider) PreCoreComponentsUpgrade(
 	}
 
 	// upgrade install tink stack chart
+	ipv6 := addressStringIsIPv6(p.datacenterConfig.Spec.TinkerbellIP)
 	err = p.stackInstaller.Upgrade(
 		ctx,
 		managementComponents.Tinkerbell,
@@ -556,8 +557,10 @@ func (p *Provider) PreCoreComponentsUpgrade(
 		p.datacenterConfig.Spec.HookImagesURLPath,
 		stack.WithLoadBalancerInterface(p.datacenterConfig.Spec.LoadBalancerInterface),
 		stack.WithSmeeOnKubernetes(),
+		stack.WithHostNetworkEnabled(ipv6),
 		stack.WithStackServiceEnabled(true),
-		stack.WithDHCPRelayEnabled(true),
+		stack.WithDHCPRelayEnabled(!ipv6),
+		stack.WithDHCPv6Config(p.datacenterConfig.Spec.DHCPv6Config),
 		stack.WithLoadBalancerEnabled(
 			len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations) != 0 && // load balancer is handled by kube-vip in control plane nodes
 				!p.datacenterConfig.Spec.SkipLoadBalancerDeployment), // configure load balancer based on datacenterConfig.Spec.SkipLoadBalancerDeployment
