@@ -15,6 +15,7 @@ description: >
 |:-------------------:|:-------:|:----------:|:-------:|:----:|
 |    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |  —   |
 |    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |  —   |
+|    Ubuntu 24.04     |    ✔    |     ✔      |    ✔    |  —   |
 | Bottlerocket        |    ✔    |     —      |    —    |  —   |
 |      RHEL 8.x       |    ✔    |     ✔      |    ✔    |  —   |
 |      RHEL 9.x       |    —    |     —      |    ✔    |  —   |
@@ -103,3 +104,12 @@ Fields like `providerID` or `cloudProvider` are set by EKS Anywhere and can't be
 ## Node Rollouts
 
 Adding, updating, or deleting the Kubelet Configuration will cause node rollouts to the respective nodes that the configuration affects. This is especially important to consider in providers like Baremetal since the node rollouts that are caused by the Kubelet config changes could require extra hardware provisioned depending on your rollout strategy.
+
+### Bare Metal
+
+On Bare Metal, a Kubelet Configuration change is rolled out by provisioning new machines, the same way as a Kubernetes version upgrade. Before you run `eksctl anywhere upgrade cluster` with a Kubelet Configuration change, make sure that enough spare hardware is available for the rollout:
+
+- For the control plane, at least `maxSurge` (default `1`) available hardware matching the control plane `hardwareSelector`. A single-node control plane always needs one extra machine, even when `maxSurge` is set to `0`.
+- For each worker node group whose Kubelet Configuration changes, at least `maxSurge` (default `1`) available hardware matching that group's `hardwareSelector`.
+
+Spare hardware can be added with the `--hardware-csv` flag of the upgrade command. The upgrade preflight validations do not check for extra hardware when only the Kubelet Configuration changes, so if no spare hardware is available, the upgrade waits for hardware that does not exist instead of failing early. See [Upgrade Bare Metal cluster]({{< relref "../../clustermgmt/cluster-upgrades/baremetal-upgrades" >}}) for more details on rollout strategies and hardware requirements.
