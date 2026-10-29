@@ -37,23 +37,23 @@ WEEKLY_RELEASES_URL_PREFIX=https://dev-release-assets.eks-anywhere.model-rocket.
 # Image URL to use all building/pushing image targets
 IMG ?= controller:latest
 
-# Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
-ifeq (,$(shell go env GOBIN))
-GOBIN=$(shell go env GOPATH)/bin
-else
-GOBIN=$(shell go env GOBIN)
-endif
-
-# Setup Go
-GOLANG_VERSION?="1.25"
-GO_VERSION ?= $(shell source $(REPO_ROOT)/scripts/common.sh && build::common::get_go_path $(GOLANG_VERSION))
-GO ?= $(GO_VERSION)/go
-
 # Setting SHELL to bash allows bash commands to be executed by recipes.
 # This is a requirement for 'setup-envtest.sh' in the test target.
 # Options are set to exit when a recipe line exits non-zero or a piped command fails.
 SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
+
+# Setup Go
+GOLANG_VERSION?=$(shell awk '/^go / {print $$2; exit}' $(REPO_ROOT)/release/cli/go.mod | cut -d. -f1,2)
+GO_VERSION ?= $(shell source $(REPO_ROOT)/scripts/common.sh && build::common::get_go_path $(GOLANG_VERSION))
+GO ?= env GOTOOLCHAIN=local $(GO_VERSION)/go
+
+# Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
+ifeq (,$(shell $(GO) env GOBIN))
+GOBIN=$(shell $(GO) env GOPATH)/bin
+else
+GOBIN=$(shell $(GO) env GOBIN)
+endif
 
 TOOLS_BIN_DIR := ../hack/tools/bin
 CONTROLLER_GEN_BIN := controller-gen
