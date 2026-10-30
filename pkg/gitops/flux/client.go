@@ -9,6 +9,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/git/githubretry"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
@@ -39,6 +40,7 @@ type fluxClient struct {
 	flux FluxClient
 	kube KubeClient
 	*retrier.Retrier
+	githubRetry func(context.Context, func() error) error
 }
 
 func newFluxClient(flux FluxClient, kube KubeClient) *fluxClient {
@@ -46,11 +48,14 @@ func newFluxClient(flux FluxClient, kube KubeClient) *fluxClient {
 		flux:    flux,
 		kube:    kube,
 		Retrier: retrier.NewWithMaxRetries(maxRetries, backOffPeriod),
+		githubRetry: func(ctx context.Context, operation func() error) error {
+			return githubretry.Retry(ctx, backOffPeriod, operation)
+		},
 	}
 }
 
 func (c *fluxClient) BootstrapGithub(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error {
-	return c.Retry(
+	return c.githubRetry(ctx,
 		func() error {
 			return c.flux.BootstrapGithub(ctx, cluster, fluxConfig)
 		},
