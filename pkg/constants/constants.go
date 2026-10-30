@@ -35,6 +35,7 @@ const (
 	DefaultHttpsPort                        = "443"
 	DefaultWorkerNodeGroupName              = "md-0"
 	DefaultNodeCidrMaskSize                 = 24
+	DefaultIPv6NodeCidrMaskSize             = 64
 
 	// Certificate renewal component types.
 	EtcdComponent         = "etcd"

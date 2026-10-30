@@ -3,6 +3,7 @@ package hardware
 import (
 	"fmt"
 	"math"
+	"net"
 
 	tinkv1alpha1 "github.com/tinkerbell/tink/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
@@ -152,7 +153,7 @@ func hardwareFromMachine(m Machine) *tinkv1alpha1.Hardware {
 	allow := true
 
 	// TODO(chrisdoherty4) Set the namespace to the CAPT namespace.
-	return &tinkv1alpha1.Hardware{
+	hardware := &tinkv1alpha1.Hardware{
 		TypeMeta: newHardwareTypeMeta(),
 		ObjectMeta: v1.ObjectMeta{
 			Name:      m.Hostname,
@@ -170,15 +171,6 @@ func hardwareFromMachine(m Machine) *tinkv1alpha1.Hardware {
 				Instance: &tinkv1alpha1.MetadataInstance{
 					ID:       m.MACAddress,
 					Hostname: m.Hostname,
-					Ips: []*tinkv1alpha1.MetadataInstanceIP{
-						{
-							Address: m.IPAddress,
-							Netmask: m.Netmask,
-							Gateway: m.Gateway,
-							Family:  4,
-							Public:  true,
-						},
-					},
 					// TODO(chrisdoherty4) Fix upstream. The OperatingSystem is used in boots to
 					// detect what iPXE scripts should be served. The Kubernetes back-end nilifies
 					// its response to retrieving the OS data and the handling code doesn't check
@@ -199,12 +191,6 @@ func hardwareFromMachine(m Machine) *tinkv1alpha1.Hardware {
 					DHCP: &tinkv1alpha1.DHCP{
 						Arch: "x86_64",
 						MAC:  m.MACAddress,
-						IP: &tinkv1alpha1.IP{
-							Address: m.IPAddress,
-							Netmask: m.Netmask,
-							Gateway: m.Gateway,
-							Family:  4,
-						},
 						// set LeaseTime to the max value so it effectively hands out max duration leases (~136 years)
 						// This value gets ignored for Ubuntu because we set static IPs for it
 						// It's only temporarily needed for Bottlerocket until Bottlerocket supports static IPs
@@ -218,6 +204,30 @@ func hardwareFromMachine(m Machine) *tinkv1alpha1.Hardware {
 			},
 		},
 	}
+
+	if m.IPAddress != "" {
+		family := int64(6)
+		if net.ParseIP(m.IPAddress).To4() != nil {
+			family = 4
+		}
+		hardware.Spec.Metadata.Instance.Ips = []*tinkv1alpha1.MetadataInstanceIP{
+			{
+				Address: m.IPAddress,
+				Netmask: m.Netmask,
+				Gateway: m.Gateway,
+				Family:  family,
+				Public:  true,
+			},
+		}
+		hardware.Spec.Interfaces[0].DHCP.IP = &tinkv1alpha1.IP{
+			Address: m.IPAddress,
+			Netmask: m.Netmask,
+			Gateway: m.Gateway,
+			Family:  family,
+		}
+	}
+
+	return hardware
 }
 
 // newBMCRefFromMachine returns a BMCRef pointer for Hardware.

@@ -4071,10 +4071,12 @@ spec:
                             type: string
                           helmValues:
                             description: |-
-                              HelmValues specifies the complete Helm values configuration for Cilium in YAML format.
-                              When set, this parameter takes precedence over all other Cilium-specific fields in this configuration.
-                              All other Cilium properties (CNIExclusive, EgressMasqueradeInterfaces, IPv4NativeRoutingCIDR, etc.)
-                              will be ignored when HelmValues is specified.
+                              HelmValues specifies additional Helm values configuration for Cilium in YAML format.
+                              When set, these values are merged on top of the EKS-A managed defaults, with the
+                              user-provided values taking precedence. EKS-A defaults are preserved for any keys the
+                              user does not set (e.g. ipam.mode, cni.chainingMode, tunnelProtocol, image, operator).
+                              The deprecated Cilium-specific fields (CNIExclusive, EgressMasqueradeInterfaces,
+                              IPv4NativeRoutingCIDR, RoutingMode, PolicyEnforcementMode) are ignored when HelmValues is set.
                             x-kubernetes-preserve-unknown-fields: true
                           ipv4NativeRoutingCIDR:
                             description: |-
@@ -7003,6 +7005,17 @@ spec:
             description: TinkerbellDatacenterConfigSpec defines the desired state
               of TinkerbellDatacenterConfig.
             properties:
+              dhcpv6Config:
+                description: DHCPv6Config configures IPv6 netboot for SLAAC based
+                  clusters.
+                properties:
+                  derivedAddressPool:
+                    description: DerivedAddressPool is the IPv6 prefix used to derive
+                      temporary boot addresses.
+                    type: string
+                required:
+                - derivedAddressPool
+                type: object
               hookImagesURLPath:
                 description: HookImagesURLPath can be used to override the default
                   Hook images path to pull from a local server.
@@ -7017,6 +7030,13 @@ spec:
                 description: IsoBoot can be used to indicate that the hardware should
                   boot using an ISO.
                 type: boolean
+              isoBootURL:
+                description: |-
+                  IsoBootURL is the BMC-reachable URL served by the ISO boot handler.
+                  CAPT inserts the Hardware instance ID into its path. The endpoint must remain
+                  reachable during bootstrap and after management moves to the workload cluster.
+                  It overrides the generated boot URL, not the source image in HookIsoURL.
+                type: string
               loadBalancerInterface:
                 description: LoadBalancerInterface can be used to configure a load
                   balancer interface for the Tinkerbell stack.
@@ -7584,6 +7604,15 @@ spec:
                                 type: string
                               name:
                                 type: string
+                              namespaces:
+                                description: ActionNamespaces selects the namespaces
+                                  an action container runs in.
+                                properties:
+                                  network:
+                                    type: string
+                                  pid:
+                                    type: string
+                                type: object
                               on-failure:
                                 items:
                                   type: string

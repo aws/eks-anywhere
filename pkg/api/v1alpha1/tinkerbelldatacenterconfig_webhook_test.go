@@ -77,6 +77,18 @@ func TestTinkerbellDatacenterValidateUpdateImmutable(t *testing.T) {
 			wantErr: "spec.tinkerbellIP: Forbidden: field is immutable",
 		},
 		{
+			name: "updated dhcpv6Config",
+			old: tinkerbellDatacenterConfig(func(d *v1alpha1.TinkerbellDatacenterConfig) {
+				d.Spec.TinkerbellIP = "2001:db8::10"
+				d.Spec.DHCPv6Config = &v1alpha1.DHCPv6Config{DerivedAddressPool: "2001:db8:1::/64"}
+			}),
+			new: tinkerbellDatacenterConfig(func(d *v1alpha1.TinkerbellDatacenterConfig) {
+				d.Spec.TinkerbellIP = "2001:db8::10"
+				d.Spec.DHCPv6Config = &v1alpha1.DHCPv6Config{DerivedAddressPool: "2001:db8:2::/64"}
+			}),
+			wantErr: "spec.dhcpv6Config: Forbidden: field is immutable",
+		},
+		{
 			name: "updated hookImagesURLPath",
 			old: tinkerbellDatacenterConfig(func(d *v1alpha1.TinkerbellDatacenterConfig) {
 				d.Spec.HookImagesURLPath = "https://oldpath"
