@@ -505,7 +505,7 @@ func (e *ClusterE2ETest) GenerateClusterConfigForVersion(eksaVersion, licenseTok
 			if licenseToken != "" {
 				e.clusterFillers = append(e.clusterFillers, api.WithLicenseToken(licenseToken))
 			} else {
-				defaultLicenseToken := GetStagingLicenseToken()
+				defaultLicenseToken := GetLicenseToken()
 				e.clusterFillers = append(e.clusterFillers, api.WithLicenseToken(defaultLicenseToken))
 			}
 		}
