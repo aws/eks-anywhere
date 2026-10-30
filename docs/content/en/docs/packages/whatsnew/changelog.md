@@ -5,6 +5,19 @@ weight: 7
 description: >
   Changelog for Curated packages release
 ---
+## Package Bundle Release (10-30-2026)
+#### Changed
+- Fix CVE-2026-111943 and CVE-2026-113470 (compromised eMudhra intermediate CAs): all curated packages are rebuilt with Go `1.26.10` or `1.27.3`, which distrust the compromised intermediates, on base images whose CA bundle no longer includes the affected emSign roots
+- EKS Anywhere Packages Controller and Credential-Provider-Package `0.4.17` rebuilt
+- ADOT `0.49.0` to `0.51.0`
+  - The package now accepts only the `logsCollection`, `kubernetesAttributes` and `resourceDetection` presets. A package config that sets another preset (for example `kubeletMetrics` or `hostMetrics`) is rejected on its next create or update; see [ADOT with AMP and AMG]({{< relref "../adot/adot_amp_amg.md" >}}) for the replacement configuration
+  - `apiVersion` is no longer required in the package config
+- Cert-Manager `1.20.2-eksbuild.3` to `1.21.2-eksbuild.4` for Kubernetes 1.32 and later, and to `1.20.2-eksbuild.4` for Kubernetes 1.30 and 1.31
+- Cluster-Autoscaler `1.32.7`, `1.33.6`, `1.34.5`, `1.35.2` and `1.36.1` for the matching Kubernetes versions
+- Metrics-Server `0.8.1-eksbuild.11` to `0.9.0-eksbuild.14` for Kubernetes 1.34 and later, and to `0.8.1-eksbuild.22` for Kubernetes 1.30 to 1.33
+- Prometheus `3.12.0` to `3.15.1`
+- Emissary, Harbor, MetalLB and Hello-EKS-Anywhere rebuilt for CVE fixes
+
 ## Package Bundle Release (08-06-2026)
 #### Changed
 - Fix critical CVEs in affected Curated Packages
