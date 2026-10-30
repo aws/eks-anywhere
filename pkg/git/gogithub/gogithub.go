@@ -12,6 +12,7 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/aws/eks-anywhere/pkg/git"
+	"github.com/aws/eks-anywhere/pkg/git/githubretry"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 )
@@ -83,10 +84,12 @@ func (ggc *githubClient) DeleteRepo(ctx context.Context, owner, repo string) (*g
 }
 
 func (ggc *githubClient) AddDeployKeyToRepo(ctx context.Context, owner, repo string, key *goGithub.Key) error {
-	_, resp, err := ggc.client.Repositories.CreateKey(ctx, owner, repo, key)
+	err := githubretry.Retry(ctx, 0, func() error {
+		_, _, err := ggc.client.Repositories.CreateKey(ctx, owner, repo, key)
+		return err
+	})
 	if err != nil {
-		logger.Info("createKey response", "resp", resp)
-		return fmt.Errorf("adding deploy key to repo: %v", err)
+		return fmt.Errorf("adding deploy key to repo: %w", err)
 	}
 	return err
 }
@@ -108,9 +111,14 @@ func (g *GoGithub) CreateRepo(ctx context.Context, opts git.CreateRepoOpts) (rep
 		logger.V(4).Info("Not a personal repository; using repository Owner as Org", "org", org, "owner", opts.Owner)
 	}
 
-	repo, _, err := g.Client.CreateRepo(ctx, org, r)
+	var repo *goGithub.Repository
+	err = githubretry.Retry(ctx, 0, func() error {
+		var err error
+		repo, _, err = g.Client.CreateRepo(ctx, org, r)
+		return err
+	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to create new Github repo %s: %v", opts.Name, err)
+		return nil, fmt.Errorf("failed to create new Github repo %s: %w", opts.Name, err)
 	}
 	logger.V(3).Info("Successfully created new Github repo", "repo", repo.GetName(), "owner", opts.Owner)
 	return &git.Repository{
@@ -162,7 +170,12 @@ func (g *GoGithub) GetRepo(ctx context.Context, opts git.GetRepoOpts) (*git.Repo
 	r := opts.Repository
 	o := opts.Owner
 	logger.V(3).Info("Describing Github repository", "name", r, "owner", o)
-	repo, _, err := g.Client.Repo(ctx, o, r)
+	var repo *goGithub.Repository
+	err := githubretry.Retry(ctx, 0, func() error {
+		var err error
+		repo, _, err = g.Client.Repo(ctx, o, r)
+		return err
+	})
 	if err != nil {
 		if isNotFound(err) {
 			return nil, &git.RepositoryDoesNotExistError{Err: err}
@@ -178,17 +191,27 @@ func (g *GoGithub) GetRepo(ctx context.Context, opts git.GetRepoOpts) (*git.Repo
 }
 
 func (g *GoGithub) AuthenticatedUser(ctx context.Context) (*goGithub.User, error) {
-	githubUser, _, err := g.Client.User(ctx, "") // passing the empty string will fetch the authenticated
+	var githubUser *goGithub.User
+	err := githubretry.Retry(ctx, 0, func() error {
+		var err error
+		githubUser, _, err = g.Client.User(ctx, "") // Empty username fetches the authenticated user.
+		return err
+	})
 	if err != nil {
-		return nil, fmt.Errorf("failed while getting the authenticated github user %v", err)
+		return nil, fmt.Errorf("failed while getting the authenticated github user %w", err)
 	}
 	return githubUser, nil
 }
 
 func (g *GoGithub) Organization(ctx context.Context, org string) (*goGithub.Organization, error) {
-	organization, _, err := g.Client.Organization(ctx, org)
+	var organization *goGithub.Organization
+	err := githubretry.Retry(ctx, 0, func() error {
+		var err error
+		organization, _, err = g.Client.Organization(ctx, org)
+		return err
+	})
 	if err != nil {
-		return nil, fmt.Errorf("failed while getting github organization %s details %v", org, err)
+		return nil, fmt.Errorf("failed while getting github organization %s details %w", org, err)
 	}
 	return organization, nil
 }
@@ -196,20 +219,23 @@ func (g *GoGithub) Organization(ctx context.Context, org string) (*goGithub.Orga
 // PathExists checks if a path exists in the remote repository. If the owner, repository or branch doesn't exist,
 // it returns false and no error.
 func (g *GoGithub) PathExists(ctx context.Context, owner, repo, branch, path string) (bool, error) {
-	_, _, _, err := g.Client.GetContents(
-		ctx,
-		owner,
-		repo,
-		path,
-		&goGithub.RepositoryContentGetOptions{Ref: branch},
-	)
+	err := githubretry.Retry(ctx, 0, func() error {
+		_, _, _, err := g.Client.GetContents(
+			ctx,
+			owner,
+			repo,
+			path,
+			&goGithub.RepositoryContentGetOptions{Ref: branch},
+		)
+		return err
+	})
 
 	if isNotFound(err) {
 		return false, nil
 	}
 
 	if err != nil {
-		return false, fmt.Errorf("failed checking if path %s exists in remote github repository: %v", path, err)
+		return false, fmt.Errorf("failed checking if path %s exists in remote github repository: %w", path, err)
 	}
 
 	return true, nil
@@ -230,9 +256,12 @@ func (g *GoGithub) DeleteRepo(ctx context.Context, opts git.DeleteRepoOpts) erro
 	r := opts.Repository
 	o := opts.Owner
 	logger.V(3).Info("Deleting Github repository", "name", r, "owner", o)
-	_, err := g.Client.DeleteRepo(ctx, o, r)
+	err := githubretry.Retry(ctx, 0, func() error {
+		_, err := g.Client.DeleteRepo(ctx, o, r)
+		return err
+	})
 	if err != nil {
-		return fmt.Errorf("deleting repository %s: %v", r, err)
+		return fmt.Errorf("deleting repository %s: %w", r, err)
 	}
 	return nil
 }
