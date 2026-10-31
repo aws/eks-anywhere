@@ -690,6 +690,10 @@ func (k *Kubectl) GetPackageBundleController(ctx context.Context, kubeconfigFile
 	if err != nil {
 		return packagesv1.PackageBundleController{}, fmt.Errorf("failed to execute cmd \"%s\": %w", strings.Join(params, " "), err)
 	}
+	// --ignore-not-found prints nothing when the PackageBundleController doesn't exist.
+	if len(bytes.TrimSpace(stdOut.Bytes())) == 0 {
+		return packagesv1.PackageBundleController{}, fmt.Errorf("PackageBundleController %s not found in namespace %s", clusterName, constants.EksaPackagesName)
+	}
 	pbc := &packagesv1.PackageBundleController{}
 	err = json.Unmarshal(stdOut.Bytes(), pbc)
 	if err != nil {

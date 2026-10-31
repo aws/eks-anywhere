@@ -107,7 +107,9 @@ func runCuratedPackageInstallSimpleFlowRegistryMirror(test *framework.ClusterE2E
 	bundlePath := "./eks-anywhere-downloads/bundle-release.yaml"
 	test.CreateCluster(framework.WithBundlesOverride(bundlePath))
 	defer func() {
-		test.GenerateSupportBundleIfTestFailed()
+		// The registry mirror only has the images from bundlePath. Without it,
+		// support-bundle uses the default bundles and can't pull its cli-tools image.
+		test.GenerateSupportBundleIfTestFailed(framework.WithBundlesManifest(bundlePath))
 		test.DeleteCluster(framework.WithBundlesOverride(bundlePath))
 	}()
 	runCuratedPackageInstall(test)

@@ -77,6 +77,12 @@ func WithBundlesOverride(bundles string) CommandOpt {
 	return appendOpt("--bundles-override", bundles)
 }
 
+// WithBundlesManifest sets --bundles-manifest, which generate support-bundle takes
+// instead of --bundles-override.
+func WithBundlesManifest(bundles string) CommandOpt {
+	return appendOpt("--bundles-manifest", bundles)
+}
+
 type binaryFetcher func() (binaryPath string, err error)
 
 func executeWithBinaryCommandOpt(fetcher binaryFetcher) CommandOpt {

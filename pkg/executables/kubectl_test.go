@@ -3806,6 +3806,15 @@ func TestGetPackageBundleController(t *testing.T) {
 	}
 }
 
+func TestGetPackageBundleControllerNotFound(t *testing.T) {
+	t.Parallel()
+	tt := newKubectlTest(t)
+	expectedParam := []string{"get", "packagebundlecontroller.packages.eks.amazonaws.com", "testcluster", "-o", "json", "--kubeconfig", "c.kubeconfig", "--namespace", "eksa-packages", "--ignore-not-found=true"}
+	tt.e.EXPECT().Execute(gomock.Any(), gomock.Eq(expectedParam)).Return(bytes.Buffer{}, nil)
+	_, err := tt.k.GetPackageBundleController(tt.ctx, tt.cluster.KubeconfigFile, "testcluster")
+	tt.Expect(err).To(MatchError("PackageBundleController testcluster not found in namespace eksa-packages"))
+}
+
 func TestGetPackageBundleList(t *testing.T) {
 	t.Parallel()
 	tt := newKubectlTest(t)
