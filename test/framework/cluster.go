@@ -1450,8 +1450,10 @@ func (e *ClusterE2ETest) VerifyHarborPackageInstalled(prefix, namespace string) 
 	case err := <-errCh:
 		e.T.Fatal(err)
 	case <-okCh:
-		return
 	}
+
+	e.VerifyPackageImagesFromConfiguredRegistry(prefix, namespace, e.Cluster())
+	e.VerifyHarborFunctional(prefix, namespace)
 }
 
 func (e *ClusterE2ETest) printPackageSpec(ctx context.Context, params []string) {
@@ -1496,6 +1498,7 @@ func (e *ClusterE2ETest) VerifyHelloPackageInstalled(packageName string, mgmtClu
 	if err != nil {
 		e.T.Fatalf("waiting for hello-eks-anywhere deployment timed out: %s", err)
 	}
+	e.VerifyPackageImagesFromConfiguredRegistry(packageName, constants.EksaPackagesName, mgmtCluster)
 
 	svcAddress := packageName + "." + constants.EksaPackagesName + ".svc.cluster.local"
 	e.T.Log("Validate content at endpoint", svcAddress)
@@ -1528,6 +1531,7 @@ func (e *ClusterE2ETest) VerifyAdotPackageInstalled(packageName, targetNamespace
 	if err != nil {
 		e.T.Fatalf("waiting for adot deployment timed out: %s", err)
 	}
+	e.VerifyPackageImagesFromConfiguredRegistry(packageName, targetNamespace, e.Cluster())
 
 	e.T.Log("Reading", packageName, "pod logs")
 	adotPodName, err := e.KubectlClient.GetPodNameByLabel(context.TODO(), targetNamespace, "app.kubernetes.io/name=aws-otel-collector", e.KubeconfigFilePath())
@@ -1698,6 +1702,7 @@ func (e *ClusterE2ETest) VerifyEmissaryPackageInstalled(packageName string, mgmt
 	if err != nil {
 		e.T.Fatalf("waiting for emissary deployment timed out: %s", err)
 	}
+	e.VerifyPackageImagesFromConfiguredRegistry(packageName, constants.EksaPackagesName, mgmtCluster)
 	svcAddress := packageName + "-admin." + constants.EksaPackagesName + ".svc.cluster.local" + ":8877/ambassador/v0/check_alive"
 	e.T.Log("Validate content at endpoint", svcAddress)
 	expectedLogs := "Ambassador is alive and well"
@@ -1754,6 +1759,7 @@ func (e *ClusterE2ETest) VerifyPrometheusPackageInstalled(packageName, targetNam
 	if err != nil {
 		e.T.Fatalf("waiting for prometheus package install timed out: %s", err)
 	}
+	e.VerifyPackageImagesFromConfiguredRegistry(packageName, targetNamespace, e.Cluster())
 }
 
 // VerifyCertManagerPackageInstalled is checking if the cert manager package gets installed correctly.
@@ -1805,6 +1811,7 @@ func (e *ClusterE2ETest) VerifyCertManagerPackageInstalled(prefix, namespace, pa
 	if err := <-errCh; err != nil {
 		e.T.Fatalf("cert-manager package deployments did not become healthy: %s", err)
 	}
+	e.VerifyPackageImagesFromConfiguredRegistry(prefix+"-"+packageName, namespace, mgmtCluster)
 
 	e.T.Log("Waiting for Self Signed certificate to be issued")
 	if err := e.verifySelfSignedCertificate(); err != nil {
@@ -2002,6 +2009,7 @@ func (e *ClusterE2ETest) VerifyAutoScalerPackageInstalled(packageName, targetNam
 	if err != nil {
 		e.T.Fatalf("waiting for cluster-autoscaler deployment timed out: %s", err)
 	}
+	e.VerifyPackageImagesFromConfiguredRegistry(packageName, targetNamespace, mgmtCluster)
 }
 
 // VerifyMetricServerPackageInstalled is verifying that metrics-server is installed and deployed.
@@ -2031,6 +2039,7 @@ func (e *ClusterE2ETest) VerifyMetricServerPackageInstalled(packageName, targetN
 	if err != nil {
 		e.T.Fatalf("waiting for Metric Server deployment timed out: %s", err)
 	}
+	e.VerifyPackageImagesFromConfiguredRegistry(packageName, targetNamespace, mgmtCluster)
 }
 
 //go:embed testdata/autoscaler_package.yaml

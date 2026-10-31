@@ -107,6 +107,7 @@ func (suite *MetalLBSuite) TestPackagesMetalLB() {
 			if err != nil {
 				t.Fatalf("waiting for metallb speaker daemonset to be available: %s", err)
 			}
+			test.VerifyPackageImagesFromConfiguredRegistry(packagePrefix, namespace, cluster)
 		})
 
 		t.Run("Address pool configuration", func(t *testing.T) {

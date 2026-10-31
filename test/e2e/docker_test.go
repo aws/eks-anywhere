@@ -440,6 +440,22 @@ func TestDockerKubernetes137CuratedPackagesSimpleFlow(t *testing.T) {
 	runCuratedPackageInstallSimpleFlow(test)
 }
 
+// TestDockerKubernetes136CuratedPackagesBundleUpgrade installs every curated package except cert-manager from
+// an older package bundle and upgrades them to the newest bundle, checking their state survives. It skips unless
+// T_PACKAGES_UPGRADE_FROM_BUNDLE is set.
+func TestDockerKubernetes136CuratedPackagesBundleUpgrade(t *testing.T) {
+	framework.CheckPackagesUpgradeFromBundle(t)
+	framework.CheckCuratedPackagesCredentials(t)
+	minNodes := 1
+	maxNodes := 2
+	test := framework.NewClusterE2ETest(t,
+		framework.NewDocker(t),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube136),
+			api.WithWorkerNodeCount(minNodes), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
+	)
+	runCuratedPackagesBundleUpgradeFlow(test)
+}
+
 func TestDockerKubernetes131CuratedPackagesEmissarySimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
@@ -670,12 +686,37 @@ func TestDockerKubernetes136CuratedPackagesPrometheusSimpleFlow(t *testing.T) {
 	runCuratedPackagesPrometheusInstallSimpleFlow(test)
 }
 
+// TestDockerKubernetes136CuratedPackagesPrometheusCustomScrapeConfigs fails until a bundle with the Prometheus
+// chart fix from aws/eks-anywhere-build-tooling#5791 is active. It uses 1.36 to stay out of the
+// TestDocker.*137 quick tests until then.
+func TestDockerKubernetes136CuratedPackagesPrometheusCustomScrapeConfigs(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
+	test := framework.NewClusterE2ETest(t, framework.NewDocker(t),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube136)),
+	)
+	runCuratedPackagesPrometheusCustomScrapeConfigsFlow(test)
+}
+
 func TestDockerKubernetes137CuratedPackagesPrometheusSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t, framework.NewDocker(t),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube137)),
 	)
 	runCuratedPackagesPrometheusInstallSimpleFlow(test)
+}
+
+// Cluster Autoscaler
+// The 111-replica test workload exceeds the 110 pods per node limit, so it forces a scale up
+// regardless of the Docker nodes' host-sized CPU and memory.
+func TestDockerKubernetes137CuratedPackagesClusterAutoscalerSimpleFlow(t *testing.T) {
+	minNodes := 1
+	maxNodes := 2
+	framework.CheckCuratedPackagesCredentials(t)
+	test := framework.NewClusterE2ETest(t,
+		framework.NewDocker(t),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube137), api.WithWorkerNodeCount(minNodes), api.WithWorkerNodeAutoScalingConfig(minNodes, maxNodes)),
+	)
+	runAutoscalerWithMetricsServerSimpleFlow(test)
 }
 
 func TestDockerKubernetes131CuratedPackagesDisabled(t *testing.T) {
