@@ -60,6 +60,7 @@ func newPackageInstallerTest(t *testing.T) *packageInstallerTest {
 func TestPackageInstallerSuccess(t *testing.T) {
 	tt := newPackageInstallerTest(t)
 
+	tt.packageControllerClient.EXPECT().InstallCRDs(tt.ctx).Return(nil)
 	tt.packageClient.EXPECT().CreatePackages(tt.ctx, tt.packagePath, tt.kubeConfigPath).Return(nil)
 	tt.packageControllerClient.EXPECT().Enable(tt.ctx).Return(nil)
 
@@ -70,6 +71,7 @@ func TestPackageInstallerFailWhenControllerFails(t *testing.T) {
 	tt := newPackageInstallerTest(t)
 	tt.command.WithRetries(0, 0)
 
+	tt.packageControllerClient.EXPECT().InstallCRDs(tt.ctx).Return(nil)
 	tt.packageControllerClient.EXPECT().Enable(tt.ctx).Return(errors.New("controller installation failed"))
 
 	tt.command.InstallCuratedPackages(tt.ctx)
@@ -78,6 +80,7 @@ func TestPackageInstallerFailWhenControllerFails(t *testing.T) {
 func TestPackageInstallerFailWhenPackageFails(t *testing.T) {
 	tt := newPackageInstallerTest(t)
 
+	tt.packageControllerClient.EXPECT().InstallCRDs(tt.ctx).Return(nil)
 	tt.packageClient.EXPECT().CreatePackages(tt.ctx, tt.packagePath, tt.kubeConfigPath).Return(errors.New("path doesn't exist"))
 	tt.packageControllerClient.EXPECT().Enable(tt.ctx).Return(nil)
 
