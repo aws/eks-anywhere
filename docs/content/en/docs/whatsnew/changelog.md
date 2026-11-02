@@ -9,6 +9,11 @@ description: >
 ---
 
 {{% alert title="Announcements" color="warning" %}}
+* The eMudhra (emSign) certificate authorities `emSign ECC Root CA - G3`, `emSign Root CA - C1` and `emSign ECC Root CA - C3` were compromised (CVE-2026-113470), and Go distrusts the affected intermediates starting with Go `v1.26.10` (CVE-2026-111943). EKS Anywhere release `v0.26.4` removes trust in these authorities from its components, EKS Distro, HookOS and Bottlerocket `v1.68.0` node images. Ubuntu and Red Hat node images are built by you, so to fix this in your new/existing EKS-A clusters you **MUST** build new OS images using the image-builder CLI pertaining to `v0.26.4` and create/upgrade your clusters with these images.<br>
+  Refer to the following links for more information on the steps to mitigate the CVE.
+  * [Building Ubuntu and Red Hat node images]({{< relref "../osmgmt/artifacts/#building-node-images" >}})
+  * [Downloading Bottlerocket node images]({{< relref "../osmgmt/artifacts/#download-bottlerocket-node-images" >}})
+  * [Upgrading an EKS Anywhere cluster]({{< relref "../clustermgmt/cluster-upgrades" >}})
 * Starting with EKS Anywhere release `v0.26.0`, the CloudStack provider has been removed. EKS Anywhere no longer includes the Cluster API provider for CloudStack, and AWS will no longer support this provider. Users currently relying on this provider are encouraged to find alternative support.
 * If you are upgrading your management cluster to `v0.22.x` patch versions prior to `v0.22.3`, you may encounter a bug related to extended Kubernetes versions support that blocks lifecycle management (LCM) operations on workload clusters running versions prior to `v0.22.0`. To avoid this issue, we recommend upgrading your management cluster directly to `v0.22.3` before performing any workload cluster LCM operations.
 * If you are running EKS Anywhere versions `v0.22.0` or `v0.22.1` in an air-gapped environment with proxy enabled, you may be affected by a Helm `v3.17.1` bug that impacts proxy functionality in air-gapped environments. To resolve this, we recommend upgrading to EKS Anywhere `v0.22.2` or above. More details can be found [here](https://github.com/aws/eks-anywhere-build-tooling/pull/4497)
@@ -41,6 +46,33 @@ description: >
 {{% alert title="General Information" color="info" %}}
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
+
+## [v0.26.4](https://github.com/aws/eks-anywhere/releases/tag/v0.26.4)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----:|
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |  ✔   |
+|    Ubuntu 24.04     |    ✔    |     ✔      |    ✔    |  —   |
+| Bottlerocket 1.68.0 |    ✔    |     —      |    —    |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |  —   |
+|      RHEL 9.x       |    ✔    |     ✔      |    ✔    |  —   |
+
+\* Bottlerocket `v1.68.0` applies to Kubernetes versions 1.31 through 1.36. Kubernetes version 1.30 remains on Bottlerocket `v1.62.0`.
+
+### Changed
+- EKS Distro:
+  - [`v1-36-eks-10`](https://distro.eks.amazonaws.com/releases/1-36/10/)
+  - [`v1-35-eks-16`](https://distro.eks.amazonaws.com/releases/1-35/16/)
+  - [`v1-34-eks-25`](https://distro.eks.amazonaws.com/releases/1-34/25/)
+  - [`v1-33-eks-34`](https://distro.eks.amazonaws.com/releases/1-33/34/)
+  - [`v1-32-eks-44`](https://distro.eks.amazonaws.com/releases/1-32/44/)
+  - [`v1-31-eks-51`](https://distro.eks.amazonaws.com/releases/1-31/51/)
+- Cilium: `v1.19.6` to `v1.19.10` ([#5761](https://github.com/aws/eks-anywhere-build-tooling/pull/5761))
+- Bottlerocket: `v1.64.0` to `v1.68.0` for Kubernetes versions 1.31 through 1.36 ([#5765](https://github.com/aws/eks-anywhere-build-tooling/pull/5765))
+
+### Fixed
+- Removed trust in the compromised eMudhra (emSign) certificate authorities (CVE-2026-113470, CVE-2026-111943). EKS Anywhere binaries and component images are now built with Go `v1.26.10`, and EKS Distro base images, HookOS, Cilium and Bottlerocket no longer trust the `emSign ECC Root CA - G3`, `emSign Root CA - C1` and `emSign ECC Root CA - C3` roots. ([#10992](https://github.com/aws/eks-anywhere/pull/10992), [#5734](https://github.com/aws/eks-anywhere-build-tooling/pull/5734), [#5738](https://github.com/aws/eks-anywhere-build-tooling/pull/5738), [#5742](https://github.com/aws/eks-anywhere-build-tooling/pull/5742), [#5749](https://github.com/aws/eks-anywhere-build-tooling/pull/5749), [#5761](https://github.com/aws/eks-anywhere-build-tooling/pull/5761), [#5765](https://github.com/aws/eks-anywhere-build-tooling/pull/5765))
 
 ## [v0.26.3](https://github.com/aws/eks-anywhere/releases/tag/v0.26.3)
 
