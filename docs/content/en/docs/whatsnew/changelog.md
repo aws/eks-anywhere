@@ -83,7 +83,7 @@ description: >
 |    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
 |    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
 |    Ubuntu 24.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
-| Bottlerocket 1.56.0 |    ✔    |     —      |    —    |     —      |  —   |
+| Bottlerocket 1.54.0 |    ✔    |     —      |    —    |     —      |  —   |
 |      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
 |      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
 
@@ -130,7 +130,7 @@ For complete version support details, see the [Kubernetes version support table]
 |    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
 |    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
 |    Ubuntu 24.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
-| Bottlerocket 1.56.0 |    ✔    |     —      |    —    |     —      |  —   |
+| Bottlerocket 1.54.0 |    ✔    |     —      |    —    |     —      |  —   |
 |      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
 |      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
 
@@ -181,7 +181,7 @@ For complete version support details, see the [Kubernetes version support table]
 |    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
 |    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
 |    Ubuntu 24.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
-| Bottlerocket 1.56.0 |    ✔    |     —      |    —    |     —      |  —   |
+| Bottlerocket 1.54.0 |    ✔    |     —      |    —    |     —      |  —   |
 |      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
 |      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
 
@@ -221,7 +221,7 @@ For complete version support details, see the [Kubernetes version support table]
 |    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
 |    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
 |    Ubuntu 24.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
-| Bottlerocket 1.56.0 |    ✔    |     —      |    —    |     —      |  —   |
+| Bottlerocket 1.54.0 |    ✔    |     —      |    —    |     —      |  —   |
 |      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
 |      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
 
