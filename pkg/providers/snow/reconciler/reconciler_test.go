@@ -183,6 +183,12 @@ func TestReconcilerCheckControlPlaneReadyItIsReady(t *testing.T) {
 				Status:             metav1.ConditionTrue,
 				LastTransitionTime: metav1.NewTime(time.Now()),
 			},
+			{
+				Type:               controlplanev1beta2.KubeadmControlPlaneMachinesUpToDateCondition,
+				Status:             metav1.ConditionTrue,
+				ObservedGeneration: tt.kcp.Generation,
+				LastTransitionTime: metav1.NewTime(time.Now()),
+			},
 		},
 		Version: kcpVersion,
 	}
