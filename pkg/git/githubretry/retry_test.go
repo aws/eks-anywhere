@@ -85,6 +85,59 @@ func TestRateLimitDelay(t *testing.T) {
 			attempt: 1, delay: 10 * time.Minute, limited: true,
 		},
 		{
+			name: "primary Retry-After outlasts typed reset",
+			err: &github.RateLimitError{
+				Response: response(403, http.Header{"Retry-After": {"120"}}),
+				Rate:     github.Rate{Reset: github.Timestamp{Time: now.Add(time.Minute)}},
+			},
+			attempt: 1, delay: 2 * time.Minute, limited: true,
+		},
+		{
+			name: "primary reset has expired without headers",
+			err: &github.RateLimitError{
+				Rate: github.Rate{Reset: github.Timestamp{Time: now.Add(-time.Minute)}},
+			},
+			attempt: 2, delay: 2 * time.Minute, limited: true,
+		},
+		{
+			name:    "429 without retry headers",
+			err:     &github.ErrorResponse{Response: response(429, nil)},
+			attempt: 2, delay: 2 * time.Minute, limited: true,
+		},
+		{
+			name: "403 secondary limit without headers",
+			err: &github.ErrorResponse{
+				Response: response(403, nil), Message: "You have exceeded a secondary rate limit",
+			},
+			attempt: 1, delay: time.Minute, limited: true,
+		},
+		{
+			name:    "primary API error without response",
+			err:     &github.ErrorResponse{Message: "API rate limit exceeded"},
+			attempt: 1, delay: time.Minute, limited: true,
+		},
+		{
+			name: "invalid quota reset uses safe fallback",
+			err: &github.ErrorResponse{Response: response(429, http.Header{
+				"X-Ratelimit-Remaining": {"0"}, "X-Ratelimit-Reset": {"invalid"},
+			})},
+			attempt: 1, delay: time.Minute, limited: true,
+		},
+		{
+			name: "expired Retry-After uses safe fallback",
+			err: &github.AbuseRateLimitError{Response: response(403, http.Header{
+				"Retry-After": {now.Add(-time.Minute).Format(http.TimeFormat)},
+			})},
+			attempt: 1, delay: time.Minute, limited: true,
+		},
+		{
+			name: "authentication failure stays terminal",
+			err: &github.ErrorResponse{
+				Response: response(401, nil), Message: "API rate limit exceeded",
+			},
+			attempt: 1,
+		},
+		{
 			name:    "Flux secondary rate limit without headers",
 			err:     errors.New("executing flux bootstrap github: POST https://api.github.com/user/repos: 403 You have exceeded a secondary rate limit"),
 			attempt: 1, delay: time.Minute, limited: true,
@@ -218,6 +271,34 @@ func TestRetryCancellationWhileWaiting(t *testing.T) {
 		return &github.AbuseRateLimitError{Response: response(403, nil)}
 	})
 	if !errors.Is(err, context.DeadlineExceeded) || calls != 1 {
+		t.Fatalf("err=%v calls=%d", err, calls)
+	}
+}
+
+func TestRetryCompletesAfterOrdinaryBackoff(t *testing.T) {
+	calls := 0
+	err := Retry(context.Background(), time.Nanosecond, func() error {
+		calls++
+		if calls == 1 {
+			return errors.New("temporary bootstrap failure")
+		}
+		return nil
+	})
+	if err != nil || calls != 2 {
+		t.Fatalf("err=%v calls=%d", err, calls)
+	}
+}
+
+func TestRetryStopsWhenWaitFails(t *testing.T) {
+	calls := 0
+	want := errors.New("wait interrupted")
+	err := retry(context.Background(), 0, func() error {
+		calls++
+		return &github.AbuseRateLimitError{}
+	}, func(context.Context, time.Duration) error {
+		return want
+	})
+	if !errors.Is(err, want) || calls != 1 {
 		t.Fatalf("err=%v calls=%d", err, calls)
 	}
 }

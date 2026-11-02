@@ -63,45 +63,57 @@ func rateLimitDelay(err error, attempt int, now time.Time) (time.Duration, bool)
 	fallback := time.Minute * time.Duration(1<<(attempt-1))
 	var primary *github.RateLimitError
 	if errors.As(err, &primary) {
-		delay, ok := headerDelay(primary.Response, now)
-		if reset := primary.Rate.Reset.Sub(now); reset > delay {
-			return reset, true
-		}
-		if ok {
-			return delay, true
-		}
-		return fallback, true
+		return primaryRateLimitDelay(primary, fallback, now), true
 	}
 	var secondary *github.AbuseRateLimitError
 	if errors.As(err, &secondary) {
-		if delay, ok := headerDelay(secondary.Response, now); ok {
-			return delay, true
-		}
-		if secondary.RetryAfter != nil && *secondary.RetryAfter > 0 {
-			return *secondary.RetryAfter, true
-		}
-		return fallback, true
+		return secondaryRateLimitDelay(secondary, fallback, now), true
 	}
 	var response *github.ErrorResponse
 	if errors.As(err, &response) {
-		if response.Response == nil {
-			if isRateLimitMessage(response.Message) {
-				return fallback, true
-			}
-			return 0, false
-		}
-		status := response.Response.StatusCode
-		if status == http.StatusTooManyRequests ||
-			(status == http.StatusForbidden && isRateLimitMessage(response.Message)) {
-			if delay, ok := headerDelay(response.Response, now); ok {
-				return delay, true
-			}
+		return responseRateLimitDelay(response, fallback, now)
+	}
+	// Flux bootstrap is a subprocess, so its GitHub API errors arrive as text.
+	if isRateLimitMessage(err.Error()) {
+		return fallback, true
+	}
+	return 0, false
+}
+
+func primaryRateLimitDelay(err *github.RateLimitError, fallback time.Duration, now time.Time) time.Duration {
+	delay, ok := headerDelay(err.Response, now)
+	if reset := err.Rate.Reset.Sub(now); reset > delay {
+		return reset
+	}
+	if ok {
+		return delay
+	}
+	return fallback
+}
+
+func secondaryRateLimitDelay(err *github.AbuseRateLimitError, fallback time.Duration, now time.Time) time.Duration {
+	if delay, ok := headerDelay(err.Response, now); ok {
+		return delay
+	}
+	if err.RetryAfter != nil && *err.RetryAfter > 0 {
+		return *err.RetryAfter
+	}
+	return fallback
+}
+
+func responseRateLimitDelay(err *github.ErrorResponse, fallback time.Duration, now time.Time) (time.Duration, bool) {
+	if err.Response == nil {
+		if isRateLimitMessage(err.Message) {
 			return fallback, true
 		}
 		return 0, false
 	}
-	// Flux bootstrap is a subprocess, so its GitHub API errors arrive as text.
-	if isRateLimitMessage(err.Error()) {
+	status := err.Response.StatusCode
+	if status == http.StatusTooManyRequests ||
+		(status == http.StatusForbidden && isRateLimitMessage(err.Message)) {
+		if delay, ok := headerDelay(err.Response, now); ok {
+			return delay, true
+		}
 		return fallback, true
 	}
 	return 0, false
