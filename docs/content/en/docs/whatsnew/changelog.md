@@ -9,6 +9,11 @@ description: >
 ---
 
 {{% alert title="Announcements" color="warning" %}}
+* The eMudhra (emSign) certificate authorities `emSign ECC Root CA - G3`, `emSign Root CA - C1` and `emSign ECC Root CA - C3` were compromised (CVE-2026-113470), and Go distrusts the affected intermediates starting with Go `v1.26.10` (CVE-2026-111943). EKS Anywhere releases `v0.26.4` and `v0.25.5` remove trust in these authorities from their components, EKS Distro, HookOS and Bottlerocket `v1.68.0` node images. Ubuntu and Red Hat node images are built by you, so to fix this in your new/existing EKS-A clusters you **MUST** build new OS images using the image-builder CLI pertaining to `v0.26.4` or `v0.25.5` and create/upgrade your clusters with these images.<br>
+  Refer to the following links for more information on the steps to mitigate the CVE.
+  * [Building Ubuntu and Red Hat node images]({{< relref "../osmgmt/artifacts/#building-node-images" >}})
+  * [Downloading Bottlerocket node images]({{< relref "../osmgmt/artifacts/#download-bottlerocket-node-images" >}})
+  * [Upgrading an EKS Anywhere cluster]({{< relref "../clustermgmt/cluster-upgrades" >}})
 * If you are upgrading your management cluster to `v0.22.x` patch versions prior to `v0.22.3`, you may encounter a bug related to extended Kubernetes versions support that blocks lifecycle management (LCM) operations on workload clusters running versions prior to `v0.22.0`. To avoid this issue, we recommend upgrading your management cluster directly to `v0.22.3` before performing any workload cluster LCM operations.
 * If you are running EKS Anywhere versions `v0.22.0` or `v0.22.1` in an air-gapped environment with proxy enabled, you may be affected by a Helm `v3.17.1` bug that impacts proxy functionality in air-gapped environments. To resolve this, we recommend upgrading to EKS Anywhere `v0.22.2` or above. More details can be found [here](https://github.com/aws/eks-anywhere-build-tooling/pull/4497)
 * Due to a bug in Cilium introduced in 1.14, which is present in `v0.21.0`-`v0.21.6`, we recommend that you upgrade to `v0.21.7` or above to fix an issue when using hostport. More details listed [here](https://github.com/aws/eks-anywhere-build-tooling/pull/4330)
@@ -41,6 +46,72 @@ description: >
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
 
+## [v0.25.5](https://github.com/aws/eks-anywhere/releases/tag/v0.25.5)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+|    Ubuntu 24.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.68.0 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+
+\* Bottlerocket `v1.68.0` applies to Kubernetes versions 1.31 through 1.35. Kubernetes versions 1.29 and 1.30 remain on Bottlerocket `v1.54.0`.
+\* Starting with EKS-A minor release v0.25.0, the bundled Kubernetes Image Builder will no longer support Ubuntu 20.04 LTS builds, as Ubuntu 20.04 LTS Standard Support has ended, and the upstream Kubernetes Image Builder no longer supports Ubuntu 20.04 LTS.
+\* RHEL 8's kernel version (4.18) is not supported by kubeadm for Kubernetes versions 1.32 and above (see Kubernetes GitHub issue [#129462](https://github.com/kubernetes/kubernetes/issues/129462)). As a result, EKS Anywhere does not support using RHEL 8 as the node operating system for Kubernetes versions 1.32 and above.
+
+### Changed
+- EKS Distro:
+  - [`v1-35-eks-16`](https://distro.eks.amazonaws.com/releases/1-35/16/)
+  - [`v1-34-eks-25`](https://distro.eks.amazonaws.com/releases/1-34/25/)
+  - [`v1-33-eks-34`](https://distro.eks.amazonaws.com/releases/1-33/34/)
+  - [`v1-32-eks-44`](https://distro.eks.amazonaws.com/releases/1-32/44/)
+  - [`v1-31-eks-51`](https://distro.eks.amazonaws.com/releases/1-31/51/)
+- Cilium: `v1.18.9-1` to `v1.18.16-3` ([#5762](https://github.com/aws/eks-anywhere-build-tooling/pull/5762))
+- Bottlerocket: `v1.54.0` to `v1.68.0` for Kubernetes versions 1.31 through 1.35 ([#5766](https://github.com/aws/eks-anywhere-build-tooling/pull/5766))
+
+### Fixed
+- Removed trust in the compromised eMudhra (emSign) certificate authorities (CVE-2026-113470, CVE-2026-111943). EKS Anywhere binaries and component images are now built with Go `v1.26.10`, and EKS Distro base images, HookOS, Cilium and Bottlerocket no longer trust the `emSign ECC Root CA - G3`, `emSign Root CA - C1` and `emSign ECC Root CA - C3` roots. ([#10993](https://github.com/aws/eks-anywhere/pull/10993), [#5735](https://github.com/aws/eks-anywhere-build-tooling/pull/5735), [#5739](https://github.com/aws/eks-anywhere-build-tooling/pull/5739), [#5743](https://github.com/aws/eks-anywhere-build-tooling/pull/5743), [#5748](https://github.com/aws/eks-anywhere-build-tooling/pull/5748), [#5751](https://github.com/aws/eks-anywhere-build-tooling/pull/5751), [#5762](https://github.com/aws/eks-anywhere-build-tooling/pull/5762), [#5766](https://github.com/aws/eks-anywhere-build-tooling/pull/5766))
+
+## [v0.25.4](https://github.com/aws/eks-anywhere/releases/tag/v0.25.4)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+|    Ubuntu 24.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.54.0 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+
+\* Starting with EKS-A minor release v0.25.0, the bundled Kubernetes Image Builder will no longer support Ubuntu 20.04 LTS builds, as Ubuntu 20.04 LTS Standard Support has ended, and the upstream Kubernetes Image Builder no longer supports Ubuntu 20.04 LTS.
+\* RHEL 8's kernel version (4.18) is not supported by kubeadm for Kubernetes versions 1.32 and above (see Kubernetes GitHub issue [#129462](https://github.com/kubernetes/kubernetes/issues/129462)). As a result, EKS Anywhere does not support using RHEL 8 as the node operating system for Kubernetes versions 1.32 and above.
+
+### Added
+- `redhat_epel_rpm` and `epel_rpm_gpg_key` image-builder configuration options, allowing RHEL images to be built in networks that cannot reach the Fedora EPEL mirrors ([#5631](https://github.com/aws/eks-anywhere-build-tooling/pull/5631))
+
+### Changed
+- EKS Distro:
+  - [`v1-35-eks-13`](https://distro.eks.amazonaws.com/releases/1-35/13/)
+  - [`v1-34-eks-22`](https://distro.eks.amazonaws.com/releases/1-34/22/)
+  - [`v1-33-eks-31`](https://distro.eks.amazonaws.com/releases/1-33/31/)
+  - [`v1-32-eks-41`](https://distro.eks.amazonaws.com/releases/1-32/41/)
+  - [`v1-31-eks-48`](https://distro.eks.amazonaws.com/releases/1-31/48/)
+  - [`v1-30-eks-59`](https://distro.eks.amazonaws.com/releases/1-30/59/)
+- New EKS-Distro base images
+- Cluster API (CAPI): `v1.12.2` to `v1.12.11` ([#5655](https://github.com/aws/eks-anywhere-build-tooling/pull/5655))
+
+### Fixed
+- Fix Kubernetes 1.34 control plane upgrades losing API server permissions for `kubectl logs` and `kubectl exec`, resolved by the Cluster API `v1.12.11` bump ([#5655](https://github.com/aws/eks-anywhere-build-tooling/pull/5655))
+- Honor the kubeadm-selected kubelet API server endpoint during Bottlerocket control plane joins ([#5667](https://github.com/aws/eks-anywhere-build-tooling/pull/5667))
+- Preserve EKS Anywhere default Cilium configuration when custom Helm values are provided ([#10965](https://github.com/aws/eks-anywhere/pull/10965))
+- Fix Tinkerbell binding address ([#10922](https://github.com/aws/eks-anywhere/pull/10922))
+- Fix feature flags not propagating to the controller during an upgrade with no version difference ([#10908](https://github.com/aws/eks-anywhere/pull/10908))
+- Increase Tinkerbell node deletion timeout to 30s to prevent orphaned nodes during control plane scale-down ([#10905](https://github.com/aws/eks-anywhere/pull/10905))
+
 ## [v0.25.3](https://github.com/aws/eks-anywhere/releases/tag/v0.25.3)
 
 ### Planned updates to supported kubernetes versions
@@ -59,7 +130,7 @@ For complete version support details, see the [Kubernetes version support table]
 |    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
 |    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
 |    Ubuntu 24.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
-| Bottlerocket 1.56.0 |    ✔    |     —      |    —    |     —      |  —   |
+| Bottlerocket 1.54.0 |    ✔    |     —      |    —    |     —      |  —   |
 |      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
 |      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
 
@@ -110,7 +181,7 @@ For complete version support details, see the [Kubernetes version support table]
 |    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
 |    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
 |    Ubuntu 24.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
-| Bottlerocket 1.56.0 |    ✔    |     —      |    —    |     —      |  —   |
+| Bottlerocket 1.54.0 |    ✔    |     —      |    —    |     —      |  —   |
 |      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
 |      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
 
@@ -150,7 +221,7 @@ For complete version support details, see the [Kubernetes version support table]
 |    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
 |    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
 |    Ubuntu 24.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
-| Bottlerocket 1.56.0 |    ✔    |     —      |    —    |     —      |  —   |
+| Bottlerocket 1.54.0 |    ✔    |     —      |    —    |     —      |  —   |
 |      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
 |      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
 
