@@ -6,7 +6,6 @@ import (
 	_ "embed"
 	"fmt"
 	"io"
-	"net/url"
 	"strings"
 	"time"
 
@@ -41,8 +40,6 @@ const (
 	defaultRegistry               = "public.ecr.aws"
 	netbootMode                   = "netboot"
 	isobootMode                   = "iso"
-	// SmeeHTTPPort is the port in Smee that serves HTTP requests.
-	SmeeHTTPPort = "7171"
 )
 
 type TemplateBuilder struct {
@@ -225,6 +222,7 @@ func buildTemplateMapCP(
 		"format":                        format,
 		"kubernetesVersion":             versionsBundle.KubeDistro.Kubernetes.Tag,
 		"kubeVipImage":                  versionsBundle.Tinkerbell.KubeVip.VersionedImage(),
+		"kubeVipCIDR":                   "32",
 		"podCidrs":                      clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks,
 		"serviceCidrs":                  clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks,
 		"apiserverExtraArgs":            apiServerExtraArgs,
@@ -244,6 +242,9 @@ func buildTemplateMapCP(
 		"workerNodeGroupConfigurations": clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations,
 		"skipLoadBalancerDeployment":    datacenterSpec.SkipLoadBalancerDeployment,
 		"cpSkipLoadBalancerDeployment":  clusterSpec.Cluster.Spec.ControlPlaneConfiguration.SkipLoadBalancerDeployment,
+	}
+	if addressStringIsIPv6(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host) {
+		values["kubeVipCIDR"] = "128"
 	}
 
 	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy != nil {
@@ -349,6 +350,10 @@ func buildTemplateMapCP(
 		values["kubeletExtraArgs"] = kubeletExtraArgs
 	}
 
+	if err := addIPv6NodeIPBootstrap(values, clusterSpec, datacenterSpec, controlPlaneMachineSpec.OSFamily); err != nil {
+		return nil, err
+	}
+
 	cpNodeLabelArgs := clusterapi.ControlPlaneNodeLabelsExtraArgs(clusterSpec.Cluster.Spec.ControlPlaneConfiguration)
 	if len(cpNodeLabelArgs) != 0 {
 		values["cpNodeLabelArgs"] = cpNodeLabelArgs
@@ -358,17 +363,7 @@ func buildTemplateMapCP(
 		values["bootMode"] = netbootMode
 	} else {
 		values["bootMode"] = isobootMode
-		tinkerbellIP := datacenterSpec.TinkerbellIP
-		if t := clusterSpec.Cluster.HasTinkerbellIPAnnotation(); t != "" {
-			tinkerbellIP = t
-		}
-		isoURL := url.URL{
-			Scheme: "http",
-			Host:   fmt.Sprintf("%s:%s", tinkerbellIP, SmeeHTTPPort),
-			// isoURL path is only served in the top level /iso path.
-			Path: "/iso/hook.iso",
-		}
-		values["isoUrl"] = isoURL.String()
+		values["isoUrl"] = TinkerbellISOURL(datacenterSpec, clusterSpec.Cluster.HasTinkerbellIPAnnotation())
 	}
 
 	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.SkipAdmissionForSystemResources != nil &&
@@ -476,6 +471,10 @@ func buildTemplateMapMD(
 		values["kubeletExtraArgs"] = kubeletExtraArgs
 	}
 
+	if err := addIPv6NodeIPBootstrap(values, clusterSpec, datacenterSpec, workerNodeGroupMachineSpec.OSFamily); err != nil {
+		return nil, err
+	}
+
 	wnNodeLabelArgs := clusterapi.WorkerNodeLabelsExtraArgs(workerNodeGroupConfiguration)
 	if len(wnNodeLabelArgs) != 0 {
 		values["wnNodeLabelArgs"] = wnNodeLabelArgs
@@ -485,17 +484,7 @@ func buildTemplateMapMD(
 		values["bootMode"] = netbootMode
 	} else {
 		values["bootMode"] = isobootMode
-		tinkerbellIP := datacenterSpec.TinkerbellIP
-		if t := clusterSpec.Cluster.HasTinkerbellIPAnnotation(); t != "" {
-			tinkerbellIP = t
-		}
-		isoURL := url.URL{
-			Scheme: "http",
-			Host:   fmt.Sprintf("%s:%s", tinkerbellIP, SmeeHTTPPort),
-			// isoURL path is only served in the top level /iso path.
-			Path: "/iso/hook.iso",
-		}
-		values["isoUrl"] = isoURL.String()
+		values["isoUrl"] = TinkerbellISOURL(datacenterSpec, clusterSpec.Cluster.HasTinkerbellIPAnnotation())
 	}
 
 	return values, nil

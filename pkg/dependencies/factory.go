@@ -502,15 +502,14 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 			}
 
 			machineConfigs := config.TinkerbellMachineConfigs
-			tinkerbellIP := tinkerbellBootstrapIP
-			if tinkerbellIP == "" {
+			if tinkerbellBootstrapIP == "" {
 				logger.V(4).Info("Inferring local Tinkerbell Bootstrap IP from environment")
-				localIp, err := networkutils.GetLocalIP()
-				if err != nil {
-					return err
-				}
-				tinkerbellIP = localIp.String()
 			}
+			localIP, err := networkutils.ResolveLocalIP(&networkutils.DefaultNetClient{}, datacenterConfig.Spec.TinkerbellIP, tinkerbellBootstrapIP)
+			if err != nil {
+				return err
+			}
+			tinkerbellIP := localIP.String()
 			logger.V(4).Info("Tinkerbell IP", "tinkerbell-ip", tinkerbellIP)
 
 			// Set BMC timeout based on noTimeouts flag
@@ -829,6 +828,9 @@ func (f *Factory) WithHelm(opts ...helm.Opt) *Factory {
 	f.WithExecutableBuilder().WithProxyConfiguration()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.config.noTimeouts {
+			opts = append(opts, helm.WithNoTimeouts())
+		}
 		if f.registryMirror != nil {
 			opts = append(opts, helm.WithRegistryMirror(f.registryMirror))
 		}

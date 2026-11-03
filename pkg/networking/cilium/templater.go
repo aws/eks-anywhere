@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"net"
 	"strings"
 	"time"
 
@@ -304,6 +305,14 @@ func templateValues(spec *cluster.Spec, versionsBundle *cluster.VersionsBundle) 
 		"envoy": values{
 			"enabled": false,
 		},
+	}
+
+	if cidrs := spec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks; len(cidrs) == 1 {
+		if ip, _, err := net.ParseCIDR(cidrs[0]); err == nil && ip.To4() == nil {
+			val["ipv4"] = values{"enabled": false}
+			val["ipv6"] = values{"enabled": true}
+			val["underlayProtocol"] = "ipv6"
+		}
 	}
 
 	if len(spec.Cluster.Spec.WorkerNodeGroupConfigurations) == 0 && spec.Cluster.Spec.ControlPlaneConfiguration.Count == 1 {

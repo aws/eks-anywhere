@@ -100,6 +100,15 @@ func ensureRequiredColumnsInCSV(unmatched []string) error {
 
 // BuildHardwareYAML builds a hardware yaml from the csv at the provided path.
 func BuildHardwareYAML(path string, opts *BMCOptions) ([]byte, error) {
+	return buildHardwareYAML(path, opts, NewDefaultMachineValidator())
+}
+
+// BuildSLAACHardwareYAML builds hardware YAML from addressless IPv6 SLAAC inventory.
+func BuildSLAACHardwareYAML(path string, opts *BMCOptions) ([]byte, error) {
+	return buildHardwareYAML(path, opts, NewMachineValidator(true))
+}
+
+func buildHardwareYAML(path string, opts *BMCOptions, validator MachineValidator) ([]byte, error) {
 	reader, err := NewNormalizedCSVReaderFromFile(path, opts)
 	if err != nil {
 		return nil, fmt.Errorf("reading csv: %v", err)
@@ -107,8 +116,6 @@ func BuildHardwareYAML(path string, opts *BMCOptions) ([]byte, error) {
 
 	var b bytes.Buffer
 	writer := NewTinkerbellManifestYAML(&b)
-
-	validator := NewDefaultMachineValidator()
 
 	err = TranslateAll(reader, writer, validator)
 	if err != nil {

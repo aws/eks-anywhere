@@ -4,6 +4,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -70,7 +73,13 @@ func newTest(t *testing.T, p provider) *factoryTest {
 	case vsphere:
 		f.clusterConfigFile = "testdata/cluster_vsphere.yaml"
 	case tinkerbell:
-		f.clusterConfigFile = "testdata/cluster_tinkerbell.yaml"
+		// Keep provider construction deterministic: the explicit bootstrap IP bypasses route discovery.
+		f.clusterConfigFile = filepath.Join(t.TempDir(), "cluster.yaml")
+		config := strings.ReplaceAll(test.ReadFile(t, "testdata/cluster_tinkerbell.yaml"), "test-tinkerbell-ip", "192.0.2.11")
+		if err := os.WriteFile(f.clusterConfigFile, []byte(config), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		f.tinkerbellBootstrapIP = "192.0.2.12"
 		f.providerOptions = &dependencies.ProviderOptions{
 			Tinkerbell: &dependencies.TinkerbellOptions{
 				BMCOptions: &hardware.BMCOptions{
@@ -178,6 +187,40 @@ func TestFactoryBuildWithProviderTinkerbell(t *testing.T) {
 	tt.Expect(deps.Provider).NotTo(BeNil())
 	tt.Expect(deps.Helm).NotTo(BeNil())
 	tt.Expect(deps.DockerClient).NotTo(BeNil())
+}
+
+func TestFactoryBuildWithProviderTinkerbellBootstrapIPFamily(t *testing.T) {
+	tests := []struct {
+		name        string
+		tinkerbell  string
+		bootstrapIP string
+		wantErr     string
+	}{
+		{"IPv4", "192.0.2.11", "192.0.2.12", ""},
+		{"IPv6", "2001:db8::11", "2001:db8::12", ""},
+		{"IPv4 bootstrap for IPv6", "2001:db8::11", "192.0.2.12", "bootstrap IP 192.0.2.12 and Tinkerbell IP 2001:db8::11 must use the same IP family"},
+		{"IPv6 bootstrap for IPv4", "192.0.2.11", "2001:db8::12", "bootstrap IP 2001:db8::12 and Tinkerbell IP 192.0.2.11 must use the same IP family"},
+		{"invalid bootstrap", "2001:db8::11", "invalid", `invalid bootstrap IP "invalid"`},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			tt := newTest(t, tinkerbell)
+			config := strings.ReplaceAll(test.ReadFile(t, tt.clusterConfigFile), "192.0.2.11", tc.tinkerbell)
+			tt.Expect(os.WriteFile(tt.clusterConfigFile, []byte(config), 0o600)).To(Succeed())
+			deps, err := dependencies.NewFactory().
+				WithLocalExecutables().
+				WithWriterFolder(t.TempDir()).
+				WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tc.bootstrapIP, map[string]bool{}, tt.providerOptions).
+				Build(context.Background())
+			if tc.wantErr != "" {
+				tt.Expect(err).To(MatchError(tc.wantErr))
+				tt.Expect(deps).To(BeNil())
+				return
+			}
+			tt.Expect(err).To(Succeed())
+			tt.Expect(deps.Provider).NotTo(BeNil())
+		})
+	}
 }
 
 func TestFactoryBuildWithProviderSnow(t *testing.T) {

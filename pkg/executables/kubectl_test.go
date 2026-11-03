@@ -2373,6 +2373,19 @@ func TestKubectlMergePatchResourceError(t *testing.T) {
 	tt.Expect(err).To(HaveOccurred())
 }
 
+func TestKubectlMergePatchResourceStatus(t *testing.T) {
+	t.Parallel()
+	tt := newKubectlTest(t)
+	patch := `{"status":{"addresses":[{"type":"InternalIP","address":"2001:db8::10"}]}}`
+	tt.e.EXPECT().Execute(
+		tt.ctx,
+		"patch", "hardware.tinkerbell.org", "test-hardware", "--type=merge", "--subresource=status", "-p", patch,
+		"--kubeconfig", tt.cluster.KubeconfigFile, "--namespace", tt.namespace,
+	).Return(bytes.Buffer{}, nil)
+	tt.Expect(tt.k.MergePatchResourceStatus(tt.ctx, "hardware.tinkerbell.org", "test-hardware", patch,
+		tt.cluster.KubeconfigFile, tt.namespace)).To(Succeed())
+}
+
 func TestKubectlGetConfigMap(t *testing.T) {
 	t.Parallel()
 	tt := newKubectlTest(t)

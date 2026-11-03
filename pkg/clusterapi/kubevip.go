@@ -2,6 +2,7 @@ package clusterapi
 
 import (
 	"fmt"
+	"net"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,6 +30,11 @@ func SetKubeVipInKubeadmControlPlane(kcp *controlplanev1beta2.KubeadmControlPlan
 }
 
 func kubeVip(address, image string) *corev1.Pod {
+	vipCIDR := "32"
+	if ip := net.ParseIP(address); ip != nil && ip.To4() == nil {
+		vipCIDR = "128"
+	}
+
 	return &corev1.Pod{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: corev1.SchemeGroupVersion.String(),
@@ -55,7 +61,7 @@ func kubeVip(address, image string) *corev1.Pod {
 						},
 						{
 							Name:  "vip_cidr",
-							Value: "32",
+							Value: vipCIDR,
 						},
 						{
 							Name:  "cp_enable",

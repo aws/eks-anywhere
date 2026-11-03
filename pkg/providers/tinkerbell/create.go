@@ -2,7 +2,9 @@ package tinkerbell
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"reflect"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
@@ -53,6 +55,7 @@ func (p *Provider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types
 		stack.WithHostNetworkEnabled(true), // enable host network on bootstrap cluster
 		stack.WithLoadBalancerEnabled(false),
 		stack.WithStackServiceEnabled(false),
+		stack.WithDHCPv6Config(p.datacenterConfig.Spec.DHCPv6Config),
 		stack.WithHookIsoOverride(p.datacenterConfig.Spec.HookIsoURL),
 	)
 	if err != nil {
@@ -105,6 +108,7 @@ func (p *Provider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster,
 		return fmt.Errorf("installing tinkerbell crds on workload cluster: %v", err)
 	}
 
+	ipv6 := addressStringIsIPv6(p.templateBuilder.datacenterSpec.TinkerbellIP)
 	err = p.stackInstaller.Install(
 		ctx,
 		versionsBundle.Tinkerbell,
@@ -113,9 +117,10 @@ func (p *Provider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster,
 		p.datacenterConfig.Spec.HookImagesURLPath,
 		stack.WithLoadBalancerInterface(p.datacenterConfig.Spec.LoadBalancerInterface),
 		stack.WithSmeeOnKubernetes(),
-		stack.WithHostNetworkEnabled(false), // disable host network on workload cluster
+		stack.WithHostNetworkEnabled(ipv6),
 		stack.WithStackServiceEnabled(true), // use stack service on workload cluster
-		stack.WithDHCPRelayEnabled(true),
+		stack.WithDHCPRelayEnabled(!ipv6),
+		stack.WithDHCPv6Config(p.datacenterConfig.Spec.DHCPv6Config),
 		stack.WithLoadBalancerEnabled(
 			len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations) != 0 && // load balancer is handled by kube-vip in control plane nodes
 				!p.datacenterConfig.Spec.SkipLoadBalancerDeployment), // configure load balancer based on datacenterConfig.Spec.SkipLoadBalancerDeployment
@@ -191,6 +196,9 @@ func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 		if p.datacenterConfig.Spec.TinkerbellIP != "" && p.datacenterConfig.Spec.TinkerbellIP != managementDatacenterConfig.Spec.TinkerbellIP {
 			return fmt.Errorf("TinkerbellIP %v does not match management cluster ip %v", p.datacenterConfig.Spec.TinkerbellIP, managementDatacenterConfig.Spec.TinkerbellIP)
 		}
+		if !reflect.DeepEqual(p.datacenterConfig.Spec.DHCPv6Config, managementDatacenterConfig.Spec.DHCPv6Config) {
+			return errors.New("DHCPv6 configuration must match the management cluster")
+		}
 	}
 	// TODO(chrisdoherty4) Look to inject the validator. Possibly look to use a builder for
 	// constructing the validations rather than injecting flags into the provider.
@@ -259,7 +267,7 @@ func (p *Provider) readCSVToCatalogue() error {
 	// Create a catalogue writer used to write hardware to the catalogue.
 	catalogueWriter := hardware.NewMachineCatalogueWriter(p.catalogue)
 
-	machineValidator := hardware.NewDefaultMachineValidator()
+	machineValidator := hardware.NewMachineValidator(addressStringIsIPv6(p.datacenterConfig.Spec.TinkerbellIP))
 
 	// Translate all Machine instances from the p.machines source into Kubernetes object types.
 	// The PostBootstrapSetup() call invoked elsewhere in the program serializes the catalogue

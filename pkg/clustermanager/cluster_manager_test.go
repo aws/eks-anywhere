@@ -12,11 +12,14 @@ import (
 	"go.uber.org/mock/gomock"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	tinkerbellv1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1/thirdparty/tinkerbell/capt/v1beta1"
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clustermanager"
 	"github.com/aws/eks-anywhere/pkg/clustermanager/internal"
@@ -24,8 +27,10 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	mocksdiagnostics "github.com/aws/eks-anywhere/pkg/diagnostics/interfaces/mocks"
 	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/filewriter"
 	mockswriter "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
 	mocksprovider "github.com/aws/eks-anywhere/pkg/providers/mocks"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
@@ -426,54 +431,285 @@ func TestClusterManagerBackupCAPIError(t *testing.T) {
 }
 
 func TestClusterManagerMoveCAPISuccess(t *testing.T) {
-	from := &types.Cluster{
-		Name: "from-cluster",
+	for _, providerKind := range []string{"vsphere", "tinkerbell"} {
+		t.Run(providerKind, func(t *testing.T) {
+			from := &types.Cluster{
+				Name: "from-cluster",
+			}
+			to := &types.Cluster{
+				Name: "to-cluster",
+			}
+			clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+				s.Cluster.Name = to.Name
+				s.Cluster.Spec.ControlPlaneConfiguration.Count = 3
+				s.Cluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{Count: ptr.Int(3), MachineGroupRef: &v1alpha1.Ref{Name: "test-wn"}}}
+			})
+			ctx := context.Background()
+
+			c, m := newClusterManager(t)
+			if providerKind == "tinkerbell" {
+				clusterSpec.Cluster.Spec.DatacenterRef.Kind = v1alpha1.TinkerbellDatacenterKind
+				clusterSpec.TinkerbellDatacenter = &v1alpha1.TinkerbellDatacenterConfig{
+					Spec: v1alpha1.TinkerbellDatacenterConfigSpec{TinkerbellIP: "2001:db8::5"},
+				}
+				readSource := m.client.EXPECT().ListObjects(ctx, "hardware.tinkerbell.org", constants.EksaSystemNamespace, from.KubeconfigFile, gomock.Any()).
+					DoAndReturn(func(_ context.Context, _, _, _ string, list kubernetes.ObjectList) error {
+						list.(*unstructured.UnstructuredList).Items = []unstructured.Unstructured{addressHardware("2001:db8::10")}
+						return nil
+					})
+				backup := m.writer.EXPECT().Write("tinkerbell-hardware-addresses.json", gomock.Any(), gomock.Any(), gomock.Any()).
+					Return("test-cluster/tinkerbell-hardware-addresses.json", nil)
+				readTarget := m.client.EXPECT().ListObjects(ctx, "hardware.tinkerbell.org", constants.EksaSystemNamespace, to.KubeconfigFile, gomock.Any()).
+					DoAndReturn(func(_ context.Context, _, _, _ string, list kubernetes.ObjectList) error {
+						list.(*unstructured.UnstructuredList).Items = []unstructured.Unstructured{addressHardware("")}
+						return nil
+					})
+				writeTarget := m.client.EXPECT().MergePatchResourceStatus(ctx, "hardware.tinkerbell.org", "test-hardware", gomock.Any(), to.KubeconfigFile, constants.EksaSystemNamespace)
+				gomock.InOrder(readSource, backup, readTarget, writeTarget)
+			}
+			kcp, mds := getKcpAndMdsForNodeCount(0)
+			m.client.EXPECT().GetKubeadmControlPlane(ctx,
+				from,
+				to.Name,
+				gomock.AssignableToTypeOf(executables.WithCluster(from)),
+				gomock.AssignableToTypeOf(executables.WithNamespace(constants.EksaSystemNamespace)),
+			).Return(kcp, nil)
+			m.client.EXPECT().GetMachineDeploymentsForCluster(ctx,
+				to.Name,
+				gomock.AssignableToTypeOf(executables.WithCluster(from)),
+				gomock.AssignableToTypeOf(executables.WithNamespace(constants.EksaSystemNamespace)),
+			).Return(mds, nil)
+			m.client.EXPECT().GetMachines(ctx, from, to.Name)
+			m.client.EXPECT().WaitForClusterReady(ctx, from, "1h0m0s", to.Name)
+			m.client.EXPECT().MoveManagement(ctx, from, to, to.Name)
+			m.client.EXPECT().WaitForControlPlaneReady(ctx, to, "15m0s", to.Name)
+			m.client.EXPECT().ValidateControlPlaneNodes(ctx, to, to.Name)
+			m.client.EXPECT().CountMachineDeploymentReplicasReady(ctx, to.Name, to.KubeconfigFile)
+			m.client.EXPECT().GetKubeadmControlPlane(ctx,
+				to,
+				to.Name,
+				gomock.AssignableToTypeOf(executables.WithCluster(from)),
+				gomock.AssignableToTypeOf(executables.WithNamespace(constants.EksaSystemNamespace)),
+			).Return(kcp, nil)
+			m.client.EXPECT().GetMachineDeploymentsForCluster(ctx,
+				to.Name,
+				gomock.AssignableToTypeOf(executables.WithCluster(from)),
+				gomock.AssignableToTypeOf(executables.WithNamespace(constants.EksaSystemNamespace)),
+			).Return(mds, nil)
+			m.client.EXPECT().GetMachines(ctx, to, to.Name)
+
+			if err := c.MoveCAPI(ctx, from, to, to.Name, clusterSpec); err != nil {
+				t.Errorf("ClusterManager.MoveCAPI() error = %v, wantErr nil", err)
+			}
+		})
 	}
-	to := &types.Cluster{
-		Name: "to-cluster",
+}
+
+type isoURLMoveTestCase struct {
+	name           string
+	tinkerbellIP   string
+	bootstrapIP    string
+	controlPlaneIP string
+	ipv6           bool
+	isoBootURL     string
+	want           string
+}
+
+func TestClusterManagerMoveCAPIISOURLs(t *testing.T) {
+	for _, family := range []isoURLMoveTestCase{
+		{name: "IPv4", tinkerbellIP: "192.0.2.10", bootstrapIP: "192.0.2.20", controlPlaneIP: "192.0.2.30", want: "http://192.0.2.10:7172/iso/hook.iso"},
+		{name: "IPv6", tinkerbellIP: "2001:db8::10", bootstrapIP: "2001:db8::20", controlPlaneIP: "2001:db8::30", ipv6: true, want: "http://[2001:db8::10]:7172/iso6/hook.iso"},
+		{name: "IPv6 with IPv4 media", tinkerbellIP: "2001:db8::10", bootstrapIP: "2001:db8::20", controlPlaneIP: "2001:db8::30", ipv6: true, isoBootURL: "http://192.0.2.61:7172/iso6/hook.iso", want: "http://192.0.2.61:7172/iso6/hook.iso"},
+	} {
+		for _, customTemplate := range []bool{false, true} {
+			name := family.name + "/default"
+			filename := "../providers/tinkerbell/testdata/cluster_hook_iso_boot.yaml"
+			if customTemplate {
+				name = family.name + "/override"
+				filename = "../providers/tinkerbell/testdata/cluster_tinkerbell_awsiam.yaml"
+			}
+			t.Run(name, func(t *testing.T) {
+				testClusterManagerMoveCAPIISOURL(t, family, filename, customTemplate)
+			})
+		}
 	}
-	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.Cluster.Name = to.Name
-		s.Cluster.Spec.ControlPlaneConfiguration.Count = 3
-		s.Cluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{Count: ptr.Int(3), MachineGroupRef: &v1alpha1.Ref{Name: "test-wn"}}}
-	})
+}
+
+func testClusterManagerMoveCAPIISOURL(t *testing.T, family isoURLMoveTestCase, filename string, customTemplate bool) {
+	t.Helper()
+	g := NewWithT(t)
 	ctx := context.Background()
+	spec := test.NewFullClusterSpec(t, filename)
+	spec.TinkerbellDatacenter.Spec.TinkerbellIP = family.tinkerbellIP
+	spec.TinkerbellDatacenter.Spec.IsoBoot = true
+	spec.TinkerbellDatacenter.Spec.IsoBootURL = family.isoBootURL
+	spec.TinkerbellDatacenter.Spec.HookIsoURL = "http://example.invalid/source.iso"
+	spec.TinkerbellDatacenter.Spec.OSImageURL = "http://example.invalid/os.tgz"
+	spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host = family.controlPlaneIP
+	if family.ipv6 {
+		spec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks = []string{"2001:db8:100::/56"}
+		spec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks = []string{"2001:db8:200::/112"}
+	}
+	spec.Cluster.AddTinkerbellIPAnnotation(family.bootstrapIP)
+	sourceClient := test.NewFakeKubeClient()
+	log := test.NewNullLogger()
+	cp, err := tinkerbell.ControlPlaneSpec(ctx, log, sourceClient, spec)
+	g.Expect(err).NotTo(HaveOccurred())
+	workers, err := tinkerbell.WorkersSpec(ctx, log, sourceClient, spec)
+	g.Expect(err).NotTo(HaveOccurred())
+	if family.isoBootURL != "" {
+		g.Expect(cp.ControlPlaneMachineTemplate.Spec.Template.Spec.BootOptions.ISOURL).To(Equal(family.isoBootURL))
+		for _, worker := range workers.Groups {
+			g.Expect(worker.ProviderMachineTemplate.Spec.Template.Spec.BootOptions.ISOURL).To(Equal(family.isoBootURL))
+		}
+	}
+	objects := []kubernetes.Object{cp.KubeadmControlPlane, cp.ControlPlaneMachineTemplate}
+	objects = append(objects, workers.WorkerObjects()...)
+	for _, obj := range objects {
+		g.Expect(sourceClient.Create(ctx, obj)).To(Succeed())
+	}
 
 	c, m := newClusterManager(t)
-	kcp, mds := getKcpAndMdsForNodeCount(0)
-	m.client.EXPECT().GetKubeadmControlPlane(ctx,
-		from,
-		to.Name,
-		gomock.AssignableToTypeOf(executables.WithCluster(from)),
-		gomock.AssignableToTypeOf(executables.WithNamespace(constants.EksaSystemNamespace)),
-	).Return(kcp, nil)
-	m.client.EXPECT().GetMachineDeploymentsForCluster(ctx,
-		to.Name,
-		gomock.AssignableToTypeOf(executables.WithCluster(from)),
-		gomock.AssignableToTypeOf(executables.WithNamespace(constants.EksaSystemNamespace)),
-	).Return(mds, nil)
-	m.client.EXPECT().GetMachines(ctx, from, to.Name)
-	m.client.EXPECT().WaitForClusterReady(ctx, from, "1h0m0s", to.Name)
-	m.client.EXPECT().MoveManagement(ctx, from, to, to.Name)
-	m.client.EXPECT().WaitForControlPlaneReady(ctx, to, "15m0s", to.Name)
-	m.client.EXPECT().ValidateControlPlaneNodes(ctx, to, to.Name)
-	m.client.EXPECT().CountMachineDeploymentReplicasReady(ctx, to.Name, to.KubeconfigFile)
-	m.client.EXPECT().GetKubeadmControlPlane(ctx,
-		to,
-		to.Name,
-		gomock.AssignableToTypeOf(executables.WithCluster(from)),
-		gomock.AssignableToTypeOf(executables.WithNamespace(constants.EksaSystemNamespace)),
-	).Return(kcp, nil)
-	m.client.EXPECT().GetMachineDeploymentsForCluster(ctx,
-		to.Name,
-		gomock.AssignableToTypeOf(executables.WithCluster(from)),
-		gomock.AssignableToTypeOf(executables.WithNamespace(constants.EksaSystemNamespace)),
-	).Return(mds, nil)
-	m.client.EXPECT().GetMachines(ctx, to, to.Name)
+	from := &types.Cluster{Name: "bootstrap", KubeconfigFile: "source.kubeconfig"}
+	to := &types.Cluster{Name: spec.Cluster.Name, KubeconfigFile: "target.kubeconfig"}
+	m.clientFactory.EXPECT().BuildClientFromKubeconfig(from.KubeconfigFile).Return(sourceClient, nil)
+	expectMoveNodesReady(m, ctx, from, spec.Cluster.Name)
+	expectMoveNodesReady(m, ctx, to, spec.Cluster.Name)
+	m.client.EXPECT().WaitForClusterReady(ctx, from, "1h0m0s", spec.Cluster.Name)
+	m.client.EXPECT().ListObjects(ctx, "hardware.tinkerbell.org", constants.EksaSystemNamespace, from.KubeconfigFile, gomock.Any()).Return(nil)
+	m.client.EXPECT().MoveManagement(ctx, from, to, spec.Cluster.Name).Return(nil)
+	m.client.EXPECT().WaitForControlPlaneReady(ctx, to, "15m0s", spec.Cluster.Name)
+	m.client.EXPECT().ValidateControlPlaneNodes(ctx, to, spec.Cluster.Name)
+	m.client.EXPECT().CountMachineDeploymentReplicasReady(ctx, spec.Cluster.Name, to.KubeconfigFile)
+	g.Expect(c.MoveCAPI(ctx, from, to, spec.Cluster.Name, spec)).To(Succeed())
 
-	if err := c.MoveCAPI(ctx, from, to, to.Name, clusterSpec); err != nil {
-		t.Errorf("ClusterManager.MoveCAPI() error = %v, wantErr nil", err)
+	spec.Cluster.ClearTinkerbellIPAnnotation()
+	workloadCP, err := tinkerbell.ControlPlaneSpec(ctx, log, sourceClient, spec)
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(workloadCP.ControlPlaneMachineTemplate.Name).To(Equal(cp.ControlPlaneMachineTemplate.Name))
+	workloadWorkers, err := tinkerbell.WorkersSpec(ctx, log, sourceClient, spec)
+	g.Expect(err).NotTo(HaveOccurred())
+	templates := []*tinkerbellv1.TinkerbellMachineTemplate{workloadCP.ControlPlaneMachineTemplate}
+	for i, worker := range workloadWorkers.Groups {
+		g.Expect(worker.ProviderMachineTemplate.Name).To(Equal(workers.Groups[i].ProviderMachineTemplate.Name))
+		templates = append(templates, worker.ProviderMachineTemplate)
 	}
+	for _, desired := range templates {
+		moved := &tinkerbellv1.TinkerbellMachineTemplate{}
+		g.Expect(sourceClient.Get(ctx, desired.Name, desired.Namespace, moved)).To(Succeed())
+		g.Expect(moved.Spec.Template.Spec.BootOptions.ISOURL).To(Equal(family.want))
+		g.Expect(moved.Spec).To(Equal(desired.Spec))
+		if customTemplate {
+			g.Expect(moved.Spec.Template.Spec.TemplateOverride).To(Equal(cp.ControlPlaneMachineTemplate.Spec.Template.Spec.TemplateOverride))
+		}
+	}
+	g.Expect(spec.TinkerbellDatacenter.Spec.IsoBootURL).To(Equal(family.isoBootURL))
+	g.Expect(spec.TinkerbellDatacenter.Spec.HookIsoURL).To(Equal("http://example.invalid/source.iso"))
+}
+
+func TestClusterManagerMoveCAPISnapshotRetries(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		failures  int
+		reads     int
+		invalid   string
+		saveError bool
+		wantError string
+	}{
+		{name: "transient API failure", failures: 1, reads: 2},
+		{name: "exhausted API retries", failures: 2, reads: 2, wantError: "API unavailable"},
+		{name: "invalid addresses", reads: 1, invalid: "addresses", wantError: "reading Hardware"},
+		{name: "invalid hardware identity", reads: 1, invalid: "mac", wantError: "invalid MAC"},
+		{name: "snapshot save failure", reads: 1, saveError: true, wantError: "saving Tinkerbell hardware address snapshot"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			g := NewWithT(t)
+			ctx := context.Background()
+			r := retrier.NewWithMaxRetries(2, 0)
+			_, m := newClusterManager(t)
+			// Match Factory.WithClusterManager: only Kubernetes operations retry.
+			client := struct {
+				clustermanager.CAPIClient
+				clustermanager.KubernetesClient
+			}{
+				CAPIClient:       m.client,
+				KubernetesClient: clustermanager.NewRetrierClient(m.client, r),
+			}
+			c := clustermanager.New(m.clientFactory, client, m.writer, m.diagnosticsFactory, m.eksaComponents, clustermanager.WithRetrier(r))
+			from := &types.Cluster{Name: "bootstrap", KubeconfigFile: "source.kubeconfig"}
+			to := &types.Cluster{Name: "workload", KubeconfigFile: "target.kubeconfig"}
+			spec := test.NewClusterSpec()
+			spec.Cluster.Name = to.Name
+			spec.Cluster.Spec.WorkerNodeGroupConfigurations = nil
+			spec.Cluster.Spec.DatacenterRef.Kind = v1alpha1.TinkerbellDatacenterKind
+			spec.TinkerbellDatacenter = &v1alpha1.TinkerbellDatacenterConfig{
+				Spec: v1alpha1.TinkerbellDatacenterConfigSpec{TinkerbellIP: "2001:db8::5"},
+			}
+			m.clientFactory.EXPECT().BuildClientFromKubeconfig(from.KubeconfigFile).Return(test.NewFakeKubeClient(), nil)
+			expectMoveNodesReady(m, ctx, from, to.Name)
+			m.client.EXPECT().WaitForClusterReady(ctx, from, "1h0m0s", to.Name)
+			hw := addressHardware("2001:db8::10")
+			switch tc.invalid {
+			case "addresses":
+				hw.Object["status"] = map[string]interface{}{"addresses": "invalid"}
+			case "mac":
+				g.Expect(unstructured.SetNestedSlice(hw.Object, []interface{}{
+					map[string]interface{}{"dhcp": map[string]interface{}{"mac": "invalid"}},
+				}, "spec", "interfaces")).To(Succeed())
+			}
+			attempts := 0
+			read := m.client.EXPECT().ListObjects(ctx, "hardware.tinkerbell.org", constants.EksaSystemNamespace, from.KubeconfigFile, gomock.Any()).
+				Times(tc.reads).
+				DoAndReturn(func(_ context.Context, _, _, _ string, list kubernetes.ObjectList) error {
+					attempts++
+					if attempts <= tc.failures {
+						return errors.New("API unavailable")
+					}
+					list.(*unstructured.UnstructuredList).Items = []unstructured.Unstructured{hw}
+					return nil
+				})
+			if tc.invalid == "" && tc.failures < tc.reads {
+				var saveErr error
+				if tc.saveError {
+					saveErr = errors.New("disk unavailable")
+				}
+				save := m.writer.EXPECT().Write("tinkerbell-hardware-addresses.json", gomock.Any(), gomock.Any(), gomock.Any()).
+					DoAndReturn(func(_ string, data []byte, _ ...filewriter.FileOptionsFunc) (string, error) {
+						g.Expect(string(data)).To(MatchJSON(`[{"name":"test-hardware","namespace":"eksa-system","macs":["02:00:00:00:00:01"],"addresses":[{"type":"InternalIP","address":"2001:db8::10"}]}]`))
+						return "snapshot.json", saveErr
+					})
+				gomock.InOrder(read, save)
+				if !tc.saveError {
+					move := m.client.EXPECT().MoveManagement(ctx, from, to, to.Name).Return(nil)
+					restore := m.client.EXPECT().ListObjects(ctx, "hardware.tinkerbell.org", constants.EksaSystemNamespace, to.KubeconfigFile, gomock.Any()).
+						DoAndReturn(func(_ context.Context, _, _, _ string, list kubernetes.ObjectList) error {
+							list.(*unstructured.UnstructuredList).Items = []unstructured.Unstructured{addressHardware("")}
+							return nil
+						})
+					patch := m.client.EXPECT().MergePatchResourceStatus(ctx, "hardware.tinkerbell.org", "test-hardware", gomock.Any(), to.KubeconfigFile, constants.EksaSystemNamespace)
+					gomock.InOrder(save, move, restore, patch)
+					m.client.EXPECT().WaitForControlPlaneReady(ctx, to, "15m0s", to.Name)
+					m.client.EXPECT().ValidateControlPlaneNodes(ctx, to, to.Name)
+					m.client.EXPECT().CountMachineDeploymentReplicasReady(ctx, to.Name, to.KubeconfigFile)
+					expectMoveNodesReady(m, ctx, to, to.Name)
+				}
+			}
+			err := c.MoveCAPI(ctx, from, to, to.Name, spec)
+			if tc.wantError != "" {
+				g.Expect(err).To(MatchError(ContainSubstring(tc.wantError)))
+			} else {
+				g.Expect(err).NotTo(HaveOccurred())
+			}
+			g.Expect(attempts).To(Equal(tc.reads))
+		})
+	}
+}
+
+func expectMoveNodesReady(m *clusterManagerMocks, ctx context.Context, cluster *types.Cluster, clusterName string) {
+	kcp, mds := getKcpAndMdsForNodeCount(0)
+	m.client.EXPECT().GetKubeadmControlPlane(ctx, cluster, clusterName, gomock.Any(), gomock.Any()).Return(kcp, nil)
+	m.client.EXPECT().GetMachineDeploymentsForCluster(ctx, clusterName, gomock.Any(), gomock.Any()).Return(mds, nil)
+	m.client.EXPECT().GetMachines(ctx, cluster, clusterName)
 }
 
 func TestClusterManagerMoveCAPIRetrySuccess(t *testing.T) {
@@ -1079,6 +1315,7 @@ func newTest(t *testing.T, opts ...clustermanager.ClusterManagerOpt) *testSetup 
 }
 
 type clusterManagerMocks struct {
+	clientFactory      *mocksmanager.MockClientFactory
 	writer             *mockswriter.MockFileWriter
 	client             *mocksmanager.MockClusterClient
 	provider           *mocksprovider.MockProvider
@@ -1121,6 +1358,7 @@ func newClusterManager(t *testing.T, opts ...clustermanager.ClusterManagerOpt) (
 
 	fakeClient := test.NewFakeKubeClient(dc, oc, b, r, ac, gc, er)
 	cf := mocksmanager.NewMockClientFactory(mockCtrl)
+	m.clientFactory = cf
 	cf.EXPECT().BuildClientFromKubeconfig("").Return(fakeClient, nil).AnyTimes()
 	c := clustermanager.New(cf, m.client, m.writer, m.diagnosticsFactory, m.eksaComponents, opts...)
 

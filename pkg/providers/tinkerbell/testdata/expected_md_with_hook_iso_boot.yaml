@@ -52,7 +52,7 @@ spec:
               type: worker
       bootOptions:
         bootMode: iso
-        isoURL: http://5.6.7.8:7171/iso/hook.iso
+        isoURL: http://5.6.7.8:7172/iso/hook.iso
       templateOverride: |
         global_timeout: 6000
         id: ""

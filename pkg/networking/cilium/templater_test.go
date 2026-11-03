@@ -291,6 +291,40 @@ func TestTemplaterGenerateManifestSuccess(t *testing.T) {
 	tt.Expect(tt.t.GenerateManifest(tt.ctx, tt.spec)).To(Equal(tt.manifest), "templater.GenerateManifest() should return right manifest")
 }
 
+func TestTemplaterGenerateManifestIPv6Success(t *testing.T) {
+	wantValues := baseTemplateValues()
+	wantValues["ipv4"] = map[string]interface{}{"enabled": false}
+	wantValues["ipv6"] = map[string]interface{}{"enabled": true}
+	wantValues["underlayProtocol"] = "ipv6"
+
+	tt := newtemplaterTest(t)
+	tt.spec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks = []string{"2001:db8:1::/48"}
+
+	tt.expectHelmClientFactoryGet("", "")
+	tt.expectHelmTemplateWith(eqMap(wantValues), "1.22").Return(tt.manifest, nil)
+
+	tt.Expect(tt.t.GenerateManifest(tt.ctx, tt.spec)).To(Equal(tt.manifest))
+}
+
+func TestTemplaterGenerateManifestIPv6WithHelmValues(t *testing.T) {
+	userHelmValues := map[string]interface{}{
+		"hubble": map[string]interface{}{"enabled": true},
+	}
+	wantValues := mergeMaps(baseTemplateValues(), userHelmValues)
+	wantValues["ipv4"] = map[string]interface{}{"enabled": false}
+	wantValues["ipv6"] = map[string]interface{}{"enabled": true}
+	wantValues["underlayProtocol"] = "ipv6"
+
+	tt := newtemplaterTest(t)
+	tt.spec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks = []string{"2001:db8:1::/48"}
+	tt.spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.HelmValues = toJSON(userHelmValues)
+
+	tt.expectHelmClientFactoryGet("", "")
+	tt.expectHelmTemplateWith(eqMap(wantValues), "1.22").Return(tt.manifest, nil)
+
+	tt.Expect(tt.t.GenerateManifest(tt.ctx, tt.spec)).To(Equal(tt.manifest))
+}
+
 // TestTemplaterGenerateManifestWithHelmValues tests the new helmValues functionality.
 func TestTemplaterGenerateManifestWithHelmValues(t *testing.T) {
 	customHelmValues := map[string]interface{}{

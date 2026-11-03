@@ -1,6 +1,7 @@
 package clusterapi_test
 
 import (
+	"strings"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -24,4 +25,19 @@ func TestSetKubeVipInKubeadmControlPlane(t *testing.T) {
 
 	g.Expect(clusterapi.SetKubeVipInKubeadmControlPlane(got, g.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host, "public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.1433")).To(Succeed())
 	g.Expect(got).To(Equal(want))
+}
+
+func TestSetKubeVipInKubeadmControlPlaneIPv6(t *testing.T) {
+	g := newApiBuilerTest(t)
+	got := wantKubeadmControlPlane()
+
+	g.Expect(clusterapi.SetKubeVipInKubeadmControlPlane(
+		got,
+		"2001:db8::10",
+		"public.ecr.aws/eks-anywhere/kube-vip:test",
+	)).To(Succeed())
+
+	content := got.Spec.KubeadmConfigSpec.Files[0].Content
+	g.Expect(strings.Contains(content, "value: \"128\"")).To(BeTrue())
+	g.Expect(strings.Contains(content, "value: 2001:db8::10")).To(BeTrue())
 }

@@ -284,6 +284,13 @@ spec:
 {{- end }}
 {{- end }}
     files:
+{{- if .ipv6NodeIPScript }}
+      - content: |
+{{ .ipv6NodeIPScript | indent 10 }}
+        owner: root:root
+        permissions: "0755"
+        path: /usr/local/bin/eks-a-set-node-ip
+{{- end }}
 {{- if .kubeletConfiguration }}
       - content: |
 {{ .kubeletConfiguration | indent 10 }}
@@ -309,7 +316,7 @@ spec:
               - name: port
                 value: "6443"
               - name: vip_cidr
-                value: "32"
+                value: "{{.kubeVipCIDR}}"
               - name: cp_enable
                 value: "true"
               - name: cp_namespace
@@ -479,8 +486,11 @@ spec:
       - {{ . }}
       {{- end }}
 {{- end }}
-{{- if and (or .registryMirrorMap .proxyConfig (ge (atoi $kube_minor_version) 29)) (ne .format "bottlerocket") }}
+{{- if and (or .ipv6NodeIPScript .registryMirrorMap .proxyConfig (ge (atoi $kube_minor_version) 29)) (ne .format "bottlerocket") }}
     preKubeadmCommands:
+{{- if .ipv6NodeIPScript }}
+    - "{{ .ipv6NodeIPCommand }}"
+{{- end }}
 {{- if .registryMirrorMap }}
     - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
 {{- end}}

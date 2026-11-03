@@ -206,8 +206,15 @@ spec:
 {{- if .wnNodeLabelArgs }}
 {{ .wnNodeLabelArgs.ToYaml | indent 10 }}
 {{- end }}
-{{- if or (and (ne .format "bottlerocket") (or .proxyConfig .registryMirrorMap)) .kubeletConfiguration }}
+{{- if or .ipv6NodeIPScript (and (ne .format "bottlerocket") (or .proxyConfig .registryMirrorMap)) .kubeletConfiguration }}
       files:
+{{- end }}
+{{- if .ipv6NodeIPScript }}
+        - content: |
+{{ .ipv6NodeIPScript | indent 12 }}
+          owner: root:root
+          permissions: "0755"
+          path: /usr/local/bin/eks-a-set-node-ip
 {{- end }}
 {{- if .kubeletConfiguration }}
         - content: |
@@ -289,13 +296,18 @@ spec:
         - {{ . }}
         {{- end }}
 {{- end }}
-{{- if and (or .proxyConfig .registryMirrorMap) (ne .format "bottlerocket") }}
+{{- if and (or .ipv6NodeIPScript .proxyConfig .registryMirrorMap) (ne .format "bottlerocket") }}
       preKubeadmCommands:
+{{- if .ipv6NodeIPScript }}
+      - "{{ .ipv6NodeIPCommand }}"
+{{- end }}
 {{- if .registryMirrorMap }}
       - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
 {{- end }}
+{{- if or .proxyConfig .registryMirrorMap }}
       - sudo systemctl daemon-reload
       - sudo systemctl restart containerd
+{{- end }}
 {{- end }}
       users:
       - name: {{.workerSshUsername}}

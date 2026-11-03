@@ -420,6 +420,14 @@ func TestHelmUpgradeChartWithValues(s *testing.T) {
 		tt.Expect(err).NotTo(HaveOccurred())
 	})
 
+	s.Run("disables wait timeout with per-call flags", func(t *testing.T) {
+		tt := newHelmTest(t, helm.WithNoTimeouts())
+		installName := "test-install"
+		expectCommand(tt.e, tt.ctx, "upgrade", "--install", installName, url, "--version", version, "--values", valuesFileName, "--kubeconfig", kubeconfig, "--wait", "--skip-crds", "--timeout", "2562047h47m16.854775807s").withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
+		err := tt.h.UpgradeInstallChartWithValuesFile(tt.ctx, installName, url, version, kubeconfig, "", valuesFileName, helm.WithExtraFlags([]string{"--skip-crds"}))
+		tt.Expect(err).NotTo(HaveOccurred())
+	})
+
 	s.Run("returns errors from the helm executable", func(t *testing.T) {
 		tt := newHelmTest(t)
 		installName := "test-install"
@@ -461,6 +469,14 @@ func TestHelmUninstall(s *testing.T) {
 		tt := newHelmTest(t, helm.WithExtraFlags([]string{"--test"}))
 		installName := "test-install"
 		expectCommand(tt.e, tt.ctx, "uninstall", installName, "--kubeconfig", kubeconfig, "--wait", "--test").withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
+		err := tt.h.Uninstall(tt.ctx, installName, kubeconfig, "")
+		tt.Expect(err).NotTo(HaveOccurred())
+	})
+
+	s.Run("disables wait timeout", func(t *testing.T) {
+		tt := newHelmTest(t, helm.WithNoTimeouts())
+		installName := "test-install"
+		expectCommand(tt.e, tt.ctx, "uninstall", installName, "--kubeconfig", kubeconfig, "--wait", "--timeout", "2562047h47m16.854775807s").withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
 		err := tt.h.Uninstall(tt.ctx, installName, kubeconfig, "")
 		tt.Expect(err).NotTo(HaveOccurred())
 	})

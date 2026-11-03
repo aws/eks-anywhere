@@ -17,6 +17,7 @@ package v1alpha1
 import (
 	"context"
 	"fmt"
+	"reflect"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -126,6 +127,13 @@ func validateImmutableFieldsTinkerbellDatacenterConfig(new, old *TinkerbellDatac
 		allErrs = append(
 			allErrs,
 			field.Forbidden(specPath.Child("tinkerbellIP"), "field is immutable"),
+		)
+	}
+
+	if !reflect.DeepEqual(new.Spec.DHCPv6Config, old.Spec.DHCPv6Config) {
+		allErrs = append(
+			allErrs,
+			field.Forbidden(specPath.Child("dhcpv6Config"), "field is immutable"),
 		)
 	}
 

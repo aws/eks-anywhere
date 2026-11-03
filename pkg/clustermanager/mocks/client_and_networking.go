@@ -571,6 +571,20 @@ func (mr *MockClusterClientMockRecorder) ListObjects(ctx, resourceType, namespac
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListObjects", reflect.TypeOf((*MockClusterClient)(nil).ListObjects), ctx, resourceType, namespace, kubeconfig, list)
 }
 
+// MergePatchResourceStatus mocks base method.
+func (m *MockClusterClient) MergePatchResourceStatus(ctx context.Context, resource, name, patch, kubeconfig, namespace string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MergePatchResourceStatus", ctx, resource, name, patch, kubeconfig, namespace)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// MergePatchResourceStatus indicates an expected call of MergePatchResourceStatus.
+func (mr *MockClusterClientMockRecorder) MergePatchResourceStatus(ctx, resource, name, patch, kubeconfig, namespace any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MergePatchResourceStatus", reflect.TypeOf((*MockClusterClient)(nil).MergePatchResourceStatus), ctx, resource, name, patch, kubeconfig, namespace)
+}
+
 // MoveManagement mocks base method.
 func (m *MockClusterClient) MoveManagement(ctx context.Context, from, target *types.Cluster, clusterName string) error {
 	m.ctrl.T.Helper()
@@ -1302,6 +1316,20 @@ func (m *MockKubernetesClient) ListObjects(ctx context.Context, resourceType, na
 func (mr *MockKubernetesClientMockRecorder) ListObjects(ctx, resourceType, namespace, kubeconfig, list any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListObjects", reflect.TypeOf((*MockKubernetesClient)(nil).ListObjects), ctx, resourceType, namespace, kubeconfig, list)
+}
+
+// MergePatchResourceStatus mocks base method.
+func (m *MockKubernetesClient) MergePatchResourceStatus(ctx context.Context, resource, name, patch, kubeconfig, namespace string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MergePatchResourceStatus", ctx, resource, name, patch, kubeconfig, namespace)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// MergePatchResourceStatus indicates an expected call of MergePatchResourceStatus.
+func (mr *MockKubernetesClientMockRecorder) MergePatchResourceStatus(ctx, resource, name, patch, kubeconfig, namespace any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MergePatchResourceStatus", reflect.TypeOf((*MockKubernetesClient)(nil).MergePatchResourceStatus), ctx, resource, name, patch, kubeconfig, namespace)
 }
 
 // PauseCAPICluster mocks base method.

@@ -34,4 +34,11 @@ type Action struct {
 	Volumes     []string          `json:"volumes,omitempty"`
 	Environment map[string]string `json:"environment,omitempty" yaml:"environment,omitempty"`
 	Pid         string            `json:"pid,omitempty"`
+	Namespaces  *ActionNamespaces `json:"namespaces,omitempty"`
+}
+
+// ActionNamespaces selects the namespaces an action container runs in.
+type ActionNamespaces struct {
+	Network string `json:"network,omitempty"`
+	PID     string `json:"pid,omitempty"`
 }

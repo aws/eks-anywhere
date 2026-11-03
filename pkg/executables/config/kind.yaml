@@ -2,6 +2,9 @@
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 networking:
+{{- if ne .IPFamily "" }}
+  ipFamily: {{ .IPFamily }}
+{{- end }}
   podSubnet: {{ .PodSubnet }}
   serviceSubnet: {{ .ServiceSubnet }}
 kubeadmConfigPatches:
@@ -74,5 +77,8 @@ nodes:
 {{- range .ExtraPortMappings }}
   - containerPort: {{ . }}
     hostPort: {{ . }}
+{{- if eq $.IPFamily "ipv6" }}
+    listenAddress: "::"
+{{- end }}
 {{- end }}
 {{- end }}
