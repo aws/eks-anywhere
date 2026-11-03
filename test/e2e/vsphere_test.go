@@ -1660,42 +1660,6 @@ func TestVSphereDownloadArtifacts(t *testing.T) {
 	runDownloadArtifactsFlow(test)
 }
 
-func TestVSphereKubernetes131GithubFlux(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewVSphere(t, framework.WithUbuntu2204131()),
-		framework.WithFluxGithub(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube131)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-	)
-	runFluxFlow(test)
-}
-
-func TestVSphereKubernetes132GithubFlux(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewVSphere(t, framework.WithUbuntu2204132()),
-		framework.WithFluxGithub(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube132)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-	)
-	runFluxFlow(test)
-}
-
-func TestVSphereKubernetes133GithubFlux(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewVSphere(t, framework.WithUbuntu2204133()),
-		framework.WithFluxGithub(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-	)
-	runFluxFlow(test)
-}
-
 func TestVSphereKubernetes131GitFlux(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithUbuntu2204131()),
@@ -1732,47 +1696,11 @@ func TestVSphereKubernetes133GitFlux(t *testing.T) {
 	runFluxFlow(test)
 }
 
-func TestVSphereKubernetes134GithubFlux(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewVSphere(t, framework.WithUbuntu2204134()),
-		framework.WithFluxGithub(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube134)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-	)
-	runFluxFlow(test)
-}
-
 func TestVSphereKubernetes134GitFlux(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithUbuntu2204134()),
 		framework.WithFluxGit(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube134)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-	)
-	runFluxFlow(test)
-}
-
-func TestVSphereKubernetes135GithubFlux(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewVSphere(t, framework.WithUbuntu2204135()),
-		framework.WithFluxGithub(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube135)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-	)
-	runFluxFlow(test)
-}
-
-func TestVSphereKubernetes136GithubFlux(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewVSphere(t, framework.WithUbuntu2204136()),
-		framework.WithFluxGithub(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube136)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
@@ -1828,42 +1756,6 @@ func TestVSphereKubernetes137GitFlux(t *testing.T) {
 	runFluxFlow(test)
 }
 
-func TestVSphereKubernetes131BottleRocketGithubFlux(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewVSphere(t, framework.WithBottleRocket131()),
-		framework.WithFluxGithub(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube131)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-	)
-	runFluxFlow(test)
-}
-
-func TestVSphereKubernetes132BottleRocketGithubFlux(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewVSphere(t, framework.WithBottleRocket132()),
-		framework.WithFluxGithub(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube132)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-	)
-	runFluxFlow(test)
-}
-
-func TestVSphereKubernetes133BottleRocketGithubFlux(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewVSphere(t, framework.WithBottleRocket133()),
-		framework.WithFluxGithub(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-	)
-	runFluxFlow(test)
-}
-
 func TestVSphereKubernetes131BottleRocketGitFlux(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithBottleRocket131()),
@@ -1900,47 +1792,11 @@ func TestVSphereKubernetes133BottleRocketGitFlux(t *testing.T) {
 	runFluxFlow(test)
 }
 
-func TestVSphereKubernetes134BottleRocketGithubFlux(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewVSphere(t, framework.WithBottleRocket134()),
-		framework.WithFluxGithub(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube134)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-	)
-	runFluxFlow(test)
-}
-
 func TestVSphereKubernetes134BottleRocketGitFlux(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithBottleRocket134()),
 		framework.WithFluxGit(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube134)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-	)
-	runFluxFlow(test)
-}
-
-func TestVSphereKubernetes135BottleRocketGithubFlux(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewVSphere(t, framework.WithBottleRocket135()),
-		framework.WithFluxGithub(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube135)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-	)
-	runFluxFlow(test)
-}
-
-func TestVSphereKubernetes136BottleRocketGithubFlux(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewVSphere(t, framework.WithBottleRocket136()),
-		framework.WithFluxGithub(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube136)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
@@ -6687,17 +6543,17 @@ func TestVSphereKubernetes134UpgradeWorkerNodeGroupsUbuntuAPI(t *testing.T) {
 	)
 }
 
-func TestVSphereKubernetes134MulticlusterWorkloadClusterGitHubFluxAPI(t *testing.T) {
+func TestVSphereKubernetes134MulticlusterWorkloadClusterGitFluxAPI(t *testing.T) {
 	vsphere := framework.NewVSphere(t)
 	managementCluster := framework.NewClusterE2ETest(
-		t, vsphere, framework.WithFluxGithubEnvVarCheck(), framework.WithFluxGithubCleanup(),
+		t, vsphere, framework.WithFluxGitEnvVarCheck(), framework.WithFluxGitCleanup(),
 	).WithClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithControlPlaneCount(1),
 			api.WithWorkerNodeCount(1),
 			api.WithStackedEtcdTopology(),
 		),
-		framework.WithFluxGithubConfig(),
+		framework.WithFluxGitConfig(),
 		vsphere.WithUbuntu134(),
 	)
 	test := framework.NewMulticlusterE2ETest(t, managementCluster)
@@ -6791,13 +6647,13 @@ func TestVSphereKubernetes134CiliumUbuntuAPI(t *testing.T) {
 	test.DeleteManagementCluster()
 }
 
-func TestVSphereKubernetes135UpgradeLabelsTaintsBottleRocketGitHubFluxAPI(t *testing.T) {
+func TestVSphereKubernetes135UpgradeLabelsTaintsBottleRocketGitFluxAPI(t *testing.T) {
 	licenseToken := framework.GetLicenseToken()
 	licenseToken2 := framework.GetLicenseToken2()
 	vsphere := framework.NewVSphere(t)
 
 	managementCluster := framework.NewClusterE2ETest(
-		t, vsphere, framework.WithFluxGithubEnvVarCheck(), framework.WithFluxGithubCleanup(),
+		t, vsphere, framework.WithFluxGitEnvVarCheck(), framework.WithFluxGitCleanup(),
 	).WithClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithControlPlaneCount(1),
@@ -6806,7 +6662,7 @@ func TestVSphereKubernetes135UpgradeLabelsTaintsBottleRocketGitHubFluxAPI(t *tes
 			api.WithLicenseToken(licenseToken),
 		),
 		vsphere.WithBottleRocket135(),
-		framework.WithFluxGithubConfig(),
+		framework.WithFluxGitConfig(),
 	)
 
 	test := framework.NewMulticlusterE2ETest(t, managementCluster)
@@ -6839,13 +6695,13 @@ func TestVSphereKubernetes135UpgradeLabelsTaintsBottleRocketGitHubFluxAPI(t *tes
 	)
 }
 
-func TestVSphereKubernetes136UpgradeLabelsTaintsBottleRocketGitHubFluxAPI(t *testing.T) {
+func TestVSphereKubernetes136UpgradeLabelsTaintsBottleRocketGitFluxAPI(t *testing.T) {
 	licenseToken := framework.GetLicenseToken()
 	licenseToken2 := framework.GetLicenseToken2()
 	vsphere := framework.NewVSphere(t)
 
 	managementCluster := framework.NewClusterE2ETest(
-		t, vsphere, framework.WithFluxGithubEnvVarCheck(), framework.WithFluxGithubCleanup(),
+		t, vsphere, framework.WithFluxGitEnvVarCheck(), framework.WithFluxGitCleanup(),
 	).WithClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithControlPlaneCount(1),
@@ -6854,7 +6710,7 @@ func TestVSphereKubernetes136UpgradeLabelsTaintsBottleRocketGitHubFluxAPI(t *tes
 			api.WithLicenseToken(licenseToken),
 		),
 		vsphere.WithBottleRocket136(),
-		framework.WithFluxGithubConfig(),
+		framework.WithFluxGitConfig(),
 	)
 
 	test := framework.NewMulticlusterE2ETest(t, managementCluster)
@@ -6935,13 +6791,13 @@ func TestVSphereKubernetes137UpgradeLabelsTaintsBottleRocketGitHubFluxAPI(t *tes
 	)
 }
 
-func TestVSphereKubernetes134UpgradeWorkerNodeGroupsUbuntuGitHubFluxAPI(t *testing.T) {
+func TestVSphereKubernetes134UpgradeWorkerNodeGroupsUbuntuGitFluxAPI(t *testing.T) {
 	licenseToken := framework.GetLicenseToken()
 	licenseToken2 := framework.GetLicenseToken2()
 	vsphere := framework.NewVSphere(t)
 
 	managementCluster := framework.NewClusterE2ETest(
-		t, vsphere, framework.WithFluxGithubEnvVarCheck(), framework.WithFluxGithubCleanup(),
+		t, vsphere, framework.WithFluxGitEnvVarCheck(), framework.WithFluxGitCleanup(),
 	).WithClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithControlPlaneCount(1),
@@ -6950,7 +6806,7 @@ func TestVSphereKubernetes134UpgradeWorkerNodeGroupsUbuntuGitHubFluxAPI(t *testi
 			api.WithLicenseToken(licenseToken),
 		),
 		vsphere.WithUbuntu134(),
-		framework.WithFluxGithubConfig(),
+		framework.WithFluxGitConfig(),
 	)
 
 	test := framework.NewMulticlusterE2ETest(t, managementCluster)
@@ -6980,13 +6836,13 @@ func TestVSphereKubernetes134UpgradeWorkerNodeGroupsUbuntuGitHubFluxAPI(t *testi
 	)
 }
 
-func TestVSphereUpgradeKubernetes134CiliumUbuntuGitHubFluxAPI(t *testing.T) {
+func TestVSphereUpgradeKubernetes134CiliumUbuntuGitFluxAPI(t *testing.T) {
 	licenseToken := framework.GetLicenseToken()
 	licenseToken2 := framework.GetLicenseToken2()
 	vsphere := framework.NewVSphere(t)
 
 	managementCluster := framework.NewClusterE2ETest(
-		t, vsphere, framework.WithFluxGithubEnvVarCheck(), framework.WithFluxGithubCleanup(),
+		t, vsphere, framework.WithFluxGitEnvVarCheck(), framework.WithFluxGitCleanup(),
 	).WithClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithControlPlaneCount(1),
@@ -6995,7 +6851,7 @@ func TestVSphereUpgradeKubernetes134CiliumUbuntuGitHubFluxAPI(t *testing.T) {
 			api.WithLicenseToken(licenseToken),
 		),
 		vsphere.WithUbuntu134(),
-		framework.WithFluxGithubConfig(),
+		framework.WithFluxGitConfig(),
 	)
 
 	test := framework.NewMulticlusterE2ETest(t, managementCluster)
@@ -7503,17 +7359,17 @@ func TestVSphereKubernetes133UpgradeWorkerNodeGroupsUbuntuAPI(t *testing.T) {
 	)
 }
 
-func TestVSphereKubernetes133MulticlusterWorkloadClusterGitHubFluxAPI(t *testing.T) {
+func TestVSphereKubernetes133MulticlusterWorkloadClusterGitFluxAPI(t *testing.T) {
 	vsphere := framework.NewVSphere(t)
 	managementCluster := framework.NewClusterE2ETest(
-		t, vsphere, framework.WithFluxGithubEnvVarCheck(), framework.WithFluxGithubCleanup(),
+		t, vsphere, framework.WithFluxGitEnvVarCheck(), framework.WithFluxGitCleanup(),
 	).WithClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithControlPlaneCount(1),
 			api.WithWorkerNodeCount(1),
 			api.WithStackedEtcdTopology(),
 		),
-		framework.WithFluxGithubConfig(),
+		framework.WithFluxGitConfig(),
 		vsphere.WithUbuntu133(),
 	)
 	test := framework.NewMulticlusterE2ETest(t, managementCluster)
@@ -7607,13 +7463,13 @@ func TestVSphereKubernetes133CiliumUbuntuAPI(t *testing.T) {
 	test.DeleteManagementCluster()
 }
 
-func TestVSphereKubernetes133UpgradeLabelsTaintsBottleRocketGitHubFluxAPI(t *testing.T) {
+func TestVSphereKubernetes133UpgradeLabelsTaintsBottleRocketGitFluxAPI(t *testing.T) {
 	licenseToken := framework.GetLicenseToken()
 	licenseToken2 := framework.GetLicenseToken2()
 	vsphere := framework.NewVSphere(t)
 
 	managementCluster := framework.NewClusterE2ETest(
-		t, vsphere, framework.WithFluxGithubEnvVarCheck(), framework.WithFluxGithubCleanup(),
+		t, vsphere, framework.WithFluxGitEnvVarCheck(), framework.WithFluxGitCleanup(),
 	).WithClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithControlPlaneCount(1),
@@ -7622,7 +7478,7 @@ func TestVSphereKubernetes133UpgradeLabelsTaintsBottleRocketGitHubFluxAPI(t *tes
 			api.WithLicenseToken(licenseToken),
 		),
 		vsphere.WithBottleRocket133(),
-		framework.WithFluxGithubConfig(),
+		framework.WithFluxGitConfig(),
 	)
 
 	test := framework.NewMulticlusterE2ETest(t, managementCluster)
@@ -7655,13 +7511,13 @@ func TestVSphereKubernetes133UpgradeLabelsTaintsBottleRocketGitHubFluxAPI(t *tes
 	)
 }
 
-func TestVSphereKubernetes133UpgradeWorkerNodeGroupsUbuntuGitHubFluxAPI(t *testing.T) {
+func TestVSphereKubernetes133UpgradeWorkerNodeGroupsUbuntuGitFluxAPI(t *testing.T) {
 	licenseToken := framework.GetLicenseToken()
 	licenseToken2 := framework.GetLicenseToken2()
 	vsphere := framework.NewVSphere(t)
 
 	managementCluster := framework.NewClusterE2ETest(
-		t, vsphere, framework.WithFluxGithubEnvVarCheck(), framework.WithFluxGithubCleanup(),
+		t, vsphere, framework.WithFluxGitEnvVarCheck(), framework.WithFluxGitCleanup(),
 	).WithClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithControlPlaneCount(1),
@@ -7670,7 +7526,7 @@ func TestVSphereKubernetes133UpgradeWorkerNodeGroupsUbuntuGitHubFluxAPI(t *testi
 			api.WithLicenseToken(licenseToken),
 		),
 		vsphere.WithUbuntu133(),
-		framework.WithFluxGithubConfig(),
+		framework.WithFluxGitConfig(),
 	)
 
 	test := framework.NewMulticlusterE2ETest(t, managementCluster)
@@ -7700,13 +7556,13 @@ func TestVSphereKubernetes133UpgradeWorkerNodeGroupsUbuntuGitHubFluxAPI(t *testi
 	)
 }
 
-func TestVSphereUpgradeKubernetes133CiliumUbuntuGitHubFluxAPI(t *testing.T) {
+func TestVSphereUpgradeKubernetes133CiliumUbuntuGitFluxAPI(t *testing.T) {
 	licenseToken := framework.GetLicenseToken()
 	licenseToken2 := framework.GetLicenseToken2()
 	vsphere := framework.NewVSphere(t)
 
 	managementCluster := framework.NewClusterE2ETest(
-		t, vsphere, framework.WithFluxGithubEnvVarCheck(), framework.WithFluxGithubCleanup(),
+		t, vsphere, framework.WithFluxGitEnvVarCheck(), framework.WithFluxGitCleanup(),
 	).WithClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithControlPlaneCount(1),
@@ -7715,7 +7571,7 @@ func TestVSphereUpgradeKubernetes133CiliumUbuntuGitHubFluxAPI(t *testing.T) {
 			api.WithLicenseToken(licenseToken),
 		),
 		vsphere.WithUbuntu133(),
-		framework.WithFluxGithubConfig(),
+		framework.WithFluxGitConfig(),
 	)
 
 	test := framework.NewMulticlusterE2ETest(t, managementCluster)
