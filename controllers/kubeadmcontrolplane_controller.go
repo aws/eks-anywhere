@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"regexp"
 	"strings"
 	"time"
 
@@ -40,12 +41,18 @@ import (
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/semver"
 )
 
 const (
 	kcpInPlaceUpgradeNeededAnnotation = "controlplane.clusters.x-k8s.io/in-place-upgrade-needed"
 	controlPlaneMachineLabel          = "cluster.x-k8s.io/control-plane-name"
 	kubeadmControlPlaneKind           = "KubeadmControlPlane"
+)
+
+var (
+	kcpEKSNodeVersion    = regexp.MustCompile(`^v?([0-9]+)\.([0-9]+)\.([0-9]+)-eks-[0-9a-f]{7,40}$`)
+	kcpEKSReleaseVersion = regexp.MustCompile(`^v?([0-9]+)\.([0-9]+)\.([0-9]+)-eks-([0-9]+)-([0-9]+)-[0-9]+$`)
 )
 
 // KubeadmControlPlaneReconciler reconciles a KubeadmControlPlaneReconciler object.
@@ -136,7 +143,8 @@ func (r *KubeadmControlPlaneReconciler) reconcile(ctx context.Context, log logr.
 	cpUpgrade := &anywherev1.ControlPlaneUpgrade{}
 	cpuGetErr := r.client.Get(ctx, GetNamespacedNameType(cpUpgradeName(kcp.ObjectMeta.Name), constants.EksaSystemNamespace), cpUpgrade)
 	if cpuGetErr == nil {
-		if cpUpgrade.Status.Ready && kcp.Status.Version != "" && kcp.Status.Version == cpUpgrade.Spec.KubernetesVersion {
+		if cpUpgrade.Status.Ready && kcp.Spec.Version == cpUpgrade.Spec.KubernetesVersion &&
+			controlPlaneVersionsMatch(kcp.Status.Version, cpUpgrade.Spec.KubernetesVersion) {
 			log.Info("Control plane upgrade complete, deleting object", "ControlPlaneUpgrade", cpUpgrade.Name)
 			if err := r.client.Delete(ctx, cpUpgrade); err != nil {
 				return ctrl.Result{}, fmt.Errorf("deleting ControlPlaneUpgrade object: %v", err)
@@ -176,6 +184,24 @@ func (r *KubeadmControlPlaneReconciler) reconcile(ctx context.Context, log logr.
 	}
 
 	return ctrl.Result{}, fmt.Errorf("getting ControlPlaneUpgrade for KubeadmControlPlane %s: %v", kcp.ObjectMeta.Name, err)
+}
+
+func controlPlaneVersionsMatch(observed, desired string) bool {
+	actual, err := semver.New(observed)
+	if err != nil {
+		return false
+	}
+	expected, err := semver.New(desired)
+	if err != nil || !actual.SameMajor(expected) || !actual.SameMinor(expected) || !actual.SamePatch(expected) {
+		return false
+	}
+	if observed == desired {
+		return true
+	}
+	// CAPI reports the EKS-D source version after an in-place upgrade.
+	node := kcpEKSNodeVersion.FindStringSubmatch(observed)
+	release := kcpEKSReleaseVersion.FindStringSubmatch(desired)
+	return node != nil && release != nil && release[1] == release[4] && release[2] == release[5]
 }
 
 func (r *KubeadmControlPlaneReconciler) inPlaceUpgradeNeeded(kcp *controlplanev1beta2.KubeadmControlPlane) bool {

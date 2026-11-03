@@ -8,6 +8,7 @@ import (
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	apierrors1 "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
@@ -35,12 +36,13 @@ func ValidateClusterReady(ctx context.Context, vc clusterf.StateValidationConfig
 		return fmt.Errorf("cluster %s does not exist", clus.Name)
 	}
 
-	for _, condition := range capiCluster.Status.Conditions {
-		if condition.Type == string(clusterv1beta2.ReadyCondition) {
-			if condition.Status != metav1.ConditionTrue {
-				return fmt.Errorf("capi cluster %s not ready yet", capiCluster.GetName())
-			}
-			break
+	available := meta.FindStatusCondition(capiCluster.Status.Conditions, clusterv1beta2.AvailableCondition)
+	if available == nil || available.Status != metav1.ConditionTrue || available.ObservedGeneration != capiCluster.Generation {
+		return fmt.Errorf("capi cluster %s not ready yet", capiCluster.GetName())
+	}
+	if len(clus.Spec.WorkerNodeGroupConfigurations) > 0 {
+		if err := validateMDs(ctx, vc); err != nil {
+			return err
 		}
 	}
 
@@ -57,7 +59,21 @@ func ValidateClusterReady(ctx context.Context, vc clusterf.StateValidationConfig
 func ValidateEKSAObjects(ctx context.Context, vc clusterf.StateValidationConfig) error {
 	mgmtClusterClient := vc.ManagementClusterClient
 	errorList := make([]error, 0)
+	machineRefs := make(map[v1alpha1.Ref]struct{})
+	for _, ref := range vc.ClusterSpec.Cluster.MachineConfigRefs() {
+		machineRefs[ref] = struct{}{}
+	}
 	for _, obj := range vc.ClusterSpec.ChildObjects() {
+		kind := obj.GetObjectKind().GroupVersionKind().Kind
+		switch kind {
+		case v1alpha1.VSphereMachineConfigKind, v1alpha1.NutanixMachineConfigKind,
+			v1alpha1.TinkerbellMachineConfigKind, v1alpha1.SnowMachineConfigKind,
+			v1alpha1.CloudStackMachineConfigKind:
+			// Topology changes can remove configs that remain in the test fixture.
+			if _, referenced := machineRefs[v1alpha1.Ref{Kind: kind, Name: obj.GetName()}]; !referenced {
+				continue
+			}
+		}
 		u := &unstructured.Unstructured{}
 		u.SetGroupVersionKind(obj.GetObjectKind().GroupVersionKind())
 		key := types.NamespacedName{Namespace: obj.GetNamespace(), Name: obj.GetName()}
