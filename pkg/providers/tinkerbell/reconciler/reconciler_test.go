@@ -16,6 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
 	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -1683,6 +1684,7 @@ rules:
 					Namespace: constants.EksaSystemNamespace,
 				},
 				Spec: tinkerbellv1.TinkerbellClusterSpec{
+					ControlPlaneEndpoint:    clusterv1beta1.APIEndpoint{Host: "1.1.1.1", Port: 6443},
 					ImageLookupFormat:       "--kube-v1.19.8.raw.gz",
 					ImageLookupBaseRegistry: "/",
 				},

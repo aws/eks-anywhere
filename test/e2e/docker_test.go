@@ -69,42 +69,6 @@ func TestDockerKubernetes137NoTimeoutsCreateCluster(t *testing.T) {
 }
 
 // Flux
-func TestDockerKubernetes133GithubFlux(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewDocker(t),
-		framework.WithFluxGithub(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133)),
-	)
-	runFluxFlow(test)
-}
-
-func TestDockerKubernetes134GithubFlux(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewDocker(t),
-		framework.WithFluxGithub(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube134)),
-	)
-	runFluxFlow(test)
-}
-
-func TestDockerKubernetes135GithubFlux(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewDocker(t),
-		framework.WithFluxGithub(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube135)),
-	)
-	runFluxFlow(test)
-}
-
-func TestDockerKubernetes136GithubFlux(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewDocker(t),
-		framework.WithFluxGithub(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube136)),
-	)
-	runFluxFlow(test)
-}
-
 func TestDockerKubernetes137GithubFlux(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewDocker(t),
@@ -185,14 +149,14 @@ func TestDockerInstallGithubFluxDuringUpgrade(t *testing.T) {
 	)
 }
 
-func TestDockerKubernetes132UpgradeWorkloadClusterWithGithubFlux(t *testing.T) {
+func TestDockerKubernetes132UpgradeWorkloadClusterWithGitFlux(t *testing.T) {
 	provider := framework.NewDocker(t)
 	test := framework.NewMulticlusterE2ETest(
 		t,
 		framework.NewClusterE2ETest(
 			t,
 			provider,
-			framework.WithFluxGithub(),
+			framework.WithFluxGit(),
 			framework.WithClusterFiller(
 				api.WithKubernetesVersion(v1alpha1.Kube131),
 				api.WithControlPlaneCount(1),
@@ -202,7 +166,7 @@ func TestDockerKubernetes132UpgradeWorkloadClusterWithGithubFlux(t *testing.T) {
 		framework.NewClusterE2ETest(
 			t,
 			provider,
-			framework.WithFluxGithub(),
+			framework.WithFluxGit(),
 			framework.WithClusterFiller(
 				api.WithKubernetesVersion(v1alpha1.Kube131),
 				api.WithControlPlaneCount(1),
@@ -223,14 +187,14 @@ func TestDockerKubernetes132UpgradeWorkloadClusterWithGithubFlux(t *testing.T) {
 	)
 }
 
-func TestDockerKubernetes133UpgradeWorkloadClusterWithGithubFlux(t *testing.T) {
+func TestDockerKubernetes133UpgradeWorkloadClusterWithGitFlux(t *testing.T) {
 	provider := framework.NewDocker(t)
 	test := framework.NewMulticlusterE2ETest(
 		t,
 		framework.NewClusterE2ETest(
 			t,
 			provider,
-			framework.WithFluxGithub(),
+			framework.WithFluxGit(),
 			framework.WithClusterFiller(
 				api.WithKubernetesVersion(v1alpha1.Kube132),
 				api.WithControlPlaneCount(1),
@@ -240,7 +204,7 @@ func TestDockerKubernetes133UpgradeWorkloadClusterWithGithubFlux(t *testing.T) {
 		framework.NewClusterE2ETest(
 			t,
 			provider,
-			framework.WithFluxGithub(),
+			framework.WithFluxGit(),
 			framework.WithClusterFiller(
 				api.WithKubernetesVersion(v1alpha1.Kube132),
 				api.WithControlPlaneCount(1),
@@ -261,14 +225,14 @@ func TestDockerKubernetes133UpgradeWorkloadClusterWithGithubFlux(t *testing.T) {
 	)
 }
 
-func TestDockerKubernetes134UpgradeWorkloadClusterWithGithubFlux(t *testing.T) {
+func TestDockerKubernetes134UpgradeWorkloadClusterWithGitFlux(t *testing.T) {
 	provider := framework.NewDocker(t)
 	test := framework.NewMulticlusterE2ETest(
 		t,
 		framework.NewClusterE2ETest(
 			t,
 			provider,
-			framework.WithFluxGithub(),
+			framework.WithFluxGit(),
 			framework.WithClusterFiller(
 				api.WithKubernetesVersion(v1alpha1.Kube133),
 				api.WithControlPlaneCount(1),
@@ -278,7 +242,7 @@ func TestDockerKubernetes134UpgradeWorkloadClusterWithGithubFlux(t *testing.T) {
 		framework.NewClusterE2ETest(
 			t,
 			provider,
-			framework.WithFluxGithub(),
+			framework.WithFluxGit(),
 			framework.WithClusterFiller(
 				api.WithKubernetesVersion(v1alpha1.Kube133),
 				api.WithControlPlaneCount(1),
@@ -299,14 +263,14 @@ func TestDockerKubernetes134UpgradeWorkloadClusterWithGithubFlux(t *testing.T) {
 	)
 }
 
-func TestDockerKubernetes135UpgradeWorkloadClusterWithGithubFlux(t *testing.T) {
+func TestDockerKubernetes135UpgradeWorkloadClusterWithGitFlux(t *testing.T) {
 	provider := framework.NewDocker(t)
 	test := framework.NewMulticlusterE2ETest(
 		t,
 		framework.NewClusterE2ETest(
 			t,
 			provider,
-			framework.WithFluxGithub(),
+			framework.WithFluxGit(),
 			framework.WithClusterFiller(
 				api.WithKubernetesVersion(v1alpha1.Kube134),
 				api.WithControlPlaneCount(1),
@@ -316,7 +280,7 @@ func TestDockerKubernetes135UpgradeWorkloadClusterWithGithubFlux(t *testing.T) {
 		framework.NewClusterE2ETest(
 			t,
 			provider,
-			framework.WithFluxGithub(),
+			framework.WithFluxGit(),
 			framework.WithClusterFiller(
 				api.WithKubernetesVersion(v1alpha1.Kube134),
 				api.WithControlPlaneCount(1),
@@ -337,14 +301,14 @@ func TestDockerKubernetes135UpgradeWorkloadClusterWithGithubFlux(t *testing.T) {
 	)
 }
 
-func TestDockerKubernetes136UpgradeWorkloadClusterWithGithubFlux(t *testing.T) {
+func TestDockerKubernetes136UpgradeWorkloadClusterWithGitFlux(t *testing.T) {
 	provider := framework.NewDocker(t)
 	test := framework.NewMulticlusterE2ETest(
 		t,
 		framework.NewClusterE2ETest(
 			t,
 			provider,
-			framework.WithFluxGithub(),
+			framework.WithFluxGit(),
 			framework.WithClusterFiller(
 				api.WithKubernetesVersion(v1alpha1.Kube135),
 				api.WithControlPlaneCount(1),
@@ -354,7 +318,7 @@ func TestDockerKubernetes136UpgradeWorkloadClusterWithGithubFlux(t *testing.T) {
 		framework.NewClusterE2ETest(
 			t,
 			provider,
-			framework.WithFluxGithub(),
+			framework.WithFluxGit(),
 			framework.WithClusterFiller(
 				api.WithKubernetesVersion(v1alpha1.Kube135),
 				api.WithControlPlaneCount(1),
@@ -1453,12 +1417,12 @@ func TestDockerKubernetes131to132UpgradeFromLatestMinorRelease(t *testing.T) {
 	)
 }
 
-func TestDockerKubernetes136to137GithubFluxEnabledUpgradeFromLatestMinorRelease(t *testing.T) {
+func TestDockerKubernetes136to137GitFluxEnabledUpgradeFromLatestMinorRelease(t *testing.T) {
 	release := latestMinorRelease(t)
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewDocker(t),
-		framework.WithFluxGithub(),
+		framework.WithFluxGit(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube136)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
@@ -1661,7 +1625,7 @@ func TestDockerKubernetes131to132UpgradeFromLatestMinorReleaseAPI(t *testing.T) 
 	wc := framework.NewClusterE2ETest(
 		t, provider, framework.WithClusterName(test.NewWorkloadClusterName()),
 	)
-	wc.GenerateClusterConfigForVersion(release.Version, "", framework.ExecuteWithEksaRelease(release))
+	wc.GenerateClusterConfigForVersion(release.Version, framework.GetStagingLicenseToken2(), framework.ExecuteWithEksaRelease(release))
 	wc.UpdateClusterConfig(api.ClusterToConfigFiller(
 		api.WithKubernetesVersion(v1alpha1.Kube131),
 		api.WithManagementCluster(managementCluster.ClusterName),
@@ -1680,12 +1644,12 @@ func TestDockerKubernetes131to132UpgradeFromLatestMinorReleaseAPI(t *testing.T) 
 	)
 }
 
-func TestDockerUpgradeKubernetes131to132WorkloadClusterScaleupGitHubFluxAPI(t *testing.T) {
+func TestDockerUpgradeKubernetes131to132WorkloadClusterScaleupGitFluxAPI(t *testing.T) {
 	licenseToken := framework.GetLicenseToken()
 	licenseToken2 := framework.GetLicenseToken2()
 	provider := framework.NewDocker(t)
 	managementCluster := framework.NewClusterE2ETest(
-		t, provider, framework.WithFluxGithubEnvVarCheck(), framework.WithFluxGithubCleanup(),
+		t, provider, framework.WithFluxGitEnvVarCheck(), framework.WithFluxGitCleanup(),
 	).WithClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithKubernetesVersion(v1alpha1.Kube131),
@@ -1694,7 +1658,7 @@ func TestDockerUpgradeKubernetes131to132WorkloadClusterScaleupGitHubFluxAPI(t *t
 			api.WithExternalEtcdTopology(1),
 			api.WithLicenseToken(licenseToken),
 		),
-		framework.WithFluxGithubConfig(),
+		framework.WithFluxGitConfig(),
 	)
 	test := framework.NewMulticlusterE2ETest(t, managementCluster)
 	test.WithWorkloadClusters(
@@ -1722,12 +1686,12 @@ func TestDockerUpgradeKubernetes131to132WorkloadClusterScaleupGitHubFluxAPI(t *t
 	)
 }
 
-func TestDockerUpgradeKubernetes132to133WorkloadClusterScaleupGitHubFluxAPI(t *testing.T) {
+func TestDockerUpgradeKubernetes132to133WorkloadClusterScaleupGitFluxAPI(t *testing.T) {
 	licenseToken := framework.GetLicenseToken()
 	licenseToken2 := framework.GetLicenseToken2()
 	provider := framework.NewDocker(t)
 	managementCluster := framework.NewClusterE2ETest(
-		t, provider, framework.WithFluxGithubEnvVarCheck(), framework.WithFluxGithubCleanup(),
+		t, provider, framework.WithFluxGitEnvVarCheck(), framework.WithFluxGitCleanup(),
 	).WithClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithKubernetesVersion(v1alpha1.Kube132),
@@ -1736,7 +1700,7 @@ func TestDockerUpgradeKubernetes132to133WorkloadClusterScaleupGitHubFluxAPI(t *t
 			api.WithExternalEtcdTopology(1),
 			api.WithLicenseToken(licenseToken),
 		),
-		framework.WithFluxGithubConfig(),
+		framework.WithFluxGitConfig(),
 	)
 	test := framework.NewMulticlusterE2ETest(t, managementCluster)
 	test.WithWorkloadClusters(
@@ -1764,12 +1728,12 @@ func TestDockerUpgradeKubernetes132to133WorkloadClusterScaleupGitHubFluxAPI(t *t
 	)
 }
 
-func TestDockerUpgradeKubernetes133to134WorkloadClusterScaleupGitHubFluxAPI(t *testing.T) {
+func TestDockerUpgradeKubernetes133to134WorkloadClusterScaleupGitFluxAPI(t *testing.T) {
 	licenseToken := framework.GetLicenseToken()
 	licenseToken2 := framework.GetLicenseToken2()
 	provider := framework.NewDocker(t)
 	managementCluster := framework.NewClusterE2ETest(
-		t, provider, framework.WithFluxGithubEnvVarCheck(), framework.WithFluxGithubCleanup(),
+		t, provider, framework.WithFluxGitEnvVarCheck(), framework.WithFluxGitCleanup(),
 	).WithClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithKubernetesVersion(v1alpha1.Kube133),
@@ -1778,7 +1742,7 @@ func TestDockerUpgradeKubernetes133to134WorkloadClusterScaleupGitHubFluxAPI(t *t
 			api.WithExternalEtcdTopology(1),
 			api.WithLicenseToken(licenseToken),
 		),
-		framework.WithFluxGithubConfig(),
+		framework.WithFluxGitConfig(),
 	)
 	test := framework.NewMulticlusterE2ETest(t, managementCluster)
 	test.WithWorkloadClusters(
@@ -1806,12 +1770,12 @@ func TestDockerUpgradeKubernetes133to134WorkloadClusterScaleupGitHubFluxAPI(t *t
 	)
 }
 
-func TestDockerUpgradeKubernetes134to135WorkloadClusterScaleupGitHubFluxAPI(t *testing.T) {
+func TestDockerUpgradeKubernetes134to135WorkloadClusterScaleupGitFluxAPI(t *testing.T) {
 	licenseToken := framework.GetLicenseToken()
 	licenseToken2 := framework.GetLicenseToken2()
 	provider := framework.NewDocker(t)
 	managementCluster := framework.NewClusterE2ETest(
-		t, provider, framework.WithFluxGithubEnvVarCheck(), framework.WithFluxGithubCleanup(),
+		t, provider, framework.WithFluxGitEnvVarCheck(), framework.WithFluxGitCleanup(),
 	).WithClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithKubernetesVersion(v1alpha1.Kube134),
@@ -1820,7 +1784,7 @@ func TestDockerUpgradeKubernetes134to135WorkloadClusterScaleupGitHubFluxAPI(t *t
 			api.WithExternalEtcdTopology(1),
 			api.WithLicenseToken(licenseToken),
 		),
-		framework.WithFluxGithubConfig(),
+		framework.WithFluxGitConfig(),
 	)
 	test := framework.NewMulticlusterE2ETest(t, managementCluster)
 	test.WithWorkloadClusters(
@@ -1848,12 +1812,12 @@ func TestDockerUpgradeKubernetes134to135WorkloadClusterScaleupGitHubFluxAPI(t *t
 	)
 }
 
-func TestDockerUpgradeKubernetes135to136WorkloadClusterScaleupGitHubFluxAPI(t *testing.T) {
+func TestDockerUpgradeKubernetes135to136WorkloadClusterScaleupGitFluxAPI(t *testing.T) {
 	licenseToken := framework.GetLicenseToken()
 	licenseToken2 := framework.GetLicenseToken2()
 	provider := framework.NewDocker(t)
 	managementCluster := framework.NewClusterE2ETest(
-		t, provider, framework.WithFluxGithubEnvVarCheck(), framework.WithFluxGithubCleanup(),
+		t, provider, framework.WithFluxGitEnvVarCheck(), framework.WithFluxGitCleanup(),
 	).WithClusterConfig(
 		api.ClusterToConfigFiller(
 			api.WithKubernetesVersion(v1alpha1.Kube135),
@@ -1862,7 +1826,7 @@ func TestDockerUpgradeKubernetes135to136WorkloadClusterScaleupGitHubFluxAPI(t *t
 			api.WithExternalEtcdTopology(1),
 			api.WithLicenseToken(licenseToken),
 		),
-		framework.WithFluxGithubConfig(),
+		framework.WithFluxGitConfig(),
 	)
 	test := framework.NewMulticlusterE2ETest(t, managementCluster)
 	test.WithWorkloadClusters(
@@ -2478,12 +2442,12 @@ func TestDockerKubernetes132to133UpgradeFromLatestMinorRelease(t *testing.T) {
 	)
 }
 
-func TestDockerKubernetes132to133GithubFluxEnabledUpgradeFromLatestMinorRelease(t *testing.T) {
+func TestDockerKubernetes132to133GitFluxEnabledUpgradeFromLatestMinorRelease(t *testing.T) {
 	release := latestMinorRelease(t)
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewDocker(t),
-		framework.WithFluxGithub(),
+		framework.WithFluxGit(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube132)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
@@ -2520,12 +2484,12 @@ func TestDockerKubernetes133to134UpgradeFromLatestMinorRelease(t *testing.T) {
 	)
 }
 
-func TestDockerKubernetes133to134GithubFluxEnabledUpgradeFromLatestMinorRelease(t *testing.T) {
+func TestDockerKubernetes133to134GitFluxEnabledUpgradeFromLatestMinorRelease(t *testing.T) {
 	release := latestMinorRelease(t)
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewDocker(t),
-		framework.WithFluxGithub(),
+		framework.WithFluxGit(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube133)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
@@ -2562,12 +2526,12 @@ func TestDockerKubernetes134to135UpgradeFromLatestMinorRelease(t *testing.T) {
 	)
 }
 
-func TestDockerKubernetes134to135GithubFluxEnabledUpgradeFromLatestMinorRelease(t *testing.T) {
+func TestDockerKubernetes134to135GitFluxEnabledUpgradeFromLatestMinorRelease(t *testing.T) {
 	release := latestMinorRelease(t)
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewDocker(t),
-		framework.WithFluxGithub(),
+		framework.WithFluxGit(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube134)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
@@ -2604,12 +2568,12 @@ func TestDockerKubernetes135to136UpgradeFromLatestMinorRelease(t *testing.T) {
 	)
 }
 
-func TestDockerKubernetes135to136GithubFluxEnabledUpgradeFromLatestMinorRelease(t *testing.T) {
+func TestDockerKubernetes135to136GitFluxEnabledUpgradeFromLatestMinorRelease(t *testing.T) {
 	release := latestMinorRelease(t)
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewDocker(t),
-		framework.WithFluxGithub(),
+		framework.WithFluxGit(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube135)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),

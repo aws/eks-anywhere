@@ -10,6 +10,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -128,7 +129,7 @@ func TestValidateClusterReady(t *testing.T) {
 			name: "CAPI cluster ready",
 			conditions: v1beta1.Conditions{
 				{
-					Type:   v1beta1.ConditionType(corev1.NodeReady),
+					Type:   v1beta1.ConditionType(clusterv1beta2.AvailableCondition),
 					Status: "True",
 					Reason: "",
 					LastTransitionTime: metav1.Time{
@@ -143,7 +144,7 @@ func TestValidateClusterReady(t *testing.T) {
 			name: "CAPI cluster does not ready",
 			conditions: v1beta1.Conditions{
 				{
-					Type:   v1beta1.ConditionType(corev1.NodeReady),
+					Type:   v1beta1.ConditionType(clusterv1beta2.AvailableCondition),
 					Status: "False",
 					Reason: "Never ready for testing",
 					LastTransitionTime: metav1.Time{
@@ -175,6 +176,7 @@ func TestValidateClusterReady(t *testing.T) {
 					c.Status.Conditions = []metav1.Condition{
 						{
 							Type:               string(tt.conditions[0].Type),
+							ObservedGeneration: c.Generation,
 							Status:             metav1.ConditionStatus(tt.conditions[0].Status),
 							LastTransitionTime: tt.conditions[0].LastTransitionTime,
 							Reason:             tt.conditions[0].Reason,
@@ -189,6 +191,69 @@ func TestValidateClusterReady(t *testing.T) {
 				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
 			} else {
 				g.Expect(err).To(BeNil())
+			}
+		})
+	}
+}
+
+func TestValidateClusterReadyCurrentConditionsAndWorkerRollout(t *testing.T) {
+	tests := []struct {
+		name      string
+		available bool
+		stale     bool
+		workers   bool
+		updated   int32
+		wantErr   string
+	}{
+		{"missing Available cannot pass", false, false, false, 0, "not ready yet"},
+		{"stale Available cannot pass", true, true, false, 0, "not ready yet"},
+		{"worker rollout still in progress", true, false, true, 1, "are not in sync"},
+		{"worker rollout complete", true, false, true, 2, ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			spec := test.NewClusterSpec(func(s *cluster.Spec) {
+				s.Cluster = testCluster()
+				s.Cluster.Spec.WorkerNodeGroupConfigurations = nil
+				if tt.workers {
+					s.Cluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{Name: "workers", Count: ptr.To(2)}}
+				}
+			})
+			vt := newStateValidatorTest(t, spec)
+			vt.createTestObjects(context.Background())
+			capiCluster := test.CAPICluster(func(c *clusterv1beta2.Cluster) {
+				c.Name = spec.Cluster.Name
+				c.Generation = 2
+				c.Status.Conditions = nil
+				if tt.available {
+					observed := c.Generation
+					if tt.stale {
+						observed--
+					}
+					c.Status.Conditions = []metav1.Condition{{
+						Type: clusterv1beta2.AvailableCondition, Status: metav1.ConditionTrue,
+						Reason: "Available", ObservedGeneration: observed, LastTransitionTime: metav1.Now(),
+					}}
+				}
+			})
+			vt.createManagementClusterObjects(context.Background(), capiCluster)
+			if tt.workers {
+				md := &clusterv1beta2.MachineDeployment{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "workers", Namespace: constants.EksaSystemNamespace,
+						Labels: map[string]string{clusterv1beta2.ClusterNameLabel: spec.Cluster.Name},
+					},
+					Spec:   clusterv1beta2.MachineDeploymentSpec{Replicas: ptr.To(int32(2))},
+					Status: clusterv1beta2.MachineDeploymentStatus{ReadyReplicas: ptr.To(int32(2)), UpToDateReplicas: ptr.To(tt.updated)},
+				}
+				vt.createManagementClusterObjects(context.Background(), md)
+			}
+			err := validations.ValidateClusterReady(context.Background(), vt.config)
+			if tt.wantErr == "" {
+				g.Expect(err).ToNot(HaveOccurred())
+			} else {
+				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
 			}
 		})
 	}
@@ -243,6 +308,57 @@ func TestValidateEKSAObjects(t *testing.T) {
 				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
 			} else {
 				g.Expect(err).To(BeNil())
+			}
+		})
+	}
+}
+
+func TestValidateEKSAObjectsMachineConfigReferences(t *testing.T) {
+	cp := &v1alpha1.VSphereMachineConfig{
+		TypeMeta:   metav1.TypeMeta{Kind: v1alpha1.VSphereMachineConfigKind, APIVersion: v1alpha1.GroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{Name: "control-plane", Namespace: "default"},
+	}
+	worker := cp.DeepCopy()
+	worker.Name = "worker"
+	etcd := cp.DeepCopy()
+	etcd.Name = "removed-etcd"
+	tests := []struct {
+		name         string
+		externalEtcd bool
+		missing      *v1alpha1.VSphereMachineConfig
+		wantErr      string
+	}{
+		{"stacked topology ignores removed etcd config", false, etcd, ""},
+		{"external etcd config is still required", true, etcd, "removed-etcd"},
+		{"control-plane config is still required", false, cp, "control-plane"},
+		{"worker config is still required", false, worker, "worker"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			spec := test.NewClusterSpec(func(s *cluster.Spec) {
+				s.Cluster = testCluster()
+				s.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef = &v1alpha1.Ref{Kind: v1alpha1.VSphereMachineConfigKind, Name: cp.Name}
+				s.Cluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{
+					{Name: "workers", MachineGroupRef: &v1alpha1.Ref{Kind: v1alpha1.VSphereMachineConfigKind, Name: worker.Name}},
+				}
+				s.Cluster.Spec.ExternalEtcdConfiguration = nil
+				if tt.externalEtcd {
+					s.Cluster.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{
+						Count: 1, MachineGroupRef: &v1alpha1.Ref{Kind: v1alpha1.VSphereMachineConfigKind, Name: etcd.Name},
+					}
+				}
+				s.VSphereMachineConfigs = map[string]*v1alpha1.VSphereMachineConfig{
+					cp.Name: cp.DeepCopy(), worker.Name: worker.DeepCopy(), etcd.Name: etcd.DeepCopy(),
+				}
+			})
+			vt := newStateValidatorTest(t, spec)
+			vt.createTestObjects(context.Background(), tt.missing)
+			err := validations.ValidateEKSAObjects(context.Background(), vt.config)
+			if tt.wantErr == "" {
+				g.Expect(err).ToNot(HaveOccurred())
+			} else {
+				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
 			}
 		})
 	}

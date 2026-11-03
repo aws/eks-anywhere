@@ -2,6 +2,7 @@ package docker_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
 	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	dockerv1beta2 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta2"
 
@@ -96,6 +98,38 @@ func TestControlPlaneSpecNewCluster(t *testing.T) {
 	g.Expect(cp.ProviderCluster).To(Equal(dockerCluster()))
 	g.Expect(cp.ControlPlaneMachineTemplate).To(Equal(wantCPMachineTemplate))
 	g.Expect(cp.EtcdMachineTemplate).To(Equal(wantEtcdMachineTemplate))
+}
+
+func TestDockerControlPlaneRetainsNodeDeletionRetries(t *testing.T) {
+	for _, version := range []anywherev1.KubernetesVersion{"1.32", "1.37"} {
+		for _, externalEtcd := range []bool{true, false} {
+			t.Run(string(version)+"/externalEtcd="+fmt.Sprint(externalEtcd), func(t *testing.T) {
+				g := NewWithT(t)
+				spec := testClusterSpec(func(s *cluster.Spec) {
+					s.VersionsBundles[version] = s.VersionsBundles["1.23"]
+					s.Cluster.Spec.KubernetesVersion = version
+					if !externalEtcd {
+						s.Cluster.Spec.ExternalEtcdConfiguration = nil
+					}
+				})
+				cp, err := docker.ControlPlaneSpec(context.Background(), test.NewNullLogger(), test.NewFakeKubeClient(), spec)
+				g.Expect(err).NotTo(HaveOccurred())
+				timeout := cp.KubeadmControlPlane.Spec.MachineTemplate.Spec.Deletion.NodeDeletionTimeoutSeconds
+				g.Expect(timeout).NotTo(BeNil())
+				g.Expect(*timeout).To(BeZero())
+
+				machine := &clusterv1beta2.Machine{}
+				machine.Spec.Deletion.NodeDeletionTimeoutSeconds = timeout
+				converted := &clusterv1beta1.Machine{}
+				g.Expect(converted.ConvertFrom(machine)).To(Succeed())
+				g.Expect(converted.Spec.NodeDeletionTimeout).NotTo(BeNil())
+				g.Expect(converted.Spec.NodeDeletionTimeout.Duration).To(BeZero())
+				g.Expect(converted.ConvertTo(machine)).To(Succeed())
+				g.Expect(machine.Spec.Deletion.NodeDeletionTimeoutSeconds).NotTo(BeNil())
+				g.Expect(*machine.Spec.Deletion.NodeDeletionTimeoutSeconds).To(BeZero())
+			})
+		}
+	}
 }
 
 func TestControlPlaneSpecUpdateMachineTemplates(t *testing.T) {
@@ -246,6 +280,7 @@ func TestControlPlaneSpecRegistryMirrorConfiguration(t *testing.T) {
 			g.Expect(cp.KubeadmControlPlane).To(Equal(kubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
 				kcp.Spec.KubeadmConfigSpec.Files = append(kcp.Spec.KubeadmConfigSpec.Files, tt.files...)
 				kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands = append(kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands, test.RegistryMirrorPreKubeadmCommands()...)
+				kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands = append(kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands, testPauseImageAliasCommand)
 			})))
 			g.Expect(cp.EtcdCluster).To(Equal(etcdCluster(func(ec *etcdv1.EtcdadmCluster) {
 				ec.Spec.EtcdadmConfigSpec.RegistryMirror = &etcdadmbootstrapv1.RegistryMirrorConfiguration{
@@ -337,6 +372,9 @@ func testClusterSpec(opts ...test.ClusterSpecOpt) *cluster.Spec {
 		s.VersionsBundles = map[anywherev1.KubernetesVersion]*cluster.VersionsBundle{
 			"1.23": {
 				KubeDistro: &cluster.KubeDistro{
+					Pause: releasev1alpha1.Image{
+						URI: "registry.example.test/kubernetes/pause:v1.23.12-example",
+					},
 					Kubernetes: cluster.VersionedRepository{
 						Repository: "public.ecr.aws/eks-distro/kubernetes",
 						Tag:        "v1.23.12-eks-1-23-6",
@@ -464,6 +502,9 @@ func kubeadmControlPlane(opts ...func(*controlplanev1beta2.KubeadmControlPlane))
 					Labels: map[string]string{"node-role.kubernetes.io/control-plane": ""},
 				},
 				Spec: controlplanev1beta2.KubeadmControlPlaneMachineTemplateSpec{
+					Deletion: controlplanev1beta2.KubeadmControlPlaneMachineTemplateDeletionSpec{
+						NodeDeletionTimeoutSeconds: ptr.Int32(0),
+					},
 					InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
 						APIGroup: "infrastructure.cluster.x-k8s.io",
 						Kind:     "DockerMachineTemplate",

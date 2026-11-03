@@ -758,6 +758,9 @@ metadata:
   name:  {{.clusterName}}
   namespace: {{.eksaSystemNamespace}}
 spec:
+  controlPlaneEndpoint:
+    host: {{.controlPlaneEndpointIp}}
+    port: 6443
   imageLookupFormat: {{.osDistro}}-{{.osVersion}}-kube-{{.kubernetesVersion}}.raw.gz
   imageLookupBaseRegistry: {{.baseRegistry}}/
 {{- if .registryAuth }}

@@ -13,8 +13,8 @@
 - pattern: "^TestVSphereKubernetes\\d+MulticlusterWorkloadClusterAPI$"
   ipPoolSize: 5
 
-# VSphere MulticlusterWorkloadClusterGitHubFluxAPI: 1 mgmt + 3 workload = 4 IPs
-- pattern: "^TestVSphereKubernetes\\d+MulticlusterWorkloadClusterGitHubFluxAPI$"
+# VSphere MulticlusterWorkloadCluster Git/GitHub Flux API: 1 mgmt + 3 workload = 4 IPs
+- pattern: "^TestVSphereKubernetes\\d+MulticlusterWorkloadClusterGit(Hub)?FluxAPI$"
   ipPoolSize: 4
 
 # VSphere InPlaceUpgradeMulticluster: 1 mgmt + 3 workload = 4 IPs

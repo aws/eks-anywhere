@@ -310,6 +310,7 @@ func TestWorkersSpecRegistryMirrorConfiguration(t *testing.T) {
 					KubeadmConfigTemplate: kubeadmConfigTemplate(func(kct *bootstrapv1beta2.KubeadmConfigTemplate) {
 						kct.Spec.Template.Spec.Files = append(kct.Spec.Template.Spec.Files, tt.files...)
 						kct.Spec.Template.Spec.PreKubeadmCommands = append(kct.Spec.Template.Spec.PreKubeadmCommands, test.RegistryMirrorPreKubeadmCommands()...)
+						kct.Spec.Template.Spec.PreKubeadmCommands = append(kct.Spec.Template.Spec.PreKubeadmCommands, testPauseImageAliasCommand)
 					}),
 					MachineDeployment:       machineDeployment(),
 					ProviderMachineTemplate: dockerMachineTemplate("test-md-0-1"),
@@ -320,6 +321,7 @@ func TestWorkersSpecRegistryMirrorConfiguration(t *testing.T) {
 							kct.Name = "test-md-1-1"
 							kct.Spec.Template.Spec.Files = append(kct.Spec.Template.Spec.Files, tt.files...)
 							kct.Spec.Template.Spec.PreKubeadmCommands = append(kct.Spec.Template.Spec.PreKubeadmCommands, test.RegistryMirrorPreKubeadmCommands()...)
+							kct.Spec.Template.Spec.PreKubeadmCommands = append(kct.Spec.Template.Spec.PreKubeadmCommands, testPauseImageAliasCommand)
 						},
 					),
 					MachineDeployment: machineDeployment(

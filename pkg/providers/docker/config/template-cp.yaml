@@ -59,6 +59,8 @@ spec:
       labels:
         node-role.kubernetes.io/control-plane: ""
     spec:
+      deletion:
+        nodeDeletionTimeoutSeconds: 0
       infrastructureRef:
         apiGroup: infrastructure.cluster.x-k8s.io
         kind: DockerMachineTemplate
@@ -334,6 +336,8 @@ spec:
     - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
     - systemctl daemon-reload
     - systemctl restart containerd
+    - |
+{{ .pauseImageAliasCommand | indent 6 }}
 {{- end }}
   replicas: {{.control_plane_replicas}}
 {{- if .upgradeRolloutStrategy }}

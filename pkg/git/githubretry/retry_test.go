@@ -38,6 +38,17 @@ func TestRateLimitDelay(t *testing.T) {
 			attempt: 1, delay: 2 * time.Minute, limited: true,
 		},
 		{
+			name: "secondary limit ignores an unexhausted primary reset",
+			err: &github.AbuseRateLimitError{
+				Response: response(403, http.Header{
+					"Retry-After":           {"60"},
+					"X-Ratelimit-Remaining": {"100"},
+					"X-Ratelimit-Reset":     {fmt.Sprint(now.Add(time.Hour).Unix())},
+				}),
+			},
+			attempt: 1, delay: time.Minute, limited: true,
+		},
+		{
 			name: "secondary client retry duration",
 			err: &github.AbuseRateLimitError{
 				Response: response(403, nil), RetryAfter: &retryAfter,

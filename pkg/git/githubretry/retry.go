@@ -3,6 +3,7 @@ package githubretry
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math/rand/v2"
 	"net/http"
 	"strconv"
@@ -35,7 +36,7 @@ func retry(ctx context.Context, backoff time.Duration, operation func() error, s
 		if limited {
 			// Spread retries from independent runners without shortening GitHub's requested wait.
 			delay += time.Duration(rand.Int64N(int64(30 * time.Second)))
-			logger.Info("GitHub rate limited the request; waiting before retry", "wait", delay, "attempt", attempt)
+			logger.Info("GitHub rate limited the request; waiting before retry", "wait", delay, "attempt", attempt, "errorType", fmt.Sprintf("%T", err))
 		} else {
 			if backoff <= 0 {
 				return err

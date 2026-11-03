@@ -53,6 +53,8 @@ spec:
       labels:
         node-role.kubernetes.io/control-plane: ""
     spec:
+      deletion:
+        nodeDeletionTimeoutSeconds: 0
       infrastructureRef:
         apiGroup: infrastructure.cluster.x-k8s.io
         kind: DockerMachineTemplate

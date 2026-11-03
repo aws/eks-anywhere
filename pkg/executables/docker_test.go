@@ -96,6 +96,31 @@ func TestDockerLoadFromFile(t *testing.T) {
 	g.Expect(d.LoadFromFile(ctx, file)).To(Succeed())
 }
 
+func TestDockerImageID(t *testing.T) {
+	for _, tt := range []struct {
+		name   string
+		output string
+		err    error
+	}{
+		{name: "present", output: "sha256:configuration\n"},
+		{name: "missing", err: errors.New("No such image")},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			executable := mockexecutables.NewMockExecutable(gomock.NewController(t))
+			executable.EXPECT().Execute(ctx, "image", "inspect", "--format", "{{.Id}}", "image:tag").
+				Return(*bytes.NewBufferString(tt.output), tt.err)
+			id, err := executables.NewDocker(executable).ImageID(ctx, "image:tag")
+			if tt.err != nil {
+				assert.ErrorIs(t, err, tt.err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, "sha256:configuration", id)
+			}
+		})
+	}
+}
+
 func TestDockerSaveToFileMultipleImages(t *testing.T) {
 	file := "file"
 	image1 := "image1:tag1"

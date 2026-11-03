@@ -2,13 +2,18 @@ package tinkerbell
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
+	"k8s.io/apiextensions-apiserver/pkg/apiserver/validation"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
 	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/yaml"
 
@@ -70,6 +75,33 @@ func TestControlPlaneSpecNewCluster(t *testing.T) {
 	g.Expect(cp.KubeadmControlPlane).To(Equal(kubeadmControlPlane()))
 	g.Expect(cp.ProviderCluster).To(Equal(tinkerbellCluster()))
 	g.Expect(cp.ControlPlaneMachineTemplate.Name).To(Equal("test-control-plane-1"))
+}
+
+func TestControlPlaneSpecEndpointSchema(t *testing.T) {
+	g := NewWithT(t)
+	spec := test.NewFullClusterSpec(t, testClusterConfigFilename)
+	cp, err := ControlPlaneSpec(context.Background(), test.NewNullLogger(), test.NewFakeKubeClient(), spec)
+	g.Expect(err).NotTo(HaveOccurred())
+
+	// CAPT validates the serialized endpoint even when it was absent from the input YAML.
+	minLength := int64(1)
+	minPort := float64(1)
+	validator, _, err := validation.NewSchemaValidator(&apiextensions.JSONSchemaProps{
+		Type: "object",
+		Properties: map[string]apiextensions.JSONSchemaProps{
+			"host": {Type: "string", MinLength: &minLength},
+			"port": {Type: "integer", Minimum: &minPort},
+		},
+		Required: []string{"host", "port"},
+	})
+	g.Expect(err).NotTo(HaveOccurred())
+	encoded, err := json.Marshal(cp.ProviderCluster.Spec.ControlPlaneEndpoint)
+	g.Expect(err).NotTo(HaveOccurred())
+	var endpoint map[string]interface{}
+	g.Expect(json.Unmarshal(encoded, &endpoint)).To(Succeed())
+	g.Expect(validation.ValidateCustomResource(field.NewPath("spec", "controlPlaneEndpoint"), endpoint, validator)).To(BeEmpty())
+	g.Expect(endpoint["host"]).To(Equal(spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host))
+	g.Expect(endpoint["port"]).To(Equal(float64(6443)))
 }
 
 func TestControlPlaneSpecNoChangesMachineTemplates(t *testing.T) {
@@ -214,6 +246,7 @@ func tinkerbellCluster() *tinkerbellv1.TinkerbellCluster {
 			Namespace: constants.EksaSystemNamespace,
 		},
 		Spec: tinkerbellv1.TinkerbellClusterSpec{
+			ControlPlaneEndpoint:    clusterv1beta1.APIEndpoint{Host: "1.2.3.4", Port: 6443},
 			ImageLookupFormat:       "--kube-v1.21.2-eks-1-21-4.raw.gz",
 			ImageLookupBaseRegistry: "/",
 		},
