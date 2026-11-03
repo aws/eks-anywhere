@@ -334,6 +334,8 @@ spec:
     - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
     - systemctl daemon-reload
     - systemctl restart containerd
+    - |
+{{ .pauseImageAliasCommand | indent 6 }}
 {{- end }}
   replicas: {{.control_plane_replicas}}
 {{- if .upgradeRolloutStrategy }}

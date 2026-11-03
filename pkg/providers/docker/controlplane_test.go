@@ -246,6 +246,7 @@ func TestControlPlaneSpecRegistryMirrorConfiguration(t *testing.T) {
 			g.Expect(cp.KubeadmControlPlane).To(Equal(kubeadmControlPlane(func(kcp *controlplanev1beta2.KubeadmControlPlane) {
 				kcp.Spec.KubeadmConfigSpec.Files = append(kcp.Spec.KubeadmConfigSpec.Files, tt.files...)
 				kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands = append(kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands, test.RegistryMirrorPreKubeadmCommands()...)
+				kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands = append(kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands, testPauseImageAliasCommand)
 			})))
 			g.Expect(cp.EtcdCluster).To(Equal(etcdCluster(func(ec *etcdv1.EtcdadmCluster) {
 				ec.Spec.EtcdadmConfigSpec.RegistryMirror = &etcdadmbootstrapv1.RegistryMirrorConfiguration{
@@ -337,6 +338,9 @@ func testClusterSpec(opts ...test.ClusterSpecOpt) *cluster.Spec {
 		s.VersionsBundles = map[anywherev1.KubernetesVersion]*cluster.VersionsBundle{
 			"1.23": {
 				KubeDistro: &cluster.KubeDistro{
+					Pause: releasev1alpha1.Image{
+						URI: "registry.example.test/kubernetes/pause:v1.23.12-example",
+					},
 					Kubernetes: cluster.VersionedRepository{
 						Repository: "public.ecr.aws/eks-distro/kubernetes",
 						Tag:        "v1.23.12-eks-1-23-6",
