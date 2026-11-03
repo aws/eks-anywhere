@@ -6,6 +6,8 @@ import (
 
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -34,9 +36,12 @@ func CheckControlPlaneReady(ctx context.Context, client client.Client, log logr.
 		return controller.ResultWithRequeue(5 * time.Second), nil
 	}
 
-	// Checking for version as well to avoid race condition of status not being updated in time at least for Kubernetes version upgrades
+	// CAPI reports kubelet versions, which can differ from EKS-D release labels.
+	// Its current machine condition also guards unfinished version and template rollouts.
+	machinesUpToDate := meta.FindStatusCondition(kcp.GetConditions(), controlplanev1beta2.KubeadmControlPlaneMachinesUpToDateCondition)
 	if !meta.IsStatusConditionTrue(kcp.GetConditions(), clusterv1beta2.AvailableCondition) ||
-		kcp.Status.Version == "" || kcp.Spec.Version != kcp.Status.Version {
+		kcp.Status.Version == "" || machinesUpToDate == nil ||
+		machinesUpToDate.Status != metav1.ConditionTrue || machinesUpToDate.ObservedGeneration != kcp.Generation {
 		log.Info("KCP is not ready yet, requeing")
 		return controller.ResultWithRequeue(30 * time.Second), nil
 	}
