@@ -33,6 +33,11 @@ skipped_tests:
 - TestTinkerbellKubernetes136Ubuntu2404GenericSimpleFlow
 - TestTinkerbellKubernetes136Ubuntu2404SimpleFlow
 
+# The Kubernetes 1.37 Ubuntu generic-kernel images are not available in CI.
+- TestTinkerbellKubernetes137Ubuntu2204GenericSimpleFlow
+- TestTinkerbellKubernetes137Ubuntu2404GenericSimpleFlow
+- TestTinkerbellKubernetes137Ubuntu2204To2404GenericUpgrade
+
 # Tinkerbell conformance: preserve the existing historical skips.
 - TestTinkerbellKubernetes131ThreeReplicasTwoWorkersConformanceFlow
 - TestTinkerbellKubernetes132ThreeReplicasTwoWorkersConformanceFlow

@@ -305,10 +305,22 @@ func TestGoGithubDeleteRepoFail(t *testing.T) {
 				Client: client,
 			}
 			err := g.DeleteRepo(ctx, tt.args)
-			if !reflect.DeepEqual(err, tt.wantErr) {
+			if err == nil || err.Error() != tt.wantErr.Error() || !errors.Is(err, tt.throwErr) {
 				t.Errorf("DeleteRepo() got error: %v want error: %v", err, tt.wantErr)
 			}
 		})
+	}
+}
+
+func TestGoGithubCreateRepoCanceled(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	client := mockGoGithub.NewMockClient(gomock.NewController(t))
+	g := &gogithub.GoGithub{Client: client}
+
+	_, err := g.CreateRepo(ctx, git.CreateRepoOpts{Name: "testrepo", Owner: "testuser", Personal: true})
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("CreateRepo() error=%v, want context cancellation", err)
 	}
 }
 

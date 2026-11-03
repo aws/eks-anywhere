@@ -375,7 +375,7 @@ func (k *Kubectl) WaitForClusterReady(ctx context.Context, cluster *types.Cluste
 }
 
 func (k *Kubectl) WaitForControlPlaneReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error {
-	jsonpath := ".status.initialization.controlPlaneInitialized"
+	jsonpath := "status.initialization.controlPlaneInitialized"
 	return k.WaitJSONPathLoop(ctx, cluster.KubeconfigFile, timeout, jsonpath, "true", fmt.Sprintf("%s/%s", capiClustersResourceType, newClusterName), constants.EksaSystemNamespace)
 }
 
@@ -624,6 +624,10 @@ func (k *Kubectl) waitJSONPathLoop(ctx context.Context, kubeconfig string, timeo
 			}
 			stdout, err := k.Execute(ctx, params...)
 			if err != nil {
+				// Resources may not be visible yet during a management move.
+				if strings.Contains(err.Error(), "Error from server (NotFound)") {
+					continue
+				}
 				return fmt.Errorf("waiting for %s %s on %s: %w", jsonpath, forCondition, property, err)
 			}
 			if strings.Contains(stdout.String(), forCondition) {

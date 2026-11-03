@@ -107,8 +107,6 @@ var requiredTinkerbellEnvVars = []string{
 	tinkerbellImageUbuntu2404Kubernetes136EnvVar,
 	tinkerbellImageRedHat9136EnvVar,
 	tinkerbellImageUbuntu2204Kubernetes137EnvVar,
-	tinkerbellImageUbuntu2204Kubernetes137GenericEnvVar,
-	tinkerbellImageUbuntu2404Kubernetes137GenericEnvVar,
 	tinkerbellImageUbuntu2404Kubernetes137EnvVar,
 	tinkerbellImageRedHat9137EnvVar,
 	tinkerbellInventoryCsvFilePathEnvVar,
