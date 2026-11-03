@@ -256,6 +256,7 @@ func TestTinkerbellKubernetes131UbuntuTo132UpgradeCPOnly(t *testing.T) {
 
 func TestTinkerbellKubernetes133UbuntuTo134UpgradeCPOnly(t *testing.T) {
 	provider := framework.NewTinkerbell(t)
+	licenseToken := framework.GetLicenseToken()
 	kube133 := v1alpha1.Kube133
 	test := framework.NewClusterE2ETest(
 		t,
@@ -269,6 +270,9 @@ func TestTinkerbellKubernetes133UbuntuTo134UpgradeCPOnly(t *testing.T) {
 	).WithClusterConfig(
 		provider.WithCPKubeVersionAndOS(kube133, framework.Ubuntu2204),
 		provider.WithWorkerKubeVersionAndOS(kube133, framework.Ubuntu2204),
+		api.ClusterToConfigFiller(
+			api.WithLicenseToken(licenseToken),
+		),
 	)
 	runSimpleUpgradeFlowWorkerNodeVersionForBareMetal(
 		test,
