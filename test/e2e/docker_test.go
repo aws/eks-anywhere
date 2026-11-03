@@ -413,16 +413,6 @@ func TestDockerKubernetes137UpgradeWorkloadClusterWithGithubFlux(t *testing.T) {
 	)
 }
 
-// Curated Packages
-func TestDockerKubernetes130CuratedPackagesSimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	test := framework.NewClusterE2ETest(t,
-		framework.NewDocker(t),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130)),
-	)
-	runCuratedPackageInstallSimpleFlow(test)
-}
-
 func TestDockerKubernetes131CuratedPackagesSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
@@ -484,16 +474,6 @@ func TestDockerKubernetes137CuratedPackagesSimpleFlow(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube137)),
 	)
 	runCuratedPackageInstallSimpleFlow(test)
-}
-
-// Emissary
-func TestDockerKubernetes130CuratedPackagesEmissarySimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	test := framework.NewClusterE2ETest(t,
-		framework.NewDocker(t),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130)),
-	)
-	runCuratedPackageEmissaryInstallSimpleFlow(test)
 }
 
 func TestDockerKubernetes131CuratedPackagesEmissarySimpleFlow(t *testing.T) {
@@ -559,16 +539,6 @@ func TestDockerKubernetes137CuratedPackagesEmissarySimpleFlow(t *testing.T) {
 	runCuratedPackageEmissaryInstallSimpleFlow(test)
 }
 
-// Harbor
-func TestDockerKubernetes130CuratedPackagesHarborSimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	test := framework.NewClusterE2ETest(t,
-		framework.NewDocker(t),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130)),
-	)
-	runCuratedPackageHarborInstallSimpleFlowLocalStorageProvisioner(test)
-}
-
 func TestDockerKubernetes131CuratedPackagesHarborSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
@@ -632,15 +602,6 @@ func TestDockerKubernetes137CuratedPackagesHarborSimpleFlow(t *testing.T) {
 	runCuratedPackageHarborInstallSimpleFlowLocalStorageProvisioner(test)
 }
 
-// ADOT
-func TestDockerKubernetes130CuratedPackagesAdotSimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	test := framework.NewClusterE2ETest(t, framework.NewDocker(t),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130)),
-	)
-	runCuratedPackagesAdotInstallSimpleFlow(test) // other args as necessary
-}
-
 func TestDockerKubernetes131CuratedPackagesAdotSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t, framework.NewDocker(t),
@@ -697,15 +658,6 @@ func TestDockerKubernetes137CuratedPackagesAdotSimpleFlow(t *testing.T) {
 	runCuratedPackagesAdotInstallSimpleFlow(test) // other args as necessary
 }
 
-// Prometheus
-func TestDockerKubernetes130CuratedPackagesPrometheusSimpleFlow(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	test := framework.NewClusterE2ETest(t, framework.NewDocker(t),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130)),
-	)
-	runCuratedPackagesPrometheusInstallSimpleFlow(test)
-}
-
 func TestDockerKubernetes131CuratedPackagesPrometheusSimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t, framework.NewDocker(t),
@@ -760,16 +712,6 @@ func TestDockerKubernetes137CuratedPackagesPrometheusSimpleFlow(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube137)),
 	)
 	runCuratedPackagesPrometheusInstallSimpleFlow(test)
-}
-
-// Curated Packages Disabled
-func TestDockerKubernetes130CuratedPackagesDisabled(t *testing.T) {
-	framework.CheckCuratedPackagesCredentials(t)
-	test := framework.NewClusterE2ETest(t, framework.NewDocker(t),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130)),
-		framework.WithClusterFiller(api.WithPackagesDisabled()),
-	)
-	runDisabledCuratedPackageInstallSimpleFlow(test) // other args as necessary
 }
 
 func TestDockerKubernetes131CuratedPackagesDisabled(t *testing.T) {
@@ -835,11 +777,6 @@ func TestDockerKubernetes137CuratedPackagesDisabled(t *testing.T) {
 	runDisabledCuratedPackageInstallSimpleFlow(test) // other args as necessary
 }
 
-// MetalLB
-func TestDockerKubernetes130CuratedPackagesMetalLB(t *testing.T) {
-	RunMetalLBDockerTestsForKubeVersion(t, v1alpha1.Kube130)
-}
-
 func TestDockerKubernetes131CuratedPackagesMetalLB(t *testing.T) {
 	RunMetalLBDockerTestsForKubeVersion(t, v1alpha1.Kube131)
 }
@@ -866,16 +803,6 @@ func TestDockerKubernetes136CuratedPackagesMetalLB(t *testing.T) {
 
 func TestDockerKubernetes137CuratedPackagesMetalLB(t *testing.T) {
 	RunMetalLBDockerTestsForKubeVersion(t, v1alpha1.Kube137)
-}
-
-// AWS IAM Auth
-func TestDockerKubernetes130AWSIamAuth(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewDocker(t),
-		framework.WithAWSIam(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130)),
-	)
-	runAWSIamAuthFlow(test)
 }
 
 func TestDockerKubernetes131AWSIamAuth(t *testing.T) {
@@ -939,16 +866,6 @@ func TestDockerKubernetes137AWSIamAuth(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube137)),
 	)
 	runAWSIamAuthFlow(test)
-}
-
-// OIDC
-func TestDockerKubernetes130OIDC(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewDocker(t),
-		framework.WithOIDC(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130)),
-	)
-	runOIDCFlow(test)
 }
 
 func TestDockerKubernetes131OIDC(t *testing.T) {
@@ -1139,16 +1056,6 @@ func TestDockerKubernetes137RegistryMirrorInsecureSkipVerify(t *testing.T) {
 		framework.WithRegistryMirrorInsecureSkipVerify(constants.DockerProviderName),
 	)
 	runRegistryMirrorConfigFlow(test)
-}
-
-// Simple Flow
-func TestDockerKubernetes130SimpleFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewDocker(t),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130)),
-	)
-	runSimpleFlow(test)
 }
 
 func TestDockerKubernetes131SimpleFlow(t *testing.T) {
@@ -3174,17 +3081,6 @@ func TestDockerKubernetes137EtcdScaleDown(t *testing.T) {
 			api.WithExternalEtcdTopology(1),
 		),
 	)
-}
-
-// Kubelet Configuration tests
-func TestDockerKubernetes130KubeletConfigurationSimpleFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewDocker(t),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube130)),
-		framework.WithKubeletConfig(),
-	)
-	runKubeletConfigurationFlow(test)
 }
 
 func TestDockerKubernetes131KubeletConfigurationSimpleFlow(t *testing.T) {
