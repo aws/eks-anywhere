@@ -1625,7 +1625,7 @@ func TestDockerKubernetes131to132UpgradeFromLatestMinorReleaseAPI(t *testing.T) 
 	wc := framework.NewClusterE2ETest(
 		t, provider, framework.WithClusterName(test.NewWorkloadClusterName()),
 	)
-	wc.GenerateClusterConfigForVersion(release.Version, "", framework.ExecuteWithEksaRelease(release))
+	wc.GenerateClusterConfigForVersion(release.Version, framework.GetStagingLicenseToken2(), framework.ExecuteWithEksaRelease(release))
 	wc.UpdateClusterConfig(api.ClusterToConfigFiller(
 		api.WithKubernetesVersion(v1alpha1.Kube131),
 		api.WithManagementCluster(managementCluster.ClusterName),
