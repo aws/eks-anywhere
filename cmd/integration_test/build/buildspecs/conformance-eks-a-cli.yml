@@ -134,8 +134,6 @@ env:
     T_TINKERBELL_IMAGE_UBUNTU_2404_1_36: "tinkerbell_ci:image_ubuntu_2404_1_36"
     T_TINKERBELL_IMAGE_REDHAT_9_1_36: "tinkerbell_ci:image_redhat_9_1_36"
     T_TINKERBELL_IMAGE_UBUNTU_2204_1_37: "tinkerbell_ci:image_ubuntu_2204_1_37"
-    T_TINKERBELL_IMAGE_UBUNTU_2204_1_37_GENERIC: "tinkerbell_ci:image_ubuntu_2204_1_37_generic"
-    T_TINKERBELL_IMAGE_UBUNTU_2404_1_37_GENERIC: "tinkerbell_ci:image_ubuntu_2404_1_37_generic"
     T_TINKERBELL_IMAGE_UBUNTU_2404_1_37: "tinkerbell_ci:image_ubuntu_2404_1_37"
     T_TINKERBELL_IMAGE_REDHAT_9_1_37: "tinkerbell_ci:image_redhat_9_1_37"
     T_TINKERBELL_SSH_AUTHORIZED_KEY: "vsphere_ci_beta_connection:ssh_authorized_key"
