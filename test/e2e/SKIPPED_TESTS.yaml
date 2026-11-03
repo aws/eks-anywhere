@@ -8,11 +8,6 @@ skipped_tests:
 # Tinkerbell
 # Keep older OS simple flows in source; run their latest available image versions to conserve hardware.
 # Ubuntu and RHEL use 1.37. RTOS stays on its latest available 1.34/1.35 images until 1.37 exists.
-- TestTinkerbellKubernetes130RedHat9SimpleFlow
-- TestTinkerbellKubernetes130RedHatSimpleFlow
-- TestTinkerbellKubernetes130Ubuntu2204GenericSimpleFlow
-- TestTinkerbellKubernetes130Ubuntu2204RTOSSimpleFlow
-- TestTinkerbellKubernetes130Ubuntu2204SimpleFlow
 - TestTinkerbellKubernetes131RedHat9SimpleFlow
 - TestTinkerbellKubernetes131RedHatSimpleFlow
 - TestTinkerbellKubernetes131Ubuntu2204GenericSimpleFlow
@@ -44,12 +39,11 @@ skipped_tests:
 - TestTinkerbellKubernetes137Ubuntu2204To2404GenericUpgrade
 
 # Tinkerbell conformance: preserve the existing historical skips.
-- TestTinkerbellKubernetes130ThreeReplicasTwoWorkersConformanceFlow
 - TestTinkerbellKubernetes131ThreeReplicasTwoWorkersConformanceFlow
 - TestTinkerbellKubernetes132ThreeReplicasTwoWorkersConformanceFlow
 
 # Vsphere
 # Auto import tests fail from time to time if the underlying template doesn't go well with the content library.
 # Currently there's no fix for this and issue has been brought up with the BR team multiple times.
-- TestVSphereKubernetes130BottlerocketAutoimport
+- TestVSphereKubernetes131BottlerocketAutoimport
 - TestVSphereKubernetes137BottlerocketAutoimport
