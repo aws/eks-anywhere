@@ -108,6 +108,7 @@ func newUpgradeManagementComponentsTest(t *testing.T) *upgradeManagementComponen
 	}
 
 	return &upgradeManagementComponentsTest{
+		ctx:               context.Background(),
 		mocks:             mocks,
 		runner:            runner,
 		managementCluster: managementCluster,

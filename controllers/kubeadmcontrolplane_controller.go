@@ -51,7 +51,7 @@ const (
 )
 
 var (
-	kcpEKSNodeVersion    = regexp.MustCompile(`^v?([0-9]+)\.([0-9]+)\.([0-9]+)-eks-[0-9a-f]{7,40}$`)
+	kcpEKSANodeVersion   = regexp.MustCompile(`^v?([0-9]+)\.([0-9]+)\.([0-9]+)-eks-[0-9a-f]{7,40}$`)
 	kcpEKSReleaseVersion = regexp.MustCompile(`^v?([0-9]+)\.([0-9]+)\.([0-9]+)-eks-([0-9]+)-([0-9]+)-[0-9]+$`)
 )
 
@@ -199,7 +199,7 @@ func controlPlaneVersionsMatch(observed, desired string) bool {
 		return true
 	}
 	// CAPI reports the EKS-D source version after an in-place upgrade.
-	node := kcpEKSNodeVersion.FindStringSubmatch(observed)
+	node := kcpEKSANodeVersion.FindStringSubmatch(observed)
 	release := kcpEKSReleaseVersion.FindStringSubmatch(desired)
 	return node != nil && release != nil && release[1] == release[4] && release[2] == release[5]
 }

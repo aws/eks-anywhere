@@ -104,6 +104,14 @@ func (d *Docker) LoadFromFile(ctx context.Context, filepath string) error {
 	return nil
 }
 
+func (d *Docker) ImageID(ctx context.Context, image string) (string, error) {
+	output, err := d.Execute(ctx, "image", "inspect", "--format", "{{.Id}}", image)
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(output.String()), nil
+}
+
 func (d *Docker) SaveToFile(ctx context.Context, filepath string, images ...string) error {
 	params := make([]string, 0, 3+len(images))
 	params = append(params, "save", "-o", filepath)
