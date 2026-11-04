@@ -6,6 +6,7 @@ import (
 	"context"
 	"crypto/sha1"
 	_ "embed"
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -22,6 +23,7 @@ import (
 
 	"github.com/bmc-toolbox/bmclib/v2"
 	"github.com/go-logr/logr"
+	yamlv3 "gopkg.in/yaml.v3"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -2319,8 +2321,110 @@ func dumpFile(description, path string, t T) {
 	b, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
+		return
+	}
+	if strings.EqualFold(filepath.Ext(path), ".csv") {
+		b, err = redactHardwarePasswords(b)
+	} else {
+		b, err = redactLicenseTokens(b)
+	}
+	if err != nil {
+		t.Logf("%s: file content omitted because credentials could not be redacted", description)
+		return
 	}
 	t.Logf("%s:\n%s\n", description, string(b))
+}
+
+func redactLicenseTokens(content []byte) ([]byte, error) {
+	decoder := yamlv3.NewDecoder(bytes.NewReader(content))
+	var output bytes.Buffer
+	encoder := yamlv3.NewEncoder(&output)
+	encoder.SetIndent(2)
+	for {
+		var document yamlv3.Node
+		if err := decoder.Decode(&document); err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, err
+		}
+		secretNodes := make(map[*yamlv3.Node]bool)
+		findLicenseTokenNodes(&document, secretNodes)
+		redactSecretNodes(&document, secretNodes, make(map[*yamlv3.Node]bool))
+		if err := encoder.Encode(&document); err != nil {
+			return nil, err
+		}
+	}
+	if err := encoder.Close(); err != nil {
+		return nil, err
+	}
+	return output.Bytes(), nil
+}
+
+func findLicenseTokenNodes(node *yamlv3.Node, secretNodes map[*yamlv3.Node]bool) {
+	if node.Kind == yamlv3.MappingNode {
+		for i := 0; i < len(node.Content); i += 2 {
+			key := node.Content[i]
+			if key.Kind == yamlv3.AliasNode {
+				key = key.Alias
+			}
+			if key.Value == "licenseToken" {
+				markSecretNodes(node.Content[i+1], secretNodes)
+			}
+		}
+	}
+	for _, child := range node.Content {
+		findLicenseTokenNodes(child, secretNodes)
+	}
+}
+
+func markSecretNodes(node *yamlv3.Node, secretNodes map[*yamlv3.Node]bool) {
+	if node == nil || secretNodes[node] {
+		return
+	}
+	secretNodes[node] = true
+	markSecretNodes(node.Alias, secretNodes)
+	for _, child := range node.Content {
+		markSecretNodes(child, secretNodes)
+	}
+}
+
+func redactSecretNodes(node *yamlv3.Node, secretNodes, visited map[*yamlv3.Node]bool) {
+	if node == nil || visited[node] {
+		return
+	}
+	visited[node] = true
+	if secretNodes[node] || node.Kind == yamlv3.AliasNode && secretNodes[node.Alias] {
+		*node = yamlv3.Node{Kind: yamlv3.ScalarNode, Tag: "!!str", Value: "<redacted>", Anchor: node.Anchor}
+		return
+	}
+	redactSecretNodes(node.Alias, secretNodes, visited)
+	for _, child := range node.Content {
+		redactSecretNodes(child, secretNodes, visited)
+	}
+}
+
+func redactHardwarePasswords(content []byte) ([]byte, error) {
+	records, err := csv.NewReader(bytes.NewReader(content)).ReadAll()
+	if err != nil {
+		return nil, err
+	}
+	if len(records) == 0 {
+		return nil, fmt.Errorf("hardware CSV has no header")
+	}
+	for column, name := range records[0] {
+		if strings.EqualFold(strings.TrimSpace(name), "bmc_password") {
+			for _, record := range records[1:] {
+				record[column] = "<redacted>"
+			}
+		}
+	}
+	var output bytes.Buffer
+	writer := csv.NewWriter(&output)
+	if err := writer.WriteAll(records); err != nil {
+		return nil, err
+	}
+	return output.Bytes(), nil
 }
 
 // CreateCloudStackCredentialsSecretFromEnvVar parses the cloudstack credentials from an environment variable,

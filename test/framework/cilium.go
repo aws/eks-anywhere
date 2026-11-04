@@ -10,6 +10,7 @@ import (
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -40,6 +41,13 @@ func (e *ClusterE2ETest) UninstallCilium() {
 
 	e.T.Log("Uninstalling Cilium using Cilium CLI")
 	if err := cmd.Run(); err != nil {
+		e.T.Fatal(err)
+	}
+	c, err := buildClusterClient(e.KubeconfigFilePath())
+	if err != nil {
+		e.T.Fatal(err)
+	}
+	if err := deleteCiliumRBAC(context.Background(), c); err != nil {
 		e.T.Fatal(err)
 	}
 }
@@ -167,4 +175,28 @@ func AwaitCiliumDaemonSetReady(ctx context.Context, client client.Client, retrie
 
 		return nil
 	})
+}
+
+func deleteCiliumRBAC(ctx context.Context, c client.Client) error {
+	// The CLI's older chart can omit RBAC introduced by the installed Cilium release.
+	selector := client.MatchingLabels{"app.kubernetes.io/part-of": "cilium"}
+	bindings := &rbacv1.RoleBindingList{}
+	if err := c.List(ctx, bindings, selector); err != nil {
+		return fmt.Errorf("listing Cilium role bindings: %w", err)
+	}
+	for i := range bindings.Items {
+		if err := client.IgnoreNotFound(c.Delete(ctx, &bindings.Items[i])); err != nil {
+			return fmt.Errorf("deleting Cilium role binding: %w", err)
+		}
+	}
+	roles := &rbacv1.RoleList{}
+	if err := c.List(ctx, roles, selector); err != nil {
+		return fmt.Errorf("listing Cilium roles: %w", err)
+	}
+	for i := range roles.Items {
+		if err := client.IgnoreNotFound(c.Delete(ctx, &roles.Items[i])); err != nil {
+			return fmt.Errorf("deleting Cilium role: %w", err)
+		}
+	}
+	return nil
 }
