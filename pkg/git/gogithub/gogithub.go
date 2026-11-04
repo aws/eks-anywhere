@@ -112,9 +112,34 @@ func (g *GoGithub) CreateRepo(ctx context.Context, opts git.CreateRepoOpts) (rep
 	}
 
 	var repo *goGithub.Repository
+	uncertainCreation := false
+	absenceChecked := false
+	var creationStart time.Time
 	err = githubretry.Retry(ctx, 0, func() error {
+		if !absenceChecked {
+			if lookupErr := g.requireAbsentRepo(ctx, opts); lookupErr != nil {
+				return lookupErr
+			}
+			absenceChecked = true
+		}
+		if uncertainCreation {
+			existing, lookupErr := g.recoverCreatedRepo(ctx, opts, creationStart)
+			if lookupErr != nil {
+				return lookupErr
+			}
+			if existing != nil {
+				repo = existing
+				return nil
+			}
+		}
+		started := time.Now()
 		var err error
 		repo, _, err = g.Client.CreateRepo(ctx, org, r)
+		// A server error can hide a successful creation; look up that exact repository before another POST.
+		uncertainCreation = githubretry.IsTransientServerError(err)
+		if uncertainCreation && creationStart.IsZero() {
+			creationStart = creationRequestStart(err, time.Since(started))
+		}
 		return err
 	})
 	if err != nil {
@@ -127,6 +152,35 @@ func (g *GoGithub) CreateRepo(ctx context.Context, opts git.CreateRepoOpts) (rep
 		Owner:        repo.GetOwner().GetName(),
 		Organization: repo.GetOrganization().GetName(),
 	}, err
+}
+
+func (g *GoGithub) requireAbsentRepo(ctx context.Context, opts git.CreateRepoOpts) error {
+	_, _, err := g.Client.Repo(ctx, opts.Owner, opts.Name)
+	if err == nil {
+		return fmt.Errorf("repository %s already exists", opts.Name)
+	}
+	if isNotFound(err) {
+		return nil
+	}
+	return err
+}
+
+func (g *GoGithub) recoverCreatedRepo(ctx context.Context, opts git.CreateRepoOpts, creationStart time.Time) (*goGithub.Repository, error) {
+	existing, response, err := g.Client.Repo(ctx, opts.Owner, opts.Name)
+	if isNotFound(err) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	if !strings.EqualFold(existing.GetName(), opts.Name) ||
+		!strings.EqualFold(existing.GetOwner().GetLogin(), opts.Owner) || existing.GetPrivate() != opts.Privacy {
+		return nil, errors.New("repository found after failed creation does not match requested owner, name or privacy")
+	}
+	if !repoCreatedDuringRequest(existing, response, creationStart) {
+		return nil, errors.New("repository found after failed creation lacks a fresh creation timestamp")
+	}
+	return existing, nil
 }
 
 func (g *GoGithub) GetAccessTokenPermissions(accessToken string) (string, error) {
@@ -269,10 +323,34 @@ func (g *GoGithub) DeleteRepo(ctx context.Context, opts git.DeleteRepoOpts) erro
 func newClient(ctx context.Context, opts Options) Client {
 	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: opts.Auth.Token})
 	tc := oauth2.NewClient(ctx, ts)
+	tc.Transport = secondaryRateLimitTransport{base: tc.Transport}
 	return &githubClient{goGithub.NewClient(tc)}
 }
 
 func isNotFound(err error) bool {
 	var e *goGithub.ErrorResponse
 	return errors.As(err, &e) && e.Response.StatusCode == http.StatusNotFound
+}
+
+func creationRequestStart(err error, elapsed time.Duration) time.Time {
+	var response *goGithub.ErrorResponse
+	if !errors.As(err, &response) || response.Response == nil {
+		return time.Time{}
+	}
+	serverTime, parseErr := http.ParseTime(response.Response.Header.Get("Date"))
+	if parseErr != nil {
+		return time.Time{}
+	}
+	// HTTP Date and GitHub creation timestamps have second precision. Use the
+	// server clock and monotonic request duration, never the runner's wall clock.
+	return serverTime.Add(-elapsed).Truncate(time.Second)
+}
+
+func repoCreatedDuringRequest(repo *goGithub.Repository, response *goGithub.Response, started time.Time) bool {
+	if started.IsZero() || repo == nil || repo.GetCreatedAt().IsZero() || response == nil || response.Response == nil {
+		return false
+	}
+	serverTime, err := http.ParseTime(response.Header.Get("Date"))
+	created := repo.GetCreatedAt().Time
+	return err == nil && !created.Before(started) && !created.After(serverTime)
 }

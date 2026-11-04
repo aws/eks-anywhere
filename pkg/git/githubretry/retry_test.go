@@ -313,3 +313,75 @@ func TestRetryStopsWhenWaitFails(t *testing.T) {
 		t.Fatalf("err=%v calls=%d", err, calls)
 	}
 }
+
+func TestRetryTransientServerThenSuccess(t *testing.T) {
+	for _, status := range []int{500, 502, 503, 504} {
+		t.Run(fmt.Sprint(status), func(t *testing.T) {
+			calls := 0
+			var delays []time.Duration
+			err := retry(context.Background(), 0, func() error {
+				calls++
+				if calls < 3 {
+					return fmt.Errorf("create repository: %w", &github.ErrorResponse{Response: response(status, nil)})
+				}
+				return nil
+			}, func(_ context.Context, delay time.Duration) error {
+				delays = append(delays, delay)
+				return nil
+			})
+			if err != nil || calls != 3 || len(delays) != 2 || delays[0] != time.Second || delays[1] != 2*time.Second {
+				t.Fatalf("err=%v calls=%d delays=%v", err, calls, delays)
+			}
+		})
+	}
+}
+
+func TestRetryTransientServerBounded(t *testing.T) {
+	want := &github.ErrorResponse{Response: response(502, nil)}
+	calls := 0
+	var elapsed time.Duration
+	err := retry(context.Background(), 0, func() error {
+		calls++
+		return want
+	}, func(_ context.Context, delay time.Duration) error {
+		elapsed += delay
+		return nil
+	})
+	if err != want || calls != 5 || elapsed != 15*time.Second {
+		t.Fatalf("err=%v calls=%d elapsed=%v", err, calls, elapsed)
+	}
+}
+
+func TestRetryServerFailureDoesNotRetryPermanentErrors(t *testing.T) {
+	for _, status := range []int{400, 401, 403, 404, 422, 501} {
+		t.Run(fmt.Sprint(status), func(t *testing.T) {
+			want := &github.ErrorResponse{Response: response(status, nil)}
+			calls := 0
+			err := retry(context.Background(), 0, func() error {
+				calls++
+				return want
+			}, func(context.Context, time.Duration) error {
+				t.Fatal("permanent error slept")
+				return nil
+			})
+			if err != want || calls != 1 {
+				t.Fatalf("err=%v calls=%d", err, calls)
+			}
+		})
+	}
+}
+
+func TestRetryTransientServerCancellation(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	calls := 0
+	err := retry(ctx, 0, func() error {
+		calls++
+		return &github.ErrorResponse{Response: response(502, nil)}
+	}, func(ctx context.Context, _ time.Duration) error {
+		cancel()
+		return ctx.Err()
+	})
+	if err != context.Canceled || calls != 1 {
+		t.Fatalf("err=%v calls=%d", err, calls)
+	}
+}
