@@ -950,18 +950,30 @@ func TestTinkerbellSingleNode136To137UbuntuManagementCPUpgradeAPI(t *testing.T) 
 		),
 		framework.WithControlPlaneHardware(4),
 	)
-	runUpgradeFlowForBareMetalWithAPI(
-		test,
-		api.ClusterToConfigFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube137),
-			api.WithControlPlaneCount(3),
-		),
+	test.GenerateClusterConfig()
+	test.GenerateHardwareConfig()
+	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
+	test.LoadClusterConfigGeneratedByCLI()
+	test.ClusterConfig.Cluster.ClearTinkerbellIPAnnotation()
+
+	// Scaling and a rolling Kubernetes upgrade must use separate API updates.
+	test.UpdateClusterConfig(api.ClusterToConfigFiller(api.WithControlPlaneCount(3)))
+	test.ApplyClusterManifest()
+	test.ValidateClusterState()
+	test.StopIfFailed()
+
+	test.UpdateClusterConfig(
+		api.ClusterToConfigFiller(api.WithKubernetesVersion(v1alpha1.Kube137)),
 		provider.WithKubeVersionAndOS(v1alpha1.Kube137, framework.Ubuntu2204, nil),
 	)
+	test.ApplyClusterManifest()
+	test.ValidateClusterState()
+	test.StopIfFailed()
+	test.DeleteCluster()
+	test.ValidateHardwareDecommissioned()
 }
 
 func TestTinkerbellCustomTemplateRefSimpleFlow(t *testing.T) {
-
 	// Get license token for Ubuntu 2204
 	licenseToken := framework.GetLicenseToken()
 

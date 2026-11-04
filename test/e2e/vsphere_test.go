@@ -6308,7 +6308,7 @@ func TestVSphereKubernetes134MulticlusterWorkloadClusterAPI(t *testing.T) {
 				api.WithWorkerNodeCount(1),
 				api.WithStackedEtcdTopology(),
 			),
-			vsphere.WithUbuntu131(),
+			vsphere.WithUbuntu136(),
 		),
 		framework.NewClusterE2ETest(
 			t, vsphere, framework.WithClusterName(test.NewWorkloadClusterName()),
@@ -6319,7 +6319,7 @@ func TestVSphereKubernetes134MulticlusterWorkloadClusterAPI(t *testing.T) {
 				api.WithWorkerNodeCount(1),
 				api.WithStackedEtcdTopology(),
 			),
-			vsphere.WithUbuntu132(),
+			vsphere.WithUbuntu137(),
 		),
 		framework.NewClusterE2ETest(
 			t, vsphere, framework.WithClusterName(test.NewWorkloadClusterName()),
@@ -7191,7 +7191,7 @@ func TestVSphereInPlaceUpgradeMulticlusterWorkloadClusterK8sUpgrade132To133(t *t
 }
 
 // Workload API
-func TestVSphereKubernetes133MulticlusterWorkloadClusterAPI(t *testing.T) {
+func TestVSphereKubernetes137MulticlusterWorkloadClusterAPI(t *testing.T) {
 	vsphere := framework.NewVSphere(t)
 	// add licensetoken for extended support k8s versions
 	licenseToken := framework.GetLicenseToken()
@@ -7205,7 +7205,7 @@ func TestVSphereKubernetes133MulticlusterWorkloadClusterAPI(t *testing.T) {
 			api.WithWorkerNodeCount(1),
 			api.WithStackedEtcdTopology(),
 		),
-		vsphere.WithUbuntu133(),
+		vsphere.WithUbuntu137(),
 	)
 	test := framework.NewMulticlusterE2ETest(t, managementCluster)
 	test.WithWorkloadClusters(
@@ -7218,7 +7218,7 @@ func TestVSphereKubernetes133MulticlusterWorkloadClusterAPI(t *testing.T) {
 				api.WithWorkerNodeCount(1),
 				api.WithStackedEtcdTopology(),
 			),
-			vsphere.WithUbuntu131(),
+			vsphere.WithUbuntu136(),
 		),
 		framework.NewClusterE2ETest(
 			t, vsphere, framework.WithClusterName(test.NewWorkloadClusterName()),
@@ -7229,7 +7229,7 @@ func TestVSphereKubernetes133MulticlusterWorkloadClusterAPI(t *testing.T) {
 				api.WithWorkerNodeCount(1),
 				api.WithStackedEtcdTopology(),
 			),
-			vsphere.WithUbuntu132(),
+			vsphere.WithUbuntu137(),
 		),
 		framework.NewClusterE2ETest(
 			t, vsphere, framework.WithClusterName(test.NewWorkloadClusterName()),
@@ -7359,7 +7359,7 @@ func TestVSphereKubernetes133UpgradeWorkerNodeGroupsUbuntuAPI(t *testing.T) {
 	)
 }
 
-func TestVSphereKubernetes133MulticlusterWorkloadClusterGitFluxAPI(t *testing.T) {
+func TestVSphereKubernetes137MulticlusterWorkloadClusterGitFluxAPI(t *testing.T) {
 	vsphere := framework.NewVSphere(t)
 	managementCluster := framework.NewClusterE2ETest(
 		t, vsphere, framework.WithFluxGitEnvVarCheck(), framework.WithFluxGitCleanup(),
@@ -7370,7 +7370,7 @@ func TestVSphereKubernetes133MulticlusterWorkloadClusterGitFluxAPI(t *testing.T)
 			api.WithStackedEtcdTopology(),
 		),
 		framework.WithFluxGitConfig(),
-		vsphere.WithUbuntu133(),
+		vsphere.WithUbuntu137(),
 	)
 	test := framework.NewMulticlusterE2ETest(t, managementCluster)
 	test.WithWorkloadClusters(
@@ -7383,7 +7383,7 @@ func TestVSphereKubernetes133MulticlusterWorkloadClusterGitFluxAPI(t *testing.T)
 				api.WithWorkerNodeCount(1),
 				api.WithStackedEtcdTopology(),
 			),
-			vsphere.WithUbuntu133(),
+			vsphere.WithUbuntu136(),
 		),
 		framework.NewClusterE2ETest(
 			t, vsphere, framework.WithClusterName(test.NewWorkloadClusterName()),
@@ -7394,7 +7394,7 @@ func TestVSphereKubernetes133MulticlusterWorkloadClusterGitFluxAPI(t *testing.T)
 				api.WithWorkerNodeCount(1),
 				api.WithExternalEtcdTopology(1),
 			),
-			vsphere.WithUbuntu133(),
+			vsphere.WithUbuntu137(),
 		),
 	)
 

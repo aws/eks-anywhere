@@ -1786,6 +1786,30 @@ func TestClusterValidateUpdateValidRequest(t *testing.T) {
 	g.Expect(err).To(Succeed())
 }
 
+func TestClusterValidateUpdateTinkerbellScaleBeforeRollingUpgrade(t *testing.T) {
+	initial := baseCluster()
+	initial.SetSelfManaged()
+	initial.Spec.DatacenterRef.Kind = v1alpha1.TinkerbellDatacenterKind
+	initial.Spec.KubernetesVersion = v1alpha1.Kube136
+	initial.Spec.ControlPlaneConfiguration.Count = 1
+
+	scaled := initial.DeepCopy()
+	scaled.Spec.ControlPlaneConfiguration.Count = 3
+	upgraded := scaled.DeepCopy()
+	upgraded.Spec.KubernetesVersion = v1alpha1.Kube137
+
+	g := NewWithT(t)
+	warnings, err := scaled.ValidateUpdate(context.TODO(), initial, scaled)
+	g.Expect(warnings).To(BeEmpty())
+	g.Expect(err).To(Succeed())
+	warnings, err = upgraded.ValidateUpdate(context.TODO(), scaled, upgraded)
+	g.Expect(warnings).To(BeEmpty())
+	g.Expect(err).To(Succeed())
+	warnings, err = upgraded.ValidateUpdate(context.TODO(), initial, upgraded)
+	g.Expect(warnings).To(BeEmpty())
+	g.Expect(err).To(MatchError(ContainSubstring("cannot perform scale up or down during rolling upgrades")))
+}
+
 func TestClusterValidateUpdateRollingAndScalingTinkerbellRequest(t *testing.T) {
 	cOld := baseCluster()
 	cOld.IsManaged()
@@ -2342,6 +2366,7 @@ func TestValidateWorkerVersionSkewAddNodeGroup(t *testing.T) {
 	g.Expect(warnings).To(BeEmpty())
 	g.Expect(err).To(Succeed())
 }
+
 func TestClusterDefaultCastFail(t *testing.T) {
 	g := NewWithT(t)
 

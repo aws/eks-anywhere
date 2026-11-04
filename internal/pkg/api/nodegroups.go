@@ -16,6 +16,11 @@ func FillWorkerNodeGroup(w *anywherev1.WorkerNodeGroupConfiguration, fillers ...
 
 func WithTaint(taint corev1.Taint) WorkerNodeGroupFiller {
 	return func(w *anywherev1.WorkerNodeGroupConfiguration) {
+		for _, existing := range w.Taints {
+			if existing.Key == taint.Key && existing.Effect == taint.Effect && existing.Value == taint.Value {
+				return
+			}
+		}
 		w.Taints = append(w.Taints, taint)
 	}
 }
