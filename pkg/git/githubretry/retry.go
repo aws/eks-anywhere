@@ -17,7 +17,8 @@ import (
 
 const maxAttempts = 5
 
-// Retry honors GitHub rate limits. Other errors are retried only if backoff is positive.
+// Retry honors GitHub rate limits and retries transient GitHub server errors.
+// Other errors are retried only if backoff is positive.
 func Retry(ctx context.Context, backoff time.Duration, operation func() error) error {
 	return retry(ctx, backoff, operation, wait)
 }
@@ -37,6 +38,9 @@ func retry(ctx context.Context, backoff time.Duration, operation func() error, s
 			// Spread retries from independent runners without shortening GitHub's requested wait.
 			delay += time.Duration(rand.Int64N(int64(30 * time.Second)))
 			logger.Info("GitHub rate limited the request; waiting before retry", "wait", delay, "attempt", attempt, "errorType", fmt.Sprintf("%T", err))
+		} else if serverDelay, transient := transientServerDelay(err, attempt); transient {
+			delay = max(serverDelay, backoff)
+			logger.Info("GitHub server error; waiting before retry", "wait", delay, "attempt", attempt)
 		} else {
 			if backoff <= 0 {
 				return err
@@ -149,4 +153,23 @@ func headerDelay(response *http.Response, now time.Time) (time.Duration, bool) {
 		}
 	}
 	return delay, delay > 0
+}
+
+// IsTransientServerError identifies GitHub responses whose mutation outcome may be unknown.
+func IsTransientServerError(err error) bool {
+	_, transient := transientServerDelay(err, 1)
+	return transient
+}
+
+func transientServerDelay(err error, attempt int) (time.Duration, bool) {
+	var response *github.ErrorResponse
+	if !errors.As(err, &response) || response.Response == nil {
+		return 0, false
+	}
+	switch response.Response.StatusCode {
+	case http.StatusInternalServerError, http.StatusBadGateway, http.StatusServiceUnavailable, http.StatusGatewayTimeout:
+		return time.Second * time.Duration(1<<(attempt-1)), true
+	default:
+		return 0, false
+	}
 }
