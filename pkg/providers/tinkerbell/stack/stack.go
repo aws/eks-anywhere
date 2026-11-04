@@ -261,6 +261,7 @@ func (s *Installer) installSmeeOnDocker(ctx context.Context, bundle releasev1alp
 		// Set the global bind address and the per-service ones so listeners always
 		// bind to the same IP that is advertised.
 		"-e", fmt.Sprintf("TINKERBELL_BIND_ADDRESS=%s", tinkServerIP),
+		"-e", fmt.Sprintf("TINKERBELL_HTTP_PORT=%s", smeeHTTPPort),
 		"-e", fmt.Sprintf("TINKERBELL_TRUSTED_PROXIES=%s", s.podCidrRange),
 		"-e", "TINKERBELL_ENABLE_SMEE=true",
 		"-e", "TINKERBELL_ENABLE_TOOTLES=false",
@@ -564,6 +565,12 @@ func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle
 
 	tinkerbellImage, tinkerbellTag := parseImageURI(tinkerbellImageURI)
 
+	httpPort := 7171
+	if s.smeeOnDocker {
+		// Bootstrap metadata uses the existing kind port mapping.
+		httpPort = 7172
+	}
+
 	valuesMap := map[string]any{
 		"name":     "tinkerbell",
 		"publicIP": tinkerbellIP,
@@ -609,6 +616,7 @@ func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle
 				"globals": map[string]any{
 					"backend":               "kube",
 					"backendKubeNamespace":  s.namespace,
+					"httpPort":              httpPort,
 					"enableSmee":            !s.smeeOnDocker,
 					"enableTootles":         true,
 					"enableTinkServer":      true,
@@ -658,6 +666,11 @@ func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle
 			"type":           "LoadBalancer",
 			"loadBalancerIP": tinkerbellIP,
 			"lbClass":        "kube-vip.io/kube-vip-class",
+			"ports": map[string]any{
+				"http": map[string]any{
+					"port": httpPort,
+				},
+			},
 		},
 		"optional": map[string]any{
 			"hookos": map[string]any{

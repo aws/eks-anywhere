@@ -32,10 +32,11 @@ func DefaultActions(clusterSpec *Cluster, osImageOverride, tinkerbellLocalIP, ti
 	// 1. one that will be used initially for bootstrap and will point to tootles running on kind.
 	// 2. one that will be used when the workload cluster is up and will point to tootles running on
 	//    the workload cluster.
-	// Port 7172 is the tootles (metadata service) port in the mono-repo tinkerbell chart.
+	// Bootstrap metadata uses the kind port mapping; workload metadata shares
+	// the unified HTTP listener with iPXE.
 	metadataURLs := []string{
 		fmt.Sprintf("http://%s:7172", tinkerbellLocalIP),
-		fmt.Sprintf("http://%s:7172", tinkerbellLBIP),
+		fmt.Sprintf("http://%s:7171", tinkerbellLBIP),
 	}
 
 	additionalEnvVar := make(map[string]string)
