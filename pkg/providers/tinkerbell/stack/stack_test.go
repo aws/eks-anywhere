@@ -10,9 +10,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/internal/test"
@@ -87,6 +87,19 @@ func assertYamlFilesEqual(t *testing.T, wantYamlPath, gotYamlPath string) {
 	}
 }
 
+func assertHTTPPort(t *testing.T, valuesPath string, wantPort int) {
+	t.Helper()
+	values := unmarshalYamlToObject(t, valuesPath)
+	deployment := values["deployment"].(map[string]interface{})
+	envs := deployment["envs"].(map[string]interface{})
+	globals := envs["globals"].(map[string]interface{})
+	assert.Equal(t, float64(wantPort), globals["httpPort"])
+	service := values["service"].(map[string]interface{})
+	ports := service["ports"].(map[string]interface{})
+	http := ports["http"].(map[string]interface{})
+	assert.Equal(t, float64(wantPort), http["port"])
+}
+
 func unmarshalYamlToObject(t *testing.T, filepath string) map[string]interface{} {
 	unmarshaledObject := make(map[string]interface{})
 	bytes := test.ReadFileAsBytes(t, filepath)
@@ -116,15 +129,17 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 		hookIsoOverride   string
 		expectedFile      string
 		installOnDocker   bool
+		expectedHTTPPort  int
 		registryMirror    *registrymirror.RegistryMirror
 		proxyConfig       *v1alpha1.ProxyConfiguration
 		opts              []stack.InstallOption
 	}{
 		{
-			name:            "with_boots_on_docker",
-			expectedFile:    "testdata/expected_with_boots_on_docker.yaml",
-			installOnDocker: true,
-			opts:            []stack.InstallOption{stack.WithSmeeOnDocker()},
+			name:             "with_boots_on_docker",
+			expectedFile:     "testdata/expected_with_boots_on_docker.yaml",
+			installOnDocker:  true,
+			expectedHTTPPort: 7172,
+			opts:             []stack.InstallOption{stack.WithSmeeOnDocker()},
 		},
 		{
 			name:         "with_boots_on_kubernetes",
@@ -165,9 +180,10 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 			},
 		},
 		{
-			name:            "with_docker_options",
-			expectedFile:    "testdata/expected_with_docker_options.yaml",
-			installOnDocker: true,
+			name:             "with_docker_options",
+			expectedFile:     "testdata/expected_with_docker_options.yaml",
+			installOnDocker:  true,
+			expectedHTTPPort: 7172,
 			opts: []stack.InstallOption{
 				stack.WithSmeeOnDocker(),
 				stack.WithHostNetworkEnabled(true),
@@ -240,6 +256,10 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 					"-e", "TINKERBELL_BACKEND_KUBE_CONFIG=/kubeconfig",
 					"-e", gomock.Any(), // TINKERBELL_BACKEND_KUBE_NAMESPACE
 					"-e", gomock.Any(), // TINKERBELL_PUBLIC_IPV4
+					// Listeners must bind to the same IP that is advertised to
+					// netbooting machines (multi-NIC admin machines).
+					"-e", "TINKERBELL_BIND_ADDRESS="+testIP,
+					"-e", "TINKERBELL_HTTP_PORT=7171",
 					"-e", gomock.Any(), // TINKERBELL_TRUSTED_PROXIES
 					// Enable flags
 					"-e", "TINKERBELL_ENABLE_SMEE=true",
@@ -260,6 +280,7 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 					"-e", gomock.Any(), // TINKERBELL_DHCP_IPXE_HTTP_SCRIPT_HOST
 					"-e", gomock.Any(), // TINKERBELL_DHCP_IPXE_HTTP_SCRIPT_PORT
 					// HTTP/iPXE settings
+					"-e", "TINKERBELL_IPXE_HTTP_SCRIPT_BIND_ADDR="+testIP,
 					"-e", gomock.Any(), // TINKERBELL_IPXE_HTTP_SCRIPT_BIND_PORT
 					"-e", gomock.Any(), // TINKERBELL_IPXE_HTTP_SCRIPT_OSIE_URL
 					"-e", gomock.Any(), // TINKERBELL_IPXE_HTTP_SCRIPT_EXTRA_KERNEL_ARGS
@@ -271,8 +292,10 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 					"-e", gomock.Any(), // TINKERBELL_ISO_UPSTREAM_URL
 					// TFTP settings
 					"-e", "TINKERBELL_TFTP_SERVER_ENABLED=true",
+					"-e", "TINKERBELL_TFTP_SERVER_BIND_ADDR="+testIP,
 					// Syslog settings
 					"-e", "TINKERBELL_SYSLOG_ENABLED=true",
+					"-e", "TINKERBELL_SYSLOG_BIND_ADDR="+testIP,
 				)
 
 			}
@@ -289,6 +312,11 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 			}
 
 			assertYamlFilesEqual(t, stackTest.expectedFile, generatedOverridesPath)
+			wantPort := stackTest.expectedHTTPPort
+			if wantPort == 0 {
+				wantPort = 7171
+			}
+			assertHTTPPort(t, generatedOverridesPath, wantPort)
 		})
 	}
 }
@@ -393,6 +421,7 @@ func TestUpgrade(t *testing.T) {
 	assert.NoError(t, err)
 
 	assertYamlFilesEqual(t, "testdata/expected_upgrade.yaml", valuesFile)
+	assertHTTPPort(t, valuesFile, 7171)
 }
 
 func TestUpgradeWithRegistryMirrorAuthError(t *testing.T) {
@@ -477,6 +506,7 @@ func TestUpgradeWithProxy(t *testing.T) {
 	assert.NoError(t, err)
 
 	assertYamlFilesEqual(t, "testdata/expected_upgrade_with_proxy.yaml", valuesFile)
+	assertHTTPPort(t, valuesFile, 7171)
 }
 
 func TestUpgradeCRDsChart(t *testing.T) {

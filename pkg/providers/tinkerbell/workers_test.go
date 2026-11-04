@@ -318,6 +318,9 @@ func machineDeployment(opts ...func(*clusterv1beta2.MachineDeployment)) *cluster
 						Name:     "test-md-0-1",
 						APIGroup: "infrastructure.cluster.x-k8s.io",
 					},
+					Deletion: clusterv1beta2.MachineDeletionSpec{
+						NodeDeletionTimeoutSeconds: ptr.Int32(30),
+					},
 					Version: "v1.21.2-eks-1-21-4",
 				},
 			},

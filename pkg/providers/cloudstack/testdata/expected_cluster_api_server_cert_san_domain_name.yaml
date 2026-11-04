@@ -53,6 +53,9 @@ metadata:
   namespace: eksa-system
 spec:
   machineTemplate:
+    metadata:
+      labels:
+        node-role.kubernetes.io/control-plane: ""
     spec:
       infrastructureRef:
         apiGroup: infrastructure.cluster.x-k8s.io
@@ -151,7 +154,7 @@ spec:
               value: "2"
             - name: address
               value: 0.0.0.0
-            image: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158
+            image: <placeholder>
             imagePullPolicy: IfNotPresent
             name: kube-vip
             resources: {}

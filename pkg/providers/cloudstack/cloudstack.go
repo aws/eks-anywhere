@@ -355,6 +355,10 @@ func (p *cloudstackProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 		return fmt.Errorf("validating environment variables: %v", err)
 	}
 
+	if err := p.validateCloudStackBundleImages(clusterSpec); err != nil {
+		return err
+	}
+
 	if err := p.validateClusterSpec(ctx, clusterSpec); err != nil {
 		return fmt.Errorf("validating cluster spec: %v", err)
 	}
@@ -384,6 +388,34 @@ func (p *cloudstackProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 		if len(existingDatacenter) > 0 {
 			return fmt.Errorf("CloudStackDatacenter %s already exists", clusterSpec.CloudStackDatacenter.Name)
 		}
+	}
+
+	return nil
+}
+
+// validateCloudStackBundleImages validates that CloudStack bundle images are available.
+// CloudStack has been deprecated and all bundle URIs are now placeholders.
+// Customers must provide their own images via bundle override or pre-install CAPC.
+func (p *cloudstackProvider) validateCloudStackBundleImages(clusterSpec *cluster.Spec) error {
+	versionsBundle := clusterSpec.RootVersionsBundle()
+	cloudStack := versionsBundle.CloudStack
+
+	componentsPlaceholder := cloudStack.Components.URI == "" || cloudStack.Components.URI == "<placeholder>"
+	controllerPlaceholder := cloudStack.ClusterAPIController.URI == "" || cloudStack.ClusterAPIController.URI == "<placeholder>"
+
+	if componentsPlaceholder || controllerPlaceholder {
+		return fmt.Errorf("CloudStack provider images are not available in the bundle. " +
+			"CloudStack support has been deprecated and EKS Anywhere no longer provides CAPC images. " +
+			"You must provide your own CAPC images and infrastructure-components manifest via bundle override, " +
+			"or pre-install CAPC on your management cluster")
+	}
+
+	kubeVipEnabled := !features.IsActive(features.CloudStackKubeVipDisabled())
+	kubeVipPlaceholder := cloudStack.KubeVip.URI == "" || cloudStack.KubeVip.URI == "<placeholder>"
+	if kubeVipEnabled && kubeVipPlaceholder {
+		return fmt.Errorf("CloudStack kube-vip image is not available in the bundle and kube-vip is enabled. " +
+			"You must either provide your own kube-vip image via bundle override, " +
+			"or disable kube-vip by setting CLOUDSTACK_KUBE_VIP_DISABLED=true and using an external load balancer")
 	}
 
 	return nil
@@ -507,6 +539,11 @@ func (p *cloudstackProvider) GetDeployments() map[string][]string {
 
 // GetInfrastructureBundle returns the infrastructure bundle for the provider.
 func (p *cloudstackProvider) GetInfrastructureBundle(components *cluster.ManagementComponents) *types.InfrastructureBundle {
+	// CloudStack is deprecated — if manifests are placeholder/empty, skip the bundle.
+	if components.CloudStack.Components.URI == "" || components.CloudStack.Components.URI == "<placeholder>" {
+		return nil
+	}
+
 	folderName := fmt.Sprintf("infrastructure-cloudstack/%s/", components.CloudStack.Version)
 
 	infraBundle := types.InfrastructureBundle{

@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 	"github.com/pkg/errors"
+	"go.uber.org/mock/gomock"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
@@ -496,6 +496,9 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 		kcp.Name = cluster.Name
 		kcp.Spec = controlplanev1beta2.KubeadmControlPlaneSpec{
 			MachineTemplate: controlplanev1beta2.KubeadmControlPlaneMachineTemplate{
+				ObjectMeta: clusterv1beta2.ObjectMeta{
+					Labels: map[string]string{"node-role.kubernetes.io/control-plane": ""},
+				},
 				Spec: controlplanev1beta2.KubeadmControlPlaneMachineTemplateSpec{
 					InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
 						Name: fmt.Sprintf("%s-control-plane-1", cluster.Name),

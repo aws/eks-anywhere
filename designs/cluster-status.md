@@ -213,7 +213,7 @@ In these examples, the `Cluster` spec submitted is configured with 1 Control Pla
 
 ```
   status:
-    failureMessage: "Invalid cluster CloudStackDatacenterConfig: bad datacenter config"
+    failureMessage: "Invalid cluster VSphereDatacenterConfig: bad datacenter config"
     failureReason: "BadDatacenterConfig"
     childrenReconciledGeneration: 5
     reconciledGeneration: 2

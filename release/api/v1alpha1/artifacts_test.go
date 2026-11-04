@@ -181,3 +181,75 @@ func TestVersionsBundleSharedImages(t *testing.T) {
 		})
 	}
 }
+
+func TestCloudStackImagesSkipsPlaceholders(t *testing.T) {
+	g := NewWithT(t)
+
+	vb := &v1alpha1.VersionsBundle{
+		CloudStack: v1alpha1.CloudStackBundle{
+			ClusterAPIController: v1alpha1.Image{URI: "<placeholder>"},
+			KubeRbacProxy:        v1alpha1.Image{URI: "<placeholder>"},
+			KubeVip:              v1alpha1.Image{URI: "<placeholder>"},
+		},
+	}
+
+	g.Expect(vb.CloudStackImages()).To(BeEmpty())
+}
+
+func TestCloudStackImagesSkipsEmpty(t *testing.T) {
+	g := NewWithT(t)
+
+	vb := &v1alpha1.VersionsBundle{
+		CloudStack: v1alpha1.CloudStackBundle{},
+	}
+
+	g.Expect(vb.CloudStackImages()).To(BeEmpty())
+}
+
+func TestCloudStackImagesIncludesRealURIs(t *testing.T) {
+	g := NewWithT(t)
+
+	controller := v1alpha1.Image{URI: "public.ecr.aws/j9l9l0k3/cluster-api-provider-capc:latest"}
+	proxy := v1alpha1.Image{URI: "public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0"}
+	kubeVip := v1alpha1.Image{URI: "public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7"}
+
+	vb := &v1alpha1.VersionsBundle{
+		CloudStack: v1alpha1.CloudStackBundle{
+			ClusterAPIController: controller,
+			KubeRbacProxy:        proxy,
+			KubeVip:              kubeVip,
+		},
+	}
+
+	g.Expect(vb.CloudStackImages()).To(ConsistOf(controller, proxy, kubeVip))
+}
+
+func TestManifestsSkipsCloudStackPlaceholder(t *testing.T) {
+	g := NewWithT(t)
+
+	vb := &v1alpha1.VersionsBundle{
+		CloudStack: v1alpha1.CloudStackBundle{
+			Components: v1alpha1.Manifest{URI: "<placeholder>"},
+			Metadata:   v1alpha1.Manifest{URI: "<placeholder>"},
+		},
+	}
+
+	manifests := vb.Manifests()
+	_, hasCloudStack := manifests["cluster-api-provider-cloudstack"]
+	g.Expect(hasCloudStack).To(BeFalse(), "cloudstack should be absent from manifests when URIs are placeholders")
+}
+
+func TestManifestsIncludesCloudStackWhenRealURI(t *testing.T) {
+	g := NewWithT(t)
+
+	vb := &v1alpha1.VersionsBundle{
+		CloudStack: v1alpha1.CloudStackBundle{
+			Components: v1alpha1.Manifest{URI: "https://example.com/infrastructure-components.yaml"},
+			Metadata:   v1alpha1.Manifest{URI: "https://example.com/metadata.yaml"},
+		},
+	}
+
+	manifests := vb.Manifests()
+	_, hasCloudStack := manifests["cluster-api-provider-cloudstack"]
+	g.Expect(hasCloudStack).To(BeTrue(), "cloudstack should be present in manifests when real URIs are provided")
+}

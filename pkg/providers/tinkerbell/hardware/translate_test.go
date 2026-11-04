@@ -5,8 +5,8 @@ import (
 	"io"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/onsi/gomega"
+	"go.uber.org/mock/gomock"
 
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware/mocks"

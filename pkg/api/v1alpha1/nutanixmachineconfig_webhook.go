@@ -18,9 +18,8 @@ var nutanixmachineconfiglog = logf.Log.WithName("nutanixmachineconfig-resource")
 
 // SetupWebhookWithManager sets up and registers the webhook with the manager.
 func (in *NutanixMachineConfig) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(in).
-		WithValidator(in).
+	return ctrl.NewWebhookManagedBy(mgr, in).
+		WithCustomValidator(in).
 		Complete()
 }
 

@@ -262,6 +262,7 @@ func buildTemplateMapCP(
 		registryMirror := registrymirror.FromCluster(clusterSpec.Cluster)
 		values["registryMirrorMap"] = containerd.ToAPIEndpoints(registryMirror.NamespacedRegistryMap)
 		values["mirrorBase"] = registryMirror.BaseRegistry
+		values["mirrorBaseAPIEndpoint"] = containerd.ToAPIEndpoint(registryMirror.BaseRegistry)
 		values["publicMirror"] = containerd.ToAPIEndpoint(registryMirror.CoreEKSAMirror())
 		values["insecureSkip"] = registryMirror.InsecureSkipVerify
 		if len(registryMirror.CACertContent) > 0 {
@@ -453,6 +454,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 		registryMirror := registrymirror.FromCluster(clusterSpec.Cluster)
 		values["registryMirrorMap"] = containerd.ToAPIEndpoints(registryMirror.NamespacedRegistryMap)
 		values["mirrorBase"] = registryMirror.BaseRegistry
+		values["mirrorBaseAPIEndpoint"] = containerd.ToAPIEndpoint(registryMirror.BaseRegistry)
 		values["publicMirror"] = containerd.ToAPIEndpoint(registryMirror.CoreEKSAMirror())
 		values["insecureSkip"] = registryMirror.InsecureSkipVerify
 		if len(registryMirror.CACertContent) > 0 {

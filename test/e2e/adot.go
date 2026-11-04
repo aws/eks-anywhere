@@ -21,7 +21,7 @@ func runCuratedPackagesAdotInstall(test *framework.ClusterE2ETest) {
 	test.CreateNamespace(adotTargetNamespace)
 	test.InstallCuratedPackage(adotPackageName, adotPackagePrefix+"-"+adotPackageName,
 		kubeconfig.FromClusterName(test.ClusterName),
-		"--set mode=deployment")
+		"--set apiVersion=apps/v1 --set mode=deployment")
 	test.VerifyAdotPackageInstalled(adotPackagePrefix+"-"+adotPackageName, adotTargetNamespace)
 }
 
@@ -31,7 +31,7 @@ func runCuratedPackagesAdotInstallWithUpdate(test *framework.ClusterE2ETest) {
 	test.CreateNamespace(adotTargetNamespace)
 	test.InstallCuratedPackage(adotPackageName, adotPackagePrefix+"-"+adotPackageName,
 		kubeconfig.FromClusterName(test.ClusterName),
-		"--set mode=deployment")
+		"--set apiVersion=apps/v1 --set mode=deployment")
 	test.VerifyAdotPackageInstalled(adotPackagePrefix+"-"+adotPackageName, adotTargetNamespace)
 	test.T.Log("Waiting before updating package")
 	time.Sleep(60 * time.Second)

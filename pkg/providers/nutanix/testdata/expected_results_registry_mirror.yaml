@@ -48,6 +48,9 @@ spec:
   replicas: 3
   version: "v1.19.8-eks-1-19-4"
   machineTemplate:
+    metadata:
+      labels:
+        node-role.kubernetes.io/control-plane: ""
     spec:
       infrastructureRef:
         apiGroup: infrastructure.cluster.x-k8s.io
@@ -195,20 +198,22 @@ spec:
       path: "/etc/containerd/config_append.toml"
     - content: |
         server = "https://1.2.3.4:1234"
-        
-        [host."https://1.2.3.4:1234"]
+
+        [host."https://1.2.3.4:1234/v2"]
           capabilities = ["pull", "resolve"]
+          override_path = true
           ca = "/etc/containerd/certs.d/1.2.3.4:1234/ca.crt"
           skip_verify = true
-          [host."https://1.2.3.4:1234".header]
+          [host."https://1.2.3.4:1234/v2".header]
             authorization = "Basic dXNlcm5hbWU6cGFzc3dvcmQ="
       owner: root:root
       path: "/etc/containerd/certs.d/1.2.3.4:1234/hosts.toml"
     - content: |
         server = "https://public.ecr.aws"
-        
+
         [host."https://1.2.3.4:1234/v2/eks-anywhere"]
           capabilities = ["pull", "resolve"]
+          override_path = true
           ca = "/etc/containerd/certs.d/1.2.3.4:1234/ca.crt"
           skip_verify = true
           [host."https://1.2.3.4:1234/v2/eks-anywhere".header]

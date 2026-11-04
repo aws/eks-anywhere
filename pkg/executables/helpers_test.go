@@ -3,7 +3,7 @@ package executables_test
 import (
 	"context"
 
-	"github.com/golang/mock/gomock"
+	"go.uber.org/mock/gomock"
 
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/executables/mocks"

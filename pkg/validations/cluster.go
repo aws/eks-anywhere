@@ -382,3 +382,4 @@ func getReleaseManifestFromBundle(clusterSpec v1alpha1.Cluster, bundle *releasev
 
 	return releaseManifest, nil
 }
+

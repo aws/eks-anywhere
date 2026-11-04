@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/golang/mock/gomock"
 	"github.com/onsi/gomega"
+	"go.uber.org/mock/gomock"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 

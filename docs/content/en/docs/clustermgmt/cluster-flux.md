@@ -353,7 +353,7 @@ Follow these steps if you want to use your initial cluster to create and manage 
 ### Upgrade cluster using Gitops
       
    1. To upgrade the cluster using Gitops, modify the workload cluster yaml file with the desired changes.
-      As an example, to upgrade a cluster with version 1.34 to 1.35 you would change your spec:
+      As an example, to upgrade a cluster with version 1.35 to 1.36 you would change your spec:
        ```bash
         apiVersion: anywhere.eks.amazonaws.com/v1alpha1
         kind: Cluster
@@ -369,7 +369,7 @@ Follow these steps if you want to use your initial cluster to create and manage 
               kind: VSphereMachineConfig
               name: dev
               ...
-          kubernetesVersion: "1.35"
+          kubernetesVersion: "1.36"
           ...
       ```
 
@@ -382,7 +382,7 @@ Follow these steps if you want to use your initial cluster to create and manage 
       git push origin main
       ```
 
-For a comprehensive list of upgradeable fields for VSphere, Snow, and Nutanix, see the [upgradeable attributes section]({{< relref "./cluster-upgrades/vsphere-and-cloudstack-upgrades.md#upgradeable-cluster-attributes" >}}).
+For a comprehensive list of upgradeable fields for VSphere, Snow, and Nutanix, see the [upgradeable attributes section]({{< relref "./cluster-upgrades/vsphere-upgrades.md#upgradeable-cluster-attributes" >}}).
       
 ### Delete cluster using Gitops
 

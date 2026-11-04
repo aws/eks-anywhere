@@ -3,15 +3,22 @@ package framework
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
 
+	appsv1 "k8s.io/api/apps/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
 	"github.com/aws/eks-anywhere/pkg/retrier"
+	"github.com/aws/eks-anywhere/pkg/semver"
+	"github.com/aws/eks-anywhere/pkg/utils/oci"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
@@ -36,6 +43,13 @@ func (e *ClusterE2ETest) UninstallCilium() {
 	if err := cmd.Run(); err != nil {
 		e.T.Fatal(err)
 	}
+	c, err := buildClusterClient(e.KubeconfigFilePath())
+	if err != nil {
+		e.T.Fatal(err)
+	}
+	if err := deleteCiliumRBAC(context.Background(), c); err != nil {
+		e.T.Fatal(err)
+	}
 }
 
 // ValidateCiliumCLIAvailable ensures the Cilium CLI can be found on the PATH.
@@ -45,18 +59,26 @@ func (e *ClusterE2ETest) ValidateCiliumCLIAvailable() {
 	}
 }
 
-// InstallOSSCilium installs an open source version of Cilium. The version is dependent on the
-// Cilium CLI version available on the PATH.
-func (e *ClusterE2ETest) InstallOSSCilium() {
-	e.ValidateCiliumCLIAvailable()
+// InstallOSSCilium installs the upstream chart matching the Cilium version already on the nodes.
+func (e *ClusterE2ETest) InstallOSSCilium(version string) {
+	ctx := context.Background()
+	e.T.Logf("Installing OSS Cilium %s", version)
+	helm := executableBuilder(ctx, e.T).BuildHelmExecutable()
+	if err := helm.InstallChart(ctx, "cilium", "oci://quay.io/cilium/charts/cilium", version,
+		e.KubeconfigFilePath(), constants.KubeSystemNamespace, "", false,
+		[]string{"operator.replicas=1", "ipam.mode=kubernetes"}); err != nil {
+		e.T.Fatal(err)
+	}
 
-	cmd := exec.Command("cilium", "install")
-	cmd.Env = append(cmd.Env, "KUBECONFIG="+e.KubeconfigFilePath())
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	e.T.Log("Installing OSS Cilium using Cilium CLI")
-	if err := cmd.Run(); err != nil {
+	c, err := buildClusterClient(e.KubeconfigFilePath())
+	if err != nil {
+		e.T.Fatal(err)
+	}
+	if err := AwaitCiliumDaemonSetReady(ctx, c, 12, 15*time.Second); err != nil {
+		e.T.Fatal(err)
+	}
+	if err := e.KubectlClient.WaitForDeployment(ctx, e.Cluster(), "3m", "Available=true",
+		cilium.DeploymentName, constants.KubeSystemNamespace); err != nil {
 		e.T.Fatal(err)
 	}
 }
@@ -64,8 +86,37 @@ func (e *ClusterE2ETest) InstallOSSCilium() {
 // ReplaceCiliumWithOSSCilium replaces the current Cilium installation in the workload cluster
 // with an open source version. See InstallOSSCilium().
 func (e *ClusterE2ETest) ReplaceCiliumWithOSSCilium() {
+	ds, err := e.KubectlClient.GetDaemonSet(context.Background(), cilium.DaemonSetName,
+		constants.KubeSystemNamespace, e.KubeconfigFilePath())
+	if err != nil {
+		e.T.Fatal(err)
+	}
+	version, err := ossCiliumVersion(ds)
+	if err != nil {
+		e.T.Fatal(err)
+	}
 	e.UninstallCilium()
-	e.InstallOSSCilium()
+	e.InstallOSSCilium(version)
+}
+
+func ossCiliumVersion(ds *appsv1.DaemonSet) (string, error) {
+	if ds == nil {
+		return "", errors.New("Cilium DaemonSet not found")
+	}
+	for _, container := range ds.Spec.Template.Spec.Containers {
+		if container.Name != "cilium-agent" {
+			continue
+		}
+		image, _, _ := strings.Cut(container.Image, "@")
+		_, tag := oci.Split(image)
+		version, err := semver.New(tag)
+		if err != nil {
+			return "", fmt.Errorf("parsing Cilium version: %w", err)
+		}
+		// Reusing the upstream release avoids downgrading the nodes' BPF maps.
+		return fmt.Sprintf("%d.%d.%d", version.Major, version.Minor, version.Patch), nil
+	}
+	return "", errors.New("Cilium agent container not found")
 }
 
 // ValidateEKSACiliumNotInstalled inspects the workload cluster for an EKSA Cilium installation
@@ -124,4 +175,28 @@ func AwaitCiliumDaemonSetReady(ctx context.Context, client client.Client, retrie
 
 		return nil
 	})
+}
+
+func deleteCiliumRBAC(ctx context.Context, c client.Client) error {
+	// The CLI's older chart can omit RBAC introduced by the installed Cilium release.
+	selector := client.MatchingLabels{"app.kubernetes.io/part-of": "cilium"}
+	bindings := &rbacv1.RoleBindingList{}
+	if err := c.List(ctx, bindings, selector); err != nil {
+		return fmt.Errorf("listing Cilium role bindings: %w", err)
+	}
+	for i := range bindings.Items {
+		if err := client.IgnoreNotFound(c.Delete(ctx, &bindings.Items[i])); err != nil {
+			return fmt.Errorf("deleting Cilium role binding: %w", err)
+		}
+	}
+	roles := &rbacv1.RoleList{}
+	if err := c.List(ctx, roles, selector); err != nil {
+		return fmt.Errorf("listing Cilium roles: %w", err)
+	}
+	for i := range roles.Items {
+		if err := client.IgnoreNotFound(c.Delete(ctx, &roles.Items[i])); err != nil {
+			return fmt.Errorf("deleting Cilium role: %w", err)
+		}
+	}
+	return nil
 }

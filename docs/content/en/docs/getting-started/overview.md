@@ -11,11 +11,11 @@ description: >
 
 #### Overview
 
-Kubernetes clusters require infrastructure capacity for the Kubernetes control plane, etcd, and worker nodes. EKS Anywhere provisions and manages this capacity on your behalf when you create EKS Anywhere clusters by interacting with the underlying infrastructure interfaces. Today, EKS Anywhere supports vSphere, bare metal, Snow, Apache CloudStack and Nutanix infrastructure providers. EKS Anywhere can also run on Docker for dev/test and non-production deployments only.
+Kubernetes clusters require infrastructure capacity for the Kubernetes control plane, etcd, and worker nodes. EKS Anywhere provisions and manages this capacity on your behalf when you create EKS Anywhere clusters by interacting with the underlying infrastructure interfaces. Today, EKS Anywhere supports vSphere, bare metal, Snow, and Nutanix infrastructure providers. EKS Anywhere can also run on Docker for dev/test and non-production deployments only.
 
 If you are creating your first EKS Anywhere cluster, you must first prepare an Administrative machine (Admin machine) where you install and run the EKS Anywhere CLI. The EKS Anywhere CLI (`eksctl anywhere`) is the primary tool you will use to create and manage your first cluster. 
 
-Your interface for configuring EKS Anywhere clusters is the cluster specification yaml (cluster spec). This cluster spec is where you define cluster configuration including cluster name, network, Kubernetes version, control plane settings, worker node settings, and operating system. You also specify environment-specific configuration in the cluster spec for vSphere, bare metal, Snow, CloudStack, and Nutanix. When you perform cluster lifecycle operations, you modify the cluster spec, and then apply the cluster spec changes to your cluster in a declarative manner.
+Your interface for configuring EKS Anywhere clusters is the cluster specification yaml (cluster spec). This cluster spec is where you define cluster configuration including cluster name, network, Kubernetes version, control plane settings, worker node settings, and operating system. You also specify environment-specific configuration in the cluster spec for vSphere, bare metal, Snow, and Nutanix. When you perform cluster lifecycle operations, you modify the cluster spec, and then apply the cluster spec changes to your cluster in a declarative manner.
 
 Before creating EKS Anywhere clusters, you must determine the operating system you will use. EKS Anywhere supports Bottlerocket, Ubuntu, and Red Hat Enterprise Linux (RHEL). All operating systems are not supported on each infrastructure provider. If you are using Ubuntu or RHEL, you must build your images before creating your cluster. For details reference the [Operating System Management documenation]({{< relref "../osmgmt" >}})
 
@@ -47,7 +47,6 @@ Before creating your first EKS Anywhere cluster, you must choose your infrastruc
 - [VMWare vSphere]({{< relref "./vsphere" >}}) 
 - [Bare Metal]({{< relref "./baremetal" >}}) 
 - [Snow]({{< relref "./snow" >}}) 
-- [CloudStack]({{< relref "./cloudstack" >}}) 
 - [Nutanix]({{< relref "./nutanix" >}}) 
 
 #### Deployment Architectures

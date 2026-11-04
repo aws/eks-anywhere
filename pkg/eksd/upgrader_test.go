@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
+	"go.uber.org/mock/gomock"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	m "github.com/aws/eks-anywhere/internal/test/mocks"

@@ -1,6 +1,8 @@
 package clusterapi
 
 import (
+	"math"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 
@@ -14,11 +16,21 @@ const (
 )
 
 // durationToSeconds converts a *metav1.Duration to *int32 seconds for v1beta2.
+// Durations that exceed MaxInt32 seconds are capped to avoid integer overflow.
 func durationToSeconds(d *metav1.Duration) *int32 {
 	if d == nil {
 		return nil
 	}
-	s := int32(d.Duration.Seconds())
+	seconds := math.Trunc(d.Duration.Seconds())
+	if seconds > math.MaxInt32 {
+		s := int32(math.MaxInt32)
+		return &s
+	}
+	if seconds < 0 {
+		s := int32(0)
+		return &s
+	}
+	s := int32(seconds)
 	return &s
 }
 

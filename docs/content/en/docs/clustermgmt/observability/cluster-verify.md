@@ -47,7 +47,7 @@ eksa-system   w01-md-0-799ffd7946x5gz8w-p94mt   w01       w01-md-0-799ffd7946x5g
 ```
 
 #### Check cluster components
-To verify cluster components are present and running, use the `kubectl` command to show that the system Pods are `Running`. The number of Pods may vary based on the infrastructure provider (vSphere, bare metal, Snow, Nutanix, CloudStack), and whether the cluster is a workload cluster or a management cluster.
+To verify cluster components are present and running, use the `kubectl` command to show that the system Pods are `Running`. The number of Pods may vary based on the infrastructure provider (vSphere, bare metal, Snow, Nutanix), and whether the cluster is a workload cluster or a management cluster.
 
 ```bash
 kubectl get pods -A

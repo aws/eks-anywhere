@@ -12,7 +12,7 @@ description: >
 
 #### Where can I deploy EKS Anywhere?
 
-EKS Anywhere is designed to run on user-managed infrastructure in user-managed environments. EKS Anywhere supports different types of infrastructure including VMware vSphere, bare metal, Nutanix, AWS Snowball Edge, and Apache CloudStack. 
+EKS Anywhere is designed to run on user-managed infrastructure in user-managed environments. EKS Anywhere supports different types of infrastructure including VMware vSphere, bare metal, Nutanix, and AWS Snowball Edge. 
 
 #### Can I run EKS Anywhere in the cloud?
 
@@ -42,19 +42,18 @@ With EKS Hybrid Nodes, there are no upfront commitments or minimum fees and you 
 
 #### What infrastructure do I need to get started with EKS Anywhere?
 
-To get started with EKS Anywhere, you need 1 [admin machine]({{< relref "../../getting-started/install" >}}) and at least 1 VM for the control plane and 1 VM for the worker node if you are running on VMware vSphere, Nutanix, AWS Snowball Edge, or Apache CloudStack. If you are running on bare metal, you need at least 1 [admin machine]({{< relref "../../getting-started/install" >}}) and 1 physical server for the co-located control plane and worker node.
+To get started with EKS Anywhere, you need 1 [admin machine]({{< relref "../../getting-started/install" >}}) and at least 1 VM for the control plane and 1 VM for the worker node if you are running on VMware vSphere, Nutanix, or AWS Snowball Edge. If you are running on bare metal, you need at least 1 [admin machine]({{< relref "../../getting-started/install" >}}) and 1 physical server for the co-located control plane and worker node.
 
 #### What infrastructure do I need to run EKS Anywhere in production?
 
 To use EKS Anywhere in production, it is generally recommended to run separate management and workload clusters, see [EKS Anywhere Architecture]({{< relref "../../concepts/architecture" >}}) for more information. It is recommended to run both the management cluster and workload clusters in a highly available fashion with the Kubernetes control plane instances spread across multiple virtual or physical hosts. For management clusters, management components are run on worker nodes that are separate from the Kubernetes control plane machines. For workload clusters, application workloads are run on worker nodes that are separate from the Kubernetes control plane machines, unless you are running on bare metal which allows for co-locating the Kubernetes control plane and worker nodes on the same physical machines. 
 
-If you are using VMware vSphere, Nutanix, AWS Snowball Edge, or Apache CloudStack for your infrastructure, it is recommended to run at least 3 separate virtual machines for the etcd instances of the Kubernetes control plane, which can be configured with the `externalEctdConfiguration` setting of the EKS Anywhere cluster specification. For more information, see the installation [Overview]({{< relref "../../getting-started/overview" >}}) and the requirements for using EKS Anywhere for each infrastructure provider below.
+If you are using VMware vSphere, Nutanix, or AWS Snowball Edge for your infrastructure, it is recommended to run at least 3 separate virtual machines for the etcd instances of the Kubernetes control plane, which can be configured with the `externalEctdConfiguration` setting of the EKS Anywhere cluster specification. For more information, see the installation [Overview]({{< relref "../../getting-started/overview" >}}) and the requirements for using EKS Anywhere for each infrastructure provider below.
 
 - [Requirements for VMware vSphere]({{< relref "../../getting-started/vsphere/vsphere-prereq">}})
 - [Requirements for bare metal]({{< relref "../../getting-started/baremetal/bare-prereq">}})
 - [Requirements for Nutanix]({{< relref "../../getting-started/nutanix/nutanix-prereq">}})
 - [Requirements for Snow]({{< relref "../../getting-started/snow/snow-getstarted/#prerequisite-checklist">}})
-- [Requirements for Apache CloudStack]({{< relref "../../getting-started/cloudstack/cloudstack-prereq">}})
 
 #### What permissions does EKS Anywhere need to manage infrastructure used for the cluster?
 EKS Anywhere needs permissions to create the virtual machines that are used as nodes in EKS Anywhere clusters. If you are running EKS Anywhere on bare metal, EKS Anywhere needs to be able to remotely manage your bare metal servers for network booting. You must configure these permissions before creating EKS Anywhere clusters.
@@ -63,7 +62,6 @@ EKS Anywhere needs permissions to create the virtual machines that are used as n
 - [Prepare hardware for bare metal]({{< relref "../../getting-started/baremetal/bare-preparation">}})
 - [Prepare Nutanix]({{< relref "../../getting-started/nutanix/nutanix-preparation">}})
 - [Prepare Snow]({{< relref "../../getting-started/snow/snow-getstarted">}})
-- [Prepare Apache CloudStack]({{< relref "../../getting-started/cloudstack/cloudstack-preparation">}})
 
 #### What components does EKS Anywhere use?
 

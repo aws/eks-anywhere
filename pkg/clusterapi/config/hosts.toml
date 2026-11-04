@@ -2,6 +2,7 @@ server = "https://{{ .server }}"
 
 [host."https://{{ .host }}"]
   capabilities = ["pull", "resolve"]
+  override_path = true
 {{- if .registryCACert }}
   ca = "/etc/containerd/certs.d/{{ .mirrorBase }}/ca.crt"
 {{- end }}

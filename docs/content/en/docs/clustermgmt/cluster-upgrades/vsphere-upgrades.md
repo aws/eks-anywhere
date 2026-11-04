@@ -1,12 +1,12 @@
 ---
-title: "Upgrade vSphere, CloudStack, Nutanix, or Snow cluster"
-linkTitle: "Upgrade vSphere, CloudStack, Nutanix, or Snow cluster"
+title: "Upgrade vSphere, Nutanix, or Snow cluster"
+linkTitle: "Upgrade vSphere, Nutanix, or Snow cluster"
 weight: 20
 aliases:
     /docs/tasks/cluster/cluster-upgrades/vsphere-and-cloudstack-upgrades/
 date: 2017-01-05
 description: >
-  How to perform vSphere, CloudStack, Nutanix, or Snow cluster upgrades
+  How to perform vSphere, Nutanix, or Snow cluster upgrades
 ---
 
 {{% alert title="Note" color="warning" %}}
@@ -72,7 +72,7 @@ To the format output in json, add `-o json` to the end of the command line.
 
 To perform a cluster upgrade you can modify your cluster specification `kubernetesVersion` field to the desired version.
 
-As an example, to upgrade a cluster with version 1.34 to 1.35 you would change your spec
+As an example, to upgrade a cluster with version 1.35 to 1.36 you would change your spec
 
 ```
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
@@ -88,13 +88,13 @@ spec:
       kind: VSphereMachineConfig
       name: dev
       ...
-  kubernetesVersion: "1.35"
+  kubernetesVersion: "1.36"
       ...
 ```
 
 >**_NOTE:_** If you have a custom machine image for your nodes you may also need to update your `vsphereMachineConfig` with a new `template`. Refer to [vSphere Artifacts]({{< relref "../../osmgmt/artifacts/#vsphere-artifacts" >}}) to build a new OVA template.
 
-and then you will run the [upgrade cluster command]({{< relref "vsphere-and-cloudstack-upgrades/#upgrade-cluster-command" >}}).
+and then you will run the [upgrade cluster command]({{< relref "vsphere-upgrades/#upgrade-cluster-command" >}}).
 
 #### Upgrade cluster command
 
@@ -259,17 +259,6 @@ allowing you to upgrade a number of fields simultaneously with the same procedur
 - `containersVolume`
 - `osFamily`
 - `network`
-
-`CloudStackDatacenterConfig`:
-- `availabilityZones` (Can add and remove availability zones provided at least 1 previously configured zone is still present)
-
-`CloudStackMachineConfig`:
-- `template`
-- `computeOffering`
-- `diskOffering`
-- `userCustomDetails`
-- `symlinks`
-- `users`
 
 `OIDCConfig`:
 - `clientID`

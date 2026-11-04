@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/golang/mock/gomock"
+	"go.uber.org/mock/gomock"
 	policy "k8s.io/api/policy/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 

@@ -57,6 +57,11 @@ func addNTPScheme(server string) string {
 	if strings.Contains(server, "://") {
 		return server
 	}
+	// Bracket bare IPv6 literals so url.ParseRequestURI doesn't treat the
+	// colons as a host:port separator (Go 1.26 parses unbracketed IPv6 as invalid).
+	if ip := net.ParseIP(server); ip != nil && strings.Contains(server, ":") {
+		return fmt.Sprintf("udp://[%s]", server)
+	}
 	return fmt.Sprintf("udp://%s", server)
 }
 

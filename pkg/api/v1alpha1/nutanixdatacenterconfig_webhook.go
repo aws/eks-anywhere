@@ -18,9 +18,8 @@ var nutanixdatacenterconfiglog = logf.Log.WithName("nutanixdatacenterconfig-reso
 
 // SetupWebhookWithManager sets up the webhook with the manager.
 func (r *NutanixDatacenterConfig) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(r).
-		WithValidator(r).
+	return ctrl.NewWebhookManagedBy(mgr, r).
+		WithCustomValidator(r).
 		Complete()
 }
 

@@ -638,13 +638,8 @@ func (c *ClusterManager) CreateEKSANamespace(ctx context.Context, cluster *types
 }
 
 func (c *ClusterManager) ApplyBundles(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
-	bundleObj, err := yaml.Marshal(clusterSpec.Bundles)
-	if err != nil {
-		return fmt.Errorf("outputting bundle yaml: %v", err)
-	}
 	logger.V(1).Info("Applying Bundles to cluster")
-	err = c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, bundleObj)
-	if err != nil {
+	if err := c.clusterClient.Apply(ctx, cluster.KubeconfigFile, clusterSpec.Bundles, kubernetes.KubectlApplyOptions{ServerSide: true, ForceOwnership: true}); err != nil {
 		return fmt.Errorf("applying bundle spec: %v", err)
 	}
 

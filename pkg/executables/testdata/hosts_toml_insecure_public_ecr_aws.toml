@@ -2,4 +2,5 @@ server = "https://public.ecr.aws"
 
 [host."https://registry-mirror.test:443/v2/eks-anywhere"]
   capabilities = ["pull", "resolve"]
+  override_path = true
   skip_verify = true

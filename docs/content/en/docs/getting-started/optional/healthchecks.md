@@ -11,9 +11,9 @@ description: >
 ## MachineHealthCheck Support
 
 #### Provider support details
-|                | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
-|:--------------:|:-------:|:----------:|:-------:|:----------:|:----:|
-| **Supported?** |   ✓	    |     ✓      |   	 ✓   |     ✓      |  ✓   |
+|                | vSphere | Bare Metal | Nutanix | Snow |
+|:--------------:|:-------:|:----------:|:-------:|:----:|
+| **Supported?** |   ✓	    |     ✓      |   	 ✓   |  ✓   |
 
 You can configure EKS Anywhere to specify timeouts and `maxUnhealthy` values for machine health checks.
 

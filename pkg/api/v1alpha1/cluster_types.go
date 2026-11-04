@@ -889,6 +889,8 @@ const (
 	Kube133 KubernetesVersion = "1.33"
 	Kube134 KubernetesVersion = "1.34"
 	Kube135 KubernetesVersion = "1.35"
+	Kube136 KubernetesVersion = "1.36"
+	Kube137 KubernetesVersion = "1.37"
 )
 
 // KubeVersionToSemver converts kube version to semver for comparisons.
@@ -961,10 +963,12 @@ type CiliumConfig struct {
 	// +optional
 	CNIExclusive *bool `json:"cniExclusive,omitempty"`
 
-	// HelmValues specifies the complete Helm values configuration for Cilium in YAML format.
-	// When set, this parameter takes precedence over all other Cilium-specific fields in this configuration.
-	// All other Cilium properties (CNIExclusive, EgressMasqueradeInterfaces, IPv4NativeRoutingCIDR, etc.)
-	// will be ignored when HelmValues is specified.
+	// HelmValues specifies additional Helm values configuration for Cilium in YAML format.
+	// When set, these values are merged on top of the EKS-A managed defaults, with the
+	// user-provided values taking precedence. EKS-A defaults are preserved for any keys the
+	// user does not set (e.g. ipam.mode, cni.chainingMode, tunnelProtocol, image, operator).
+	// The deprecated Cilium-specific fields (CNIExclusive, EgressMasqueradeInterfaces,
+	// IPv4NativeRoutingCIDR, RoutingMode, PolicyEnforcementMode) are ignored when HelmValues is set.
 	// +kubebuilder:pruning:PreserveUnknownFields
 	// +kubebuilder:validation:Schemaless
 	// +optional

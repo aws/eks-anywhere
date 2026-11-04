@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
 	tinkv1alpha1 "github.com/tinkerbell/tink/api/v1alpha1"
+	"go.uber.org/mock/gomock"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

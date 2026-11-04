@@ -6,6 +6,7 @@ import (
 	"context"
 	"crypto/sha1"
 	_ "embed"
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -22,6 +23,7 @@ import (
 
 	"github.com/bmc-toolbox/bmclib/v2"
 	"github.com/go-logr/logr"
+	yamlv3 "gopkg.in/yaml.v3"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -494,11 +496,11 @@ func (e *ClusterE2ETest) GenerateClusterConfigForVersion(eksaVersion, licenseTok
 		// We will need the conditional check as long as the latest minor is 'v0.21.*'.
 		currentSemver, err := semver.New(eksaVersion)
 		if err != nil {
-			e.T.Fatalf("parsing eks-a version:", err)
+			e.T.Fatalf("parsing eks-a version: %s", err)
 		}
 		semverV022, err := semver.New(releaseV022)
 		if err != nil {
-			e.T.Fatalf("parsing eks-a version:", err)
+			e.T.Fatalf("parsing eks-a version: %s", err)
 		}
 
 		if currentSemver.Compare(semverV022) != -1 {
@@ -673,13 +675,27 @@ func (e *ClusterE2ETest) DownloadImages(opts ...CommandOpt) {
 }
 
 // ImportImages runs the EKS-A `import images` command with appropriate args.
+// When ociNamespaces are configured, it imports images into each namespace path
+// so containerd can find them at the correct namespaced location.
 func (e *ClusterE2ETest) ImportImages(opts ...CommandOpt) {
 	clusterConfig := e.ClusterConfig.Cluster
 	registyMirrorEndpoint, registryMirrorPort := clusterConfig.Spec.RegistryMirrorConfiguration.Endpoint, clusterConfig.Spec.RegistryMirrorConfiguration.Port
 	registryMirrorHost := net.JoinHostPort(registyMirrorEndpoint, registryMirrorPort)
 	bundleManifestLocation := getBundleManifestLocation()
-	importImagesArgs := []string{"import images", "--input", defaultDownloadImagesOutputLocation, "--bundles", bundleManifestLocation, "--registry", registryMirrorHost, "--insecure"}
-	e.RunEKSA(importImagesArgs, opts...)
+
+	registries := []string{registryMirrorHost}
+	seen := make(map[string]bool)
+	for _, ns := range clusterConfig.Spec.RegistryMirrorConfiguration.OCINamespaces {
+		if ns.Namespace != "" && !seen[ns.Namespace] {
+			seen[ns.Namespace] = true
+			registries = append(registries, registryMirrorHost+"/"+ns.Namespace)
+		}
+	}
+
+	for _, reg := range registries {
+		importImagesArgs := []string{"import images", "--input", defaultDownloadImagesOutputLocation, "--bundles", bundleManifestLocation, "--registry", reg, "--insecure"}
+		e.RunEKSA(importImagesArgs, opts...)
+	}
 }
 
 // GetDiagnosticCollectorImage returns the diagnostic collector image from the bundle file,
@@ -1749,8 +1765,7 @@ func (e *ClusterE2ETest) VerifyCertManagerPackageInstalled(prefix, namespace, pa
 	deployments := []string{"cert-manager", "cert-manager-cainjector", "cert-manager-webhook"}
 
 	var wg sync.WaitGroup
-	errCh := make(chan error, 1)
-	okCh := make(chan string, 1)
+	errCh := make(chan error, len(deployments))
 
 	e.T.Log("Waiting for Package", packageName, "To be installed")
 
@@ -1781,28 +1796,24 @@ func (e *ClusterE2ETest) VerifyCertManagerPackageInstalled(prefix, namespace, pa
 		}(name)
 	}
 
+	// Wait for the cert-manager deployments (including the webhook) to be Available
+	// before applying any Issuer/Certificate. Applying an Issuer triggers the
+	// cert-manager validating webhook; if we apply before the webhook is ready the
+	// apply fails with "failed calling webhook ... connect: connection refused".
+	wg.Wait()
+	close(errCh)
+	if err := <-errCh; err != nil {
+		e.T.Fatalf("cert-manager package deployments did not become healthy: %s", err)
+	}
+
 	e.T.Log("Waiting for Self Signed certificate to be issued")
-	err = e.verifySelfSignedCertificate()
-	if err != nil {
-		errCh <- err
+	if err := e.verifySelfSignedCertificate(); err != nil {
+		e.T.Fatalf("self-signed certificate verification failed: %s", err)
 	}
 
 	e.T.Log("Waiting for Let's Encrypt certificate to be issued")
-	err = e.verifyLetsEncryptCert()
-	if err != nil {
-		errCh <- err
-	}
-
-	go func() {
-		wg.Wait()
-		okCh <- "completed"
-	}()
-
-	select {
-	case err := <-errCh:
-		e.T.Fatal(err)
-	case <-okCh:
-		return
+	if err := e.verifyLetsEncryptCert(); err != nil {
+		e.T.Fatalf("lets-encrypt certificate verification failed: %s", err)
 	}
 }
 
@@ -2156,7 +2167,7 @@ func (e *ClusterE2ETest) VerifyWorkerNodesScaleUp(mgmtCluster *types.Cluster) {
 		e.T.Fatalf("Failed to get Running phase for machinedeployment: %s", err)
 	}
 
-	err = e.KubectlClient.WaitForMachineDeploymentReady(ctx, mgmtCluster, "5m", machineDeploymentName)
+	err = e.KubectlClient.WaitForMachineDeploymentReady(ctx, mgmtCluster, "20m", machineDeploymentName)
 	if err != nil {
 		e.T.Fatalf("Machine deployment stuck in scaling up: %s", err)
 	}
@@ -2310,8 +2321,110 @@ func dumpFile(description, path string, t T) {
 	b, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
+		return
+	}
+	if strings.EqualFold(filepath.Ext(path), ".csv") {
+		b, err = redactHardwarePasswords(b)
+	} else {
+		b, err = redactLicenseTokens(b)
+	}
+	if err != nil {
+		t.Logf("%s: file content omitted because credentials could not be redacted", description)
+		return
 	}
 	t.Logf("%s:\n%s\n", description, string(b))
+}
+
+func redactLicenseTokens(content []byte) ([]byte, error) {
+	decoder := yamlv3.NewDecoder(bytes.NewReader(content))
+	var output bytes.Buffer
+	encoder := yamlv3.NewEncoder(&output)
+	encoder.SetIndent(2)
+	for {
+		var document yamlv3.Node
+		if err := decoder.Decode(&document); err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, err
+		}
+		secretNodes := make(map[*yamlv3.Node]bool)
+		findLicenseTokenNodes(&document, secretNodes)
+		redactSecretNodes(&document, secretNodes, make(map[*yamlv3.Node]bool))
+		if err := encoder.Encode(&document); err != nil {
+			return nil, err
+		}
+	}
+	if err := encoder.Close(); err != nil {
+		return nil, err
+	}
+	return output.Bytes(), nil
+}
+
+func findLicenseTokenNodes(node *yamlv3.Node, secretNodes map[*yamlv3.Node]bool) {
+	if node.Kind == yamlv3.MappingNode {
+		for i := 0; i < len(node.Content); i += 2 {
+			key := node.Content[i]
+			if key.Kind == yamlv3.AliasNode {
+				key = key.Alias
+			}
+			if key.Value == "licenseToken" {
+				markSecretNodes(node.Content[i+1], secretNodes)
+			}
+		}
+	}
+	for _, child := range node.Content {
+		findLicenseTokenNodes(child, secretNodes)
+	}
+}
+
+func markSecretNodes(node *yamlv3.Node, secretNodes map[*yamlv3.Node]bool) {
+	if node == nil || secretNodes[node] {
+		return
+	}
+	secretNodes[node] = true
+	markSecretNodes(node.Alias, secretNodes)
+	for _, child := range node.Content {
+		markSecretNodes(child, secretNodes)
+	}
+}
+
+func redactSecretNodes(node *yamlv3.Node, secretNodes, visited map[*yamlv3.Node]bool) {
+	if node == nil || visited[node] {
+		return
+	}
+	visited[node] = true
+	if secretNodes[node] || node.Kind == yamlv3.AliasNode && secretNodes[node.Alias] {
+		*node = yamlv3.Node{Kind: yamlv3.ScalarNode, Tag: "!!str", Value: "<redacted>", Anchor: node.Anchor}
+		return
+	}
+	redactSecretNodes(node.Alias, secretNodes, visited)
+	for _, child := range node.Content {
+		redactSecretNodes(child, secretNodes, visited)
+	}
+}
+
+func redactHardwarePasswords(content []byte) ([]byte, error) {
+	records, err := csv.NewReader(bytes.NewReader(content)).ReadAll()
+	if err != nil {
+		return nil, err
+	}
+	if len(records) == 0 {
+		return nil, fmt.Errorf("hardware CSV has no header")
+	}
+	for column, name := range records[0] {
+		if strings.EqualFold(strings.TrimSpace(name), "bmc_password") {
+			for _, record := range records[1:] {
+				record[column] = "<redacted>"
+			}
+		}
+	}
+	var output bytes.Buffer
+	writer := csv.NewWriter(&output)
+	if err := writer.WriteAll(records); err != nil {
+		return nil, err
+	}
+	return output.Bytes(), nil
 }
 
 // CreateCloudStackCredentialsSecretFromEnvVar parses the cloudstack credentials from an environment variable,

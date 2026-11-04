@@ -8,7 +8,7 @@ description: >
   EKS Anywhere architecture overview
 ---
 
-EKS Anywhere supports many different types of infrastructure including VMWare vSphere, bare metal, Nutanix, Apache CloudStack, and AWS Snow. EKS Anywhere is built on the Kubernetes sub-project called [Cluster API](https://cluster-api.sigs.k8s.io/) (CAPI), which is focused on providing declarative APIs and tooling to simplify the provisioning, upgrading, and operating of multiple Kubernetes clusters. EKS Anywhere inherits many of the same architectural patterns and concepts that exist in CAPI. Reference the [CAPI documentation](https://cluster-api.sigs.k8s.io/user/concepts) to learn more about the core CAPI concepts.
+EKS Anywhere supports many different types of infrastructure including VMWare vSphere, bare metal, Nutanix, and AWS Snow. EKS Anywhere is built on the Kubernetes sub-project called [Cluster API](https://cluster-api.sigs.k8s.io/) (CAPI), which is focused on providing declarative APIs and tooling to simplify the provisioning, upgrading, and operating of multiple Kubernetes clusters. EKS Anywhere inherits many of the same architectural patterns and concepts that exist in CAPI. Reference the [CAPI documentation](https://cluster-api.sigs.k8s.io/user/concepts) to learn more about the core CAPI concepts.
 
 ## Components
 

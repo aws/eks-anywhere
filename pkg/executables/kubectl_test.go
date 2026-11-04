@@ -12,9 +12,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 	tinkv1alpha1 "github.com/tinkerbell/tink/api/v1alpha1"
+	"go.uber.org/mock/gomock"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -3681,6 +3681,74 @@ func TestWaitJSONPathLoopRetrierError(t *testing.T) {
 	tt.Expect(tt.k.WaitJSONPathLoop(tt.ctx, tt.cluster.KubeconfigFile, "2m", "", "", "packages.packages.eks.amazonaws.com/testpackage", "eksa-system")).To(MatchError(ContainSubstring("executing wait")))
 }
 
+func TestWaitJSONPathLoopRetriesNotFound(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name    string
+		message string
+	}{
+		{
+			name:    "namespace is not yet visible",
+			message: `Error from server (NotFound): namespaces "eksa-system" not found`,
+		},
+		{
+			name:    "cluster is not yet visible",
+			message: `Error from server (NotFound): clusters.cluster.x-k8s.io "test-cluster" not found`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			g := NewWithT(t)
+			k, ctx, cluster, e := newKubectl(t)
+			params := []string{
+				"get", "clusters.cluster.x-k8s.io/test-cluster",
+				"-o", "jsonpath='{.status.initialization.controlPlaneInitialized}'",
+				"--kubeconfig", cluster.KubeconfigFile, "-n", constants.EksaSystemNamespace,
+			}
+			gomock.InOrder(
+				e.EXPECT().Execute(ctx, params).Return(bytes.Buffer{}, errors.New(tt.message)),
+				e.EXPECT().Execute(ctx, params).Return(*bytes.NewBufferString("'false'"), nil),
+				e.EXPECT().Execute(ctx, params).Return(*bytes.NewBufferString("'true'"), nil),
+			)
+
+			err := k.WaitJSONPathLoop(ctx, cluster.KubeconfigFile, "25s",
+				"status.initialization.controlPlaneInitialized", "true",
+				"clusters.cluster.x-k8s.io/test-cluster", constants.EksaSystemNamespace)
+
+			g.Expect(err).NotTo(HaveOccurred())
+		})
+	}
+}
+
+func TestWaitJSONPathLoopMissingResourceTimesOut(t *testing.T) {
+	t.Parallel()
+	g := NewWithT(t)
+	k, ctx, cluster, e := newKubectl(t)
+	e.EXPECT().Execute(ctx, gomock.Any()).Return(bytes.Buffer{},
+		errors.New(`Error from server (NotFound): namespaces "eksa-system" not found`))
+
+	err := k.WaitJSONPathLoop(ctx, cluster.KubeconfigFile, "7s",
+		"status.initialization.controlPlaneInitialized", "true",
+		"clusters.cluster.x-k8s.io/test-cluster", constants.EksaSystemNamespace)
+
+	g.Expect(err).To(MatchError(ContainSubstring("timed out")))
+}
+
+func TestWaitJSONPathLoopForbiddenIsTerminal(t *testing.T) {
+	t.Parallel()
+	g := NewWithT(t)
+	k, ctx, cluster, e := newKubectl(t)
+	e.EXPECT().Execute(ctx, gomock.Any()).Return(bytes.Buffer{},
+		errors.New(`Error from server (Forbidden): clusters.cluster.x-k8s.io is forbidden`))
+
+	err := k.WaitJSONPathLoop(ctx, cluster.KubeconfigFile, "25s",
+		"status.initialization.controlPlaneInitialized", "true",
+		"clusters.cluster.x-k8s.io/test-cluster", constants.EksaSystemNamespace)
+
+	g.Expect(err).To(MatchError(ContainSubstring("Forbidden")))
+}
+
 func TestWaitJSONPath(t *testing.T) {
 	t.Parallel()
 	var b bytes.Buffer
@@ -4045,6 +4113,12 @@ func TestKubectlWaitForControlPlaneReady(t *testing.T) {
 			execError:   nil,
 			wantError:   true,
 			returnValue: "",
+		},
+		{
+			name:        "initialized control plane",
+			timeout:     "20s",
+			clusterName: "test-cluster",
+			returnValue: "'true'",
 		},
 	}
 

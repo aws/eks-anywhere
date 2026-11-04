@@ -9,7 +9,7 @@ description: >
 ---
 
 >**_NOTE_**: Currently, Multus support is only available with the EKS Anywhere Bare Metal provider.
-The vSphere and CloudStack providers, do not have multi-network support for cluster machines.
+The vSphere provider does not have multi-network support for cluster machines.
 Once multiple network support is added to those clusters, Multus CNI can be supported. 
 >
 

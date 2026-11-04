@@ -12,7 +12,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
-	"github.com/golang/mock/gomock"
+	"go.uber.org/mock/gomock"
 
 	"github.com/aws/eks-anywhere/pkg/git"
 	"github.com/aws/eks-anywhere/pkg/git/gitclient"

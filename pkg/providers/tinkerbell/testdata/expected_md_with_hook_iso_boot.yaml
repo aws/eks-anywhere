@@ -27,6 +27,8 @@ spec:
         apiGroup: infrastructure.cluster.x-k8s.io
         kind: TinkerbellMachineTemplate
         name: test-md-0-1
+      deletion:
+        nodeDeletionTimeoutSeconds: 30
       version: v1.21.2-eks-1-21-4
   rollout:
     strategy:
@@ -130,7 +132,7 @@ spec:
               CONTENTS: |
                 datasource:
                   Ec2:
-                    metadata_urls: [http://0.0.0.0:7172,http://5.6.7.8:7172]
+                    metadata_urls: [http://0.0.0.0:7172,http://5.6.7.8:7171]
                     strict_id: false
                 manage_etc_hosts: localhost
                 warnings:

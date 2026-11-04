@@ -7,15 +7,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 	tinkv1alpha1 "github.com/tinkerbell/tink/api/v1alpha1"
+	"go.uber.org/mock/gomock"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
 	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -1294,7 +1295,7 @@ tasks:
       DIRMODE: "0700"
       FS_TYPE: ext4
       GID: "0"
-      HEGEL_URLS: http://2.2.2.2:7172,http://2.2.2.2:7172
+      HEGEL_URLS: http://2.2.2.2:7172,http://2.2.2.2:7171
       MODE: "0644"
       UID: "0"
     image: 127.0.0.1/embedded/writefile
@@ -1391,11 +1392,17 @@ func tinkerbellCP(clusterName string, opts ...cpOpt) *tinkerbell.ControlPlane {
 					},
 					Version: "v1.19.8",
 					MachineTemplate: controlplanev1beta2.KubeadmControlPlaneMachineTemplate{
+						ObjectMeta: clusterv1beta2.ObjectMeta{
+							Labels: clusterapi.DefaultControlPlaneLabels(),
+						},
 						Spec: controlplanev1beta2.KubeadmControlPlaneMachineTemplateSpec{
 							InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
 								APIGroup: "infrastructure.cluster.x-k8s.io",
 								Kind:     "TinkerbellMachineTemplate",
 								Name:     "workload-cluster-control-plane-1",
+							},
+							Deletion: controlplanev1beta2.KubeadmControlPlaneMachineTemplateDeletionSpec{
+								NodeDeletionTimeoutSeconds: ptr.Int32(30),
 							},
 						},
 					},
@@ -1677,6 +1684,7 @@ rules:
 					Namespace: constants.EksaSystemNamespace,
 				},
 				Spec: tinkerbellv1.TinkerbellClusterSpec{
+					ControlPlaneEndpoint:    clusterv1beta1.APIEndpoint{Host: "1.1.1.1", Port: 6443},
 					ImageLookupFormat:       "--kube-v1.19.8.raw.gz",
 					ImageLookupBaseRegistry: "/",
 				},
@@ -1809,6 +1817,9 @@ func tinkWorker(clusterName string, opts ...workerOpt) *tinkerbell.Workers {
 									Kind:     "TinkerbellMachineTemplate",
 									Name:     clusterName + "-md-0-1",
 									APIGroup: "infrastructure.cluster.x-k8s.io",
+								},
+								Deletion: clusterv1beta2.MachineDeletionSpec{
+									NodeDeletionTimeoutSeconds: ptr.Int32(30),
 								},
 								Version: "v1.19.8",
 							},

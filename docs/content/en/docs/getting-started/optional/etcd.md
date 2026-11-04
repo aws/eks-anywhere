@@ -11,9 +11,9 @@ description: >
 ### Unstacked etcd topology (recommended)
 
 #### Provider support details
-|                | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
-|:--------------:|:-------:|:----------:|:-------:|:----------:|:----:|
-| **Supported?** |   ✓	   |            |    ✓    |     ✓      |  ✓   |
+|                | vSphere | Bare Metal | Nutanix | Snow |
+|:--------------:|:-------:|:----------:|:-------:|:----:|
+| **Supported?** |   ✓	   |            |    ✓    |  ✓   |
 
 There are two types of etcd topologies for configuring a Kubernetes cluster:
 
@@ -61,7 +61,7 @@ spec:
       machineGroupRef:
         kind: VSphereMachineConfig
         name: my-cluster-name-etcd
-   kubernetesVersion: "1.35"
+   kubernetesVersion: "1.36"
    workerNodeGroupConfigurations:
       - count: 1
         machineGroupRef:

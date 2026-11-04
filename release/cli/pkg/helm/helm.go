@@ -16,6 +16,7 @@ package helm
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -25,10 +26,10 @@ import (
 	docker "github.com/fsouza/go-dockerclient"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
-	"helm.sh/helm/v3/pkg/action"
-	"helm.sh/helm/v3/pkg/chart"
-	"helm.sh/helm/v3/pkg/cli"
-	"helm.sh/helm/v3/pkg/registry"
+	"helm.sh/helm/v4/pkg/action"
+	chart "helm.sh/helm/v4/pkg/chart/v2"
+	"helm.sh/helm/v4/pkg/cli"
+	"helm.sh/helm/v4/pkg/registry"
 	"k8s.io/helm/pkg/chartutil"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/yaml"
@@ -57,7 +58,7 @@ func NewHelm() (*helmDriver, error) {
 	}
 	cfg := &action.Configuration{RegistryClient: client}
 	err = cfg.Init(settings.RESTClientGetter(), settings.Namespace(),
-		os.Getenv("HELM_DRIVER"), helmLog(HelmLog))
+		os.Getenv("HELM_DRIVER"))
 	if err != nil {
 		return nil, fmt.Errorf("initializing helm driver: %w", err)
 	}
@@ -209,6 +210,11 @@ func (d *helmDriver) HelmRegistryLogin(r *releasetypes.ReleaseConfig, remoteType
 		return fmt.Errorf("unknown remoteType: %s", remoteType)
 	}
 
+	remote, err := registryHost(remote)
+	if err != nil {
+		return fmt.Errorf("getting registry host: %w", err)
+	}
+
 	login := action.NewRegistryLogin(d.cfg)
 	if err := login.Run(os.Stdout, remote, authConfig.Username, authConfig.Password); err != nil {
 		return fmt.Errorf("running the Helm registry login command: %w", err)
@@ -231,12 +237,33 @@ func (d *helmDriver) HelmRegistryLogout(r *releasetypes.ReleaseConfig, remoteTyp
 		return fmt.Errorf("unknown remoteType: %s", remoteType)
 	}
 
+	remote, err := registryHost(remote)
+	if err != nil {
+		return fmt.Errorf("getting registry host: %w", err)
+	}
+
 	logout := action.NewRegistryLogout(d.cfg)
 	if err := logout.Run(os.Stdout, remote); err != nil {
 		return fmt.Errorf("running the Helm registry logout command: %w", err)
 	}
 
 	return nil
+}
+
+func registryHost(remote string) (string, error) {
+	if !strings.Contains(remote, "://") {
+		remote = "//" + remote
+	}
+
+	parsed, err := url.Parse(remote)
+	if err != nil {
+		return "", fmt.Errorf("parsing registry %q: %w", remote, err)
+	}
+	if parsed.Host == "" {
+		return "", fmt.Errorf("registry %q has no host", remote)
+	}
+
+	return parsed.Host, nil
 }
 
 // PullHelmChart will take in a a remote Helm URI and attempt to pull down the chart if it exists.
@@ -297,13 +324,6 @@ func PackageHelmChart(dir string) (string, error) {
 		return "", fmt.Errorf("running the Helm Package command %w", err)
 	}
 	return packaged, nil
-}
-
-// helmLog wraps logr.Logger to make it compatible with helm's DebugLog.
-func helmLog(log logr.Logger) action.DebugLog {
-	return func(template string, args ...interface{}) {
-		log.Info(fmt.Sprintf(template, args...))
-	}
 }
 
 // UnTarHelmChart will attempt to move the helm chart out of the helm cache, by untaring it to the pwd and creating the filesystem to unpack it into.

@@ -11,9 +11,9 @@ description: >
 ## AWS IAM Authenticator support (optional)
 
 #### Provider support details
-|                | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
-|:--------------:|:-------:|:----------:|:-------:|:----------:|:----:|
-| **Supported?** |   ✓	    |     ✓      |   	 ✓   |     ✓      |  ✓   |
+|                | vSphere | Bare Metal | Nutanix | Snow |
+|:--------------:|:-------:|:----------:|:-------:|:----:|
+| **Supported?** |   ✓	    |     ✓      |   	 ✓   |  ✓   |
 
 EKS Anywhere can create clusters that support AWS IAM Authenticator-based api server authentication.
 In order to add IAM Authenticator support, you need to configure your cluster by updating the configuration file before creating the cluster.

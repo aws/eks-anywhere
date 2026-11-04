@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
+	"go.uber.org/mock/gomock"
 
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
@@ -150,7 +150,7 @@ func TestHelmSkipCRDs(t *testing.T) {
 	kubeconfig := "kubeconfig"
 	chart := "chart"
 	expectCommand(
-		tt.e, tt.ctx, "upgrade", "--install", chart, url, "--version", version, "--skip-crds", "--kubeconfig", kubeconfig, "--create-namespace", "--namespace", constants.EksaPackagesName,
+		tt.e, tt.ctx, "upgrade", "--install", chart, url, "--version", version, "--wait", "--skip-crds", "--kubeconfig", kubeconfig, "--create-namespace", "--namespace", constants.EksaPackagesName,
 	).withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
 
 	tt.Expect(tt.h.InstallChart(tt.ctx, chart, url, version, kubeconfig, constants.EksaPackagesName, "", true, nil)).To(Succeed())
@@ -164,7 +164,7 @@ func TestHelmInstallChartSuccess(t *testing.T) {
 	kubeconfig := "/root/.kube/config"
 	values := []string{"key1=value1"}
 	expectCommand(
-		tt.e, tt.ctx, "upgrade", "--install", chart, url, "--version", version, "--set", "key1=value1", "--kubeconfig", kubeconfig, "--create-namespace", "--namespace", "eksa-packages",
+		tt.e, tt.ctx, "upgrade", "--install", chart, url, "--version", version, "--wait", "--set", "key1=value1", "--kubeconfig", kubeconfig, "--create-namespace", "--namespace", "eksa-packages",
 	).withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
 
 	tt.Expect(tt.h.InstallChart(tt.ctx, chart, url, version, kubeconfig, "eksa-packages", "", false, values)).To(Succeed())
@@ -179,7 +179,7 @@ func TestHelmInstallChartSuccessWithValuesFile(t *testing.T) {
 	values := []string{"key1=value1"}
 	valuesFileName := "values.yaml"
 	expectCommand(
-		tt.e, tt.ctx, "upgrade", "--install", chart, url, "--version", version, "--set", "key1=value1", "--kubeconfig", kubeconfig, "--create-namespace", "--namespace", "eksa-packages", "-f", valuesFileName,
+		tt.e, tt.ctx, "upgrade", "--install", chart, url, "--version", version, "--wait", "--set", "key1=value1", "--kubeconfig", kubeconfig, "--create-namespace", "--namespace", "eksa-packages", "-f", valuesFileName,
 	).withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
 
 	tt.Expect(tt.h.InstallChart(tt.ctx, chart, url, version, kubeconfig, "eksa-packages", valuesFileName, false, values)).To(Succeed())
@@ -193,7 +193,7 @@ func TestHelmInstallChartSuccessWithInsecure(t *testing.T) {
 	kubeconfig := "/root/.kube/config"
 	values := []string{"key1=value1"}
 	expectCommand(
-		tt.e, tt.ctx, "upgrade", "--install", chart, url, "--version", version, "--set", "key1=value1", "--kubeconfig", kubeconfig, "--create-namespace", "--namespace", "eksa-packages", "--insecure-skip-tls-verify",
+		tt.e, tt.ctx, "upgrade", "--install", chart, url, "--version", version, "--wait", "--set", "key1=value1", "--kubeconfig", kubeconfig, "--create-namespace", "--namespace", "eksa-packages", "--insecure-skip-tls-verify",
 	).withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
 
 	tt.Expect(tt.h.InstallChart(tt.ctx, chart, url, version, kubeconfig, "eksa-packages", "", false, values)).To(Succeed())
@@ -208,7 +208,7 @@ func TestHelmInstallChartSuccessWithInsecureAndValuesFile(t *testing.T) {
 	values := []string{"key1=value1"}
 	valuesFileName := "values.yaml"
 	expectCommand(
-		tt.e, tt.ctx, "upgrade", "--install", chart, url, "--version", version, "--set", "key1=value1", "--kubeconfig", kubeconfig, "--create-namespace", "--namespace", "eksa-packages", "-f", valuesFileName, "--insecure-skip-tls-verify",
+		tt.e, tt.ctx, "upgrade", "--install", chart, url, "--version", version, "--wait", "--set", "key1=value1", "--kubeconfig", kubeconfig, "--create-namespace", "--namespace", "eksa-packages", "-f", valuesFileName, "--insecure-skip-tls-verify",
 	).withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
 
 	tt.Expect(tt.h.InstallChart(tt.ctx, chart, url, version, kubeconfig, "eksa-packages", valuesFileName, false, values)).To(Succeed())

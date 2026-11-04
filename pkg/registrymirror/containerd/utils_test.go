@@ -18,12 +18,12 @@ func TestToAPIEndpoint(t *testing.T) {
 		{
 			name: "no namespace",
 			URL:  "oci://1.2.3.4:443",
-			want: "oci://1.2.3.4:443",
+			want: "oci://1.2.3.4:443/v2",
 		},
 		{
 			name: "no namespace",
 			URL:  "registry-mirror.test:443",
-			want: "registry-mirror.test:443",
+			want: "registry-mirror.test:443/v2",
 		},
 		{
 			name: "with namespace",
@@ -57,7 +57,7 @@ func TestToAPIEndpoints(t *testing.T) {
 				constants.DefaultCuratedPackagesRegistry: "1.2.3.4:443/curated-packages",
 			},
 			want: map[string]string{
-				constants.DefaultCoreEKSARegistry:        "1.2.3.4:443",
+				constants.DefaultCoreEKSARegistry:        "1.2.3.4:443/v2",
 				constants.DefaultCuratedPackagesRegistry: "1.2.3.4:443/v2/curated-packages",
 			},
 		},

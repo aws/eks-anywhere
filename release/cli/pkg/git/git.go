@@ -15,16 +15,34 @@
 package git
 
 import (
-	"fmt"
 	"os/exec"
 
 	commandutils "github.com/aws/eks-anywhere/release/cli/pkg/util/command"
 )
 
 func CloneRepo(cloneUrl, destination string) (string, error) {
-	cloneRepoCommandSequence := fmt.Sprintf("git clone --depth 1 %s %[2]s; cd %[2]s; git config --unset-all remote.origin.fetch; git config --add remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'; git fetch --unshallow; git pull --all", cloneUrl, destination)
-	cmd := exec.Command("bash", "-c", cloneRepoCommandSequence)
-	return commandutils.ExecCommand(cmd)
+	commands := []*exec.Cmd{
+		exec.Command("git", "clone", "--depth", "1", cloneUrl, destination),
+		exec.Command("git", "-C", destination, "config", "--unset-all", "remote.origin.fetch"),
+		exec.Command("git", "-C", destination, "config", "--add", "remote.origin.fetch", "+refs/heads/*:refs/remotes/origin/*"),
+		exec.Command("git", "-C", destination, "fetch", "--unshallow"),
+		exec.Command("git", "-C", destination, "pull", "--all"),
+	}
+
+	var output string
+	for _, cmd := range commands {
+		out, err := commandutils.ExecCommand(cmd)
+		if out != "" {
+			if output != "" {
+				output += "\n"
+			}
+			output += out
+		}
+		if err != nil {
+			return output, err
+		}
+	}
+	return output, nil
 }
 
 func CheckoutRepo(gitRoot, branch string) (string, error) {

@@ -44,6 +44,9 @@ func TestConfigureAPIServerExtraArgsInKubeadmControlPlane(t *testing.T) {
 				},
 				Spec: controlplanev1beta2.KubeadmControlPlaneSpec{
 					MachineTemplate: controlplanev1beta2.KubeadmControlPlaneMachineTemplate{
+						ObjectMeta: clusterv1beta2.ObjectMeta{
+							Labels: clusterapi.DefaultControlPlaneLabels(),
+						},
 						Spec: controlplanev1beta2.KubeadmControlPlaneMachineTemplateSpec{
 							InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
 								APIGroup: "infrastructure.cluster.x-k8s.io",
@@ -180,6 +183,9 @@ func TestConfigureAWSIAMAuthInKubeadmControlPlane(t *testing.T) {
 				},
 				Spec: controlplanev1beta2.KubeadmControlPlaneSpec{
 					MachineTemplate: controlplanev1beta2.KubeadmControlPlaneMachineTemplate{
+						ObjectMeta: clusterv1beta2.ObjectMeta{
+							Labels: clusterapi.DefaultControlPlaneLabels(),
+						},
 						Spec: controlplanev1beta2.KubeadmControlPlaneMachineTemplateSpec{
 							InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
 								APIGroup: "infrastructure.cluster.x-k8s.io",
@@ -378,6 +384,9 @@ func TestConfigureOIDCInKubeadmControlPlane(t *testing.T) {
 				},
 				Spec: controlplanev1beta2.KubeadmControlPlaneSpec{
 					MachineTemplate: controlplanev1beta2.KubeadmControlPlaneMachineTemplate{
+						ObjectMeta: clusterv1beta2.ObjectMeta{
+							Labels: clusterapi.DefaultControlPlaneLabels(),
+						},
 						Spec: controlplanev1beta2.KubeadmControlPlaneMachineTemplateSpec{
 							InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
 								APIGroup: "infrastructure.cluster.x-k8s.io",
@@ -501,6 +510,9 @@ func TestConfigurePodIamAuthInKubeadmControlPlane(t *testing.T) {
 				},
 				Spec: controlplanev1beta2.KubeadmControlPlaneSpec{
 					MachineTemplate: controlplanev1beta2.KubeadmControlPlaneMachineTemplate{
+						ObjectMeta: clusterv1beta2.ObjectMeta{
+							Labels: clusterapi.DefaultControlPlaneLabels(),
+						},
 						Spec: controlplanev1beta2.KubeadmControlPlaneMachineTemplateSpec{
 							InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
 								APIGroup: "infrastructure.cluster.x-k8s.io",

@@ -85,3 +85,4 @@ func TestAPIServerExtraArgsEnabledFeatureFlag(t *testing.T) {
 	g.Expect(os.Setenv(APIServerExtraArgsEnabledEnvVar, "true")).To(Succeed())
 	g.Expect(IsActive(APIServerExtraArgsEnabled())).To(BeTrue())
 }
+

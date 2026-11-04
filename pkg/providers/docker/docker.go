@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"regexp"
+	"strings"
 
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
@@ -335,6 +336,9 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 		if err != nil {
 			return values, err
 		}
+		if err := populatePauseImageAlias(versionsBundle, values); err != nil {
+			return values, err
+		}
 	}
 
 	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy != nil {
@@ -429,6 +433,9 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupConfiguration 
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
 		values, err := populateRegistryMirrorValues(clusterSpec, values)
 		if err != nil {
+			return values, err
+		}
+		if err := populatePauseImageAlias(versionsBundle, values); err != nil {
 			return values, err
 		}
 	}
@@ -672,6 +679,7 @@ func populateRegistryMirrorValues(clusterSpec *cluster.Spec, values map[string]i
 	registryMirror := registrymirror.FromCluster(clusterSpec.Cluster)
 	values["registryMirrorMap"] = containerd.ToAPIEndpoints(registryMirror.NamespacedRegistryMap)
 	values["mirrorBase"] = registryMirror.BaseRegistry
+	values["mirrorBaseAPIEndpoint"] = containerd.ToAPIEndpoint(registryMirror.BaseRegistry)
 	values["insecureSkip"] = registryMirror.InsecureSkipVerify
 	values["publicMirror"] = containerd.ToAPIEndpoint(registryMirror.CoreEKSAMirror())
 	if len(registryMirror.CACertContent) > 0 {
@@ -688,4 +696,26 @@ func populateRegistryMirrorValues(clusterSpec *cluster.Spec, values map[string]i
 		values["registryPassword"] = password
 	}
 	return values, nil
+}
+
+func populatePauseImageAlias(versionsBundle *cluster.VersionsBundle, values map[string]interface{}) error {
+	pauseImage := versionsBundle.KubeDistro.Pause.VersionedImage()
+	if pauseImage == "" {
+		return fmt.Errorf("pause image is missing from the EKS-D release")
+	}
+	values["pauseImageAliasCommand"] = pauseImageAliasCommand(versionsBundle.KubeDistro.Kubernetes.Tag,
+		versionsBundle.KubeDistro.Kubernetes.Repository, pauseImage)
+	return nil
+}
+
+func pauseImageAliasCommand(kubernetesVersion, kubernetesRepository, pauseImage string) string {
+	quote := func(value string) string {
+		return "'" + strings.ReplaceAll(value, "'", "'\\''") + "'"
+	}
+	// Kubeadm's generic pause tag is not a versioned EKS-D artifact imported into the mirror.
+	return fmt.Sprintf(`set -eu
+images=$(kubeadm config images list --kubernetes-version %s --image-repository %s)
+pause_image=$(printf '%%s\n' "$images" | grep '/pause:')
+ctr --namespace k8s.io images tag --force %s "$pause_image"`,
+		quote(kubernetesVersion), quote(kubernetesRepository), quote(pauseImage))
 }

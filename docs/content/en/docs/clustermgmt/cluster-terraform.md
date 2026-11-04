@@ -9,7 +9,7 @@ description: >
   Use Terraform to manage EKS Anywhere Clusters
 ---
 
->**_NOTE_**: Support for using Terraform to manage and modify an EKS Anywhere cluster is available for vSphere, Snow, Bare metal, Nutanix and CloudStack clusters.
+>**_NOTE_**: Support for using Terraform to manage and modify an EKS Anywhere cluster is available for vSphere, Snow, Bare metal, and Nutanix clusters.
 >
 
 ## Using Terraform to manage an EKS Anywhere Cluster (Optional)
@@ -188,7 +188,7 @@ Follow these steps if you want to use your initial cluster to create and manage 
 ### Upgrade cluster using Terraform
    
 1. To upgrade a workload cluster using Terraform, modify the desired fields in the Terraform resource file.
-   As an example, to upgrade a cluster with version 1.34 to 1.35 you would modify your Terraform cluster resource:
+   As an example, to upgrade a cluster with version 1.35 to 1.36 you would modify your Terraform cluster resource:
    ```bash
     manifest = {
       "apiVersion" = "anywhere.eks.amazonaws.com/v1alpha1"
@@ -198,7 +198,7 @@ Follow these steps if you want to use your initial cluster to create and manage 
         "namespace" = "default"
       }
       "spec" = {
-        "kubernetesVersion" = "1.35"
+        "kubernetesVersion" = "1.36"
          ...
          ...
       }
@@ -210,7 +210,7 @@ Follow these steps if you want to use your initial cluster to create and manage 
    terraform apply
    ```
 
-For a comprehensive list of upgradeable fields for VSphere, Snow, and Nutanix, see the [upgradeable attributes section]({{< relref "./cluster-upgrades/vsphere-and-cloudstack-upgrades.md#upgradeable-cluster-attributes" >}}).
+For a comprehensive list of upgradeable fields for VSphere, Snow, and Nutanix, see the [upgradeable attributes section]({{< relref "./cluster-upgrades/vsphere-upgrades.md#upgradeable-cluster-attributes" >}}).
  
 ### Delete cluster using Terraform
 

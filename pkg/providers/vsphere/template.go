@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	corev1 "k8s.io/api/core/v1"
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
 	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
 	"sigs.k8s.io/yaml"
@@ -260,6 +261,7 @@ func buildTemplateMapCP(
 		registryMirror := registrymirror.FromCluster(clusterSpec.Cluster)
 		values["registryMirrorMap"] = containerd.ToAPIEndpoints(registryMirror.NamespacedRegistryMap)
 		values["mirrorBase"] = registryMirror.BaseRegistry
+		values["mirrorBaseAPIEndpoint"] = containerd.ToAPIEndpoint(registryMirror.BaseRegistry)
 		values["insecureSkip"] = registryMirror.InsecureSkipVerify
 		values["publicMirror"] = containerd.ToAPIEndpoint(registryMirror.CoreEKSAMirror())
 		if len(registryMirror.CACertContent) > 0 {
@@ -368,7 +370,9 @@ func buildTemplateMapCP(
 		}
 	}
 
-	if len(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints) > 0 {
+	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints == nil {
+		values["controlPlaneTaints"] = []corev1.Taint{clusterapi.DefaultControlPlaneTaint()}
+	} else if len(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints) > 0 {
 		values["controlPlaneTaints"] = clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints
 	}
 
@@ -498,6 +502,7 @@ func buildTemplateMapMD(
 		registryMirror := registrymirror.FromCluster(clusterSpec.Cluster)
 		values["registryMirrorMap"] = containerd.ToAPIEndpoints(registryMirror.NamespacedRegistryMap)
 		values["mirrorBase"] = registryMirror.BaseRegistry
+		values["mirrorBaseAPIEndpoint"] = containerd.ToAPIEndpoint(registryMirror.BaseRegistry)
 		values["insecureSkip"] = registryMirror.InsecureSkipVerify
 		values["publicMirror"] = containerd.ToAPIEndpoint(registryMirror.CoreEKSAMirror())
 		if len(registryMirror.CACertContent) > 0 {

@@ -49,15 +49,15 @@ spec:
         uri: public.ecr.aws/l0g8r8j6/cilium/operator-generic:v1.9.6
     cloudStack:
       clusterAPIController:
-        uri: public.ecr.aws/j9l9l0k3/cluster-api-provider-capc:latest
+        uri: <placeholder>
       kubeRbacProxy:
-        uri: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244
+        uri: <placeholder>
       kubeVip:
-        uri: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158
+        uri: <placeholder>
       components:
-        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/infrastructure-components.yaml
+        uri: <placeholder>
       metadata:
-        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/metadata.yaml
+        uri: <placeholder>
       version: v0.4.0-alpha+e3b0c44
     clusterAPI:
       components:
@@ -149,15 +149,15 @@ spec:
       version: v0.7.8
     cloudStack:
       clusterAPIController:
-        uri: public.ecr.aws/j9l9l0k3/cluster-api-provider-capc:latest
+        uri: <placeholder>
       kubeRbacProxy:
-        uri: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244
+        uri: <placeholder>
       kubeVip:
-        uri: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158
+        uri: <placeholder>
       components:
-        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/infrastructure-components.yaml
+        uri: <placeholder>
       metadata:
-        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/metadata.yaml
+        uri: <placeholder>
       version: v0.4.0-alpha+e3b0c44
     nutanix:
       cloudProvider:
@@ -324,15 +324,15 @@ spec:
       version: v0.7.8
     cloudStack:
       clusterAPIController:
-        uri: public.ecr.aws/j9l9l0k3/cluster-api-provider-capc:latest
+        uri: <placeholder>
       kubeRbacProxy:
-        uri: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244
+        uri: <placeholder>
       kubeVip:
-        uri: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158
+        uri: <placeholder>
       components:
-        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/infrastructure-components.yaml
+        uri: <placeholder>
       metadata:
-        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/metadata.yaml
+        uri: <placeholder>
       version: v0.4.0-alpha+e3b0c44
       nutanix:
         cloudProvider:
@@ -340,34 +340,34 @@ spec:
           - amd64
           - arm64
           description: Container image for cloud-provider-nutanix image
-          imageDigest: sha256:11b00e5434961ca5bde7dd90d41d5a9f695b60673f6691ced33116f40b971035
+          imageDigest: <placeholder>
           name: cloud-provider-nutanix
           os: linux
-          uri: public.ecr.aws/l0g8r8j6/nutanix-cloud-native/cloud-provider-nutanix/controller:v0.3.2-eks-a-v0.0.0-dev-build.8341
+          uri: <placeholder>
         clusterAPIController:
           arch:
           - amd64
           - arm64
           description: Container image for cluster-api-provider-nutanix image
-          imageDigest: sha256:dc6e42917719c30b2a84e11e55b3b974c51bb67e16e2e51e4793a34d02f98c21
+          imageDigest: <placeholder>
           name: cluster-api-provider-nutanix
           os: linux
-          uri: public.ecr.aws/l0g8r8j6/nutanix-cloud-native/cluster-api-provider-nutanix:v1.2.4-eks-a-v0.0.0-dev-build.7927
+          uri: <placeholder>
         clusterTemplate:
-          uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.8341/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.2.4/cluster-template.yaml
+          uri: <placeholder>
         components:
-          uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.8341/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.2.4/infrastructure-components.yaml
+          uri: <placeholder>
         kubeVip:
           arch:
           - amd64
           - arm64
           description: Container image for kube-vip image
-          imageDigest: sha256:af4ced2d214c3b440bf00cc04f352052796cbc384efba7dbdfb82b15315a12b8
+          imageDigest: <placeholder>
           name: kube-vip
           os: linux
-          uri: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.6.4-eks-a-v0.0.0-dev-build.7944
+          uri: <placeholder>
         metadata:
-          uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.8341/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v1.2.4/metadata.yaml
+          uri: <placeholder>
         version: v1.2.4+4b53cc4
   - aws:
       clusterTemplate:
@@ -411,15 +411,15 @@ spec:
         uri: public.ecr.aws/l0g8r8j6/cilium/operator-generic:v1.9.6
     cloudStack:
       clusterAPIController:
-        uri: public.ecr.aws/j9l9l0k3/cluster-api-provider-capc:latest
+        uri: <placeholder>
       kubeRbacProxy:
-        uri: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244
+        uri: <placeholder>
       kubeVip:
-        uri: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158
+        uri: <placeholder>
       components:
-        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/infrastructure-components.yaml
+        uri: <placeholder>
       metadata:
-        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/metadata.yaml
+        uri: <placeholder>
       version: v0.4.0-alpha+e3b0c44
     clusterAPI:
       components:
@@ -523,15 +523,15 @@ spec:
       version: v0.7.8
     cloudStack:
       clusterAPIController:
-        uri: public.ecr.aws/j9l9l0k3/cluster-api-provider-capc:latest
+        uri: <placeholder>
       kubeRbacProxy:
-        uri: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244
+        uri: <placeholder>
       kubeVip:
-        uri: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158
+        uri: <placeholder>
       components:
-        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/infrastructure-components.yaml
+        uri: <placeholder>
       metadata:
-        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/metadata.yaml
+        uri: <placeholder>
       version: v0.4.0-alpha+e3b0c44
     nutanix:
       cloudProvider:
@@ -677,15 +677,15 @@ spec:
         uri: public.ecr.aws/eks/cilium/operator-generic:v1.17.8-0
     cloudStack:
       clusterAPIController:
-        uri: public.ecr.aws/j9l9l0k3/cluster-api-provider-capc:latest
+        uri: <placeholder>
       kubeRbacProxy:
-        uri: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244
+        uri: <placeholder>
       kubeVip:
-        uri: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158
+        uri: <placeholder>
       components:
-        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/infrastructure-components.yaml
+        uri: <placeholder>
       metadata:
-        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/metadata.yaml
+        uri: <placeholder>
       version: v0.4.0-alpha+e3b0c44
     clusterAPI:
       components:
@@ -963,15 +963,15 @@ spec:
       version: v0.7.10
     cloudStack:
       clusterAPIController:
-        uri: public.ecr.aws/j9l9l0k3/cluster-api-provider-capc:latest
+        uri: <placeholder>
       kubeRbacProxy:
-        uri: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244
+        uri: <placeholder>
       kubeVip:
-        uri: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158
+        uri: <placeholder>
       components:
-        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/infrastructure-components.yaml
+        uri: <placeholder>
       metadata:
-        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/metadata.yaml
+        uri: <placeholder>
       version: v0.4.0-alpha+e3b0c44
     nutanix:
       cloudProvider:
@@ -1138,32 +1138,32 @@ spec:
         - amd64
         - arm64
         description: Container image for cluster-api-provider-cloudstack image
-        imageDigest: sha256:d6f2a79ce9a71f6c6407fe8ece71b4fddf9d8c8b707c590dace946573cc71020
+        imageDigest: <placeholder>
         name: cluster-api-provider-cloudstack
         os: linux
-        uri: public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.4.9-rc8-eks-a-v0.19.0-dev-build.158
+        uri: <placeholder>
       components:
-        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.19.0-dev-build.158/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.9-rc8/infrastructure-components.yaml
+        uri: <placeholder>
       kubeRbacProxy:
         arch:
         - amd64
         - arm64
         description: Container image for kube-rbac-proxy image
-        imageDigest: sha256:5bf6ef9dc8dccd3e90b89803db69e7d065dfe80a4aaf1d82c8778c99f86d4fb5
+        imageDigest: <placeholder>
         name: kube-rbac-proxy
         os: linux
-        uri: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.16.0-eks-a-v0.19.0-dev-build.158
+        uri: <placeholder>
       kubeVip:
         arch:
         - amd64
         - arm64
         description: Container image for kube-vip image
-        imageDigest: sha256:af4ced2d214c3b440bf00cc04f352052796cbc384efba7dbdfb82b15315a12b8
+        imageDigest: <placeholder>
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.6.4-eks-a-v0.19.0-dev-build.158
+        uri: <placeholder>
       metadata:
-        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.19.0-dev-build.158/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.9-rc8/metadata.yaml
+        uri: <placeholder>
       version: v0.4.9-rc8+570e6a9
     clusterAPI:
       components:

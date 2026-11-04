@@ -73,9 +73,11 @@ images:
   control-plane-kubeadm/kube-rbac-proxy:
     repository: {{ .KubeadmControlPlaneKubeRbacProxyRepository }}
     tag: {{ .KubeadmControlPlaneKubeRbacProxyTag }} #org one is v0.4.1
+  {{- if .ClusterApiCloudStackKubeRbacProxyRepository }}
   infrastructure-cloudstack/kube-rbac-proxy:
     repository: {{ .ClusterApiCloudStackKubeRbacProxyRepository }}
     tag: {{ .ClusterApiCloudStackKubeRbacProxyTag }} #org one is v0.8.0
+  {{- end }}
   infrastructure-vsphere/manager:
     repository: {{ .ClusterApiVSphereControllerRepository }}
     tag: {{ .ClusterApiVSphereControllerTag }}

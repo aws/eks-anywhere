@@ -6,8 +6,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
+	"go.uber.org/mock/gomock"
 
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere/setupuser"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere/setupuser/mocks"

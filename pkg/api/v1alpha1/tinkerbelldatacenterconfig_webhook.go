@@ -33,9 +33,8 @@ var tinkerbelldatacenterconfiglog = logf.Log.WithName("tinkerbelldatacenterconfi
 
 // SetupWebhookWithManager sets up TinkerbellDatacenterConfig webhook to controller manager.
 func (r *TinkerbellDatacenterConfig) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(r).
-		WithValidator(r).
+	return ctrl.NewWebhookManagedBy(mgr, r).
+		WithCustomValidator(r).
 		Complete()
 }
 

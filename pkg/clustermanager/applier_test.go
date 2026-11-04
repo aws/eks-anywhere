@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
+	"go.uber.org/mock/gomock"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	apitypes "k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -33,16 +33,10 @@ type applierTest struct {
 	client        kubernetes.Client
 	log           logr.Logger
 	mgmtCluster   types.Cluster
-	isUpdate      bool
 }
 
-func newApplierTest(tb testing.TB, optionalParams ...bool) *applierTest {
+func newApplierTest(tb testing.TB) *applierTest {
 	ctrl := gomock.NewController(tb)
-	isUpdateTest := false
-	// If optional params were provided, use the first one
-	if len(optionalParams) > 0 {
-		isUpdateTest = optionalParams[0]
-	}
 	return &applierTest{
 		tb:            tb,
 		Gomega:        NewWithT(tb),
@@ -53,7 +47,6 @@ func newApplierTest(tb testing.TB, optionalParams ...bool) *applierTest {
 		mgmtCluster: types.Cluster{
 			KubeconfigFile: "my-config",
 		},
-		isUpdate: isUpdateTest,
 	}
 }
 
@@ -72,6 +65,12 @@ func (a *applierTest) markConditionWithJSONPatch(inputPatchData []byte) {
 	_ = a.client.Get(a.ctx, a.spec.Cluster.Name, a.spec.Cluster.Namespace, latest)
 	err := a.client.Patch(a.ctx, latest, client.RawPatch(apitypes.JSONPatchType, inputPatchData))
 	a.Expect(err).To(Succeed())
+	// Keep the spec's ResourceVersion in sync with the store. The controller-runtime
+	// fake client (v0.24+) enforces optimistic concurrency on server-side apply, so a
+	// stale ResourceVersion on a.spec.Cluster would make the subsequent apply conflict.
+	synced := &anywherev1.Cluster{}
+	a.Expect(a.client.Get(a.ctx, a.spec.Cluster.Name, a.spec.Cluster.Namespace, synced)).To(Succeed())
+	a.spec.Cluster.ResourceVersion = synced.ResourceVersion
 }
 
 func (a *applierTest) markCPReady(c *anywherev1.Cluster) {
@@ -115,10 +114,6 @@ func (a *applierTest) markClusterReady(c *anywherev1.Cluster) {
 	a.markConditionWithJSONPatch(patchData)
 }
 
-func (a *applierTest) isUpdateTest() bool {
-	return a.isUpdate
-}
-
 const updateMarkerAnnotation = "anywhere.aws.amazon.com/cluster-updated"
 
 func (a *applierTest) startFakeController() {
@@ -130,35 +125,33 @@ func (a *applierTest) startFakeController() {
 	// check from the controller when it gets updated
 	clientutil.AddAnnotation(a.spec.Cluster, updateMarkerAnnotation, "true")
 
-	if a.isUpdateTest() {
-		// For update tests, explicitly update the object in the fake client
-		// to ensure the annotation is stored
-		err := a.client.Update(a.ctx, a.spec.Cluster)
-		a.Expect(err).NotTo(HaveOccurred())
-	}
+	// Wait for the applier to store the annotation, and keep controller status
+	// updates from mutating the applier's input while it is being applied.
+	fakeController := *a
+	fakeController.spec = a.spec.DeepCopy()
 
 	go func() {
 		c := &anywherev1.Cluster{}
 		for {
-			err := a.client.Get(a.ctx, a.spec.Cluster.Name, a.spec.Cluster.Namespace, c)
+			err := fakeController.client.Get(fakeController.ctx, fakeController.spec.Cluster.Name, fakeController.spec.Cluster.Namespace, c)
 			if apierrors.IsNotFound(err) {
 				continue
 			}
-			a.Expect(err).NotTo(HaveOccurred())
+			fakeController.Expect(err).NotTo(HaveOccurred())
 
 			// If the annotation is not present, keep trying
 			if _, ok := c.Annotations[updateMarkerAnnotation]; !ok {
 				continue
 			}
 
-			a.markCPReady(c)
+			fakeController.markCPReady(c)
 			// We wait after each condition update to "simulate" multiple reconcile loops
 			time.Sleep(5 * time.Millisecond)
-			a.markCNIConfigured(c)
+			fakeController.markCNIConfigured(c)
 			time.Sleep(5 * time.Millisecond)
-			a.markWorkersReady(c)
+			fakeController.markWorkersReady(c)
 			time.Sleep(5 * time.Millisecond)
-			a.markClusterReady(c)
+			fakeController.markClusterReady(c)
 
 			break
 		}
@@ -178,7 +171,7 @@ func TestApplierRunClusterCreateSuccess(t *testing.T) {
 }
 
 func TestApplierRunClusterUpdateSuccess(t *testing.T) {
-	tt := newApplierTest(t, true)
+	tt := newApplierTest(t)
 	tt.spec.Cluster.ResourceVersion = "999"
 	tt.buildClient(tt.spec.ClusterAndChildren()...)
 	tt.startFakeController()

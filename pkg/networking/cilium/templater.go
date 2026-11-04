@@ -241,16 +241,23 @@ func convertSliceToValues(input []interface{}) []interface{} {
 	return result
 }
 
-func templateValues(spec *cluster.Spec, versionsBundle *cluster.VersionsBundle) values {
-	// If HelmValues are configured, use them instead of templated values
-	if spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.HelmValues != nil {
-		// Unmarshal JSON to map
-		var helmValues map[string]interface{}
-		if err := json.Unmarshal(spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.HelmValues.Raw, &helmValues); err == nil && helmValues != nil {
-			return convertToValues(helmValues)
+// mergeValues deep-merges src into dst, with src taking precedence. Nested maps
+// are merged recursively so EKS-A defaults are preserved for keys the user does
+// not set; all other values (including slices) are replaced wholesale, matching
+// Helm's own values merge semantics.
+func mergeValues(dst, src values) {
+	for k, srcVal := range src {
+		if srcMap, ok := srcVal.(values); ok {
+			if dstMap, ok := dst[k].(values); ok {
+				mergeValues(dstMap, srcMap)
+				continue
+			}
 		}
+		dst[k] = srcVal
 	}
+}
 
+func templateValues(spec *cluster.Spec, versionsBundle *cluster.VersionsBundle) values {
 	val := values{
 		"cni": values{
 			"chainingMode": "portmap",
@@ -303,34 +310,53 @@ func templateValues(spec *cluster.Spec, versionsBundle *cluster.VersionsBundle) 
 		val["operator"].(values)["replicas"] = 1
 	}
 
-	if spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode != "" {
-		val["policyEnforcementMode"] = spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode
-	}
-
-	if spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.EgressMasqueradeInterfaces != "" {
-		val["egressMasqueradeInterfaces"] = spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.EgressMasqueradeInterfaces
-	}
-
-	if spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.CNIExclusive != nil {
-		val["cni"].(values)["exclusive"] = *spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.CNIExclusive
-	}
-
-	if spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.RoutingMode == anywherev1.CiliumRoutingModeDirect {
-		val["routingMode"] = "native"
-		val["autoDirectNodeRoutes"] = "true"
-
-		delete(val, "tunnelProtocol")
-
-		if spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.IPv4NativeRoutingCIDR != "" {
-			val["ipv4NativeRoutingCIDR"] = spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.IPv4NativeRoutingCIDR
+	// If HelmValues are configured, merge them on top of the EKS-A defaults so the
+	// user-provided values take precedence while EKS-A defaults are preserved for
+	// any keys the user does not set. The deprecated Cilium-specific fields below
+	// remain ignored when HelmValues is set.
+	if spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.HelmValues != nil {
+		var helmValues map[string]interface{}
+		if err := json.Unmarshal(spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.HelmValues.Raw, &helmValues); err == nil && helmValues != nil {
+			mergeValues(val, convertToValues(helmValues))
 		}
-		if spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.IPv6NativeRoutingCIDR != "" {
-			val["ipv6NativeRoutingCIDR"] = spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.IPv6NativeRoutingCIDR
-		}
-
+		return val
 	}
+
+	setDeprecatedCiliumValues(val, spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium)
 
 	return val
+}
+
+// setDeprecatedCiliumValues applies the deprecated Cilium-specific fields from the
+// cluster spec. These are only honored when HelmValues is not set.
+func setDeprecatedCiliumValues(val values, cilium *anywherev1.CiliumConfig) {
+	if cilium.PolicyEnforcementMode != "" {
+		val["policyEnforcementMode"] = cilium.PolicyEnforcementMode
+	}
+
+	if cilium.EgressMasqueradeInterfaces != "" {
+		val["egressMasqueradeInterfaces"] = cilium.EgressMasqueradeInterfaces
+	}
+
+	if cilium.CNIExclusive != nil {
+		val["cni"].(values)["exclusive"] = *cilium.CNIExclusive
+	}
+
+	if cilium.RoutingMode != anywherev1.CiliumRoutingModeDirect {
+		return
+	}
+
+	val["routingMode"] = "native"
+	val["autoDirectNodeRoutes"] = "true"
+
+	delete(val, "tunnelProtocol")
+
+	if cilium.IPv4NativeRoutingCIDR != "" {
+		val["ipv4NativeRoutingCIDR"] = cilium.IPv4NativeRoutingCIDR
+	}
+	if cilium.IPv6NativeRoutingCIDR != "" {
+		val["ipv6NativeRoutingCIDR"] = cilium.IPv6NativeRoutingCIDR
+	}
 }
 
 func getChartURIAndVersion(versionsBundle *cluster.VersionsBundle) (uri, version string) {

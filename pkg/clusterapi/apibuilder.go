@@ -142,6 +142,9 @@ func KubeadmControlPlane(clusterSpec *cluster.Spec, infrastructureObject APIObje
 		},
 		Spec: controlplanev1beta2.KubeadmControlPlaneSpec{
 			MachineTemplate: controlplanev1beta2.KubeadmControlPlaneMachineTemplate{
+				ObjectMeta: clusterv1beta2.ObjectMeta{
+					Labels: DefaultControlPlaneLabels(),
+				},
 				Spec: controlplanev1beta2.KubeadmControlPlaneMachineTemplateSpec{
 					InfrastructureRef: clusterv1beta2.ContractVersionedObjectReference{
 						APIGroup: infrastructureObject.GetObjectKind().GroupVersionKind().Group,
@@ -173,14 +176,14 @@ func KubeadmControlPlane(clusterSpec *cluster.Spec, infrastructureObject APIObje
 					NodeRegistration: bootstrapv1beta2.NodeRegistrationOptions{
 						KubeletExtraArgs: SecureTlsCipherSuitesExtraArgs().
 							Append(ControlPlaneNodeLabelsExtraArgs(clusterSpec.Cluster.Spec.ControlPlaneConfiguration)).ToArgs(),
-						Taints: taintsToPtr(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints),
+						Taints: ControlPlaneTaintsToPtr(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints),
 					},
 				},
 				JoinConfiguration: bootstrapv1beta2.JoinConfiguration{
 					NodeRegistration: bootstrapv1beta2.NodeRegistrationOptions{
 						KubeletExtraArgs: SecureTlsCipherSuitesExtraArgs().
 							Append(ControlPlaneNodeLabelsExtraArgs(clusterSpec.Cluster.Spec.ControlPlaneConfiguration)).ToArgs(),
-						Taints: taintsToPtr(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints),
+						Taints: ControlPlaneTaintsToPtr(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints),
 					},
 				},
 				PreKubeadmCommands:  []string{},

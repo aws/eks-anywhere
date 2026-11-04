@@ -16,6 +16,8 @@ func ToAPIEndpoint(url string) string {
 	}
 	if u.Path != "" {
 		u.Path = filepath.Join("v2", u.Path)
+	} else {
+		u.Path = "v2"
 	}
 	return strings.TrimPrefix(u.String(), "//")
 }

@@ -239,13 +239,15 @@ type DockerBundle struct {
 }
 
 // CloudStackBundle defines the CloudStack provider images and version for this bundle.
+// This provider has been deprecated. All image URIs and manifest URIs are placeholders.
+// Customers must provide their own CAPC images and manifests via bundle override.
 type CloudStackBundle struct {
 	Version              string   `json:"version"`
-	ClusterAPIController Image    `json:"clusterAPIController"`
-	KubeRbacProxy        Image    `json:"kubeRbacProxy"`
-	KubeVip              Image    `json:"kubeVip"`
-	Components           Manifest `json:"components"`
-	Metadata             Manifest `json:"metadata"`
+	ClusterAPIController Image    `json:"clusterAPIController,omitempty"`
+	KubeRbacProxy        Image    `json:"kubeRbacProxy,omitempty"`
+	KubeVip              Image    `json:"kubeVip,omitempty"`
+	Components           Manifest `json:"components,omitempty"`
+	Metadata             Manifest `json:"metadata,omitempty"`
 }
 
 // CiliumBundle defines the Cilium version and images used for CNI in this bundle.

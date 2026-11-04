@@ -1,6 +1,6 @@
 module github.com/aws/eks-anywhere-test-tool
 
-go 1.23.0
+go 1.25.0
 
 toolchain go1.25.8
 
@@ -9,7 +9,7 @@ require (
 	github.com/aws/eks-anywhere v0.14.1
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.19.0
-	golang.org/x/sync v0.16.0
+	golang.org/x/sync v0.20.0
 )
 
 require (
@@ -39,9 +39,9 @@ require (
 	go.uber.org/multierr v1.9.0 // indirect
 	go.uber.org/zap v1.22.0 // indirect
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
-	golang.org/x/net v0.38.0 // indirect
-	golang.org/x/sys v0.31.0 // indirect
-	golang.org/x/text v0.23.0 // indirect
+	golang.org/x/net v0.55.0 // indirect
+	golang.org/x/sys v0.45.0 // indirect
+	golang.org/x/text v0.37.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

@@ -15,8 +15,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
+	"go.uber.org/mock/gomock"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -157,7 +157,11 @@ func (dt *deployTemplateTest) expectMarkAsTemplateToReturn(err error) {
 }
 
 func (dt *deployTemplateTest) DeployTemplateFromLibrary() error {
-	gomock.InOrder(dt.expectations...)
+	calls := make([]any, len(dt.expectations))
+	for i, c := range dt.expectations {
+		calls[i] = c
+	}
+	gomock.InOrder(calls...)
 	return dt.govc.DeployTemplateFromLibrary(dt.ctx, dt.deployFolder, dt.templateName, templateLibrary, dt.datacenter, dt.datastore, dt.network, dt.resourcePool, dt.resizeDisk2)
 }
 

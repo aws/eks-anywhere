@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 	"oras.land/oras-go/v2/registry/remote"
 
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"

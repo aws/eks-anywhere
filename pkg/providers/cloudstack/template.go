@@ -156,8 +156,6 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 		"etcdImageTag":                               versionsBundle.KubeDistro.Etcd.Tag,
 		"corednsRepository":                          versionsBundle.KubeDistro.CoreDNS.Repository,
 		"corednsVersion":                             versionsBundle.KubeDistro.CoreDNS.Tag,
-		"managerImage":                               versionsBundle.CloudStack.ClusterAPIController.VersionedImage(),
-		"kubeRbacProxyImage":                         versionsBundle.CloudStack.KubeRbacProxy.VersionedImage(),
 		"kubeVipImage":                               versionsBundle.CloudStack.KubeVip.VersionedImage(),
 		"cloudstackKubeVip":                          !features.IsActive(features.CloudStackKubeVipDisabled()),
 		"cloudstackAvailabilityZones":                datacenterConfigSpec.AvailabilityZones,
@@ -224,6 +222,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) (map[string]interface{}, erro
 		registryMirror := registrymirror.FromCluster(clusterSpec.Cluster)
 		values["registryMirrorMap"] = containerd.ToAPIEndpoints(registryMirror.NamespacedRegistryMap)
 		values["mirrorBase"] = registryMirror.BaseRegistry
+		values["mirrorBaseAPIEndpoint"] = containerd.ToAPIEndpoint(registryMirror.BaseRegistry)
 		values["insecureSkip"] = registryMirror.InsecureSkipVerify
 		values["publicMirror"] = containerd.ToAPIEndpoint(registryMirror.CoreEKSAMirror())
 		if len(registryMirror.CACertContent) > 0 {
@@ -408,6 +407,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupConfiguration 
 		registryMirror := registrymirror.FromCluster(clusterSpec.Cluster)
 		values["registryMirrorMap"] = containerd.ToAPIEndpoints(registryMirror.NamespacedRegistryMap)
 		values["mirrorBase"] = registryMirror.BaseRegistry
+		values["mirrorBaseAPIEndpoint"] = containerd.ToAPIEndpoint(registryMirror.BaseRegistry)
 		values["insecureSkip"] = registryMirror.InsecureSkipVerify
 		if len(registryMirror.CACertContent) > 0 {
 			values["registryCACert"] = registryMirror.CACertContent

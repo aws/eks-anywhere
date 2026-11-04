@@ -7,8 +7,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
+	"go.uber.org/mock/gomock"
 	"sigs.k8s.io/yaml"
 
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"

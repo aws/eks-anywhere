@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
+	"go.uber.org/mock/gomock"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/aws/eks-anywhere/internal/test"

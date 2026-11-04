@@ -13,11 +13,11 @@ description: >
 EKS Anywhere can create clusters that support api server OIDC authentication.
 
 #### Provider support details
-|                | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
-|:--------------:|:-------:|:----------:|:-------:|:----------:|:----:|
-| **Supported?** |   ✓	    |     ✓      |   	 ✓   |     ✓      |  ✓   |
+|                | vSphere | Bare Metal | Nutanix | Snow |
+|:--------------:|:-------:|:----------:|:-------:|:----:|
+| **Supported?** |   ✓	    |     ✓      |   	 ✓   |  ✓   |
 
-In order to add OIDC support, you need to configure your cluster by updating the configuration file to include the details below. The OIDC configuration can be added at cluster creation time, or introduced via a cluster upgrade in VMware and CloudStack.
+In order to add OIDC support, you need to configure your cluster by updating the configuration file to include the details below. The OIDC configuration can be added at cluster creation time, or introduced via a cluster upgrade in VMware.
 
 This is a generic template with detailed descriptions below for reference:
 ```yaml

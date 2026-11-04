@@ -8,10 +8,11 @@ import (
 	"net/url"
 	"reflect"
 	"testing"
+	"time"
 
-	"github.com/golang/mock/gomock"
-	"github.com/google/go-github/v35/github"
+	"github.com/google/go-github/v74/github"
 	. "github.com/onsi/gomega"
+	"go.uber.org/mock/gomock"
 
 	"github.com/aws/eks-anywhere/pkg/git"
 	"github.com/aws/eks-anywhere/pkg/git/gogithub"
@@ -79,6 +80,7 @@ func TestGoGithubCreateRepo(t *testing.T) {
 					Name: &tt.args.opts.Name,
 				},
 			}
+			client.EXPECT().Repo(gomock.Any(), tt.args.opts.Owner, tt.args.opts.Name).Return(nil, nil, notFoundError())
 			client.EXPECT().CreateRepo(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(arg0 context.Context, org string, arg2 *github.Repository) {
 				returnRepo.Organization.Name = &org
 			}).Return(
@@ -305,10 +307,22 @@ func TestGoGithubDeleteRepoFail(t *testing.T) {
 				Client: client,
 			}
 			err := g.DeleteRepo(ctx, tt.args)
-			if !reflect.DeepEqual(err, tt.wantErr) {
+			if err == nil || err.Error() != tt.wantErr.Error() || !errors.Is(err, tt.throwErr) {
 				t.Errorf("DeleteRepo() got error: %v want error: %v", err, tt.wantErr)
 			}
 		})
+	}
+}
+
+func TestGoGithubCreateRepoCanceled(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	client := mockGoGithub.NewMockClient(gomock.NewController(t))
+	g := &gogithub.GoGithub{Client: client}
+
+	_, err := g.CreateRepo(ctx, git.CreateRepoOpts{Name: "testrepo", Owner: "testuser", Personal: true})
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("CreateRepo() error=%v, want context cancellation", err)
 	}
 }
 
@@ -498,5 +512,88 @@ func notFoundError() error {
 				URL:    &url.URL{},
 			},
 		},
+	}
+}
+
+func TestCreateRepoRecoversUnknownServerOutcome(t *testing.T) {
+	for _, tt := range []struct {
+		name              string
+		lookupStatus      int
+		owner             string
+		privacy           bool
+		wantError         bool
+		old               bool
+		missingCreated    bool
+		missingPostDate   bool
+		missingLookupDate bool
+	}{
+		{name: "created despite 502", owner: "testuser", privacy: true},
+		{name: "not created retries POST", lookupStatus: 404},
+		{name: "lookup forbidden remains terminal", lookupStatus: 403, wantError: true},
+		{name: "different owner refused", owner: "other-user", privacy: true, wantError: true},
+		{name: "different privacy refused", owner: "testuser", wantError: true},
+		{name: "old matching repository refused", owner: "testuser", privacy: true, old: true, wantError: true},
+		{name: "missing creation timestamp refused", owner: "testuser", privacy: true, missingCreated: true, wantError: true},
+		{name: "missing POST server time refused", owner: "testuser", privacy: true, missingPostDate: true, wantError: true},
+		{name: "missing GET server time refused", owner: "testuser", privacy: true, missingLookupDate: true, wantError: true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			ctrl := gomock.NewController(t)
+			client := mockGoGithub.NewMockClient(ctrl)
+			opts := git.CreateRepoOpts{Name: "testrepo", Owner: "testuser", Personal: true, Privacy: true}
+			serverTime := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+			postHeaders := http.Header{"Date": {serverTime.Format(http.TimeFormat)}}
+			if tt.missingPostDate {
+				postHeaders = nil
+			}
+			serverErr := &github.ErrorResponse{Response: &http.Response{StatusCode: 502, Header: postHeaders, Request: &http.Request{URL: &url.URL{}}}}
+			client.EXPECT().Repo(gomock.Any(), opts.Owner, opts.Name).Return(nil, nil, notFoundError())
+			client.EXPECT().CreateRepo(gomock.Any(), "", gomock.Any()).Return(nil, nil, serverErr)
+			recovered := &github.Repository{
+				Name: github.Ptr(opts.Name), Private: github.Ptr(tt.privacy),
+				Owner: &github.User{Login: github.Ptr(tt.owner)}, CloneURL: github.Ptr("https://example.test/testrepo.git"),
+				CreatedAt: &github.Timestamp{Time: serverTime},
+			}
+			if tt.old {
+				recovered.CreatedAt.Time = serverTime.Add(-time.Hour)
+			}
+			if tt.missingCreated {
+				recovered.CreatedAt = nil
+			}
+			var lookupErr error
+			if tt.lookupStatus != 0 {
+				lookupErr = &github.ErrorResponse{Response: &http.Response{StatusCode: tt.lookupStatus, Request: &http.Request{URL: &url.URL{}}}}
+			}
+			lookupHeaders := http.Header{"Date": {serverTime.Add(time.Second).Format(http.TimeFormat)}}
+			if tt.missingLookupDate {
+				lookupHeaders = nil
+			}
+			lookupResponse := &github.Response{Response: &http.Response{Header: lookupHeaders}}
+			client.EXPECT().Repo(gomock.Any(), opts.Owner, opts.Name).Return(recovered, lookupResponse, lookupErr)
+			if tt.lookupStatus == 404 {
+				client.EXPECT().CreateRepo(gomock.Any(), "", gomock.Any()).Return(recovered, nil, nil)
+			}
+			provider := &gogithub.GoGithub{Client: client}
+			repo, err := provider.CreateRepo(context.Background(), opts)
+			g.Expect(err != nil).To(Equal(tt.wantError))
+			if err == nil {
+				g.Expect(repo.Name).To(Equal(opts.Name))
+			}
+		})
+	}
+}
+
+func TestCreateRepoExistingNameWithoutServerErrorRemainsTerminal(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	client := mockGoGithub.NewMockClient(ctrl)
+	opts := git.CreateRepoOpts{Name: "testrepo", Owner: "testuser", Personal: true}
+	want := &github.ErrorResponse{Response: &http.Response{StatusCode: 422, Request: &http.Request{URL: &url.URL{}}}}
+	client.EXPECT().Repo(gomock.Any(), opts.Owner, opts.Name).Return(nil, nil, notFoundError())
+	client.EXPECT().CreateRepo(gomock.Any(), "", gomock.Any()).Return(nil, nil, want)
+	g := &gogithub.GoGithub{Client: client}
+	_, err := g.CreateRepo(context.Background(), opts)
+	if !errors.Is(err, want) {
+		t.Fatalf("err=%v", err)
 	}
 }

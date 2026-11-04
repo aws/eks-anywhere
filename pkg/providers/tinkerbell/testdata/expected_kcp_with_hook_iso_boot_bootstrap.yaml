@@ -306,11 +306,16 @@ spec:
       sudo: ALL=(ALL) NOPASSWD:ALL
     format: cloud-config
   machineTemplate:
+    metadata:
+      labels:
+        node-role.kubernetes.io/control-plane: ""
     spec:
       infrastructureRef:
         apiGroup: infrastructure.cluster.x-k8s.io
         kind: TinkerbellMachineTemplate
         name: <no value>
+      deletion:
+        nodeDeletionTimeoutSeconds: 30
   replicas: 1
   rollout:
     strategy:
@@ -414,7 +419,7 @@ spec:
               CONTENTS: |
                 datasource:
                   Ec2:
-                    metadata_urls: [http://0.0.0.0:7172,http://5.6.7.8:7172]
+                    metadata_urls: [http://0.0.0.0:7172,http://5.6.7.8:7171]
                     strict_id: false
                 manage_etc_hosts: localhost
                 warnings:
@@ -463,5 +468,8 @@ metadata:
   name:  test
   namespace: eksa-system
 spec:
+  controlPlaneEndpoint:
+    host: 1.2.3.4
+    port: 6443
   imageLookupFormat: --kube-v1.21.2-eks-1-21-4.raw.gz
   imageLookupBaseRegistry: /
