@@ -1295,7 +1295,7 @@ tasks:
       DIRMODE: "0700"
       FS_TYPE: ext4
       GID: "0"
-      HEGEL_URLS: http://2.2.2.2:7172,http://2.2.2.2:7172
+      HEGEL_URLS: http://2.2.2.2:7172,http://2.2.2.2:7171
       MODE: "0644"
       UID: "0"
     image: 127.0.0.1/embedded/writefile
