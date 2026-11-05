@@ -131,7 +131,7 @@ func TestDockerInstallGitFluxDuringUpgrade(t *testing.T) {
 	runUpgradeFlowWithFlux(
 		test,
 		v1alpha1.Kube137,
-		framework.WithFluxGit(),
+		framework.WithFluxGit(api.WithFluxConfigName(framework.DefaultFluxConfigName)),
 		framework.WithClusterUpgrade(api.WithGitOpsRef(framework.DefaultFluxConfigName, v1alpha1.FluxConfigKind)),
 	)
 }

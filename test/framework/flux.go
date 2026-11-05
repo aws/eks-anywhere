@@ -67,8 +67,9 @@ func getJobIDFromEnv() string {
 func WithFluxGit(opts ...api.FluxConfigOpt) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
 		checkRequiredEnvVars(e.T, fluxGitRequiredEnvVars)
+		name := fluxConfigName()
 		jobID := strings.Replace(getJobIDFromEnv(), ":", "-", -1)
-		e.ClusterConfig.FluxConfig = api.NewFluxConfig(DefaultFluxConfigName,
+		e.ClusterConfig.FluxConfig = api.NewFluxConfig(name,
 			api.WithGenericGitProvider(
 				api.WithStringFromEnvVarGenericGitProviderConfig(GitRepoSshUrl, api.WithGitRepositoryUrl),
 			),
@@ -76,13 +77,13 @@ func WithFluxGit(opts ...api.FluxConfigOpt) ClusterE2ETestOpt {
 			api.WithClusterConfigPath(jobID),
 			api.WithBranch(jobID),
 		)
-		e.clusterFillers = append(e.clusterFillers,
-			api.WithGitOpsRef(DefaultFluxConfigName, v1alpha1.FluxConfigKind),
-		)
 		// apply the rest of the opts passed into the function
 		for _, opt := range opts {
 			opt(e.ClusterConfig.FluxConfig)
 		}
+		e.clusterFillers = append(e.clusterFillers,
+			api.WithGitOpsRef(e.ClusterConfig.FluxConfig.Name, v1alpha1.FluxConfigKind),
+		)
 		e.T.Cleanup(e.CleanUpGitRepo)
 	}
 }
