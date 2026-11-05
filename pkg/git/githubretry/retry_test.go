@@ -215,6 +215,49 @@ func TestRetryRateLimitThenSuccess(t *testing.T) {
 	}
 }
 
+func TestRetryRepeatedSecondaryLimitWithRetryAfter(t *testing.T) {
+	for _, kind := range []string{"header", "typed duration", "response message"} {
+		t.Run(kind, func(t *testing.T) {
+			var delays []time.Duration
+			calls := 0
+			err := retry(context.Background(), 0, func() error {
+				calls++
+				if calls == 5 {
+					return nil
+				}
+				return secondaryLimitWithRetryHint(kind)
+			}, func(_ context.Context, delay time.Duration) error {
+				delays = append(delays, delay)
+				return nil
+			})
+			if err != nil || calls != 5 || len(delays) != 4 {
+				t.Fatalf("err=%v calls=%d delays=%v", err, calls, delays)
+			}
+			for attempt, delay := range delays {
+				minimum := time.Minute * time.Duration(1<<attempt)
+				if delay < minimum || delay >= minimum+30*time.Second {
+					t.Fatalf("attempt %d delay=%v; want [%v,%v)", attempt+1, delay, minimum, minimum+30*time.Second)
+				}
+			}
+		})
+	}
+}
+
+func secondaryLimitWithRetryHint(kind string) error {
+	delay := time.Minute
+	switch kind {
+	case "header":
+		return &github.AbuseRateLimitError{Response: response(403, http.Header{"Retry-After": {"60"}})}
+	case "typed duration":
+		return &github.AbuseRateLimitError{RetryAfter: &delay}
+	default:
+		return &github.ErrorResponse{
+			Response: response(403, http.Header{"Retry-After": {"60"}}),
+			Message:  "You have exceeded a secondary rate limit",
+		}
+	}
+}
+
 func TestRetryStopsAfterFiveAttempts(t *testing.T) {
 	calls, sleeps := 0, 0
 	want := &github.AbuseRateLimitError{Response: response(403, nil)}
