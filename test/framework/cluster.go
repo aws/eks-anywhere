@@ -1038,6 +1038,13 @@ func (e *ClusterE2ETest) GenerateSupportBundleIfTestFailed(opts ...CommandOpt) {
 }
 
 func (e *ClusterE2ETest) Run(name string, args ...string) {
+	if output, err := e.runCommand(name, args...); err != nil {
+		e.failCommand(name, args, output, err)
+	}
+}
+
+// runCommand runs name with args, streaming its output, and returns the combined stdout and stderr.
+func (e *ClusterE2ETest) runCommand(name string, args ...string) (string, error) {
 	cmd, err := prepareCommand(name, args...)
 	if err != nil {
 		e.T.Fatalf("Error preparing command: %v", err)
@@ -1047,33 +1054,37 @@ func (e *ClusterE2ETest) Run(name string, args ...string) {
 	var stdoutAndErr bytes.Buffer
 	cmd.Stderr = io.MultiWriter(os.Stderr, &stdoutAndErr)
 	cmd.Stdout = io.MultiWriter(os.Stdout, &stdoutAndErr)
+	err = cmd.Run()
+	return stdoutAndErr.String(), err
+}
 
-	if err = cmd.Run(); err != nil {
-		e.T.Log("Command failed, scanning output for error")
-		scanner := bufio.NewScanner(&stdoutAndErr)
-		var errorMessage string
-		// Look for the last line of the out put that starts with 'Error:'
-		for scanner.Scan() {
-			line := scanner.Text()
-			if strings.HasPrefix(line, "Error:") {
-				errorMessage = line
-			}
+// failCommand fails the test for a command that returned err, using the last "Error:" line of its output.
+// It returns without failing if the error was expected (e.ExpectFailure).
+func (e *ClusterE2ETest) failCommand(name string, args []string, output string, err error) {
+	e.T.Log("Command failed, scanning output for error")
+	scanner := bufio.NewScanner(strings.NewReader(output))
+	var errorMessage string
+	// Look for the last line of the out put that starts with 'Error:'
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.HasPrefix(line, "Error:") {
+			errorMessage = line
 		}
-
-		if err := scanner.Err(); err != nil {
-			e.T.Fatalf("Failed reading command output looking for error message: %v", err)
-		}
-
-		if errorMessage != "" {
-			if e.ExpectFailure {
-				e.T.Logf("This error was expected. Continuing...")
-				return
-			}
-			e.T.Fatalf("Command %s %v failed with error: %v: %s", name, args, err, errorMessage)
-		}
-
-		e.T.Fatalf("Error running command %s %v: %v", name, args, err)
 	}
+
+	if err := scanner.Err(); err != nil {
+		e.T.Fatalf("Failed reading command output looking for error message: %v", err)
+	}
+
+	if errorMessage != "" {
+		if e.ExpectFailure {
+			e.T.Logf("This error was expected. Continuing...")
+			return
+		}
+		e.T.Fatalf("Command %s %v failed with error: %v: %s", name, args, err, errorMessage)
+	}
+
+	e.T.Fatalf("Error running command %s %v: %v", name, args, err)
 }
 
 func (e *ClusterE2ETest) RunEKSA(args []string, opts ...CommandOpt) {
@@ -1278,7 +1289,7 @@ func (e *ClusterE2ETest) InstallCuratedPackage(packageName, packagePrefix, kubec
 	os.Setenv("CURATED_PACKAGES_SUPPORT", "true")
 	// The package install command doesn't (yet?) have a --kubeconfig flag.
 	os.Setenv("KUBECONFIG", kubeconfig)
-	e.RunEKSA([]string{
+	e.runEKSAPackageCommand([]string{
 		"install", "package", packageName,
 		"--package-name=" + packagePrefix, "-v=9",
 		"--cluster=" + e.ClusterName,
@@ -1291,7 +1302,7 @@ func (e *ClusterE2ETest) InstallCuratedPackageFile(packageFile, kubeconfig strin
 	os.Setenv("CURATED_PACKAGES_SUPPORT", "true")
 	os.Setenv("KUBECONFIG", kubeconfig)
 	e.T.Log("Installing EKS-A Packages file", packageFile)
-	e.RunEKSA([]string{
+	e.runEKSAPackageCommand([]string{
 		"apply", "package", "-f", packageFile, "-v=9", strings.Join(opts, " "),
 	})
 }
@@ -1561,7 +1572,7 @@ func (e *ClusterE2ETest) VerifyAdotPackageDeploymentUpdated(packageName, targetN
 	// Deploy ADOT as a deployment and scrape the apiservers
 	e.T.Log("Apply changes to package", packageName)
 	e.T.Log("This will update", packageName, "to be a deployment, and scrape the apiservers")
-	err := e.KubectlClient.ApplyKubeSpecFromBytesWithNamespace(ctx, e.Cluster(), adotPackageDeployment, packageMetadatNamespace)
+	err := e.applyPackageSpec(ctx, e.Cluster(), adotPackageDeployment, packageMetadatNamespace)
 	if err != nil {
 		e.T.Fatalf("Error upgrading adot package: %s", err)
 		return
@@ -1614,7 +1625,7 @@ func (e *ClusterE2ETest) VerifyAdotPackageDaemonSetUpdated(packageName, targetNa
 	// Deploy ADOT as a daemonset and scrape the node
 	e.T.Log("Apply changes to package", packageName)
 	e.T.Log("This will update", packageName, "to be a daemonset, and scrape the node")
-	err := e.KubectlClient.ApplyKubeSpecFromBytesWithNamespace(ctx, e.Cluster(), adotPackageDaemonset, packageMetadatNamespace)
+	err := e.applyPackageSpec(ctx, e.Cluster(), adotPackageDaemonset, packageMetadatNamespace)
 	if err != nil {
 		e.T.Fatalf("Error upgrading adot package: %s", err)
 		return
@@ -1709,7 +1720,7 @@ func (e *ClusterE2ETest) TestEmissaryPackageRouting(packageName, checkName strin
 	ctx := context.Background()
 	packageMetadatNamespace := fmt.Sprintf("%s-%s", constants.EksaPackagesName, e.ClusterName)
 
-	err := e.KubectlClient.ApplyKubeSpecFromBytesWithNamespace(ctx, e.Cluster(), emisarryPackage, packageMetadatNamespace)
+	err := e.applyPackageSpec(ctx, e.Cluster(), emisarryPackage, packageMetadatNamespace)
 	if err != nil {
 		e.T.Errorf("Error upgrading emissary package: %v", err)
 		return
@@ -2053,7 +2064,7 @@ func (e *ClusterE2ETest) InstallAutoScalerWithMetricServer(targetNamespace strin
 		e.T.Fatalf("Failed creating metrics-erver Package Deployment: %s", err)
 	}
 
-	err = e.KubectlClient.ApplyKubeSpecFromBytesWithNamespace(ctx, e.Cluster(), metricsServerPackageDeployment,
+	err = e.applyPackageSpec(ctx, e.Cluster(), metricsServerPackageDeployment,
 		packageMetadatNamespace)
 	if err != nil {
 		e.T.Fatalf("Error installing metrics-sserver pacakge: %s", err)
@@ -2064,7 +2075,7 @@ func (e *ClusterE2ETest) InstallAutoScalerWithMetricServer(targetNamespace strin
 		e.T.Fatalf("Failed creating autoscaler Package Deployment: %s", err)
 	}
 
-	err = e.KubectlClient.ApplyKubeSpecFromBytesWithNamespace(ctx, e.Cluster(), autoscalerPackageDeployment,
+	err = e.applyPackageSpec(ctx, e.Cluster(), autoscalerPackageDeployment,
 		packageMetadatNamespace)
 	if err != nil {
 		e.T.Fatalf("Error installing cluster autoscaler pacakge: %s", err)
@@ -2088,7 +2099,7 @@ func (e *ClusterE2ETest) InstallAutoScaler(workloadClusterName, targetNamespace 
 		e.T.Fatalf("Failed creating autoscaler Package Deployment: %s", err)
 	}
 
-	err = e.KubectlClient.ApplyKubeSpecFromBytesWithNamespace(ctx, e.Cluster(), autoscalerPackageWorkloadClusterDeployment,
+	err = e.applyPackageSpec(ctx, e.Cluster(), autoscalerPackageWorkloadClusterDeployment,
 		packageMetadataNamespace)
 	if err != nil {
 		e.T.Fatalf("Error installing cluster autoscaler package: %s", err)
@@ -2121,7 +2132,7 @@ func (e *ClusterE2ETest) InstallCertManagerPackageWithAwsCredentials(prefix, pac
 		e.T.Fatalf("Failed creating cert-manager package deployment: %s", err)
 	}
 
-	err = e.KubectlClient.ApplyKubeSpecFromBytesWithNamespace(ctx, e.Cluster(), certManagerPackageDeployment,
+	err = e.applyPackageSpec(ctx, e.Cluster(), certManagerPackageDeployment,
 		namespace)
 	if err != nil {
 		e.T.Fatalf("Error installing cert-manager package: %s", err)
@@ -2218,7 +2229,7 @@ func (e *ClusterE2ETest) ApplyPackageFile(packageName, targetNamespace string, P
 	packageMetadatNamespace := fmt.Sprintf("%s-%s", "eksa-packages", e.ClusterName)
 
 	e.T.Log("Apply changes to package", packageName)
-	err := e.KubectlClient.ApplyKubeSpecFromBytesWithNamespace(ctx, e.Cluster(), PackageFile, packageMetadatNamespace)
+	err := e.applyPackageSpec(ctx, e.Cluster(), PackageFile, packageMetadatNamespace)
 	if err != nil {
 		e.T.Fatalf("Error upgrading package: %s", err)
 		return
