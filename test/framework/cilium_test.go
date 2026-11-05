@@ -11,6 +11,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -212,5 +213,100 @@ func TestDeleteCiliumRBACPreservesAPIFailure(t *testing.T) {
 	}).Build()
 	if err := deleteCiliumRBAC(context.Background(), c); !errors.Is(err, want) {
 		t.Fatalf("err=%v", err)
+	}
+}
+
+func TestDeleteCiliumLeftoversAfterOlderCLIUninstall(t *testing.T) {
+	g := NewWithT(t)
+	// Metadata from cilium:1.19.10 rendered with the replacement values.
+	peer := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "hubble-peer", Namespace: "kube-system",
+			Labels: map[string]string{
+				"k8s-app":                   "cilium",
+				"app.kubernetes.io/part-of": "cilium",
+				"app.kubernetes.io/name":    "hubble-peer",
+			},
+		},
+		Spec: corev1.ServiceSpec{
+			Selector: map[string]string{"k8s-app": "cilium"},
+			Ports:    []corev1.ServicePort{{Name: "peer-service", Port: 443}},
+		},
+	}
+	unrelated := peer.DeepCopy()
+	unrelated.Name = "application-service"
+	otherNamespace := peer.DeepCopy()
+	otherNamespace.Namespace = "application"
+	role := &rbacv1.Role{ObjectMeta: metav1.ObjectMeta{
+		Name: "cilium-operator-ztunnel", Namespace: "kube-system",
+		Labels: map[string]string{"app.kubernetes.io/part-of": "cilium"},
+	}}
+	scheme := runtime.NewScheme()
+	g.Expect(corev1.AddToScheme(scheme)).To(Succeed())
+	g.Expect(rbacv1.AddToScheme(scheme)).To(Succeed())
+	c := fake.NewClientBuilder().WithScheme(scheme).
+		WithObjects(peer, unrelated, otherNamespace, role).Build()
+	ctx := context.Background()
+	replacement := peer.DeepCopy()
+	replacement.SetResourceVersion("")
+	g.Expect(apierrors.IsAlreadyExists(c.Create(ctx, replacement))).To(BeTrue())
+	for range 2 {
+		g.Expect(deleteCiliumLeftovers(ctx, c)).To(Succeed())
+	}
+	g.Expect(apierrors.IsNotFound(c.Get(ctx, client.ObjectKeyFromObject(peer), peer))).To(BeTrue())
+	g.Expect(apierrors.IsNotFound(c.Get(ctx, client.ObjectKeyFromObject(role), role))).To(BeTrue())
+	g.Expect(c.Create(ctx, replacement)).To(Succeed())
+	for _, service := range []*corev1.Service{unrelated, otherNamespace} {
+		g.Expect(c.Get(ctx, client.ObjectKeyFromObject(service), service)).To(Succeed())
+	}
+}
+
+func TestDeleteCiliumLeftoversPreservesUnrelatedPeer(t *testing.T) {
+	for _, label := range []string{"k8s-app", "app.kubernetes.io/part-of", "app.kubernetes.io/name"} {
+		t.Run(label, func(t *testing.T) {
+			g := NewWithT(t)
+			service := &corev1.Service{ObjectMeta: metav1.ObjectMeta{
+				Name: "hubble-peer", Namespace: "kube-system",
+				Labels: map[string]string{
+					"k8s-app":                   "cilium",
+					"app.kubernetes.io/part-of": "cilium",
+					"app.kubernetes.io/name":    "hubble-peer",
+				},
+			}}
+			delete(service.Labels, label)
+			c := fake.NewClientBuilder().WithObjects(service).Build()
+			g.Expect(deleteCiliumLeftovers(context.Background(), c)).To(
+				MatchError("refusing to delete hubble-peer service without Cilium labels"))
+			g.Expect(c.Get(context.Background(), client.ObjectKeyFromObject(service), service)).To(Succeed())
+		})
+	}
+}
+
+func TestDeleteCiliumLeftoversPreservesServiceAPIFailure(t *testing.T) {
+	want := errors.New("peer service access denied")
+	for _, operation := range []string{"get", "delete"} {
+		t.Run(operation, func(t *testing.T) {
+			g := NewWithT(t)
+			service := &corev1.Service{ObjectMeta: metav1.ObjectMeta{
+				Name: "hubble-peer", Namespace: "kube-system",
+				Labels: map[string]string{
+					"k8s-app":                   "cilium",
+					"app.kubernetes.io/part-of": "cilium",
+					"app.kubernetes.io/name":    "hubble-peer",
+				},
+			}}
+			c := fake.NewClientBuilder().WithObjects(service).WithInterceptorFuncs(interceptor.Funcs{
+				Get: func(ctx context.Context, c client.WithWatch, key client.ObjectKey, object client.Object, opts ...client.GetOption) error {
+					if operation == "get" {
+						return want
+					}
+					return c.Get(ctx, key, object, opts...)
+				},
+				Delete: func(context.Context, client.WithWatch, client.Object, ...client.DeleteOption) error {
+					return want
+				},
+			}).Build()
+			g.Expect(errors.Is(deleteCiliumLeftovers(context.Background(), c), want)).To(BeTrue())
+		})
 	}
 }

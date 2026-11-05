@@ -378,6 +378,9 @@ func TestValidateControlPlanes(t *testing.T) {
 				s.Cluster.Spec.ControlPlaneConfiguration = v1alpha1.ControlPlaneConfiguration{
 					Count: 2,
 				}
+				s.Cluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{
+					{Name: "workers", Count: ptr.To(1)},
+				}
 			}),
 			nodes: []*corev1.Node{
 				controlPlaneNode(func(node *corev1.Node) {
@@ -460,6 +463,9 @@ func TestValidateControlPlanes(t *testing.T) {
 				s.Cluster.Spec.ControlPlaneConfiguration = v1alpha1.ControlPlaneConfiguration{
 					Count:  2,
 					Taints: []corev1.Taint{api.ControlPlaneTaint()},
+				}
+				s.Cluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{
+					{Name: "workers", Count: ptr.To(1)},
 				}
 			}),
 			nodes: []*corev1.Node{
@@ -549,6 +555,60 @@ func TestValidateControlPlanes(t *testing.T) {
 				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
 			} else {
 				g.Expect(err).To(BeNil())
+			}
+		})
+	}
+}
+
+func TestValidateControlPlaneTaintsWorkerTopology(t *testing.T) {
+	customTaint := corev1.Taint{Key: "dedicated", Value: "control-plane", Effect: corev1.TaintEffectNoSchedule}
+	tests := []struct {
+		name       string
+		cpCount    int
+		workers    bool
+		configured []corev1.Taint
+		actual     []corev1.Taint
+		wantErr    bool
+	}{
+		{name: "one control plane without workers", cpCount: 1},
+		{name: "three control planes without workers", cpCount: 3},
+		{name: "three control planes without workers explicit empty taints", cpCount: 3, configured: []corev1.Taint{}},
+		{name: "three control planes without workers unexpected default taint", cpCount: 3, actual: []corev1.Taint{api.ControlPlaneTaint()}, wantErr: true},
+		{name: "three control planes without workers configured taints", cpCount: 3, configured: []corev1.Taint{customTaint}, actual: []corev1.Taint{customTaint}, wantErr: true},
+		{name: "one control plane with workers default taint", cpCount: 1, workers: true, actual: []corev1.Taint{api.ControlPlaneTaint()}},
+		{name: "three control planes with workers default taint", cpCount: 3, workers: true, actual: []corev1.Taint{api.ControlPlaneTaint()}},
+		{name: "three control planes with workers missing default taint", cpCount: 3, workers: true, wantErr: true},
+		{name: "three control planes with workers explicit empty taints", cpCount: 3, workers: true, configured: []corev1.Taint{}},
+		{name: "three control planes with workers configured custom taint", cpCount: 3, workers: true, configured: []corev1.Taint{customTaint}, actual: []corev1.Taint{customTaint}},
+		{name: "three control planes with workers missing custom taint", cpCount: 3, workers: true, configured: []corev1.Taint{customTaint}, wantErr: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			spec := test.NewClusterSpec(func(s *cluster.Spec) {
+				s.Cluster = testCluster()
+				s.Cluster.Spec.ControlPlaneConfiguration = v1alpha1.ControlPlaneConfiguration{
+					Count: tt.cpCount, Taints: tt.configured,
+				}
+				if tt.workers {
+					s.Cluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{
+						{Name: "workers", Count: ptr.To(1)},
+					}
+				}
+			})
+			vt := newStateValidatorTest(t, spec)
+			for i := 0; i < tt.cpCount; i++ {
+				vt.createClusterObjects(context.Background(), controlPlaneNode(func(n *corev1.Node) {
+					n.Name = fmt.Sprintf("control-plane-%d", i)
+					n.Spec.Taints = tt.actual
+					n.Status.Conditions = []corev1.NodeCondition{{Type: corev1.NodeReady, Status: corev1.ConditionTrue}}
+				}))
+			}
+			err := validations.ValidateControlPlaneNodes(context.Background(), vt.config)
+			if tt.wantErr && err == nil {
+				t.Fatal("expected control-plane taint validation to fail")
+			}
+			if !tt.wantErr && err != nil {
+				t.Fatalf("expected valid control-plane taints: %v", err)
 			}
 		})
 	}
