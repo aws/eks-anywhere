@@ -49,6 +49,30 @@ func runCuratedPackagesPrometheusUpdate(test *framework.ClusterE2ETest) {
 	test.VerifyPrometheusNodeExporterStates(packageFullName, prometheusPackageTargetNamespace)
 }
 
+// runCuratedPackagesPrometheusCustomScrapeConfigs installs Prometheus with a job from extraScrapeConfigs
+// and one from serverFiles."prometheus.yml".scrape_configs, and checks both are active next to the
+// default "prometheus" job. This fails on the Prometheus chart shipped before
+// the chart fix in aws/eks-anywhere-build-tooling#5791 and passes once a bundle with that fix is active.
+func runCuratedPackagesPrometheusCustomScrapeConfigs(test *framework.ClusterE2ETest) {
+	packageFullName := prometheusPackagePrefix + "-" + prometheusPackageName
+	test.InstallLocalStorageProvisioner()
+	test.CreateNamespace(prometheusPackageTargetNamespace)
+	test.SetPackageBundleActive()
+	test.ValidatePackageBundleControllerRegistry()
+	test.InstallPrometheusPackageWithCustomScrapeConfigs(packageFullName, prometheusPackageTargetNamespace)
+	test.VerifyPrometheusPackageInstalled(packageFullName, prometheusPackageTargetNamespace)
+	test.VerifyPrometheusPrometheusServerStates(packageFullName, prometheusPackageTargetNamespace, "deployment")
+	test.VerifyPrometheusScrapeJobsActive(packageFullName, prometheusPackageTargetNamespace,
+		framework.PrometheusDefaultScrapeJob,
+		framework.PrometheusExtraScrapeConfigsJob,
+		framework.PrometheusServerFilesScrapeJob,
+	)
+}
+
+func runCuratedPackagesPrometheusCustomScrapeConfigsFlow(test *framework.ClusterE2ETest) {
+	test.WithCluster(runCuratedPackagesPrometheusCustomScrapeConfigs)
+}
+
 func runCuratedPackagesPrometheusInstallSimpleFlow(test *framework.ClusterE2ETest) {
 	test.WithCluster(runCuratedPackagesPrometheusInstall)
 }

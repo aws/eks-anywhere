@@ -1,0 +1,28 @@
+# Prometheus package with a job from extraScrapeConfigs (a string) and one from
+# serverFiles."prometheus.yml".scrape_configs. The chart keeps its default scrape configs, including
+# the "prometheus" job. The chart shipped before aws/eks-anywhere-build-tooling#5791 renders
+# extraScrapeConfigs a second time after rule_files (invalid config) and drops the serverFiles
+# scrape_configs from the ConfigMap.
+apiVersion: packages.eks.amazonaws.com/v1alpha1
+kind: Package
+metadata:
+  name: {{.name}}
+spec:
+  packageName: prometheus
+  targetNamespace: {{.targetNamespace}}
+  config: |
+    server:
+      persistentVolume:
+        storageClass: local-path
+    extraScrapeConfigs: |
+      - job_name: {{.extraScrapeConfigsJob}}
+        static_configs:
+          - targets:
+              - localhost:9090
+    serverFiles:
+      prometheus.yml:
+        scrape_configs:
+          - job_name: {{.serverFilesJob}}
+            static_configs:
+              - targets:
+                  - localhost:9090
