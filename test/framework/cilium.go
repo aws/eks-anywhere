@@ -10,6 +10,7 @@ import (
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -47,7 +48,7 @@ func (e *ClusterE2ETest) UninstallCilium() {
 	if err != nil {
 		e.T.Fatal(err)
 	}
-	if err := deleteCiliumRBAC(context.Background(), c); err != nil {
+	if err := deleteCiliumLeftovers(context.Background(), c); err != nil {
 		e.T.Fatal(err)
 	}
 }
@@ -197,6 +198,31 @@ func deleteCiliumRBAC(ctx context.Context, c client.Client) error {
 		if err := client.IgnoreNotFound(c.Delete(ctx, &roles.Items[i])); err != nil {
 			return fmt.Errorf("deleting Cilium role: %w", err)
 		}
+	}
+	return nil
+}
+
+func deleteCiliumLeftovers(ctx context.Context, c client.Client) error {
+	if err := deleteCiliumRBAC(ctx, c); err != nil {
+		return err
+	}
+	// Older CLIs do not remove the peer service introduced by newer charts.
+	service := &corev1.Service{}
+	key := client.ObjectKey{Namespace: constants.KubeSystemNamespace, Name: "hubble-peer"}
+	if err := c.Get(ctx, key, service); err != nil {
+		return client.IgnoreNotFound(err)
+	}
+	for key, value := range map[string]string{
+		"k8s-app":                   "cilium",
+		"app.kubernetes.io/part-of": "cilium",
+		"app.kubernetes.io/name":    "hubble-peer",
+	} {
+		if service.Labels[key] != value {
+			return errors.New("refusing to delete hubble-peer service without Cilium labels")
+		}
+	}
+	if err := client.IgnoreNotFound(c.Delete(ctx, service, client.Preconditions{UID: &service.UID})); err != nil {
+		return fmt.Errorf("deleting Cilium Hubble peer service: %w", err)
 	}
 	return nil
 }

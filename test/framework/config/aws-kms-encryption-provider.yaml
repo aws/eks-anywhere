@@ -40,6 +40,14 @@ spec:
         - --key={{ .kmsKeyArn }}
         - --region=us-west-2
         - --listen={{ .kmsSocket }}
+        # Pods need identity even while the mutation webhook is starting.
+        env:
+        - name: AWS_ROLE_ARN
+          value: {{ .kmsIamRole }}
+        - name: AWS_WEB_IDENTITY_TOKEN_FILE
+          value: /var/run/secrets/eks.amazonaws.com/serviceaccount/token
+        - name: AWS_STS_REGIONAL_ENDPOINTS
+          value: regional
         ports:
         - containerPort: 8080
           protocol: TCP
@@ -52,6 +60,9 @@ spec:
             name: var-run-kmsplugin
           - mountPath: /root/.aws
             name: aws-credentials
+          - mountPath: /var/run/secrets/eks.amazonaws.com/serviceaccount
+            name: aws-iam-token
+            readOnly: true
       tolerations:
       - key: "node-role.kubernetes.io/master"
         effect: "NoSchedule"
@@ -63,6 +74,13 @@ spec:
 {{- end }}
       serviceAccountName: {{ .serviceAccountName }}
       volumes:
+      - name: aws-iam-token
+        projected:
+          sources:
+          - serviceAccountToken:
+              audience: sts.amazonaws.com
+              expirationSeconds: 86400
+              path: token
       - hostPath:
           path: /var/run/kmsplugin
           type: DirectoryOrCreate

@@ -376,7 +376,7 @@ func validateNodeReady(node corev1.Node, kubeVersion v1alpha1.KubernetesVersion)
 }
 
 func validateControlPlaneTaints(cluster *v1alpha1.Cluster, node corev1.Node) error {
-	if cluster.IsSingleNode() {
+	if len(cluster.Spec.WorkerNodeGroupConfigurations) == 0 {
 		return api.ValidateControlPlaneNoTaints(cluster.Spec.ControlPlaneConfiguration, node)
 	}
 
