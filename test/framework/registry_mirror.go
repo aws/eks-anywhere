@@ -5,10 +5,13 @@ import (
 	"encoding/base64"
 	"net"
 	"os"
+	"path"
+	"strings"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/registrymirror"
 )
 
 const (
@@ -218,4 +221,18 @@ func (e *ClusterE2ETest) SetRegistryMirrorDefaultInstanceSecurityGroupOnCleanup(
 	e.T.Cleanup(func() {
 		e.ChangeInstanceSecurityGroup(os.Getenv(RegistryMirrorDefaultSecurityGroup))
 	})
+}
+
+// PackagesSourceRegistryMirrorPath returns the path under the registry mirror host that the CLI sets as the
+// packages controller's sourceRegistry for packageMirrorAlias: the public.ecr.aws mirror, including its OCI
+// namespace if one is set, plus the alias (see curatedpackages.GetCuratedPackagesRegistries). The controller
+// pulls its own images (controller, migrations hook, credential provider) from there; other packages pull
+// from defaultImageRegistry.
+func (e *ClusterE2ETest) PackagesSourceRegistryMirrorPath(packageMirrorAlias string) string {
+	mirror := registrymirror.FromCluster(e.ClusterConfig.Cluster)
+	if mirror == nil {
+		return packageMirrorAlias
+	}
+	namespace := strings.TrimPrefix(strings.TrimPrefix(mirror.CoreEKSAMirror(), mirror.BaseRegistry), "/")
+	return path.Join(namespace, packageMirrorAlias)
 }
