@@ -9,6 +9,8 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
+
+	e2etests "github.com/aws/eks-anywhere/test/framework"
 )
 
 const (
@@ -54,6 +56,10 @@ func (e *E2ESession) setupPackagesEnv(testRegex string) error {
 		return nil
 	}
 
+	if from, ok := packagesUpgradeFromBundle(e.stage); ok {
+		e.testEnvVars[e2etests.PackagesUpgradeFromBundleVar] = from
+	}
+
 	isNonRegional := regexp.MustCompile(nonRegionalPackagesRegex).MatchString(testRegex)
 
 	var roleArnEnvVar, sessionName string
@@ -79,6 +85,20 @@ func (e *E2ESession) setupPackagesEnv(testRegex string) error {
 	}
 
 	return nil
+}
+
+// packagesUpgradeFromBundle returns the value of T_PACKAGES_UPGRADE_FROM_BUNDLE for the package tests, which
+// skip the bundle upgrade tests when it's unset. It's taken from the environment if set there. Staging runs default
+// it to "prod", so the upgrade tests go from the current prod bundle to the staging bundle; their clusters pull from
+// the staging registries, which have the older controller images. Dev registries don't, so other stages don't set it.
+func packagesUpgradeFromBundle(stage string) (string, bool) {
+	if from := os.Getenv(e2etests.PackagesUpgradeFromBundleVar); from != "" {
+		return from, true
+	}
+	if stage == "staging" {
+		return "prod", true
+	}
+	return "", false
 }
 
 func (e *E2ESession) setupCertManagerEnv(testRegex string) error {
