@@ -1,0 +1,295 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.19.0
+  name: nutanixclustertemplates.infrastructure.cluster.x-k8s.io
+spec:
+  group: infrastructure.cluster.x-k8s.io
+  names:
+    categories:
+    - cluster-api
+    kind: NutanixClusterTemplate
+    listKind: NutanixClusterTemplateList
+    plural: nutanixclustertemplates
+    singular: nutanixclustertemplate
+  scope: Namespaced
+  versions:
+  - name: v1beta1
+    schema:
+      openAPIV3Schema:
+        description: NutanixClusterTemplate is the Schema for the nutanixclustertemplates
+          API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: NutanixClusterTemplateSpec defines the desired state of NutanixClusterTemplate
+            properties:
+              template:
+                description: NutanixClusterTemplateResource describes the data needed
+                  to create a NutanixCluster from a template.
+                properties:
+                  spec:
+                    description: NutanixClusterSpec defines the desired state of NutanixCluster
+                    properties:
+                      controlPlaneEndpoint:
+                        description: |-
+                          ControlPlaneEndpoint represents the endpoint used to communicate with the control plane.
+                          host can be either DNS name or ip address
+                        properties:
+                          host:
+                            description: host is the hostname on which the API server
+                              is serving.
+                            maxLength: 512
+                            type: string
+                          port:
+                            description: port is the port on which the API server
+                              is serving.
+                            format: int32
+                            type: integer
+                        type: object
+                      controlPlaneFailureDomains:
+                        description: |-
+                          controlPlaneFailureDomains configures references to the NutanixFailureDomain objects
+                          that the cluster uses to deploy its control-plane machines.
+                        items:
+                          description: |-
+                            LocalObjectReference contains enough information to let you locate the
+                            referenced object inside the same namespace.
+                          properties:
+                            name:
+                              default: ""
+                              description: |-
+                                Name of the referent.
+                                This field is effectively required, but due to backwards compatibility is
+                                allowed to be empty. Instances of this type with an empty value here are
+                                almost certainly wrong.
+                                More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                              type: string
+                          type: object
+                          x-kubernetes-map-type: atomic
+                        type: array
+                        x-kubernetes-list-map-keys:
+                        - name
+                        x-kubernetes-list-type: map
+                      failureDomains:
+                        description: |-
+                          failureDomains configures failure domains information for the Nutanix platform.
+                          When set, the failure domains defined here may be used to spread Machines across
+                          prism element clusters to improve fault tolerance of the cluster.
+
+                          Deprecated: This field is replaced by the field controlPlaneFailureDomains and will be removed in the next apiVersion.
+                        items:
+                          description: |-
+                            NutanixFailureDomainConfig configures failure domain information for Nutanix.
+
+                            Deprecated: This type is replaced by the NutanixFailureDomain CRD type and will be removed in the next apiVersion.
+                          properties:
+                            cluster:
+                              description: |-
+                                cluster is to identify the cluster (the Prism Element under management of the Prism Central),
+                                in which the Machine's VM will be created. The cluster identifier (uuid or name) can be obtained
+                                from the Prism Central console or using the prism_central API.
+                              properties:
+                                name:
+                                  description: name is the resource name in the PC
+                                  minLength: 1
+                                  type: string
+                                type:
+                                  description: Type is the identifier type to use
+                                    for this resource.
+                                  enum:
+                                  - uuid
+                                  - name
+                                  type: string
+                                uuid:
+                                  description: uuid is the UUID of the resource in
+                                    the PC.
+                                  format: uuid
+                                  maxLength: 36
+                                  minLength: 36
+                                  type: string
+                              required:
+                              - type
+                              type: object
+                              x-kubernetes-validations:
+                              - message: '''name'' must be set when type is ''name'',
+                                  and forbidden otherwise'
+                                rule: 'self.type == ''name'' ? has(self.name) : !has(self.name)'
+                              - message: '''uuid'' must be set when type is ''uuid'',
+                                  and forbidden otherwise'
+                                rule: 'self.type == ''uuid'' ? has(self.uuid) && self.uuid.contains(''-'')
+                                  : !has(self.uuid)'
+                            controlPlane:
+                              description: indicates if a failure domain is suited
+                                for control plane nodes
+                              type: boolean
+                            name:
+                              description: |-
+                                name defines the unique name of a failure domain.
+                                Name is required and must be at most 64 characters in length.
+                                It must consist of only lower case alphanumeric characters and hyphens (-).
+                                It must start and end with an alphanumeric character.
+                                This value is arbitrary and is used to identify the failure domain within the platform.
+                              maxLength: 64
+                              minLength: 1
+                              pattern: '[a-z0-9]([-a-z0-9]*[a-z0-9])?'
+                              type: string
+                            subnets:
+                              description: |-
+                                subnets holds a list of identifiers (one or more) of the cluster's network subnets
+                                for the Machine's VM to connect to. The subnet identifiers (uuid or name) can be
+                                obtained from the Prism Central console or using the prism_central API.
+                              items:
+                                description: NutanixResourceIdentifier holds the identity
+                                  of a Nutanix PC resource (cluster, image, subnet,
+                                  etc.)
+                                properties:
+                                  name:
+                                    description: name is the resource name in the
+                                      PC
+                                    minLength: 1
+                                    type: string
+                                  type:
+                                    description: Type is the identifier type to use
+                                      for this resource.
+                                    enum:
+                                    - uuid
+                                    - name
+                                    type: string
+                                  uuid:
+                                    description: uuid is the UUID of the resource
+                                      in the PC.
+                                    format: uuid
+                                    maxLength: 36
+                                    minLength: 36
+                                    type: string
+                                required:
+                                - type
+                                type: object
+                                x-kubernetes-validations:
+                                - message: '''name'' must be set when type is ''name'',
+                                    and forbidden otherwise'
+                                  rule: 'self.type == ''name'' ? has(self.name) :
+                                    !has(self.name)'
+                                - message: '''uuid'' must be set when type is ''uuid'',
+                                    and forbidden otherwise'
+                                  rule: 'self.type == ''uuid'' ? has(self.uuid) &&
+                                    self.uuid.contains(''-'') : !has(self.uuid)'
+                              minItems: 1
+                              type: array
+                          required:
+                          - cluster
+                          - controlPlane
+                          - name
+                          - subnets
+                          type: object
+                        type: array
+                        x-kubernetes-list-map-keys:
+                        - name
+                        x-kubernetes-list-type: map
+                      prismCentral:
+                        description: |-
+                          prismCentral holds the endpoint address and port to access the Nutanix Prism Central.
+                          When a cluster-wide proxy is installed, by default, this endpoint will be accessed via the proxy.
+                          Should you wish for communication with this endpoint not to be proxied, please add the endpoint to the
+                          proxy spec.noProxy list.
+                        properties:
+                          additionalTrustBundle:
+                            description: |-
+                              AdditionalTrustBundle is a PEM encoded x509 cert for the RootCA that was used to create the certificate
+                              for a Prism Central that uses certificates that were issued by a non-publicly trusted RootCA. The trust
+                              bundle is added to the cert pool used to authenticate the TLS connection to the Prism Central.
+                            properties:
+                              data:
+                                description: Data of the trust bundle if Kind is String.
+                                type: string
+                              kind:
+                                description: Kind of the Nutanix trust bundle
+                                enum:
+                                - String
+                                - ConfigMap
+                                type: string
+                              name:
+                                description: Name of the credential.
+                                type: string
+                              namespace:
+                                description: namespace of the credential.
+                                type: string
+                            required:
+                            - kind
+                            type: object
+                          address:
+                            description: address is the endpoint address (DNS name
+                              or IP address) of the Nutanix Prism Central or Element
+                              (cluster)
+                            maxLength: 256
+                            type: string
+                          credentialRef:
+                            description: Pass credential information for the target
+                              Prism instance
+                            properties:
+                              kind:
+                                description: Kind of the Nutanix credential
+                                enum:
+                                - Secret
+                                type: string
+                              name:
+                                description: Name of the credential.
+                                minLength: 1
+                                type: string
+                              namespace:
+                                description: namespace of the credential.
+                                type: string
+                            required:
+                            - kind
+                            - name
+                            type: object
+                          insecure:
+                            default: false
+                            description: use insecure connection to Prism endpoint
+                            type: boolean
+                          port:
+                            default: 9440
+                            description: port is the port number to access the Nutanix
+                              Prism Central or Element (cluster)
+                            format: int32
+                            maximum: 65535
+                            minimum: 1
+                            type: integer
+                        required:
+                        - address
+                        - port
+                        type: object
+                    type: object
+                    x-kubernetes-validations:
+                    - message: Cannot set both 'failureDomains' and 'controlPlaneFailureDomains'
+                        fields simultaneously. Use 'controlPlaneFailureDomains' as
+                        'failureDomains' is deprecated.
+                      rule: '!(has(self.failureDomains) && has(self.controlPlaneFailureDomains))'
+                required:
+                - spec
+                type: object
+            required:
+            - template
+            type: object
+        type: object
+    served: true
+    storage: true

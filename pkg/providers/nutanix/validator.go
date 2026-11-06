@@ -10,8 +10,11 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/nutanix-cloud-native/prism-go-client/converged"
 	"github.com/nutanix-cloud-native/prism-go-client/environment/credentials"
-	v3 "github.com/nutanix-cloud-native/prism-go-client/v3"
+	clusterModels "github.com/nutanix/ntnx-api-golang-clients/clustermgmt-go-client/v4/models/clustermgmt/v4/config"
+	subnetModels "github.com/nutanix/ntnx-api-golang-clients/networking-go-client/v4/models/networking/v4/config"
+	imageModels "github.com/nutanix/ntnx-api-golang-clients/vmm-go-client/v4/models/vmm/v4/content"
 	"k8s.io/apimachinery/pkg/api/resource"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -51,7 +54,6 @@ func NewValidator(clientCache *ClientCache, certValidator crypto.TlsValidator, h
 }
 
 func (v *Validator) validateControlPlaneIP(ip string) error {
-	// check if controlPlaneEndpointIp is valid
 	parsedIP := net.ParseIP(ip)
 	if parsedIP == nil {
 		return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host is invalid: %s", ip)
@@ -93,7 +95,6 @@ func (v *Validator) checkImageNameMatchesKubernetesVersion(ctx context.Context, 
 	if controlPlaneMachineConfig == nil {
 		return fmt.Errorf("cannot find NutanixMachineConfig %v for control plane", spec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name)
 	}
-	// validate template field name contains cluster kubernetes version for the control plane machine.
 	if err := v.validateTemplateMatchesKubernetesVersion(ctx, controlPlaneMachineConfig.Spec.Image, client, string(spec.Cluster.Spec.KubernetesVersion)); err != nil {
 		return fmt.Errorf("machine config %s validation failed: %v", controlPlaneMachineConfig.Name, err)
 	}
@@ -103,7 +104,6 @@ func (v *Validator) checkImageNameMatchesKubernetesVersion(ctx context.Context, 
 		if etcdMachineConfig == nil {
 			return fmt.Errorf("cannot find NutanixMachineConfig %v for etcd machines", spec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name)
 		}
-		// validate template field name contains cluster kubernetes version for the external etcd machine.
 		if err := v.validateTemplateMatchesKubernetesVersion(ctx, etcdMachineConfig.Spec.Image, client, string(spec.Cluster.Spec.KubernetesVersion)); err != nil {
 			return fmt.Errorf("machine config %s validation failed: %v", etcdMachineConfig.Name, err)
 		}
@@ -114,7 +114,6 @@ func (v *Validator) checkImageNameMatchesKubernetesVersion(ctx context.Context, 
 		if workerNodeGroupConfiguration.KubernetesVersion != nil {
 			kubernetesVersion = string(*workerNodeGroupConfiguration.KubernetesVersion)
 		}
-		// validate template field name contains cluster kubernetes version for the control plane machine.
 		imageIdentifier := spec.NutanixMachineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name].Spec.Image
 		if err := v.validateTemplateMatchesKubernetesVersion(ctx, imageIdentifier, client, kubernetesVersion); err != nil {
 			return fmt.Errorf("machine config %s validation failed: %v", controlPlaneMachineConfig.Name, err)
@@ -295,11 +294,10 @@ func (v *Validator) validateEndpointAndPort(dcConf anywherev1.NutanixDatacenterC
 }
 
 func (v *Validator) validateCredentials(ctx context.Context, client Client) error {
-	_, err := client.GetCurrentLoggedInUser(ctx)
+	_, err := client.ListClusters(ctx, converged.WithLimit(1))
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to validate credentials: %v", err)
 	}
-
 	return nil
 }
 
@@ -452,6 +450,43 @@ func (v *Validator) validateImageConfig(ctx context.Context, client Client, iden
 	return nil
 }
 
+func (v *Validator) validateProjectConfig(ctx context.Context, client Client, identifier anywherev1.NutanixResourceIdentifier) error {
+	switch identifier.Type {
+	case anywherev1.NutanixIdentifierName:
+		if identifier.Name == nil || *identifier.Name == "" {
+			return fmt.Errorf("missing project name")
+		}
+		return findProjectByName(ctx, client, *identifier.Name)
+	case anywherev1.NutanixIdentifierUUID:
+		if identifier.UUID == nil || *identifier.UUID == "" {
+			return fmt.Errorf("missing project uuid")
+		}
+	default:
+		return fmt.Errorf("invalid project identifier type: %s; valid types are: %q and %q", identifier.Type, anywherev1.NutanixIdentifierName, anywherev1.NutanixIdentifierUUID)
+	}
+	return nil
+}
+
+func findProjectByName(ctx context.Context, client Client, projectName string) error {
+	projects, err := client.ListAllProject(ctx, "")
+	if err != nil {
+		return fmt.Errorf("failed to list projects: %v", err)
+	}
+	found := make([]*string, 0)
+	for _, p := range projects.Entities {
+		if p.Spec != nil && p.Spec.Name == projectName {
+			found = append(found, p.Metadata.UUID)
+		}
+	}
+	if len(found) == 0 {
+		return fmt.Errorf("failed to find project by name %q: %v", projectName, err)
+	}
+	if len(found) > 1 {
+		return fmt.Errorf("found more than one (%v) project with name %q", len(found), projectName)
+	}
+	return nil
+}
+
 func (v *Validator) validateTemplateMatchesKubernetesVersion(ctx context.Context, identifier anywherev1.NutanixResourceIdentifier, client Client, kubernetesVersionName string) error {
 	var templateName string
 	if identifier.Type == anywherev1.NutanixIdentifierUUID {
@@ -460,23 +495,18 @@ func (v *Validator) validateTemplateMatchesKubernetesVersion(ctx context.Context
 		if err != nil {
 			return fmt.Errorf("failed to find image with uuid %s: %v", imageUUID, err)
 		}
-		if imageDetails.Spec == nil || imageDetails.Spec.Name == nil {
+		if imageDetails.Name == nil {
 			return fmt.Errorf("failed to find image details with uuid %s", imageUUID)
 		}
-		templateName = *imageDetails.Spec.Name
+		templateName = *imageDetails.Name
 	} else {
 		templateName = *identifier.Name
 	}
 
-	// Replace 1.23, 1-23, 1_23 to 123 in the template name string.
 	templateReplacer := strings.NewReplacer("-", "", ".", "", "_", "")
 	template := templateReplacer.Replace(templateName)
-	// Replace 1-23 to 123 in the kubernetesversion string.
 	replacer := strings.NewReplacer(".", "")
 	kubernetesVersion := replacer.Replace(string(kubernetesVersionName))
-	// This will return an error if the template name does not contain specified kubernetes version.
-	// For ex if the kubernetes version is 1.23,
-	// the template name should include 1.23 or 1-23, 1_23 or 123 i.e. kubernetes-1-23-eks in the string.
 	if !strings.Contains(template, kubernetesVersion) {
 		return fmt.Errorf("missing kube version from the machine config template name: template=%s, version=%s", templateName, string(kubernetesVersionName))
 	}
@@ -515,31 +545,6 @@ func (v *Validator) validateSubnetConfig(ctx context.Context, client Client, clu
 	return nil
 }
 
-func (v *Validator) validateProjectConfig(ctx context.Context, client Client, identifier anywherev1.NutanixResourceIdentifier) error {
-	switch identifier.Type {
-	case anywherev1.NutanixIdentifierName:
-		if identifier.Name == nil || *identifier.Name == "" {
-			return fmt.Errorf("missing project name")
-		}
-		projectName := *identifier.Name
-		if _, err := findProjectUUIDByName(ctx, client, projectName); err != nil {
-			return fmt.Errorf("failed to find project with name %q: %v", projectName, err)
-		}
-	case anywherev1.NutanixIdentifierUUID:
-		if identifier.UUID == nil || *identifier.UUID == "" {
-			return fmt.Errorf("missing project uuid")
-		}
-		projectUUID := *identifier.UUID
-		if _, err := client.GetProject(ctx, projectUUID); err != nil {
-			return fmt.Errorf("failed to find project with uuid %s: %v", projectUUID, err)
-		}
-	default:
-		return fmt.Errorf("invalid project identifier type: %s; valid types are: %q and %q", identifier.Type, anywherev1.NutanixIdentifierName, anywherev1.NutanixIdentifierUUID)
-	}
-
-	return nil
-}
-
 func (v *Validator) validateAdditionalCategories(ctx context.Context, client Client, categories []anywherev1.NutanixCategoryIdentifier) error {
 	for _, category := range categories {
 		if category.Key == "" {
@@ -550,12 +555,14 @@ func (v *Validator) validateAdditionalCategories(ctx context.Context, client Cli
 			return fmt.Errorf("missing category value")
 		}
 
-		if _, err := client.GetCategoryKey(ctx, category.Key); err != nil {
-			return fmt.Errorf("failed to find category with key %q: %v", category.Key, err)
+		filter := fmt.Sprintf("key eq '%s' and value eq '%s'", category.Key, category.Value)
+		cats, err := client.ListCategories(ctx, converged.WithFilter(filter))
+		if err != nil {
+			return fmt.Errorf("failed to list categories with key %q and value %q: %v", category.Key, category.Value, err)
 		}
 
-		if _, err := client.GetCategoryValue(ctx, category.Key, category.Value); err != nil {
-			return fmt.Errorf("failed to find category value %q for category %q: %v", category.Value, category.Key, err)
+		if len(cats) == 0 {
+			return fmt.Errorf("failed to find category with key %q and value %q", category.Key, category.Value)
 		}
 	}
 
@@ -592,13 +599,21 @@ func getRequestedGPUsForAllMachines(machineCount int, requestedGpus []anywherev1
 	return allMachinesRequestedGPUs
 }
 
-func (v *Validator) tryAssignGPUsToMachineConfig(machineCount int, requestedGpus []anywherev1.NutanixGPUIdentifier, clusterGpuList []v3.GPU, cluster anywherev1.NutanixResourceIdentifier) ([]v3.GPU, error) {
+// availableGPU represents a GPU that is available for assignment, abstracting
+// over both physical and virtual GPU profiles from the v4 API.
+type availableGPU struct {
+	deviceID   *int64
+	deviceName *string
+	mode       string
+}
+
+func (v *Validator) tryAssignGPUsToMachineConfig(machineCount int, requestedGpus []anywherev1.NutanixGPUIdentifier, clusterGpuList []availableGPU, cluster anywherev1.NutanixResourceIdentifier) ([]availableGPU, error) {
 	allMachinesRequestedGPUs := getRequestedGPUsForAllMachines(machineCount, requestedGpus)
 
 	for _, requestedGpu := range allMachinesRequestedGPUs {
 		found := -1
 		for index, gpu := range clusterGpuList {
-			if isRequestedGPUAssignable(gpu, requestedGpu) {
+			if isAvailableGPUAssignable(gpu, requestedGpu) {
 				found = index
 				break
 			}
@@ -624,54 +639,83 @@ func (v *Validator) isGPURequested(configs map[string]*anywherev1.NutanixMachine
 	return false
 }
 
-func (v *Validator) initAvailableGPUsMap(hosts []*v3.HostResponse) map[string][]v3.GPU {
-	availableGpu := make(map[string][]v3.GPU)
-	for _, host := range hosts {
-		if host.Status != nil &&
-			host.Status.Resources != nil &&
-			host.Status.ClusterReference != nil &&
-			host.Status.ClusterReference.UUID != "" {
-			clusterUUID := host.Status.ClusterReference.UUID
-
-			availableGpu[clusterUUID] = make([]v3.GPU, 0)
-		}
-	}
-	return availableGpu
-}
-
-func (v *Validator) getAvailableGPUs(hosts []*v3.HostResponse) (map[string][]v3.GPU, error) {
-	availableGpu := v.initAvailableGPUsMap(hosts)
-
-	for _, host := range hosts {
-		if host.Status != nil &&
-			host.Status.Resources != nil &&
-			host.Status.Resources.GPUList != nil &&
-			host.Status.ClusterReference != nil &&
-			host.Status.ClusterReference.UUID != "" {
-			clusterUUID := host.Status.ClusterReference.UUID
-
-			for _, gpu := range host.Status.Resources.GPUList {
-				availableGpu[clusterUUID] = append(availableGpu[clusterUUID], *gpu)
-			}
-		}
+func (v *Validator) getAvailableGPUs(ctx context.Context, client Client, clusterUUID string) ([]availableGPU, error) {
+	physicalGPUs, err := collectAvailablePhysicalGPUs(ctx, client, clusterUUID)
+	if err != nil {
+		return nil, err
 	}
 
-	return availableGpu, nil
+	virtualGPUs, err := collectAvailableVirtualGPUs(ctx, client, clusterUUID)
+	if err != nil {
+		return nil, err
+	}
+
+	return append(physicalGPUs, virtualGPUs...), nil
 }
 
-func (v *Validator) tryAssignGPUsToAllMachineConfigs(ctx context.Context, v3Client Client, cluster *cluster.Spec, availableGpu map[string][]v3.GPU) error {
-	configs := cluster.NutanixMachineConfigs
-	machineCount := v.getMachineCountForAllMachineConfigs(cluster)
+func collectAvailablePhysicalGPUs(ctx context.Context, client Client, clusterUUID string) ([]availableGPU, error) {
+	profiles, err := client.ListClusterPhysicalGPUs(ctx, clusterUUID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list physical GPUs for cluster %s: %v", clusterUUID, err)
+	}
+	var result []availableGPU
+	for _, pg := range profiles {
+		if pg.PhysicalGpuConfig == nil {
+			continue
+		}
+		cfg := pg.PhysicalGpuConfig
+		if cfg.IsInUse != nil && *cfg.IsInUse {
+			continue
+		}
+		mode := "PASSTHROUGH_COMPUTE"
+		if cfg.Type != nil && *cfg.Type == clusterModels.GPUTYPE_PASSTHROUGH_GRAPHICS {
+			mode = "PASSTHROUGH_GRAPHICS"
+		}
+		result = append(result, availableGPU{
+			deviceID:   cfg.DeviceId,
+			deviceName: cfg.DeviceName,
+			mode:       mode,
+		})
+	}
+	return result, nil
+}
+
+func collectAvailableVirtualGPUs(ctx context.Context, client Client, clusterUUID string) ([]availableGPU, error) {
+	profiles, err := client.ListClusterVirtualGPUs(ctx, clusterUUID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list virtual GPUs for cluster %s: %v", clusterUUID, err)
+	}
+	var result []availableGPU
+	for _, vg := range profiles {
+		if vg.VirtualGpuConfig == nil {
+			continue
+		}
+		cfg := vg.VirtualGpuConfig
+		if cfg.IsInUse != nil && *cfg.IsInUse {
+			continue
+		}
+		result = append(result, availableGPU{
+			deviceID:   cfg.DeviceId,
+			deviceName: cfg.DeviceName,
+			mode:       "VIRTUAL",
+		})
+	}
+	return result, nil
+}
+
+func (v *Validator) tryAssignGPUsToAllMachineConfigs(ctx context.Context, client Client, clusterSpec *cluster.Spec, availableGpuByCluster map[string][]availableGPU) error {
+	configs := clusterSpec.NutanixMachineConfigs
+	machineCount := v.getMachineCountForAllMachineConfigs(clusterSpec)
 
 	for _, machineConfig := range configs {
-		clusterUUID, err := getClusterUUID(ctx, v3Client, machineConfig.Spec.Cluster)
+		clusterUUID, err := getClusterUUID(ctx, client, machineConfig.Spec.Cluster)
 		if err != nil {
 			return err
 		}
 
 		if machineConfig.Spec.GPUs != nil {
 			if _, ok := machineCount[machineConfig.Name]; ok {
-				availableGpu[clusterUUID], err = v.tryAssignGPUsToMachineConfig(machineCount[machineConfig.Name], machineConfig.Spec.GPUs, availableGpu[clusterUUID], machineConfig.Spec.Cluster)
+				availableGpuByCluster[clusterUUID], err = v.tryAssignGPUsToMachineConfig(machineCount[machineConfig.Name], machineConfig.Spec.GPUs, availableGpuByCluster[clusterUUID], machineConfig.Spec.Cluster)
 				if err != nil {
 					return err
 				}
@@ -684,17 +728,17 @@ func (v *Validator) tryAssignGPUsToAllMachineConfigs(ctx context.Context, v3Clie
 
 func (v *Validator) getMachineCountForAllMachineConfigs(clusterSpec *cluster.Spec) map[string]int {
 	machineCountMap := make(map[string]int)
-	cluster := clusterSpec.Cluster.Spec
-	if cluster.ControlPlaneConfiguration.MachineGroupRef.Kind == constants.NutanixMachineConfigKind {
-		machineCountMap[cluster.ControlPlaneConfiguration.MachineGroupRef.Name] = cluster.ControlPlaneConfiguration.Count
+	cl := clusterSpec.Cluster.Spec
+	if cl.ControlPlaneConfiguration.MachineGroupRef.Kind == constants.NutanixMachineConfigKind {
+		machineCountMap[cl.ControlPlaneConfiguration.MachineGroupRef.Name] = cl.ControlPlaneConfiguration.Count
 	}
 
-	if cluster.ExternalEtcdConfiguration != nil &&
-		cluster.ExternalEtcdConfiguration.MachineGroupRef.Kind == constants.NutanixMachineConfigKind {
-		machineCountMap[cluster.ExternalEtcdConfiguration.MachineGroupRef.Name] = cluster.ExternalEtcdConfiguration.Count
+	if cl.ExternalEtcdConfiguration != nil &&
+		cl.ExternalEtcdConfiguration.MachineGroupRef.Kind == constants.NutanixMachineConfigKind {
+		machineCountMap[cl.ExternalEtcdConfiguration.MachineGroupRef.Name] = cl.ExternalEtcdConfiguration.Count
 	}
 
-	for _, workerNodeGroupConfiguration := range cluster.WorkerNodeGroupConfigurations {
+	for _, workerNodeGroupConfiguration := range cl.WorkerNodeGroupConfigurations {
 		if workerNodeGroupConfiguration.MachineGroupRef.Kind == constants.NutanixMachineConfigKind &&
 			workerNodeGroupConfiguration.Count != nil {
 			machineCountMap[workerNodeGroupConfiguration.MachineGroupRef.Name] = *workerNodeGroupConfiguration.Count
@@ -703,35 +747,26 @@ func (v *Validator) getMachineCountForAllMachineConfigs(clusterSpec *cluster.Spe
 	return machineCountMap
 }
 
-func (v *Validator) getGPUModeMapping(hosts []*v3.HostResponse) (map[int64]string, map[string]string, error) {
+func (v *Validator) getGPUModeMapping(gpus []availableGPU) (map[int64]string, map[string]string) {
 	gpuDeviceIDToMode := make(map[int64]string)
 	gpuNameToMode := make(map[string]string)
 
-	for _, host := range hosts {
-		if host.Status != nil &&
-			host.Status.Resources != nil &&
-			host.Status.Resources.GPUList != nil {
-			for _, gpu := range host.Status.Resources.GPUList {
-				if gpu.DeviceID != nil {
-					gpuDeviceIDToMode[*gpu.DeviceID] = gpu.Mode
-				}
-				if gpu.Name != "" {
-					gpuNameToMode[gpu.Name] = gpu.Mode
-				}
-			}
+	for _, gpu := range gpus {
+		if gpu.deviceID != nil {
+			gpuDeviceIDToMode[*gpu.deviceID] = gpu.mode
+		}
+		if gpu.deviceName != nil && *gpu.deviceName != "" {
+			gpuNameToMode[*gpu.deviceName] = gpu.mode
 		}
 	}
 
-	return gpuDeviceIDToMode, gpuNameToMode, nil
+	return gpuDeviceIDToMode, gpuNameToMode
 }
 
-func (v *Validator) validateGPUModeNotMixed(hosts []*v3.HostResponse, cluster *cluster.Spec) error {
-	configs := cluster.NutanixMachineConfigs
+func (v *Validator) validateGPUModeNotMixed(gpus []availableGPU, clusterSpec *cluster.Spec) error {
+	configs := clusterSpec.NutanixMachineConfigs
 
-	gpuDeviceIDToMode, gpuNameToMode, err := v.getGPUModeMapping(hosts)
-	if err != nil {
-		return err
-	}
+	gpuDeviceIDToMode, gpuNameToMode := v.getGPUModeMapping(gpus)
 
 	gpuMode := ""
 	getGpuModeFunc := createGetGpuModeFunc(gpuDeviceIDToMode, gpuNameToMode)
@@ -762,26 +797,38 @@ func createGetGpuModeFunc(gpuDeviceIDToMode map[int64]string, gpuNameToMode map[
 	}
 }
 
-func (v *Validator) validateFreeGPU(ctx context.Context, v3Client Client, cluster *cluster.Spec) error {
-	if v.isGPURequested(cluster.NutanixMachineConfigs) {
-		res, err := v3Client.ListAllHost(ctx)
-		if err != nil || len(res.Entities) == 0 {
-			return fmt.Errorf("no GPUs found: %v", err)
-		}
+func (v *Validator) validateFreeGPU(ctx context.Context, client Client, clusterSpec *cluster.Spec) error {
+	if !v.isGPURequested(clusterSpec.NutanixMachineConfigs) {
+		return nil
+	}
 
-		err = v.validateGPUModeNotMixed(res.Entities, cluster)
+	availableGpuByCluster := make(map[string][]availableGPU)
+	allGPUs := make([]availableGPU, 0)
+
+	for _, machineConfig := range clusterSpec.NutanixMachineConfigs {
+		if machineConfig.Spec.GPUs == nil {
+			continue
+		}
+		clusterUUID, err := getClusterUUID(ctx, client, machineConfig.Spec.Cluster)
 		if err != nil {
 			return err
 		}
-
-		availableGpu, err := v.getAvailableGPUs(res.Entities)
-		if err != nil {
-			return err
+		if _, ok := availableGpuByCluster[clusterUUID]; !ok {
+			gpus, err := v.getAvailableGPUs(ctx, client, clusterUUID)
+			if err != nil {
+				return fmt.Errorf("no GPUs found: %v", err)
+			}
+			availableGpuByCluster[clusterUUID] = gpus
+			allGPUs = append(allGPUs, gpus...)
 		}
+	}
 
-		if err = v.tryAssignGPUsToAllMachineConfigs(ctx, v3Client, cluster, availableGpu); err != nil {
-			return err
-		}
+	if err := v.validateGPUModeNotMixed(allGPUs, clusterSpec); err != nil {
+		return err
+	}
+
+	if err := v.tryAssignGPUsToAllMachineConfigs(ctx, client, clusterSpec, availableGpuByCluster); err != nil {
+		return err
 	}
 
 	return nil
@@ -817,31 +864,56 @@ func checkMachineConfigIsForWorker(config *anywherev1.NutanixMachineConfig, clus
 	return fmt.Errorf("machine config %s is not associated with any worker node group", config.Name)
 }
 
+// subnetBelongsToCluster checks if a subnet belongs to the specified PE cluster.
+// It checks both ClusterReference (single UUID) and ClusterReferenceList (list of UUIDs),
+// matching the CAPX implementation.
+func subnetBelongsToCluster(subnet *subnetModels.Subnet, peUUID string) bool {
+	if subnet.ClusterReference != nil && *subnet.ClusterReference == peUUID {
+		return true
+	}
+	if subnet.ClusterReferenceList != nil {
+		for _, ref := range subnet.ClusterReferenceList {
+			if ref == peUUID {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // findSubnetUUIDByName retrieves the subnet uuid by the given subnet name.
-func findSubnetUUIDByName(ctx context.Context, v3Client Client, clusterUUID, subnetName string) (*string, error) {
-	res, err := v3Client.ListAllSubnet(ctx, "", nil)
+func findSubnetUUIDByName(ctx context.Context, client Client, clusterUUID, subnetName string) (*string, error) {
+	subnets, err := client.ListSubnets(ctx, converged.WithFilter(fmt.Sprintf("name eq '%s'", subnetName)))
 	if err != nil {
 		return nil, fmt.Errorf("failed to list subnets: %v", err)
 	}
 
-	subnets := make([]*v3.SubnetIntentResponse, 0)
-	for _, subnet := range res.Entities {
-		if subnet.Spec.ClusterReference != nil && *subnet.Spec.ClusterReference.UUID != "" {
-			if *subnet.Spec.ClusterReference.UUID == clusterUUID && subnet.Spec.Name != nil && *subnet.Spec.Name == subnetName {
-				subnets = append(subnets, subnet)
+	matched := make([]subnetModels.Subnet, 0)
+	for _, subnet := range subnets {
+		if subnet.Name == nil || subnet.SubnetType == nil {
+			continue
+		}
+		if *subnet.Name == subnetName {
+			// Overlay subnets are not tied to a specific PE cluster
+			if subnet.SubnetType.GetName() == "OVERLAY" {
+				matched = append(matched, subnet)
+				continue
+			}
+			if subnetBelongsToCluster(&subnet, clusterUUID) {
+				matched = append(matched, subnet)
 			}
 		}
 	}
 
-	if len(subnets) == 0 {
-		return nil, fmt.Errorf("failed to find subnet by name %q: %v", subnetName, err)
+	if len(matched) == 0 {
+		return nil, fmt.Errorf("failed to find subnet by name %q", subnetName)
 	}
 
-	if len(subnets) > 1 {
-		return nil, fmt.Errorf("found more than one (%v) subnet with name %q and cluster uuid %v", len(subnets), subnetName, clusterUUID)
+	if len(matched) > 1 {
+		return nil, fmt.Errorf("found more than one (%v) subnet with name %q and cluster uuid %v", len(matched), subnetName, clusterUUID)
 	}
 
-	return subnets[0].Metadata.UUID, nil
+	return matched[0].ExtId, nil
 }
 
 // getWorkerMachineGroups retrieves the worker machine group names from the cluster spec.
@@ -856,7 +928,7 @@ func getWorkerMachineGroups(spec *cluster.Spec) map[string]anywherev1.WorkerNode
 }
 
 // getClusterUUID retrieves the cluster uuid by the given cluster identifier.
-func getClusterUUID(ctx context.Context, v3Client Client, cluster anywherev1.NutanixResourceIdentifier) (string, error) {
+func getClusterUUID(ctx context.Context, client Client, cluster anywherev1.NutanixResourceIdentifier) (string, error) {
 	var clusterUUID string
 	var err error
 	if cluster.Type == anywherev1.NutanixIdentifierUUID {
@@ -869,7 +941,7 @@ func getClusterUUID(ctx context.Context, v3Client Client, cluster anywherev1.Nut
 	if cluster.Type == anywherev1.NutanixIdentifierName {
 		clusterName := *cluster.Name
 		var uuid *string
-		if uuid, err = findClusterUUIDByName(ctx, v3Client, clusterName); err != nil {
+		if uuid, err = findClusterUUIDByName(ctx, client, clusterName); err != nil {
 			return "", fmt.Errorf("failed to find cluster with name %q: %v", clusterName, err)
 		}
 		clusterUUID = *uuid
@@ -877,97 +949,76 @@ func getClusterUUID(ctx context.Context, v3Client Client, cluster anywherev1.Nut
 	return clusterUUID, nil
 }
 
+// hasPEClusterServiceEnabled checks if a cluster has the AOS (PE) cluster function enabled.
+// This matches the CAPX approach of positively identifying PE clusters instead of
+// excluding Prism Central clusters.
+func hasPEClusterServiceEnabled(peCluster *clusterModels.Cluster) bool {
+	if peCluster.Config == nil || peCluster.Config.ClusterFunction == nil {
+		return false
+	}
+	for _, s := range peCluster.Config.ClusterFunction {
+		if strings.ToUpper(string(s.GetName())) == clusterModels.CLUSTERFUNCTIONREF_AOS.GetName() {
+			return true
+		}
+	}
+	return false
+}
+
 // findClusterUUIDByName retrieves the cluster uuid by the given cluster name.
-func findClusterUUIDByName(ctx context.Context, v3Client Client, clusterName string) (*string, error) {
-	res, err := v3Client.ListAllCluster(ctx, "")
+func findClusterUUIDByName(ctx context.Context, client Client, clusterName string) (*string, error) {
+	clusters, err := client.ListClusters(ctx, converged.WithFilter(fmt.Sprintf("name eq '%s'", clusterName)))
 	if err != nil {
 		return nil, fmt.Errorf("failed to list clusters: %v", err)
 	}
 
-	entities := make([]*v3.ClusterIntentResponse, 0)
-	for _, entity := range res.Entities {
-		if entity.Status != nil && entity.Status.Resources != nil && entity.Status.Resources.Config != nil {
-			serviceList := entity.Status.Resources.Config.ServiceList
-			isPrismCentral := false
-			for _, svc := range serviceList {
-				// Prism Central is also internally a cluster, but we filter that out here as we only care about prism element clusters
-				if svc != nil && strings.ToUpper(*svc) == "PRISM_CENTRAL" {
-					isPrismCentral = true
-				}
-			}
-			if !isPrismCentral && *entity.Spec.Name == clusterName {
-				entities = append(entities, entity)
-			}
+	entities := make([]clusterModels.Cluster, 0)
+	for _, entity := range clusters {
+		if strings.EqualFold(*entity.Name, clusterName) && hasPEClusterServiceEnabled(&entity) {
+			entities = append(entities, entity)
 		}
 	}
 
 	if len(entities) == 0 {
-		return nil, fmt.Errorf("failed to find cluster by name %q: %v", clusterName, err)
+		return nil, fmt.Errorf("failed to find cluster by name %q", clusterName)
 	}
 
 	if len(entities) > 1 {
 		return nil, fmt.Errorf("found more than one (%v) cluster with name %q", len(entities), clusterName)
 	}
 
-	return entities[0].Metadata.UUID, nil
+	return entities[0].ExtId, nil
 }
 
 // findImageUUIDByName retrieves the image uuid by the given image name.
-func findImageUUIDByName(ctx context.Context, v3Client Client, imageName string) (*string, error) {
-	res, err := v3Client.ListAllImage(ctx, "")
+func findImageUUIDByName(ctx context.Context, client Client, imageName string) (*string, error) {
+	images, err := client.ListImages(ctx, converged.WithFilter(fmt.Sprintf("name eq '%s'", imageName)))
 	if err != nil {
 		return nil, fmt.Errorf("failed to list images: %v", err)
 	}
 
-	images := make([]*v3.ImageIntentResponse, 0)
-	for _, image := range res.Entities {
-		if image.Spec.Name != nil && *image.Spec.Name == imageName {
-			images = append(images, image)
+	matched := make([]imageModels.Image, 0)
+	for _, image := range images {
+		if image.Name != nil && strings.EqualFold(*image.Name, imageName) {
+			matched = append(matched, image)
 		}
 	}
 
-	if len(images) == 0 {
-		return nil, fmt.Errorf("failed to find image by name %q: %v", imageName, err)
+	if len(matched) == 0 {
+		return nil, fmt.Errorf("failed to find image by name %q", imageName)
 	}
 
-	if len(images) > 1 {
-		return nil, fmt.Errorf("found more than one (%v) image with name %q", len(images), imageName)
+	if len(matched) > 1 {
+		return nil, fmt.Errorf("found more than one (%v) image with name %q", len(matched), imageName)
 	}
 
-	return images[0].Metadata.UUID, nil
+	return matched[0].ExtId, nil
 }
 
-// findProjectUUIDByName retrieves the project uuid by the given image name.
-func findProjectUUIDByName(ctx context.Context, v3Client Client, projectName string) (*string, error) {
-	res, err := v3Client.ListAllProject(ctx, "")
-	if err != nil {
-		return nil, fmt.Errorf("failed to list projects: %v", err)
-	}
-
-	projects := make([]*v3.Project, 0)
-	for _, project := range res.Entities {
-		if project.Spec.Name == projectName {
-			projects = append(projects, project)
-		}
-	}
-
-	if len(projects) == 0 {
-		return nil, fmt.Errorf("failed to find project by name %q: %v", projectName, err)
-	}
-
-	if len(projects) > 1 {
-		return nil, fmt.Errorf("found more than one (%v) project with name %q", len(res.Entities), projectName)
-	}
-
-	return projects[0].Metadata.UUID, nil
-}
-
-func isRequestedGPUAssignable(gpu v3.GPU, requestedGpu anywherev1.NutanixGPUIdentifier) bool {
+func isAvailableGPUAssignable(gpu availableGPU, requestedGpu anywherev1.NutanixGPUIdentifier) bool {
 	if requestedGpu.Type == anywherev1.NutanixGPUIdentifierDeviceID {
-		return (*gpu.DeviceID == *requestedGpu.DeviceID) && gpu.Assignable
+		return gpu.deviceID != nil && (*gpu.deviceID == *requestedGpu.DeviceID)
 	}
-
-	return (gpu.Name == requestedGpu.Name) && gpu.Assignable
+	return gpu.deviceName != nil && *gpu.deviceName == requestedGpu.Name
 }
 
 func errorGPUNotFound(gpu anywherev1.NutanixGPUIdentifier, cluster anywherev1.NutanixResourceIdentifier) error {

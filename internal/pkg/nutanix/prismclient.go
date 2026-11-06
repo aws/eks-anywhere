@@ -6,7 +6,9 @@ import (
 	"strings"
 
 	prismgoclient "github.com/nutanix-cloud-native/prism-go-client"
-	v3 "github.com/nutanix-cloud-native/prism-go-client/v3"
+	"github.com/nutanix-cloud-native/prism-go-client/converged"
+	v4converged "github.com/nutanix-cloud-native/prism-go-client/converged/v4"
+	clusterModels "github.com/nutanix/ntnx-api-golang-clients/clustermgmt-go-client/v4/models/clustermgmt/v4/config"
 
 	"github.com/aws/eks-anywhere/pkg/providers/nutanix"
 )
@@ -19,7 +21,7 @@ type PrismClient interface {
 }
 
 type client struct {
-	v3.Client
+	convergedClient *v4converged.Client
 }
 
 // NewPrismClient returns an implementation of the PrismClient interface.
@@ -33,98 +35,92 @@ func NewPrismClient(endpoint, port string, insecure bool) (PrismClient, error) {
 		Port:     port,
 		Insecure: insecure,
 	}
-	pclient, err := v3.NewV3Client(nutanixCreds)
+	pclient, err := v4converged.NewClient(nutanixCreds)
 	if err != nil {
 		return nil, err
 	}
 
-	return &client{*pclient}, nil
+	return &client{convergedClient: pclient}, nil
 }
 
 // GetImageUUIDFromName retrieves the image uuid from the given image name.
 func (c *client) GetImageUUIDFromName(ctx context.Context, imageName string) (*string, error) {
-	res, err := c.V3.ListAllImage(ctx, "")
+	images, err := c.convergedClient.Images.List(ctx, converged.WithFilter(fmt.Sprintf("name eq '%s'", imageName)))
 	if err != nil {
 		return nil, fmt.Errorf("failed to list images: %v", err)
 	}
 
-	images := make([]*v3.ImageIntentResponse, 0)
-
-	for _, image := range res.Entities {
-		if image.Spec.Name != nil && *image.Spec.Name == imageName {
-			images = append(images, image)
+	var matched []*string
+	for _, image := range images {
+		if image.Name != nil && strings.EqualFold(*image.Name, imageName) {
+			matched = append(matched, image.ExtId)
 		}
 	}
 
-	if len(images) == 0 {
-		return nil, fmt.Errorf("failed to find image by name %q: %v", imageName, err)
+	if len(matched) == 0 {
+		return nil, fmt.Errorf("failed to find image by name %q", imageName)
 	}
-
-	if len(images) > 1 {
-		return nil, fmt.Errorf("found more than one (%v) image with name %q", len(images), imageName)
+	if len(matched) > 1 {
+		return nil, fmt.Errorf("found more than one (%v) image with name %q", len(matched), imageName)
 	}
+	return matched[0], nil
+}
 
-	return images[0].Metadata.UUID, nil
+// hasPEClusterServiceEnabled checks if a cluster has the AOS (PE) cluster function.
+func hasPEClusterServiceEnabled(peCluster *clusterModels.Cluster) bool {
+	if peCluster.Config == nil || peCluster.Config.ClusterFunction == nil {
+		return false
+	}
+	for _, s := range peCluster.Config.ClusterFunction {
+		if strings.ToUpper(string(s.GetName())) == clusterModels.CLUSTERFUNCTIONREF_AOS.GetName() {
+			return true
+		}
+	}
+	return false
 }
 
 // GetClusterUUIDFromName retrieves the cluster uuid from the given cluster name.
-//
-//nolint:gocyclo
 func (c *client) GetClusterUUIDFromName(ctx context.Context, clusterName string) (*string, error) {
-	res, err := c.V3.ListAllCluster(ctx, "")
+	clusters, err := c.convergedClient.Clusters.List(ctx, converged.WithFilter(fmt.Sprintf("name eq '%s'", clusterName)))
 	if err != nil {
 		return nil, fmt.Errorf("failed to list clusters: %v", err)
 	}
 
-	entities := make([]*v3.ClusterIntentResponse, 0)
-	for _, entity := range res.Entities {
-		if entity.Status != nil && entity.Status.Resources != nil && entity.Status.Resources.Config != nil {
-			serviceList := entity.Status.Resources.Config.ServiceList
-			isPrismCentral := false
-			for _, svc := range serviceList {
-				// Prism Central is also internally a cluster, but we filter that out here as we only care about prism element clusters
-				if svc != nil && strings.ToUpper(*svc) == "PRISM_CENTRAL" {
-					isPrismCentral = true
-				}
-			}
-			if !isPrismCentral && *entity.Spec.Name == clusterName {
-				entities = append(entities, entity)
-			}
+	entities := make([]clusterModels.Cluster, 0)
+	for _, entity := range clusters {
+		if strings.EqualFold(*entity.Name, clusterName) && hasPEClusterServiceEnabled(&entity) {
+			entities = append(entities, entity)
 		}
 	}
-	if len(entities) == 0 {
-		return nil, fmt.Errorf("failed to find cluster by name %q: %v", clusterName, err)
-	}
 
+	if len(entities) == 0 {
+		return nil, fmt.Errorf("failed to find cluster by name %q", clusterName)
+	}
 	if len(entities) > 1 {
 		return nil, fmt.Errorf("found more than one (%v) cluster with name %q", len(entities), clusterName)
 	}
-
-	return entities[0].Metadata.UUID, nil
+	return entities[0].ExtId, nil
 }
 
 // GetSubnetUUIDFromName retrieves the subnet uuid from the given subnet name.
 func (c *client) GetSubnetUUIDFromName(ctx context.Context, subnetName string) (*string, error) {
-	res, err := c.V3.ListAllSubnet(ctx, "", nil)
+	subnets, err := c.convergedClient.Subnets.List(ctx, converged.WithFilter(fmt.Sprintf("name eq '%s'", subnetName)))
 	if err != nil {
 		return nil, fmt.Errorf("failed to list subnets: %v", err)
 	}
 
-	subnets := make([]*v3.SubnetIntentResponse, 0)
-
-	for _, subnet := range res.Entities {
-		if subnet.Spec.Name != nil && *subnet.Spec.Name == subnetName {
-			subnets = append(subnets, subnet)
+	var matched []*string
+	for _, subnet := range subnets {
+		if subnet.Name != nil && strings.EqualFold(*subnet.Name, subnetName) {
+			matched = append(matched, subnet.ExtId)
 		}
 	}
 
-	if len(subnets) == 0 {
-		return nil, fmt.Errorf("failed to find subnet by name %q: %v", subnetName, err)
+	if len(matched) == 0 {
+		return nil, fmt.Errorf("failed to find subnet by name %q", subnetName)
 	}
-
-	if len(subnets) > 1 {
-		return nil, fmt.Errorf("found more than one (%v) subnet with name %q", len(subnets), subnetName)
+	if len(matched) > 1 {
+		return nil, fmt.Errorf("found more than one (%v) subnet with name %q", len(matched), subnetName)
 	}
-
-	return subnets[0].Metadata.UUID, nil
+	return matched[0], nil
 }
