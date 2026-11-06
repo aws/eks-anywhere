@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"golang.org/x/oauth2"
+
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/git"
 	"github.com/aws/eks-anywhere/pkg/git/gogithub"
@@ -11,6 +13,7 @@ import (
 )
 
 func (e *E2ESession) TestGithubClient(ctx context.Context, githubToken string, owner string, repository string, personal bool) (git.ProviderClient, error) {
+	ctx = context.WithValue(ctx, oauth2.HTTPClient, githubSetupHTTPClient(ctx, githubSetupMutations))
 	auth := git.TokenAuth{Token: githubToken, Username: owner}
 	gogithubOpts := gogithub.Options{Auth: auth}
 	githubProviderClient := gogithub.New(ctx, gogithubOpts)
