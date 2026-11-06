@@ -247,6 +247,25 @@ For complete version support details, see the [Kubernetes version support table]
 - Dropped Kubernetes v1.29 support ([#5521](https://github.com/aws/eks-anywhere-build-tooling/pull/5521))
 - Removed CloudStack provider ([#10786](https://github.com/aws/eks-anywhere/pull/10786), [#10814](https://github.com/aws/eks-anywhere/pull/10814))
 
+## [v0.25.6](https://github.com/aws/eks-anywhere/releases/tag/v0.25.6)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+|    Ubuntu 24.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.68.1 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+
+\* Bottlerocket `v1.68.1` applies to Kubernetes versions 1.31 through 1.35. Kubernetes versions 1.29 and 1.30 remain on Bottlerocket `v1.54.0`.
+\* Starting with EKS-A minor release v0.25.0, the bundled Kubernetes Image Builder will no longer support Ubuntu 20.04 LTS builds, as Ubuntu 20.04 LTS Standard Support has ended, and the upstream Kubernetes Image Builder no longer supports Ubuntu 20.04 LTS.
+\* RHEL 8's kernel version (4.18) is not supported by kubeadm for Kubernetes versions 1.32 and above (see Kubernetes GitHub issue [#129462](https://github.com/kubernetes/kubernetes/issues/129462)). As a result, EKS Anywhere does not support using RHEL 8 as the node operating system for Kubernetes versions 1.32 and above.
+
+### Changed
+- Bottlerocket: `v1.68.0` to `v1.68.1` for Kubernetes versions 1.31 through 1.35 ([#5788](https://github.com/aws/eks-anywhere-build-tooling/pull/5788))
+
 ## [v0.25.5](https://github.com/aws/eks-anywhere/releases/tag/v0.25.5)
 
 ### Supported OS version details
