@@ -13,6 +13,8 @@ import (
 type PackageController interface {
 	// Enable curated packages support.
 	Enable(ctx context.Context) error
+	// InstallCRDs installs the curated packages CRDs separately from the controller.
+	InstallCRDs(ctx context.Context) error
 	IsInstalled(ctx context.Context) bool
 }
 
@@ -64,7 +66,12 @@ func (pi *Installer) InstallCuratedPackages(ctx context.Context) {
 		return
 	}
 	PrintLicense()
-	err := pi.installPackagesController(ctx)
+	err := pi.installCRDs(ctx)
+	if err != nil {
+		logger.MarkWarning("  Failed to install curated packages CRDs. Please try installation again through eksctl after the cluster creation succeeds", "warning", err)
+		return
+	}
+	err = pi.installPackagesController(ctx)
 	// There is an ask from customers to avoid considering the failure of installing curated packages
 	// controller as an error but rather a warning
 	if err != nil {
@@ -87,6 +94,10 @@ func (pi *Installer) UpgradeCuratedPackages(ctx context.Context) {
 		return
 	}
 	PrintLicense()
+	if err := pi.installCRDs(ctx); err != nil {
+		logger.MarkWarning("Failed to upgrade curated packages CRDs.", "warning", err)
+		return
+	}
 	if err := pi.installPackagesController(ctx); err != nil {
 		logger.MarkWarning("Failed to upgrade the optional EKS-A Curated Package Controller.", "warning", err)
 		return
@@ -101,6 +112,13 @@ func (pi *Installer) installPackagesController(ctx context.Context) error {
 	logger.Info("Enabling curated packages on the cluster")
 	return retrier.Retry(pi.installMaxRetries, pi.installBackoff, func() error {
 		return pi.packageController.Enable(ctx)
+	})
+}
+
+func (pi *Installer) installCRDs(ctx context.Context) error {
+	logger.Info("Installing curated packages CRDs")
+	return retrier.Retry(pi.installMaxRetries, pi.installBackoff, func() error {
+		return pi.packageController.InstallCRDs(ctx)
 	})
 }
 

@@ -153,6 +153,30 @@ func (h *Helm) InstallChart(ctx context.Context, chart, ociURI, version, kubecon
 	return err
 }
 
+// TemplateChart renders a helm chart to YAML manifests without installing it.
+// This is used to separate CRD installation from the Helm release lifecycle.
+func (h *Helm) TemplateChart(ctx context.Context, chart, ociURI, version, namespace, valueFilePath string, skipCRDs bool, values []string) ([]byte, error) {
+	valueArgs := GetHelmValueArgs(values)
+	params := []string{"template", chart, ociURI, "--version", version}
+	if skipCRDs {
+		params = append(params, "--skip-crds")
+	}
+	params = append(params, valueArgs...)
+	if len(namespace) > 0 {
+		params = append(params, "--namespace", namespace)
+	}
+	if valueFilePath != "" {
+		params = append(params, "-f", valueFilePath)
+	}
+	params = h.addInsecureFlagIfProvided(params)
+
+	result, err := h.executable.Command(ctx, params...).WithEnvVars(h.env).Run()
+	if err != nil {
+		return nil, fmt.Errorf("templating helm chart %s: %w", chart, err)
+	}
+	return result.Bytes(), nil
+}
+
 // Delete removes an installation.
 func (h *Helm) Delete(ctx context.Context, kubeconfigFilePath, installName, namespace string) error {
 	params := []string{
