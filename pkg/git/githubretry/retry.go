@@ -98,10 +98,10 @@ func primaryRateLimitDelay(err *github.RateLimitError, fallback time.Duration, n
 
 func secondaryRateLimitDelay(err *github.AbuseRateLimitError, fallback time.Duration, now time.Time) time.Duration {
 	if delay, ok := headerDelay(err.Response, now); ok {
-		return delay
+		return max(delay, fallback)
 	}
 	if err.RetryAfter != nil && *err.RetryAfter > 0 {
-		return *err.RetryAfter
+		return max(*err.RetryAfter, fallback)
 	}
 	return fallback
 }
@@ -117,6 +117,9 @@ func responseRateLimitDelay(err *github.ErrorResponse, fallback time.Duration, n
 	if status == http.StatusTooManyRequests ||
 		(status == http.StatusForbidden && isRateLimitMessage(err.Message)) {
 		if delay, ok := headerDelay(err.Response, now); ok {
+			if strings.Contains(strings.ToLower(err.Message), "secondary rate limit") {
+				return max(delay, fallback), true
+			}
 			return delay, true
 		}
 		return fallback, true
