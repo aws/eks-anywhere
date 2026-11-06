@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"path"
 	"testing"
 	"time"
@@ -19,6 +20,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	filewritermocks "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
+	networkmocks "github.com/aws/eks-anywhere/pkg/networkutils/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/stack"
 	stackmocks "github.com/aws/eks-anywhere/pkg/providers/tinkerbell/stack/mocks"
@@ -480,6 +482,16 @@ func TestSetupAndValidateCreateWorkloadClusterSuccess(t *testing.T) {
 	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
 	provider.stackInstaller = stackInstaller
 
+	netClient := networkmocks.NewMockNetClient(mockCtrl)
+	provider.netClient = netClient
+	for _, address := range []string{
+		"0.0.0.0:80", "0.0.0.0:42113", "0.0.0.0:7172",
+		net.JoinHostPort(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host, "80"),
+	} {
+		netClient.EXPECT().DialTimeout("tcp", address, 500*time.Millisecond).
+			Return(nil, errors.New("network unavailable"))
+	}
+
 	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
 	provider.providerKubectlClient = kubectl
 
@@ -527,6 +539,16 @@ func TestSetupAndValidateCreateWorkloadClusterDifferentNamespaceSuccess(t *testi
 
 	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
 	provider.stackInstaller = stackInstaller
+
+	netClient := networkmocks.NewMockNetClient(mockCtrl)
+	provider.netClient = netClient
+	for _, address := range []string{
+		"0.0.0.0:80", "0.0.0.0:42113", "0.0.0.0:7172",
+		net.JoinHostPort(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host, "80"),
+	} {
+		netClient.EXPECT().DialTimeout("tcp", address, 500*time.Millisecond).
+			Return(nil, errors.New("network unavailable"))
+	}
 
 	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
 	provider.providerKubectlClient = kubectl
