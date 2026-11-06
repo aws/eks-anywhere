@@ -69,6 +69,40 @@ type cleanupCaptureT struct {
 	cleanups []func()
 }
 
+func TestWithFluxGitManagementAndWorkloadConfigs(t *testing.T) {
+	g := NewWithT(t)
+	for _, name := range fluxGitRequiredEnvVars {
+		t.Setenv(name, "example")
+	}
+	t.Setenv(JobIdVar, "build:example")
+	management := &ClusterE2ETest{T: &cleanupCaptureT{T: t}, ClusterConfig: &cluster.Config{Cluster: &v1alpha1.Cluster{}}}
+	workload := &ClusterE2ETest{T: &cleanupCaptureT{T: t}, ClusterConfig: &cluster.Config{Cluster: &v1alpha1.Cluster{}}}
+	WithFluxGit()(management)
+	WithFluxGit()(workload)
+	for _, fixture := range []*ClusterE2ETest{management, workload} {
+		for _, filler := range fixture.clusterFillers {
+			filler(fixture.ClusterConfig.Cluster)
+		}
+		g.Expect(fixture.ClusterConfig.Cluster.Spec.GitOpsRef.Name).To(Equal(fixture.ClusterConfig.FluxConfig.Name))
+	}
+	g.Expect(management.ClusterConfig.FluxConfig.Name).NotTo(Equal(workload.ClusterConfig.FluxConfig.Name))
+	g.Expect(management.ClusterConfig.FluxConfig.Spec.Equal(&workload.ClusterConfig.FluxConfig.Spec)).To(BeTrue())
+}
+
+func TestWithFluxGitExplicitConfigName(t *testing.T) {
+	g := NewWithT(t)
+	for _, name := range fluxGitRequiredEnvVars {
+		t.Setenv(name, "example")
+	}
+	fixture := &ClusterE2ETest{T: &cleanupCaptureT{T: t}, ClusterConfig: &cluster.Config{Cluster: &v1alpha1.Cluster{}}}
+	WithFluxGit(api.WithFluxConfigName("custom-flux"))(fixture)
+	for _, filler := range fixture.clusterFillers {
+		filler(fixture.ClusterConfig.Cluster)
+	}
+	g.Expect(fixture.ClusterConfig.FluxConfig.Name).To(Equal("custom-flux"))
+	g.Expect(fixture.ClusterConfig.Cluster.Spec.GitOpsRef.Name).To(Equal("custom-flux"))
+}
+
 func (t *cleanupCaptureT) Cleanup(f func()) {
 	t.cleanups = append(t.cleanups, f)
 }
