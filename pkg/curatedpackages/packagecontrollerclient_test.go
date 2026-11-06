@@ -14,6 +14,7 @@ import (
 	"github.com/go-logr/logr/testr"
 	. "github.com/onsi/gomega"
 	"go.uber.org/mock/gomock"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -321,6 +322,9 @@ func TestEnableSuccess(t *testing.T) {
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(func(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj interface{}) error {
 				switch v := obj.(type) {
+				case *appsv1.Deployment:
+					*v = readyPackageControllerDeployment()
+					return nil
 				case *packagesv1.PackageBundleController:
 					return getPBCSuccess(t)(ctx, resourceType, name, namespace, kubeconfig, v)
 				case *packagesv1.Package:
@@ -372,6 +376,9 @@ func TestEnableSucceedInWorkloadCluster(t *testing.T) {
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(func(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj interface{}) error {
 				switch v := obj.(type) {
+				case *appsv1.Deployment:
+					*v = readyPackageControllerDeployment()
+					return nil
 				case *packagesv1.PackageBundleController:
 					return getPBCSuccess(t)(ctx, resourceType, name, namespace, kubeconfig, v)
 				case *packagesv1.Package:
@@ -525,6 +532,9 @@ func TestEnableWithProxy(t *testing.T) {
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(func(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj interface{}) error {
 				switch v := obj.(type) {
+				case *appsv1.Deployment:
+					*v = readyPackageControllerDeployment()
+					return nil
 				case *packagesv1.PackageBundleController:
 					return getPBCSuccess(t)(ctx, resourceType, name, namespace, kubeconfig, v)
 				case *packagesv1.Package:
@@ -585,6 +595,9 @@ func TestEnableWithEmptyProxy(t *testing.T) {
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(func(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj interface{}) error {
 				switch v := obj.(type) {
+				case *appsv1.Deployment:
+					*v = readyPackageControllerDeployment()
+					return nil
 				case *packagesv1.PackageBundleController:
 					return getPBCSuccess(t)(ctx, resourceType, name, namespace, kubeconfig, v)
 				case *packagesv1.Package:
@@ -643,6 +656,9 @@ func TestEnableWithSkipWait(t *testing.T) {
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(func(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj interface{}) error {
 				switch v := obj.(type) {
+				case *appsv1.Deployment:
+					*v = readyPackageControllerDeployment()
+					return nil
 				case *packagesv1.PackageBundleController:
 					return getPBCSuccess(t)(ctx, resourceType, name, namespace, kubeconfig, v)
 				case *packagesv1.Package:
@@ -686,6 +702,9 @@ func TestEnableFail(t *testing.T) {
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(func(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj interface{}) error {
 				switch v := obj.(type) {
+				case *appsv1.Deployment:
+					*v = readyPackageControllerDeployment()
+					return nil
 				case *packagesv1.PackageBundleController:
 					return getPBCSuccess(t)(ctx, resourceType, name, namespace, kubeconfig, v)
 				case *packagesv1.Package:
@@ -755,6 +774,9 @@ func TestEnableSuccessWhenCronJobFails(t *testing.T) {
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(func(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj interface{}) error {
 				switch v := obj.(type) {
+				case *appsv1.Deployment:
+					*v = readyPackageControllerDeployment()
+					return nil
 				case *packagesv1.PackageBundleController:
 					return getPBCSuccess(t)(ctx, resourceType, name, namespace, kubeconfig, v)
 				case *packagesv1.Package:
@@ -837,6 +859,9 @@ func TestEnableActiveBundleCustomTimeout(t *testing.T) {
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(func(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj interface{}) error {
 				switch v := obj.(type) {
+				case *appsv1.Deployment:
+					*v = readyPackageControllerDeployment()
+					return nil
 				case *packagesv1.PackageBundleController:
 					return getPBCSuccess(t)(ctx, resourceType, name, namespace, kubeconfig, v)
 				case *packagesv1.Package:
@@ -891,6 +916,9 @@ func TestEnableActiveBundleWaitLoops(t *testing.T) {
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(func(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj interface{}) error {
 				switch v := obj.(type) {
+				case *appsv1.Deployment:
+					*v = readyPackageControllerDeployment()
+					return nil
 				case *packagesv1.PackageBundleController:
 					return getPBCLoops(t, 3)(ctx, resourceType, name, namespace, kubeconfig, v)
 				case *packagesv1.Package:
@@ -1017,6 +1045,9 @@ func TestEnableActiveBundleNamespaceTimesOut(t *testing.T) {
 			GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			DoAndReturn(func(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj interface{}) error {
 				switch v := obj.(type) {
+				case *appsv1.Deployment:
+					*v = readyPackageControllerDeployment()
+					return nil
 				case *packagesv1.PackageBundleController:
 					return getPBCSuccess(t)(ctx, resourceType, name, namespace, kubeconfig, v)
 				case *packagesv1.Package:
@@ -1085,6 +1116,9 @@ func TestEnableWaitsForPackageInstalled(t *testing.T) {
 		GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(func(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj interface{}) error {
 			switch v := obj.(type) {
+			case *appsv1.Deployment:
+				*v = readyPackageControllerDeployment()
+				return nil
 			case *packagesv1.PackageBundleController:
 				return getPBCSuccess(t)(ctx, resourceType, name, namespace, kubeconfig, v)
 			case *packagesv1.Package:
@@ -1137,6 +1171,9 @@ func TestEnableFailsWhenPackageGetObjectFails(t *testing.T) {
 		GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(func(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj interface{}) error {
 			switch v := obj.(type) {
+			case *appsv1.Deployment:
+				*v = readyPackageControllerDeployment()
+				return nil
 			case *packagesv1.PackageBundleController:
 				return getPBCSuccess(t)(ctx, resourceType, name, namespace, kubeconfig, v)
 			case *packagesv1.Package:
@@ -1469,6 +1506,9 @@ func TestEnableFullLifecyclePath(t *testing.T) {
 		GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		DoAndReturn(func(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj interface{}) error {
 			switch v := obj.(type) {
+			case *appsv1.Deployment:
+				*v = readyPackageControllerDeployment()
+				return nil
 			case *packagesv1.PackageBundleController:
 				return getPBCSuccess(t)(ctx, resourceType, name, namespace, kubeconfig, v)
 			case *packagesv1.Package:
@@ -2035,4 +2075,55 @@ func createEKSARelease(cluster *anywherev1.Cluster, bundle *artifactsv1.Bundles)
 			},
 		},
 	}
+}
+
+func readyPackageControllerDeployment() appsv1.Deployment {
+	replicas := int32(1)
+	return appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{Generation: 2},
+		Spec:       appsv1.DeploymentSpec{Replicas: &replicas},
+		Status: appsv1.DeploymentStatus{
+			ObservedGeneration: 2,
+			Replicas:           1, UpdatedReplicas: 1, ReadyReplicas: 1, AvailableReplicas: 1,
+		},
+	}
+}
+
+func TestEnableWaitsForSelfManagedControllerRollout(t *testing.T) {
+	t.Setenv("REGISTRY_USERNAME", "username")
+	t.Setenv("REGISTRY_PASSWORD", "password")
+	tt := newPackageControllerTests(t)[0]
+	tt.chartManager.EXPECT().InstallChart(gomock.Any(), gomock.Any(), gomock.Any(),
+		gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+	polls := 0
+	tt.kubectl.EXPECT().
+		GetObject(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj interface{}) error {
+			switch v := obj.(type) {
+			case *packagesv1.PackageBundleController:
+				return getPBCSuccess(t)(ctx, resourceType, name, namespace, kubeconfig, v)
+			case *packagesv1.Package:
+				return getPackageSuccess(t)(ctx, resourceType, name, namespace, kubeconfig, v)
+			case *appsv1.Deployment:
+				tt.Expect(resourceType).To(Equal("deployment"))
+				tt.Expect(name).To(Equal(constants.EksaPackagesName))
+				tt.Expect(namespace).To(Equal(packagesv1.PackageNamespace))
+				polls++
+				*v = readyPackageControllerDeployment()
+				switch polls {
+				case 1:
+					// An old ready replica does not make the new generation ready.
+					v.Status.ObservedGeneration = 1
+				case 2:
+					// The new replica is initializing while the old one is gone.
+					v.Status.ReadyReplicas = 0
+					v.Status.AvailableReplicas = 0
+				}
+				return nil
+			default:
+				return fmt.Errorf("unexpected type: %T", obj)
+			}
+		}).AnyTimes()
+	tt.Expect(tt.command.Enable(tt.ctx)).To(Succeed())
+	tt.Expect(polls).To(Equal(3), "Enable must wait for the replacement webhook controller")
 }
