@@ -48,7 +48,7 @@ func (cb *ClientCache) GetNutanixClient(datacenterConfig *anywherev1.NutanixData
 		block, _ := pem.Decode([]byte(datacenterConfig.Spec.AdditionalTrustBundle))
 		certs, err := x509.ParseCertificates(block.Bytes)
 		if err != nil {
-			return nil, fmt.Errorf("unable to parse additional trust bundle %s: %v", datacenterConfig.Spec.AdditionalTrustBundle, err)
+			return nil, fmt.Errorf("unable to parse additional trust bundle %s: %w", datacenterConfig.Spec.AdditionalTrustBundle, err)
 		}
 		if len(certs) == 0 {
 			return nil, fmt.Errorf("unable to extract certs from the addtional trust bundle %s", datacenterConfig.Spec.AdditionalTrustBundle)
@@ -78,7 +78,7 @@ func (cb *ClientCache) GetNutanixClient(datacenterConfig *anywherev1.NutanixData
 
 	convergedClient, err := v4converged.NewClient(nutanixCreds)
 	if err != nil {
-		return nil, fmt.Errorf("error creating nutanix converged client: %v", err)
+		return nil, fmt.Errorf("error creating nutanix converged client: %w", err)
 	}
 
 	// v3 client for projects: pass the trust bundle via WithPEMEncodedCertBundle
@@ -89,7 +89,7 @@ func (cb *ClientCache) GetNutanixClient(datacenterConfig *anywherev1.NutanixData
 	}
 	v3Client, err := v3.NewV3Client(nutanixCreds, v3Opts...)
 	if err != nil {
-		return nil, fmt.Errorf("error creating nutanix v3 client: %v", err)
+		return nil, fmt.Errorf("error creating nutanix v3 client: %w", err)
 	}
 
 	client := &convergedClientAdapter{client: convergedClient, v3Client: v3Client}

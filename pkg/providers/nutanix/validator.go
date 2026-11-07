@@ -79,7 +79,7 @@ func (v *Validator) ValidateClusterSpec(ctx context.Context, spec *cluster.Spec,
 
 	for _, conf := range spec.NutanixMachineConfigs {
 		if err := v.ValidateMachineConfig(ctx, client, spec.Cluster, conf); err != nil {
-			return fmt.Errorf("failed to validate machine config: %v", err)
+			return fmt.Errorf("failed to validate machine config: %w", err)
 		}
 	}
 
@@ -96,7 +96,7 @@ func (v *Validator) checkImageNameMatchesKubernetesVersion(ctx context.Context, 
 		return fmt.Errorf("cannot find NutanixMachineConfig %v for control plane", spec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name)
 	}
 	if err := v.validateTemplateMatchesKubernetesVersion(ctx, controlPlaneMachineConfig.Spec.Image, client, string(spec.Cluster.Spec.KubernetesVersion)); err != nil {
-		return fmt.Errorf("machine config %s validation failed: %v", controlPlaneMachineConfig.Name, err)
+		return fmt.Errorf("machine config %s validation failed: %w", controlPlaneMachineConfig.Name, err)
 	}
 
 	if spec.Cluster.Spec.ExternalEtcdConfiguration != nil {
@@ -105,7 +105,7 @@ func (v *Validator) checkImageNameMatchesKubernetesVersion(ctx context.Context, 
 			return fmt.Errorf("cannot find NutanixMachineConfig %v for etcd machines", spec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name)
 		}
 		if err := v.validateTemplateMatchesKubernetesVersion(ctx, etcdMachineConfig.Spec.Image, client, string(spec.Cluster.Spec.KubernetesVersion)); err != nil {
-			return fmt.Errorf("machine config %s validation failed: %v", etcdMachineConfig.Name, err)
+			return fmt.Errorf("machine config %s validation failed: %w", etcdMachineConfig.Name, err)
 		}
 	}
 
@@ -116,7 +116,7 @@ func (v *Validator) checkImageNameMatchesKubernetesVersion(ctx context.Context, 
 		}
 		imageIdentifier := spec.NutanixMachineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name].Spec.Image
 		if err := v.validateTemplateMatchesKubernetesVersion(ctx, imageIdentifier, client, kubernetesVersion); err != nil {
-			return fmt.Errorf("machine config %s validation failed: %v", controlPlaneMachineConfig.Name, err)
+			return fmt.Errorf("machine config %s validation failed: %w", controlPlaneMachineConfig.Name, err)
 		}
 	}
 	return nil
@@ -189,7 +189,7 @@ func (v *Validator) validateCcmExcludeNodeIPs(ccmExcludeNodeIPs []string) error 
 			cidrStr := strings.TrimSpace(ipOrIPRange)
 			_, _, err := net.ParseCIDR(cidrStr)
 			if err != nil {
-				return fmt.Errorf("invalid CIDR %s: %v", cidrStr, err)
+				return fmt.Errorf("invalid CIDR %s: %w", cidrStr, err)
 			}
 		} else if strings.Contains(ipOrIPRange, "-") {
 			err := v.validateIPRangeForCcmExcludeNodeIPs(ipOrIPRange)
@@ -287,7 +287,7 @@ func (v *Validator) validateEndpointAndPort(dcConf anywherev1.NutanixDatacenterC
 	}
 
 	if _, err := v.httpClient.Get(server); err != nil {
-		return fmt.Errorf("failed to reach server %s: %v", server, err)
+		return fmt.Errorf("failed to reach server %s: %w", server, err)
 	}
 
 	return nil
@@ -296,7 +296,7 @@ func (v *Validator) validateEndpointAndPort(dcConf anywherev1.NutanixDatacenterC
 func (v *Validator) validateCredentials(ctx context.Context, client Client) error {
 	_, err := client.ListClusters(ctx, converged.WithLimit(1))
 	if err != nil {
-		return fmt.Errorf("failed to validate credentials: %v", err)
+		return fmt.Errorf("failed to validate credentials: %w", err)
 	}
 	return nil
 }
@@ -404,7 +404,7 @@ func (v *Validator) validateClusterConfig(ctx context.Context, client Client, id
 		} else {
 			clusterName := *identifier.Name
 			if _, err := findClusterUUIDByName(ctx, client, clusterName); err != nil {
-				return fmt.Errorf("failed to find cluster with name %q: %v", clusterName, err)
+				return fmt.Errorf("failed to find cluster with name %q: %w", clusterName, err)
 			}
 		}
 	case anywherev1.NutanixIdentifierUUID:
@@ -413,7 +413,7 @@ func (v *Validator) validateClusterConfig(ctx context.Context, client Client, id
 		} else {
 			clusterUUID := *identifier.UUID
 			if _, err := client.GetCluster(ctx, clusterUUID); err != nil {
-				return fmt.Errorf("failed to find cluster with uuid %v: %v", clusterUUID, err)
+				return fmt.Errorf("failed to find cluster with uuid %v: %w", clusterUUID, err)
 			}
 		}
 	default:
@@ -431,7 +431,7 @@ func (v *Validator) validateImageConfig(ctx context.Context, client Client, iden
 		} else {
 			imageName := *identifier.Name
 			if _, err := findImageUUIDByName(ctx, client, imageName); err != nil {
-				return fmt.Errorf("failed to find image with name %q: %v", imageName, err)
+				return fmt.Errorf("failed to find image with name %q: %w", imageName, err)
 			}
 		}
 	case anywherev1.NutanixIdentifierUUID:
@@ -440,7 +440,7 @@ func (v *Validator) validateImageConfig(ctx context.Context, client Client, iden
 		} else {
 			imageUUID := *identifier.UUID
 			if _, err := client.GetImage(ctx, imageUUID); err != nil {
-				return fmt.Errorf("failed to find image with uuid %s: %v", imageUUID, err)
+				return fmt.Errorf("failed to find image with uuid %s: %w", imageUUID, err)
 			}
 		}
 	default:
@@ -470,7 +470,7 @@ func (v *Validator) validateProjectConfig(ctx context.Context, client Client, id
 func findProjectByName(ctx context.Context, client Client, projectName string) error {
 	projects, err := client.ListAllProject(ctx, "")
 	if err != nil {
-		return fmt.Errorf("failed to list projects: %v", err)
+		return fmt.Errorf("failed to list projects: %w", err)
 	}
 	found := make([]*string, 0)
 	for _, p := range projects.Entities {
@@ -493,7 +493,7 @@ func (v *Validator) validateTemplateMatchesKubernetesVersion(ctx context.Context
 		imageUUID := *identifier.UUID
 		imageDetails, err := client.GetImage(ctx, imageUUID)
 		if err != nil {
-			return fmt.Errorf("failed to find image with uuid %s: %v", imageUUID, err)
+			return fmt.Errorf("failed to find image with uuid %s: %w", imageUUID, err)
 		}
 		if imageDetails.Name == nil {
 			return fmt.Errorf("failed to find image details with uuid %s", imageUUID)
@@ -526,7 +526,7 @@ func (v *Validator) validateSubnetConfig(ctx context.Context, client Client, clu
 		} else {
 			subnetName := *subnet.Name
 			if _, err = findSubnetUUIDByName(ctx, client, clusterUUID, subnetName); err != nil {
-				return fmt.Errorf("failed to find subnet with name %s: %v", subnetName, err)
+				return fmt.Errorf("failed to find subnet with name %s: %w", subnetName, err)
 			}
 		}
 	case anywherev1.NutanixIdentifierUUID:
@@ -535,7 +535,7 @@ func (v *Validator) validateSubnetConfig(ctx context.Context, client Client, clu
 		} else {
 			subnetUUID := *subnet.UUID
 			if _, err = client.GetSubnet(ctx, subnetUUID); err != nil {
-				return fmt.Errorf("failed to find subnet with uuid %s: %v", subnetUUID, err)
+				return fmt.Errorf("failed to find subnet with uuid %s: %w", subnetUUID, err)
 			}
 		}
 	default:
@@ -558,7 +558,7 @@ func (v *Validator) validateAdditionalCategories(ctx context.Context, client Cli
 		filter := fmt.Sprintf("key eq '%s' and value eq '%s'", category.Key, category.Value)
 		cats, err := client.ListCategories(ctx, converged.WithFilter(filter))
 		if err != nil {
-			return fmt.Errorf("failed to list categories with key %q and value %q: %v", category.Key, category.Value, err)
+			return fmt.Errorf("failed to list categories with key %q and value %q: %w", category.Key, category.Value, err)
 		}
 
 		if len(cats) == 0 {
@@ -656,7 +656,7 @@ func (v *Validator) getAvailableGPUs(ctx context.Context, client Client, cluster
 func collectAvailablePhysicalGPUs(ctx context.Context, client Client, clusterUUID string) ([]availableGPU, error) {
 	profiles, err := client.ListClusterPhysicalGPUs(ctx, clusterUUID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to list physical GPUs for cluster %s: %v", clusterUUID, err)
+		return nil, fmt.Errorf("failed to list physical GPUs for cluster %s: %w", clusterUUID, err)
 	}
 	var result []availableGPU
 	for _, pg := range profiles {
@@ -683,7 +683,7 @@ func collectAvailablePhysicalGPUs(ctx context.Context, client Client, clusterUUI
 func collectAvailableVirtualGPUs(ctx context.Context, client Client, clusterUUID string) ([]availableGPU, error) {
 	profiles, err := client.ListClusterVirtualGPUs(ctx, clusterUUID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to list virtual GPUs for cluster %s: %v", clusterUUID, err)
+		return nil, fmt.Errorf("failed to list virtual GPUs for cluster %s: %w", clusterUUID, err)
 	}
 	var result []availableGPU
 	for _, vg := range profiles {
@@ -816,7 +816,7 @@ func (v *Validator) validateFreeGPU(ctx context.Context, client Client, clusterS
 		if _, ok := availableGpuByCluster[clusterUUID]; !ok {
 			gpus, err := v.getAvailableGPUs(ctx, client, clusterUUID)
 			if err != nil {
-				return fmt.Errorf("no GPUs found: %v", err)
+				return fmt.Errorf("no GPUs found: %w", err)
 			}
 			availableGpuByCluster[clusterUUID] = gpus
 			allGPUs = append(allGPUs, gpus...)
@@ -885,7 +885,7 @@ func subnetBelongsToCluster(subnet *subnetModels.Subnet, peUUID string) bool {
 func findSubnetUUIDByName(ctx context.Context, client Client, clusterUUID, subnetName string) (*string, error) {
 	subnets, err := client.ListSubnets(ctx, converged.WithFilter(fmt.Sprintf("name eq '%s'", subnetName)))
 	if err != nil {
-		return nil, fmt.Errorf("failed to list subnets: %v", err)
+		return nil, fmt.Errorf("failed to list subnets: %w", err)
 	}
 
 	matched := make([]subnetModels.Subnet, 0)
@@ -942,7 +942,7 @@ func getClusterUUID(ctx context.Context, client Client, cluster anywherev1.Nutan
 		clusterName := *cluster.Name
 		var uuid *string
 		if uuid, err = findClusterUUIDByName(ctx, client, clusterName); err != nil {
-			return "", fmt.Errorf("failed to find cluster with name %q: %v", clusterName, err)
+			return "", fmt.Errorf("failed to find cluster with name %q: %w", clusterName, err)
 		}
 		clusterUUID = *uuid
 	}
@@ -968,7 +968,7 @@ func hasPEClusterServiceEnabled(peCluster *clusterModels.Cluster) bool {
 func findClusterUUIDByName(ctx context.Context, client Client, clusterName string) (*string, error) {
 	clusters, err := client.ListClusters(ctx, converged.WithFilter(fmt.Sprintf("name eq '%s'", clusterName)))
 	if err != nil {
-		return nil, fmt.Errorf("failed to list clusters: %v", err)
+		return nil, fmt.Errorf("failed to list clusters: %w", err)
 	}
 
 	entities := make([]clusterModels.Cluster, 0)
@@ -993,7 +993,7 @@ func findClusterUUIDByName(ctx context.Context, client Client, clusterName strin
 func findImageUUIDByName(ctx context.Context, client Client, imageName string) (*string, error) {
 	images, err := client.ListImages(ctx, converged.WithFilter(fmt.Sprintf("name eq '%s'", imageName)))
 	if err != nil {
-		return nil, fmt.Errorf("failed to list images: %v", err)
+		return nil, fmt.Errorf("failed to list images: %w", err)
 	}
 
 	matched := make([]imageModels.Image, 0)
