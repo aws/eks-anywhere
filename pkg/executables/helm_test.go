@@ -26,8 +26,17 @@ type helmTest struct {
 }
 
 func newHelmTest(t *testing.T, opts ...helm.Opt) *helmTest {
+	return newHelmTestVersion(t, "v3.21.3", nil, opts...)
+}
+
+func newHelmTestVersion(t *testing.T, version string, versionErr error, opts ...helm.Opt) *helmTest {
 	ctrl := gomock.NewController(t)
 	e := mocks.NewMockExecutable(ctrl)
+	ctx := context.Background()
+	args := []string{"version", "--template", "{{.Version}}"}
+	command := executables.NewCommand(ctx, e, args...)
+	e.EXPECT().Command(ctx, args).Return(command).AnyTimes()
+	e.EXPECT().Run(command).Return(*bytes.NewBufferString(version), versionErr).AnyTimes()
 	return &helmTest{
 		WithT: NewWithT(t),
 		ctx:   context.Background(),
@@ -37,6 +46,58 @@ func newHelmTest(t *testing.T, opts ...helm.Opt) *helmTest {
 			"HELM_EXPERIMENTAL_OCI": "1",
 		},
 	}
+}
+
+func TestHelmReadinessWaitCompatibility(t *testing.T) {
+	for _, version := range []string{"v3.21.3", "v4.3", "v4.3.1", "v4.3.1-rc.1+build.2\n"} {
+		t.Run(version, func(t *testing.T) {
+			waitFlag := "--wait=legacy"
+			if version[1] == '3' {
+				waitFlag = "--wait"
+			}
+			tt := newHelmTestVersion(t, version, nil)
+			expectCommand(tt.e, tt.ctx, "upgrade", "--install", "chart", "oci://example.test/chart", "--version", "1.0.0", waitFlag,
+				"--skip-crds", "--set", "replicas=2", "--kubeconfig", "config", "--create-namespace", "--namespace", "namespace", "-f", "values.yaml").
+				withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
+			tt.Expect(tt.h.InstallChart(tt.ctx, "chart", "oci://example.test/chart", "1.0.0", "config", "namespace", "values.yaml", true, []string{"replicas=2"})).To(Succeed())
+
+			expectCommand(tt.e, tt.ctx, "upgrade", "--install", "chart", "oci://example.test/chart", "--version", "1.0.0", "--values", "values.yaml",
+				"--kubeconfig", "config", waitFlag, "--namespace", "namespace").withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
+			tt.Expect(tt.h.UpgradeInstallChartWithValuesFile(tt.ctx, "chart", "oci://example.test/chart", "1.0.0", "config", "namespace", "values.yaml")).To(Succeed())
+
+			expectCommand(tt.e, tt.ctx, "uninstall", "chart", "--kubeconfig", "config", waitFlag, "--namespace", "namespace").
+				withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
+			tt.Expect(tt.h.Uninstall(tt.ctx, "chart", "config", "namespace")).To(Succeed())
+		})
+	}
+}
+
+func TestHelmReadinessWaitRejectsUnknownVersion(t *testing.T) {
+	for _, version := range []string{"", "v5.0.0", "v4", "v4.03.1", "v4.3.1-junk trailing", "v4.3.1+bad..metadata"} {
+		t.Run(version, func(t *testing.T) {
+			tt := newHelmTestVersion(t, version, nil)
+			tt.Expect(tt.h.InstallChart(tt.ctx, "chart", "oci://example.test/chart", "1.0.0", "config", "namespace", "", false, nil)).
+				To(MatchError(ContainSubstring("unsupported Helm version")))
+			tt.Expect(tt.h.UpgradeInstallChartWithValuesFile(tt.ctx, "chart", "oci://example.test/chart", "1.0.0", "config", "namespace", "")).
+				To(MatchError(ContainSubstring("unsupported Helm version")))
+			tt.Expect(tt.h.Uninstall(tt.ctx, "chart", "config", "namespace")).
+				To(MatchError(ContainSubstring("unsupported Helm version")))
+		})
+	}
+}
+
+func TestHelmReadinessWaitPropagatesProbeFailure(t *testing.T) {
+	tt := newHelmTestVersion(t, "", errors.New("version probe failed"))
+	tt.Expect(tt.h.UpgradeInstallChartWithValuesFile(tt.ctx, "chart", "oci://example.test/chart", "1.0.0", "config", "namespace", "")).
+		To(MatchError(ContainSubstring("getting Helm version for readiness wait: version probe failed")))
+}
+
+func TestHelmLegacyWaitPropagatesInstallFailure(t *testing.T) {
+	tt := newHelmTestVersion(t, "v4.3", nil)
+	expectCommand(tt.e, tt.ctx, "upgrade", "--install", "chart", "oci://example.test/chart", "--version", "1.0.0", "--values", "",
+		"--kubeconfig", "config", "--wait=legacy").withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, errors.New("chart never became ready"))
+	tt.Expect(tt.h.UpgradeInstallChartWithValuesFile(tt.ctx, "chart", "oci://example.test/chart", "1.0.0", "config", "", "")).
+		To(MatchError("chart never became ready"))
 }
 
 type helmTemplateTest struct {
