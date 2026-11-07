@@ -1397,6 +1397,15 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec, kubeConfig str
 			curatedpackages.WithClusterSpec(spec),
 		}
 
+		if bundle.PackageController.CRDChart.Image() != "" {
+			options = append(options, curatedpackages.WithCRDChart(&bundle.PackageController.CRDChart))
+		} else {
+			// Derive CRD chart from main chart — same registry, different name
+			crdChart := bundle.PackageController.HelmChart
+			crdChart.Name = "eks-anywhere-packages-crds"
+			options = append(options, curatedpackages.WithCRDChart(&crdChart))
+		}
+
 		options = append(options, opts...)
 
 		f.dependencies.PackageControllerClient = curatedpackages.NewPackageControllerClient(
