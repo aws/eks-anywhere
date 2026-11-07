@@ -132,12 +132,8 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 
 	validations.CheckDockerAllocatedMemory(ctx, docker)
 
-	kubeconfigPath := kubeconfig.FromClusterName(clusterConfig.Name)
-	if validations.FileExistsAndIsNotEmpty(kubeconfigPath) {
-		return fmt.Errorf(
-			"old cluster config file exists under %s, please use a different clusterName to proceed",
-			clusterConfig.Name,
-		)
+	if err := kubeconfig.ValidateKubeconfigPath(clusterConfig.Name); err != nil {
+		return err
 	}
 
 	clusterSpec, err := newClusterSpec(cc.clusterOptions)
