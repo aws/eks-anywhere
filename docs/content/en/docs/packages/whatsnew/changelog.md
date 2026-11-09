@@ -5,6 +5,23 @@ weight: 7
 description: >
   Changelog for Curated packages release
 ---
+## Package Bundle Release (XX-XX-2026)
+#### Added
+- Package bundle for Kubernetes 1.37
+#### Changed
+- EKS Anywhere Packages Controller and Credential-Provider-Package `0.4.17` to `0.4.19` for Kubernetes 1.32 and later
+  - The ECR token refresher no longer blocks the packages controller from starting in air-gapped and registry mirror clusters [#1317](https://github.com/aws/eks-anywhere-packages/pull/1317)
+  - Dependency updates for CVE fixes
+- Harbor `2.14.2` to `2.15.4` for Kubernetes 1.32 and later
+- Prometheus scrape config fixes for Kubernetes 1.32 and later ([v3.15.1]({{< relref "../prometheus/v3.15.1.md" >}}))
+  - Jobs in `serverFiles."prometheus.yml".scrape_configs` are applied again. They are added to the default jobs, and a job with the same `job_name` as a default job replaces it
+  - `extraScrapeConfigs` no longer produces an invalid Prometheus configuration
+- Cluster-Autoscaler `1.37.0` for Kubernetes 1.37
+- Emissary, Harbor, MetalLB, Prometheus, Cluster-Autoscaler and Hello-EKS-Anywhere rebuilt on updated base images for CVE fixes, for Kubernetes 1.32 and later
+- The Kubernetes 1.31 bundle is unchanged
+#### Removed
+- New package bundles for Kubernetes 1.30. The last Kubernetes 1.30 bundle is from the 10-30-2026 release
+
 ## Package Bundle Release (10-30-2026)
 #### Changed
 - Fix CVE-2026-111943 and CVE-2026-113470 (compromised eMudhra intermediate CAs): all curated packages are rebuilt with Go `1.26.10` or `1.27.3`, which distrust the compromised intermediates, on base images whose CA bundle no longer includes the affected emSign roots
