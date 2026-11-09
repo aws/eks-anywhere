@@ -18,9 +18,6 @@ description: >
   - `extraScrapeConfigs` no longer produces an invalid Prometheus configuration
 - Cluster-Autoscaler `1.37.0` for Kubernetes 1.37
 - Emissary, Harbor, MetalLB, Prometheus, Cluster-Autoscaler and Hello-EKS-Anywhere rebuilt on updated base images for CVE fixes, for Kubernetes 1.32 and later
-- The Kubernetes 1.31 bundle is unchanged
-#### Removed
-- New package bundles for Kubernetes 1.30. The last Kubernetes 1.30 bundle is from the 10-30-2026 release
 
 ## Package Bundle Release (10-30-2026)
 #### Changed
