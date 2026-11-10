@@ -267,7 +267,7 @@ For complete version support details, see the [Kubernetes version support table]
 - Bottlerocket: `v1.68.0` to `v1.68.1` for Kubernetes versions 1.31 through 1.35 ([#5788](https://github.com/aws/eks-anywhere-build-tooling/pull/5788))
 
 ### Fixed
-- Updated Bottlerocket node images to `v1.68.1` to address Linux kernel vulnerabilities, including [CVE-2026-98432](https://nvd.nist.gov/vuln/detail/CVE-2026-98432), [CVE-2026-98374](https://nvd.nist.gov/vuln/detail/CVE-2026-98374), and [CVE-2026-98276](https://nvd.nist.gov/vuln/detail/CVE-2026-98276), for Kubernetes versions 1.31 through 1.35 on vSphere ([kernel-kit security advisories](https://github.com/bottlerocket-os/bottlerocket-kernel-kit/tree/v9.6.2/advisories/9.6.1), [#5788](https://github.com/aws/eks-anywhere-build-tooling/pull/5788)).
+- Updated Bottlerocket node images to `v1.68.1` to address Linux kernel vulnerabilities, including [CVE-2026-98432](https://nvd.nist.gov/vuln/detail/CVE-2026-98432), [CVE-2026-98374](https://nvd.nist.gov/vuln/detail/CVE-2026-98374), and [CVE-2026-98276](https://nvd.nist.gov/vuln/detail/CVE-2026-98276) ([#5788](https://github.com/aws/eks-anywhere-build-tooling/pull/5788)).
 
 ## [v0.25.5](https://github.com/aws/eks-anywhere/releases/tag/v0.25.5)
 
