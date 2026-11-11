@@ -30,8 +30,8 @@ UNIT_TEST_PACKAGE_EXCLUSION_REGEX ?=mocks$
 # in Go 1.25+ when running go test -cover on packages without tests.
 UNIT_TEST_PACKAGES ?= $(shell $(GO) list -f '{{if or .TestGoFiles .XTestGoFiles}}{{.ImportPath}}{{end}}' ./... | grep -vE "$(UNIT_TEST_PACKAGE_EXCLUSION_REGEX)")
 
-## ensure local execution uses the 'main' branch bundle
-BRANCH_NAME?=main
+## ensure local execution uses the release branch bundle
+BRANCH_NAME?=release-0.27
 # DEV_GIT_VERSION should be something like v0.19.0-dev+latest, depending on the base branch
 # https://github.com/aws/eks-anywhere/blob/main/docs/developer/manifests.md#locally-building-the-cli
 ifneq ($(PULL_BASE_REF),) # PULL_BASE_REF originates from prow
