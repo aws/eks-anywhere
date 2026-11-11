@@ -663,6 +663,7 @@ func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle
 			},
 		},
 		"service": map[string]any{
+			"enabled":        s.stackService,
 			"type":           "LoadBalancer",
 			"loadBalancerIP": tinkerbellIP,
 			"lbClass":        "kube-vip.io/kube-vip-class",
