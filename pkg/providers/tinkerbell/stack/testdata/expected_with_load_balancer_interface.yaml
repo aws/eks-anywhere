@@ -82,6 +82,7 @@ optional:
       operator: Exists
 publicIP: 1.2.3.4
 service:
+  enabled: false
   lbClass: kube-vip.io/kube-vip-class
   loadBalancerIP: 1.2.3.4
   ports:

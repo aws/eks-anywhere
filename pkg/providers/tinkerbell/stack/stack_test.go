@@ -321,6 +321,41 @@ func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
 	}
 }
 
+func TestTinkerbellStackServiceEnabled(t *testing.T) {
+	for _, tt := range []struct {
+		name    string
+		enabled bool
+	}{
+		{name: "bootstrap", enabled: false},
+		{name: "workload", enabled: true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			docker := mocks.NewMockDocker(ctrl)
+			helm := mocks.NewMockHelm(ctrl)
+			folder, writer := test.NewWriter(t)
+			ctx := context.Background()
+			s := stack.NewInstaller(docker, writer, helm, "", constants.EksaSystemNamespace, "192.168.0.0/16", nil, nil)
+			valuesPath := filepath.Join(folder, "generated", overridesFileName)
+			helm.EXPECT().UpgradeInstallChartWithValuesFile(
+				ctx, "stack", "oci://public.ecr.aws/eks-anywhere/tinkerbell/stack",
+				helmChartVersion, "", constants.EksaSystemNamespace, valuesPath, gomock.Any(),
+			)
+			err := s.Install(ctx, getTinkBundle(), testIP, "", "",
+				stack.WithHostNetworkEnabled(!tt.enabled),
+				stack.WithLoadBalancerEnabled(tt.enabled),
+				stack.WithStackServiceEnabled(tt.enabled),
+			)
+			if err != nil {
+				t.Fatalf("failed to install Tinkerbell stack: %v", err)
+			}
+			values := unmarshalYamlToObject(t, valuesPath)
+			service := values["service"].(map[string]interface{})
+			assert.Equal(t, tt.enabled, service["enabled"])
+		})
+	}
+}
+
 func TestTinkerbellStackUninstallLocalSucess(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	docker := mocks.NewMockDocker(mockCtrl)
