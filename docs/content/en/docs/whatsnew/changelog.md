@@ -106,15 +106,17 @@ For complete version support details, see the [Kubernetes version support table]
 
 ### Fixed
 
-- Fix control-plane readiness and cluster management transfers when creating or upgrading clusters with Cluster API v1.14 ([#10994](https://github.com/aws/eks-anywhere/pull/10994), [#11020](https://github.com/aws/eks-anywhere/pull/11020)).
-- Apply datacenter and machine configurations before the Cluster resource to prevent reconciliation from observing missing configuration ([#11041](https://github.com/aws/eks-anywhere/pull/11041)).
-- Retry transient GitHub failures and rate limits during GitOps operations ([#11011](https://github.com/aws/eks-anywhere/pull/11011), [#11024](https://github.com/aws/eks-anywhere/pull/11024), [#11038](https://github.com/aws/eks-anywhere/pull/11038)).
-- Reuse the tools container during air-gapped image import ([#11025](https://github.com/aws/eks-anywhere/pull/11025)).
-- Use the correct Tinkerbell HTTP ports before and after cluster management transfers ([#11022](https://github.com/aws/eks-anywhere/pull/11022)).
-- Disable the unused bootstrap Tinkerbell LoadBalancer Service so stack installation does not wait for an address that cannot be assigned ([#11055](https://github.com/aws/eks-anywhere/pull/11055)).
+- Fix cluster creation and control-plane upgrade stalls caused by EKS Distro version checks and initialization during cluster management transfers ([#10994](https://github.com/aws/eks-anywhere/pull/10994), [#11020](https://github.com/aws/eks-anywhere/pull/11020)).
+- Prevent cluster reconciliation from failing on missing datacenter or machine configuration by applying these resources before the Cluster ([#11041](https://github.com/aws/eks-anywhere/pull/11041)).
+- Avoid importing the CLI tools image twice during air-gapped image import ([#11025](https://github.com/aws/eks-anywhere/pull/11025)).
+- Fix bare-metal provisioning after cluster management transfers by directing metadata requests to the correct Tinkerbell HTTP port ([#11022](https://github.com/aws/eks-anywhere/pull/11022)).
+- Prevent Tinkerbell bootstrap installation from timing out on an unused LoadBalancer Service ([#11055](https://github.com/aws/eks-anywhere/pull/11055)).
 - Use compatible Helm readiness waits during cluster creation and package installation ([#11047](https://github.com/aws/eks-anywhere/pull/11047)).
 - Retry Nutanix validation and machine lookups when Prism is temporarily unavailable ([#11046](https://github.com/aws/eks-anywhere/pull/11046), [#5793](https://github.com/aws/eks-anywhere-build-tooling/pull/5793)).
 - Fix IPv6 NTP address validation with Go 1.26 ([#10899](https://github.com/aws/eks-anywhere/pull/10899)).
+
+### Other
+
 - Include Smee logs in Tinkerbell support bundles ([#11027](https://github.com/aws/eks-anywhere/pull/11027)).
 
 ## [v0.26.4](https://github.com/aws/eks-anywhere/releases/tag/v0.26.4)
