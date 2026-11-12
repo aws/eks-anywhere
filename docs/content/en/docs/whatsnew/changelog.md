@@ -76,7 +76,7 @@ For complete version support details, see the [Kubernetes version support table]
 ### Added
 
 - Support for Kubernetes v1.37 ([#10991](https://github.com/aws/eks-anywhere/pull/10991)).
-- IPv6 networking is available as a **beta feature**.
+- IPv6 networking is available as a **beta feature** for the bare metal provider.
 
 ### Changed
 
