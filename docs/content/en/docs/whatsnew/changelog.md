@@ -47,6 +47,67 @@ description: >
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
 
+## [v0.27.0](https://github.com/aws/eks-anywhere/releases/tag/v0.27.0)
+
+### Must read before upgrade
+
+- Kubernetes v1.30 reached the end of extended support on August 31, 2026. Upgrade clusters running Kubernetes v1.30 to a supported Kubernetes version before upgrading to EKS Anywhere v0.27.0.
+
+### Planned updates to supported Kubernetes versions
+
+- Kubernetes v1.31 reaches the end of extended support on December 31, 2026. No further patches will be available after this date.
+- Kubernetes v1.34 reaches the end of standard support on December 31, 2026. Extended support continues until December 31, 2027 for clusters with valid license tokens.
+
+For complete version support details, see the [Kubernetes version support table](https://anywhere.eks.amazonaws.com/docs/concepts/support-versions/#kubernetes-versions).
+
+### Supported OS version details
+
+|                     | vSphere | Bare Metal | Nutanix | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----:|
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |  ✔   |
+|    Ubuntu 24.04     |    ✔    |     ✔      |    ✔    |  —   |
+| Bottlerocket 1.68.1 |    ✔    |     —      |    —    |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |  —   |
+|      RHEL 9.x       |    ✔    |     ✔      |    ✔    |  —   |
+
+\* Bottlerocket `v1.68.1` applies to Kubernetes versions 1.31 through 1.37.
+\* RHEL 8's default kernel is not supported by kubeadm for Kubernetes versions 1.32 and above. Use RHEL 9 for these Kubernetes versions.
+
+### Added
+
+- Support for Kubernetes v1.37 ([#10991](https://github.com/aws/eks-anywhere/pull/10991)).
+- IPv6 networking is available as a **beta feature** for the bare metal provider.
+
+### Changed
+
+- EKS Distro:
+  - [`v1-37-eks-4`](https://distro.eks.amazonaws.com/releases/1-37/4/)
+  - [`v1-36-eks-10`](https://distro.eks.amazonaws.com/releases/1-36/10/)
+  - [`v1-35-eks-16`](https://distro.eks.amazonaws.com/releases/1-35/16/)
+  - [`v1-34-eks-25`](https://distro.eks.amazonaws.com/releases/1-34/25/)
+  - [`v1-33-eks-34`](https://distro.eks.amazonaws.com/releases/1-33/34/)
+  - [`v1-32-eks-44`](https://distro.eks.amazonaws.com/releases/1-32/44/)
+  - [`v1-31-eks-51`](https://distro.eks.amazonaws.com/releases/1-31/51/)
+- Bottlerocket: `v1.68.0` to `v1.68.1` ([#5786](https://github.com/aws/eks-anywhere-build-tooling/pull/5786)).
+- Cluster API (CAPI): `v1.13.7` to `v1.14.3` ([#5771](https://github.com/aws/eks-anywhere-build-tooling/pull/5771)).
+- Cluster API Provider vSphere (CAPV): `v1.16.1` to `v1.17.0` ([#5650](https://github.com/aws/eks-anywhere-build-tooling/pull/5650)).
+- Cluster API Provider Nutanix (CAPX): `v1.6.1` to `v1.10.3` ([#5429](https://github.com/aws/eks-anywhere-build-tooling/pull/5429), [#10770](https://github.com/aws/eks-anywhere/pull/10770)).
+- Cluster API Provider AWS Snow (CAPAS): `v0.3.3` to `v0.3.5` ([#5691](https://github.com/aws/eks-anywhere-build-tooling/pull/5691)).
+- Cluster API Provider Tinkerbell (CAPT): `v0.6.6` to the v0.7.0 development commit `c3ee56df719e83851e015fa3cac157324fddfbf0` ([#5681](https://github.com/aws/eks-anywhere-build-tooling/pull/5681)).
+- cert-manager: `v1.20.2` to `v1.21.2` ([#5740](https://github.com/aws/eks-anywhere-build-tooling/pull/5740)).
+- Flux: `v2.8.8` to `v2.10.0` ([#5546](https://github.com/aws/eks-anywhere-build-tooling/pull/5546)).
+- EKS Anywhere packages controller: `v0.4.17` to `v0.4.20`.
+- cri-tools: `v1.36.0` to `v1.37.0`.
+- govmomi: `v0.54.2` to `v0.56.2` ([#5534](https://github.com/aws/eks-anywhere-build-tooling/pull/5534)).
+- Helm: `v4.2.0` to `v4.3.1` ([#5460](https://github.com/aws/eks-anywhere-build-tooling/pull/5460)).
+- Kind: `v0.32.0` to `v0.33.0` ([#5645](https://github.com/aws/eks-anywhere-build-tooling/pull/5645)).
+- kube-vip: `v1.2.3` to `v1.3.1` ([#5234](https://github.com/aws/eks-anywhere-build-tooling/pull/5234)).
+- Troubleshoot: `v0.130.0` to `v0.134.2` ([#5572](https://github.com/aws/eks-anywhere-build-tooling/pull/5572)).
+
+### Fixed
+
+- Avoid importing the CLI tools image twice during air-gapped image import ([#11025](https://github.com/aws/eks-anywhere/pull/11025)).
+
 ## [v0.26.4](https://github.com/aws/eks-anywhere/releases/tag/v0.26.4)
 
 ### Supported OS version details
