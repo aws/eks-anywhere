@@ -248,6 +248,11 @@ func normalizeSSHKeys(machineConfig *TinkerbellMachineConfig) {
 }
 
 func stripCommentsFromSSHKeys(machine *TinkerbellMachineConfig) error {
+	// Missing users or keys are reported by the validating webhook.
+	if len(machine.Spec.Users) == 0 || len(machine.Spec.Users[0].SshAuthorizedKeys) == 0 {
+		return nil
+	}
+
 	public, _, _, _, err := ssh.ParseAuthorizedKey([]byte(machine.Spec.Users[0].SshAuthorizedKeys[0]))
 	if err != nil {
 		return err
