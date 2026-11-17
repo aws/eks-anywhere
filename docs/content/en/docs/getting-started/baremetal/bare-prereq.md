@@ -43,6 +43,11 @@ When upgrading without an extra machine, keep in mind that your control plane an
 
 ## Network requirements
 
+For IPv6 clusters, follow [IPv6 Networking]({{< relref
+"customize/bare-metal-ipv6" >}}) for Router Advertisements, SLAAC, IPv6 DNS
+and BMC connectivity. IPv4 BMC management remains separate from IPv6 node
+address allocation.
+
 Each machine should include the following features:
 
 * Network Interface Cards: at least one NIC is required. For network/PXE boot mode, it must be capable of network booting. See [Boot Modes]({{< relref "customize/bare-metal-boot-modes" >}}) for boot configuration options.

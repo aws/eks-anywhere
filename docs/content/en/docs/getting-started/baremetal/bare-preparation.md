@@ -24,6 +24,12 @@ Once the hardware is in place, you need to:
 * Go to the BMC settings for each machine and set the IP address (bmc_ip), username (bmc_username), and password (bmc_password) to use later in the CSV file.
 
 ## Prepare hardware inventory
+
+For IPv6 SLAAC, retain the CSV columns but leave `ip_address`, `netmask` and
+`gateway` empty. Supply the provisioning NIC MAC and reachable IPv6
+nameservers. See [IPv6 Networking]({{< relref
+"customize/bare-metal-ipv6/#prepare-the-hardware-inventory" >}}) for creation
+and Hardware YAML generation.
 Create a CSV file to provide information about all physical machines that you are ready to add to your target Bare Metal cluster.
 
 {{% alert title="Hardware CSV vs kubectl: When to Use Each" color="primary" %}}

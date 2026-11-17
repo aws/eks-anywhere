@@ -269,6 +269,22 @@ This IP address must be a unique IP in the network range that does not conflict 
 Once the Tinkerbell services move from the Admin machine to run on the target cluster, this IP address makes it possible for the stack to be used for future provisioning needs.
 When separate management and workload clusters are supported in Bare Metal, the IP address becomes a necessity.
 
+### dhcpv6Config (required for IPv6 network boot)
+
+Configures temporary firmware addresses for IPv6 network boot. Set
+`dhcpv6Config.derivedAddressPool` to a usable on-link IPv6 prefix between
+`/1` and `/64`; normally use the provisioning network's `/64`. The installed
+OS uses SLAAC. This field is not required for ISO boot.
+
+```yaml
+dhcpv6Config:
+  derivedAddressPool: "2001:db8:66::/64"
+```
+
+The Tinkerbell IP, control plane endpoint, pod CIDR and service CIDR must use
+the same IP family. See [IPv6 Networking]({{< relref
+"customize/bare-metal-ipv6" >}}) for the complete configuration.
+
 ### osImageURL (required)
 Required field to set the operating system. In order to use Ubuntu or RHEL see [building baremetal node images]({{< relref "../../osmgmt/artifacts/#build-bare-metal-node-images" >}}). This field is also useful if you want to provide a customized operating system image or simply host the standard image locally. To upgrade a node or group of nodes to a new operating system version (ie. RHEL 8.7 to RHEL 8.8), modify this field to point to the new operating system image URL and run [upgrade cluster command]({{< relref "../../clustermgmt/cluster-upgrades/baremetal-upgrades/#upgrade-cluster-command" >}}).
 The `osImageURL` must contain the `Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` version (in case of modular upgrade). For example, if the Kubernetes version is 1.36, the `osImageURL` name should include 1.36, 1_36, 1-36 or 136.
@@ -284,6 +300,17 @@ See [Artifacts]({{< relref "../../osmgmt/artifacts/#hookos-kernel-and-initial-ra
 Optional field (boolean) to enable the ISO boot mode.
 Use this field to enable ISO mounting and boot for OS installation.
 See [Boot Modes]({{< relref "customize/bare-metal-boot-modes/#iso-boot" >}}) for details.
+
+### isoBootURL (optional)
+
+Overrides the BMC-reachable Smee ISO handler URL. Requires `isoBoot: true`
+and an absolute HTTP or HTTPS URL ending in `/iso/hook.iso` for IPv4, or
+`/iso6/hook.iso` for IPv6. CAPT inserts the machine MAC before `hook.iso`.
+
+Use an endpoint that remains reachable during bootstrap and after Tinkerbell
+moves to the cluster. The URL's transport family can differ from the
+cluster's IP family. This field does not select the source HookOS image;
+use `hookIsoURL` for that.
 
 ### hookIsoURL (optional)
 Optional field (string URL) to override the default AWS hosted location for the HookOS ISO.
