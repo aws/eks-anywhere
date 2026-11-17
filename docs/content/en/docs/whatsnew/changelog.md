@@ -47,6 +47,25 @@ description: >
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
 
+## [v0.26.5](https://github.com/aws/eks-anywhere/releases/tag/v0.26.5)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----:|
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |  ✔   |
+|    Ubuntu 24.04     |    ✔    |     ✔      |    ✔    |  —   |
+| Bottlerocket 1.68.1 |    ✔    |     —      |    —    |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |  —   |
+|      RHEL 9.x       |    ✔    |     ✔      |    ✔    |  —   |
+
+\* Bottlerocket `v1.68.1` applies to Kubernetes versions 1.31 through 1.36. Kubernetes version 1.30 remains on Bottlerocket `v1.62.0`.
+
+### Changed
+- Bottlerocket: `v1.68.0` to `v1.68.1` for Kubernetes versions 1.31 through 1.36 ([#5787](https://github.com/aws/eks-anywhere-build-tooling/pull/5787))
+
+### Fixed
+- Updated Bottlerocket node images to `v1.68.1` to address Linux kernel vulnerabilities, including [CVE-2026-98432](https://nvd.nist.gov/vuln/detail/CVE-2026-98432), [CVE-2026-98374](https://nvd.nist.gov/vuln/detail/CVE-2026-98374), and [CVE-2026-98276](https://nvd.nist.gov/vuln/detail/CVE-2026-98276) ([#5787](https://github.com/aws/eks-anywhere-build-tooling/pull/5787)).
+
 ## [v0.26.4](https://github.com/aws/eks-anywhere/releases/tag/v0.26.4)
 
 ### Supported OS version details
