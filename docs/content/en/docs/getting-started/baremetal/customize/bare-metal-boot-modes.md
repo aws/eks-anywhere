@@ -34,6 +34,9 @@ Machine -> File Server: load HookOS
 
 As this is the default method, no additional configuration is required. Follow the installation instructions as normal.
 
+For IPv6, configure `dhcpv6Config.derivedAddressPool` and Router Advertisements
+as described in [IPv6 Networking]({{< relref "bare-metal-ipv6" >}}).
+
 ## ISO Boot
 
 This method does not require the EKS Anywhere Bootstrap and Management Clusters to have layer 2 network access to the machines being booted. It does not use DHCP or require layer 2 network access. Instead, the EKS Anywhere HookOS image is provided as a CD/DVD ISO file by the Tinkerbell stack. The HookOS ISO is then attached to the machine via the BMC as a virtual CD/DVD device. The machine is then booted into the virtual CD/DVD device and HookOS boots up. The following is a simplified sequence diagram of the ISO boot process:
@@ -59,7 +62,8 @@ EKS Anywhere -> File Server: patch and serve HookOS
 To enable the ISO boot method there is one required field and one optional field.
 
 - Required: `TinkerbellDatacenterConfig.spec.isoBoot` - Set this field to `true` to enable the ISO boot mode.
-- Optional: `TinkerbellDatacenterConfig.spec.isoURL` - This field is a string value that specifies the URL to the HookOS ISO file. If this field is not provided, the default HookOS ISO file will be used.
+- Optional: `TinkerbellDatacenterConfig.spec.hookIsoURL` - URL of the source HookOS ISO. If omitted, the bundled HookOS ISO is used.
+- Optional: `TinkerbellDatacenterConfig.spec.isoBootURL` - BMC-reachable URL of the Smee ISO handler. Use a stable endpoint reachable during bootstrap and later provisioning.
 
 {{% alert title="Important" color="warning" %}}
 In order to use the ISO boot mode all of the following must be true:
@@ -73,6 +77,22 @@ spec:
   isoBoot: true
   hookIsoURL: "http://example.com/hookos.iso"
 ```
+
+For IPv6, the machines still need Router Advertisements for SLAAC; no derived
+firmware pool is needed for ISO boot. An `isoBootURL` override must end in
+`/iso6/hook.iso`, even when the BMC downloads the media over IPv4:
+
+```yaml
+spec:
+  tinkerbellIP: "2001:db8:66::101"
+  isoBoot: true
+  isoBootURL: "http://192.0.2.20:7172/iso6/hook.iso"
+```
+
+CAPT adds each machine's MAC to the handler path. This example endpoint must
+forward those requests to the active Smee service. See [IPv6 Networking]({{<
+relref "bare-metal-ipv6" >}}) and the [`isoBootURL` reference]({{< relref
+"../bare-spec/#isobooturl-optional" >}}).
 
 It is highly recommended that the HookOS ISO file is available locally in your environment and its location is specified in the `hookIsoURL` field. The default location for the HookOS ISO file is hosted in the cloud by AWS. This means that the Tinkerbell stack, and more specifically the Smee service, will need internet access to this location and Smee will need to pull from this location every time a machine is booted. This can lead to slow boot times and potential boot failures if the internet connection is slow, constrained, or lost.
 
