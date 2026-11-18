@@ -5,11 +5,13 @@ import (
 	"encoding/base64"
 	"net"
 	"os"
+	"path"
 	"strings"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/registrymirror"
 )
 
 const (
@@ -25,14 +27,11 @@ const (
 	RegistryCACertTinkerbellVar          = "T_REGISTRY_MIRROR_CA_CERT_TINKERBELL"
 	RegistryMirrorDefaultSecurityGroup   = "T_REGISTRY_MIRROR_DEFAULT_SECURITY_GROUP"
 	RegistryMirrorAirgappedSecurityGroup = "T_REGISTRY_MIRROR_AIRGAPPED_SECURITY_GROUP"
-	PrivateRegistryEndpointVar              = "T_PRIVATE_REGISTRY_MIRROR_ENDPOINT"
-	PrivateRegistryPortVar                  = "T_PRIVATE_REGISTRY_MIRROR_PORT"
-	PrivateRegistryUsernameVar              = "T_PRIVATE_REGISTRY_MIRROR_USERNAME"
-	PrivateRegistryPasswordVar              = "T_PRIVATE_REGISTRY_MIRROR_PASSWORD"
-	PrivateRegistryCACertVar                = "T_PRIVATE_REGISTRY_MIRROR_CA_CERT"
-	PrivateRegistryEndpointBottlerocketVar  = "T_PRIVATE_REGISTRY_MIRROR_ENDPOINT_BOTTLEROCKET"
-	PrivateRegistryPortBottlerocketVar      = "T_PRIVATE_REGISTRY_MIRROR_PORT_BOTTLEROCKET"
-	PrivateRegistryCACertBottlerocketVar    = "T_PRIVATE_REGISTRY_MIRROR_CA_CERT_BOTTLEROCKET"
+	PrivateRegistryEndpointVar           = "T_PRIVATE_REGISTRY_MIRROR_ENDPOINT"
+	PrivateRegistryPortVar               = "T_PRIVATE_REGISTRY_MIRROR_PORT"
+	PrivateRegistryUsernameVar           = "T_PRIVATE_REGISTRY_MIRROR_USERNAME"
+	PrivateRegistryPasswordVar           = "T_PRIVATE_REGISTRY_MIRROR_PASSWORD"
+	PrivateRegistryCACertVar             = "T_PRIVATE_REGISTRY_MIRROR_CA_CERT"
 	PrivateRegistryEndpointTinkerbellVar = "T_PRIVATE_REGISTRY_MIRROR_ENDPOINT_TINKERBELL"
 	PrivateRegistryPortTinkerbellVar     = "T_PRIVATE_REGISTRY_MIRROR_PORT_TINKERBELL"
 	PrivateRegistryUsernameTinkerbellVar = "T_PRIVATE_REGISTRY_MIRROR_USERNAME_TINKERBELL"
@@ -49,8 +48,7 @@ var (
 	registryMirrorRequiredEnvVars                  = []string{RegistryEndpointVar, RegistryPortVar, RegistryUsernameVar, RegistryPasswordVar, RegistryCACertVar}
 	registryMirrorTinkerbellRequiredEnvVars        = []string{RegistryEndpointTinkerbellVar, RegistryPortTinkerbellVar, RegistryUsernameTinkerbellVar, RegistryPasswordTinkerbellVar, RegistryCACertTinkerbellVar}
 	registryMirrorDockerAirgappedRequiredEnvVars   = []string{RegistryMirrorDefaultSecurityGroup, RegistryMirrorAirgappedSecurityGroup}
-	privateRegistryMirrorRequiredEnvVars              = []string{PrivateRegistryEndpointVar, PrivateRegistryPortVar, PrivateRegistryUsernameVar, PrivateRegistryPasswordVar, PrivateRegistryCACertVar}
-	privateRegistryMirrorBottlerocketRequiredEnvVars = []string{PrivateRegistryEndpointBottlerocketVar, PrivateRegistryPortBottlerocketVar, PrivateRegistryUsernameVar, PrivateRegistryPasswordVar, PrivateRegistryCACertBottlerocketVar}
+	privateRegistryMirrorRequiredEnvVars           = []string{PrivateRegistryEndpointVar, PrivateRegistryPortVar, PrivateRegistryUsernameVar, PrivateRegistryPasswordVar, PrivateRegistryCACertVar}
 	privateRegistryMirrorTinkerbellRequiredEnvVars = []string{PrivateRegistryEndpointTinkerbellVar, PrivateRegistryPortTinkerbellVar, PrivateRegistryUsernameTinkerbellVar, PrivateRegistryPasswordTinkerbellVar, PrivateRegistryCACertTinkerbellVar}
 	registryMirrorOciNamespacesRequiredEnvVars     = []string{RegistryMirrorOciNamespacesRegistry1Var, RegistryMirrorOciNamespacesNamespace1Var}
 )
@@ -117,26 +115,14 @@ func WithAuthenticatedRegistryMirror(providerName string, optNamespaces ...v1alp
 				port = os.Getenv(PrivateRegistryPortTinkerbellVar)
 			}
 		default:
-			if strings.Contains(e.T.Name(), "BottlerocketAuthenticatedRegistryMirror") {
-				checkRequiredEnvVars(e.T, privateRegistryMirrorBottlerocketRequiredEnvVars)
-				endpoint = os.Getenv(PrivateRegistryEndpointBottlerocketVar)
-				hostPort = net.JoinHostPort(endpoint, os.Getenv(PrivateRegistryPortBottlerocketVar))
-				username = os.Getenv(PrivateRegistryUsernameVar)
-				password = os.Getenv(PrivateRegistryPasswordVar)
-				registryCert = os.Getenv(PrivateRegistryCACertBottlerocketVar)
-				if os.Getenv(PrivateRegistryPortBottlerocketVar) != "" {
-					port = os.Getenv(PrivateRegistryPortBottlerocketVar)
-				}
-			} else {
-				checkRequiredEnvVars(e.T, privateRegistryMirrorRequiredEnvVars)
-				endpoint = os.Getenv(PrivateRegistryEndpointVar)
-				hostPort = net.JoinHostPort(endpoint, os.Getenv(PrivateRegistryPortVar))
-				username = os.Getenv(PrivateRegistryUsernameVar)
-				password = os.Getenv(PrivateRegistryPasswordVar)
-				registryCert = os.Getenv(PrivateRegistryCACertVar)
-				if os.Getenv(PrivateRegistryPortVar) != "" {
-					port = os.Getenv(PrivateRegistryPortVar)
-				}
+			checkRequiredEnvVars(e.T, privateRegistryMirrorRequiredEnvVars)
+			endpoint = os.Getenv(PrivateRegistryEndpointVar)
+			hostPort = net.JoinHostPort(endpoint, os.Getenv(PrivateRegistryPortVar))
+			username = os.Getenv(PrivateRegistryUsernameVar)
+			password = os.Getenv(PrivateRegistryPasswordVar)
+			registryCert = os.Getenv(PrivateRegistryCACertVar)
+			if os.Getenv(PrivateRegistryPortVar) != "" {
+				port = os.Getenv(PrivateRegistryPortVar)
 			}
 		}
 
@@ -173,7 +159,6 @@ func RequiredRegistryMirrorEnvVars() []string {
 	registryMirrorRequiredEnvVars = append(registryMirrorRequiredEnvVars, registryMirrorTinkerbellRequiredEnvVars...)
 	registryMirrorRequiredEnvVars = append(registryMirrorRequiredEnvVars, privateRegistryMirrorRequiredEnvVars...)
 	registryMirrorRequiredEnvVars = append(registryMirrorRequiredEnvVars, privateRegistryMirrorTinkerbellRequiredEnvVars...)
-	registryMirrorRequiredEnvVars = append(registryMirrorRequiredEnvVars, privateRegistryMirrorBottlerocketRequiredEnvVars...)
 	return append(registryMirrorRequiredEnvVars, registryMirrorDockerAirgappedRequiredEnvVars...)
 }
 
@@ -236,4 +221,18 @@ func (e *ClusterE2ETest) SetRegistryMirrorDefaultInstanceSecurityGroupOnCleanup(
 	e.T.Cleanup(func() {
 		e.ChangeInstanceSecurityGroup(os.Getenv(RegistryMirrorDefaultSecurityGroup))
 	})
+}
+
+// PackagesSourceRegistryMirrorPath returns the path under the registry mirror host that the CLI sets as the
+// packages controller's sourceRegistry for packageMirrorAlias: the public.ecr.aws mirror, including its OCI
+// namespace if one is set, plus the alias (see curatedpackages.GetCuratedPackagesRegistries). The controller
+// pulls its own images (controller, migrations hook, credential provider) from there; other packages pull
+// from defaultImageRegistry.
+func (e *ClusterE2ETest) PackagesSourceRegistryMirrorPath(packageMirrorAlias string) string {
+	mirror := registrymirror.FromCluster(e.ClusterConfig.Cluster)
+	if mirror == nil {
+		return packageMirrorAlias
+	}
+	namespace := strings.TrimPrefix(strings.TrimPrefix(mirror.CoreEKSAMirror(), mirror.BaseRegistry), "/")
+	return path.Join(namespace, packageMirrorAlias)
 }

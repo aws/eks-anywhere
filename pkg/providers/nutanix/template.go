@@ -576,8 +576,8 @@ func generateNoProxyList(clusterSpec *cluster.Spec) []string {
 	return noProxyList
 }
 
-func generateNutanixFailureDomains(eksNutanixFailureDomains []v1alpha1.NutanixDatacenterFailureDomain) []capxv1beta1.NutanixFailureDomain {
-	var failureDomains []capxv1beta1.NutanixFailureDomain
+func generateNutanixFailureDomains(eksNutanixFailureDomains []v1alpha1.NutanixDatacenterFailureDomain) []capxv1beta1.NutanixFailureDomainConfig {
+	var failureDomains []capxv1beta1.NutanixFailureDomainConfig
 	for _, fd := range eksNutanixFailureDomains {
 
 		subnets := []capxv1beta1.NutanixResourceIdentifier{}
@@ -589,7 +589,7 @@ func generateNutanixFailureDomains(eksNutanixFailureDomains []v1alpha1.NutanixDa
 			})
 		}
 
-		failureDomains = append(failureDomains, capxv1beta1.NutanixFailureDomain{
+		failureDomains = append(failureDomains, capxv1beta1.NutanixFailureDomainConfig{
 			Name: fd.Name,
 			Cluster: capxv1beta1.NutanixResourceIdentifier{
 				Type: capxv1beta1.NutanixIdentifierType(fd.Cluster.Type),

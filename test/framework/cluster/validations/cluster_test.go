@@ -10,6 +10,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/cluster-api/api/core/v1beta1"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -128,7 +129,7 @@ func TestValidateClusterReady(t *testing.T) {
 			name: "CAPI cluster ready",
 			conditions: v1beta1.Conditions{
 				{
-					Type:   v1beta1.ConditionType(corev1.NodeReady),
+					Type:   v1beta1.ConditionType(clusterv1beta2.AvailableCondition),
 					Status: "True",
 					Reason: "",
 					LastTransitionTime: metav1.Time{
@@ -143,7 +144,7 @@ func TestValidateClusterReady(t *testing.T) {
 			name: "CAPI cluster does not ready",
 			conditions: v1beta1.Conditions{
 				{
-					Type:   v1beta1.ConditionType(corev1.NodeReady),
+					Type:   v1beta1.ConditionType(clusterv1beta2.AvailableCondition),
 					Status: "False",
 					Reason: "Never ready for testing",
 					LastTransitionTime: metav1.Time{
@@ -175,6 +176,7 @@ func TestValidateClusterReady(t *testing.T) {
 					c.Status.Conditions = []metav1.Condition{
 						{
 							Type:               string(tt.conditions[0].Type),
+							ObservedGeneration: c.Generation,
 							Status:             metav1.ConditionStatus(tt.conditions[0].Status),
 							LastTransitionTime: tt.conditions[0].LastTransitionTime,
 							Reason:             tt.conditions[0].Reason,
@@ -189,6 +191,69 @@ func TestValidateClusterReady(t *testing.T) {
 				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
 			} else {
 				g.Expect(err).To(BeNil())
+			}
+		})
+	}
+}
+
+func TestValidateClusterReadyCurrentConditionsAndWorkerRollout(t *testing.T) {
+	tests := []struct {
+		name      string
+		available bool
+		stale     bool
+		workers   bool
+		updated   int32
+		wantErr   string
+	}{
+		{"missing Available cannot pass", false, false, false, 0, "not ready yet"},
+		{"stale Available cannot pass", true, true, false, 0, "not ready yet"},
+		{"worker rollout still in progress", true, false, true, 1, "are not in sync"},
+		{"worker rollout complete", true, false, true, 2, ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			spec := test.NewClusterSpec(func(s *cluster.Spec) {
+				s.Cluster = testCluster()
+				s.Cluster.Spec.WorkerNodeGroupConfigurations = nil
+				if tt.workers {
+					s.Cluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{Name: "workers", Count: ptr.To(2)}}
+				}
+			})
+			vt := newStateValidatorTest(t, spec)
+			vt.createTestObjects(context.Background())
+			capiCluster := test.CAPICluster(func(c *clusterv1beta2.Cluster) {
+				c.Name = spec.Cluster.Name
+				c.Generation = 2
+				c.Status.Conditions = nil
+				if tt.available {
+					observed := c.Generation
+					if tt.stale {
+						observed--
+					}
+					c.Status.Conditions = []metav1.Condition{{
+						Type: clusterv1beta2.AvailableCondition, Status: metav1.ConditionTrue,
+						Reason: "Available", ObservedGeneration: observed, LastTransitionTime: metav1.Now(),
+					}}
+				}
+			})
+			vt.createManagementClusterObjects(context.Background(), capiCluster)
+			if tt.workers {
+				md := &clusterv1beta2.MachineDeployment{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "workers", Namespace: constants.EksaSystemNamespace,
+						Labels: map[string]string{clusterv1beta2.ClusterNameLabel: spec.Cluster.Name},
+					},
+					Spec:   clusterv1beta2.MachineDeploymentSpec{Replicas: ptr.To(int32(2))},
+					Status: clusterv1beta2.MachineDeploymentStatus{ReadyReplicas: ptr.To(int32(2)), UpToDateReplicas: ptr.To(tt.updated)},
+				}
+				vt.createManagementClusterObjects(context.Background(), md)
+			}
+			err := validations.ValidateClusterReady(context.Background(), vt.config)
+			if tt.wantErr == "" {
+				g.Expect(err).ToNot(HaveOccurred())
+			} else {
+				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
 			}
 		})
 	}
@@ -248,6 +313,57 @@ func TestValidateEKSAObjects(t *testing.T) {
 	}
 }
 
+func TestValidateEKSAObjectsMachineConfigReferences(t *testing.T) {
+	cp := &v1alpha1.VSphereMachineConfig{
+		TypeMeta:   metav1.TypeMeta{Kind: v1alpha1.VSphereMachineConfigKind, APIVersion: v1alpha1.GroupVersion.String()},
+		ObjectMeta: metav1.ObjectMeta{Name: "control-plane", Namespace: "default"},
+	}
+	worker := cp.DeepCopy()
+	worker.Name = "worker"
+	etcd := cp.DeepCopy()
+	etcd.Name = "removed-etcd"
+	tests := []struct {
+		name         string
+		externalEtcd bool
+		missing      *v1alpha1.VSphereMachineConfig
+		wantErr      string
+	}{
+		{"stacked topology ignores removed etcd config", false, etcd, ""},
+		{"external etcd config is still required", true, etcd, "removed-etcd"},
+		{"control-plane config is still required", false, cp, "control-plane"},
+		{"worker config is still required", false, worker, "worker"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			spec := test.NewClusterSpec(func(s *cluster.Spec) {
+				s.Cluster = testCluster()
+				s.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef = &v1alpha1.Ref{Kind: v1alpha1.VSphereMachineConfigKind, Name: cp.Name}
+				s.Cluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{
+					{Name: "workers", MachineGroupRef: &v1alpha1.Ref{Kind: v1alpha1.VSphereMachineConfigKind, Name: worker.Name}},
+				}
+				s.Cluster.Spec.ExternalEtcdConfiguration = nil
+				if tt.externalEtcd {
+					s.Cluster.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{
+						Count: 1, MachineGroupRef: &v1alpha1.Ref{Kind: v1alpha1.VSphereMachineConfigKind, Name: etcd.Name},
+					}
+				}
+				s.VSphereMachineConfigs = map[string]*v1alpha1.VSphereMachineConfig{
+					cp.Name: cp.DeepCopy(), worker.Name: worker.DeepCopy(), etcd.Name: etcd.DeepCopy(),
+				}
+			})
+			vt := newStateValidatorTest(t, spec)
+			vt.createTestObjects(context.Background(), tt.missing)
+			err := validations.ValidateEKSAObjects(context.Background(), vt.config)
+			if tt.wantErr == "" {
+				g.Expect(err).ToNot(HaveOccurred())
+			} else {
+				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
+			}
+		})
+	}
+}
+
 func TestValidateControlPlanes(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -261,6 +377,9 @@ func TestValidateControlPlanes(t *testing.T) {
 				s.Cluster = testCluster()
 				s.Cluster.Spec.ControlPlaneConfiguration = v1alpha1.ControlPlaneConfiguration{
 					Count: 2,
+				}
+				s.Cluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{
+					{Name: "workers", Count: ptr.To(1)},
 				}
 			}),
 			nodes: []*corev1.Node{
@@ -344,6 +463,9 @@ func TestValidateControlPlanes(t *testing.T) {
 				s.Cluster.Spec.ControlPlaneConfiguration = v1alpha1.ControlPlaneConfiguration{
 					Count:  2,
 					Taints: []corev1.Taint{api.ControlPlaneTaint()},
+				}
+				s.Cluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{
+					{Name: "workers", Count: ptr.To(1)},
 				}
 			}),
 			nodes: []*corev1.Node{
@@ -433,6 +555,60 @@ func TestValidateControlPlanes(t *testing.T) {
 				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
 			} else {
 				g.Expect(err).To(BeNil())
+			}
+		})
+	}
+}
+
+func TestValidateControlPlaneTaintsWorkerTopology(t *testing.T) {
+	customTaint := corev1.Taint{Key: "dedicated", Value: "control-plane", Effect: corev1.TaintEffectNoSchedule}
+	tests := []struct {
+		name       string
+		cpCount    int
+		workers    bool
+		configured []corev1.Taint
+		actual     []corev1.Taint
+		wantErr    bool
+	}{
+		{name: "one control plane without workers", cpCount: 1},
+		{name: "three control planes without workers", cpCount: 3},
+		{name: "three control planes without workers explicit empty taints", cpCount: 3, configured: []corev1.Taint{}},
+		{name: "three control planes without workers unexpected default taint", cpCount: 3, actual: []corev1.Taint{api.ControlPlaneTaint()}, wantErr: true},
+		{name: "three control planes without workers configured taints", cpCount: 3, configured: []corev1.Taint{customTaint}, actual: []corev1.Taint{customTaint}, wantErr: true},
+		{name: "one control plane with workers default taint", cpCount: 1, workers: true, actual: []corev1.Taint{api.ControlPlaneTaint()}},
+		{name: "three control planes with workers default taint", cpCount: 3, workers: true, actual: []corev1.Taint{api.ControlPlaneTaint()}},
+		{name: "three control planes with workers missing default taint", cpCount: 3, workers: true, wantErr: true},
+		{name: "three control planes with workers explicit empty taints", cpCount: 3, workers: true, configured: []corev1.Taint{}},
+		{name: "three control planes with workers configured custom taint", cpCount: 3, workers: true, configured: []corev1.Taint{customTaint}, actual: []corev1.Taint{customTaint}},
+		{name: "three control planes with workers missing custom taint", cpCount: 3, workers: true, configured: []corev1.Taint{customTaint}, wantErr: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			spec := test.NewClusterSpec(func(s *cluster.Spec) {
+				s.Cluster = testCluster()
+				s.Cluster.Spec.ControlPlaneConfiguration = v1alpha1.ControlPlaneConfiguration{
+					Count: tt.cpCount, Taints: tt.configured,
+				}
+				if tt.workers {
+					s.Cluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{
+						{Name: "workers", Count: ptr.To(1)},
+					}
+				}
+			})
+			vt := newStateValidatorTest(t, spec)
+			for i := 0; i < tt.cpCount; i++ {
+				vt.createClusterObjects(context.Background(), controlPlaneNode(func(n *corev1.Node) {
+					n.Name = fmt.Sprintf("control-plane-%d", i)
+					n.Spec.Taints = tt.actual
+					n.Status.Conditions = []corev1.NodeCondition{{Type: corev1.NodeReady, Status: corev1.ConditionTrue}}
+				}))
+			}
+			err := validations.ValidateControlPlaneNodes(context.Background(), vt.config)
+			if tt.wantErr && err == nil {
+				t.Fatal("expected control-plane taint validation to fail")
+			}
+			if !tt.wantErr && err != nil {
+				t.Fatalf("expected valid control-plane taints: %v", err)
 			}
 		})
 	}

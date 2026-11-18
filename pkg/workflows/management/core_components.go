@@ -2,6 +2,12 @@ package management
 
 import (
 	"context"
+	"fmt"
+	"strings"
+	"time"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
@@ -113,11 +119,13 @@ func runUpgradeCoreComponents(ctx context.Context, commandContext *task.CommandC
 	}
 	eksaCluster.SetManagementComponentsVersion(commandContext.ClusterSpec.EKSARelease.Spec.Version)
 	eksaCluster.ResourceVersion = ""
-	if err := client.ApplyServerSide(ctx,
-		constants.EKSACLIFieldManager,
-		eksaCluster,
-		kubernetes.ApplyServerSideOptions{ForceOwnership: true},
-	); err != nil {
+	if err := retryAdmissionConnection(ctx, time.Second, time.Minute, func(ctx context.Context) error {
+		return client.ApplyServerSide(ctx,
+			constants.EKSACLIFieldManager,
+			eksaCluster,
+			kubernetes.ApplyServerSideOptions{ForceOwnership: true},
+		)
+	}); err != nil {
 		commandContext.SetError(err)
 		return err
 	}
@@ -125,6 +133,42 @@ func runUpgradeCoreComponents(ctx context.Context, commandContext *task.CommandC
 	commandContext.ClusterSpec.Cluster.SetManagementComponentsVersion(commandContext.ClusterSpec.EKSARelease.Spec.Version)
 
 	return nil
+}
+
+// A Ready controller can precede webhook Service endpoint propagation. Retry
+// the idempotent version update only for admission connection failures.
+func retryAdmissionConnection(ctx context.Context, interval, timeout time.Duration, apply func(context.Context) error) error {
+	var lastError error
+	err := wait.PollUntilContextTimeout(ctx, interval, timeout, true, func(ctx context.Context) (bool, error) {
+		if err := ctx.Err(); err != nil {
+			return false, err
+		}
+		lastError = apply(ctx)
+		if lastError == nil {
+			return true, nil
+		}
+		if transientAdmissionConnection(lastError) {
+			return false, nil
+		}
+		return false, lastError
+	})
+	if err != nil && lastError != nil && ctx.Err() == nil && wait.Interrupted(err) {
+		return fmt.Errorf("waiting for admission webhook connection: %w: %v", err, lastError)
+	}
+	return err
+}
+
+func transientAdmissionConnection(err error) bool {
+	if apierrors.IsForbidden(err) || apierrors.IsInvalid(err) || apierrors.IsUnauthorized(err) {
+		return false
+	}
+	message := err.Error()
+	if strings.Contains(message, "x509:") || strings.Contains(message, "tls:") {
+		return false
+	}
+	return strings.Contains(message, "failed calling webhook") &&
+		(strings.Contains(message, "connect: connection refused") ||
+			strings.Contains(message, "no endpoints available for service"))
 }
 
 // Run upgradeCoreComponents upgrades pre cluster upgrade components.

@@ -79,7 +79,7 @@ func assertTemplateConfigGeneration(t *testing.T, cfg *v1alpha1.TinkerbellTempla
 	}
 	metadata := templateConfigMetadata(cfg)
 	bootstrapURL := "http://" + net.JoinHostPort(source, "7172")
-	workloadURL := "http://" + net.JoinHostPort(destination, "7172")
+	workloadURL := "http://" + net.JoinHostPort(destination, "7171")
 	if !strings.Contains(metadata, bootstrapURL) || !strings.Contains(metadata, workloadURL) {
 		t.Fatalf("metadata does not contain the selected addresses: %s", metadata)
 	}

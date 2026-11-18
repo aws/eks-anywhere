@@ -105,6 +105,12 @@ func ReconcileControlPlane(ctx context.Context, log logr.Logger, c client.Client
 		cp.Cluster.Spec.ControlPlaneEndpoint = currentCPEndpoint
 	}
 
+	if kcp == nil || (cp.EtcdCluster != nil && etcdadmCluster == nil) {
+		// An interrupted initial apply can leave the CAPI cluster without its child objects.
+		log.Info("Completing initial control plane creation")
+		return controller.Result{}, applyAllControlPlaneObjects(ctx, c, cp)
+	}
+
 	if cp.EtcdCluster == nil {
 		// For stacked etcd, we don't need orchestration, apply directly
 		return controller.Result{}, applyAllControlPlaneObjects(ctx, c, cp)
@@ -142,6 +148,9 @@ func readCurrentControlPlane(ctx context.Context, c client.Client, cp *ControlPl
 		Namespace: cluster.Namespace,
 	}
 	if err = c.Get(ctx, key, kcp); err != nil {
+		if apierrors.IsNotFound(err) && controlPlaneNotInitialized(cluster) {
+			return cluster, nil, nil, nil
+		}
 		return nil, nil, nil, errors.Wrap(err, "reading kubeadm control plane")
 	}
 
@@ -151,10 +160,18 @@ func readCurrentControlPlane(ctx context.Context, c client.Client, cp *ControlPl
 
 	etcdadmCluster, err := getEtcdadmCluster(ctx, c, cluster)
 	if err != nil {
+		if apierrors.IsNotFound(err) && controlPlaneNotInitialized(cluster) {
+			return cluster, kcp, nil, nil
+		}
 		return nil, nil, nil, errors.Wrap(err, "reading etcdadm cluster")
 	}
 
 	return cluster, kcp, etcdadmCluster, nil
+}
+
+func controlPlaneNotInitialized(cluster *clusterv1beta2.Cluster) bool {
+	initialized := cluster.Status.Initialization.ControlPlaneInitialized
+	return initialized == nil || !*initialized
 }
 
 func applyAllControlPlaneObjects(ctx context.Context, c client.Client, cp *ControlPlane) error {

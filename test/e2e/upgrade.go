@@ -13,7 +13,7 @@ func runSimpleUpgradeFlow(test *framework.ClusterE2ETest, updateVersion v1alpha1
 	test.GenerateClusterConfig()
 	test.CreateCluster()
 	test.UpgradeClusterWithNewConfig(clusterOpts)
-	test.ValidateCluster(updateVersion)
+	test.ValidateClusterState()
 	test.StopIfFailed()
 	test.DeleteCluster()
 }
@@ -24,7 +24,7 @@ func runSimpleUpgradeFlow(test *framework.ClusterE2ETest, updateVersion v1alpha1
 func runSimpleUpgradeFlowWithoutClusterConfigGeneration(test *framework.ClusterE2ETest, updateVersion v1alpha1.KubernetesVersion, clusterOpts ...framework.ClusterE2ETestOpt) {
 	test.CreateCluster()
 	test.UpgradeClusterWithNewConfig(clusterOpts)
-	test.ValidateCluster(updateVersion)
+	test.ValidateClusterState()
 	test.StopIfFailed()
 	test.DeleteCluster()
 }
@@ -34,7 +34,7 @@ func runUpgradeFlowWithCheckpoint(test *framework.ClusterE2ETest, updateVersion 
 	test.CreateCluster()
 	test.UpgradeClusterWithNewConfig(clusterOpts, commandOpts...)
 	test.UpgradeClusterWithNewConfig(clusterOpts2)
-	test.ValidateCluster(updateVersion)
+	test.ValidateClusterState()
 	test.StopIfFailed()
 	test.DeleteCluster()
 }
@@ -44,7 +44,7 @@ func runSimpleUpgradeFlowForBareMetal(test *framework.ClusterE2ETest, updateVers
 	test.GenerateHardwareConfig()
 	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
 	test.UpgradeClusterWithNewConfig(clusterOpts)
-	test.ValidateCluster(updateVersion)
+	test.ValidateClusterState()
 	test.StopIfFailed()
 	test.DeleteCluster()
 	test.ValidateHardwareDecommissioned()
@@ -71,8 +71,7 @@ func runInPlaceMultipleUpgradesFlow(test *framework.ClusterE2ETest, clusterOpts 
 	test.DeleteCluster()
 }
 
-// runInPlaceUpgradeFlow makes use of the new ValidateClusterState method instead of ValidateCluster, but we should incorporate this
-// in runSimpleUpgradeFlow itself.
+// runInPlaceUpgradeFlow validates the upgraded cluster state before cleanup.
 func runInPlaceUpgradeFlow(test *framework.ClusterE2ETest, clusterOpts ...framework.ClusterE2ETestOpt) {
 	test.CreateCluster()
 	test.UpgradeClusterWithNewConfig(clusterOpts)
@@ -113,7 +112,7 @@ func runSimpleUpgradeFlowForBaremetalWithoutClusterConfigGeneration(test *framew
 	test.GenerateHardwareConfig()
 	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
 	test.UpgradeClusterWithNewConfig(clusterOpts)
-	test.ValidateCluster(updateVersion)
+	test.ValidateClusterState()
 	test.StopIfFailed()
 	test.DeleteCluster()
 	test.ValidateHardwareDecommissioned()

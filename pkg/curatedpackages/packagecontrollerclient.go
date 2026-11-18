@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -420,7 +421,18 @@ func (pc *PackageControllerClient) waitForActiveBundle(ctx context.Context) erro
 			}
 
 			if readyCnt == 2 {
-				return
+				deployment := &appsv1.Deployment{}
+				err := pc.kubectl.GetObject(timeoutCtx, "deployment", constants.EksaPackagesName,
+					packagesv1.PackageNamespace, pc.kubeConfig, deployment)
+				if err != nil && !apierrors.IsNotFound(err) {
+					done <- fmt.Errorf("getting package controller deployment: %w", err)
+					return
+				}
+				// The self-managed package can report installed while its controller is rolling out.
+				if err == nil && packageControllerDeploymentReady(deployment) {
+					return
+				}
+				logger.V(6).Info("waiting for package controller deployment rollout")
 			}
 
 			// TODO read a polling interval value from the context, falling
@@ -439,6 +451,17 @@ func (pc *PackageControllerClient) waitForActiveBundle(ctx context.Context) erro
 
 		return nil
 	}
+}
+
+func packageControllerDeploymentReady(deployment *appsv1.Deployment) bool {
+	replicas := int32(1)
+	if deployment.Spec.Replicas != nil {
+		replicas = *deployment.Spec.Replicas
+	}
+	status := deployment.Status
+	return replicas > 0 && status.ObservedGeneration >= deployment.Generation &&
+		status.UpdatedReplicas == replicas && status.ReadyReplicas == replicas &&
+		status.AvailableReplicas == replicas && status.Replicas == replicas
 }
 
 // IsInstalled checks if a package controller custom resource exists.

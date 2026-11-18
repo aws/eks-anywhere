@@ -11,7 +11,7 @@ const (
 	// SmeeHTTPPort serves boot requests from Docker during bootstrap.
 	SmeeHTTPPort = "7171"
 	// The consolidated Kubernetes stack serves boot and metadata requests together.
-	tinkerbellHTTPPort = "7172"
+	tinkerbellHTTPPort = "7171"
 )
 
 // TinkerbellISOURL builds the media URL for the provisioning phase.

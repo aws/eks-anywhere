@@ -16,6 +16,7 @@ func runTaintsUpgradeFlow(test *framework.ClusterE2ETest, updateVersion v1alpha1
 	test.ValidateControlPlaneNodes(framework.ValidateControlPlaneTaints)
 	test.UpgradeClusterWithNewConfig(clusterOpts)
 	test.ValidateCluster(updateVersion)
+	test.ValidateClusterState()
 	test.ValidateWorkerNodes(framework.ValidateWorkerNodeTaints)
 	test.ValidateControlPlaneNodes(framework.ValidateControlPlaneTaints)
 	test.StopIfFailed()

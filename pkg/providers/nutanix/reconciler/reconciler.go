@@ -39,10 +39,15 @@ type IPValidator interface {
 	ValidateControlPlaneIP(ctx context.Context, log logr.Logger, spec *cluster.Spec) (controller.Result, error)
 }
 
+// ClusterSpecValidator validates Nutanix configuration against Prism Central.
+type ClusterSpecValidator interface {
+	ValidateClusterSpec(ctx context.Context, spec *cluster.Spec, creds credentials.BasicAuthCredential) error
+}
+
 // Reconciler reconciles a Nutanix cluster.
 type Reconciler struct {
 	client               client.Client
-	validator            *nutanix.Validator
+	validator            ClusterSpecValidator
 	cniReconciler        CNIReconciler
 	remoteClientRegistry RemoteClientRegistry
 	ipValidator          IPValidator
@@ -50,7 +55,7 @@ type Reconciler struct {
 }
 
 // New defines a new Nutanix reconciler.
-func New(client client.Client, validator *nutanix.Validator, cniReconciler CNIReconciler, registry RemoteClientRegistry, ipValidator IPValidator) *Reconciler {
+func New(client client.Client, validator ClusterSpecValidator, cniReconciler CNIReconciler, registry RemoteClientRegistry, ipValidator IPValidator) *Reconciler {
 	return &Reconciler{
 		client:               client,
 		validator:            validator,
@@ -180,6 +185,9 @@ func (r *Reconciler) ValidateClusterSpec(ctx context.Context, log logr.Logger, c
 	}
 
 	if err := r.validator.ValidateClusterSpec(ctx, clusterSpec, creds); err != nil {
+		if nutanix.IsRetryableValidationError(err) {
+			return controller.Result{}, err
+		}
 		log.Error(err, "Invalid cluster spec", "cluster", clusterSpec.Cluster.Name)
 		failureMessage := err.Error()
 		clusterSpec.Cluster.SetFailure(anywherev1.ClusterInvalidReason, failureMessage)

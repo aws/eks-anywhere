@@ -171,7 +171,7 @@ func TestHostCollectors(t *testing.T) {
 				if tt.datacenterKind == eksav1alpha1.TinkerbellDatacenterKind {
 					g.Expect(collectors[0].Run.CollectorName).To(Equal("boots-logs"))
 					g.Expect(collectors[0].Run.Command).To(Equal("docker"))
-					g.Expect(collectors[0].Run.Args).To(Equal([]string{"logs", "boots"}))
+					g.Expect(collectors[0].Run.Args).To(Equal([]string{"logs", "smee"}))
 					g.Expect(collectors[0].Run.OutputDir).To(Equal("boots-logs"))
 				}
 			}

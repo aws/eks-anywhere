@@ -15,13 +15,19 @@
 package bundles
 
 import (
+	"encoding/hex"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/pkg/errors"
+	utilversion "k8s.io/apimachinery/pkg/util/version"
+	"sigs.k8s.io/yaml"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	"github.com/aws/eks-anywhere/release/cli/pkg/constants"
+	"github.com/aws/eks-anywhere/release/cli/pkg/filereader"
 	releasetypes "github.com/aws/eks-anywhere/release/cli/pkg/types"
 	bundleutils "github.com/aws/eks-anywhere/release/cli/pkg/util/bundles"
 	"github.com/aws/eks-anywhere/release/cli/pkg/version"
@@ -40,6 +46,7 @@ func GetTinkerbellBundle(r *releasetypes.ReleaseConfig, imageDigests releasetype
 	sortedComponentNames := bundleutils.SortArtifactsMap(tinkerbellBundleArtifacts)
 
 	var sourceBranch string
+	var captMetadata *releasetypes.ManifestArtifact
 	var componentChecksum string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
@@ -84,6 +91,9 @@ func GetTinkerbellBundle(r *releasetypes.ReleaseConfig, imageDigests releasetype
 
 			if artifact.Manifest != nil {
 				manifestArtifact := artifact.Manifest
+				if componentName == "cluster-api-provider-tinkerbell" && manifestArtifact.ReleaseName == "metadata.yaml" {
+					captMetadata = manifestArtifact
+				}
 				bundleManifestArtifact := anywherev1alpha1.Manifest{
 					URI: manifestArtifact.ReleaseCdnURI,
 				}
@@ -115,16 +125,17 @@ func GetTinkerbellBundle(r *releasetypes.ReleaseConfig, imageDigests releasetype
 	} else {
 		componentChecksum = version.GenerateComponentHash(artifactHashes, r.DryRun)
 	}
-	version, err := version.BuildComponentVersion(
-		version.NewVersionerWithGITTAG(r.BuildRepoSource, constants.CaptProjectPath, sourceBranch, r),
-		componentChecksum,
-	)
+	captGitTag, err := filereader.ReadGitTag(constants.CaptProjectPath, r.BuildRepoSource, sourceBranch)
+	if err != nil {
+		return anywherev1alpha1.TinkerbellBundle{}, errors.Wrap(err, "Error getting version for cluster-api-provider-tinkerbell")
+	}
+	providerVersion, err := tinkerbellProviderVersion(captGitTag, captMetadata, componentChecksum, r.DryRun)
 	if err != nil {
 		return anywherev1alpha1.TinkerbellBundle{}, errors.Wrapf(err, "Error getting version for cluster-api-provider-tinkerbell")
 	}
 
 	bundle := anywherev1alpha1.TinkerbellBundle{
-		Version:              version,
+		Version:              providerVersion,
 		ClusterAPIController: bundleImageArtifacts["cluster-api-provider-tinkerbell"],
 		KubeVip:              bundleImageArtifacts["kube-vip"],
 		Envoy:                bundleImageArtifacts["envoy"],
@@ -168,4 +179,47 @@ func GetTinkerbellBundle(r *releasetypes.ReleaseConfig, imageDigests releasetype
 	}
 
 	return bundle, nil
+}
+
+func tinkerbellProviderVersion(gitTag string, metadataArtifact *releasetypes.ManifestArtifact, checksum string, dryRun bool) (string, error) {
+	if _, err := utilversion.ParseSemantic(gitTag); err == nil {
+		return fmt.Sprintf("%s+%s", gitTag, checksum), nil
+	}
+
+	if sha, err := hex.DecodeString(gitTag); err != nil || len(sha) != 20 {
+		return "", fmt.Errorf("CAPT source version %q must be a semantic version or a full commit SHA", gitTag)
+	}
+	if dryRun {
+		// Dry-run generation must work without downloaded metadata.
+		return fmt.Sprintf("v0.0.0-dev-%s+%s", gitTag, checksum), nil
+	}
+	if metadataArtifact == nil {
+		return "", fmt.Errorf("CAPT metadata is required for commit %s", gitTag)
+	}
+	metadataPath := filepath.Join(metadataArtifact.ArtifactPath, metadataArtifact.ReleaseName)
+	contents, err := os.ReadFile(metadataPath)
+	if err != nil {
+		return "", errors.Wrap(err, "reading CAPT metadata")
+	}
+	var metadata struct {
+		ReleaseSeries []struct {
+			Major uint `json:"major"`
+			Minor uint `json:"minor"`
+		} `json:"releaseSeries"`
+	}
+	if err := yaml.Unmarshal(contents, &metadata); err != nil {
+		return "", errors.Wrap(err, "parsing CAPT metadata")
+	}
+	if len(metadata.ReleaseSeries) == 0 {
+		return "", fmt.Errorf("CAPT metadata has no release series")
+	}
+
+	// Commit pins use the newest release series declared by the built provider.
+	series := metadata.ReleaseSeries[0]
+	for _, candidate := range metadata.ReleaseSeries[1:] {
+		if candidate.Major > series.Major || (candidate.Major == series.Major && candidate.Minor > series.Minor) {
+			series = candidate
+		}
+	}
+	return fmt.Sprintf("v%d.%d.0-dev-%s+%s", series.Major, series.Minor, gitTag, checksum), nil
 }

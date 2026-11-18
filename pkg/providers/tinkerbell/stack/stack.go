@@ -26,7 +26,8 @@ const (
 
 	smee               = "smee"
 	smeeHTTPPort       = 7171
-	tinkerbellHTTPPort = 7172
+	tinkerbellHTTPPort = 7171
+	metadataHTTPPort   = 7172
 	grpcPort           = "42113"
 
 	// localTinkWorkerImage is the path to the tink-worker image embedded in HookOS.
@@ -265,12 +266,8 @@ func (s *Installer) installSmeeOnDocker(ctx context.Context, bundle releasev1alp
 	}
 
 	ipv6 := isIPv6(tinkServerIP)
-	// Keep listeners reachable on the provisioning NIC: bind IPv4 to its
-	// selected address and IPv6 to all interfaces.
+	// Bind boot services to the selected provisioning address.
 	listenerAddress := tinkServerIP
-	if ipv6 {
-		listenerAddress = "::"
-	}
 	if ipv6 {
 		flags = append(flags, "-e", fmt.Sprintf("TINKERBELL_PUBLIC_IPV6=%s", tinkServerIP))
 	} else {
@@ -304,7 +301,8 @@ func (s *Installer) installSmeeOnDocker(ctx context.Context, bundle releasev1alp
 			"-e", "TINKERBELL_DHCPV6_ENABLED=true",
 			"-e", "TINKERBELL_DHCPV6_MODE=derived",
 			"-e", fmt.Sprintf("TINKERBELL_DHCPV6_DERIVED_DIRECT_ADDRESS_POOL=%s", derivedAddressPool),
-			"-e", fmt.Sprintf("TINKERBELL_DHCPV6_BIND_ADDR=%s", listenerAddress),
+			// DHCPv6 multicast needs a wildcard socket restricted to the provisioning NIC.
+			"-e", "TINKERBELL_DHCPV6_BIND_ADDR=::",
 			"-e", fmt.Sprintf("TINKERBELL_DHCPV6_BIND_INTERFACE=%s", bootstrapInterface),
 			"-e", fmt.Sprintf("TINKERBELL_DHCPV6_SYSLOG_IP=%s", tinkServerIP),
 			"-e", fmt.Sprintf("TINKERBELL_DHCPV6_TFTP_IP=%s", tinkServerIP),
@@ -333,6 +331,8 @@ func (s *Installer) installSmeeOnDocker(ctx context.Context, bundle releasev1alp
 		flags = append(flags, "-e", fmt.Sprintf("TINKERBELL_IPXE_HTTP_SCRIPT_OSIE_URL=%s", osiePath))
 	}
 	flags = append(flags,
+		"-e", fmt.Sprintf("TINKERBELL_IPXE_HTTP_SCRIPT_BIND_ADDR=%s", listenerAddress),
+		"-e", fmt.Sprintf("TINKERBELL_IPXE_HTTP_SCRIPT_BIND_PORT=%d", smeeHTTPPort),
 		"-e", fmt.Sprintf("TINKERBELL_IPXE_HTTP_SCRIPT_EXTRA_KERNEL_ARGS=%s", extraKernelArgs),
 	)
 	if ipv6 {
@@ -631,6 +631,11 @@ func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle
 
 	tinkerbellImage, tinkerbellTag := parseImageURI(tinkerbellImageURI)
 
+	httpPort := tinkerbellHTTPPort
+	if s.smeeOnDocker {
+		// Bootstrap metadata uses the existing kind port mapping.
+		httpPort = metadataHTTPPort
+	}
 	bootHTTPPort := tinkerbellHTTPPort
 	if s.smeeOnDocker {
 		bootHTTPPort = smeeHTTPPort
@@ -681,6 +686,7 @@ func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle
 				"globals": map[string]any{
 					"backend":               "kube",
 					"backendKubeNamespace":  s.namespace,
+					"httpPort":              httpPort,
 					"enableSmee":            !s.smeeOnDocker,
 					"enableTootles":         true,
 					"enableTinkServer":      true,
@@ -688,7 +694,6 @@ func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle
 					"enableRufioController": true,
 					"enableSecondstar":      false,
 					"enableCRDMigrations":   false,
-					"httpPort":              tinkerbellHTTPPort,
 				},
 				"smee": map[string]any{
 					"dhcpEnabled":                     true,
@@ -700,6 +705,7 @@ func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle
 					"dhcpIpxeHttpBinaryPort":          bootHTTPPort,
 					"dhcpIpxeHttpScriptHost":          tinkerbellIP,
 					"dhcpIpxeHttpScriptPort":          bootHTTPPort,
+					"ipxeHttpScriptBindPort":          bootHTTPPort,
 					"ipxeHttpScriptOsieURL":           osieURL,
 					"ipxeHttpScriptExtraKernelArgs":   bootEnv,
 					"ipxeScriptTinkServerAddrPort":    fmt.Sprintf("%s:%s", tinkerbellIP, grpcPort),
@@ -710,7 +716,9 @@ func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle
 					"tftpServerEnabled":               true,
 					"syslogEnabled":                   true,
 				},
-				"tootles": map[string]any{},
+				"tootles": map[string]any{
+					"bindPort": metadataHTTPPort,
+				},
 				"tinkServer": map[string]any{
 					"bindPort": 42113,
 				},
@@ -725,11 +733,14 @@ func (s *Installer) createValuesOverride(bundle releasev1alpha1.TinkerbellBundle
 			},
 		},
 		"service": map[string]any{
+			"enabled":        s.stackService,
 			"type":           "LoadBalancer",
 			"loadBalancerIP": tinkerbellIP,
 			"lbClass":        "kube-vip.io/kube-vip-class",
 			"ports": map[string]any{
-				"http": map[string]any{"port": tinkerbellHTTPPort},
+				"http": map[string]any{
+					"port": httpPort,
+				},
 			},
 		},
 		"optional": map[string]any{

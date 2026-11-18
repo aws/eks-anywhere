@@ -246,6 +246,12 @@ func TestReconcileRemoteGetClientError(t *testing.T) {
 					Status:             metav1.ConditionTrue,
 					LastTransitionTime: metav1.NewTime(time.Now()),
 				},
+				{
+					Type:               controlplanev1beta2.KubeadmControlPlaneMachinesUpToDateCondition,
+					Status:             metav1.ConditionTrue,
+					ObservedGeneration: 1,
+					LastTransitionTime: metav1.NewTime(time.Now()),
+				},
 			},
 			Version:            kcpVersion,
 			ReadyReplicas:      ptr.To(int32(1)),
@@ -324,6 +330,12 @@ func TestReconcileConfigMapNotFoundApplyError(t *testing.T) {
 				{
 					Type:               clusterv1beta2.AvailableCondition,
 					Status:             metav1.ConditionTrue,
+					LastTransitionTime: metav1.NewTime(time.Now()),
+				},
+				{
+					Type:               controlplanev1beta2.KubeadmControlPlaneMachinesUpToDateCondition,
+					Status:             metav1.ConditionTrue,
+					ObservedGeneration: 1,
 					LastTransitionTime: metav1.NewTime(time.Now()),
 				},
 			},

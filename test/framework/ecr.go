@@ -3,6 +3,7 @@ package framework
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
 	"os"
 	"strings"
 	"time"
@@ -21,38 +22,49 @@ func loginToPackagesRegistry(e *ClusterE2ETest, registry string) {
 
 // loginToECRWithCredentials performs Docker login with explicit credentials.
 func loginToECRWithCredentials(e *ClusterE2ETest, registry, accessKey, secretKey, sessionToken string) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
-	cfg, err := config.LoadDefaultConfig(
-		ctx,
-		config.WithRegion(defaultRegion),
-		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKey, secretKey, sessionToken)),
-	)
+	username, password, err := ecrBasicAuth(defaultRegion, accessKey, secretKey, sessionToken)
 	if err != nil {
-		e.T.Fatalf("aws config error: %v", err)
+		e.T.Fatalf("getting ECR credentials for registry %s: %v", registry, err)
 	}
-
-	ecrClient := ecr.NewFromConfig(cfg)
-	authTokenOutput, err := ecrClient.GetAuthorizationToken(context.Background(), &ecr.GetAuthorizationTokenInput{})
-	if err != nil {
-		e.T.Fatalf("failed to fetch authorization token from ECR for registry %s : %v", registry, err)
-	}
-
-	decoded, err := base64.StdEncoding.DecodeString(*authTokenOutput.AuthorizationData[0].AuthorizationToken)
-	if err != nil {
-		e.T.Fatalf("failed to decode authorization token from ECR for registry %s: %v", registry, err)
-	}
-
-	parts := strings.SplitN(string(decoded), ":", 2)
-	if len(parts) != 2 {
-		e.T.Fatalf("invalid authorization token format from ECR for registry %s", registry)
-	}
-
-	username, password := parts[0], parts[1]
 
 	err = buildDocker(e.T).Login(context.Background(), registry, username, password)
 	if err != nil {
 		e.T.Fatalf("error logging into docker registry %s: %v", registry, err)
 	}
+}
+
+// ecrBasicAuth exchanges AWS credentials for the username and password of the ECR registries in region.
+func ecrBasicAuth(region, accessKey, secretKey, sessionToken string) (username, password string, err error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	cfg, err := config.LoadDefaultConfig(
+		ctx,
+		config.WithRegion(region),
+		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKey, secretKey, sessionToken)),
+	)
+	if err != nil {
+		return "", "", fmt.Errorf("aws config error: %v", err)
+	}
+
+	ecrClient := ecr.NewFromConfig(cfg)
+	authTokenOutput, err := ecrClient.GetAuthorizationToken(ctx, &ecr.GetAuthorizationTokenInput{})
+	if err != nil {
+		return "", "", fmt.Errorf("failed to fetch authorization token from ECR: %v", err)
+	}
+	if len(authTokenOutput.AuthorizationData) == 0 || authTokenOutput.AuthorizationData[0].AuthorizationToken == nil {
+		return "", "", fmt.Errorf("ECR returned no authorization token")
+	}
+
+	decoded, err := base64.StdEncoding.DecodeString(*authTokenOutput.AuthorizationData[0].AuthorizationToken)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to decode authorization token from ECR: %v", err)
+	}
+
+	parts := strings.SplitN(string(decoded), ":", 2)
+	if len(parts) != 2 {
+		return "", "", fmt.Errorf("invalid authorization token format from ECR")
+	}
+
+	return parts[0], parts[1], nil
 }

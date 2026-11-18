@@ -22,8 +22,32 @@ func NewDiskSource(client ImageDiskLoader, file string) *ImageDiskSource {
 
 // Load reads images and tags from a tarbal into the local docker cache.
 func (s *ImageDiskSource) Load(ctx context.Context, images ...string) error {
+	if cache, ok := s.client.(imageCache); ok && len(images) > 0 {
+		if ids, err := archiveImageIDs(s.file); err == nil && imagesCached(ctx, cache, ids, images) {
+			logger.Info("Using verified images already in the docker cache")
+			return nil
+		}
+	}
 	logger.Info("Loading images from disk")
 	return s.client.LoadFromFile(ctx, s.file)
+}
+
+type imageCache interface {
+	ImageID(context.Context, string) (string, error)
+}
+
+func imagesCached(ctx context.Context, cache imageCache, ids map[string]string, images []string) bool {
+	for _, image := range images {
+		expected, ok := ids[image]
+		if !ok {
+			return false
+		}
+		actual, err := cache.ImageID(ctx, image)
+		if err != nil || actual != expected {
+			return false
+		}
+	}
+	return true
 }
 
 // ImageDiskDestination implements the ImageDestination interface, writing images and tags from

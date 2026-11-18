@@ -9,6 +9,11 @@ description: >
 ---
 
 {{% alert title="Announcements" color="warning" %}}
+* The eMudhra (emSign) certificate authorities `emSign ECC Root CA - G3`, `emSign Root CA - C1` and `emSign ECC Root CA - C3` were compromised (CVE-2026-113470), and Go distrusts the affected intermediates starting with Go `v1.26.10` (CVE-2026-111943). EKS Anywhere releases `v0.26.4` and `v0.25.5` remove trust in these authorities from their components, EKS Distro, HookOS and Bottlerocket `v1.68.0` node images. Ubuntu and Red Hat node images are built by you, so to fix this in your new/existing EKS-A clusters you **MUST** build new OS images using the image-builder CLI pertaining to `v0.26.4` or `v0.25.5` and create/upgrade your clusters with these images.<br>
+  Refer to the following links for more information on the steps to mitigate the CVE.
+  * [Building Ubuntu and Red Hat node images]({{< relref "../osmgmt/artifacts/#building-node-images" >}})
+  * [Downloading Bottlerocket node images]({{< relref "../osmgmt/artifacts/#download-bottlerocket-node-images" >}})
+  * [Upgrading an EKS Anywhere cluster]({{< relref "../clustermgmt/cluster-upgrades" >}})
 * Starting with EKS Anywhere release `v0.26.0`, the CloudStack provider has been removed. EKS Anywhere no longer includes the Cluster API provider for CloudStack, and AWS will no longer support this provider. Users currently relying on this provider are encouraged to find alternative support.
 * If you are upgrading your management cluster to `v0.22.x` patch versions prior to `v0.22.3`, you may encounter a bug related to extended Kubernetes versions support that blocks lifecycle management (LCM) operations on workload clusters running versions prior to `v0.22.0`. To avoid this issue, we recommend upgrading your management cluster directly to `v0.22.3` before performing any workload cluster LCM operations.
 * If you are running EKS Anywhere versions `v0.22.0` or `v0.22.1` in an air-gapped environment with proxy enabled, you may be affected by a Helm `v3.17.1` bug that impacts proxy functionality in air-gapped environments. To resolve this, we recommend upgrading to EKS Anywhere `v0.22.2` or above. More details can be found [here](https://github.com/aws/eks-anywhere-build-tooling/pull/4497)
@@ -41,6 +46,121 @@ description: >
 {{% alert title="General Information" color="info" %}}
 * When upgrading to a new minor version, a new OS image must be created using the new image-builder CLI pertaining to that release.
 {{% /alert %}}
+
+## [v0.27.0](https://github.com/aws/eks-anywhere/releases/tag/v0.27.0)
+
+### Must read before upgrade
+
+- Kubernetes v1.30 reached the end of extended support on August 31, 2026. Upgrade clusters running Kubernetes v1.30 to a supported Kubernetes version before upgrading to EKS Anywhere v0.27.0.
+
+### Planned updates to supported Kubernetes versions
+
+- Kubernetes v1.31 reaches the end of extended support on December 31, 2026. No further patches will be available after this date.
+- Kubernetes v1.34 reaches the end of standard support on December 31, 2026. Extended support continues until December 31, 2027 for clusters with valid license tokens.
+
+For complete version support details, see the [Kubernetes version support table](https://anywhere.eks.amazonaws.com/docs/concepts/support-versions/#kubernetes-versions).
+
+### Supported OS version details
+
+|                     | vSphere | Bare Metal | Nutanix | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----:|
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |  ✔   |
+|    Ubuntu 24.04     |    ✔    |     ✔      |    ✔    |  —   |
+| Bottlerocket 1.68.1 |    ✔    |     —      |    —    |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |  —   |
+|      RHEL 9.x       |    ✔    |     ✔      |    ✔    |  —   |
+
+\* Bottlerocket `v1.68.1` applies to Kubernetes versions 1.31 through 1.37.
+\* RHEL 8's default kernel is not supported by kubeadm for Kubernetes versions 1.32 and above. Use RHEL 9 for these Kubernetes versions.
+
+### Added
+
+- Support for Kubernetes v1.37 ([#10991](https://github.com/aws/eks-anywhere/pull/10991)).
+- IPv6 networking is available as a **beta feature** for the bare metal provider.
+
+### Changed
+
+- EKS Distro:
+  - [`v1-37-eks-4`](https://distro.eks.amazonaws.com/releases/1-37/4/)
+  - [`v1-36-eks-10`](https://distro.eks.amazonaws.com/releases/1-36/10/)
+  - [`v1-35-eks-16`](https://distro.eks.amazonaws.com/releases/1-35/16/)
+  - [`v1-34-eks-25`](https://distro.eks.amazonaws.com/releases/1-34/25/)
+  - [`v1-33-eks-34`](https://distro.eks.amazonaws.com/releases/1-33/34/)
+  - [`v1-32-eks-44`](https://distro.eks.amazonaws.com/releases/1-32/44/)
+  - [`v1-31-eks-51`](https://distro.eks.amazonaws.com/releases/1-31/51/)
+- Bottlerocket: `v1.68.0` to `v1.68.1` ([#5786](https://github.com/aws/eks-anywhere-build-tooling/pull/5786)).
+- Cluster API (CAPI): `v1.13.7` to `v1.14.3` ([#5771](https://github.com/aws/eks-anywhere-build-tooling/pull/5771)).
+- Cluster API Provider vSphere (CAPV): `v1.16.1` to `v1.17.0` ([#5650](https://github.com/aws/eks-anywhere-build-tooling/pull/5650)).
+- Cluster API Provider Nutanix (CAPX): `v1.6.1` to `v1.10.3` ([#5429](https://github.com/aws/eks-anywhere-build-tooling/pull/5429), [#10770](https://github.com/aws/eks-anywhere/pull/10770)).
+- Cluster API Provider AWS Snow (CAPAS): `v0.3.3` to `v0.3.5` ([#5691](https://github.com/aws/eks-anywhere-build-tooling/pull/5691)).
+- Cluster API Provider Tinkerbell (CAPT): `v0.6.6` to the v0.7.0 development commit `c3ee56df719e83851e015fa3cac157324fddfbf0` ([#5681](https://github.com/aws/eks-anywhere-build-tooling/pull/5681)).
+- cert-manager: `v1.20.2` to `v1.21.2` ([#5740](https://github.com/aws/eks-anywhere-build-tooling/pull/5740)).
+- Flux: `v2.8.8` to `v2.10.0` ([#5546](https://github.com/aws/eks-anywhere-build-tooling/pull/5546)).
+- EKS Anywhere packages controller: `v0.4.17` to `v0.4.20`.
+- cri-tools: `v1.36.0` to `v1.37.0`.
+- govmomi: `v0.54.2` to `v0.56.2` ([#5534](https://github.com/aws/eks-anywhere-build-tooling/pull/5534)).
+- Helm: `v4.2.0` to `v4.3.1` ([#5460](https://github.com/aws/eks-anywhere-build-tooling/pull/5460)).
+- Kind: `v0.32.0` to `v0.33.0` ([#5645](https://github.com/aws/eks-anywhere-build-tooling/pull/5645)).
+- kube-vip: `v1.2.3` to `v1.3.1` ([#5234](https://github.com/aws/eks-anywhere-build-tooling/pull/5234)).
+- Troubleshoot: `v0.130.0` to `v0.134.2` ([#5572](https://github.com/aws/eks-anywhere-build-tooling/pull/5572)).
+
+### Fixed
+
+- Avoid importing the CLI tools image twice during air-gapped image import ([#11025](https://github.com/aws/eks-anywhere/pull/11025)).
+
+## [v0.26.4](https://github.com/aws/eks-anywhere/releases/tag/v0.26.4)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----:|
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |  ✔   |
+|    Ubuntu 24.04     |    ✔    |     ✔      |    ✔    |  —   |
+| Bottlerocket 1.68.0 |    ✔    |     —      |    —    |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |  —   |
+|      RHEL 9.x       |    ✔    |     ✔      |    ✔    |  —   |
+
+\* Bottlerocket `v1.68.0` applies to Kubernetes versions 1.31 through 1.36. Kubernetes version 1.30 remains on Bottlerocket `v1.62.0`.
+
+### Changed
+- EKS Distro:
+  - [`v1-36-eks-10`](https://distro.eks.amazonaws.com/releases/1-36/10/)
+  - [`v1-35-eks-16`](https://distro.eks.amazonaws.com/releases/1-35/16/)
+  - [`v1-34-eks-25`](https://distro.eks.amazonaws.com/releases/1-34/25/)
+  - [`v1-33-eks-34`](https://distro.eks.amazonaws.com/releases/1-33/34/)
+  - [`v1-32-eks-44`](https://distro.eks.amazonaws.com/releases/1-32/44/)
+  - [`v1-31-eks-51`](https://distro.eks.amazonaws.com/releases/1-31/51/)
+- Cilium: `v1.19.6` to `v1.19.10` ([#5761](https://github.com/aws/eks-anywhere-build-tooling/pull/5761))
+- Bottlerocket: `v1.64.0` to `v1.68.0` for Kubernetes versions 1.31 through 1.36 ([#5765](https://github.com/aws/eks-anywhere-build-tooling/pull/5765))
+
+### Fixed
+- Removed trust in the compromised eMudhra (emSign) certificate authorities (CVE-2026-113470, CVE-2026-111943). EKS Anywhere binaries and component images are now built with Go `v1.26.10`, and EKS Distro base images, HookOS, Cilium and Bottlerocket no longer trust the `emSign ECC Root CA - G3`, `emSign Root CA - C1` and `emSign ECC Root CA - C3` roots. ([#10992](https://github.com/aws/eks-anywhere/pull/10992), [#5734](https://github.com/aws/eks-anywhere-build-tooling/pull/5734), [#5738](https://github.com/aws/eks-anywhere-build-tooling/pull/5738), [#5742](https://github.com/aws/eks-anywhere-build-tooling/pull/5742), [#5749](https://github.com/aws/eks-anywhere-build-tooling/pull/5749), [#5761](https://github.com/aws/eks-anywhere-build-tooling/pull/5761), [#5765](https://github.com/aws/eks-anywhere-build-tooling/pull/5765))
+
+## [v0.26.3](https://github.com/aws/eks-anywhere/releases/tag/v0.26.3)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----:|
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |  ✔   |
+|    Ubuntu 24.04     |    ✔    |     ✔      |    ✔    |  —   |
+| Bottlerocket 1.64.0 |    ✔    |     —      |    —    |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |  —   |
+|      RHEL 9.x       |    ✔    |     ✔      |    ✔    |  —   |
+
+\* Bottlerocket `v1.64.0` applies to Kubernetes versions 1.33 through 1.36. Kubernetes versions 1.30 through 1.32 remain on Bottlerocket `v1.62.0`.
+
+### Changed
+- EKS Distro:
+  - [`v1-36-eks-9`](https://distro.eks.amazonaws.com/releases/1-36/9/)
+  - [`v1-35-eks-15`](https://distro.eks.amazonaws.com/releases/1-35/15/)
+  - [`v1-34-eks-24`](https://distro.eks.amazonaws.com/releases/1-34/24/)
+  - [`v1-33-eks-33`](https://distro.eks.amazonaws.com/releases/1-33/33/)
+  - [`v1-32-eks-43`](https://distro.eks.amazonaws.com/releases/1-32/43/)
+  - [`v1-31-eks-50`](https://distro.eks.amazonaws.com/releases/1-31/50/)
+- Cluster API (CAPI): `v1.13.2` to `v1.13.7` ([#5694](https://github.com/aws/eks-anywhere-build-tooling/pull/5694))
+
+### Fixed
+- Preserve EKS Anywhere default Cilium configuration when custom Helm values are provided ([#10964](https://github.com/aws/eks-anywhere/pull/10964))
+- Honor the kubeadm-selected kubelet API server endpoint during Bottlerocket control plane joins ([#5664](https://github.com/aws/eks-anywhere-build-tooling/pull/5664))
 
 ## [v0.26.2](https://github.com/aws/eks-anywhere/releases/tag/v0.26.2)
 
@@ -187,6 +307,57 @@ For complete version support details, see the [Kubernetes version support table]
 ### Removed
 - Dropped Kubernetes v1.29 support ([#5521](https://github.com/aws/eks-anywhere-build-tooling/pull/5521))
 - Removed CloudStack provider ([#10786](https://github.com/aws/eks-anywhere/pull/10786), [#10814](https://github.com/aws/eks-anywhere/pull/10814))
+
+## [v0.25.6](https://github.com/aws/eks-anywhere/releases/tag/v0.25.6)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+|    Ubuntu 24.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.68.1 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+
+\* Bottlerocket `v1.68.1` applies to Kubernetes versions 1.31 through 1.35. Kubernetes versions 1.29 and 1.30 remain on Bottlerocket `v1.54.0`.
+\* Starting with EKS-A minor release v0.25.0, the bundled Kubernetes Image Builder will no longer support Ubuntu 20.04 LTS builds, as Ubuntu 20.04 LTS Standard Support has ended, and the upstream Kubernetes Image Builder no longer supports Ubuntu 20.04 LTS.
+\* RHEL 8's kernel version (4.18) is not supported by kubeadm for Kubernetes versions 1.32 and above (see Kubernetes GitHub issue [#129462](https://github.com/kubernetes/kubernetes/issues/129462)). As a result, EKS Anywhere does not support using RHEL 8 as the node operating system for Kubernetes versions 1.32 and above.
+
+### Changed
+- Bottlerocket: `v1.68.0` to `v1.68.1` for Kubernetes versions 1.31 through 1.35 ([#5788](https://github.com/aws/eks-anywhere-build-tooling/pull/5788))
+
+### Fixed
+- Updated Bottlerocket node images to `v1.68.1` to address Linux kernel vulnerabilities, including [CVE-2026-98432](https://nvd.nist.gov/vuln/detail/CVE-2026-98432), [CVE-2026-98374](https://nvd.nist.gov/vuln/detail/CVE-2026-98374), and [CVE-2026-98276](https://nvd.nist.gov/vuln/detail/CVE-2026-98276) ([#5788](https://github.com/aws/eks-anywhere-build-tooling/pull/5788)).
+
+## [v0.25.5](https://github.com/aws/eks-anywhere/releases/tag/v0.25.5)
+
+### Supported OS version details
+|                     | vSphere | Bare Metal | Nutanix | CloudStack | Snow |
+|:-------------------:|:-------:|:----------:|:-------:|:----------:|:----:|
+|    Ubuntu 20.04     |    ✔    |     ✔      |    ✔    |     —      |  ✔   |
+|    Ubuntu 22.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+|    Ubuntu 24.04     |    ✔    |     ✔      |    ✔    |     —      |  —   |
+| Bottlerocket 1.68.0 |    ✔    |     —      |    —    |     —      |  —   |
+|      RHEL 8.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+|      RHEL 9.x       |    ✔    |     ✔      |    ✔    |     ✔      |  —   |
+
+\* Bottlerocket `v1.68.0` applies to Kubernetes versions 1.31 through 1.35. Kubernetes versions 1.29 and 1.30 remain on Bottlerocket `v1.54.0`.
+\* Starting with EKS-A minor release v0.25.0, the bundled Kubernetes Image Builder will no longer support Ubuntu 20.04 LTS builds, as Ubuntu 20.04 LTS Standard Support has ended, and the upstream Kubernetes Image Builder no longer supports Ubuntu 20.04 LTS.
+\* RHEL 8's kernel version (4.18) is not supported by kubeadm for Kubernetes versions 1.32 and above (see Kubernetes GitHub issue [#129462](https://github.com/kubernetes/kubernetes/issues/129462)). As a result, EKS Anywhere does not support using RHEL 8 as the node operating system for Kubernetes versions 1.32 and above.
+
+### Changed
+- EKS Distro:
+  - [`v1-35-eks-16`](https://distro.eks.amazonaws.com/releases/1-35/16/)
+  - [`v1-34-eks-25`](https://distro.eks.amazonaws.com/releases/1-34/25/)
+  - [`v1-33-eks-34`](https://distro.eks.amazonaws.com/releases/1-33/34/)
+  - [`v1-32-eks-44`](https://distro.eks.amazonaws.com/releases/1-32/44/)
+  - [`v1-31-eks-51`](https://distro.eks.amazonaws.com/releases/1-31/51/)
+- Cilium: `v1.18.9-1` to `v1.18.16-3` ([#5762](https://github.com/aws/eks-anywhere-build-tooling/pull/5762))
+- Bottlerocket: `v1.54.0` to `v1.68.0` for Kubernetes versions 1.31 through 1.35 ([#5766](https://github.com/aws/eks-anywhere-build-tooling/pull/5766))
+
+### Fixed
+- Removed trust in the compromised eMudhra (emSign) certificate authorities (CVE-2026-113470, CVE-2026-111943). EKS Anywhere binaries and component images are now built with Go `v1.26.10`, and EKS Distro base images, HookOS, Cilium and Bottlerocket no longer trust the `emSign ECC Root CA - G3`, `emSign Root CA - C1` and `emSign ECC Root CA - C3` roots. ([#10993](https://github.com/aws/eks-anywhere/pull/10993), [#5735](https://github.com/aws/eks-anywhere-build-tooling/pull/5735), [#5739](https://github.com/aws/eks-anywhere-build-tooling/pull/5739), [#5743](https://github.com/aws/eks-anywhere-build-tooling/pull/5743), [#5748](https://github.com/aws/eks-anywhere-build-tooling/pull/5748), [#5751](https://github.com/aws/eks-anywhere-build-tooling/pull/5751), [#5762](https://github.com/aws/eks-anywhere-build-tooling/pull/5762), [#5766](https://github.com/aws/eks-anywhere-build-tooling/pull/5766))
 
 ## [v0.25.4](https://github.com/aws/eks-anywhere/releases/tag/v0.25.4)
 

@@ -116,7 +116,7 @@ function build::gather_licenses() {
   # data about each dependency to generate the amazon approved attribution.txt files
   # go-deps is needed for module versions
   # go-licenses are all the dependencies found from the module(s) that were passed in via patterns
-  go list -deps=true -json ./... | jq -s ''  > "${outputdir}/attribution/go-deps.json"
+  go list -deps=true -json ./... | jq -s '.'  > "${outputdir}/attribution/go-deps.json"
 
   go-licenses save --force $patterns --save_path="${outputdir}/LICENSES"
 

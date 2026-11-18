@@ -141,6 +141,64 @@ func TestKCPReconcileKCPAndControlPlaneUpgradeReady(t *testing.T) {
 	g.Expect(mhc.Annotations).ToNot(HaveKey(capiPausedAnnotation))
 }
 
+func TestKCPReconcileControlPlaneUpgradeVersionAliases(t *testing.T) {
+	const target = "v1.34.12-eks-1-34-25"
+	tests := []struct {
+		name        string
+		observed    string
+		desired     string
+		upgrade     string
+		ready       bool
+		wantDeleted bool
+	}{
+		{"EKS-D source alias", "v1.34.12-eks-abcdef1", target, target, true, true},
+		{"same release label", target, target, target, true, true},
+		{"not ready", "v1.34.12-eks-abcdef1", target, target, false, false},
+		{"different patch", "v1.34.11-eks-abcdef1", target, target, true, false},
+		{"different minor", "v1.33.12-eks-abcdef1", target, target, true, false},
+		{"invalid observed", "not-a-version", target, target, true, false},
+		{"invalid identical versions", "not-a-version", "not-a-version", "not-a-version", true, false},
+		{"unknown prerelease", "v1.34.12-rc.1", target, target, true, false},
+		{"malformed source alias", "v1.34.12-eks-not-a-hash", target, target, true, false},
+		{"wrong release branch", "v1.34.12-eks-abcdef1", "v1.34.12-eks-1-33-25", "v1.34.12-eks-1-33-25", true, false},
+		{"desired target changed", "v1.34.12-eks-abcdef1", "v1.34.12-eks-1-34-26", target, true, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			ctx := context.Background()
+			objs := getObjectsForKCP()
+			objs.kcp.Spec.Version = tt.desired
+			objs.kcp.Status.Version = tt.observed
+			objs.cpUpgrade.Spec.KubernetesVersion = tt.upgrade
+			objs.cpUpgrade.Status.Ready = tt.ready
+			objs.mhc.Annotations = map[string]string{capiPausedAnnotation: ""}
+			client := fake.NewClientBuilder().WithRuntimeObjects(objs.kcp, objs.mhc, objs.cpUpgrade).Build()
+			r := controllers.NewKubeadmControlPlaneReconciler(client, client)
+			_, err := r.Reconcile(ctx, kcpRequest(objs.kcp))
+			g.Expect(err).ToNot(HaveOccurred())
+			cpu := &anywherev1.ControlPlaneUpgrade{}
+			err = client.Get(ctx, types.NamespacedName{Name: objs.cpUpgrade.Name, Namespace: constants.EksaSystemNamespace}, cpu)
+			if tt.wantDeleted {
+				g.Expect(apierrors.IsNotFound(err)).To(BeTrue())
+			} else {
+				g.Expect(err).ToNot(HaveOccurred())
+			}
+			kcp := &controlplanev1beta2.KubeadmControlPlane{}
+			g.Expect(client.Get(ctx, types.NamespacedName{Name: objs.kcp.Name, Namespace: constants.EksaSystemNamespace}, kcp)).To(Succeed())
+			mhc := &clusterv1beta2.MachineHealthCheck{}
+			g.Expect(client.Get(ctx, types.NamespacedName{Name: objs.mhc.Name, Namespace: constants.EksaSystemNamespace}, mhc)).To(Succeed())
+			if tt.wantDeleted {
+				g.Expect(kcp.Annotations).ToNot(HaveKey(kcpInPlaceAnnotation))
+				g.Expect(mhc.Annotations).ToNot(HaveKey(capiPausedAnnotation))
+			} else {
+				g.Expect(kcp.Annotations).To(HaveKey(kcpInPlaceAnnotation))
+				g.Expect(mhc.Annotations).To(HaveKey(capiPausedAnnotation))
+			}
+		})
+	}
+}
+
 func TestKCPReconcileFullFlow(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()

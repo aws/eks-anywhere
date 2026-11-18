@@ -103,6 +103,13 @@ func runCuratedPackageInstallSimpleFlowRegistryMirror(test *framework.ClusterE2E
 	test.DownloadImages()
 	test.ImportImages()
 	test.CopyPackages(alias, "public.ecr.aws/"+alias, pkgRegistry)
+	// The controller installs its own images (controller, migrations hook, credential provider) from
+	// sourceRegistry, not defaultImageRegistry. With a public.ecr.aws OCI namespace, that's a different path
+	// from the copy above. When the bundle pins a different controller than the EKS-A bundle, the controller
+	// then can't upgrade itself, because only the EKS-A bundle's controller images were imported there.
+	if sourcePath := test.PackagesSourceRegistryMirrorPath(alias); sourcePath != alias {
+		test.CopyPackages(sourcePath, "public.ecr.aws/"+alias, pkgRegistry)
+	}
 
 	bundlePath := "./eks-anywhere-downloads/bundle-release.yaml"
 	test.CreateCluster(framework.WithBundlesOverride(bundlePath))

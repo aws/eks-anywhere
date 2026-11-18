@@ -133,11 +133,27 @@ This approach uses the ADOT helm chart's preset feature to automatically configu
           presets:
             kubernetesAttributes:
               enabled: true
-            kubeletMetrics:
-              enabled: true
 
+          # RBAC for the prometheus scrape jobs below (kubelet metrics through the API server proxy)
           clusterRole:
             create: true
+            rules:
+            - apiGroups:
+              - ""
+              resources:
+              - nodes
+              - nodes/proxy
+              - services
+              - endpoints
+              - pods
+              verbs:
+              - get
+              - list
+              - watch
+            - nonResourceURLs:
+              - /metrics
+              verbs:
+              - get
 
           config:
             extensions:
@@ -608,16 +624,15 @@ For custom configurations, you can explicitly define ClusterRole rules in your p
 
 ### Available Presets
 
-The ADOT helm chart provides several presets that automatically configure both collector features and RBAC permissions:
+The ADOT package supports these presets, which configure collector features and RBAC permissions:
 
 | Preset | Description | Auto-Added RBAC Rules |
 |--------|-------------|----------------------|
 | `kubernetesAttributes` | Adds Kubernetes metadata (pod, namespace, etc.) to metrics | pods, namespaces, replicasets (apps & extensions) |
-| `kubeletMetrics` | Collects metrics from kubelet | nodes/stats |
-| `clusterMetrics` | Collects cluster-level metrics | events, namespaces, nodes, pods, services, daemonsets, deployments, replicasets, statefulsets, jobs, cronjobs, horizontalpodautoscalers |
-| `kubernetesEvents` | Collects Kubernetes events | events (events.k8s.io apiGroup) |
 | `logsCollection` | Collects logs from nodes (best with daemonset mode) | None (requires host access) |
-| `hostMetrics` | Collects host-level metrics (best with daemonset mode) | None (requires host access) |
+| `resourceDetection` | Adds resource attributes such as `k8s.cluster.name` | nodes; namespaces (`kube-system`, get) |
+
+The upstream chart's other presets (`hostMetrics`, `kubeletMetrics`, `kubernetesEvents`, `kubernetesObjects`, `clusterMetrics`, `annotationDiscovery` and `profiling`) need receivers that the ADOT Collector doesn't include, so the package rejects them (ADOT v0.50.0 and later). To collect kubelet metrics, scrape them through the API server proxy with the `prometheus` receiver and add the RBAC rules with `clusterRole.rules`, as in the example above.
 
 For more details on presets, refer to the [OpenTelemetry Collector Kubernetes Components documentation](https://opentelemetry.io/docs/kubernetes/collector/components/).
 

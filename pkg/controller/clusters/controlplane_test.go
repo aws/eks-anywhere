@@ -2,13 +2,16 @@ package clusters_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
 	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	bootstrapv1beta2 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
 	controlplanev1beta2 "sigs.k8s.io/cluster-api/api/controlplane/kubeadm/v1beta2"
 	clusterv1beta2 "sigs.k8s.io/cluster-api/api/core/v1beta2"
@@ -101,6 +104,137 @@ func TestReconcileControlPlaneExternalEtcdNewCluster(t *testing.T) {
 			)
 		},
 	)
+}
+
+func TestReconcileControlPlanePartialCreate(t *testing.T) {
+	tests := []struct {
+		name     string
+		external bool
+		prefix   int
+	}{
+		{name: "stacked before provider", prefix: 1},
+		{name: "external before KCP", external: true, prefix: 2},
+		{name: "external before etcd", external: true, prefix: 5},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			ctx := context.Background()
+			c := env.Client()
+			ns := env.CreateNamespaceForTest(ctx, t)
+			cp := controlPlaneStackedEtcd(ns)
+			if tt.external {
+				cp = controlPlaneExternalEtcd(ns)
+			}
+			endpoint := clusterv1beta2.APIEndpoint{Host: "control.example.test", Port: 6443}
+			cp.Cluster.Spec.ControlPlaneEndpoint = endpoint
+			objects := cp.AllObjects()
+			envtest.CreateObjs(ctx, t, c, objects[:tt.prefix]...)
+			g.Eventually(func() error {
+				return c.Get(ctx, client.ObjectKeyFromObject(cp.Cluster), &clusterv1beta2.Cluster{})
+			}).Should(Succeed())
+			cp.Cluster.Spec.ControlPlaneEndpoint = clusterv1beta2.APIEndpoint{}
+
+			result, err := clusters.ReconcileControlPlane(ctx, test.NewNullLogger(), c, cp)
+			g.Expect(err).NotTo(HaveOccurred())
+			g.Expect(result).To(Equal(controller.Result{}))
+			api := envtest.NewAPIExpecter(t, c)
+			for _, object := range cp.AllObjects() {
+				api.ShouldEventuallyExist(ctx, object)
+			}
+			g.Expect(cp.Cluster.Spec.ControlPlaneEndpoint).To(Equal(endpoint))
+		})
+	}
+}
+
+func TestControlPlaneInitializedChildMissing(t *testing.T) {
+	for _, missing := range []string{"KubeadmControlPlane", "EtcdadmCluster"} {
+		t.Run(missing, func(t *testing.T) {
+			g := NewWithT(t)
+			ctx := context.Background()
+			c := env.Client()
+			cp := controlPlaneExternalEtcd(env.CreateNamespaceForTest(ctx, t))
+			envtest.CreateObjs(ctx, t, c, cp.AllObjects()...)
+			current := &clusterv1beta2.Cluster{}
+			g.Eventually(func() error {
+				return c.Get(ctx, client.ObjectKeyFromObject(cp.Cluster), current)
+			}).Should(Succeed())
+			current.Status.Initialization.ControlPlaneInitialized = ptr.Bool(true)
+			g.Expect(c.Status().Update(ctx, current)).To(Succeed())
+			g.Eventually(func() bool {
+				got := &clusterv1beta2.Cluster{}
+				if err := c.Get(ctx, client.ObjectKeyFromObject(cp.Cluster), got); err != nil {
+					return false
+				}
+				return got.Status.Initialization.ControlPlaneInitialized != nil && *got.Status.Initialization.ControlPlaneInitialized
+			}).Should(BeTrue())
+			reader := &controlPlaneReadErrorClient{
+				Client: c,
+				kind:   missing,
+				err:    apierrors.NewNotFound(schema.GroupResource{Resource: missing}, cp.Cluster.Name),
+			}
+			_, err := clusters.ReconcileControlPlane(ctx, test.NewNullLogger(), reader, cp)
+			g.Expect(apierrors.IsNotFound(err)).To(BeTrue())
+			g.Expect(reader.patches).To(BeZero())
+		})
+	}
+}
+
+func TestControlPlaneChildReadError(t *testing.T) {
+	for _, kind := range []string{"KubeadmControlPlane", "EtcdadmCluster"} {
+		for _, failure := range []struct {
+			name string
+			err  error
+		}{
+			{name: "forbidden", err: apierrors.NewForbidden(schema.GroupResource{Resource: kind}, "test", errors.New("denied"))},
+			{name: "transport", err: errors.New("transport unavailable")},
+		} {
+			t.Run(kind+" "+failure.name, func(t *testing.T) {
+				g := NewWithT(t)
+				ctx := context.Background()
+				c := env.Client()
+				cp := controlPlaneExternalEtcd(env.CreateNamespaceForTest(ctx, t))
+				envtest.CreateObjs(ctx, t, c, cp.AllObjects()...)
+				g.Eventually(func() error {
+					return c.Get(ctx, client.ObjectKeyFromObject(cp.Cluster), &clusterv1beta2.Cluster{})
+				}).Should(Succeed())
+				reader := &controlPlaneReadErrorClient{
+					Client: c,
+					kind:   kind,
+					err:    failure.err,
+				}
+				_, err := clusters.ReconcileControlPlane(ctx, test.NewNullLogger(), reader, cp)
+				g.Expect(errors.Is(err, failure.err)).To(BeTrue())
+				g.Expect(reader.patches).To(BeZero())
+			})
+		}
+	}
+}
+
+type controlPlaneReadErrorClient struct {
+	client.Client
+	kind    string
+	err     error
+	patches int
+}
+
+func (c *controlPlaneReadErrorClient) Get(ctx context.Context, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+	if c.kind == "KubeadmControlPlane" {
+		if _, ok := obj.(*controlplanev1beta2.KubeadmControlPlane); ok {
+			return c.err
+		}
+	}
+	if c.kind == "EtcdadmCluster" {
+		if _, ok := obj.(*etcdv1.EtcdadmCluster); ok {
+			return c.err
+		}
+	}
+	return c.Client.Get(ctx, key, obj, opts...)
+}
+
+func (c *controlPlaneReadErrorClient) Patch(ctx context.Context, obj client.Object, patch client.Patch, opts ...client.PatchOption) error {
+	c.patches++
+	return c.Client.Patch(ctx, obj, patch, opts...)
 }
 
 func TestReconcileControlPlaneExternalEtcdUpgradeWithDiff(t *testing.T) {

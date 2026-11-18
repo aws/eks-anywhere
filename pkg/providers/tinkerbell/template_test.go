@@ -30,9 +30,9 @@ func TestTinkerbellISOURL(t *testing.T) {
 		want         string
 	}{
 		{name: "IPv4 bootstrap", tinkerbellIP: "192.0.2.10", bootstrapIP: "192.0.2.20", host: "192.0.2.20", port: "7171", path: "/iso/hook.iso", want: "http://192.0.2.20:7171/iso/hook.iso"},
-		{name: "IPv4 workload", tinkerbellIP: "192.0.2.10", host: "192.0.2.10", port: "7172", path: "/iso/hook.iso", want: "http://192.0.2.10:7172/iso/hook.iso"},
+		{name: "IPv4 workload", tinkerbellIP: "192.0.2.10", host: "192.0.2.10", port: "7171", path: "/iso/hook.iso", want: "http://192.0.2.10:7171/iso/hook.iso"},
 		{name: "IPv6 bootstrap", tinkerbellIP: "2001:db8::10", bootstrapIP: "2001:db8::20", host: "2001:db8::20", port: "7171", path: "/iso6/hook.iso", want: "http://[2001:db8::20]:7171/iso6/hook.iso"},
-		{name: "IPv6 workload", tinkerbellIP: "2001:db8::10", host: "2001:db8::10", port: "7172", path: "/iso6/hook.iso", want: "http://[2001:db8::10]:7172/iso6/hook.iso"},
+		{name: "IPv6 workload", tinkerbellIP: "2001:db8::10", host: "2001:db8::10", port: "7171", path: "/iso6/hook.iso", want: "http://[2001:db8::10]:7171/iso6/hook.iso"},
 		{name: "IPv6 bootstrap with IPv4 media", tinkerbellIP: "2001:db8::10", bootstrapIP: "2001:db8::20", isoBootURL: "http://192.0.2.61:7172/iso6/hook.iso", host: "192.0.2.61", port: "7172", path: "/iso6/hook.iso", want: "http://192.0.2.61:7172/iso6/hook.iso"},
 		{name: "IPv6 workload with IPv4 media", tinkerbellIP: "2001:db8::10", isoBootURL: "http://192.0.2.61:7172/iso6/hook.iso", host: "192.0.2.61", port: "7172", path: "/iso6/hook.iso", want: "http://192.0.2.61:7172/iso6/hook.iso"},
 	} {
@@ -67,8 +67,8 @@ type isoURLPhaseTestCase struct {
 
 func TestTemplateBuilderISOURLPhases(t *testing.T) {
 	for _, family := range []isoURLPhaseTestCase{
-		{name: "IPv4", tinkerbellIP: "192.0.2.10", bootstrapIP: "192.0.2.20", controlPlaneIP: "192.0.2.30", bootstrapURL: "http://192.0.2.20:7171/iso/hook.iso", workloadURL: "http://192.0.2.10:7172/iso/hook.iso"},
-		{name: "IPv6", tinkerbellIP: "2001:db8::10", bootstrapIP: "2001:db8::20", controlPlaneIP: "2001:db8::30", ipv6: true, bootstrapURL: "http://[2001:db8::20]:7171/iso6/hook.iso", workloadURL: "http://[2001:db8::10]:7172/iso6/hook.iso"},
+		{name: "IPv4", tinkerbellIP: "192.0.2.10", bootstrapIP: "192.0.2.20", controlPlaneIP: "192.0.2.30", bootstrapURL: "http://192.0.2.20:7171/iso/hook.iso", workloadURL: "http://192.0.2.10:7171/iso/hook.iso"},
+		{name: "IPv6", tinkerbellIP: "2001:db8::10", bootstrapIP: "2001:db8::20", controlPlaneIP: "2001:db8::30", ipv6: true, bootstrapURL: "http://[2001:db8::20]:7171/iso6/hook.iso", workloadURL: "http://[2001:db8::10]:7171/iso6/hook.iso"},
 		{name: "IPv6 with IPv4 media", tinkerbellIP: "2001:db8::10", bootstrapIP: "2001:db8::20", controlPlaneIP: "2001:db8::30", ipv6: true, isoBootURL: "http://192.0.2.61:7172/iso6/hook.iso", bootstrapURL: "http://192.0.2.61:7172/iso6/hook.iso", workloadURL: "http://192.0.2.61:7172/iso6/hook.iso"},
 	} {
 		for _, bootstrap := range []bool{true, false} {
@@ -115,7 +115,7 @@ func testTemplateBuilderISOURLPhase(t *testing.T, family isoURLPhaseTestCase, fi
 	g.Expect(err).NotTo(HaveOccurred())
 	g.Expect(cp.ControlPlaneMachineTemplate.Spec.Template.Spec.BootOptions.ISOURL).To(Equal(want))
 	if family.isoBootURL != "" && !customTemplate {
-		g.Expect(cp.ControlPlaneMachineTemplate.Spec.Template.Spec.TemplateOverride).To(ContainSubstring("http://[2001:db8::10]:7172/tootles/instanceID/"))
+		g.Expect(cp.ControlPlaneMachineTemplate.Spec.Template.Spec.TemplateOverride).To(ContainSubstring("http://[2001:db8::10]:7171/tootles/instanceID/"))
 	}
 	workers, err := WorkersSpec(ctx, test.NewNullLogger(), client, spec)
 	g.Expect(err).NotTo(HaveOccurred())
@@ -123,7 +123,7 @@ func testTemplateBuilderISOURLPhase(t *testing.T, family isoURLPhaseTestCase, fi
 	for _, worker := range workers.Groups {
 		g.Expect(worker.ProviderMachineTemplate.Spec.Template.Spec.BootOptions.ISOURL).To(Equal(want))
 		if family.isoBootURL != "" && !customTemplate {
-			g.Expect(worker.ProviderMachineTemplate.Spec.Template.Spec.TemplateOverride).To(ContainSubstring("http://[2001:db8::10]:7172/tootles/instanceID/"))
+			g.Expect(worker.ProviderMachineTemplate.Spec.Template.Spec.TemplateOverride).To(ContainSubstring("http://[2001:db8::10]:7171/tootles/instanceID/"))
 		}
 	}
 	g.Expect(spec.TinkerbellDatacenter.Spec.HookIsoURL).To(Equal("http://example.invalid/source.iso"))

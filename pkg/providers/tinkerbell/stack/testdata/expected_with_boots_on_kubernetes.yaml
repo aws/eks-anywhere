@@ -20,7 +20,7 @@ deployment:
       enableTinkController: true
       enableTinkServer: true
       enableTootles: true
-      httpPort: 7172
+      httpPort: 7171
     rufio:
       enableLeaderElection: true
       maxConcurrentReconciles: 10
@@ -28,12 +28,13 @@ deployment:
       dhcpEnabled: true
       dhcpIPForPacket: 1.2.3.4
       dhcpIpxeHttpBinaryHost: 1.2.3.4
-      dhcpIpxeHttpBinaryPort: 7172
+      dhcpIpxeHttpBinaryPort: 7171
       dhcpIpxeHttpScriptHost: 1.2.3.4
-      dhcpIpxeHttpScriptPort: 7172
+      dhcpIpxeHttpScriptPort: 7171
       dhcpMode: reservation
       dhcpSyslogIP: 1.2.3.4
       dhcpTftpIP: 1.2.3.4
+      ipxeHttpScriptBindPort: 7171
       ipxeHttpScriptExtraKernelArgs: []
       ipxeHttpScriptOsieURL: https://anywhere-assests.eks.amazonaws.com/tinkerbell/hook
       ipxeScriptTinkServerAddrPort: 1.2.3.4:42113
@@ -48,7 +49,8 @@ deployment:
       maxConcurrentReconciles: 5
     tinkServer:
       bindPort: 42113
-    tootles: {}
+    tootles:
+      bindPort: 7172
   hostNetwork: false
   image: public.ecr.aws/eks-anywhere/tinkerbell
   imageTag: latest
@@ -78,11 +80,12 @@ optional:
       operator: Exists
 publicIP: 1.2.3.4
 service:
+  enabled: false
   lbClass: kube-vip.io/kube-vip-class
   loadBalancerIP: 1.2.3.4
   ports:
     http:
-      port: 7172
+      port: 7171
   type: LoadBalancer
 trustedProxies:
 - 192.168.0.0/16

@@ -34,6 +34,7 @@ deployment:
       dhcpMode: reservation
       dhcpSyslogIP: 1.2.3.4
       dhcpTftpIP: 1.2.3.4
+      ipxeHttpScriptBindPort: 7171
       ipxeHttpScriptExtraKernelArgs: []
       ipxeHttpScriptOsieURL: https://anywhere-assests.eks.amazonaws.com/tinkerbell/hook
       ipxeScriptTinkServerAddrPort: 1.2.3.4:42113
@@ -48,7 +49,8 @@ deployment:
       maxConcurrentReconciles: 5
     tinkServer:
       bindPort: 42113
-    tootles: {}
+    tootles:
+      bindPort: 7172
   hostNetwork: false
   image: public.ecr.aws/eks-anywhere/tinkerbell
   imageTag: latest
@@ -78,6 +80,7 @@ optional:
       operator: Exists
 publicIP: 1.2.3.4
 service:
+  enabled: false
   lbClass: kube-vip.io/kube-vip-class
   loadBalancerIP: 1.2.3.4
   ports:

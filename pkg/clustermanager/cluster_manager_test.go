@@ -517,8 +517,8 @@ type isoURLMoveTestCase struct {
 
 func TestClusterManagerMoveCAPIISOURLs(t *testing.T) {
 	for _, family := range []isoURLMoveTestCase{
-		{name: "IPv4", tinkerbellIP: "192.0.2.10", bootstrapIP: "192.0.2.20", controlPlaneIP: "192.0.2.30", want: "http://192.0.2.10:7172/iso/hook.iso"},
-		{name: "IPv6", tinkerbellIP: "2001:db8::10", bootstrapIP: "2001:db8::20", controlPlaneIP: "2001:db8::30", ipv6: true, want: "http://[2001:db8::10]:7172/iso6/hook.iso"},
+		{name: "IPv4", tinkerbellIP: "192.0.2.10", bootstrapIP: "192.0.2.20", controlPlaneIP: "192.0.2.30", want: "http://192.0.2.10:7171/iso/hook.iso"},
+		{name: "IPv6", tinkerbellIP: "2001:db8::10", bootstrapIP: "2001:db8::20", controlPlaneIP: "2001:db8::30", ipv6: true, want: "http://[2001:db8::10]:7171/iso6/hook.iso"},
 		{name: "IPv6 with IPv4 media", tinkerbellIP: "2001:db8::10", bootstrapIP: "2001:db8::20", controlPlaneIP: "2001:db8::30", ipv6: true, isoBootURL: "http://192.0.2.61:7172/iso6/hook.iso", want: "http://192.0.2.61:7172/iso6/hook.iso"},
 	} {
 		for _, customTemplate := range []bool{false, true} {

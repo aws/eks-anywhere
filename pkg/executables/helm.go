@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"regexp"
 	"strings"
 	"time"
 
@@ -18,6 +19,8 @@ const (
 	helmPath               = "helm"
 	insecureSkipVerifyFlag = "--insecure-skip-tls-verify"
 )
+
+var helmVersionPattern = regexp.MustCompile(`^v(3|4)\.(?:0|[1-9][0-9]*)(?:\.(?:0|[1-9][0-9]*))?(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$`)
 
 type Helm struct {
 	executable Executable
@@ -133,8 +136,12 @@ func (h *Helm) InstallChartFromName(ctx context.Context, ociURI, kubeConfig, nam
 //
 // If kubeconfigFilePath is the empty string, it won't be passed at all.
 func (h *Helm) InstallChart(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, namespace, valueFilePath string, skipCRDs bool, values []string) error {
+	waitFlag, err := h.waitFlag(ctx)
+	if err != nil {
+		return err
+	}
 	valueArgs := GetHelmValueArgs(values)
-	params := []string{"upgrade", "--install", chart, ociURI, "--version", version}
+	params := []string{"upgrade", "--install", chart, ociURI, "--version", version, waitFlag}
 	if skipCRDs {
 		params = append(params, "--skip-crds")
 	}
@@ -151,8 +158,25 @@ func (h *Helm) InstallChart(ctx context.Context, chart, ociURI, version, kubecon
 	params = h.addInsecureFlagIfProvided(params)
 
 	logger.Info("Installing helm chart on cluster", "chart", chart, "version", version)
-	_, err := h.executable.Command(ctx, params...).WithEnvVars(h.env).Run()
+	_, err = h.executable.Command(ctx, params...).WithEnvVars(h.env).Run()
 	return err
+}
+
+func (h *Helm) waitFlag(ctx context.Context) (string, error) {
+	output, err := h.executable.Command(ctx, "version", "--template", "{{.Version}}").Run()
+	if err != nil {
+		return "", fmt.Errorf("getting Helm version for readiness wait: %w", err)
+	}
+	version := strings.TrimSpace(output.String())
+	match := helmVersionPattern.FindStringSubmatch(version)
+	if match == nil {
+		return "", fmt.Errorf("unsupported Helm version %q for readiness wait", version)
+	}
+	if match[1] == "4" {
+		// Keep Helm 3 readiness semantics without Helm 4's watcher race.
+		return "--wait=legacy", nil
+	}
+	return "--wait", nil
 }
 
 // Delete removes an installation.
@@ -221,6 +245,10 @@ func GetHelmValueArgs(values []string) []string {
 // UpgradeInstallChartWithValuesFile runs a helm upgrade --install with the provided values file and waits for the
 // chart deployment to be ready. This will upgrade the chart if it exists and install if it does not.
 func (h *Helm) UpgradeInstallChartWithValuesFile(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, namespace, valuesFilePath string, opts ...helm.Opt) error {
+	waitFlag, err := h.waitFlag(ctx)
+	if err != nil {
+		return err
+	}
 	params := []string{
 		"upgrade",
 		"--install",
@@ -228,7 +256,7 @@ func (h *Helm) UpgradeInstallChartWithValuesFile(ctx context.Context, chart, oci
 		"--version", version,
 		"--values", valuesFilePath,
 		"--kubeconfig", kubeconfigFilePath,
-		"--wait",
+		waitFlag,
 	}
 
 	if len(namespace) > 0 {
@@ -248,16 +276,20 @@ func (h *Helm) UpgradeInstallChartWithValuesFile(ctx context.Context, chart, oci
 	if h.helmConfig.NoTimeouts {
 		params = append(params, "--timeout", time.Duration(math.MaxInt64).String())
 	}
-	_, err := h.executable.Command(ctx, params...).WithEnvVars(h.env).Run()
+	_, err = h.executable.Command(ctx, params...).WithEnvVars(h.env).Run()
 	return err
 }
 
 // Uninstall runs a helm uninstall for the given chart in given namespace.
 func (h *Helm) Uninstall(ctx context.Context, chart, kubeconfigFilePath, namespace string, opts ...helm.Opt) error {
+	waitFlag, err := h.waitFlag(ctx)
+	if err != nil {
+		return err
+	}
 	params := []string{
 		"uninstall", chart,
 		"--kubeconfig", kubeconfigFilePath,
-		"--wait",
+		waitFlag,
 	}
 
 	if len(namespace) > 0 {
@@ -274,6 +306,6 @@ func (h *Helm) Uninstall(ctx context.Context, chart, kubeconfigFilePath, namespa
 	}
 
 	logger.Info("Uninstalling helm chart on cluster", "chart", chart)
-	_, err := h.executable.Command(ctx, params...).WithEnvVars(h.env).Run()
+	_, err = h.executable.Command(ctx, params...).WithEnvVars(h.env).Run()
 	return err
 }

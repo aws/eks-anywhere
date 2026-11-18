@@ -16,6 +16,7 @@ import (
 	"github.com/go-git/go-git/v5/storage/memory"
 
 	"github.com/aws/eks-anywhere/pkg/git"
+	"github.com/aws/eks-anywhere/pkg/git/githubretry"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 )
@@ -149,9 +150,11 @@ func (g *GitClient) Push(ctx context.Context) error {
 		return fmt.Errorf("err pushing: %v", err)
 	}
 
-	err = g.Client.PushWithContext(ctx, r, g.Auth)
+	err = githubretry.RetryGitPush(ctx, g.RepoUrl, func() error {
+		return g.Client.PushWithContext(ctx, r, g.Auth)
+	})
 	if err != nil {
-		return fmt.Errorf("pushing: %v", err)
+		return fmt.Errorf("pushing: %w", err)
 	}
 	return err
 }

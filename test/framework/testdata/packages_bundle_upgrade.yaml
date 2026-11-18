@@ -1,0 +1,76 @@
+# Packages installed from an older bundle by the package bundle upgrade test, with state that must
+# survive the upgrade. The Prometheus job uses scrapeConfigs, which renders correctly with and
+# without the extraScrapeConfigs/serverFiles chart fix. Harbor, cluster-autoscaler and metrics-server
+# are installed by their own helpers.
+apiVersion: packages.eks.amazonaws.com/v1alpha1
+kind: Package
+metadata:
+  name: {{.prometheusName}}
+spec:
+  packageName: prometheus
+  targetNamespace: {{.prometheusNamespace}}
+  config: |
+    server:
+      persistentVolume:
+        storageClass: local-path
+    scrapeConfigs:
+      {{.prometheusScrapeJob}}:
+        enabled: true
+        static_configs:
+          - targets:
+              - localhost:9090
+---
+apiVersion: packages.eks.amazonaws.com/v1alpha1
+kind: Package
+metadata:
+  name: {{.metallbName}}
+spec:
+  packageName: metallb
+  targetNamespace: {{.metallbNamespace}}
+  config: |
+    IPAddressPools:
+      - name: {{.metallbPool}}
+        addresses:
+          - {{.metallbAddresses}}
+    L2Advertisements:
+      - ipAddressPools:
+          - {{.metallbPool}}
+---
+# The EKS-A hello image prints the subtitle in its plain-text page.
+apiVersion: packages.eks.amazonaws.com/v1alpha1
+kind: Package
+metadata:
+  name: {{.helloName}}
+spec:
+  packageName: hello-eks-anywhere
+  targetNamespace: {{.helloNamespace}}
+  config: |
+    subtitle: {{.helloSubtitle}}
+---
+# ClusterIP so the Service doesn't take an address from the MetalLB pool.
+apiVersion: packages.eks.amazonaws.com/v1alpha1
+kind: Package
+metadata:
+  name: {{.emissaryName}}
+spec:
+  packageName: emissary
+  targetNamespace: {{.emissaryNamespace}}
+  config: |
+    service:
+      type: ClusterIP
+      ports:
+        - name: http
+          port: 80
+          targetPort: 8080
+---
+# The chart default is a DaemonSet, so the Deployment only exists while this config survives.
+apiVersion: packages.eks.amazonaws.com/v1alpha1
+kind: Package
+metadata:
+  name: {{.adotName}}
+spec:
+  packageName: adot
+  targetNamespace: {{.adotNamespace}}
+  config: |
+    apiVersion: apps/v1
+    mode: deployment

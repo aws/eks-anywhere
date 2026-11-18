@@ -104,6 +104,8 @@ spec:
       - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
       - systemctl daemon-reload
       - systemctl restart containerd
+      - |
+{{ .pauseImageAliasCommand | indent 8 }}
 {{- end }}
 ---
 apiVersion: cluster.x-k8s.io/v1beta2

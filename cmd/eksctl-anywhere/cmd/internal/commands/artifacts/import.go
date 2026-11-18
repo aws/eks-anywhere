@@ -35,7 +35,12 @@ func (i Import) Run(ctx context.Context) error {
 	// Filter out CSI component images as they're not used by EKS Anywhere
 	// but are still referenced in the EKS-D release manifest
 	var filteredImages []releasev1.Image
+	toolsImage := i.Bundles.DefaultEksAToolsImage().VersionedImage()
 	for _, img := range images {
+		// Download puts the tools image in its own archive, imported before this step.
+		if img.VersionedImage() == toolsImage {
+			continue
+		}
 		if img.URI != "" && strings.Contains(img.URI, "public.ecr.aws/csi-components/") {
 			// Skip CSI component images
 			continue

@@ -125,7 +125,9 @@ func (a Applier) Run(ctx context.Context, spec *cluster.Spec, managementCluster 
 			return errors.Wrap(err, "building client to apply cluster spec changes")
 		}
 
-		for _, obj := range spec.ClusterAndChildren() {
+		// Store referenced configs before exposing the Cluster to its reconciler.
+		objects := append(spec.ChildObjects(), spec.Cluster)
+		for _, obj := range objects {
 			if err := client.ApplyServerSide(ctx,
 				defaultFieldManager,
 				obj,

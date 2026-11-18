@@ -14,8 +14,8 @@ import (
 func TestWithDefaultActionsFromBundle(t *testing.T) {
 	tinkerbellLocalIp := "127.0.0.1"
 	tinkerbellLBIP := "1.2.3.4"
-	metadataString := fmt.Sprintf("http://%s:7172,http://%s:7172", tinkerbellLocalIp, tinkerbellLBIP)
-	rhelMetadataString := fmt.Sprintf("'http://%s:7172','http://%s:7172'", tinkerbellLocalIp, tinkerbellLBIP)
+	metadataString := fmt.Sprintf("http://%s:7172,http://%s:7171", tinkerbellLocalIp, tinkerbellLBIP)
+	rhelMetadataString := fmt.Sprintf("'http://%s:7172','http://%s:7171'", tinkerbellLocalIp, tinkerbellLBIP)
 	cloudInit := `datasource:
   Ec2:
     metadata_urls: [%s]
@@ -785,7 +785,7 @@ func TestDefaultActionsCloudInitMetadata(t *testing.T) {
 			osFamily:  Ubuntu,
 			localIP:   "192.0.2.10",
 			loadBalIP: "192.0.2.20",
-			wantURLs:  []string{"http://192.0.2.10:7172", "http://192.0.2.20:7172"},
+			wantURLs:  []string{"http://192.0.2.10:7172", "http://192.0.2.20:7171"},
 		},
 		{
 			name:      "Ubuntu IPv6",
@@ -794,7 +794,7 @@ func TestDefaultActionsCloudInitMetadata(t *testing.T) {
 			loadBalIP: "2001:db8::20",
 			wantURLs: []string{
 				"http://[2001:db8::10]:7172/tootles/instanceID/{{ (index .Hardware.Interfaces 0).DHCP.MAC }}",
-				"http://[2001:db8::20]:7172/tootles/instanceID/{{ (index .Hardware.Interfaces 0).DHCP.MAC }}",
+				"http://[2001:db8::20]:7171/tootles/instanceID/{{ (index .Hardware.Interfaces 0).DHCP.MAC }}",
 			},
 		},
 		{
@@ -802,7 +802,7 @@ func TestDefaultActionsCloudInitMetadata(t *testing.T) {
 			osFamily:  RedHat,
 			localIP:   "192.0.2.10",
 			loadBalIP: "192.0.2.20",
-			wantURLs:  []string{"http://192.0.2.10:7172", "http://192.0.2.20:7172"},
+			wantURLs:  []string{"http://192.0.2.10:7172", "http://192.0.2.20:7171"},
 		},
 		{
 			name:      "RHEL IPv6",
@@ -811,7 +811,7 @@ func TestDefaultActionsCloudInitMetadata(t *testing.T) {
 			loadBalIP: "2001:db8::20",
 			wantURLs: []string{
 				"http://[2001:db8::10]:7172/tootles/instanceID/{{ (index .Hardware.Interfaces 0).DHCP.MAC }}",
-				"http://[2001:db8::20]:7172/tootles/instanceID/{{ (index .Hardware.Interfaces 0).DHCP.MAC }}",
+				"http://[2001:db8::20]:7171/tootles/instanceID/{{ (index .Hardware.Interfaces 0).DHCP.MAC }}",
 			},
 		},
 	}

@@ -34,7 +34,7 @@ func runAutoscalerWithMetricsServerTinkerbellSimpleFlow(test *framework.ClusterE
 func runAutoscalerUpgradeFlow(test *framework.MulticlusterE2ETest) {
 	test.CreateManagementClusterWithConfig()
 	test.RunInWorkloadClusters(func(e *framework.WorkloadCluster) {
-		e.GenerateClusterConfig()
+		e.GenerateClusterConfigWithLicenseToken(framework.GetLicenseToken2())
 		e.CreateCluster()
 		autoscalerName := "cluster-autoscaler"
 		targetNamespace := "eksa-system"

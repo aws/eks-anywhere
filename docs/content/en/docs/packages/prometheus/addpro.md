@@ -56,7 +56,7 @@ Be sure to refer to the [troubleshooting guide]({{< relref "../troubleshoot" >}}
         #   enabled: false
    ```
 
-   Example package file with prometheus-server deployed as a statefulSet with replicaCount 2, and set scrape config to collect Prometheus-server's own metrics only:
+   Example package file with prometheus-server deployed as a statefulSet with replicaCount 2, and set scrape config to collect Prometheus-server's own metrics only. The default scrape jobs are defined under `scrapeConfigs`, keyed by job name. This example turns off every default job except `prometheus`, which scrapes `localhost:9090`:
    ```yaml
     apiVersion: packages.eks.amazonaws.com/v1alpha1
     kind: Package
@@ -71,14 +71,28 @@ Be sure to refer to the [troubleshooting guide]({{< relref "../troubleshoot" >}}
           replicaCount: 2
           statefulSet:
             enabled: true
-        serverFiles:
-          prometheus.yml:
-            scrape_configs:
-              - job_name: prometheus
-                static_configs:
-                  - targets:
-                    - localhost:9090
+        scrapeConfigs:
+          kubernetes-api-servers:
+            enabled: false
+          kubernetes-nodes:
+            enabled: false
+          kubernetes-nodes-cadvisor:
+            enabled: false
+          kubernetes-pods:
+            enabled: false
+          kubernetes-pods-slow:
+            enabled: false
+          kubernetes-service-endpoints:
+            enabled: false
+          kubernetes-service-endpoints-slow:
+            enabled: false
+          kubernetes-services:
+            enabled: false
+          prometheus-pushgateway:
+            enabled: false
    ```
+
+   This example applies to Prometheus package v3.12.0 and later. Starting with v3.12.0, jobs set under `serverFiles."prometheus.yml".scrape_configs` don't replace the default jobs. If your configuration still sets them from an earlier version of this example, remove them and use `scrapeConfigs` as shown. For v3.8.0 and earlier, list only the `prometheus` job under `serverFiles."prometheus.yml".scrape_configs`; in those versions it replaces the default jobs.
 
 1. Create the namespace
   (If overriding `targetNamespace`, change `observability` to the value of `targetNamespace`)

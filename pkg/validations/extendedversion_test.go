@@ -124,7 +124,7 @@ func TestValidateExtendedK8sVersionSupport(t *testing.T) {
 					LicenseToken:      "invalid-token",
 				},
 			},
-			bundle:  validBundle(),
+			bundle: validBundle(),
 			eksdRelease: &eksdv1alpha1.Release{
 				TypeMeta: v1.TypeMeta{
 					Kind:       "Release",
@@ -226,18 +226,24 @@ func TestValidateLicenseKeyIsUnique(t *testing.T) {
 					LicenseToken: "valid-token",
 				},
 			},
-			wantErr: fmt.Errorf("license token valid-token is already in use by cluster"),
+			wantErr: fmt.Errorf("license token is already in use by cluster cluster2"),
 		},
 	}
 	for _, tc := range tests {
-		t.Run(tc.name, func(_ *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			cb := fake.NewClientBuilder()
 			cl := cb.WithRuntimeObjects(tc.cluster, tc.workloadCluster).Build()
 			client := clientutil.NewKubeClient(cl)
 
 			err := validateLicenseKeyIsUnique(ctx, tc.cluster.Name, tc.cluster.Spec.LicenseToken, client)
-			if err != nil && !strings.Contains(err.Error(), tc.wantErr.Error()) {
+			if (err != nil) != (tc.wantErr != nil) {
+				t.Fatalf("got error %v, want %v", err, tc.wantErr)
+			}
+			if err != nil && err.Error() != tc.wantErr.Error() {
 				t.Errorf("%v got = %v, \nwant %v", tc.name, err, tc.wantErr)
+			}
+			if err != nil && strings.Contains(err.Error(), tc.cluster.Spec.LicenseToken) {
+				t.Fatal("uniqueness error exposes the license token")
 			}
 		})
 	}

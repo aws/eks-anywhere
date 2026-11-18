@@ -6,6 +6,7 @@ import (
 	"context"
 	"crypto/sha1"
 	_ "embed"
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -22,6 +23,7 @@ import (
 
 	"github.com/bmc-toolbox/bmclib/v2"
 	"github.com/go-logr/logr"
+	yamlv3 "gopkg.in/yaml.v3"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -1036,6 +1038,13 @@ func (e *ClusterE2ETest) GenerateSupportBundleIfTestFailed(opts ...CommandOpt) {
 }
 
 func (e *ClusterE2ETest) Run(name string, args ...string) {
+	if output, err := e.runCommand(name, args...); err != nil {
+		e.failCommand(name, args, output, err)
+	}
+}
+
+// runCommand runs name with args, streaming its output, and returns the combined stdout and stderr.
+func (e *ClusterE2ETest) runCommand(name string, args ...string) (string, error) {
 	cmd, err := prepareCommand(name, args...)
 	if err != nil {
 		e.T.Fatalf("Error preparing command: %v", err)
@@ -1045,33 +1054,37 @@ func (e *ClusterE2ETest) Run(name string, args ...string) {
 	var stdoutAndErr bytes.Buffer
 	cmd.Stderr = io.MultiWriter(os.Stderr, &stdoutAndErr)
 	cmd.Stdout = io.MultiWriter(os.Stdout, &stdoutAndErr)
+	err = cmd.Run()
+	return stdoutAndErr.String(), err
+}
 
-	if err = cmd.Run(); err != nil {
-		e.T.Log("Command failed, scanning output for error")
-		scanner := bufio.NewScanner(&stdoutAndErr)
-		var errorMessage string
-		// Look for the last line of the out put that starts with 'Error:'
-		for scanner.Scan() {
-			line := scanner.Text()
-			if strings.HasPrefix(line, "Error:") {
-				errorMessage = line
-			}
+// failCommand fails the test for a command that returned err, using the last "Error:" line of its output.
+// It returns without failing if the error was expected (e.ExpectFailure).
+func (e *ClusterE2ETest) failCommand(name string, args []string, output string, err error) {
+	e.T.Log("Command failed, scanning output for error")
+	scanner := bufio.NewScanner(strings.NewReader(output))
+	var errorMessage string
+	// Look for the last line of the out put that starts with 'Error:'
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.HasPrefix(line, "Error:") {
+			errorMessage = line
 		}
-
-		if err := scanner.Err(); err != nil {
-			e.T.Fatalf("Failed reading command output looking for error message: %v", err)
-		}
-
-		if errorMessage != "" {
-			if e.ExpectFailure {
-				e.T.Logf("This error was expected. Continuing...")
-				return
-			}
-			e.T.Fatalf("Command %s %v failed with error: %v: %s", name, args, err, errorMessage)
-		}
-
-		e.T.Fatalf("Error running command %s %v: %v", name, args, err)
 	}
+
+	if err := scanner.Err(); err != nil {
+		e.T.Fatalf("Failed reading command output looking for error message: %v", err)
+	}
+
+	if errorMessage != "" {
+		if e.ExpectFailure {
+			e.T.Logf("This error was expected. Continuing...")
+			return
+		}
+		e.T.Fatalf("Command %s %v failed with error: %v: %s", name, args, err, errorMessage)
+	}
+
+	e.T.Fatalf("Error running command %s %v: %v", name, args, err)
 }
 
 func (e *ClusterE2ETest) RunEKSA(args []string, opts ...CommandOpt) {
@@ -1276,7 +1289,7 @@ func (e *ClusterE2ETest) InstallCuratedPackage(packageName, packagePrefix, kubec
 	os.Setenv("CURATED_PACKAGES_SUPPORT", "true")
 	// The package install command doesn't (yet?) have a --kubeconfig flag.
 	os.Setenv("KUBECONFIG", kubeconfig)
-	e.RunEKSA([]string{
+	e.runEKSAPackageCommand([]string{
 		"install", "package", packageName,
 		"--package-name=" + packagePrefix, "-v=9",
 		"--cluster=" + e.ClusterName,
@@ -1289,7 +1302,7 @@ func (e *ClusterE2ETest) InstallCuratedPackageFile(packageFile, kubeconfig strin
 	os.Setenv("CURATED_PACKAGES_SUPPORT", "true")
 	os.Setenv("KUBECONFIG", kubeconfig)
 	e.T.Log("Installing EKS-A Packages file", packageFile)
-	e.RunEKSA([]string{
+	e.runEKSAPackageCommand([]string{
 		"apply", "package", "-f", packageFile, "-v=9", strings.Join(opts, " "),
 	})
 }
@@ -1448,8 +1461,10 @@ func (e *ClusterE2ETest) VerifyHarborPackageInstalled(prefix, namespace string) 
 	case err := <-errCh:
 		e.T.Fatal(err)
 	case <-okCh:
-		return
 	}
+
+	e.VerifyPackageImagesFromConfiguredRegistry(prefix, namespace, e.Cluster())
+	e.VerifyHarborFunctional(prefix, namespace)
 }
 
 func (e *ClusterE2ETest) printPackageSpec(ctx context.Context, params []string) {
@@ -1494,6 +1509,7 @@ func (e *ClusterE2ETest) VerifyHelloPackageInstalled(packageName string, mgmtClu
 	if err != nil {
 		e.T.Fatalf("waiting for hello-eks-anywhere deployment timed out: %s", err)
 	}
+	e.VerifyPackageImagesFromConfiguredRegistry(packageName, constants.EksaPackagesName, mgmtCluster)
 
 	svcAddress := packageName + "." + constants.EksaPackagesName + ".svc.cluster.local"
 	e.T.Log("Validate content at endpoint", svcAddress)
@@ -1526,6 +1542,7 @@ func (e *ClusterE2ETest) VerifyAdotPackageInstalled(packageName, targetNamespace
 	if err != nil {
 		e.T.Fatalf("waiting for adot deployment timed out: %s", err)
 	}
+	e.VerifyPackageImagesFromConfiguredRegistry(packageName, targetNamespace, e.Cluster())
 
 	e.T.Log("Reading", packageName, "pod logs")
 	adotPodName, err := e.KubectlClient.GetPodNameByLabel(context.TODO(), targetNamespace, "app.kubernetes.io/name=aws-otel-collector", e.KubeconfigFilePath())
@@ -1559,7 +1576,7 @@ func (e *ClusterE2ETest) VerifyAdotPackageDeploymentUpdated(packageName, targetN
 	// Deploy ADOT as a deployment and scrape the apiservers
 	e.T.Log("Apply changes to package", packageName)
 	e.T.Log("This will update", packageName, "to be a deployment, and scrape the apiservers")
-	err := e.KubectlClient.ApplyKubeSpecFromBytesWithNamespace(ctx, e.Cluster(), adotPackageDeployment, packageMetadatNamespace)
+	err := e.applyPackageSpec(ctx, e.Cluster(), adotPackageDeployment, packageMetadatNamespace)
 	if err != nil {
 		e.T.Fatalf("Error upgrading adot package: %s", err)
 		return
@@ -1612,7 +1629,7 @@ func (e *ClusterE2ETest) VerifyAdotPackageDaemonSetUpdated(packageName, targetNa
 	// Deploy ADOT as a daemonset and scrape the node
 	e.T.Log("Apply changes to package", packageName)
 	e.T.Log("This will update", packageName, "to be a daemonset, and scrape the node")
-	err := e.KubectlClient.ApplyKubeSpecFromBytesWithNamespace(ctx, e.Cluster(), adotPackageDaemonset, packageMetadatNamespace)
+	err := e.applyPackageSpec(ctx, e.Cluster(), adotPackageDaemonset, packageMetadatNamespace)
 	if err != nil {
 		e.T.Fatalf("Error upgrading adot package: %s", err)
 		return
@@ -1696,6 +1713,7 @@ func (e *ClusterE2ETest) VerifyEmissaryPackageInstalled(packageName string, mgmt
 	if err != nil {
 		e.T.Fatalf("waiting for emissary deployment timed out: %s", err)
 	}
+	e.VerifyPackageImagesFromConfiguredRegistry(packageName, constants.EksaPackagesName, mgmtCluster)
 	svcAddress := packageName + "-admin." + constants.EksaPackagesName + ".svc.cluster.local" + ":8877/ambassador/v0/check_alive"
 	e.T.Log("Validate content at endpoint", svcAddress)
 	expectedLogs := "Ambassador is alive and well"
@@ -1707,7 +1725,7 @@ func (e *ClusterE2ETest) TestEmissaryPackageRouting(packageName, checkName strin
 	ctx := context.Background()
 	packageMetadatNamespace := fmt.Sprintf("%s-%s", constants.EksaPackagesName, e.ClusterName)
 
-	err := e.KubectlClient.ApplyKubeSpecFromBytesWithNamespace(ctx, e.Cluster(), emisarryPackage, packageMetadatNamespace)
+	err := e.applyPackageSpec(ctx, e.Cluster(), emisarryPackage, packageMetadatNamespace)
 	if err != nil {
 		e.T.Errorf("Error upgrading emissary package: %v", err)
 		return
@@ -1752,6 +1770,7 @@ func (e *ClusterE2ETest) VerifyPrometheusPackageInstalled(packageName, targetNam
 	if err != nil {
 		e.T.Fatalf("waiting for prometheus package install timed out: %s", err)
 	}
+	e.VerifyPackageImagesFromConfiguredRegistry(packageName, targetNamespace, e.Cluster())
 }
 
 // VerifyCertManagerPackageInstalled is checking if the cert manager package gets installed correctly.
@@ -1803,6 +1822,7 @@ func (e *ClusterE2ETest) VerifyCertManagerPackageInstalled(prefix, namespace, pa
 	if err := <-errCh; err != nil {
 		e.T.Fatalf("cert-manager package deployments did not become healthy: %s", err)
 	}
+	e.VerifyPackageImagesFromConfiguredRegistry(prefix+"-"+packageName, namespace, mgmtCluster)
 
 	e.T.Log("Waiting for Self Signed certificate to be issued")
 	if err := e.verifySelfSignedCertificate(); err != nil {
@@ -2000,6 +2020,7 @@ func (e *ClusterE2ETest) VerifyAutoScalerPackageInstalled(packageName, targetNam
 	if err != nil {
 		e.T.Fatalf("waiting for cluster-autoscaler deployment timed out: %s", err)
 	}
+	e.VerifyPackageImagesFromConfiguredRegistry(packageName, targetNamespace, mgmtCluster)
 }
 
 // VerifyMetricServerPackageInstalled is verifying that metrics-server is installed and deployed.
@@ -2029,6 +2050,7 @@ func (e *ClusterE2ETest) VerifyMetricServerPackageInstalled(packageName, targetN
 	if err != nil {
 		e.T.Fatalf("waiting for Metric Server deployment timed out: %s", err)
 	}
+	e.VerifyPackageImagesFromConfiguredRegistry(packageName, targetNamespace, mgmtCluster)
 }
 
 //go:embed testdata/autoscaler_package.yaml
@@ -2051,7 +2073,7 @@ func (e *ClusterE2ETest) InstallAutoScalerWithMetricServer(targetNamespace strin
 		e.T.Fatalf("Failed creating metrics-erver Package Deployment: %s", err)
 	}
 
-	err = e.KubectlClient.ApplyKubeSpecFromBytesWithNamespace(ctx, e.Cluster(), metricsServerPackageDeployment,
+	err = e.applyPackageSpec(ctx, e.Cluster(), metricsServerPackageDeployment,
 		packageMetadatNamespace)
 	if err != nil {
 		e.T.Fatalf("Error installing metrics-sserver pacakge: %s", err)
@@ -2062,7 +2084,7 @@ func (e *ClusterE2ETest) InstallAutoScalerWithMetricServer(targetNamespace strin
 		e.T.Fatalf("Failed creating autoscaler Package Deployment: %s", err)
 	}
 
-	err = e.KubectlClient.ApplyKubeSpecFromBytesWithNamespace(ctx, e.Cluster(), autoscalerPackageDeployment,
+	err = e.applyPackageSpec(ctx, e.Cluster(), autoscalerPackageDeployment,
 		packageMetadatNamespace)
 	if err != nil {
 		e.T.Fatalf("Error installing cluster autoscaler pacakge: %s", err)
@@ -2086,7 +2108,7 @@ func (e *ClusterE2ETest) InstallAutoScaler(workloadClusterName, targetNamespace 
 		e.T.Fatalf("Failed creating autoscaler Package Deployment: %s", err)
 	}
 
-	err = e.KubectlClient.ApplyKubeSpecFromBytesWithNamespace(ctx, e.Cluster(), autoscalerPackageWorkloadClusterDeployment,
+	err = e.applyPackageSpec(ctx, e.Cluster(), autoscalerPackageWorkloadClusterDeployment,
 		packageMetadataNamespace)
 	if err != nil {
 		e.T.Fatalf("Error installing cluster autoscaler package: %s", err)
@@ -2119,7 +2141,7 @@ func (e *ClusterE2ETest) InstallCertManagerPackageWithAwsCredentials(prefix, pac
 		e.T.Fatalf("Failed creating cert-manager package deployment: %s", err)
 	}
 
-	err = e.KubectlClient.ApplyKubeSpecFromBytesWithNamespace(ctx, e.Cluster(), certManagerPackageDeployment,
+	err = e.applyPackageSpec(ctx, e.Cluster(), certManagerPackageDeployment,
 		namespace)
 	if err != nil {
 		e.T.Fatalf("Error installing cert-manager package: %s", err)
@@ -2216,7 +2238,7 @@ func (e *ClusterE2ETest) ApplyPackageFile(packageName, targetNamespace string, P
 	packageMetadatNamespace := fmt.Sprintf("%s-%s", "eksa-packages", e.ClusterName)
 
 	e.T.Log("Apply changes to package", packageName)
-	err := e.KubectlClient.ApplyKubeSpecFromBytesWithNamespace(ctx, e.Cluster(), PackageFile, packageMetadatNamespace)
+	err := e.applyPackageSpec(ctx, e.Cluster(), PackageFile, packageMetadatNamespace)
 	if err != nil {
 		e.T.Fatalf("Error upgrading package: %s", err)
 		return
@@ -2319,8 +2341,110 @@ func dumpFile(description, path string, t T) {
 	b, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
+		return
+	}
+	if strings.EqualFold(filepath.Ext(path), ".csv") {
+		b, err = redactHardwarePasswords(b)
+	} else {
+		b, err = redactLicenseTokens(b)
+	}
+	if err != nil {
+		t.Logf("%s: file content omitted because credentials could not be redacted", description)
+		return
 	}
 	t.Logf("%s:\n%s\n", description, string(b))
+}
+
+func redactLicenseTokens(content []byte) ([]byte, error) {
+	decoder := yamlv3.NewDecoder(bytes.NewReader(content))
+	var output bytes.Buffer
+	encoder := yamlv3.NewEncoder(&output)
+	encoder.SetIndent(2)
+	for {
+		var document yamlv3.Node
+		if err := decoder.Decode(&document); err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, err
+		}
+		secretNodes := make(map[*yamlv3.Node]bool)
+		findLicenseTokenNodes(&document, secretNodes)
+		redactSecretNodes(&document, secretNodes, make(map[*yamlv3.Node]bool))
+		if err := encoder.Encode(&document); err != nil {
+			return nil, err
+		}
+	}
+	if err := encoder.Close(); err != nil {
+		return nil, err
+	}
+	return output.Bytes(), nil
+}
+
+func findLicenseTokenNodes(node *yamlv3.Node, secretNodes map[*yamlv3.Node]bool) {
+	if node.Kind == yamlv3.MappingNode {
+		for i := 0; i < len(node.Content); i += 2 {
+			key := node.Content[i]
+			if key.Kind == yamlv3.AliasNode {
+				key = key.Alias
+			}
+			if key.Value == "licenseToken" {
+				markSecretNodes(node.Content[i+1], secretNodes)
+			}
+		}
+	}
+	for _, child := range node.Content {
+		findLicenseTokenNodes(child, secretNodes)
+	}
+}
+
+func markSecretNodes(node *yamlv3.Node, secretNodes map[*yamlv3.Node]bool) {
+	if node == nil || secretNodes[node] {
+		return
+	}
+	secretNodes[node] = true
+	markSecretNodes(node.Alias, secretNodes)
+	for _, child := range node.Content {
+		markSecretNodes(child, secretNodes)
+	}
+}
+
+func redactSecretNodes(node *yamlv3.Node, secretNodes, visited map[*yamlv3.Node]bool) {
+	if node == nil || visited[node] {
+		return
+	}
+	visited[node] = true
+	if secretNodes[node] || node.Kind == yamlv3.AliasNode && secretNodes[node.Alias] {
+		*node = yamlv3.Node{Kind: yamlv3.ScalarNode, Tag: "!!str", Value: "<redacted>", Anchor: node.Anchor}
+		return
+	}
+	redactSecretNodes(node.Alias, secretNodes, visited)
+	for _, child := range node.Content {
+		redactSecretNodes(child, secretNodes, visited)
+	}
+}
+
+func redactHardwarePasswords(content []byte) ([]byte, error) {
+	records, err := csv.NewReader(bytes.NewReader(content)).ReadAll()
+	if err != nil {
+		return nil, err
+	}
+	if len(records) == 0 {
+		return nil, fmt.Errorf("hardware CSV has no header")
+	}
+	for column, name := range records[0] {
+		if strings.EqualFold(strings.TrimSpace(name), "bmc_password") {
+			for _, record := range records[1:] {
+				record[column] = "<redacted>"
+			}
+		}
+	}
+	var output bytes.Buffer
+	writer := csv.NewWriter(&output)
+	if err := writer.WriteAll(records); err != nil {
+		return nil, err
+	}
+	return output.Bytes(), nil
 }
 
 // CreateCloudStackCredentialsSecretFromEnvVar parses the cloudstack credentials from an environment variable,

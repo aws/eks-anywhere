@@ -1,0 +1,38 @@
+# Routes http://<emissary service>/{{.name}}/ to port 80 of {{.service}}. The Listener takes cleartext on
+# 8080, the port the Emissary Service targets. The Host routes cleartext requests explicitly instead of
+# relying on Emissary's fallback Host.
+apiVersion: getambassador.io/v3alpha1
+kind: Listener
+metadata:
+  name: {{.name}}
+  namespace: {{.namespace}}
+spec:
+  port: 8080
+  protocol: HTTP
+  securityModel: XFP
+  hostBinding:
+    namespace:
+      from: SELF
+---
+apiVersion: getambassador.io/v3alpha1
+kind: Host
+metadata:
+  name: {{.name}}
+  namespace: {{.namespace}}
+spec:
+  hostname: "*"
+  acmeProvider:
+    authority: none
+  requestPolicy:
+    insecure:
+      action: Route
+---
+apiVersion: getambassador.io/v3alpha1
+kind: Mapping
+metadata:
+  name: {{.name}}
+  namespace: {{.namespace}}
+spec:
+  hostname: "*"
+  prefix: /{{.name}}/
+  service: {{.service}}.{{.namespace}}:80

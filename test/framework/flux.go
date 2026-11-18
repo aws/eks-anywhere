@@ -67,8 +67,9 @@ func getJobIDFromEnv() string {
 func WithFluxGit(opts ...api.FluxConfigOpt) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
 		checkRequiredEnvVars(e.T, fluxGitRequiredEnvVars)
+		name := fluxConfigName()
 		jobID := strings.Replace(getJobIDFromEnv(), ":", "-", -1)
-		e.ClusterConfig.FluxConfig = api.NewFluxConfig(DefaultFluxConfigName,
+		e.ClusterConfig.FluxConfig = api.NewFluxConfig(name,
 			api.WithGenericGitProvider(
 				api.WithStringFromEnvVarGenericGitProviderConfig(GitRepoSshUrl, api.WithGitRepositoryUrl),
 			),
@@ -76,13 +77,46 @@ func WithFluxGit(opts ...api.FluxConfigOpt) ClusterE2ETestOpt {
 			api.WithClusterConfigPath(jobID),
 			api.WithBranch(jobID),
 		)
-		e.clusterFillers = append(e.clusterFillers,
-			api.WithGitOpsRef(DefaultFluxConfigName, v1alpha1.FluxConfigKind),
-		)
 		// apply the rest of the opts passed into the function
 		for _, opt := range opts {
 			opt(e.ClusterConfig.FluxConfig)
 		}
+		e.clusterFillers = append(e.clusterFillers,
+			api.WithGitOpsRef(e.ClusterConfig.FluxConfig.Name, v1alpha1.FluxConfigKind),
+		)
+		e.T.Cleanup(e.CleanUpGitRepo)
+	}
+}
+
+// WithFluxGitConfig configures API-based tests to use an isolated branch of the shared Git repository.
+func WithFluxGitConfig(opts ...api.FluxConfigOpt) api.ClusterConfigFiller {
+	return func(config *cluster.Config) {
+		jobID := strings.ReplaceAll(getJobIDFromEnv(), ":", "-")
+		config.FluxConfig = api.NewFluxConfig(DefaultFluxConfigName,
+			api.WithGenericGitProvider(
+				api.WithStringFromEnvVarGenericGitProviderConfig(GitRepoSshUrl, api.WithGitRepositoryUrl),
+			),
+			api.WithSystemNamespace("default"),
+			api.WithClusterConfigPath(jobID),
+			api.WithBranch(jobID),
+		)
+		for _, opt := range opts {
+			opt(config.FluxConfig)
+		}
+		api.WithGitOpsRef(config.FluxConfig.Name, v1alpha1.FluxConfigKind)(config.Cluster)
+	}
+}
+
+// WithFluxGitEnvVarCheck checks the credentials used by the generic Git provider.
+func WithFluxGitEnvVarCheck() ClusterE2ETestOpt {
+	return func(e *ClusterE2ETest) {
+		checkRequiredEnvVars(e.T, fluxGitRequiredEnvVars)
+	}
+}
+
+// WithFluxGitCleanup registers cleanup of the test's branch without deleting the shared repository.
+func WithFluxGitCleanup() ClusterE2ETestOpt {
+	return func(e *ClusterE2ETest) {
 		e.T.Cleanup(e.CleanUpGitRepo)
 	}
 }

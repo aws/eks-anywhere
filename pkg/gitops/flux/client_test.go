@@ -31,6 +31,9 @@ func newFluxClientTest(t *testing.T) *fluxClientTest {
 	k := mocks.NewMockKubeClient(ctrl)
 	c := newFluxClient(f, k)
 	c.Retrier = retrier.NewWithMaxRetries(maxRetries, 0)
+	c.githubRetry = func(_ context.Context, operation func() error) error {
+		return c.Retry(operation)
+	}
 	return &fluxClientTest{
 		WithT:      NewWithT(t),
 		ctx:        context.Background(),
@@ -56,6 +59,15 @@ func TestFluxClientBootstrapGithubError(t *testing.T) {
 	tt.f.EXPECT().BootstrapGithub(tt.ctx, tt.cluster, tt.fluxConfig).Return(nil).AnyTimes()
 
 	tt.Expect(tt.c.BootstrapGithub(tt.ctx, tt.cluster, tt.fluxConfig)).To(MatchError(ContainSubstring("error in bootstrap github")), "fluxClient.BootstrapGithub() should fail after 5 tries")
+}
+
+func TestFluxClientBootstrapGithubCanceled(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	c := newFluxClient(mocks.NewMockFluxClient(ctrl), mocks.NewMockKubeClient(ctrl))
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	NewWithT(t).Expect(c.BootstrapGithub(ctx, &types.Cluster{}, &v1alpha1.FluxConfig{})).To(MatchError(context.Canceled))
 }
 
 func TestFluxClientBootstrapGitSuccess(t *testing.T) {

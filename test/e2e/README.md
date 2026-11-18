@@ -11,8 +11,8 @@ or
 #
 # The makefile will include the .env file and export all the vars to the environment for you
 #
-# By default the local-e2e target will run TestDockerKubernetes136SimpleFlow. You can either 
-#   override LOCAL_E2E_TESTS in your .env file or pass it on the cli every time (i.e LOCAL_E2E_TESTS=TestDockerKubernetes136SimpleFlow)
+# By default the local-e2e target will run TestDockerKubernetes137SimpleFlow. You can either
+#   override LOCAL_E2E_TESTS in your .env file or pass it on the cli every time (i.e LOCAL_E2E_TESTS=TestDockerKubernetes137SimpleFlow)
 make local-e2e
 ```
 or
@@ -43,6 +43,14 @@ Currently, Ubuntu is the only OS that we build and test multiple versions for. I
 ### Using bundle overrides
 In order to use bundle overrides, take your bundle overrides yaml file and move it to `ROOT_DIR/bin/local-bundle-release.yaml`.
 You will also need to set the environment variable `T_BUNDLES_OVERRIDE=true`
+
+### Curated packages bundle upgrade tests
+`TestDocker*CuratedPackagesBundleUpgrade` installs every curated package except cert-manager from an older package bundle, upgrades them to the newest bundle in the PackageBundleController bundle repository, and checks their state survives. It skips unless `T_PACKAGES_UPGRADE_FROM_BUNDLE` is set:
+
+- `prod`: the current prod bundle (`public.ecr.aws/eks-anywhere/eks-anywhere-packages-bundles:v1-<kube>-latest`), the bundle customers upgrade from.
+- anything else: a bundle name in the PackageBundleController bundle repository (for example `v1-36-2026-08-06-1786056321`) or a full `repository:tag` reference.
+
+Set it only where the cluster pulls from the staging or prod registries. Switching bundles also replaces the packages controller, and dev registries don't have the controller images of most older bundles. The e2e runner passes it to the package tests when it's set in its environment, and sets it to `prod` for staging runs (`--stage=staging`, used by the staging release pipeline).
 
 ### Cleaning up VM's after a test run
 In order to clean up VM's after a test runs automatically, set `T_CLEANUP_RESOURCES=true`
