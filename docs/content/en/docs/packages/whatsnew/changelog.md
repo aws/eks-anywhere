@@ -5,7 +5,7 @@ weight: 7
 description: >
   Changelog for Curated packages release
 ---
-## Package Bundle Release (11-12-2026)
+## Package Bundle Release (11-18-2026)
 #### Added
 - Package bundle for Kubernetes 1.37
 #### Changed
