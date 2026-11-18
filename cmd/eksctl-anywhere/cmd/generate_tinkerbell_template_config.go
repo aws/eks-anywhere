@@ -10,6 +10,7 @@ import (
 
 	"github.com/aws/eks-anywhere/cmd/eksctl-anywhere/cmd/aflag"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/utils/yaml"
@@ -52,16 +53,6 @@ func NewGenerateTinkerbellTemplateConfig() *cobra.Command {
 		Long:    longGenerateTinkerbellTemplateConfigHelp,
 		Aliases: []string{"ttc"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// When the bootstrap IP is unspecified attempt to derive it from IPs assigned to the
-			// primary interface.
-			if f := flgs.Lookup(aflag.TinkerbellBootstrapIP.Name); !f.Changed {
-				bootstrapIP, err := networkutils.GetLocalIP()
-				if err != nil {
-					return fmt.Errorf("tinkerbell bootstrap ip: %v", err)
-				}
-				opts.BootstrapTinkerbellIP = bootstrapIP.String()
-			}
-
 			// Validation logic called by newClusterSpec arbitrarily logs warnings. Until it can
 			// be refactored we need to redirect logging such that the output is swallowed.
 			if err := logger.Init(logger.Options{
@@ -85,20 +76,10 @@ func NewGenerateTinkerbellTemplateConfig() *cobra.Command {
 				return err
 			}
 
-			// Generating the TinkerbellTemplateConfig requires the OS family to ensure the right
-			// actions are produced. The OS family is specified per TinkerbellMachineConfig,
-			// therefore is specified in multiple places (control plane and worker node groups).
-			// However, we only support single OS family clusters so validation should error out
-			// earlier if they aren't the same. This means we can use the control plane machine
-			// configs OS family.
-			controlPlaneMachineConfigName := cs.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-			controlPlaneMachineConfig := cs.TinkerbellMachineConfigs[controlPlaneMachineConfigName]
-			osFamily := controlPlaneMachineConfig.OSFamily()
-			osImageURL := cs.TinkerbellDatacenter.Spec.OSImageURL
-			tinkerbellIP := cs.TinkerbellDatacenter.Spec.TinkerbellIP
-
-			cfg := v1alpha1.NewDefaultTinkerbellTemplateConfigCreate(cs.Cluster, osImageURL,
-				opts.BootstrapTinkerbellIP, tinkerbellIP, osFamily)
+			cfg, err := generateTinkerbellTemplateConfig(cs, opts.BootstrapTinkerbellIP, &networkutils.DefaultNetClient{})
+			if err != nil {
+				return err
+			}
 
 			return yaml.NewK8sEncoder(os.Stdout).Encode(cfg)
 		},
@@ -108,4 +89,18 @@ func NewGenerateTinkerbellTemplateConfig() *cobra.Command {
 	cmd.Flags().AddFlagSet(flgs)
 
 	return cmd
+}
+
+func generateTinkerbellTemplateConfig(cs *cluster.Spec, bootstrapOverride string, client networkutils.NetClient) (*v1alpha1.TinkerbellTemplateConfig, error) {
+	tinkerbellIP := cs.TinkerbellDatacenter.Spec.TinkerbellIP
+	bootstrapIP, err := networkutils.ResolveLocalIP(client, tinkerbellIP, bootstrapOverride)
+	if err != nil {
+		return nil, fmt.Errorf("tinkerbell bootstrap ip: %w", err)
+	}
+
+	// Validated clusters use one OS family for their control plane and workers.
+	controlPlaneMachineConfigName := cs.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+	osFamily := cs.TinkerbellMachineConfigs[controlPlaneMachineConfigName].OSFamily()
+	return v1alpha1.NewDefaultTinkerbellTemplateConfigCreate(cs.Cluster,
+		cs.TinkerbellDatacenter.Spec.OSImageURL, bootstrapIP.String(), tinkerbellIP, osFamily), nil
 }

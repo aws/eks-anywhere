@@ -13,6 +13,7 @@ import (
 type hardwareOptions struct {
 	csvPath         string
 	outputPath      string
+	ipv6SLAAC       bool
 	providerOptions *dependencies.ProviderOptions
 }
 
@@ -39,6 +40,7 @@ func init() {
 
 	fset := generateHardwareCmd.Flags()
 	fset.StringVarP(&hOpts.outputPath, "output", "o", "", "Path to output hardware YAML.")
+	fset.BoolVar(&hOpts.ipv6SLAAC, "ipv6-slaac", false, "Generate hardware for IPv6 SLAAC; ip_address, gateway, and netmask must be empty.")
 	fset.StringVarP(
 		&hOpts.csvPath,
 		TinkerbellHardwareCSVFlagName,
@@ -54,7 +56,11 @@ func init() {
 }
 
 func (hOpts *hardwareOptions) generateHardware(cmd *cobra.Command, args []string) error {
-	hardwareYaml, err := hardware.BuildHardwareYAML(hOpts.csvPath, hOpts.providerOptions.Tinkerbell.BMCOptions)
+	buildHardware := hardware.BuildHardwareYAML
+	if hOpts.ipv6SLAAC {
+		buildHardware = hardware.BuildSLAACHardwareYAML
+	}
+	hardwareYaml, err := buildHardware(hOpts.csvPath, hOpts.providerOptions.Tinkerbell.BMCOptions)
 	if err != nil {
 		return fmt.Errorf("building hardware yaml from csv: %v", err)
 	}

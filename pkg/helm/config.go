@@ -8,6 +8,7 @@ type Config struct {
 	ProxyConfig    map[string]string
 	Insecure       bool
 	ExtraFlags     []string
+	NoTimeouts     bool
 }
 
 // NewConfig retuns a new helm Config.
@@ -55,5 +56,12 @@ func WithProxyConfig(proxyConfig map[string]string) Opt {
 func WithExtraFlags(extraFlags []string) Opt {
 	return func(c *Config) {
 		c.ExtraFlags = extraFlags
+	}
+}
+
+// WithNoTimeouts disables Helm wait timeouts.
+func WithNoTimeouts() Opt {
+	return func(c *Config) {
+		c.NoTimeouts = true
 	}
 }

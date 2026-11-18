@@ -149,6 +149,73 @@ func TestKindCreateBootstrapClusterSuccess(t *testing.T) {
 	}
 }
 
+func TestKindCreateBootstrapClusterIPv6(t *testing.T) {
+	_, writer := test.NewWriter(t)
+	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Cluster.Name = "test-cluster"
+		s.VersionsBundles["1.19"] = versionBundle
+		s.Cluster.Spec.ClusterNetwork = v1alpha1.ClusterNetwork{
+			Pods:     v1alpha1.Pods{CidrBlocks: []string{"2001:db8:1::/64"}},
+			Services: v1alpha1.Services{CidrBlocks: []string{"2001:db8:2::/108"}},
+		}
+	})
+
+	ctx := context.Background()
+	executable := mockexecutables.NewMockExecutable(gomock.NewController(t))
+	executable.EXPECT().ExecuteWithEnv(
+		ctx,
+		map[string]string{},
+		"create", "cluster",
+		"--name", "test-cluster-eks-a-cluster",
+		"--kubeconfig", test.OfType("string"),
+		"--image", gomock.Any(),
+		"--config", test.OfType("string"),
+	).DoAndReturn(func(_ context.Context, _ map[string]string, args ...string) (bytes.Buffer, error) {
+		config, err := os.ReadFile(args[9])
+		if err != nil {
+			return bytes.Buffer{}, err
+		}
+		if !strings.Contains(string(config), "ipFamily: ipv6") {
+			t.Fatalf("expected IPv6 kind configuration, got:\n%s", config)
+		}
+		return bytes.Buffer{}, nil
+	})
+
+	_, err := executables.NewKind(executable, writer).CreateBootstrapCluster(ctx, clusterSpec)
+	if err != nil {
+		t.Fatalf("CreateBootstrapCluster() error = %v", err)
+	}
+}
+
+func TestKindCreateBootstrapClusterImageOverride(t *testing.T) {
+	t.Setenv("EKSA_BOOTSTRAP_KIND_IMAGE", "example.test/kind-node:custom")
+	_, writer := test.NewWriter(t)
+	spec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Cluster.Name = "test-cluster"
+		s.VersionsBundles["1.19"] = versionBundle
+		s.Cluster.Spec.ClusterNetwork = v1alpha1.ClusterNetwork{
+			Pods:     v1alpha1.Pods{CidrBlocks: []string{"2001:db8:1::/64"}},
+			Services: v1alpha1.Services{CidrBlocks: []string{"2001:db8:2::/108"}},
+		}
+	})
+	original := spec.RootVersionsBundle().EksD.KindNode.VersionedImage()
+	ctx := context.Background()
+	executable := mockexecutables.NewMockExecutable(gomock.NewController(t))
+	executable.EXPECT().ExecuteWithEnv(
+		ctx, map[string]string{},
+		"create", "cluster", "--name", "test-cluster-eks-a-cluster",
+		"--kubeconfig", test.OfType("string"),
+		"--image", "example.test/kind-node:custom",
+		"--config", test.OfType("string"),
+	).Return(bytes.Buffer{}, nil)
+	if _, err := executables.NewKind(executable, writer).CreateBootstrapCluster(ctx, spec); err != nil {
+		t.Fatal(err)
+	}
+	if got := spec.RootVersionsBundle().EksD.KindNode.VersionedImage(); got != original {
+		t.Fatalf("bootstrap image override changed the bundle: want %q, got %q", original, got)
+	}
+}
+
 func TestKindCreateBootstrapClusterSuccessWithRegistryMirror(t *testing.T) {
 	_, writer := test.NewWriter(t)
 
