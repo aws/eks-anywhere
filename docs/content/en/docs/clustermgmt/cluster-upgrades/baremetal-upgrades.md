@@ -233,8 +233,10 @@ and then you will run the [upgrade cluster command]({{< relref "baremetal-upgrad
 `Cluster`:
 - `kubernetesVersion`
 - `controlPlaneConfiguration.count`
+- `controlPlaneConfiguration.kubeletConfiguration`
 - `controlPlaneConfiguration.upgradeRolloutStrategy.rollingUpdate.maxSurge`
 - `workerNodeGroupConfigurations.count`
+- `workerNodeGroupConfigurations.kubeletConfiguration`
 - `workerNodeGroupConfigurations.kubernetesVersion` (in case of modular upgrade)
 - `workerNodeGroupConfigurations.upgradeRolloutStrategy.rollingUpdate.maxSurge`
 - `workerNodeGroupConfigurations.upgradeRolloutStrategy.rollingUpdate.maxUnavailable`
