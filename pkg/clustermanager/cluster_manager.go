@@ -2,10 +2,10 @@ package clustermanager
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
-	"net/url"
 	"os"
 	"regexp"
 	"strings"
@@ -302,6 +302,7 @@ func (c *ClusterManager) MoveCAPI(ctx context.Context, from, to *types.Cluster, 
 	if err != nil {
 		return fmt.Errorf("building bootstrap cluster client: %w", err)
 	}
+	var hardwareAddresses []HardwareAddressSnapshot
 	if clusterSpec.Cluster.Spec.DatacenterRef.Kind == v1alpha1.TinkerbellDatacenterKind {
 		r := retrier.New(c.clusterctlMoveTimeout, retrier.WithRetryPolicy(clusterctlMoveRetryPolicy))
 		err = r.Retry(func() error {
@@ -309,6 +310,21 @@ func (c *ClusterManager) MoveCAPI(ctx context.Context, from, to *types.Cluster, 
 		})
 		if err != nil {
 			return fmt.Errorf("updating Tinkerbell IP in tinkerbell machine templates: %w", err)
+		}
+		// The injected API client retries ListObjects; snapshot validation must
+		// stay outside that retry loop and finish before saving or moving.
+		hardwareAddresses, err = SnapshotTinkerbellHardwareAddresses(ctx, from.KubeconfigFile, c.clusterClient)
+		if err != nil {
+			return err
+		}
+		if len(hardwareAddresses) > 0 {
+			data, err := json.Marshal(hardwareAddresses)
+			if err != nil {
+				return fmt.Errorf("encoding Tinkerbell hardware address snapshot: %w", err)
+			}
+			if _, err := c.writer.Write("tinkerbell-hardware-addresses.json", data, filewriter.Permission0600, filewriter.PersistentFile); err != nil {
+				return fmt.Errorf("saving Tinkerbell hardware address snapshot: %w", err)
+			}
 		}
 	}
 
@@ -325,6 +341,15 @@ func (c *ClusterManager) MoveCAPI(ctx context.Context, from, to *types.Cluster, 
 	})
 	if err != nil {
 		return fmt.Errorf("moving CAPI management from source to target: %v", err)
+	}
+
+	if len(hardwareAddresses) > 0 {
+		logger.V(3).Info("Restoring observed Tinkerbell hardware addresses after move")
+		if err := c.retrier.Retry(func() error {
+			return RestoreTinkerbellHardwareAddresses(ctx, to.KubeconfigFile, hardwareAddresses, c.clusterClient)
+		}); err != nil {
+			return err
+		}
 	}
 
 	logger.V(3).Info("Waiting for workload cluster control plane to be ready after move")
@@ -926,17 +951,11 @@ func updateTinkerbellIPInBootstrapTinkerbellMachineTemplate(ctx context.Context,
 	tinkIP := spec.TinkerbellDatacenter.Spec.TinkerbellIP
 
 	for _, tinkMachineTemplate := range tinkerbellMachineTemplates.Items {
-		isoURL := url.URL{
-			Scheme: "http",
-			Host:   fmt.Sprintf("%s:%s", tinkIP, tinkerbell.SmeeHTTPPort),
-			// isoURL path is only served in the top level /iso path.
-			Path: "/iso/hook.iso",
-		}
 		err := client.Delete(ctx, &tinkMachineTemplate)
 		if err != nil {
 			return fmt.Errorf("deleting tinkerebell machine template: %w", err)
 		}
-		tinkMachineTemplate.Spec.Template.Spec.BootOptions.ISOURL = isoURL.String()
+		tinkMachineTemplate.Spec.Template.Spec.BootOptions.ISOURL = tinkerbell.TinkerbellISOURL(spec.TinkerbellDatacenter.Spec, "")
 		osImageURL := spec.TinkerbellDatacenter.Spec.OSImageURL
 
 		// When an templateOverride is specified in the spec, we do not want to modify it.
@@ -965,6 +984,9 @@ func updateTinkerbellIPInBootstrapTinkerbellMachineTemplate(ctx context.Context,
 				}
 			}
 		}
+		// Recreate the immutable template without the deleted object's identity.
+		tinkMachineTemplate.ResourceVersion = ""
+		tinkMachineTemplate.UID = ""
 		err = client.Create(ctx, &tinkMachineTemplate)
 		if err != nil {
 			return fmt.Errorf("creating tinkerebell machine template: %w", err)

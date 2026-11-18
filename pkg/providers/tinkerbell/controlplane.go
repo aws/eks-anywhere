@@ -62,6 +62,8 @@ func ControlPlaneSpec(ctx context.Context, logger logr.Logger, client kubernetes
 	}
 
 	cp := builder.ControlPlane
+	cp.ProviderCluster.Spec.ControlPlaneEndpoint.Host = cp.Cluster.Spec.ControlPlaneEndpoint.Host
+	cp.ProviderCluster.Spec.ControlPlaneEndpoint.Port = cp.Cluster.Spec.ControlPlaneEndpoint.Port
 	if err = cp.UpdateImmutableObjectNames(ctx, client, GetMachineTemplate, machineTemplateEqual); err != nil {
 		return nil, errors.Wrap(err, "updating tinkerbell immutable object names")
 	}

@@ -104,6 +104,19 @@ func TestControlPlaneSpecEndpointSchema(t *testing.T) {
 	g.Expect(endpoint["port"]).To(Equal(float64(6443)))
 }
 
+func TestControlPlaneSpecIPv6Endpoint(t *testing.T) {
+	g := NewWithT(t)
+	spec := test.NewFullClusterSpec(t, testClusterConfigFilename)
+	spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host = "2001:db8::10"
+	spec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks = []string{"2001:db8:100::/56"}
+	spec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks = []string{"2001:db8:200::/112"}
+
+	cp, err := ControlPlaneSpec(context.Background(), test.NewNullLogger(), test.NewFakeKubeClient(), spec)
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(cp.ProviderCluster.Spec.ControlPlaneEndpoint.Host).To(Equal("2001:db8::10"))
+	g.Expect(cp.ProviderCluster.Spec.ControlPlaneEndpoint.Port).To(Equal(int32(6443)))
+}
+
 func TestControlPlaneSpecNoChangesMachineTemplates(t *testing.T) {
 	g := NewWithT(t)
 	logger := test.NewNullLogger()
