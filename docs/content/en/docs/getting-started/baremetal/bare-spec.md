@@ -269,6 +269,50 @@ This IP address must be a unique IP in the network range that does not conflict 
 Once the Tinkerbell services move from the Admin machine to run on the target cluster, this IP address makes it possible for the stack to be used for future provisioning needs.
 When separate management and workload clusters are supported in Bare Metal, the IP address becomes a necessity.
 
+### dhcpv6Config (required for IPv6 network boot)
+
+Configures temporary DHCPv6 addresses for network boot. Use this field with an IPv6 `tinkerbellIP`. The control plane endpoint, pod CIDR and service CIDR must also use IPv6.
+
+The installed Ubuntu or RHEL operating system obtains its node address through SLAAC (Stateless Address Autoconfiguration). The temporary boot address is not the Kubernetes node address. See [IPv6 network boot requirements]({{< relref "./bare-prereq/#ipv6-network-boot-requirements" >}}) and [IPv6 hardware inventory]({{< relref "./bare-preparation/#ipv6-hardware-inventory" >}}).
+
+#### dhcpv6Config.derivedAddressPool
+
+An IPv6 unicast prefix from which Tinkerbell derives temporary boot addresses. Choose a prefix that is reachable on the provisioning network. Prefix lengths from `/1` through `/64` are accepted; use the provisioning network's `/64` for a typical SLAAC deployment. Link-local, multicast, loopback, unspecified and IPv4-mapped ranges are not accepted.
+
+The following example shows the IPv6 fields to set in your generated cluster configuration. Keep the machine configuration references, operating system image URLs and other required fields from that configuration. All addresses below are examples; replace them with your network's addresses.
+
+```yaml
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: example-ipv6
+spec:
+  clusterNetwork:
+    cniConfig:
+      cilium: {}
+    pods:
+      cidrBlocks:
+      - "2001:db8:100::/48"
+    services:
+      cidrBlocks:
+      - "2001:db8:200::/108"
+  controlPlaneConfiguration:
+    endpoint:
+      host: "2001:db8:10::10"
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: TinkerbellDatacenterConfig
+metadata:
+  name: example-ipv6
+spec:
+  tinkerbellIP: "2001:db8:10::20"
+  dhcpv6Config:
+    derivedAddressPool: "2001:db8:10::/64"
+  isoBoot: false
+```
+
+Use Ubuntu or RHEL images for IPv6 clusters. Bottlerocket is unsupported. The IPv6 release supports network boot; IPv6 ISO boot is not qualified.
+
 ### osImageURL (required)
 Required field to set the operating system. In order to use Ubuntu or RHEL see [building baremetal node images]({{< relref "../../osmgmt/artifacts/#build-bare-metal-node-images" >}}). This field is also useful if you want to provide a customized operating system image or simply host the standard image locally. To upgrade a node or group of nodes to a new operating system version (ie. RHEL 8.7 to RHEL 8.8), modify this field to point to the new operating system image URL and run [upgrade cluster command]({{< relref "../../clustermgmt/cluster-upgrades/baremetal-upgrades/#upgrade-cluster-command" >}}).
 The `osImageURL` must contain the `Cluster.Spec.KubernetesVersion` or `Cluster.Spec.WorkerNodeGroupConfiguration[].KubernetesVersion` version (in case of modular upgrade). For example, if the Kubernetes version is 1.36, the `osImageURL` name should include 1.36, 1_36, 1-36 or 136.
@@ -284,10 +328,29 @@ See [Artifacts]({{< relref "../../osmgmt/artifacts/#hookos-kernel-and-initial-ra
 Optional field (boolean) to enable the ISO boot mode.
 Use this field to enable ISO mounting and boot for OS installation.
 See [Boot Modes]({{< relref "customize/bare-metal-boot-modes/#iso-boot" >}}) for details.
+IPv6 clusters must use the network boot instructions; IPv6 ISO boot is not qualified for this release.
+
+### isoBootURL (optional)
+
+An absolute HTTP or HTTPS URL for the Smee ISO handler that the BMC can reach. Requires `isoBoot: true`. This field is independent of `hookIsoURL`, which selects the source HookOS image that Smee retrieves.
+
+Use a stable gateway or load balancer provided by your network that reaches Smee during bootstrap and after management moves to the cluster. The override uses the same URL in both phases and must remain available for later provisioning and rollouts. An address served only by the temporary administrative bootstrap stack does not meet this requirement.
+
+The URL path must end with the handler for the Tinkerbell cluster's IP family:
+
+| Tinkerbell IP family | Required path suffix |
+| --- | --- |
+| IPv4 | `/iso/hook.iso` |
+| IPv6 | `/iso6/hook.iso` |
+
+An IPv6 Tinkerbell cluster requires `/iso6/hook.iso` even when the URL's transport host is IPv4. CAPT inserts the machine's MAC address before `hook.iso`; the gateway must forward that per-machine path.
+
+When unset, EKS Anywhere generates the URL for each phase: Docker Smee on port `7171` during bootstrap and the Kubernetes Tinkerbell stack on port `7172` after the move. See the [boot URL examples]({{< relref "customize/bare-metal-boot-modes/#iso-boot" >}}). IPv6 ISO qualification remains pending.
 
 ### hookIsoURL (optional)
 Optional field (string URL) to override the default AWS hosted location for the HookOS ISO.
 Use this field to host the HookOS ISO locally.
+Smee retrieves this source image and serves it through its ISO handler. To override the handler URL given to BMCs, set `isoBootURL` separately.
 See [Boot Modes]({{< relref "customize/bare-metal-boot-modes/#iso-boot" >}}) for details.
 
 {{% alert title="Important: HTTP Server Requirements for Hosting HookOS" color="warning" %}}

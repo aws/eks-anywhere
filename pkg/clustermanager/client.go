@@ -30,6 +30,7 @@ type KubernetesClient interface {
 	PauseCAPICluster(ctx context.Context, cluster, kubeconfig string) error
 	ResumeCAPICluster(ctx context.Context, cluster, kubeconfig string) error
 	ListObjects(ctx context.Context, resourceType, namespace, kubeconfig string, list kubernetes.ObjectList) error
+	MergePatchResourceStatus(ctx context.Context, resource, name, patch, kubeconfig, namespace string) error
 	DeleteGitOpsConfig(ctx context.Context, cluster *types.Cluster, name string, namespace string) error
 	DeleteEKSACluster(ctx context.Context, cluster *types.Cluster, name string, namespace string) error
 	DeleteAWSIamConfig(ctx context.Context, cluster *types.Cluster, name string, namespace string) error

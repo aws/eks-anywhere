@@ -40,6 +40,14 @@ func (b ValidClusterSpecBuilder) Build() *tinkerbell.ClusterSpec {
 						Name: "cluster",
 					},
 					Spec: v1alpha1.ClusterSpec{
+						ClusterNetwork: v1alpha1.ClusterNetwork{
+							Pods: v1alpha1.Pods{
+								CidrBlocks: []string{"192.0.2.0/24"},
+							},
+							Services: v1alpha1.Services{
+								CidrBlocks: []string{"198.51.100.0/24"},
+							},
+						},
 						ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
 							Count: 1,
 							MachineGroupRef: &v1alpha1.Ref{

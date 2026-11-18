@@ -1135,10 +1135,10 @@ func tinkerbellCluster(opts ...clusterOpt) *anywherev1.Cluster {
 			KubernetesVersion: "1.22",
 			ClusterNetwork: anywherev1.ClusterNetwork{
 				Pods: anywherev1.Pods{
-					CidrBlocks: []string{"0.0.0.0"},
+					CidrBlocks: []string{"192.0.2.0/24"},
 				},
 				Services: anywherev1.Services{
-					CidrBlocks: []string{"0.0.0.0"},
+					CidrBlocks: []string{"198.51.100.0/24"},
 				},
 			},
 		},
@@ -1348,10 +1348,10 @@ func tinkerbellCP(clusterName string, opts ...cpOpt) *tinkerbell.ControlPlane {
 				Spec: clusterv1beta2.ClusterSpec{
 					ClusterNetwork: clusterv1beta2.ClusterNetwork{
 						Services: clusterv1beta2.NetworkRanges{
-							CIDRBlocks: []string{"0.0.0.0"},
+							CIDRBlocks: []string{"198.51.100.0/24"},
 						},
 						Pods: clusterv1beta2.NetworkRanges{
-							CIDRBlocks: []string{"0.0.0.0"},
+							CIDRBlocks: []string{"192.0.2.0/24"},
 						},
 					},
 					ControlPlaneEndpoint: clusterv1beta2.APIEndpoint{
@@ -1716,6 +1716,8 @@ rules:
 			},
 		},
 	}
+	cp.ProviderCluster.Spec.ControlPlaneEndpoint.Host = cp.Cluster.Spec.ControlPlaneEndpoint.Host
+	cp.ProviderCluster.Spec.ControlPlaneEndpoint.Port = cp.Cluster.Spec.ControlPlaneEndpoint.Port
 	for _, opt := range opts {
 		opt(cp)
 	}

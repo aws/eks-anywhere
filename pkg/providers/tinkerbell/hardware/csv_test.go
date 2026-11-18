@@ -5,6 +5,8 @@ import (
 	stdcsv "encoding/csv"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"testing/iotest"
@@ -226,6 +228,82 @@ metadata:
   name: bmc-worker1-auth
   namespace: eksa-system
 type: kubernetes.io/basic-auth`)))
+}
+
+func TestCSVBuildSLAACHardwareYAML(t *testing.T) {
+	g := gomega.NewWithT(t)
+	first, second := newSLAACMachine(), newSLAACMachine()
+	second.Hostname, second.MACAddress, second.BMCIPAddress = "node-second", "02:00:00:00:00:02", "192.0.2.21"
+	path := writeMachinesCSV(t, []hardware.Machine{first, second})
+
+	_, err := hardware.BuildHardwareYAML(path, nil)
+	g.Expect(err).To(gomega.MatchError(gomega.ContainSubstring("IPAddress is empty")))
+	content, err := hardware.BuildSLAACHardwareYAML(path, nil)
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+	catalogue := hardware.NewCatalogue()
+	g.Expect(hardware.ParseYAMLCatalogue(catalogue, bytes.NewReader(content))).To(gomega.Succeed())
+	g.Expect(catalogue.AllHardware()).To(gomega.HaveLen(2))
+	for _, hw := range catalogue.AllHardware() {
+		g.Expect(hw.Spec.Interfaces[0].DHCP.IP).To(gomega.BeNil())
+		g.Expect(hw.Spec.Metadata.Instance.Ips).To(gomega.BeEmpty())
+		g.Expect(hw.Spec.Interfaces[0].DHCP.NameServers).To(gomega.Equal([]string(first.Nameservers)))
+		g.Expect(hw.Spec.Interfaces[0].DHCP.VLANID).To(gomega.Equal("123"))
+		g.Expect(hw.Labels).To(gomega.HaveKeyWithValue("type", "cp"))
+		g.Expect(hw.Spec.BMCRef).NotTo(gomega.BeNil())
+	}
+	g.Expect(catalogue.AllBMCs()).To(gomega.HaveLen(2))
+	g.Expect(catalogue.AllBMCs()[0].Spec.Connection.Host).To(gomega.Equal(first.BMCIPAddress))
+	g.Expect(catalogue.AllSecrets()).To(gomega.HaveLen(2))
+}
+
+func TestCSVRejectsSLAACStaticAddresses(t *testing.T) {
+	for _, tt := range []struct {
+		name       string
+		ip, gw, nm string
+		field      string
+	}{
+		{name: "IP only", ip: "2001:db8::100", field: "ip_address"},
+		{name: "gateway only", gw: "2001:db8::1", field: "gateway"},
+		{name: "netmask only", nm: "64", field: "netmask"},
+		{name: "full IPv6", ip: "2001:db8::100", gw: "2001:db8::1", nm: "64", field: "ip_address"},
+		{name: "full IPv4", ip: "192.0.2.100", gw: "192.0.2.1", nm: "255.255.255.0", field: "ip_address"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			machine := newSLAACMachine()
+			machine.IPAddress, machine.Gateway, machine.Netmask = tt.ip, tt.gw, tt.nm
+			path := writeMachinesCSV(t, []hardware.Machine{machine})
+			content, err := hardware.BuildSLAACHardwareYAML(path, nil)
+			g.Expect(err).To(gomega.MatchError(gomega.ContainSubstring(tt.field + " must be empty for IPv6 SLAAC")))
+			g.Expect(content).To(gomega.BeNil())
+
+			// Create and upgrade use this reader, catalogue writer and validator.
+			reader, err := hardware.NewNormalizedCSVReaderFromFile(path, nil)
+			g.Expect(err).ToNot(gomega.HaveOccurred())
+			catalogue := hardware.NewCatalogue()
+			err = hardware.TranslateAll(reader, hardware.NewMachineCatalogueWriter(catalogue), hardware.NewMachineValidator(true))
+			g.Expect(err).To(gomega.MatchError(gomega.ContainSubstring(tt.field + " must be empty for IPv6 SLAAC")))
+			g.Expect(catalogue.AllHardware()).To(gomega.BeEmpty())
+		})
+	}
+}
+
+func TestCSVBuildSLAACHardwareYAMLRequiresAddressColumns(t *testing.T) {
+	g := gomega.NewWithT(t)
+	path := filepath.Join(t.TempDir(), "hardware.csv")
+	g.Expect(os.WriteFile(path, []byte("hostname,nameservers,mac,disk,labels\nnode-example,2001:db8::53,02:00:00:00:00:01,/dev/sda,type=cp\n"), 0o600)).To(gomega.Succeed())
+	_, err := hardware.BuildSLAACHardwareYAML(path, nil)
+	g.Expect(err).To(gomega.MatchError(gomega.ContainSubstring("missing required columns in csv:")))
+}
+
+func writeMachinesCSV(t *testing.T, machines []hardware.Machine) string {
+	t.Helper()
+	g := gomega.NewWithT(t)
+	buf := NewBufferedCSV()
+	g.Expect(csv.MarshalCSV(machines, buf)).To(gomega.Succeed())
+	path := filepath.Join(t.TempDir(), "hardware.csv")
+	g.Expect(os.WriteFile(path, buf.Bytes(), 0o600)).To(gomega.Succeed())
+	return path
 }
 
 // BufferedCSV is an in-memory CSV that satisfies io.Reader and io.Writer.

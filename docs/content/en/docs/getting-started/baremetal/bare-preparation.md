@@ -23,6 +23,8 @@ Once the hardware is in place, you need to:
   * IPMI over LAN and/or Redfish is enabled on all BMC interfaces.
 * Go to the BMC settings for each machine and set the IP address (bmc_ip), username (bmc_username), and password (bmc_password) to use later in the CSV file.
 
+For IPv6 SLAAC clusters, collect the provisioning NIC's MAC address and reachable IPv6 DNS server addresses. The installed operating system obtains its node address and default route from your router. Follow the [IPv6 network boot requirements]({{< relref "./bare-prereq/#ipv6-network-boot-requirements" >}}).
+
 ## Prepare hardware inventory
 Create a CSV file to provide information about all physical machines that you are ready to add to your target Bare Metal cluster.
 
@@ -79,13 +81,17 @@ The password associated with the `bmc_username` assigned to the BMC interface on
 The MAC address of the network interface card (NIC) that provides access to the host computer.
 ### ip_address
 The IP address providing access to the host computer.
+Leave this field empty for IPv6 SLAAC hardware.
 ### netmask
 The netmask associated with the `ip_address` value.
 In the example above, a /23 subnet mask is used, allowing you to use up to 510 IP addresses in that range. 
+Leave this field empty for IPv6 SLAAC hardware.
 ### gateway
 IP address of the interface that provides access (the gateway) to the Internet.
+Leave this field empty for IPv6 SLAAC hardware; the router supplies the default route through Router Advertisements.
 ### nameservers
 The IP address of the server that you want to provide DNS service to the cluster.
+For IPv6 SLAAC hardware, provide at least one reachable IPv6 DNS server. Separate multiple addresses with `|`.
 ### labels
 The optional labels field can consist of a key/value pair to use in conjunction with the `hardwareSelector` field when you set up your Bare Metal configuration.
 The key/value pair is connected with an equal (`=`) sign.
@@ -98,6 +104,28 @@ For example, it could be `/dev/sda` for the first SCSI disk or `/dev/nvme0n1` fo
 
 ### vlan_id (optional)
 The VLAN ID to assign to the machine's network interface. Use this field when machines need to be provisioned on a specific VLAN.
+
+## IPv6 hardware inventory
+
+For SLAAC hardware, leave `ip_address`, `netmask` and `gateway` empty in every row. Keep the hostname, provisioning NIC MAC, IPv6 nameservers, labels and installation disk. Tinkerbell derives temporary network boot addresses from `dhcpv6Config.derivedAddressPool`; the installed operating system obtains its own IPv6 address through SLAAC.
+
+This example includes IPv4 BMC addresses on a separate management network. All addresses, MACs and credentials are dummy values; replace them before use.
+
+```csv
+hostname,bmc_ip,bmc_username,bmc_password,mac,ip_address,netmask,gateway,nameservers,labels,disk
+example-cp,192.0.2.11,bmc-user,example-password,02:00:00:00:00:01,,,,2001:db8:10::53,type=cp,/dev/sda
+example-worker,192.0.2.12,bmc-user,example-password,02:00:00:00:00:02,,,,2001:db8:10::53|2001:db8:10::54,type=worker,/dev/sda
+```
+
+Use this CSV with `--hardware-csv` when creating a cluster whose configuration includes `dhcpv6Config`. To generate Hardware YAML for kubectl or GitOps, select SLAAC inventory mode:
+
+```bash
+eksctl anywhere generate hardware --hardware-csv hardware.csv --ipv6-slaac > hardware.yaml
+```
+
+The `--ipv6-slaac` flag requires empty `ip_address`, `netmask` and `gateway` fields. Provide reachable IPv6 nameservers for these machines.
+
+The `bmc_ip` field identifies the BMC and does not configure an address on the Kubernetes node. Any secondary IPv4 node address or route needed to reach that BMC must be [managed separately]({{< relref "./bare-prereq/#reaching-ipv4-bmcs" >}}).
 
 ## Hardware Management 
 
