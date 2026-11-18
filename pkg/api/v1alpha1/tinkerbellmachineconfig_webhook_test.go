@@ -220,6 +220,27 @@ func TestTinkerbellMachineConfigMutateSSHKey(t *testing.T) {
 	g.Expect(mOld.Spec.Users[0].SshAuthorizedKeys[0]).To(Equal(sshKey))
 }
 
+func TestTinkerbellMachineConfigMutateSSHKeyNoKeys(t *testing.T) {
+	tests := []struct {
+		name  string
+		users []v1alpha1.UserConfiguration
+	}{
+		{name: "no users", users: []v1alpha1.UserConfiguration{}},
+		{name: "user without keys", users: []v1alpha1.UserConfiguration{{Name: "ec2-user"}}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mc := v1alpha1.CreateTinkerbellMachineConfig(func(mc *v1alpha1.TinkerbellMachineConfig) {
+				mc.Spec.Users = tt.users
+			})
+
+			g := NewWithT(t)
+			g.Expect(mc.Default(context.Background(), mc)).To(Succeed())
+			g.Expect(mc.Spec.Users).To(Equal(tt.users))
+		})
+	}
+}
+
 func TestTinkerbellMachineConfigMutateSSHKeyNotMutated(t *testing.T) {
 	ctx := context.Background()
 	sshKey := "ssh incorrect Key abc@xyz.com"
