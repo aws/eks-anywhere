@@ -173,7 +173,7 @@ func (e *E2ESession) setupGithubRepo() (*git.Repository, error) {
 	}
 
 	encodedPK := encodePrivateKey(pk)
-	// Generate a PEM file from the private key and write it instance at the user-provided path
+	// Generate a PEM file from the private key and write it in the instance at the user-provided path
 	pkFile := fileFromBytes{
 		dstPath:    e.testEnvVars[config.EksaGitPrivateKeyTokenEnv],
 		permission: 600,
