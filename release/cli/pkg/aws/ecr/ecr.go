@@ -17,9 +17,7 @@ package ecr
 import (
 	"encoding/base64"
 	"fmt"
-	"reflect"
 	"strings"
-	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ecr"
@@ -152,8 +150,7 @@ func imageTagFilter(details []*ecr.ImageDetail, substring string) []*ecr.ImageDe
 
 // getLatestOCIShaTag is used to find the tag/sha of the latest pushed OCI image from a list.
 func getLatestOCIShaTag(details []*ecr.ImageDetail, branchName string, isHelmChart bool) (string, string, error) {
-	latest := &ecr.ImageDetail{}
-	latest.ImagePushedAt = &time.Time{}
+	var latest *ecr.ImageDetail
 	for _, detail := range details {
 		if len(details) < 1 || detail.ImagePushedAt == nil || detail.ImageDigest == nil || detail.ImageTags == nil || len(detail.ImageTags) == 0 {
 			continue
@@ -186,12 +183,12 @@ func getLatestOCIShaTag(details []*ecr.ImageDetail, branchName string, isHelmCha
 			}
 		}
 
-		if detail.ImagePushedAt != nil && latest.ImagePushedAt.Before(*detail.ImagePushedAt) {
+		if latest == nil || latest.ImagePushedAt.Before(*detail.ImagePushedAt) {
 			latest = detail
 		}
 	}
-	if reflect.DeepEqual(latest, ecr.ImageDetail{}) {
-		return "", "", fmt.Errorf("no images found")
+	if latest == nil {
+		return "", "", fmt.Errorf("no images found for branch %q", branchName)
 	}
 	return *latest.ImageTags[0], *latest.ImageDigest, nil
 }
