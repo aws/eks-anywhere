@@ -71,17 +71,17 @@ spec:
   template:
     spec:
       cloneMode: linkedClone
-      datacenter: 'SDDC-Datacenter'
-      datastore: /SDDC-Datacenter/datastore/WorkloadDatastore
+      datacenter: "SDDC-Datacenter"
+      datastore: "/SDDC-Datacenter/datastore/WorkloadDatastore"
       diskGiB: 25
-      folder: '/SDDC-Datacenter/vm'
+      folder: "/SDDC-Datacenter/vm"
       memoryMiB: 4096
       network:
         devices:
         - dhcp4: true
           networkName: /SDDC-Datacenter/network/sddc-cgw-network-1
       numCPUs: 3
-      resourcePool: '*/Resources'
+      resourcePool: "*/Resources"
       server: vsphere_server
       storagePolicyName: "vSAN Default Storage Policy"
       template: /SDDC-Datacenter/vm/Templates/ubuntu-1804-kube-v1.19.6

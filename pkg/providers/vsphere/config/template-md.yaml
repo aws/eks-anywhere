@@ -259,10 +259,10 @@ spec:
   template:
     spec:
       cloneMode: {{.workerCloneMode}}
-      datacenter: '{{.vsphereDatacenter}}'
-      datastore: {{.workerVsphereDatastore}}
+      datacenter: {{.vsphereDatacenter | quote}}
+      datastore: {{.workerVsphereDatastore | quote}}
       diskGiB: {{.workloadDiskGiB}}
-      folder: '{{.workerVsphereFolder}}'
+      folder: {{.workerVsphereFolder | quote}}
       memoryMiB: {{.workloadVMsMemoryMiB}}
       network:
         devices:
@@ -276,7 +276,7 @@ spec:
           networkName: {{.vsphereNetwork}}
 {{- end }}
       numCPUs: {{.workloadVMsNumCPUs}}
-      resourcePool: '{{.workerVsphereResourcePool}}'
+      resourcePool: {{.workerVsphereResourcePool | quote}}
       server: {{.vsphereServer}}
 {{- if (ne .workerVsphereStoragePolicyName "") }}
       storagePolicyName: "{{.workerVsphereStoragePolicyName}}"

@@ -51,17 +51,17 @@ spec:
   template:
     spec:
       cloneMode: {{.controlPlaneCloneMode}}
-      datacenter: '{{.vsphereDatacenter}}'
-      datastore: {{.controlPlaneVsphereDatastore}}
+      datacenter: {{.vsphereDatacenter | quote}}
+      datastore: {{.controlPlaneVsphereDatastore | quote}}
       diskGiB: {{.controlPlaneDiskGiB}}
-      folder: '{{.controlPlaneVsphereFolder}}'
+      folder: {{.controlPlaneVsphereFolder | quote}}
       memoryMiB: {{.controlPlaneVMsMemoryMiB}}
       network:
         devices:
         - dhcp4: true
           networkName: {{.vsphereNetwork}}
       numCPUs: {{.controlPlaneVMsNumCPUs}}
-      resourcePool: '{{.controlPlaneVsphereResourcePool}}'
+      resourcePool: {{.controlPlaneVsphereResourcePool | quote}}
       server: {{.vsphereServer}}
 {{- if (ne .controlPlaneVsphereStoragePolicyName "") }}
       storagePolicyName: "{{.controlPlaneVsphereStoragePolicyName}}"
@@ -745,17 +745,17 @@ spec:
   template:
     spec:
       cloneMode: {{.etcdCloneMode}}
-      datacenter: '{{.vsphereDatacenter}}'
-      datastore: {{.etcdVsphereDatastore}}
+      datacenter: {{.vsphereDatacenter | quote}}
+      datastore: {{.etcdVsphereDatastore | quote}}
       diskGiB: {{.etcdDiskGiB}}
-      folder: '{{.etcdVsphereFolder}}'
+      folder: {{.etcdVsphereFolder | quote}}
       memoryMiB: {{.etcdVMsMemoryMiB}}
       network:
         devices:
           - dhcp4: true
             networkName: {{.vsphereNetwork}}
       numCPUs: {{.etcdVMsNumCPUs}}
-      resourcePool: '{{.etcdVsphereResourcePool}}'
+      resourcePool: {{.etcdVsphereResourcePool | quote}}
       server: {{.vsphereServer}}
 {{- if (ne .etcdVsphereStoragePolicyName "") }}
       storagePolicyName: "{{.etcdVsphereStoragePolicyName}}"
@@ -939,7 +939,7 @@ data:
         vcenter:
           {{.vsphereServer}}:
             datacenters:
-            - '{{.vsphereDatacenter}}'
+            - {{.vsphereDatacenter | quote}}
             secretName: cloud-provider-vsphere-credentials
             secretNamespace: kube-system
             server: '{{.vsphereServer}}'

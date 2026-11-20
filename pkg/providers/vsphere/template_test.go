@@ -156,6 +156,97 @@ func invalidSSHKey() string {
 	return "ssh-rsa AAAA    B3NzaC1K73CeQ== testemail@test.com"
 }
 
+func TestVsphereTemplateBuilderInventoryPaths(t *testing.T) {
+	for _, field := range []string{"folder", "resourcePool", "datastore", "datacenter"} {
+		for _, value := range []string{"/Datacenter/vm", "/Datacenter/vm's", "'vm'", "", "/Datacenter/vm #1", "path \"quoted\"\\vm: name"} {
+			t.Run(field+"/"+value, func(t *testing.T) {
+				g := NewWithT(t)
+				spec := test.NewFullClusterSpec(t, "testdata/cluster_main.yaml")
+				for _, machine := range spec.VSphereMachineConfigs {
+					switch field {
+					case "folder":
+						machine.Spec.Folder = value
+					case "resourcePool":
+						machine.Spec.ResourcePool = value
+					case "datastore":
+						machine.Spec.Datastore = value
+					}
+				}
+				if field == "datacenter" {
+					spec.VSphereDatacenter.Spec.Datacenter = value
+				}
+				builder := vsphere.NewVsphereTemplateBuilder(time.Now)
+				controlPlane, err := builder.GenerateCAPISpecControlPlane(spec)
+				g.Expect(err).ToNot(HaveOccurred())
+				workers, err := builder.GenerateCAPISpecWorkers(spec, nil, nil)
+				g.Expect(err).ToNot(HaveOccurred())
+				for name, data := range map[string][]byte{"controlPlane": controlPlane, "workers": workers} {
+					t.Run(name, func(t *testing.T) {
+						g := NewWithT(t)
+						objects, err := test.ParseMultiDocYAML(data)
+						g.Expect(err).ToNot(HaveOccurred())
+						count := 0
+						for _, object := range objects {
+							if object["kind"] != "VSphereMachineTemplate" {
+								continue
+							}
+							actual, err := test.GetYAMLPath(object, "spec.template.spec."+field)
+							g.Expect(err).ToNot(HaveOccurred())
+							g.Expect(actual).To(Equal(value))
+							count++
+						}
+						if name == "controlPlane" {
+							g.Expect(count).To(Equal(2))
+						} else {
+							g.Expect(count).To(Equal(1))
+						}
+					})
+				}
+			})
+		}
+	}
+}
+
+func TestVsphereTemplateBuilderFailureDomainInventoryPaths(t *testing.T) {
+	for _, value := range []string{"/Datacenter/vm", "/Datacenter/vm's", "'vm'", "", "/Datacenter/vm #1", "path \"quoted\"\\vm: name"} {
+		t.Run(value, func(t *testing.T) {
+			g := NewWithT(t)
+			spec := test.NewFullClusterSpec(t, "testdata/cluster_vsphere_failuredomain.yaml")
+			spec.VSphereDatacenter.Spec.Datacenter = value
+			spec.VSphereDatacenter.Spec.FailureDomains = []v1alpha1.FailureDomain{{
+				Name:           "fd-1",
+				ComputeCluster: value,
+				Datastore:      value,
+				Folder:         value,
+				Network:        value,
+				ResourcePool:   value,
+			}}
+			builder := vsphere.NewVsphereTemplateBuilder(time.Now)
+			data, err := builder.GenerateVsphereFailureDomainsSpec(spec, map[string]string{"fd-1": "test-test-fd-1"})
+			g.Expect(err).ToNot(HaveOccurred())
+			objects, err := test.ParseMultiDocYAML(data)
+			g.Expect(err).ToNot(HaveOccurred())
+			for kind, paths := range map[string][]string{
+				"VSphereFailureDomain":  {"spec.region.name", "spec.zone.name", "spec.topology.datacenter", "spec.topology.computeCluster", "spec.topology.datastore"},
+				"VSphereDeploymentZone": {"spec.placementConstraint.folder", "spec.placementConstraint.resourcePool"},
+			} {
+				object, err := test.FindObjectByKind(objects, kind)
+				g.Expect(err).ToNot(HaveOccurred())
+				for _, path := range paths {
+					actual, err := test.GetYAMLPath(object, path)
+					g.Expect(err).ToNot(HaveOccurred())
+					g.Expect(actual).To(Equal(value), path)
+				}
+				if kind == "VSphereFailureDomain" {
+					networks, err := test.GetYAMLPath(object, "spec.topology.networks")
+					g.Expect(err).ToNot(HaveOccurred())
+					g.Expect(networks).To(Equal([]interface{}{value}))
+				}
+			}
+		})
+	}
+}
+
 func TestVsphereGenerateCAPISpecControlPlaneValidKubeletConfigNTPCPBR(t *testing.T) {
 	g := NewWithT(t)
 	spec := test.NewFullClusterSpec(t, "testdata/cluster_main_br.yaml")

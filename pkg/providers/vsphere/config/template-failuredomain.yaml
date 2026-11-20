@@ -4,21 +4,21 @@ metadata:
   name: {{.failureDomainTemplateName}}
 spec:
   region:
-    name: {{.regionName}}
+    name: {{.regionName | quote}}
     type: {{.regionType}}
     tagCategory: k8s-region
     autoConfigure: true
   zone:
-    name: {{.zoneName}}
+    name: {{.zoneName | quote}}
     type: {{.zoneType}}
     tagCategory: k8s-zone
     autoConfigure: true
   topology:
-    datacenter: {{.datacenter}}
-    computeCluster: {{.computeCluster}}
-    datastore: {{.datastore}}
+    datacenter: {{.datacenter | quote}}
+    computeCluster: {{.computeCluster | quote}}
+    datastore: {{.datastore | quote}}
     networks:
-    - {{.network}}
+    - {{.network | quote}}
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: VSphereDeploymentZone
@@ -31,5 +31,5 @@ spec:
   server: {{.server}}
   failureDomain: {{.failureDomainTemplateName}}
   placementConstraint:
-    resourcePool: {{.resourcePool}}
-    folder: {{.folder}}
+    resourcePool: {{.resourcePool | quote}}
+    folder: {{.folder | quote}}

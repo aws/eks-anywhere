@@ -44,17 +44,17 @@ spec:
   template:
     spec:
       cloneMode: linkedClone
-      datacenter: 'SDDC-Datacenter'
-      datastore: /SDDC-Datacenter/datastore/WorkloadDatastore
+      datacenter: "SDDC-Datacenter"
+      datastore: "/SDDC-Datacenter/datastore/WorkloadDatastore"
       diskGiB: 25
-      folder: '/SDDC-Datacenter/vm'
+      folder: "/SDDC-Datacenter/vm"
       memoryMiB: 8192
       network:
         devices:
         - dhcp4: true
           networkName: /SDDC-Datacenter/network/sddc-cgw-network-1
       numCPUs: 2
-      resourcePool: '*/Resources'
+      resourcePool: "*/Resources"
       server: vsphere_server
       template: /SDDC-Datacenter/vm/Templates/ubuntu-1804-kube-v1.19.6
       thumbprint: 'ABCDEFG'
@@ -575,7 +575,7 @@ data:
         vcenter:
           vsphere_server:
             datacenters:
-            - 'SDDC-Datacenter'
+            - "SDDC-Datacenter"
             secretName: cloud-provider-vsphere-credentials
             secretNamespace: kube-system
             server: 'vsphere_server'
