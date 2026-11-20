@@ -32,6 +32,34 @@ func TestClusterDefault(t *testing.T) {
 	g.Expect(cOld.Spec.RegistryMirrorConfiguration.Port).To(Equal(constants.DefaultHttpsPort))
 }
 
+func TestClusterValidateControlPlaneTaintEffect(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		taints  []v1.Taint
+		wantErr bool
+	}{
+		{name: "no taints"},
+		{name: "NoSchedule", taints: []v1.Taint{{Key: "test", Effect: v1.TaintEffectNoSchedule}}},
+		{name: "PreferNoSchedule", taints: []v1.Taint{{Key: "test", Effect: v1.TaintEffectPreferNoSchedule}}},
+		{name: "NoExecute", taints: []v1.Taint{{Key: "test", Effect: v1.TaintEffectNoExecute}}},
+		{name: "missing effect", taints: []v1.Taint{{Key: "test", Value: "value"}}, wantErr: true},
+		{name: "invalid effect", taints: []v1.Taint{{Key: "test", Effect: "invalid"}}, wantErr: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			old := baseCluster()
+			cluster := old.DeepCopy()
+			cluster.Spec.ControlPlaneConfiguration.Taints = tc.taints
+			_, err := cluster.ValidateUpdate(context.Background(), old, cluster)
+			g := NewWithT(t)
+			if tc.wantErr {
+				g.Expect(err).To(MatchError(ContainSubstring("control plane taint effect")))
+			} else {
+				g.Expect(err).To(Succeed())
+			}
+		})
+	}
+}
+
 func TestClusterValidateUpdateManagementValueImmutable(t *testing.T) {
 	cOld := baseCluster()
 	cOld.SetSelfManaged()

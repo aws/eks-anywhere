@@ -189,6 +189,7 @@ var clusterConfigValidations = []func(*Cluster) error{
 	validatePodIAMConfig,
 	validateCPUpgradeRolloutStrategy,
 	validateControlPlaneLabels,
+	validateControlPlaneTaints,
 	validatePackageControllerConfiguration,
 	validateEksaVersion,
 	validateControlPlaneCertSANs,
@@ -486,6 +487,17 @@ func validateControlPlaneReplicas(clusterConfig *Cluster) error {
 func validateControlPlaneLabels(clusterConfig *Cluster) error {
 	if err := validateNodeLabels(clusterConfig.Spec.ControlPlaneConfiguration.Labels, field.NewPath("spec", "controlPlaneConfiguration", "labels")); err != nil {
 		return fmt.Errorf("labels for control plane not valid: %v", err)
+	}
+	return nil
+}
+
+func validateControlPlaneTaints(clusterConfig *Cluster) error {
+	for _, taint := range clusterConfig.Spec.ControlPlaneConfiguration.Taints {
+		switch taint.Effect {
+		case "NoSchedule", "PreferNoSchedule", "NoExecute":
+		default:
+			return fmt.Errorf("invalid control plane taint effect %q for key %q: must be NoSchedule, PreferNoSchedule or NoExecute", taint.Effect, taint.Key)
+		}
 	}
 	return nil
 }
