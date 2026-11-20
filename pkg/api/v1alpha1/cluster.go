@@ -651,6 +651,16 @@ func validateWorkerNodeGroups(clusterConfig *Cluster) error {
 			}
 		}
 
+		// Kubernetes requires taints to be unique by <key, effect>.
+		taintKeyEffects := make(map[string]struct{}, len(workerNodeGroupConfig.Taints))
+		for _, taint := range workerNodeGroupConfig.Taints {
+			id := string(taint.Effect) + "/" + taint.Key
+			if _, ok := taintKeyEffects[id]; ok {
+				return fmt.Errorf("taints for worker node group %v not valid: taints must be unique by key and effect pair, duplicate key %q with effect %q", workerNodeGroupConfig.Name, taint.Key, taint.Effect)
+			}
+			taintKeyEffects[id] = struct{}{}
+		}
+
 		workerNodeGroupField := fmt.Sprintf("workerNodeGroupConfigurations[%d]", i)
 		if err := validateNodeLabels(workerNodeGroupConfig.Labels, field.NewPath("spec", workerNodeGroupField, "labels")); err != nil {
 			return fmt.Errorf("labels for worker node group %v not valid: %v", workerNodeGroupConfig.Name, err)

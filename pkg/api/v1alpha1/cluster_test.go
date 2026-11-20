@@ -4384,3 +4384,55 @@ rules:
 		})
 	}
 }
+
+func TestValidateWorkerNodeGroupsDuplicateTaints(t *testing.T) {
+	tests := []struct {
+		name    string
+		taints  []v1.Taint
+		wantErr string
+	}{
+		{
+			name: "same key and effect",
+			taints: []v1.Taint{
+				{Key: "key1", Value: "val1", Effect: v1.TaintEffectPreferNoSchedule},
+				{Key: "key1", Value: "val2", Effect: v1.TaintEffectPreferNoSchedule},
+			},
+			wantErr: "taints must be unique by key and effect pair",
+		},
+		{
+			name: "same key different effect",
+			taints: []v1.Taint{
+				{Key: "key1", Effect: v1.TaintEffectNoSchedule},
+				{Key: "key1", Effect: v1.TaintEffectPreferNoSchedule},
+			},
+		},
+		{
+			name: "different key same effect",
+			taints: []v1.Taint{
+				{Key: "key1", Effect: v1.TaintEffectPreferNoSchedule},
+				{Key: "key2", Effect: v1.TaintEffectPreferNoSchedule},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			cluster := &Cluster{
+				Spec: ClusterSpec{
+					DatacenterRef: Ref{Kind: VSphereDatacenterKind},
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{
+						{Name: "md-0", Count: ptr.Int(1), Taints: tt.taints},
+						{Name: "md-1", Count: ptr.Int(1)},
+					},
+				},
+			}
+			err := validateWorkerNodeGroups(cluster)
+			if tt.wantErr == "" {
+				g.Expect(err).To(Succeed())
+				return
+			}
+			g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
+			g.Expect(err).To(MatchError(ContainSubstring("md-0")))
+		})
+	}
+}
